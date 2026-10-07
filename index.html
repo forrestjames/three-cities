@@ -1562,11 +1562,11 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
       // closeness on the memory map, eased at the city's own pace: 0 far away, 1 the middle, 3 right on it
       const f = Math.max(0, Math.min(3, c.moodShown ?? 1));
       const near = Math.max(0, Math.min(1, (f - 1) / 2)), far = Math.max(0, 1 - f);
-      const L = 0.55 + 0.45 * Math.min(f, 1) + near * 1.6;                       // short and plucky far away, long and held up close
+      const L = 0.7 + 0.3 * Math.min(f, 1) + near * 1.6;                       // short and plucky far away, long and held up close
       let vel = pos === 0 ? 1 : 0.7;
       vel *= 0.55 + 0.45 * s.light;
       vel *= 0.85 + Math.random() * 0.15;
-      vel *= 0.65 + 0.35 * Math.min(f, 1);                                        // distant cities play softer
+      vel *= 0.82 + 0.18 * Math.min(f, 1);                                        // distant cities play softer
       if (near) vel *= 1 + near * 0.3 * (Math.random() - 0.35);                    // up close the dynamics open out
       const step = tickDur * c.rate;
       const swing = pos % 2 ? near * step * 0.33 : 0;                            // a human swing up close
@@ -1793,8 +1793,9 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
     const b = buses.get(c);
     if (!b) return;
     const f = c.moodTarget, tau = instant ? 0.01 : FOLLOW[c.index] / 3;
-    const cutoff = f >= 1 ? 6000 + (f - 1) * 6000 : 380 * Math.pow(6000 / 380, f);
-    const gain = f >= 1 ? 1 + (f - 1) * 0.12 : 0.3 + 0.7 * f;
+    // far away is softer and duller, never silent
+    const cutoff = f >= 1 ? 6000 + (f - 1) * 6000 : 1400 * Math.pow(6000 / 1400, f);
+    const gain = f >= 1 ? 1 + (f - 1) * 0.12 : 0.62 + 0.38 * f;
     b.mood.frequency.setTargetAtTime(cutoff, ac.currentTime, tau);
     b.moodGain.gain.setTargetAtTime(gain, ac.currentTime, tau);
     // where the city sits around you: relative to the light, left or right
