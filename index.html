@@ -201,9 +201,15 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
 .controls output { color: var(--ink); font-variant-numeric: tabular-nums; }
 .controls select { width: 100%; background: rgba(16,8,6,0.6); }
 .octave { grid-column: 1 / -1; display: flex; align-items: center; gap: 0; border: 1px solid var(--line); }
-.octave-label { flex: 1; padding: 0 12px; font-size: 11px; text-transform: uppercase; letter-spacing: 0.14em; color: var(--ink-dim); }
-.octave button { background: none; border: 0; border-left: 1px solid var(--line); min-width: 44px; min-height: 40px; cursor: pointer; font-variant-numeric: tabular-nums; color: var(--ink-dim); }
+.octave-label { flex: 0 0 auto; padding: 0 10px; font-size: 11px; text-transform: uppercase; letter-spacing: 0.14em; color: var(--ink-dim); }
+.octave button { flex: 1 1 0; background: none; border: 0; border-left: 1px solid var(--line); min-width: 34px; min-height: 40px; cursor: pointer; font-variant-numeric: tabular-nums; color: var(--ink-dim); }
 .octave button[aria-pressed="true"] { background: var(--accent); color: var(--ground); }
+@media (max-width: 440px) {
+  .octave { flex-wrap: wrap; }
+  .octave-label { flex: 1 0 100%; padding: 8px 10px; border-bottom: 1px solid var(--line); }
+  .octave button { min-width: 0; }
+  .octave button:nth-of-type(1) { border-left: 0; }
+}
 .fxsends { grid-column: 1 / -1; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
 .fxsend { background: none; border: 1px solid var(--line); min-height: 40px; cursor: pointer; text-transform: uppercase; letter-spacing: 0.14em; font-size: 11px; color: var(--ink-dim); }
 .fxsend[aria-pressed="true"] { border-color: var(--accent); color: var(--ink); }
