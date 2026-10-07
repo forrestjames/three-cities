@@ -78,6 +78,12 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
 .suggest .place { color: var(--ink); font-size: 14px; }
 .suggest .where { color: var(--ink-dim); font-size: 12px; }
 .suggest .empty { color: var(--ink-dim); font-size: 12px; cursor: default; }
+.suggest.sheet { position: fixed; left: 12px; right: 12px; bottom: auto; z-index: 60; max-height: 50vh;
+                 overscroll-behavior: contain; -webkit-overflow-scrolling: touch; touch-action: pan-y; }
+.suggest.sheet li { min-height: 56px; padding: 12px 16px; border-bottom: 1px solid rgba(243, 236, 230, 0.08); }
+.suggest.sheet li:last-child { border-bottom: 0; }
+.suggest.sheet .place { font-size: 17px; }
+.suggest.sheet .where { font-size: 13px; }
 .dots { display: none; }
 @media (max-width: 960px) {
   .cities { display: flex; gap: 12px; overflow-x: auto; scroll-snap-type: x mandatory; scroll-padding-inline: 16px;
@@ -167,6 +173,7 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
   .bar { grid-template-columns: 46px minmax(0, 1fr) 70px; }
   .controls { gap: 14px 12px; }
   .controls select, .swap input, .swap button, .mute { min-height: 44px; }
+  .swap input, .mine input { font-size: 16px; }
   .controls input[type="range"] { height: 28px; }
   .about { gap: 22px; }
   .cycle { font-size: 34px; }
@@ -496,6 +503,7 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
 
   // ---------- type-ahead for city names ----------
   let taCount = 0;
+  const phone = matchMedia("(max-width: 600px)");
   function typeahead(input, onPick, opensUp) {
     const list = document.createElement("ul");
     const id = "suggest-" + (++taCount);
@@ -527,11 +535,37 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
         const a = document.createElement("span"); a.className = "place"; a.textContent = h.name;
         const b = document.createElement("span"); b.className = "where"; b.textContent = placeLabel(h);
         li.append(a, b);
-        li.addEventListener("pointerdown", e => { e.preventDefault(); pick(i); });
+        li.addEventListener("mousedown", e => e.preventDefault());   // keep focus in the box
+        li.addEventListener("click", () => pick(i));
         list.appendChild(li);
       });
       list.hidden = false; input.setAttribute("aria-expanded", "true"); highlight(results.length ? 0 : -1);
+      if (phone.matches) placeSheet();
     }
+
+    // Phones: a full-width panel just below the box, sized to the space above the keyboard.
+    function placeSheet(follow) {
+      list.classList.add("sheet");
+      const vv = window.visualViewport;
+      const viewH = vv ? vv.height : window.innerHeight;
+      const measure = () => {
+        const r = input.getBoundingClientRect();
+        const space = viewH - r.bottom - 12;
+        return { r, space };
+      };
+      let m = measure();
+      if (!follow && m.space < 220) {
+        input.scrollIntoView({ block: "start" });
+        window.scrollBy(0, -12);
+        m = measure();
+      }
+      list.style.top = Math.round(m.r.bottom + 6) + "px";
+      list.style.maxHeight = Math.max(160, Math.round(m.space)) + "px";
+    }
+    phone.addEventListener("change", () => { if (!phone.matches) { list.classList.remove("sheet"); list.style.top = ""; list.style.maxHeight = ""; } });
+    const follow = () => { if (!list.hidden && phone.matches) placeSheet(true); };
+    if (window.visualViewport) window.visualViewport.addEventListener("resize", follow);
+    window.addEventListener("scroll", follow, { passive: true });
 
     input.addEventListener("input", () => {
       input._picked = null;
@@ -551,7 +585,7 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
       else if (e.key === "Enter" && active >= 0) { e.preventDefault(); pick(active); }
       else if (e.key === "Escape") { close(); }
     });
-    input.addEventListener("blur", () => setTimeout(close, 120));
+    input.addEventListener("blur", () => setTimeout(close, 200));
   }
 
   // Card swap boxes: picking a place swaps the city straight away.
