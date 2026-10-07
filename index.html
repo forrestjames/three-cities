@@ -84,6 +84,19 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
 .suggest.sheet li:last-child { border-bottom: 0; }
 .suggest.sheet .place { font-size: 17px; }
 .suggest.sheet .where { font-size: 13px; }
+.mood { display: grid; gap: 12px; justify-items: center; padding: 4px 0 8px; }
+.mood-label { font-size: 11px; text-transform: uppercase; letter-spacing: 0.2em; color: var(--ink-dim); }
+.mood-q { font-family: var(--display); font-size: clamp(26px, 3.8vw, 40px); line-height: 1.15; letter-spacing: 0.05em; text-align: center;
+          min-height: 2.4em; max-width: 24ch; display: flex; align-items: center; justify-content: center; text-wrap: balance; transition: opacity 0.6s ease; }
+.mood-q.fading { opacity: 0; }
+.mood-pad { display: block; width: 100%; max-width: 540px; aspect-ratio: 1.15; touch-action: none; cursor: grab; border-radius: 4px; }
+.mood-pad:active { cursor: grabbing; }
+.mood-row { display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 10px 14px; font-size: 12px; color: var(--ink-dim); letter-spacing: 0.04em; }
+.mood-row button { background: none; border: 1px solid var(--line); padding: 8px 14px; min-height: 40px; cursor: pointer; text-transform: uppercase; letter-spacing: 0.14em; font-size: 11px; color: var(--ink); }
+.mood-row button[aria-pressed="true"] { border-color: var(--ink); }
+.mood-timer { width: 120px; height: 2px; background: var(--line); overflow: hidden; }
+.mood-timer i { display: block; height: 100%; width: 0; background: var(--ink-dim); }
+@media (prefers-reduced-motion: reduce) { .mood-q { transition: none; } }
 .dots { display: none; }
 @media (max-width: 960px) {
   .cities { display: flex; gap: 12px; overflow-x: auto; scroll-snap-type: x mandatory; scroll-padding-inline: 16px;
@@ -217,6 +230,18 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
     <button class="share" id="share" type="button" hidden>Copy link to these cities</button>
     <span class="share-note" id="shareNote" aria-live="polite"></span>
     <label class="field" for="midi">MIDI out <select id="midi"><option value="">Off</option></select></label>
+  </section>
+
+  <section class="mood" aria-label="Memory map">
+    <div class="mood-label">Memory map</div>
+    <div class="mood-q" id="moodQ" aria-live="polite">Where were you happiest?</div>
+    <canvas class="mood-pad" id="moodPad" tabindex="0" aria-label="Memory map. Drag the dot towards the city where it happened. Arrow keys move it too."></canvas>
+    <div class="mood-row">
+      <span>Drag the dot towards where it happened</span>
+      <span class="mood-timer" aria-hidden="true"><i id="moodTimer"></i></span>
+      <button id="moodNext" type="button">Next question</button>
+      <button id="moodPause" type="button" aria-pressed="false">Pause questions</button>
+    </div>
   </section>
 
   <section class="cities" id="cities" aria-label="Cities"></section>
@@ -876,10 +901,13 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
       const filter = ac.createBiquadFilter(); filter.type = "lowpass"; filter.Q.value = 0.8;
       const out = ac.createGain(), vol = ac.createGain();
       const rev = ac.createGain(), del = ac.createGain();
-      input.connect(filter).connect(out).connect(vol).connect(master);
+      const mood = ac.createBiquadFilter(); mood.type = "lowpass"; mood.Q.value = 0.9; mood.frequency.value = 6000;
+      const moodGain = ac.createGain();
+      input.connect(filter).connect(mood).connect(moodGain).connect(out).connect(vol).connect(master);
       vol.connect(rev).connect(reverb);
       vol.connect(del).connect(delay);
-      buses.set(c, { input, filter, out, vol, rev, del });
+      buses.set(c, { input, filter, out, vol, rev, del, mood, moodGain });
+      applyMood(c, true);
       applySound(c);
     });
     setTempo();
@@ -1192,6 +1220,149 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
     gg.fillStyle = "rgba(16,8,6,0.28)"; gg.fillRect(0, 0, W, H);
   }
 
+  // ---------- memory map ----------
+  // A question about the visitor's life appears every 20 seconds. They drag a dot towards the city where it
+  // happened. The nearer a city, the brighter and louder it plays. Each city follows at its own pace.
+  const QUESTIONS = [
+    "Where were you happiest?", "Where did you fall in love?", "Where did you feel most at home?",
+    "Where did you make your closest friend?", "Where did you feel most lost?", "Where did you laugh the hardest?",
+    "Where did you take your biggest risk?", "Where did you have your best meal?", "Where did you feel most free?",
+    "Where did you grow up the most?", "Where would you go back to tomorrow?", "Where did you hear a song you still love?",
+    "Where did you feel most creative?", "Where did you have your coldest winter?", "Where did you walk the most?",
+    "Where did you feel like a stranger?", "Where did you start something new?", "Where did you say a hard goodbye?",
+    "Where does your heart still live?", "Where did you dance the most?", "Where did you learn the most about yourself?",
+    "Where did you feel most like you?"
+  ];
+  const FOLLOW = [1.2, 5, 14];   // seconds each city takes to respond: quick, steady, slow
+  const pad = document.getElementById("moodPad"), pg = pad.getContext("2d");
+  const qEl = document.getElementById("moodQ"), timerEl = document.getElementById("moodTimer");
+  const QUESTION_MS = 20000;
+  let order = [], qIndex = -1, qStart = performance.now(), paused = false, pausedAt = 0;
+  let dot = null, dragging = false, movedThisQuestion = false;
+  const memories = [];   // { w: [three weights], q }
+  cities.forEach(c => { c.moodTarget = 1; c.moodShown = 1; });
+
+  function shuffle(a) { for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; }
+  function nextQuestion() {
+    if (movedThisQuestion && dot) { memories.push({ w: dot.w.slice() }); if (memories.length > 24) memories.shift(); }
+    movedThisQuestion = false;
+    if (!order.length || qIndex >= order.length - 1) { order = shuffle(QUESTIONS.slice()); qIndex = -1; }
+    qIndex++;
+    qStart = performance.now();
+    if (reduceMotion) { qEl.textContent = order[qIndex]; return; }
+    qEl.classList.add("fading");
+    setTimeout(() => { qEl.textContent = order[qIndex]; qEl.classList.remove("fading"); }, 600);
+  }
+
+  // Triangle geometry in CSS pixels
+  let PW = 0, PH = 0, corners = [];
+  function sizePad() {
+    const r = pad.getBoundingClientRect(), dpr = Math.min(2, window.devicePixelRatio || 1);
+    PW = r.width; PH = r.height;
+    pad.width = Math.round(PW * dpr); pad.height = Math.round(PH * dpr);
+    pg.setTransform(dpr, 0, 0, dpr, 0, 0);
+    const m = 46, top = 52;
+    corners = [[PW / 2, top], [m, PH - m], [PW - m, PH - m]];
+    if (!dot) dot = { w: [1 / 3, 1 / 3, 1 / 3] };
+  }
+  const toXY = w => [0, 1].map(k => w[0] * corners[0][k] + w[1] * corners[1][k] + w[2] * corners[2][k]);
+  function toWeights(x, y) {
+    const [a, b, c] = corners;
+    const d = (b[1] - c[1]) * (a[0] - c[0]) + (c[0] - b[0]) * (a[1] - c[1]);
+    let w0 = ((b[1] - c[1]) * (x - c[0]) + (c[0] - b[0]) * (y - c[1])) / d;
+    let w1 = ((c[1] - a[1]) * (x - c[0]) + (a[0] - c[0]) * (y - c[1])) / d;
+    let w2 = 1 - w0 - w1;
+    const w = [w0, w1, w2].map(v => Math.max(0, v));
+    const s = w[0] + w[1] + w[2] || 1;
+    return w.map(v => v / s);
+  }
+  function setDot(w) {
+    dot.w = w;
+    movedThisQuestion = true;
+    cities.forEach((c, i) => { c.moodTarget = w[i] * 3; applyMood(c); });
+  }
+  // focus: 0 = far away, 1 = the even middle, 3 = right on that city
+  function applyMood(c, instant) {
+    const b = buses.get(c);
+    if (!b) return;
+    const f = c.moodTarget, tau = instant ? 0.01 : FOLLOW[c.index] / 3;
+    const cutoff = f >= 1 ? 6000 + (f - 1) * 6000 : 380 * Math.pow(6000 / 380, f);
+    const gain = f >= 1 ? 1 + (f - 1) * 0.12 : 0.3 + 0.7 * f;
+    b.mood.frequency.setTargetAtTime(cutoff, ac.currentTime, tau);
+    b.moodGain.gain.setTargetAtTime(gain, ac.currentTime, tau);
+  }
+
+  function pointer(e) {
+    const r = pad.getBoundingClientRect();
+    setDot(toWeights(e.clientX - r.left, e.clientY - r.top));
+  }
+  pad.addEventListener("pointerdown", e => { dragging = true; pad.setPointerCapture(e.pointerId); pointer(e); });
+  pad.addEventListener("pointermove", e => { if (dragging) pointer(e); });
+  pad.addEventListener("pointerup", () => { dragging = false; });
+  pad.addEventListener("pointercancel", () => { dragging = false; });
+  pad.addEventListener("keydown", e => {
+    const step = 14, k = { ArrowLeft: [-step, 0], ArrowRight: [step, 0], ArrowUp: [0, -step], ArrowDown: [0, step] }[e.key];
+    if (!k) return;
+    e.preventDefault();
+    const [x, y] = toXY(dot.w);
+    setDot(toWeights(x + k[0], y + k[1]));
+  });
+  document.getElementById("moodNext").addEventListener("click", nextQuestion);
+  const pauseBtn = document.getElementById("moodPause");
+  pauseBtn.addEventListener("click", () => {
+    paused = !paused;
+    pauseBtn.setAttribute("aria-pressed", String(paused));
+    pauseBtn.textContent = paused ? "Resume questions" : "Pause questions";
+    if (paused) pausedAt = performance.now(); else qStart += performance.now() - pausedAt;
+  });
+  addEventListener("resize", sizePad);
+  sizePad();
+  nextQuestion();
+
+  function drawMood(now, dt) {
+    if (!paused) {
+      const k = Math.min(1, (now - qStart) / QUESTION_MS);
+      timerEl.style.width = (k * 100) + "%";
+      if (k >= 1) nextQuestion();
+    }
+    // each city's shown response eases towards its target at its own pace
+    cities.forEach((c, i) => { c.moodShown += (c.moodTarget - c.moodShown) * (1 - Math.exp(-dt / (FOLLOW[i] * 1000 / 3))); });
+    pg.clearRect(0, 0, PW, PH);
+    pg.fillStyle = "rgba(243,236,230,0.03)"; pg.fillRect(0, 0, PW, PH);
+    pg.strokeStyle = "rgba(243,236,230,0.16)"; pg.lineWidth = 1;
+    pg.beginPath(); corners.forEach(([x, y], i) => i ? pg.lineTo(x, y) : pg.moveTo(x, y)); pg.closePath(); pg.stroke();
+    // past answers
+    memories.forEach((m, i) => {
+      const [x, y] = toXY(m.w);
+      pg.globalAlpha = 0.25 + 0.5 * (i + 1) / memories.length;
+      pg.fillStyle = "#f3ece6"; pg.beginPath(); pg.arc(x, y, 3, 0, 7); pg.fill();
+    });
+    pg.globalAlpha = 1;
+    // lines from the dot to each city, brighter the nearer
+    const [dx, dy] = toXY(dot.w);
+    cities.forEach((c, i) => {
+      const [x, y] = corners[i];
+      pg.strokeStyle = colorOf(c); pg.globalAlpha = 0.1 + 0.5 * dot.w[i]; pg.lineWidth = 1.5;
+      pg.beginPath(); pg.moveTo(dx, dy); pg.lineTo(x, y); pg.stroke();
+    });
+    pg.globalAlpha = 1;
+    // city corners swell as each city responds
+    cities.forEach((c, i) => {
+      const [x, y] = corners[i], s = Math.max(0, Math.min(3, c.moodShown));
+      const r = 7 + s * 9;
+      pg.fillStyle = colorOf(c);
+      pg.globalAlpha = 0.18; pg.beginPath(); pg.arc(x, y, r + 10, 0, 7); pg.fill();
+      pg.globalAlpha = 0.9; pg.beginPath(); pg.arc(x, y, r, 0, 7); pg.fill();
+      pg.globalAlpha = 1;
+      pg.fillStyle = "#f3ece6"; pg.font = "15px Abel, 'Arial Narrow', sans-serif"; pg.textAlign = "center";
+      const label = c.name.toUpperCase().split("").join(String.fromCharCode(8202));
+      pg.fillText(label, x, i === 0 ? y - r - 14 : y + r + 22);
+    });
+    // the dot
+    pg.fillStyle = "rgba(243,236,230,0.2)"; pg.beginPath(); pg.arc(dx, dy, dragging ? 22 : 17, 0, 7); pg.fill();
+    pg.fillStyle = "#f3ece6"; pg.beginPath(); pg.arc(dx, dy, 9, 0, 7); pg.fill();
+  }
+
   // ---------- frame loop ----------
   let lastGrain = 0, lastMinute = -1;
   function frame(ms) {
@@ -1206,6 +1377,7 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
     } else visualQueue.length = 0;
     const now = ac ? ac.currentTime : ms / 1000;
     cities.forEach(c => drawRing(c, now));
+    drawMood(ms, Math.min(100, ms - (frame.last || ms))); frame.last = ms;
     const minute = Math.floor(Date.now() / 60000);
     if (minute !== lastMinute) { lastMinute = minute; cities.forEach(render); }
     requestAnimationFrame(frame);
