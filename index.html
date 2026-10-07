@@ -374,6 +374,7 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
 
   <button class="fab" id="fab" type="button" hidden>Play</button>
   <p class="foot">Weather from <a href="https://open-meteo.com" target="_blank" rel="noopener">Open-Meteo</a> · Forrest James</p>
+  <p class="foot credits">Grand piano: <a href="https://archive.org/details/SalamanderGrandPianoV3" target="_blank" rel="noopener">Salamander Grand Piano</a> by Alexander Holm, CC BY 3.0 · Harp: <a href="https://vis.versilstudios.net/vsco-community.html" target="_blank" rel="noopener">VSCO 2 Community Edition</a>, CC0</p>
   <p class="foot credits" id="credits"></p>
 </main>
 
@@ -400,7 +401,10 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
     ["pluck", "Pluck"], ["string", "Plucked string"], ["epiano", "Electric piano"], ["bell", "Bell"],
     ["kalimba", "Kalimba"], ["marimba", "Marimba"], ["soft", "Soft lead"], ["breath", "Breath"],
     ["pad", "Pad"], ["choir", "Choir"], ["acid", "Acid bass"], ["sub", "Sub bass"],
-    ["drum", "Drum"], ["shaker", "Shaker"]
+    ["drum", "Drum"], ["shaker", "Shaker"],
+    ["piano", "Grand piano"], ["organ", "Organ"], ["harp", "Harp"],
+    ["junopad", "Juno pad"], ["junostrings", "Juno strings"], ["junokeys", "Juno keys"],
+    ["graincloud", "Grain cloud"], ["grainshimmer", "Grain shimmer"], ["graindust", "Grain dust"]
   ];
   const KEYS = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"];
   const SCALES = [
@@ -582,7 +586,7 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
       c.octave = Number(b.dataset.oct);
       c.ref.oct.querySelectorAll("button").forEach(x => x.setAttribute("aria-pressed", String(x === b)));
     }));
-    el.querySelector(`#${id}-sound`).addEventListener("change", e => { c.voice = e.target.value; applySound(c); });
+    el.querySelector(`#${id}-sound`).addEventListener("change", e => { c.voice = e.target.value; if (ac && NEEDS[c.voice]) loadSamples(NEEDS[c.voice]); applySound(c); });
     el.querySelector(`#${id}-vol`).addEventListener("input", e => { c.volume = Number(e.target.value); c.ref["o-vol"].value = c.volume; applySound(c); });
     el.querySelector(`#${id}-src`).addEventListener("change", e => { c.source = e.target.value; rebuild(c); });
     el.querySelector(`#${id}-rate`).addEventListener("change", e => { c.rate = Number(e.target.value); updateCycle(); });
@@ -1309,6 +1313,54 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
     stringCache.set(key, buf);
     return buf;
   }
+  // ---------- recorded instruments ----------
+  // Grand piano: Salamander Grand Piano by Alexander Holm (CC BY 3.0). Harp: VSCO 2 Community Edition (CC0).
+  const SAMPLE_SETS = {
+    piano: { dir: "samples/piano/", fallback: "epiano",
+             notes: "C1 Ds1 Fs1 A1 C2 Ds2 Fs2 A2 C3 Ds3 Fs3 A3 C4 Ds4 Fs4 A4 C5 Ds5 Fs5 A5 C6 Ds6 Fs6 A6 C7" },
+    harp:  { dir: "samples/harp/", fallback: "string",
+             notes: "E1 G1 B1 D2 F2 A2 C3 E3 G3 B3 D4 F4 A4 C5 E5 G5 B5 D6 F6 A6 D7 F7" }
+  };
+  const NEEDS = { piano: "piano", harp: "harp", graincloud: "piano", grainshimmer: "harp" };
+  const sampleBank = {};
+  const noteMidi = n => { const m = n.match(/^([A-G])(s?)(\d)$/); return 12 * (+m[3] + 1) + { C: 0, D: 2, E: 4, F: 5, G: 7, A: 9, B: 11 }[m[1]] + (m[2] ? 1 : 0); };
+  function loadSamples(name) {
+    if (sampleBank[name] || !ac) return;
+    const set = SAMPLE_SETS[name], bank = sampleBank[name] = { list: [], ready: false };
+    Promise.all(set.notes.split(" ").map(n =>
+      fetch(set.dir + n + ".mp3")
+        .then(r => { if (!r.ok) throw new Error(r.status); return r.arrayBuffer(); })
+        .then(a => new Promise((res, rej) => ac.decodeAudioData(a, res, rej)))
+        .then(buf => ({ midi: noteMidi(n), buf }))
+        .catch(() => null)))
+      .then(list => { bank.list = list.filter(Boolean).sort((a, b) => a.midi - b.midi); bank.ready = bank.list.length > 0; });
+  }
+  function nearestSample(name, midi) {
+    const bank = sampleBank[name];
+    if (!bank) { loadSamples(name); return null; }
+    if (!bank.ready) return null;
+    let best = bank.list[0];
+    for (const x of bank.list) if (Math.abs(x.midi - midi) < Math.abs(best.midi - midi)) best = x;
+    return best;
+  }
+  // Granular: lots of tiny overlapping slices of a sound, each with its own pitch, position and place in the stereo field
+  function grains(env, buf, rate0, t, dur, o) {
+    const n = Math.max(3, Math.round(dur * o.density));
+    for (let i = 0; i < n; i++) {
+      const gt = t + (i / n) * dur + Math.random() * (dur / n);
+      const size = o.size[0] + Math.random() * (o.size[1] - o.size[0]);
+      const semis = o.pitches[Math.floor(Math.random() * o.pitches.length)];
+      const rate = rate0 * Math.pow(2, (semis + (Math.random() * 2 - 1) * o.jitter / 100) / 12);
+      const maxOff = Math.max(0, buf.duration - size * rate - 0.02);
+      const off = Math.min(maxOff, o.start[0] + Math.random() * (o.start[1] - o.start[0]));
+      const src = ac.createBufferSource(); src.buffer = buf; src.playbackRate.value = rate;
+      const g = ac.createGain();
+      g.gain.setValueAtTime(0, gt); g.gain.linearRampToValueAtTime(o.amp, gt + size / 2); g.gain.linearRampToValueAtTime(0, gt + size);
+      const p = ac.createStereoPanner(); p.pan.value = (Math.random() * 2 - 1) * o.spread;
+      src.connect(g).connect(p).connect(env);
+      src.start(gt, off); src.stop(gt + size + 0.02);
+    }
+  }
   function setupAudio() {
     ac = new (window.AudioContext || window.webkitAudioContext)();
     noiseBuf = ac.createBuffer(1, ac.sampleRate, ac.sampleRate);
@@ -1336,10 +1388,21 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
       const gust = ac.createGain(); gust.gain.value = 0;
       gustSrc.connect(gust).connect(breath.detune);
       const pan = ac.createStereoPanner();
+      // Juno-style chorus: two short delays wobbling in opposite directions, one left and one right
+      const chorusIn = ac.createGain(), chorusDry = ac.createGain(), chorusWet = ac.createGain();
+      chorusDry.gain.value = 0.75; chorusWet.gain.value = 0.75;
+      const merge = ac.createChannelMerger(2);
+      const cl = ac.createDelay(0.05), cr = ac.createDelay(0.05);
+      cl.delayTime.value = 0.0045; cr.delayTime.value = 0.0045;
+      const cLfo = ac.createOscillator(); cLfo.frequency.value = 0.51;
+      const cdl = ac.createGain(), cdr = ac.createGain(); cdl.gain.value = 0.0019; cdr.gain.value = -0.0019;
+      cLfo.connect(cdl).connect(cl.delayTime); cLfo.connect(cdr).connect(cr.delayTime); cLfo.start();
+      chorusIn.connect(cl).connect(merge, 0, 0); chorusIn.connect(cr).connect(merge, 0, 1);
+      merge.connect(chorusWet).connect(filter); chorusIn.connect(chorusDry).connect(filter);
       input.connect(filter).connect(breath).connect(mood).connect(moodGain).connect(pan).connect(out).connect(vol).connect(master);
       vol.connect(rev).connect(reverb);
       vol.connect(del).connect(delay);
-      buses.set(c, { input, filter, out, vol, rev, del, mood, moodGain, breath, breathLfo, breathDepth, gust, pan });
+      buses.set(c, { input, filter, out, vol, rev, del, mood, moodGain, breath, breathLfo, breathDepth, gust, pan, chorusIn });
       applyMood(c, true);
       applySound(c);
     });
@@ -1353,7 +1416,7 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
     b.filter.frequency.setTargetAtTime(650 + s.light * 250 + s.arc * 5200, t, 20);
     b.out.gain.setTargetAtTime(0.4 + 0.6 * s.light, t, 20);
     b.rev.gain.setTargetAtTime(revSend(c), t, c.fxRev ? 0.3 : 0.05);
-    b.del.gain.setTargetAtTime(c.fxDel ? (["bell", "marimba", "kalimba", "epiano", "string"].includes(c.voice) ? 0.22 : 0.12) : 0, t, 0.05);
+    b.del.gain.setTargetAtTime(c.fxDel ? (["bell", "marimba", "kalimba", "epiano", "string", "piano", "harp", "junokeys"].includes(c.voice) ? 0.22 : 0.12) : 0, t, 0.05);
     b.vol.gain.setTargetAtTime(Math.pow(c.volume / 100, 2) * 1.4, t, 0.05);
     const br = breathOf(c);
     b.breathLfo.frequency.setTargetAtTime(br.rate, t, 2);
@@ -1391,12 +1454,102 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
   }, 1000);
   const mtof = m => 440 * Math.pow(2, (m - 69) / 12);
 
+  const PIANO_G = 1.25, HARP_G = 0.45, ORGAN_G = 0.085, JUNO_G = { pad: 0.1, strings: 0.13, keys: 0.11 }, GRAIN_G = { cloud: 4.5, shimmer: 3.4, dust: 6 };
   function voice(c, midi, vel, t, L = 1) {
+    // recorded instruments still loading: play a close cousin until they arrive
+    if (SAMPLE_SETS[c.voice] && !nearestSample(c.voice, midi)) {
+      const v = c.voice; c.voice = SAMPLE_SETS[v].fallback;
+      try { voice(c, midi, vel, t, L); } finally { c.voice = v; }
+      return;
+    }
     const b = buses.get(c), f = mtof(midi);
     const env = ac.createGain();
-    env.connect(b.input);
+    env.connect(c.voice.startsWith("juno") && b.chorusIn ? b.chorusIn : b.input);
     env.gain.setValueAtTime(0, t);
-    if (c.voice === "pluck") {
+    if (c.voice === "piano" || c.voice === "harp") {
+      const x = nearestSample(c.voice, midi), piano = c.voice === "piano";
+      const src = ac.createBufferSource(); src.buffer = x.buf; src.playbackRate.value = Math.pow(2, (midi - x.midi) / 12);
+      const lp = ac.createBiquadFilter(); lp.type = "lowpass"; lp.frequency.value = 1600 + vel * vel * 10000;   // a soft touch is darker
+      src.connect(lp).connect(env);
+      const hold = (piano ? 1.6 : 2.6) * L;
+      const lvl = (piano ? PIANO_G : HARP_G) * vel * Math.pow(10, (midi - 62) * (piano ? 0.3 : 0.4) / 20);   // keeps the top end from fading away
+      env.gain.linearRampToValueAtTime(lvl, t + 0.003);
+      env.gain.setValueAtTime(lvl, t + hold); env.gain.setTargetAtTime(0, t + hold, piano ? 0.35 : 0.5);   // dampers down
+      src.start(t); src.stop(t + hold + 2.2);
+    } else if (c.voice === "organ") {
+      const trem = ac.createGain(); trem.gain.value = 0.85;
+      const lfo = ac.createOscillator(); lfo.frequency.value = 5.5 + Math.random() * 0.7;   // a slow-ish rotating speaker
+      const ld = ac.createGain(); ld.gain.value = 0.15;
+      lfo.connect(ld).connect(trem.gain); trem.connect(env);
+      const off = t + 0.9 * L, end = off + 0.15;
+      // drawbars: 16', 8', 4', 2 2/3', 2', 1 1/3'
+      [[0.5, 0.5], [1, 1], [2, 0.55], [3, 0.3], [4, 0.25], [6, 0.1]].forEach(([r, g]) => {
+        if (f * r > 9000) return;
+        const o = ac.createOscillator(); o.frequency.value = f * r;
+        const og = ac.createGain(); og.gain.value = g;
+        o.connect(og).connect(trem); o.start(t); o.stop(end);
+      });
+      const n = ac.createBufferSource(); n.buffer = noiseBuf;
+      const hp = ac.createBiquadFilter(); hp.type = "highpass"; hp.frequency.value = 2500;
+      const ng = ac.createGain(); ng.gain.setValueAtTime(0.25 * vel, t); ng.gain.exponentialRampToValueAtTime(0.001, t + 0.015);
+      n.connect(hp).connect(ng).connect(env); n.start(t, Math.random() * 0.5); n.stop(t + 0.03);   // key click
+      const lvl = ORGAN_G * (0.6 + 0.4 * vel);
+      env.gain.linearRampToValueAtTime(lvl, t + 0.012);
+      env.gain.setValueAtTime(lvl, off); env.gain.linearRampToValueAtTime(0, off + 0.12);
+      lfo.start(t); lfo.stop(end);
+    } else if (c.voice === "junopad" || c.voice === "junostrings" || c.voice === "junokeys") {
+      const kind = c.voice.slice(4);
+      const lp = ac.createBiquadFilter(); lp.type = "lowpass"; lp.Q.value = kind === "keys" ? 2.5 : kind === "pad" ? 1.6 : 0.7;
+      const hp = ac.createBiquadFilter(); hp.type = "highpass"; hp.frequency.value = 90;
+      const mix = ac.createGain();
+      mix.connect(lp).connect(hp).connect(env);
+      const saw = ac.createOscillator(); saw.type = "sawtooth"; saw.frequency.value = f; saw.connect(mix);
+      const oscs = [saw];
+      if (kind !== "strings") {
+        const pulse = ac.createOscillator(); pulse.type = "square"; pulse.frequency.value = f; pulse.detune.value = 3;
+        const pg2 = ac.createGain(); pg2.gain.value = 0.4; pulse.connect(pg2).connect(mix); oscs.push(pulse);
+        const sub = ac.createOscillator(); sub.type = "square"; sub.frequency.value = f / 2;
+        const sg = ac.createGain(); sg.gain.value = 0.3; sub.connect(sg).connect(mix); oscs.push(sub);
+      }
+      let end;
+      if (kind === "pad") {
+        lp.frequency.setValueAtTime(f * 1.2, t); lp.frequency.linearRampToValueAtTime(Math.min(9000, f * 4), t + 0.9 * L);
+        lp.frequency.setTargetAtTime(Math.min(9000, f * 2.5), t + 0.9 * L, 1);
+        env.gain.linearRampToValueAtTime(JUNO_G.pad * vel, t + 0.5 * L);
+        env.gain.setValueAtTime(JUNO_G.pad * vel, t + 1.3 * L); env.gain.setTargetAtTime(0, t + 1.3 * L, 0.9); end = t + 1.3 * L + 4;
+      } else if (kind === "strings") {
+        lp.frequency.value = Math.min(9000, f * 5);
+        env.gain.linearRampToValueAtTime(JUNO_G.strings * vel, t + 0.22 * L);
+        env.gain.setValueAtTime(JUNO_G.strings * vel, t + 1.2 * L); env.gain.setTargetAtTime(0, t + 1.2 * L, 0.6); end = t + 1.2 * L + 3;
+      } else {
+        lp.frequency.setValueAtTime(Math.min(9000, f * (3 + 6 * vel)), t); lp.frequency.setTargetAtTime(f * 1.4, t, 0.18 * L);
+        env.gain.linearRampToValueAtTime(JUNO_G.keys * vel, t + 0.005);
+        env.gain.setValueAtTime(JUNO_G.keys * vel, t + 0.01); env.gain.setTargetAtTime(JUNO_G.keys * vel * 0.4, t + 0.01, 0.25 * L);
+        env.gain.setTargetAtTime(0, t + 0.8 * L, 0.3); end = t + 0.8 * L + 2;
+      }
+      oscs.forEach(o => { o.start(t); o.stop(end); });
+    } else if (c.voice === "graincloud" || c.voice === "grainshimmer" || c.voice === "graindust") {
+      const need = NEEDS[c.voice], x = need && nearestSample(need, midi);
+      const buf = x ? x.buf : stringBuffer(f), rate = x ? Math.pow(2, (midi - x.midi) / 12) : 1;
+      let dur;
+      vel *= Math.min(1.6, Math.pow(10, (midi - 62) * (c.voice === "graindust" ? 0.7 : c.voice === "graincloud" ? 0.3 : 0.5) / 20));   // high grains die away faster, so lift them
+      if (c.voice === "graincloud") {
+        dur = 2.8 * L;
+        grains(env, buf, rate, t, dur, { density: 16, size: [0.08, 0.22], start: [0.15, 2.4], pitches: [0, 0, 0, 12], jitter: 6, spread: 0.7, amp: 1 });
+        env.gain.linearRampToValueAtTime(GRAIN_G.cloud * vel, t + 0.6 * L);
+        env.gain.setValueAtTime(GRAIN_G.cloud * vel, t + dur * 0.7); env.gain.setTargetAtTime(0, t + dur * 0.7, dur * 0.15);
+      } else if (c.voice === "grainshimmer") {
+        dur = 2.2 * L;
+        grains(env, buf, rate, t, dur, { density: 22, size: [0.03, 0.09], start: [0.02, 1.5], pitches: [0, 12, 12, 19, 24], jitter: 4, spread: 0.9, amp: 1 });
+        env.gain.linearRampToValueAtTime(GRAIN_G.shimmer * vel, t + 0.05);
+        env.gain.setValueAtTime(GRAIN_G.shimmer * vel, t + 0.1); env.gain.setTargetAtTime(0, t + 0.1, dur * 0.35);
+      } else {
+        dur = 1.6 * L;
+        grains(env, buf, rate, t, dur, { density: 9, size: [0.012, 0.04], start: [0.15, 1.4], pitches: [0, 0, 7, 12, -12], jitter: 25, spread: 1, amp: 1 });
+        env.gain.linearRampToValueAtTime(GRAIN_G.dust * vel, t + 0.01);
+        env.gain.setValueAtTime(GRAIN_G.dust * vel, t + dur * 0.6); env.gain.setTargetAtTime(0, t + dur * 0.6, dur * 0.2);
+      }
+    } else if (c.voice === "pluck") {
       const o = ac.createOscillator(); o.type = "sawtooth"; o.frequency.value = f;
       const lp = ac.createBiquadFilter(); lp.type = "lowpass"; lp.Q.value = 4;
       lp.frequency.setValueAtTime(f * 8, t); lp.frequency.exponentialRampToValueAtTime(f * 1.2, t + 0.35 * L);

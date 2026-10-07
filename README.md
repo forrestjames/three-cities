@@ -17,4 +17,6 @@ You can swap in the cities you've lived in, then share a link to your version.
 
 Weather from [Open-Meteo](https://open-meteo.com). Photos from Wikimedia Commons, credited on the page.
 
+Grand piano samples: [Salamander Grand Piano](https://archive.org/details/SalamanderGrandPianoV3) by Alexander Holm, CC BY 3.0. Harp samples: [VSCO 2 Community Edition](https://vis.versilstudios.net/vsco-community.html), CC0. Both trimmed and re-encoded for the web.
+
 Made by Forrest James.
