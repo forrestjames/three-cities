@@ -885,8 +885,9 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
       c.ref["v-" + k].textContent = vals[k][1];
     }
     const secs = Math.round(1 / breathOf(c).rate);
+    const span = secs < 90 ? `${secs} seconds` : `${Math.floor(secs / 60)} min${secs % 60 >= 10 ? " " + (secs % 60) + " s" : ""}`;
     c.ref.pattern.innerHTML = `${c.steps} steps · ${c.hits} ${c.hits === 1 ? "hit" : "hits"} from ${c.source}<br><span class="shape">${c.pattern.map(x => x ? "x" : ".").join("")}</span>` +
-      `<br><span class="breath">Breathing with the wind: one sweep every ${secs} s</span>`;
+      `<br><span class="breath">Breathing with the wind: one breath for every kilometre it travels, about every ${span}</span>`;
     drawSun(c, s);
     applySound(c);
   }
@@ -1381,7 +1382,10 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
       // and gets more resonant in humid air
       const breath = ac.createBiquadFilter(); breath.type = "lowpass"; breath.frequency.value = 1700;
       const breathLfo = ac.createOscillator(); breathLfo.type = "sine";
-      breathLfo.frequency.value = 0.05; breathLfo.start(ac.currentTime + Math.random() * 3);   // each city starts at its own point
+      // each city starts at its own point in the breath: a sine wave with a random phase
+      { const ph = Math.random() * Math.PI * 2;
+        breathLfo.setPeriodicWave(ac.createPeriodicWave(new Float32Array([0, Math.sin(ph)]), new Float32Array([0, Math.cos(ph)]), { disableNormalization: true })); }
+      breathLfo.frequency.value = 1 / 300; breathLfo.start();
       const breathDepth = ac.createGain(); breathDepth.gain.value = 0;
       breathLfo.connect(breathDepth).connect(breath.detune);
       const gustSrc = ac.createConstantSource(); gustSrc.start();
@@ -1433,7 +1437,9 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
   function breathOf(c) {
     const wind = Math.min(c.w ? c.w.w : 0, 60) / 60, hum = c.w ? c.w.h / 100 : 0.5;
     return {
-      rate: 0.018 + wind * 0.32,            // calm: one breath a minute or so; a gale: every few seconds
+      // one breath for every kilometre the wind travels: 36 km/h is a breath every 100 s,
+      // a still day (counted as 5 km/h) is one every 12 minutes, a 60 km/h gale one a minute
+      rate: Math.max(5, Math.min(c.w ? c.w.w : 5, 60)) / 3600,
       depth: 500 + wind * 2300,             // cents either side of the centre
       q: -4 + hum * 9                       // in dB: dry air is smooth, damp air rings a little
     };
