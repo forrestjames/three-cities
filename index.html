@@ -1334,10 +1334,11 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
       const gustSrc = ac.createConstantSource(); gustSrc.start();
       const gust = ac.createGain(); gust.gain.value = 0;
       gustSrc.connect(gust).connect(breath.detune);
-      input.connect(filter).connect(breath).connect(mood).connect(moodGain).connect(out).connect(vol).connect(master);
+      const pan = ac.createStereoPanner();
+      input.connect(filter).connect(breath).connect(mood).connect(moodGain).connect(pan).connect(out).connect(vol).connect(master);
       vol.connect(rev).connect(reverb);
       vol.connect(del).connect(delay);
-      buses.set(c, { input, filter, out, vol, rev, del, mood, moodGain, breath, breathLfo, breathDepth, gust });
+      buses.set(c, { input, filter, out, vol, rev, del, mood, moodGain, breath, breathLfo, breathDepth, gust, pan });
       applyMood(c, true);
       applySound(c);
     });
@@ -1350,13 +1351,19 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
     const t = ac.currentTime;
     b.filter.frequency.setTargetAtTime(650 + s.light * 250 + s.arc * 5200, t, 20);
     b.out.gain.setTargetAtTime(0.4 + 0.6 * s.light, t, 20);
-    b.rev.gain.setTargetAtTime(c.fxRev ? 0.12 + (c.w.c / 100) * 0.5 : 0, t, c.fxRev ? 0.3 : 0.05);
+    b.rev.gain.setTargetAtTime(revSend(c), t, c.fxRev ? 0.3 : 0.05);
     b.del.gain.setTargetAtTime(c.fxDel ? (["bell", "marimba", "kalimba", "epiano", "string"].includes(c.voice) ? 0.22 : 0.12) : 0, t, 0.05);
     b.vol.gain.setTargetAtTime(Math.pow(c.volume / 100, 2) * 1.4, t, 0.05);
     const br = breathOf(c);
     b.breathLfo.frequency.setTargetAtTime(br.rate, t, 2);
     b.breathDepth.gain.setTargetAtTime(br.depth, t, 2);
     b.breath.Q.setTargetAtTime(br.q, t, 2);
+  }
+  // Reverb send: cloudier cities are wetter, and so are cities far from the light on the memory map
+  function revSend(c) {
+    if (!c.fxRev || !c.w) return 0;
+    const f = c.moodTarget ?? 1;
+    return (0.12 + (c.w.c / 100) * 0.5) * (1 + 1.4 * (1 - Math.min(1, f)));
   }
   // How each city breathes: wind sets the speed and depth of the sweep, humidity the resonance
   function breathOf(c) {
@@ -1383,7 +1390,7 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
   }, 1000);
   const mtof = m => 440 * Math.pow(2, (m - 69) / 12);
 
-  function voice(c, midi, vel, t) {
+  function voice(c, midi, vel, t, L = 1) {
     const b = buses.get(c), f = mtof(midi);
     const env = ac.createGain();
     env.connect(b.input);
@@ -1391,86 +1398,86 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
     if (c.voice === "pluck") {
       const o = ac.createOscillator(); o.type = "sawtooth"; o.frequency.value = f;
       const lp = ac.createBiquadFilter(); lp.type = "lowpass"; lp.Q.value = 4;
-      lp.frequency.setValueAtTime(f * 8, t); lp.frequency.exponentialRampToValueAtTime(f * 1.2, t + 0.35);
+      lp.frequency.setValueAtTime(f * 8, t); lp.frequency.exponentialRampToValueAtTime(f * 1.2, t + 0.35 * L);
       o.connect(lp).connect(env);
       env.gain.linearRampToValueAtTime(0.32 * vel, t + 0.005);
-      env.gain.exponentialRampToValueAtTime(0.0008, t + 0.7);
-      o.start(t); o.stop(t + 0.75);
+      env.gain.exponentialRampToValueAtTime(0.0008, t + 0.7 * L);
+      o.start(t); o.stop(t + 0.75 * L);
     } else if (c.voice === "bell") {
       const car = ac.createOscillator(); car.frequency.value = f;
       const mod = ac.createOscillator(); mod.frequency.value = f * 3.5;
       const mg = ac.createGain();
-      mg.gain.setValueAtTime(f * 2.2, t); mg.gain.exponentialRampToValueAtTime(f * 0.05, t + 1.4);
+      mg.gain.setValueAtTime(f * 2.2, t); mg.gain.exponentialRampToValueAtTime(f * 0.05, t + 1.4 * L);
       mod.connect(mg).connect(car.frequency);
       car.connect(env);
       env.gain.linearRampToValueAtTime(0.16 * vel, t + 0.004);
-      env.gain.exponentialRampToValueAtTime(0.0006, t + 2.2);
-      car.start(t); mod.start(t); car.stop(t + 2.3); mod.stop(t + 2.3);
+      env.gain.exponentialRampToValueAtTime(0.0006, t + 2.2 * L);
+      car.start(t); mod.start(t); car.stop(t + 2.3 * L); mod.stop(t + 2.3 * L);
     } else if (c.voice === "pad") {
       const lp = ac.createBiquadFilter(); lp.type = "lowpass"; lp.frequency.value = f * 3; lp.Q.value = 0.5;
       lp.connect(env);
-      [-9, 0, 9].forEach(d => { const o = ac.createOscillator(); o.type = "sawtooth"; o.frequency.value = f; o.detune.value = d; o.connect(lp); o.start(t); o.stop(t + 3.2); });
-      env.gain.linearRampToValueAtTime(0.1 * vel, t + 0.35);
-      env.gain.setTargetAtTime(0, t + 0.6, 0.7);
+      [-9, 0, 9].forEach(d => { const o = ac.createOscillator(); o.type = "sawtooth"; o.frequency.value = f; o.detune.value = d; o.connect(lp); o.start(t); o.stop(t + 3.2 * L); });
+      env.gain.linearRampToValueAtTime(0.1 * vel, t + 0.35 * L);
+      env.gain.setTargetAtTime(0, t + 0.6 * L, 0.7);
     } else if (c.voice === "marimba") {
       const o = ac.createOscillator(); o.frequency.value = f;
       const o2 = ac.createOscillator(); o2.frequency.value = f * 4;
-      const g2 = ac.createGain(); g2.gain.setValueAtTime(0.5, t); g2.gain.exponentialRampToValueAtTime(0.001, t + 0.08);
+      const g2 = ac.createGain(); g2.gain.setValueAtTime(0.5, t); g2.gain.exponentialRampToValueAtTime(0.001, t + 0.08 * L);
       o.connect(env); o2.connect(g2).connect(env);
       env.gain.linearRampToValueAtTime(0.3 * vel, t + 0.002);
-      env.gain.exponentialRampToValueAtTime(0.0006, t + 0.55);
-      o.start(t); o2.start(t); o.stop(t + 0.6); o2.stop(t + 0.6);
+      env.gain.exponentialRampToValueAtTime(0.0006, t + 0.55 * L);
+      o.start(t); o2.start(t); o.stop(t + 0.6 * L); o2.stop(t + 0.6 * L);
     } else if (c.voice === "drum") {
       const o = ac.createOscillator(); o.type = "sine";
       const base = Math.max(40, f / 4);
-      o.frequency.setValueAtTime(base * 4, t); o.frequency.exponentialRampToValueAtTime(base, t + 0.09);
+      o.frequency.setValueAtTime(base * 4, t); o.frequency.exponentialRampToValueAtTime(base, t + 0.09 * L);
       o.connect(env);
       env.gain.linearRampToValueAtTime(0.55 * vel, t + 0.002);
-      env.gain.exponentialRampToValueAtTime(0.0006, t + 0.45);
-      o.start(t); o.stop(t + 0.5);
+      env.gain.exponentialRampToValueAtTime(0.0006, t + 0.45 * L);
+      o.start(t); o.stop(t + 0.5 * L);
     } else if (c.voice === "string") {
       const src = ac.createBufferSource(); src.buffer = stringBuffer(f);
       const lp = ac.createBiquadFilter(); lp.type = "lowpass"; lp.frequency.value = Math.min(9000, f * 10);
       src.connect(lp).connect(env);
       env.gain.linearRampToValueAtTime(0.75 * vel, t + 0.003);
-      env.gain.exponentialRampToValueAtTime(0.0006, t + 2.3);
-      src.start(t); src.stop(t + 2.4);
+      env.gain.exponentialRampToValueAtTime(0.0006, t + 2.3 * L);
+      src.start(t); src.stop(t + 2.4 * L);
     } else if (c.voice === "epiano") {
       const car = ac.createOscillator(); car.frequency.value = f;
       const mod = ac.createOscillator(); mod.frequency.value = f;
       const mg = ac.createGain();
-      mg.gain.setValueAtTime(f * 1.6 * vel, t); mg.gain.exponentialRampToValueAtTime(f * 0.15, t + 0.6);
+      mg.gain.setValueAtTime(f * 1.6 * vel, t); mg.gain.exponentialRampToValueAtTime(f * 0.15, t + 0.6 * L);
       mod.connect(mg).connect(car.frequency);
       const tine = ac.createOscillator(); tine.frequency.value = f * 14;
-      const tg = ac.createGain(); tg.gain.setValueAtTime(0.05 * vel, t); tg.gain.exponentialRampToValueAtTime(0.0001, t + 0.12);
+      const tg = ac.createGain(); tg.gain.setValueAtTime(0.05 * vel, t); tg.gain.exponentialRampToValueAtTime(0.0001, t + 0.12 * L);
       car.connect(env); tine.connect(tg).connect(env);
       env.gain.linearRampToValueAtTime(0.24 * vel, t + 0.004);
-      env.gain.exponentialRampToValueAtTime(0.0006, t + 1.8);
-      [car, mod, tine].forEach(o => { o.start(t); o.stop(t + 1.9); });
+      env.gain.exponentialRampToValueAtTime(0.0006, t + 1.8 * L);
+      [car, mod, tine].forEach(o => { o.start(t); o.stop(t + 1.9 * L); });
     } else if (c.voice === "kalimba") {
       const o = ac.createOscillator(); o.frequency.value = f;
       const o2 = ac.createOscillator(); o2.frequency.value = f * 5.95;
-      const g2 = ac.createGain(); g2.gain.setValueAtTime(0.35, t); g2.gain.exponentialRampToValueAtTime(0.0001, t + 0.15);
+      const g2 = ac.createGain(); g2.gain.setValueAtTime(0.35, t); g2.gain.exponentialRampToValueAtTime(0.0001, t + 0.15 * L);
       o.connect(env); o2.connect(g2).connect(env);
       env.gain.linearRampToValueAtTime(0.28 * vel, t + 0.002);
-      env.gain.exponentialRampToValueAtTime(0.0006, t + 0.9);
-      o.start(t); o2.start(t); o.stop(t + 1); o2.stop(t + 1);
+      env.gain.exponentialRampToValueAtTime(0.0006, t + 0.9 * L);
+      o.start(t); o2.start(t); o.stop(t + 1 * L); o2.stop(t + 1 * L);
     } else if (c.voice === "acid") {
       const o = ac.createOscillator(); o.type = "sawtooth"; o.frequency.value = f / 2;
       const lp = ac.createBiquadFilter(); lp.type = "lowpass"; lp.Q.value = 14;
       lp.frequency.setValueAtTime(Math.min(8000, f * (6 + 8 * vel)), t);
-      lp.frequency.exponentialRampToValueAtTime(Math.max(120, f * 0.8), t + 0.22);
+      lp.frequency.exponentialRampToValueAtTime(Math.max(120, f * 0.8), t + 0.22 * L);
       o.connect(lp).connect(env);
       env.gain.linearRampToValueAtTime(0.38 * vel, t + 0.004);
-      env.gain.exponentialRampToValueAtTime(0.0008, t + 0.35);
-      o.start(t); o.stop(t + 0.4);
+      env.gain.exponentialRampToValueAtTime(0.0008, t + 0.35 * L);
+      o.start(t); o.stop(t + 0.4 * L);
     } else if (c.voice === "sub") {
       const o = ac.createOscillator(); o.type = "sine";
       o.frequency.value = f > 160 ? f / 4 : f / 2;
       o.connect(env);
       env.gain.linearRampToValueAtTime(0.3 * vel, t + 0.012);
-      env.gain.exponentialRampToValueAtTime(0.0006, t + 1.1);
-      o.start(t); o.stop(t + 1.2);
+      env.gain.exponentialRampToValueAtTime(0.0006, t + 1.1 * L);
+      o.start(t); o.stop(t + 1.2 * L);
     } else if (c.voice === "shaker") {
       const n = ac.createBufferSource(); n.buffer = noiseBuf;
       n.playbackRate.value = 0.8 + Math.random() * 0.4;
@@ -1489,9 +1496,9 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
       const o = ac.createOscillator(); o.frequency.value = f;
       const og = ac.createGain(); og.gain.value = 0.35;
       n.connect(bp).connect(ng).connect(env); o.connect(og).connect(env);
-      env.gain.linearRampToValueAtTime(0.16 * vel, t + 0.09);
-      env.gain.setTargetAtTime(0, t + 0.35, 0.25);
-      n.start(t); o.start(t); n.stop(t + 1.6); o.stop(t + 1.6);
+      env.gain.linearRampToValueAtTime(0.16 * vel, t + 0.09 * L);
+      env.gain.setTargetAtTime(0, t + 0.35 * L, 0.25);
+      n.start(t); o.start(t); n.stop(t + 1.6 * L); o.stop(t + 1.6 * L);
     } else if (c.voice === "choir") {
       const mix = ac.createGain(); mix.gain.value = 1;
       const body = ac.createBiquadFilter(); body.type = "lowpass"; body.frequency.value = 2400;
@@ -1502,18 +1509,38 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
         const gg = ac.createGain(); gg.gain.value = g;
         mix.connect(bp).connect(gg).connect(env);
       });
-      [-8, 0, 8].forEach(d => { const o = ac.createOscillator(); o.type = "sawtooth"; o.frequency.value = f; o.detune.value = d; o.connect(mix); o.start(t); o.stop(t + 3.2); });
-      env.gain.linearRampToValueAtTime(0.17 * vel, t + 0.4);
-      env.gain.setTargetAtTime(0, t + 0.9, 0.6);
+      [-8, 0, 8].forEach(d => { const o = ac.createOscillator(); o.type = "sawtooth"; o.frequency.value = f; o.detune.value = d; o.connect(mix); o.start(t); o.stop(t + 3.2 * L); });
+      env.gain.linearRampToValueAtTime(0.17 * vel, t + 0.4 * L);
+      env.gain.setTargetAtTime(0, t + 0.9 * L, 0.6);
     } else {
       const o1 = ac.createOscillator(); o1.type = "triangle"; o1.frequency.value = f;
       const o2 = ac.createOscillator(); o2.type = "square"; o2.frequency.value = f; o2.detune.value = 7;
       const g2 = ac.createGain(); g2.gain.value = 0.18;
       o1.connect(env); o2.connect(g2).connect(env);
       env.gain.linearRampToValueAtTime(0.2 * vel, t + 0.03);
-      env.gain.exponentialRampToValueAtTime(0.0008, t + 1.1);
-      o1.start(t); o2.start(t); o1.stop(t + 1.2); o2.stop(t + 1.2);
+      env.gain.exponentialRampToValueAtTime(0.0008, t + 1.1 * L);
+      o1.start(t); o2.start(t); o1.stop(t + 1.2 * L); o2.stop(t + 1.2 * L);
     }
+  }
+
+  // Play a note with feel: every oscillator in it scoops up into pitch, drifts, and picks up vibrato
+  function feelVoice(c, midi, vel, t, L, scoop, glide, vib, drift) {
+    const made = [], mkOsc = ac.createOscillator, mkSrc = ac.createBufferSource;
+    ac.createOscillator = function () { const o = mkOsc.call(ac); made.push(o); return o; };
+    ac.createBufferSource = function () { const s = mkSrc.call(ac); made.push(s); return s; };
+    try { voice(c, midi, vel, t, L); } finally { delete ac.createOscillator; delete ac.createBufferSource; }
+    let wob = null;
+    if (vib > 0.5) {
+      const lfo = ac.createOscillator(); lfo.frequency.value = 4.4 + Math.random() * 1.2;
+      wob = ac.createGain(); wob.gain.setValueAtTime(0, t); wob.gain.linearRampToValueAtTime(vib, t + 0.12 + 0.3 * L);
+      lfo.connect(wob); lfo.start(t); lfo.stop(t + 3 * L + 0.6);
+    }
+    made.forEach(n => {
+      if (!n.detune) return;
+      n.detune.setValueAtTime(drift - scoop, t);
+      if (scoop) n.detune.linearRampToValueAtTime(drift, t + glide);
+      if (wob) wob.connect(n.detune);
+    });
   }
 
   // ---------- clock ----------
@@ -1532,11 +1559,27 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
     if (played) {
       const deg = c.degrees[(c.hitCount + Math.abs(Math.round(c.w.t))) % c.degrees.length];
       const note = Math.max(12, Math.min(108, noteFor(c, deg) - (c.w.t < 0 ? 12 : 0) + 12 * c.octave));
+      // closeness on the memory map, eased at the city's own pace: 0 far away, 1 the middle, 3 right on it
+      const f = Math.max(0, Math.min(3, c.moodShown ?? 1));
+      const near = Math.max(0, Math.min(1, (f - 1) / 2)), far = Math.max(0, 1 - f);
+      const L = 0.55 + 0.45 * Math.min(f, 1) + near * 1.6;                       // short and plucky far away, long and held up close
       let vel = pos === 0 ? 1 : 0.7;
       vel *= 0.55 + 0.45 * s.light;
       vel *= 0.85 + Math.random() * 0.15;
-      voice(c, note, vel, t);
-      sendMidi(c, note, vel, t);
+      vel *= 0.65 + 0.35 * Math.min(f, 1);                                        // distant cities play softer
+      if (near) vel *= 1 + near * 0.3 * (Math.random() - 0.35);                    // up close the dynamics open out
+      const step = tickDur * c.rate;
+      const swing = pos % 2 ? near * step * 0.33 : 0;                            // a human swing up close
+      const tt = Math.max(ac.currentTime + 0.005, t + swing + near * 0.022 * (Math.random() * 2 - 1));
+      const scoop = near * (50 + Math.random() * 60);                             // slide up into the note, in cents
+      const drift = far * 14 * (Math.random() * 2 - 1);                           // far away, slightly out of tune
+      feelVoice(c, note, Math.min(1.2, vel), tt, L, scoop, 0.05 + near * 0.12, near * 16, drift);
+      sendMidi(c, note, Math.min(1, vel), tt);
+      // ornaments: up close, an occasional grace note or octave sparkle
+      if (near > 0.3 && Math.random() < near * 0.2) {
+        if (Math.random() < 0.5) feelVoice(c, Math.min(108, noteFor(c, deg + 1) + 12 * c.octave), vel * 0.45, Math.max(ac.currentTime + 0.004, tt - 0.07), 0.3, 0, 0, 0, 0);
+        else feelVoice(c, Math.min(108, note + 12), vel * 0.35, tt + step / 2, L * 0.6, 0, 0, near * 10, 0);
+      }
       c.hitCount++;
     }
     visualQueue.push({ t, c, pos, played });
@@ -1754,6 +1797,12 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
     const gain = f >= 1 ? 1 + (f - 1) * 0.12 : 0.3 + 0.7 * f;
     b.mood.frequency.setTargetAtTime(cutoff, ac.currentTime, tau);
     b.moodGain.gain.setTargetAtTime(gain, ac.currentTime, tau);
+    // where the city sits around you: relative to the light, left or right
+    if (dot && corners.length && PW) {
+      const [dx] = toXY(dot.w);
+      b.pan.pan.setTargetAtTime(Math.max(-1, Math.min(1, (corners[c.index][0] - dx) / (PW / 2))) * 0.8, ac.currentTime, tau);
+    }
+    b.rev.gain.setTargetAtTime(revSend(c), ac.currentTime, tau);
   }
 
   // ----- weather trail: the light leaves behind the weather of the city it's nearest -----
