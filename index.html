@@ -1129,7 +1129,7 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
   // Double-click (or double-tap) puts it back where it started.
   const polar = (r, deg) => [32 + r * Math.sin(deg * Math.PI / 180), 32 - r * Math.cos(deg * Math.PI / 180)];
   const arc = (r, a0, a1) => { const [x0, y0] = polar(r, a0), [x1, y1] = polar(r, a1); return `M${x0.toFixed(2)} ${y0.toFixed(2)} A${r} ${r} 0 ${a1 - a0 > 180 ? 1 : 0} 1 ${x1.toFixed(2)} ${y1.toFixed(2)}`; };
-  document.querySelectorAll(".kn").forEach(kn => {
+  document.querySelectorAll(".kn:not(.kn-switch)").forEach(kn => {
     const el = kn.querySelector("input, select"), out = kn.querySelector("output");
     const isSel = el.tagName === "SELECT";
     const min = isSel ? 0 : Number(el.min), max = isSel ? el.options.length - 1 : Number(el.max), step = isSel ? 1 : Number(el.step || 1);
