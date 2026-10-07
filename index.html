@@ -1,3 +1,10 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#100806">
+<meta name="description" content="Three places I've called home, playing in real time. Boston, Copenhagen and London, played by their live weather.">
 <title>Three Cities</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -60,7 +67,20 @@ input[type="range"] { accent-color: var(--ink); width: 120px; }
 select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8px; text-transform: none; letter-spacing: 0.02em; }
 
 .cities { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 20px; }
-@media (max-width: 960px) { .cities { grid-template-columns: minmax(0, 1fr); } }
+.dots { display: none; }
+@media (max-width: 960px) {
+  .cities { display: flex; gap: 12px; overflow-x: auto; scroll-snap-type: x mandatory; scroll-padding-inline: 16px;
+            margin-inline: -16px; padding-inline: 16px; padding-bottom: 4px; scrollbar-width: none; -webkit-overflow-scrolling: touch; overscroll-behavior-x: contain; }
+  .cities::-webkit-scrollbar { display: none; }
+  .city { flex: 0 0 min(88%, 460px); scroll-snap-align: center; }
+  .dots { display: flex; justify-content: center; gap: 4px; margin-top: -22px; }
+  .dots button { display: flex; align-items: center; gap: 8px; background: none; border: 0; padding: 12px 10px; cursor: pointer;
+                 font-size: 11px; text-transform: uppercase; letter-spacing: 0.14em; color: var(--ink-faint); }
+  .dots button::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: currentColor; opacity: 0.6; transition: transform 0.2s; }
+  .dots button[aria-current="true"] { color: var(--accent); }
+  .dots button[aria-current="true"]::before { opacity: 1; transform: scale(1.4); }
+}
+@media (max-width: 960px) and (prefers-reduced-motion: no-preference) { .cities { scroll-behavior: smooth; } }
 
 .city { --accent: var(--ink); position: relative; isolation: isolate; overflow: hidden; background: var(--panel); border: 1px solid var(--line); padding: 22px; display: flex; flex-direction: column; gap: 18px; min-width: 0; }
 .city > * { position: relative; z-index: 2; }
@@ -107,9 +127,42 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
 .foot { text-align: center; font-size: 12px; color: var(--ink-faint); letter-spacing: 0.12em; text-transform: uppercase; }
 .foot a { color: var(--ink-dim); }
 .credits { text-transform: none; letter-spacing: 0.04em; line-height: 1.8; max-width: 80ch; margin: -24px auto 0; }
+/* Floating play button, shown once the hero scrolls away */
+.fab { position: fixed; z-index: 20; right: 16px; bottom: calc(16px + env(safe-area-inset-bottom, 0px)); min-height: 48px; padding: 12px 22px; background: var(--ink); color: var(--ground); border: 0; text-transform: uppercase; letter-spacing: 0.16em; font-size: 13px; cursor: pointer; box-shadow: 0 8px 30px rgba(0,0,0,0.5); }
+
+@media (max-width: 600px) {
+  body { font-size: 14px; }
+  .hero { min-height: 0; padding: 52px 16px 40px; }
+  .hero-inner { gap: 18px; width: 100%; }
+  h1 { letter-spacing: 0.1em; }
+  .lede .lede-lead { font-size: 21px; }
+  .ghost { width: 100%; max-width: 320px; }
+  .mine { width: 100%; padding: 16px; }
+  .mine-row { flex-direction: column; align-items: stretch; width: 100%; }
+  .mine input { width: 100%; min-height: 44px; }
+  .ghost.small { width: 100%; max-width: none; min-height: 44px; }
+  main { gap: 28px; padding-bottom: 96px; }
+  .transport { display: grid; grid-template-columns: minmax(0, 1fr); gap: 14px; justify-items: stretch; padding: 18px 0; }
+  .field { justify-content: space-between; }
+  .field input[type="range"] { flex: 1; width: auto; min-width: 0; }
+  .field select { flex: 1; min-width: 0; min-height: 40px; }
+  .share { min-height: 44px; }
+  .city { padding: 18px 16px; gap: 16px; }
+  .city-name { font-size: 26px; }
+  .temp { font-size: 44px; }
+  .viz { grid-template-columns: minmax(0, 1fr) 84px; gap: 8px; }
+  .sun { width: 84px; height: 53px; }
+  .bar { grid-template-columns: 46px minmax(0, 1fr) 70px; }
+  .controls { gap: 14px 12px; }
+  .controls select, .swap input, .swap button, .mute { min-height: 44px; }
+  .controls input[type="range"] { height: 28px; }
+  .about { gap: 22px; }
+  .cycle { font-size: 34px; }
+}
 @media (prefers-reduced-motion: reduce) { .city, .bar .fill { transition: none; } }
 </style>
-
+</head>
+<body>
 <header class="hero">
   <canvas id="grain" aria-hidden="true"></canvas>
   <div class="hero-inner">
@@ -148,6 +201,7 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
   </section>
 
   <section class="cities" id="cities" aria-label="Cities"></section>
+  <nav class="dots" id="dots" aria-label="Choose a city"></nav>
 
   <section class="about" aria-label="How it works">
     <div>
@@ -165,6 +219,7 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
     </div>
   </section>
 
+  <button class="fab" id="fab" type="button" hidden>Play</button>
   <p class="foot">Weather from <a href="https://open-meteo.com" target="_blank" rel="noopener">Open-Meteo</a> · Forrest James</p>
   <p class="foot credits" id="credits"></p>
 </main>
@@ -383,6 +438,7 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
       if (!hit) { c.ref.swapnote.textContent = `Couldn't find "${query}". Try the city's English name.`; return false; }
       c.name = hit.name; c.lat = hit.latitude; c.lon = hit.longitude;
       c.ref.name.textContent = c.name;
+      if (c.dot) c.dot.textContent = c.name;
       c.ref.mute.textContent = (c.muted ? "Unmute " : "Mute ") + c.name;
       await fetchCity(c);
       live = true; showLiveUI(); setStatus();
@@ -489,6 +545,26 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
       navigator.clipboard.writeText(url).then(() => { note.textContent = "Link copied."; }, fallback);
     } catch (e) { fallback(); }
   });
+
+  // ---------- swipe dots (phones and tablets) ----------
+  const dots = document.getElementById("dots");
+  cities.forEach(c => {
+    const b = document.createElement("button");
+    b.type = "button";
+    b.style.setProperty("--accent", `var(${c.color})`);
+    b.textContent = c.name;
+    b.addEventListener("click", () => c.el.scrollIntoView({ block: "nearest", inline: "center" }));
+    dots.appendChild(b);
+    c.dot = b;
+  });
+  function setActiveDot(active) { cities.forEach(c => c.dot.setAttribute("aria-current", String(c === active))); }
+  setActiveDot(cities[0]);
+  if ("IntersectionObserver" in window) {
+    const io = new IntersectionObserver(entries => {
+      entries.forEach(e => { if (e.isIntersecting) setActiveDot(cities.find(c => c.el === e.target)); });
+    }, { root: wrap, threshold: 0.6 });
+    cities.forEach(c => io.observe(c.el));
+  }
 
   function render(c) {
     if (!c.w) return;
@@ -748,7 +824,16 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
       tick++;
     }
   }
+  // On iPhone, Web Audio is muted by the silent switch unless a media element is also playing.
+  let unlock = null;
+  function unlockIOS() {
+    try {
+      if (!unlock) { unlock = new Audio("data:audio/wav;base64,UklGRl4RAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YToRAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA="); unlock.loop = true; unlock.setAttribute("playsinline", ""); }
+      const pr = unlock.play(); if (pr && pr.catch) pr.catch(() => {});
+    } catch (e) {}
+  }
   async function start() {
+    unlockIOS();
     if (!ac) setupAudio();
     await ac.resume();
     tick = 0; nextTime = ac.currentTime + 0.08;
@@ -761,13 +846,24 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
     playing = false;
     cities.forEach(c => { c.playhead = -1; });
     if (ac) ac.suspend();
+    if (unlock) unlock.pause();
   }
 
   const playBtn = document.getElementById("play");
+  const fab = document.getElementById("fab");
+  function syncButtons() {
+    playBtn.textContent = playing ? "Stop" : "Start listening";
+    playBtn.setAttribute("aria-pressed", String(playing));
+    fab.textContent = playing ? "Stop" : "Play";
+  }
   playBtn.addEventListener("click", async () => {
-    if (playing) { stop(); playBtn.textContent = "Start listening"; playBtn.setAttribute("aria-pressed", "false"); }
-    else { await start(); playBtn.textContent = "Stop"; playBtn.setAttribute("aria-pressed", "true"); }
+    if (playing) stop(); else await start();
+    syncButtons();
   });
+  fab.addEventListener("click", () => playBtn.click());
+  if ("IntersectionObserver" in window) {
+    new IntersectionObserver(([e]) => { fab.hidden = e.isIntersecting; }).observe(playBtn);
+  }
   const keySel = document.getElementById("key"), scaleSel = document.getElementById("scale");
   keySel.innerHTML = KEYS.map((k, i) => `<option value="${i}"${i === keyRoot ? " selected" : ""}>${k}</option>`).join("");
   scaleSel.innerHTML = SCALES.map(([n], i) => `<option value="${i}"${i === 0 ? " selected" : ""}>${n}</option>`).join("");
@@ -891,3 +987,6 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
   requestAnimationFrame(frame);
 })();
 </script>
+
+</body>
+</html>
