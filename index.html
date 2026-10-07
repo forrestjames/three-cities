@@ -33,7 +33,7 @@ body { font-family: var(--mono); font-size: 15px; line-height: 1.55; letter-spac
 button, select, input { font: inherit; color: inherit; }
 :focus-visible { outline: 2px solid var(--sun); outline-offset: 3px; }
 
-.hero { position: relative; overflow: hidden; min-height: 420px; display: grid; place-items: center; text-align: center; padding: 72px 16px 64px; }
+.hero { position: relative; overflow: visible; z-index: 5; min-height: 420px; display: grid; place-items: center; text-align: center; padding: 72px 16px 64px; }
 .hero canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
 .hero-inner { position: relative; display: flex; flex-direction: column; align-items: center; gap: 22px; max-width: 900px; }
 .wordmark { font-family: var(--mono); font-size: 12px; letter-spacing: 0.28em; text-transform: uppercase; color: var(--ink-dim); }
@@ -67,6 +67,17 @@ input[type="range"] { accent-color: var(--ink); width: 120px; }
 select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8px; text-transform: none; letter-spacing: 0.02em; }
 
 .cities { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 20px; }
+.ta { position: relative; flex: 1; min-width: 0; display: flex; }
+.ta input { flex: 1; }
+.suggest { position: absolute; left: 0; right: 0; top: calc(100% + 4px); z-index: 30; margin: 0; padding: 4px 0; list-style: none;
+           background: #1d1412; border: 1px solid rgba(243, 236, 230, 0.25); box-shadow: 0 12px 40px rgba(0,0,0,0.55);
+           max-height: 236px; overflow-y: auto; text-align: left; }
+.suggest.up { top: auto; bottom: calc(100% + 4px); }
+.suggest li { padding: 10px 12px; min-height: 44px; display: flex; flex-direction: column; justify-content: center; cursor: pointer; text-transform: none; letter-spacing: 0.02em; }
+.suggest li[aria-selected="true"], .suggest li:hover { background: rgba(243, 236, 230, 0.1); }
+.suggest .place { color: var(--ink); font-size: 14px; }
+.suggest .where { color: var(--ink-dim); font-size: 12px; }
+.suggest .empty { color: var(--ink-dim); font-size: 12px; cursor: default; }
 .dots { display: none; }
 @media (max-width: 960px) {
   .cities { display: flex; gap: 12px; overflow-x: auto; scroll-snap-type: x mandatory; scroll-padding-inline: 16px;
@@ -139,7 +150,7 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
   .ghost { width: 100%; max-width: 320px; }
   .mine { width: 100%; padding: 16px; }
   .mine-row { flex-direction: column; align-items: stretch; width: 100%; }
-  .mine input { width: 100%; min-height: 44px; }
+  .mine input, .mine .ta { width: 100%; min-height: 44px; }
   .ghost.small { width: 100%; max-width: none; min-height: 44px; }
   main { gap: 28px; padding-bottom: 96px; }
   .transport { display: grid; grid-template-columns: minmax(0, 1fr); gap: 14px; justify-items: stretch; padding: 18px 0; }
@@ -179,9 +190,9 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
     <form class="mine" id="mine" hidden>
       <div class="mine-label">Play the cities you've lived in</div>
       <div class="mine-row">
-        <label class="sr" for="mine1">First city</label><input id="mine1" type="text" placeholder="Boston" autocomplete="off">
-        <label class="sr" for="mine2">Second city</label><input id="mine2" type="text" placeholder="Copenhagen" autocomplete="off">
-        <label class="sr" for="mine3">Third city</label><input id="mine3" type="text" placeholder="London" autocomplete="off">
+        <label class="sr" for="mine1">First city</label><div class="ta"><input id="mine1" type="text" placeholder="Boston" autocomplete="off"></div>
+        <label class="sr" for="mine2">Second city</label><div class="ta"><input id="mine2" type="text" placeholder="Copenhagen" autocomplete="off"></div>
+        <label class="sr" for="mine3">Third city</label><div class="ta"><input id="mine3" type="text" placeholder="London" autocomplete="off"></div>
         <button class="ghost small" type="submit">Play these</button>
       </div>
     </form>
@@ -393,7 +404,7 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
         <button class="mute" type="button" aria-pressed="false" data-r="mute">Mute ${c.name}</button>
         <form class="swap" data-r="swap" style="grid-column: 1 / -1">
           <label for="${id}-swap" style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)">Swap in another city</label>
-          <input id="${id}-swap" type="text" placeholder="Swap in another city" autocomplete="off">
+          <div class="ta"><input id="${id}-swap" type="text" placeholder="Swap in another city" autocomplete="off"></div>
           <button type="submit">Swap</button>
         </form>
         <div class="swap-note" data-r="swapnote" style="grid-column: 1 / -1"></div>
@@ -430,11 +441,18 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
   const DEFAULT_NAMES = cities.map(c => c.name);
   cities.forEach(c => { c.credit = CREDITS[c.key] || null; });
 
+  async function lookupPlaces(q, count) {
+    const g = await getJSON(`https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(q)}&count=${count}&language=en`);
+    return g.results || [];
+  }
+  function placeLabel(h) { return [h.admin1, h.country].filter(Boolean).filter((v, i, a) => a.indexOf(v) === i).join(", "); }
+
+  // query: typed text, or a place already picked from the type-ahead list
   async function setCity(c, query) {
-    c.ref.swapnote.textContent = "Looking up " + query + "…";
+    const typed = typeof query === "string";
+    c.ref.swapnote.textContent = "Looking up " + (typed ? query : query.name) + "…";
     try {
-      const g = await getJSON(`https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(query)}&count=1`);
-      const hit = g.results && g.results[0];
+      const hit = typed ? (await lookupPlaces(query, 1))[0] : query;
       if (!hit) { c.ref.swapnote.textContent = `Couldn't find "${query}". Try the city's English name.`; return false; }
       c.name = hit.name; c.lat = hit.latitude; c.lon = hit.longitude;
       c.ref.name.textContent = c.name;
@@ -474,6 +492,77 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
     }
     return null;
   }
+
+  // ---------- type-ahead for city names ----------
+  let taCount = 0;
+  function typeahead(input, onPick, opensUp) {
+    const list = document.createElement("ul");
+    const id = "suggest-" + (++taCount);
+    list.id = id; list.className = "suggest" + (opensUp ? " up" : ""); list.setAttribute("role", "listbox"); list.hidden = true;
+    input.parentNode.appendChild(list);
+    input.setAttribute("role", "combobox");
+    input.setAttribute("aria-autocomplete", "list");
+    input.setAttribute("aria-controls", id);
+    input.setAttribute("aria-expanded", "false");
+    let items = [], active = -1, timer = null, seq = 0;
+
+    const close = () => { list.hidden = true; input.setAttribute("aria-expanded", "false"); active = -1; input.removeAttribute("aria-activedescendant"); };
+    const highlight = i => {
+      active = i;
+      [...list.children].forEach((li, n) => li.setAttribute("aria-selected", String(n === i)));
+      if (i >= 0 && list.children[i]) { input.setAttribute("aria-activedescendant", list.children[i].id); list.children[i].scrollIntoView({ block: "nearest" }); }
+    };
+    const pick = i => { const h = items[i]; if (!h) return; close(); onPick(h); };
+
+    function show(results, q) {
+      items = results; list.textContent = "";
+      if (!results.length) {
+        const li = document.createElement("li"); li.className = "empty"; li.textContent = `No places called "${q}"`;
+        list.appendChild(li);
+      }
+      results.forEach((h, i) => {
+        const li = document.createElement("li");
+        li.id = id + "-" + i; li.setAttribute("role", "option");
+        const a = document.createElement("span"); a.className = "place"; a.textContent = h.name;
+        const b = document.createElement("span"); b.className = "where"; b.textContent = placeLabel(h);
+        li.append(a, b);
+        li.addEventListener("pointerdown", e => { e.preventDefault(); pick(i); });
+        list.appendChild(li);
+      });
+      list.hidden = false; input.setAttribute("aria-expanded", "true"); highlight(results.length ? 0 : -1);
+    }
+
+    input.addEventListener("input", () => {
+      input._picked = null;
+      const q = input.value.trim();
+      clearTimeout(timer);
+      if (q.length < 2) { close(); return; }
+      const mine = ++seq;
+      timer = setTimeout(async () => {
+        try { const r = await lookupPlaces(q, 6); if (mine === seq && input.value.trim() === q) show(r, q); }
+        catch (e) { close(); }
+      }, 220);
+    });
+    input.addEventListener("keydown", e => {
+      if (list.hidden || !items.length) return;
+      if (e.key === "ArrowDown") { e.preventDefault(); highlight((active + 1) % items.length); }
+      else if (e.key === "ArrowUp") { e.preventDefault(); highlight((active - 1 + items.length) % items.length); }
+      else if (e.key === "Enter" && active >= 0) { e.preventDefault(); pick(active); }
+      else if (e.key === "Escape") { close(); }
+    });
+    input.addEventListener("blur", () => setTimeout(close, 120));
+  }
+
+  // Card swap boxes: picking a place swaps the city straight away.
+  cities.forEach(c => {
+    const input = c.el.querySelector(".swap input");
+    typeahead(input, h => { input.value = ""; setCity(c, h); }, true);
+  });
+  // Hero boxes: picking fills the box; "Play these" plays all three.
+  [1, 2, 3].forEach(i => {
+    const input = document.getElementById("mine" + i);
+    typeahead(input, h => { input.value = h.name; input._picked = { hit: h, label: h.name }; }, false);
+  });
 
   function setPhoto(c, ph) {
     c.credit = ph;
@@ -531,7 +620,11 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
 
   document.getElementById("mine").addEventListener("submit", e => {
     e.preventDefault();
-    const qs = [1, 2, 3].map(i => document.getElementById("mine" + i).value.trim());
+    const inputs = [1, 2, 3].map(i => document.getElementById("mine" + i));
+    const qs = inputs.map(inp => {
+      const v = inp.value.trim();
+      return inp._picked && inp._picked.label === v ? inp._picked.hit : v;
+    });
     if (!qs.some(Boolean)) return;
     if (!playing) playBtn.click();   // start the sound inside the click, before the lookups
     qs.forEach((q, i) => { if (q) setCity(cities[i], q); });
