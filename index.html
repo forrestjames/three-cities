@@ -1392,6 +1392,9 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
       const gust = ac.createGain(); gust.gain.value = 0;
       gustSrc.connect(gust).connect(breath.detune);
       const pan = ac.createStereoPanner();
+      // a slow wander left and right, on top of where the memory map puts the city
+      const panDrift = ac.createConstantSource(); panDrift.offset.value = (Math.random() * 2 - 1) * 0.45;
+      panDrift.connect(pan.pan); panDrift.start();
       // Juno-style chorus: two short delays wobbling in opposite directions, one left and one right
       const chorusIn = ac.createGain(), chorusDry = ac.createGain(), chorusWet = ac.createGain();
       chorusDry.gain.value = 0.75; chorusWet.gain.value = 0.75;
@@ -1406,7 +1409,7 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
       input.connect(filter).connect(breath).connect(mood).connect(moodGain).connect(pan).connect(out).connect(vol).connect(master);
       vol.connect(rev).connect(reverb);
       vol.connect(del).connect(delay);
-      buses.set(c, { input, filter, out, vol, rev, del, mood, moodGain, breath, breathLfo, breathDepth, gust, pan, chorusIn });
+      buses.set(c, { input, filter, out, vol, rev, del, mood, moodGain, breath, breathLfo, breathDepth, gust, pan, panDrift, chorusIn });
       applyMood(c, true);
       applySound(c);
     });
@@ -1444,6 +1447,15 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
       q: -4 + hum * 9                       // in dB: dry air is smooth, damp air rings a little
     };
   }
+  // Every so often each city picks a new spot in the stereo field and drifts there over half a minute or so
+  setInterval(() => {
+    if (!ac || !playing) return;
+    cities.forEach(c => {
+      const b = buses.get(c);
+      if (!b || !b.panDrift || Math.random() > 0.08) return;
+      b.panDrift.offset.setTargetAtTime((Math.random() * 2 - 1) * 0.5, ac.currentTime, 8 + Math.random() * 8);
+    });
+  }, 1000);
   // Gusts: now and then the filter swells bright, more often on gustier days
   setInterval(() => {
     if (!ac || !playing) return;
@@ -1988,7 +2000,7 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
     // where the city sits around you: relative to the light, left or right
     if (dot && corners.length && PW) {
       const [dx] = toXY(dot.w);
-      b.pan.pan.setTargetAtTime(Math.max(-1, Math.min(1, (corners[c.index][0] - dx) / (PW / 2))) * 0.8, ac.currentTime, tau);
+      b.pan.pan.setTargetAtTime(Math.max(-1, Math.min(1, (corners[c.index][0] - dx) / (PW / 2))) * 0.5, ac.currentTime, tau);
     }
     b.rev.gain.setTargetAtTime(revSend(c), ac.currentTime, tau);
   }
