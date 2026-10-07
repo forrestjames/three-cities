@@ -99,7 +99,7 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
 }
 @media (max-width: 960px) and (prefers-reduced-motion: no-preference) { .cities { scroll-behavior: smooth; } }
 
-.city { --accent: var(--ink); position: relative; isolation: isolate; overflow: hidden; background: var(--panel); border: 1px solid var(--line); padding: 22px; display: flex; flex-direction: column; gap: 18px; min-width: 0; }
+.city { --accent: var(--ink); position: relative; isolation: isolate; overflow: hidden; overflow: clip; background: var(--panel); border: 1px solid var(--line); padding: 22px; display: flex; flex-direction: column; gap: 18px; min-width: 0; }
 .city > * { position: relative; z-index: 2; }
 .city .photo { position: absolute; inset: -12px; z-index: 0; background-size: cover; background-position: center; filter: blur(5px) saturate(1.1); transform: scale(1.03); transition: filter 2s, opacity 2s; opacity: 0.95; }
 .city.night .photo { filter: blur(5px) saturate(0.6) brightness(0.6) hue-rotate(-12deg); }
@@ -515,7 +515,10 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
     input.setAttribute("aria-expanded", "false");
     let items = [], active = -1, timer = null, seq = 0;
 
-    const close = () => { list.hidden = true; input.setAttribute("aria-expanded", "false"); active = -1; input.removeAttribute("aria-activedescendant"); };
+    const card = input.closest(".city");
+    const settle = () => { if (card) { card.scrollTop = 0; card.scrollLeft = 0; } };
+    input.addEventListener("focus", () => requestAnimationFrame(settle));
+    const close = () => { settle(); list.hidden = true; input.setAttribute("aria-expanded", "false"); active = -1; input.removeAttribute("aria-activedescendant"); };
     const highlight = i => {
       active = i;
       [...list.children].forEach((li, n) => li.setAttribute("aria-selected", String(n === i)));
@@ -557,8 +560,7 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
       };
       let m = measure();
       if (!follow && m.space < 220) {
-        input.scrollIntoView({ block: "start" });
-        window.scrollBy(0, -12);
+        window.scrollBy(0, m.r.top - 12);
         m = measure();
       }
       list.style.top = Math.round(m.r.bottom + 6) + "px";
