@@ -140,8 +140,9 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
 .mood { display: grid; gap: 12px; justify-items: center; padding: 4px 0 8px; }
 .mood-label { font-size: 11px; text-transform: uppercase; letter-spacing: 0.2em; color: var(--ink-dim); }
 .mood-q { font-family: var(--display); font-size: clamp(26px, 3.8vw, 40px); line-height: 1.15; letter-spacing: 0.05em; text-align: center;
-          min-height: 2.4em; max-width: 24ch; display: flex; align-items: center; justify-content: center; text-wrap: balance; transition: opacity 0.6s ease; }
+          min-height: 3.45em; max-width: 26ch; display: flex; align-items: center; justify-content: center; text-wrap: balance; transition: opacity 0.6s ease; }
 .mood-q.fading { opacity: 0; }
+.mood-q.long { font-size: clamp(22px, 3.1vw, 34px); max-width: 30ch; }
 .mood { margin-top: 20px; padding-top: 56px; border-top: 1px solid var(--line); }
 .mood-pad { display: block; width: 100%; max-width: 1100px; aspect-ratio: 1.75; touch-action: none; cursor: grab; border-radius: 4px; }
 .mood-pad:active { cursor: grabbing; }
@@ -1733,7 +1734,34 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
     "Where did you feel most creative?", "Where did you have your coldest winter?", "Where did you walk the most?",
     "Where did you feel like a stranger?", "Where did you start something new?", "Where did you say a hard goodbye?",
     "Where does your heart still live?", "Where did you dance the most?", "Where did you learn the most about yourself?",
-    "Where did you feel most like you?"
+    "Where did you feel most like you?",
+    // everyday memories
+    "Where did you get your first real job?", "Where did you cry the hardest?", "Where did you learn to cook?",
+    "Where did you see the best sunset?", "Where did you get properly lost?", "Where did you first live alone?",
+    "Where did you meet someone who changed everything?", "Where did you feel most broke?", "Where did you get your heart broken?",
+    "Where did you sleep the worst?", "Where did you feel most proud?", "Where did you have the best night out?",
+    "Where did you feel the most alone?", "Where did you get caught in the rain?", "Where did you make a fool of yourself?",
+    "Where did you find your favourite café?", "Where did you feel most homesick?", "Where did you get a second chance?",
+    "Where did you hear the best live music?", "Where did you feel most grown up?", "Where did you start to feel old?",
+    "Where did you first feel brave?", "Where did you feel the most seen?", "Where did you have your best birthday?",
+    "Where did you change your mind about something big?", "Where were you when you got the news?", "Where did you feel safest?",
+    "Where did you write something that mattered?", "Where did you lose touch with someone?", "Where did you feel most foreign?",
+    "Where did the seasons feel the strongest?", "Where did you learn to slow down?", "Where did you feel most ambitious?",
+    "Where did you find your people?", "Where did you hold a newborn?", "Where did you spend your loneliest Sunday?",
+    "Where did you say yes when you should have said no?", "Where did you feel most like a kid again?",
+    "Where did you have the conversation that changed you?", "Where did you make your best mistake?",
+    // the big ones
+    "Where did you first think about dying?", "Where did you feel most alive?", "Where would you want to be at the end?",
+    "Where did you feel time pass the fastest?", "Where did you stop believing in something?", "Where did you start believing in something?",
+    "Where did you feel small under the sky?", "Where did you last feel completely present?", "Where did you leave a version of yourself?",
+    "Where did you feel the weight of being alive?", "Where did you understand your parents?", "Where did you feel part of something bigger?",
+    "Where would you want your ashes scattered?", "Where did you first feel time running out?", "Where did you forgive yourself?",
+    "Where did you feel like you didn't exist?", "Where did you feel most like a ghost?", "Where did you lose someone?",
+    "Where did you feel the most at peace with not knowing?", "Where would the younger you be surprised to find you?",
+    "Where did life feel the most meaningful?", "Where did it all feel pointless?", "Where did you feel most connected to the dead?",
+    "Where did you realise nothing lasts?", "Where would you live if you had one more life?", "Where did you become who you are now?",
+    "Where does the person you were still walk around?", "Where did you feel the universe was paying attention?",
+    "Where did you feel completely ordinary, and fine with it?", "Where will you be remembered?"
   ];
   const FOLLOW = [1.2, 5, 14];   // seconds each city takes to respond: quick, steady, slow
   const pad = document.getElementById("moodPad"), pg = pad.getContext("2d");
@@ -1751,9 +1779,9 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
     if (!order.length || qIndex >= order.length - 1) { order = shuffle(QUESTIONS.slice()); qIndex = -1; }
     qIndex++;
     qStart = performance.now();
-    if (reduceMotion) { qEl.textContent = order[qIndex]; return; }
+    if (reduceMotion) { qEl.textContent = order[qIndex]; qEl.classList.toggle("long", order[qIndex].length > 42); return; }
     qEl.classList.add("fading");
-    setTimeout(() => { qEl.textContent = order[qIndex]; qEl.classList.remove("fading"); }, 600);
+    setTimeout(() => { qEl.textContent = order[qIndex]; qEl.classList.toggle("long", order[qIndex].length > 42); qEl.classList.remove("fading"); }, 600);
   }
 
   // Triangle geometry in CSS pixels, with room for each city's name
