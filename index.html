@@ -60,7 +60,11 @@ h1.custom { font-size: clamp(34px, 6.5vw, 76px); letter-spacing: 0.1em; }
 
 main { max-width: 1240px; margin: 0 auto; padding: 0 16px 80px; display: flex; flex-direction: column; gap: 40px; }
 
-.transport { display: flex; flex-wrap: wrap; gap: 18px 32px; align-items: center; justify-content: center; padding: 22px 0; border-bottom: 1px solid var(--line); }
+.transport { display: grid; grid-template-columns: repeat(4, minmax(0, auto)); gap: 18px 40px; justify-content: center; align-items: start; padding: 22px 0; border-bottom: 1px solid var(--line); }
+.tgroup { display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+.tlabel { font-family: var(--display); font-size: 18px; letter-spacing: 0.16em; text-transform: uppercase; color: var(--ink); }
+.tgroup .field { justify-content: space-between; }
+@media (max-width: 1100px) { .transport { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 .field { display: flex; align-items: center; gap: 10px; font-size: 12px; text-transform: uppercase; letter-spacing: 0.14em; color: var(--ink-dim); }
 .field output { color: var(--ink); min-width: 4ch; font-variant-numeric: tabular-nums; }
 input[type="range"] { accent-color: var(--ink); width: 120px; }
@@ -89,7 +93,8 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
 .mood-q { font-family: var(--display); font-size: clamp(26px, 3.8vw, 40px); line-height: 1.15; letter-spacing: 0.05em; text-align: center;
           min-height: 2.4em; max-width: 24ch; display: flex; align-items: center; justify-content: center; text-wrap: balance; transition: opacity 0.6s ease; }
 .mood-q.fading { opacity: 0; }
-.mood-pad { display: block; width: 100%; max-width: 540px; aspect-ratio: 1.15; touch-action: none; cursor: grab; border-radius: 4px; }
+.mood { padding-top: 12px; border-top: 1px solid var(--line); }
+.mood-pad { display: block; width: 100%; max-width: 620px; aspect-ratio: 1.1; touch-action: none; cursor: grab; border-radius: 4px; }
 .mood-pad:active { cursor: grabbing; }
 .mood-row { display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 10px 14px; font-size: 12px; color: var(--ink-dim); letter-spacing: 0.04em; }
 .mood-row button { background: none; border: 1px solid var(--line); padding: 8px 14px; min-height: 40px; cursor: pointer; text-transform: uppercase; letter-spacing: 0.14em; font-size: 11px; color: var(--ink); }
@@ -143,6 +148,10 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
 .controls .row { display: flex; justify-content: space-between; }
 .controls output { color: var(--ink); font-variant-numeric: tabular-nums; }
 .controls select { width: 100%; background: rgba(16,8,6,0.6); }
+.octave { grid-column: 1 / -1; display: flex; align-items: center; gap: 0; border: 1px solid var(--line); }
+.octave-label { flex: 1; padding: 0 12px; font-size: 11px; text-transform: uppercase; letter-spacing: 0.14em; color: var(--ink-dim); }
+.octave button { background: none; border: 0; border-left: 1px solid var(--line); min-width: 44px; min-height: 40px; cursor: pointer; font-variant-numeric: tabular-nums; color: var(--ink-dim); }
+.octave button[aria-pressed="true"] { background: var(--accent); color: var(--ground); }
 .mute { grid-column: 1 / -1; background: none; border: 1px solid var(--line); padding: 8px; text-transform: uppercase; letter-spacing: 0.16em; font-size: 11px; cursor: pointer; }
 .mute[aria-pressed="true"] { border-color: var(--accent); color: var(--accent); }
 .swap { display: flex; gap: 8px; }
@@ -222,30 +231,46 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
 </header>
 
 <main>
-  <section class="transport" aria-label="Transport">
-    <label class="field" for="tempo">Tempo <input id="tempo" type="range" min="50" max="160" value="92"> <output id="tempoOut">92</output></label>
-    <label class="field" for="volume">Volume <input id="volume" type="range" min="0" max="100" value="75"> <output id="volumeOut">75</output></label>
-    <label class="field" for="key">Key <select id="key"></select></label>
-    <label class="field" for="scale">Scale <select id="scale"></select></label>
-    <button class="share" id="share" type="button" hidden>Copy link to these cities</button>
-    <span class="share-note" id="shareNote" aria-live="polite"></span>
-    <label class="field" for="midi">MIDI out <select id="midi"><option value="">Off</option></select></label>
+  <section class="transport" aria-label="Controls">
+    <div class="tgroup">
+      <div class="tlabel">Play</div>
+      <label class="field" for="tempo">Tempo <input id="tempo" type="range" min="50" max="160" value="92"> <output id="tempoOut">92</output></label>
+      <label class="field" for="volume">Volume <input id="volume" type="range" min="0" max="100" value="75"> <output id="volumeOut">75</output></label>
+    </div>
+    <div class="tgroup">
+      <div class="tlabel">Harmony</div>
+      <label class="field" for="key">Key <select id="key"></select></label>
+      <label class="field" for="scale">Scale <select id="scale"></select></label>
+    </div>
+    <div class="tgroup">
+      <div class="tlabel">Effects</div>
+      <label class="field" for="fxReverb">Reverb <input id="fxReverb" type="range" min="0" max="100" value="60"> <output id="fxReverbOut">60</output></label>
+      <label class="field" for="fxDelay">Delay <input id="fxDelay" type="range" min="0" max="100" value="50"> <output id="fxDelayOut">50</output></label>
+      <label class="field" for="fxEchoes">Echoes <input id="fxEchoes" type="range" min="0" max="85" value="32"> <output id="fxEchoesOut">32</output></label>
+      <label class="field" for="fxTime">Delay time <select id="fxTime"><option value="0.25">1/16</option><option value="0.5">1/8</option><option value="0.75" selected>dotted 1/8</option><option value="1">1/4</option></select></label>
+    </div>
+    <div class="tgroup">
+      <div class="tlabel">Share &amp; MIDI</div>
+      <button class="share" id="share" type="button" hidden>Copy link to these cities</button>
+      <span class="share-note" id="shareNote" aria-live="polite"></span>
+      <label class="field" for="midi">MIDI out <select id="midi"><option value="">Off</option></select></label>
+    </div>
   </section>
+
+  <section class="cities" id="cities" aria-label="Cities"></section>
+  <nav class="dots" id="dots" aria-label="Choose a city"></nav>
 
   <section class="mood" aria-label="Memory map">
     <div class="mood-label">Memory map</div>
     <div class="mood-q" id="moodQ" aria-live="polite">Where were you happiest?</div>
     <canvas class="mood-pad" id="moodPad" tabindex="0" aria-label="Memory map. Drag the dot towards the city where it happened. Arrow keys move it too."></canvas>
     <div class="mood-row">
-      <span>Drag the dot towards where it happened</span>
+      <span>Drag the light towards where it happened</span>
       <span class="mood-timer" aria-hidden="true"><i id="moodTimer"></i></span>
       <button id="moodNext" type="button">Next question</button>
       <button id="moodPause" type="button" aria-pressed="false">Pause questions</button>
     </div>
   </section>
-
-  <section class="cities" id="cities" aria-label="Cities"></section>
-  <nav class="dots" id="dots" aria-label="Choose a city"></nav>
 
   <section class="about" aria-label="How it works">
     <div>
@@ -324,7 +349,7 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
       base: 60, degrees: [-2, -1, 0, 1, 2], rate: 1, source: "humidity" }
   ];
   cities.forEach((c, i) => Object.assign(c, {
-    index: i, w: null, density: 50, chance: 100, volume: 80, muted: false,
+    index: i, w: null, density: 50, chance: 100, volume: 80, octave: 0, muted: false,
     steps: 0, hits: 0, pattern: [], pos: 0, hitCount: 0,
     flashes: [], playhead: -1
   }));
@@ -439,6 +464,10 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
         <label for="${id}-chance"><span class="row">Chance <output data-r="o-chance">${c.chance}%</output></span>
           <input id="${id}-chance" type="range" min="0" max="100" value="${c.chance}">
         </label>
+        <div class="octave" role="group" aria-label="${c.name} octave" data-r="oct">
+          <span class="octave-label">Octave</span>
+          ${[-2, -1, 0, 1, 2].map(o => `<button type="button" data-oct="${o}" aria-pressed="${o === 0}">${o > 0 ? "+" + o : o < 0 ? "\u2212" + -o : "0"}</button>`).join("")}
+        </div>
         <button class="mute" type="button" aria-pressed="false" data-r="mute">Mute ${c.name}</button>
         <form class="swap" data-r="swap" style="grid-column: 1 / -1">
           <label for="${id}-swap" style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)">Swap city</label>
@@ -456,6 +485,10 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
     if (PHOTOS[c.key]) c.ref.photo.style.backgroundImage = `url(${PHOTOS[c.key]})`;
     else c.ref.photo.style.background = `radial-gradient(circle at 30% 30%, var(${c.color}), transparent 70%)`;
 
+    c.ref.oct.querySelectorAll("button").forEach(b => b.addEventListener("click", () => {
+      c.octave = Number(b.dataset.oct);
+      c.ref.oct.querySelectorAll("button").forEach(x => x.setAttribute("aria-pressed", String(x === b)));
+    }));
     el.querySelector(`#${id}-sound`).addEventListener("change", e => { c.voice = e.target.value; applySound(c); });
     el.querySelector(`#${id}-vol`).addEventListener("input", e => { c.volume = Number(e.target.value); c.ref["o-vol"].value = c.volume; applySound(c); });
     el.querySelector(`#${id}-src`).addEventListener("change", e => { c.source = e.target.value; rebuild(c); });
@@ -847,6 +880,22 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
 
   // ---------- sound ----------
   let ac = null, master, reverb, delay, playing = false;
+  const fx = {};
+  // Global effects: reverb level, delay level, echoes (feedback) and delay time synced to the tempo
+  function applyFx() {
+    if (!fx.revOut) return;
+    const v = id => Number(document.getElementById(id).value);
+    const t = ac.currentTime, beat = 60 / Number(document.getElementById("tempo").value);
+    fx.revOut.gain.setTargetAtTime(v("fxReverb") / 100 * 1.5, t, 0.05);
+    fx.delayOut.gain.setTargetAtTime(v("fxDelay") / 50, t, 0.05);
+    fx.fb.gain.setTargetAtTime(v("fxEchoes") / 100, t, 0.05);
+    delay.delayTime.setTargetAtTime(Math.min(3.9, beat * v("fxTime")), t, 0.1);
+  }
+  ["fxReverb", "fxDelay", "fxEchoes"].forEach(id => {
+    const el = document.getElementById(id);
+    el.addEventListener("input", () => { document.getElementById(id + "Out").value = el.value; applyFx(); });
+  });
+  document.getElementById("fxTime").addEventListener("change", applyFx);
   const buses = new Map();
 
   function impulse(seconds) {
@@ -889,13 +938,15 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
     master = ac.createGain(); master.gain.value = document.getElementById("volume").value / 100 * 0.9;
     master.connect(comp).connect(ac.destination);
     reverb = ac.createConvolver(); reverb.buffer = impulse(3.4);
-    const revOut = ac.createGain(); revOut.gain.value = 0.9;
-    reverb.connect(revOut).connect(master);
-    delay = ac.createDelay(2);
-    const fb = ac.createGain(); fb.gain.value = 0.32;
+    fx.revOut = ac.createGain();
+    reverb.connect(fx.revOut).connect(master);
+    delay = ac.createDelay(4);
+    fx.fb = ac.createGain();
+    fx.delayOut = ac.createGain();
     const dTone = ac.createBiquadFilter(); dTone.type = "lowpass"; dTone.frequency.value = 2400;
-    delay.connect(dTone).connect(fb).connect(delay);
-    dTone.connect(master);
+    delay.connect(dTone).connect(fx.fb).connect(delay);
+    dTone.connect(fx.delayOut).connect(master);
+    applyFx();
     cities.forEach(c => {
       const input = ac.createGain();
       const filter = ac.createBiquadFilter(); filter.type = "lowpass"; filter.Q.value = 0.8;
@@ -1064,6 +1115,7 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
   function setTempo() {
     const bpm = Number(document.getElementById("tempo").value);
     tickDur = 60 / bpm / 8;   // one 32nd note
+    applyFx();
   }
   function stepCity(c, t) {
     if (!c.pattern.length) return;
@@ -1072,7 +1124,7 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
     const played = !c.muted && c.pattern[pos] && Math.random() * 100 < c.chance;
     if (played) {
       const deg = c.degrees[(c.hitCount + Math.abs(Math.round(c.w.t))) % c.degrees.length];
-      const note = noteFor(c, deg) - (c.w.t < 0 ? 12 : 0);
+      const note = Math.max(12, Math.min(108, noteFor(c, deg) - (c.w.t < 0 ? 12 : 0) + 12 * c.octave));
       let vel = pos === 0 ? 1 : 0.7;
       vel *= 0.55 + 0.45 * s.light;
       vel *= 0.85 + Math.random() * 0.15;
@@ -1254,15 +1306,19 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
     setTimeout(() => { qEl.textContent = order[qIndex]; qEl.classList.remove("fading"); }, 600);
   }
 
-  // Triangle geometry in CSS pixels
+  // Triangle geometry in CSS pixels, with room for each city's name
   let PW = 0, PH = 0, corners = [];
+  const LABEL_FONT = "16px Abel, 'Arial Narrow', sans-serif";
+  const spaced = s => s.toUpperCase().split("").join(String.fromCharCode(8202));
   function sizePad() {
     const r = pad.getBoundingClientRect(), dpr = Math.min(2, window.devicePixelRatio || 1);
     PW = r.width; PH = r.height;
     pad.width = Math.round(PW * dpr); pad.height = Math.round(PH * dpr);
     pg.setTransform(dpr, 0, 0, dpr, 0, 0);
-    const m = 46, top = 52;
-    corners = [[PW / 2, top], [m, PH - m], [PW - m, PH - m]];
+    pg.font = LABEL_FONT;
+    const half = i => pg.measureText(spaced(cities[i].name)).width / 2 + 14;
+    const mL = Math.max(48, half(1)), mR = Math.max(48, half(2));
+    corners = [[PW / 2, 84], [mL, PH - 84], [PW - mR, PH - 84]];
     if (!dot) dot = { w: [1 / 3, 1 / 3, 1 / 3] };
   }
   const toXY = w => [0, 1].map(k => w[0] * corners[0][k] + w[1] * corners[1][k] + w[2] * corners[2][k]);
@@ -1292,9 +1348,51 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
     b.moodGain.gain.setTargetAtTime(gain, ac.currentTime, tau);
   }
 
+  // ----- weather trail: the light leaves behind the weather of the city it's nearest -----
+  const particles = [], ribbon = [];
+  const stars = Array.from({ length: 70 }, () => [Math.random(), Math.random(), Math.random() * 6.28, 0.4 + Math.random() * 0.8]);
+  function weatherKind(c) {
+    if (!c.w) return "mote";
+    const s = sunNow(c);
+    if (c.w.t <= 1) return "snow";
+    if (c.w.r > 0.05) return "rain";
+    if (c.w.w >= 28) return "wind";
+    if (s.light < 0.35) return "firefly";
+    if (c.w.c >= 70) return "mist";
+    return "mote";
+  }
+  function pickCity() {
+    let r = Math.random(), i = 0;
+    for (; i < 2; i++) { r -= dot.w[i]; if (r <= 0) break; }
+    return cities[i];
+  }
+  function emit(x, y, count) {
+    for (let n = 0; n < count && particles.length < 420; n++) {
+      const c = pickCity(), kind = weatherKind(c), color = colorOf(c);
+      const p = { x: x + (Math.random() - 0.5) * 14, y: y + (Math.random() - 0.5) * 14, kind, color, age: 0, seed: Math.random() * 6.28 };
+      if (kind === "rain") Object.assign(p, { vx: -12, vy: 160 + Math.random() * 90, life: 0.9 });
+      else if (kind === "snow") Object.assign(p, { vx: (Math.random() - 0.5) * 10, vy: 16 + Math.random() * 14, life: 3.2, size: 1.5 + Math.random() * 2 });
+      else if (kind === "wind") Object.assign(p, { vx: 120 + Math.random() * 80, vy: (Math.random() - 0.5) * 12, life: 0.8 });
+      else if (kind === "firefly") Object.assign(p, { vx: (Math.random() - 0.5) * 18, vy: -8 - Math.random() * 14, life: 3.4 });
+      else if (kind === "mist") Object.assign(p, { vx: (Math.random() - 0.5) * 8, vy: -4, life: 2.6, size: 10 + Math.random() * 10 });
+      else Object.assign(p, { vx: (Math.random() - 0.5) * 14, vy: -18 - Math.random() * 16, life: 2.2 });
+      particles.push(p);
+    }
+  }
+  let lastEmit = 0;
+  function trailTo(x, y) {
+    const prev = ribbon[ribbon.length - 1];
+    ribbon.push([x, y, performance.now()]);
+    if (ribbon.length > 60) ribbon.shift();
+    const dist = prev ? Math.hypot(x - prev[0], y - prev[1]) : 0;
+    emit(x, y, Math.min(6, 1 + Math.round(dist / 5)));
+  }
+
   function pointer(e) {
     const r = pad.getBoundingClientRect();
     setDot(toWeights(e.clientX - r.left, e.clientY - r.top));
+    const [x, y] = toXY(dot.w);
+    trailTo(x, y);
   }
   pad.addEventListener("pointerdown", e => { dragging = true; pad.setPointerCapture(e.pointerId); pointer(e); });
   pad.addEventListener("pointermove", e => { if (dragging) pointer(e); });
@@ -1306,6 +1404,8 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
     e.preventDefault();
     const [x, y] = toXY(dot.w);
     setDot(toWeights(x + k[0], y + k[1]));
+    const [nx, ny] = toXY(dot.w);
+    trailTo(nx, ny);
   });
   document.getElementById("moodNext").addEventListener("click", nextQuestion);
   const pauseBtn = document.getElementById("moodPause");
@@ -1325,42 +1425,125 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
       timerEl.style.width = (k * 100) + "%";
       if (k >= 1) nextQuestion();
     }
-    // each city's shown response eases towards its target at its own pace
-    cities.forEach((c, i) => { c.moodShown += (c.moodTarget - c.moodShown) * (1 - Math.exp(-dt / (FOLLOW[i] * 1000 / 3))); });
-    pg.clearRect(0, 0, PW, PH);
-    pg.fillStyle = "rgba(243,236,230,0.03)"; pg.fillRect(0, 0, PW, PH);
-    pg.strokeStyle = "rgba(243,236,230,0.16)"; pg.lineWidth = 1;
+    const secs = dt / 1000, t = reduceMotion ? 0 : now / 1000;
+    cities.forEach((c, i) => {
+      c.moodShown += (c.moodTarget - c.moodShown) * (1 - Math.exp(-dt / (FOLLOW[i] * 1000 / 3)));
+      c.pulse = Math.max(0, (c.pulse || 0) - secs * 3.5);
+    });
+    const [dx, dy] = toXY(dot.w);
+
+    // night sky with a wash of each city's colour from its corner
+    pg.globalCompositeOperation = "source-over";
+    pg.fillStyle = "#0d090b"; pg.fillRect(0, 0, PW, PH);
+    cities.forEach((c, i) => {
+      const [x, y] = corners[i], rr = Math.max(PW, PH) * (0.45 + 0.25 * Math.min(1.5, c.moodShown) / 1.5);
+      const gr = pg.createRadialGradient(x, y, 0, x, y, rr);
+      gr.addColorStop(0, colorOf(c) + "40"); gr.addColorStop(1, colorOf(c) + "00");
+      pg.fillStyle = gr; pg.fillRect(0, 0, PW, PH);
+    });
+    // twinkling stars
+    stars.forEach(([sx, sy, ph, sz]) => {
+      pg.globalAlpha = 0.15 + 0.35 * (0.5 + 0.5 * Math.sin(t * 1.3 + ph));
+      pg.fillStyle = "#f3ece6"; pg.fillRect(sx * PW, sy * PH, sz, sz);
+    });
+    pg.globalAlpha = 1;
+    // triangle
+    pg.strokeStyle = "rgba(243,236,230,0.14)"; pg.lineWidth = 1;
     pg.beginPath(); corners.forEach(([x, y], i) => i ? pg.lineTo(x, y) : pg.moveTo(x, y)); pg.closePath(); pg.stroke();
+
     // past answers
     memories.forEach((m, i) => {
       const [x, y] = toXY(m.w);
-      pg.globalAlpha = 0.25 + 0.5 * (i + 1) / memories.length;
-      pg.fillStyle = "#f3ece6"; pg.beginPath(); pg.arc(x, y, 3, 0, 7); pg.fill();
+      pg.globalAlpha = 0.3 + 0.5 * (i + 1) / memories.length;
+      pg.fillStyle = "#f3ece6"; pg.beginPath(); pg.arc(x, y, 2.5, 0, 7); pg.fill();
     });
     pg.globalAlpha = 1;
-    // lines from the dot to each city, brighter the nearer
-    const [dx, dy] = toXY(dot.w);
+
+    // threads of light from the light to each city
+    pg.globalCompositeOperation = "lighter";
     cities.forEach((c, i) => {
       const [x, y] = corners[i];
-      pg.strokeStyle = colorOf(c); pg.globalAlpha = 0.1 + 0.5 * dot.w[i]; pg.lineWidth = 1.5;
-      pg.beginPath(); pg.moveTo(dx, dy); pg.lineTo(x, y); pg.stroke();
+      const mx = (dx + x) / 2 + (y - dy) * 0.12, my = (dy + y) / 2 - (x - dx) * 0.12;
+      for (const [wd, al] of [[8, 0.08], [1.6, 0.55]]) {
+        pg.globalAlpha = al * (0.25 + dot.w[i] * 1.4);
+        pg.strokeStyle = colorOf(c); pg.lineWidth = wd;
+        pg.beginPath(); pg.moveTo(dx, dy); pg.quadraticCurveTo(mx, my, x, y); pg.stroke();
+      }
     });
-    pg.globalAlpha = 1;
-    // city corners swell as each city responds
+
+    // the light's ribbon, fading over a couple of seconds
+    for (let i = 1; i < ribbon.length; i++) {
+      const [x0, y0, t0] = ribbon[i - 1], [x1, y1, t1] = ribbon[i];
+      const age = (now - t1) / 2200;
+      if (age > 1) continue;
+      pg.globalAlpha = (1 - age) * 0.5;
+      pg.strokeStyle = "#ffe8c8"; pg.lineWidth = 3 * (1 - age) + 0.5;
+      pg.beginPath(); pg.moveTo(x0, y0); pg.lineTo(x1, y1); pg.stroke();
+    }
+
+    // a gentle drift of weather from the light even at rest
+    if (!reduceMotion && now - lastEmit > 220) { lastEmit = now; emit(dx, dy, 1); }
+
+    // weather particles
+    for (let i = particles.length - 1; i >= 0; i--) {
+      const q = particles[i];
+      q.age += secs;
+      if (q.age > q.life) { particles.splice(i, 1); continue; }
+      const k = 1 - q.age / q.life;
+      if (q.kind === "snow") q.x += Math.sin(t * 2 + q.seed) * 0.4;
+      q.x += q.vx * secs; q.y += q.vy * secs;
+      if (q.kind === "rain") {
+        pg.globalAlpha = 0.7 * k; pg.strokeStyle = "#b9d3ff"; pg.lineWidth = 1.3;
+        pg.beginPath(); pg.moveTo(q.x, q.y); pg.lineTo(q.x - 1.5, q.y + 9); pg.stroke();
+      } else if (q.kind === "snow") {
+        pg.globalAlpha = 0.9 * k; pg.fillStyle = "#ffffff";
+        pg.beginPath(); pg.arc(q.x, q.y, q.size, 0, 7); pg.fill();
+      } else if (q.kind === "wind") {
+        pg.globalAlpha = 0.5 * k; pg.strokeStyle = "#e9eef5"; pg.lineWidth = 1;
+        pg.beginPath(); pg.moveTo(q.x, q.y); pg.quadraticCurveTo(q.x - 9, q.y - 3, q.x - 20, q.y); pg.stroke();
+      } else if (q.kind === "firefly") {
+        const blink = 0.5 + 0.5 * Math.sin(t * 5 + q.seed);
+        pg.globalAlpha = 0.25 * k * blink; pg.fillStyle = "#f6e58d"; pg.beginPath(); pg.arc(q.x, q.y, 7, 0, 7); pg.fill();
+        pg.globalAlpha = 0.95 * k * blink; pg.beginPath(); pg.arc(q.x, q.y, 1.8, 0, 7); pg.fill();
+      } else if (q.kind === "mist") {
+        pg.globalAlpha = 0.09 * k; pg.fillStyle = "#e6e9f0";
+        pg.beginPath(); pg.arc(q.x, q.y, q.size * (1 + q.age * 0.8), 0, 7); pg.fill();
+      } else {
+        const tw = 0.6 + 0.4 * Math.sin(t * 7 + q.seed);
+        pg.globalAlpha = 0.85 * k * tw; pg.strokeStyle = "#ffd98a"; pg.lineWidth = 1.2;
+        pg.beginPath(); pg.moveTo(q.x - 3, q.y); pg.lineTo(q.x + 3, q.y); pg.moveTo(q.x, q.y - 3); pg.lineTo(q.x, q.y + 3); pg.stroke();
+      }
+    }
+
+    // cities: a glow that breathes with how close you are and flashes when the city plays
     cities.forEach((c, i) => {
       const [x, y] = corners[i], s = Math.max(0, Math.min(3, c.moodShown));
-      const r = 7 + s * 9;
-      pg.fillStyle = colorOf(c);
-      pg.globalAlpha = 0.18; pg.beginPath(); pg.arc(x, y, r + 10, 0, 7); pg.fill();
-      pg.globalAlpha = 0.9; pg.beginPath(); pg.arc(x, y, r, 0, 7); pg.fill();
-      pg.globalAlpha = 1;
-      pg.fillStyle = "#f3ece6"; pg.font = "15px Abel, 'Arial Narrow', sans-serif"; pg.textAlign = "center";
-      const label = c.name.toUpperCase().split("").join(String.fromCharCode(8202));
-      pg.fillText(label, x, i === 0 ? y - r - 14 : y + r + 22);
+      const r = 6 + s * 7 + c.pulse * 7;
+      pg.globalAlpha = 0.16 + 0.25 * c.pulse; pg.fillStyle = colorOf(c);
+      pg.beginPath(); pg.arc(x, y, r + 14 + c.pulse * 10, 0, 7); pg.fill();
+      pg.globalAlpha = 0.95; pg.beginPath(); pg.arc(x, y, r, 0, 7); pg.fill();
     });
-    // the dot
-    pg.fillStyle = "rgba(243,236,230,0.2)"; pg.beginPath(); pg.arc(dx, dy, dragging ? 22 : 17, 0, 7); pg.fill();
-    pg.fillStyle = "#f3ece6"; pg.beginPath(); pg.arc(dx, dy, 9, 0, 7); pg.fill();
+
+    // the light itself
+    pg.globalAlpha = 0.22; pg.fillStyle = "#ffe8c8"; pg.beginPath(); pg.arc(dx, dy, dragging ? 30 : 24 + 3 * Math.sin(t * 2), 0, 7); pg.fill();
+    pg.globalAlpha = 0.45; pg.beginPath(); pg.arc(dx, dy, 14, 0, 7); pg.fill();
+    pg.globalCompositeOperation = "source-over";
+    pg.globalAlpha = 1; pg.fillStyle = "#fffaf2"; pg.beginPath(); pg.arc(dx, dy, 7, 0, 7); pg.fill();
+
+    // names and weather, at fixed spots inside the canvas
+    const WORD = { snow: "snow", rain: "rain", wind: "windy", firefly: "night", mist: "misty", mote: "clear" };
+    pg.textAlign = "center"; pg.textBaseline = "alphabetic";
+    cities.forEach((c, i) => {
+      const [x, y] = corners[i];
+      const nameY = i === 0 ? y - 54 : y + 50, infoY = i === 0 ? y - 37 : y + 67;
+      pg.globalAlpha = 0.95; pg.fillStyle = "#f3ece6"; pg.font = LABEL_FONT;
+      pg.fillText(spaced(c.name), x, nameY);
+      if (c.w) {
+        pg.globalAlpha = 0.6; pg.font = "12px 'Source Code Pro', monospace";
+        pg.fillText(`${Math.round(c.w.t)}° · ${WORD[weatherKind(c)]}`, x, infoY);
+      }
+    });
+    pg.globalAlpha = 1;
   }
 
   // ---------- frame loop ----------
@@ -1372,7 +1555,7 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
       while (visualQueue.length && visualQueue[0].t <= now) {
         const v = visualQueue.shift();
         v.c.playhead = v.pos;
-        if (v.played) v.c.flashes.push({ t: v.t, pos: v.pos });
+        if (v.played) { v.c.flashes.push({ t: v.t, pos: v.pos }); v.c.pulse = 1; }
       }
     } else visualQueue.length = 0;
     const now = ac ? ac.currentTime : ms / 1000;
