@@ -93,15 +93,12 @@ main { max-width: 1240px; margin: 0 auto; padding: 0 16px 80px; display: flex; f
 .kn-label { font-size: 10px; letter-spacing: 0.18em; text-transform: uppercase; color: var(--ink-dim); margin-top: 2px; }
 .kn output { font-size: 11px; color: var(--ink); font-variant-numeric: tabular-nums; white-space: nowrap; }
 .kn-native { display: none !important; }
-.pedal-foot { display: flex; justify-content: center; margin-top: 16px; }
-.stomp { display: flex; align-items: center; gap: 12px; background: none; border: 0; cursor: pointer; padding: 0; color: var(--ink-dim);
-         font: inherit; font-size: 11px; letter-spacing: 0.22em; text-transform: uppercase; min-height: 48px; }
-.stomp::before { content: ""; width: 40px; height: 40px; border-radius: 50%;
-         background: radial-gradient(circle at 38% 32%, #f1ece6 0%, #a9a19a 28%, #5d5652 62%, #2c2725 100%);
-         box-shadow: 0 3px 0 #120d0c, 0 6px 14px rgba(0,0,0,0.55), inset 0 -2px 3px rgba(0,0,0,0.4); transition: transform 0.08s, box-shadow 0.08s; }
-.stomp:active::before { transform: translateY(2px); box-shadow: 0 1px 0 #120d0c, 0 3px 8px rgba(0,0,0,0.5), inset 0 -2px 3px rgba(0,0,0,0.4); }
-.stomp[aria-pressed="true"] { color: #bfefff; text-shadow: 0 0 10px rgba(150,220,255,0.8); }
-.stomp[aria-pressed="true"]::before { box-shadow: 0 3px 0 #120d0c, 0 0 18px rgba(150,220,255,0.75), 0 0 36px rgba(150,220,255,0.35), inset 0 -2px 3px rgba(0,0,0,0.4); }
+.toggle-sw { width: 64px; height: 64px; padding: 0; border: 0; background: none; cursor: pointer; display: block; }
+.toggle-sw:focus-visible { outline: 2px solid var(--led); outline-offset: 2px; border-radius: 8px; }
+.toggle-sw .lever { transition: transform 0.14s cubic-bezier(.5, 1.6, .5, 1); transform-origin: 32px 36px; transform: rotate(180deg); }
+.toggle-sw[aria-pressed="true"] .lever { transform: rotate(0deg); }
+.toggle-sw .jewel { transition: fill 0.2s, filter 0.2s; }
+.toggle-sw[aria-pressed="true"] .jewel { fill: #9fe6ff; filter: drop-shadow(0 0 4px #9fe6ff) drop-shadow(0 0 8px #6fd2ff); }
 .pedal.frozen { box-shadow: inset 0 0 40px rgba(150,220,255,0.18), inset 0 1px 0 rgba(255,255,255,0.12), 0 0 0 1px rgba(150,220,255,0.35), 0 14px 34px rgba(0,0,0,0.5); }
 .pedal.frozen .knob svg .kv { stroke: #bfefff; }
 @media (max-width: 600px) { .pedal { padding: 14px 12px 16px; } .knob { width: 58px; height: 58px; } .pedal-name { font-size: 20px; } }
@@ -324,9 +321,7 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
           <div class="kn"><input class="kn-native" id="fxRevDecay" type="range" min="0.5" max="24" step="0.5" value="4.5" data-label="Decay"><output id="fxRevDecayOut">4.5 s</output></div>
           <div class="kn"><input class="kn-native" id="fxRevPre" type="range" min="0" max="200" step="5" value="30" data-label="Pre-delay"><output id="fxRevPreOut">30 ms</output></div>
           <div class="kn"><input class="kn-native" id="fxRevTone" type="range" min="0" max="100" value="55" data-label="Tone"><output id="fxRevToneOut">55</output></div>
-        </div>
-        <div class="pedal-foot">
-          <button class="stomp" type="button" id="hallFreeze" aria-pressed="false" aria-label="Freeze hall reverb"><span>Freeze</span></button>
+          <div class="kn kn-switch"><button class="toggle-sw" type="button" id="hallFreeze" aria-pressed="false" aria-label="Freeze hall reverb"></button><div class="kn-label">Freeze</div><output id="hallFreezeOut">Off</output></div>
         </div>
       </section>
       <section class="pedal pedal-delay" aria-label="Delay">
@@ -341,9 +336,7 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
           <div class="kn"><input class="kn-native" id="fxEchoes" type="range" min="0" max="90" value="38" data-label="Echoes"><output id="fxEchoesOut">38</output></div>
           <div class="kn"><input class="kn-native" id="fxDelTone" type="range" min="0" max="100" value="45" data-label="Tone"><output id="fxDelToneOut">45</output></div>
           <div class="kn"><input class="kn-native" id="fxWobble" type="range" min="0" max="100" value="20" data-label="Wobble"><output id="fxWobbleOut">20</output></div>
-        </div>
-        <div class="pedal-foot">
-          <button class="stomp" type="button" id="delayFreeze" aria-pressed="false" aria-label="Freeze delay"><span>Freeze</span></button>
+          <div class="kn kn-switch"><button class="toggle-sw" type="button" id="delayFreeze" aria-pressed="false" aria-label="Freeze delay"></button><div class="kn-label">Freeze</div><output id="delayFreezeOut">Off</output></div>
         </div>
       </section>
     </div>
@@ -1030,22 +1023,29 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
     fx.revOut = ac.createGain();
     fx.revGate = ac.createGain();
     reverb.connect(fx.revGate).connect(revHp).connect(fx.pre).connect(fx.conv).connect(fx.revOut).connect(master);
-    // keep the last three seconds of the hall, ready to freeze
-    fx.ringLen = Math.floor(ac.sampleRate * 3);
-    fx.ring = [new Float32Array(fx.ringLen), new Float32Array(fx.ringLen)]; fx.ringPos = 0;
-    const rec = ac.createScriptProcessor(4096, 2, 2), mute = ac.createGain(); mute.gain.value = 0;
-    rec.onaudioprocess = e => {
-      if (fx.hallFrozen) return;
-      const n = e.inputBuffer.length;
-      for (let ch = 0; ch < 2; ch++) {
-        const src = e.inputBuffer.getChannelData(Math.min(ch, e.inputBuffer.numberOfChannels - 1)), ring = fx.ring[ch];
-        for (let i = 0; i < n; i++) ring[(fx.ringPos + i) % fx.ringLen] = src[i];
-      }
-      fx.ringPos = (fx.ringPos + n) % fx.ringLen;
-    };
-    fx.conv.connect(rec); rec.connect(mute).connect(ac.destination);
-    fx.freezeBus = ac.createGain(); fx.freezeBus.gain.value = 0;
-    fx.freezeBus.connect(fx.revOut);
+    // Freeze network: eight delay lines mixed so no energy is lost. On freeze it catches the hall's tail
+    // and keeps it circulating as a smooth, endless wash.
+    const N = 8, lens = [0.0573, 0.0711, 0.0833, 0.0947, 0.1069, 0.1187, 0.1291, 0.1433];
+    fx.fdnIn = ac.createGain(); fx.fdnIn.gain.value = 0;
+    fx.fdnFb = [];
+    fx.fdnOut = ac.createGain(); fx.fdnOut.gain.value = 0;
+    const merge = ac.createChannelMerger(2);
+    const sum = ac.createGain(), spread = ac.createGain(); spread.gain.value = -2 / N;
+    sum.connect(spread);
+    const fdnLfo = ac.createOscillator(); fdnLfo.frequency.value = 0.23;
+    const fdnLfoAmt = ac.createGain(); fdnLfoAmt.gain.value = 0.0006; fdnLfo.connect(fdnLfoAmt); fdnLfo.start();
+    lens.forEach((len, i) => {
+      const d = ac.createDelay(1); d.delayTime.value = len;
+      if (i % 3 === 0) fdnLfoAmt.connect(d.delayTime);             // a little movement so it never rings metallic
+      const damp = ac.createBiquadFilter(); damp.type = "lowpass"; damp.frequency.value = 11000; damp.Q.value = -10;   // Q is in dB here: negative means no resonant bump, so the loop can never build up
+      const fb = ac.createGain(); fb.gain.value = 0; fx.fdnFb.push(fb);
+      const inp = ac.createGain();
+      fx.fdnIn.connect(inp); spread.connect(fb);                      // Householder mix: own signal minus 2/N of the sum
+      inp.connect(d); d.connect(damp); damp.connect(sum); damp.connect(fb); fb.connect(inp);
+      damp.connect(merge, 0, i % 2);
+    });
+    fx.conv.connect(fx.fdnIn);
+    merge.connect(fx.fdnOut).connect(fx.revOut);
     updateHall(true);
 
     // Delay: sends -> low cut -> tone -> one of three styles
@@ -1189,6 +1189,27 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
     draw();
   });
 
+  // Vintage bat-handle toggles for Freeze: chrome lever on a hex nut, with a jewel lamp
+  document.querySelectorAll(".toggle-sw").forEach((b, n) => {
+    const id = "tg" + n;
+    b.innerHTML = `<svg viewBox="0 0 64 64" width="100%" height="100%" aria-hidden="true">
+      <defs>
+        <linearGradient id="${id}c" x1="0" x2="1"><stop offset="0" stop-color="#6f6a66"/><stop offset=".45" stop-color="#f4f1ed"/><stop offset=".6" stop-color="#bdb6b0"/><stop offset="1" stop-color="#55504c"/></linearGradient>
+        <radialGradient id="${id}n" cx=".35" cy=".3"><stop offset="0" stop-color="#e9e4de"/><stop offset=".6" stop-color="#8d8681"/><stop offset="1" stop-color="#4a4441"/></radialGradient>
+      </defs>
+      <text x="32" y="9" text-anchor="middle" font-size="6.5" letter-spacing="1" fill="rgba(243,236,230,0.6)" font-family="'Source Code Pro', monospace">ON</text>
+      <text x="32" y="62" text-anchor="middle" font-size="6.5" letter-spacing="1" fill="rgba(243,236,230,0.6)" font-family="'Source Code Pro', monospace">OFF</text>
+      <polygon points="32,25 41.5,30.5 41.5,41.5 32,47 22.5,41.5 22.5,30.5" fill="url(#${id}n)" stroke="rgba(0,0,0,0.5)" stroke-width="0.8"/>
+      <circle cx="32" cy="36" r="5.5" fill="#2a2524" stroke="rgba(0,0,0,0.6)"/>
+      <g class="lever">
+        <path d="M29.3 36 L30.2 15 L33.8 15 L34.7 36 Z" fill="url(#${id}c)" stroke="rgba(0,0,0,0.35)" stroke-width="0.6"/>
+        <circle cx="32" cy="14" r="3.6" fill="url(#${id}c)" stroke="rgba(0,0,0,0.35)" stroke-width="0.6"/>
+      </g>
+      <circle class="jewel" cx="54" cy="12" r="4" fill="#2b3a40" stroke="rgba(0,0,0,0.6)" stroke-width="1"/>
+      <circle cx="52.8" cy="10.8" r="1.1" fill="rgba(255,255,255,0.5)"/>
+    </svg>`;
+  });
+
   // Footswitch lights: switch each pedal on or off
   fx.hallOn = true; fx.delayOn = true;
   [["hallOn", "Hall reverb"], ["delayOn", "Delay"]].forEach(([id, name]) => {
@@ -1201,37 +1222,26 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
     });
   });
 
-  // Freeze: the delay holds its repeats forever; the hall turns its last three seconds into an endless pad
-  let grainTimer = null;
+  // Freeze: the delay holds its repeats forever; the hall's tail is caught and held by the freeze network
   function startHallFreeze() {
-    const len = fx.ringLen, buf = ac.createBuffer(2, len, ac.sampleRate);
-    for (let ch = 0; ch < 2; ch++) {
-      const d = buf.getChannelData(ch), ring = fx.ring[ch];
-      for (let i = 0; i < len; i++) d[i] = ring[(fx.ringPos + i) % len];
-    }
-    fx.frozenBuf = buf;
-    fx.freezeBus.gain.cancelScheduledValues(ac.currentTime);
-    fx.freezeBus.gain.setTargetAtTime(0.42, ac.currentTime, 0.3);
-    clearInterval(grainTimer);
-    grainTimer = setInterval(() => {
-      const t = ac.currentTime + 0.05, dur = 0.5 + Math.random() * 0.35;
-      const g = ac.createGain(), s = ac.createBufferSource();
-      s.buffer = fx.frozenBuf;
-      s.playbackRate.value = 1 + (Math.random() - 0.5) * 0.004;
-      g.gain.setValueAtTime(0, t);
-      g.gain.linearRampToValueAtTime(0.5, t + dur / 2);
-      g.gain.linearRampToValueAtTime(0, t + dur);
-      s.connect(g).connect(fx.freezeBus);
-      const from = 0.6 + Math.random() * (len / ac.sampleRate - 0.6 - dur);
-      s.start(t, from, dur);
-    }, 90);
+    const t = ac.currentTime;
+    fx.fdnFb.forEach(g => { g.gain.cancelScheduledValues(t); g.gain.setTargetAtTime(0.9997, t, 0.02); });
+    fx.fdnIn.gain.cancelScheduledValues(t);
+    fx.fdnIn.gain.setValueAtTime(0, t);
+    fx.fdnIn.gain.linearRampToValueAtTime(0.5, t + 0.05);             // catch about a third of a second of the tail
+    fx.fdnIn.gain.setValueAtTime(0.5, t + 0.3);
+    fx.fdnIn.gain.linearRampToValueAtTime(0, t + 0.4);
+    fx.fdnOut.gain.cancelScheduledValues(t);
+    fx.fdnOut.gain.setTargetAtTime(1, t, 0.15);
   }
   function stopHallFreeze() {
-    if (!fx.freezeBus) return;
-    fx.freezeBus.gain.cancelScheduledValues(ac.currentTime);
-    fx.freezeBus.gain.setTargetAtTime(0, ac.currentTime, 0.6);
-    const timer = grainTimer;
-    setTimeout(() => { if (grainTimer === timer) { clearInterval(grainTimer); grainTimer = null; } }, 3500);
+    if (!fx.fdnFb) return;
+    const t = ac.currentTime;
+    fx.fdnIn.gain.cancelScheduledValues(t); fx.fdnIn.gain.setValueAtTime(0, t);
+    fx.fdnFb.forEach(g => { g.gain.cancelScheduledValues(t); g.gain.setTargetAtTime(0.9, t, 0.05); });   // let it fade out
+    fx.fdnOut.gain.cancelScheduledValues(t);
+    fx.fdnOut.gain.setTargetAtTime(0, t + 0.6, 0.5);
+    setTimeout(() => { if (!fx.hallFrozen) fx.fdnFb.forEach(g => g.gain.setTargetAtTime(0, ac.currentTime, 0.1)); }, 3000);
   }
   [["hallFreeze", "hallFrozen", "pedal-hall"], ["delayFreeze", "delayFrozen", "pedal-delay"]].forEach(([id, key, cls]) => {
     const b = document.getElementById(id);
@@ -1239,6 +1249,7 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
       fx[key] = !fx[key];
       b.setAttribute("aria-pressed", String(fx[key]));
       document.querySelector("." + cls).classList.toggle("frozen", fx[key]);
+      document.getElementById(id + "Out").value = fx[key] ? "On" : "Off";
       if (key === "hallFrozen" && fx.conv) { if (fx[key]) startHallFreeze(); else stopHallFreeze(); }
       applyFx();
     });
