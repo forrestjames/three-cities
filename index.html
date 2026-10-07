@@ -544,8 +544,10 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
     }
 
     // Phones: a full-width panel just below the box, sized to the space above the keyboard.
+    const home = input.parentNode;
     function placeSheet(follow) {
       list.classList.add("sheet");
+      if (list.parentNode !== document.body) document.body.appendChild(list);   // above cards, dots and the play button
       const vv = window.visualViewport;
       const viewH = vv ? vv.height : window.innerHeight;
       const measure = () => {
@@ -562,7 +564,7 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
       list.style.top = Math.round(m.r.bottom + 6) + "px";
       list.style.maxHeight = Math.max(160, Math.round(m.space)) + "px";
     }
-    phone.addEventListener("change", () => { if (!phone.matches) { list.classList.remove("sheet"); list.style.top = ""; list.style.maxHeight = ""; } });
+    phone.addEventListener("change", () => { if (!phone.matches) { list.classList.remove("sheet"); list.style.top = ""; list.style.maxHeight = ""; home.appendChild(list); } });
     const follow = () => { if (!list.hidden && phone.matches) placeSheet(true); };
     if (window.visualViewport) window.visualViewport.addEventListener("resize", follow);
     window.addEventListener("scroll", follow, { passive: true });
