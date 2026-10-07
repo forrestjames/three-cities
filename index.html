@@ -437,7 +437,7 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
       base: 60, degrees: [-2, -1, 0, 1, 2], rate: 1, source: "humidity" }
   ];
   cities.forEach((c, i) => Object.assign(c, {
-    index: i, w: null, density: 100, chance: 100, volume: 80, octave: 0, muted: false, fxRev: true, fxDel: true,
+    index: i, w: null, density: 50 + Math.round(Math.random() * 50), chance: 100, volume: 80, octave: 0, muted: false, fxRev: true, fxDel: true,
     steps: 0, hits: 0, pattern: [], pos: 0, hitCount: 0,
     flashes: [], playhead: -1
   }));
