@@ -61,7 +61,7 @@ h1.custom { font-size: clamp(34px, 6.5vw, 76px); letter-spacing: 0.1em; }
 main { max-width: 1240px; margin: 0 auto; padding: 0 16px 80px; display: flex; flex-direction: column; gap: 40px; }
 
 .transport { display: grid; grid-template-columns: repeat(3, minmax(0, auto)); gap: 18px 40px; justify-content: center; align-items: start; padding: 22px 0; border-bottom: 1px solid var(--line); }
-.fxwrap { border-bottom: 1px solid var(--line); }
+.fxwrap { border-bottom: 0; }
 .fxwrap > summary { list-style: none; display: flex; align-items: center; gap: 14px; min-height: 52px; cursor: pointer; padding: 6px 0; }
 .fxwrap > summary::-webkit-details-marker { display: none; }
 .fxwrap > summary::before { content: ""; width: 9px; height: 9px; border-right: 1.5px solid var(--ink); border-bottom: 1.5px solid var(--ink); transform: rotate(-45deg); transition: transform 0.2s; margin: 0 4px; }
@@ -69,6 +69,31 @@ main { max-width: 1240px; margin: 0 auto; padding: 0 16px 80px; display: flex; f
 .fxsum-title { font-family: var(--display); font-size: 18px; letter-spacing: 0.16em; text-transform: uppercase; }
 .fxsum-info { font-size: 12px; color: var(--ink-dim); letter-spacing: 0.04em; overflow-wrap: anywhere; }
 .fxwrap[open] .fxsum-info { opacity: 0.6; }
+.fxwrap { border-top: 1px solid var(--line); }
+.pedals { display: flex; flex-wrap: wrap; gap: 18px; padding: 8px 0 28px; }
+.pedal { position: relative; flex: 4 1 330px; min-width: 0; border-radius: 16px; padding: 16px 20px 18px;
+         background: repeating-linear-gradient(100deg, rgba(255,255,255,0.018) 0 2px, transparent 2px 5px), linear-gradient(160deg, var(--p1), var(--p2));
+         border: 1px solid rgba(255,255,255,0.07); box-shadow: inset 0 1px 0 rgba(255,255,255,0.09), inset 0 -2px 0 rgba(0,0,0,0.35), 0 14px 34px rgba(0,0,0,0.5); }
+.pedal::before, .pedal::after { content: ""; position: absolute; top: 9px; width: 7px; height: 7px; border-radius: 50%;
+         background: radial-gradient(circle at 35% 35%, #d9d2cb, #6d6560 60%, #3a3431); box-shadow: 0 1px 1px rgba(0,0,0,0.6); }
+.pedal::before { left: 9px; } .pedal::after { right: 9px; }
+.pedal-delay { flex: 6 1 460px; }
+.pedal-hall { --p1: #3c2b42; --p2: #20172a; --led: #ff8a62; }
+.pedal-delay { --p1: #1e3b38; --p2: #11221f; --led: #74f0c4; }
+.pedal-head { display: flex; justify-content: space-between; align-items: center; margin: 2px 6px 12px; }
+.pedal-name { font-family: var(--display); font-size: 24px; letter-spacing: 0.34em; text-transform: uppercase; color: var(--ink); text-shadow: 0 1px 0 rgba(0,0,0,0.5); }
+.pedal-led { width: 44px; height: 44px; margin: -10px -10px -10px 0; border: 0; background: none; cursor: pointer; display: grid; place-items: center; }
+.pedal-led::after { content: ""; width: 14px; height: 14px; border-radius: 50%; background: #2a1d1d; border: 2px solid rgba(0,0,0,0.55); transition: background 0.2s, box-shadow 0.2s; }
+.pedal-led[aria-pressed="true"]::after { background: var(--led); box-shadow: 0 0 10px var(--led), 0 0 22px var(--led); }
+.pedal:has(.pedal-led[aria-pressed="false"]) .knobs { opacity: 0.55; }
+.knobs { display: grid; grid-template-columns: repeat(auto-fit, minmax(70px, 1fr)); gap: 16px 8px; }
+.kn { display: flex; flex-direction: column; align-items: center; gap: 3px; min-width: 0; }
+.knob { width: 64px; height: 64px; touch-action: none; cursor: ns-resize; border-radius: 50%; display: block; }
+.knob:focus-visible { outline: 2px solid var(--led); outline-offset: 2px; }
+.kn-label { font-size: 10px; letter-spacing: 0.18em; text-transform: uppercase; color: var(--ink-dim); margin-top: 2px; }
+.kn output { font-size: 11px; color: var(--ink); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.kn-native { display: none !important; }
+@media (max-width: 600px) { .pedal { padding: 14px 12px 16px; } .knob { width: 58px; height: 58px; } .pedal-name { font-size: 20px; } }
 .fxpanel { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 22px 48px; padding: 8px 0 24px; }
 .fxbox { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px 28px; align-content: start; min-width: 0; }
 .fxbox .tlabel { grid-column: 1 / -1; }
@@ -271,30 +296,41 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
     </div>
   </section>
 
-  <details class="fxwrap" id="fxWrap">
-    <summary><span class="fxsum-title">Effects</span><span class="fxsum-info" id="fxSummary">Hall 4.5 s · Ping-pong, dotted 1/8</span></summary>
-  <section class="fxpanel" aria-label="Effects">
-    <div class="fxbox">
-      <div class="tlabel">Hall reverb</div>
-      <label class="field" for="fxRevLevel">Level <input id="fxRevLevel" type="range" min="0" max="100" value="60"> <output id="fxRevLevelOut">60</output></label>
-      <label class="field" for="fxRevDecay">Decay <input id="fxRevDecay" type="range" min="0.5" max="24" step="0.5" value="4.5"> <output id="fxRevDecayOut">4.5 s</output></label>
-      <label class="field" for="fxRevPre">Pre-delay <input id="fxRevPre" type="range" min="0" max="200" step="5" value="30"> <output id="fxRevPreOut">30 ms</output></label>
-      <label class="field" for="fxRevTone">Tone <input id="fxRevTone" type="range" min="0" max="100" value="55"> <output id="fxRevToneOut">55</output></label>
-    </div>
-    <div class="fxbox">
-      <div class="tlabel">Delay</div>
-      <label class="field" for="fxStyle">Style <select id="fxStyle"><option value="single">Single</option><option value="pingpong" selected>Ping-pong</option><option value="taps">Three taps</option></select></label>
-      <label class="field" for="fxTime">Time <select id="fxTime"><option value="0.25">1/16</option><option value="0.5">1/8</option><option value="0.75" selected>dotted 1/8</option><option value="1">1/4</option><option value="1.5">dotted 1/4</option></select></label>
-      <label class="field" for="fxDelay">Level <input id="fxDelay" type="range" min="0" max="100" value="50"> <output id="fxDelayOut">50</output></label>
-      <label class="field" for="fxEchoes">Echoes <input id="fxEchoes" type="range" min="0" max="90" value="38"> <output id="fxEchoesOut">38</output></label>
-      <label class="field" for="fxDelTone">Tone <input id="fxDelTone" type="range" min="0" max="100" value="45"> <output id="fxDelToneOut">45</output></label>
-      <label class="field" for="fxWobble">Wobble <input id="fxWobble" type="range" min="0" max="100" value="20"> <output id="fxWobbleOut">20</output></label>
-    </div>
-  </section>
-  </details>
 
   <section class="cities" id="cities" aria-label="Cities"></section>
   <nav class="dots" id="dots" aria-label="Choose a city"></nav>
+
+  <details class="fxwrap" id="fxWrap" open>
+    <summary><span class="fxsum-title">Effects</span><span class="fxsum-info" id="fxSummary"></span></summary>
+    <div class="pedals">
+      <section class="pedal pedal-hall" aria-label="Hall reverb">
+        <div class="pedal-head">
+          <span class="pedal-name">Hall</span>
+          <button class="pedal-led" type="button" id="hallOn" aria-pressed="true" aria-label="Hall reverb on"></button>
+        </div>
+        <div class="knobs">
+          <div class="kn"><input class="kn-native" id="fxRevLevel" type="range" min="0" max="100" value="60" data-label="Level"><output id="fxRevLevelOut">60</output></div>
+          <div class="kn"><input class="kn-native" id="fxRevDecay" type="range" min="0.5" max="24" step="0.5" value="4.5" data-label="Decay"><output id="fxRevDecayOut">4.5 s</output></div>
+          <div class="kn"><input class="kn-native" id="fxRevPre" type="range" min="0" max="200" step="5" value="30" data-label="Pre-delay"><output id="fxRevPreOut">30 ms</output></div>
+          <div class="kn"><input class="kn-native" id="fxRevTone" type="range" min="0" max="100" value="55" data-label="Tone"><output id="fxRevToneOut">55</output></div>
+        </div>
+      </section>
+      <section class="pedal pedal-delay" aria-label="Delay">
+        <div class="pedal-head">
+          <span class="pedal-name">Delay</span>
+          <button class="pedal-led" type="button" id="delayOn" aria-pressed="true" aria-label="Delay on"></button>
+        </div>
+        <div class="knobs">
+          <div class="kn"><select class="kn-native" id="fxStyle" data-label="Style"><option value="single">Single</option><option value="pingpong" selected>Ping-pong</option><option value="taps">Three taps</option></select><output id="fxStyleOut">Ping-pong</output></div>
+          <div class="kn"><select class="kn-native" id="fxTime" data-label="Time"><option value="0.25">1/16</option><option value="0.5">1/8</option><option value="0.75" selected>dotted 1/8</option><option value="1">1/4</option><option value="1.5">dotted 1/4</option></select><output id="fxTimeOut">dotted 1/8</output></div>
+          <div class="kn"><input class="kn-native" id="fxDelay" type="range" min="0" max="100" value="50" data-label="Level"><output id="fxDelayOut">50</output></div>
+          <div class="kn"><input class="kn-native" id="fxEchoes" type="range" min="0" max="90" value="38" data-label="Echoes"><output id="fxEchoesOut">38</output></div>
+          <div class="kn"><input class="kn-native" id="fxDelTone" type="range" min="0" max="100" value="45" data-label="Tone"><output id="fxDelToneOut">45</output></div>
+          <div class="kn"><input class="kn-native" id="fxWobble" type="range" min="0" max="100" value="20" data-label="Wobble"><output id="fxWobbleOut">20</output></div>
+        </div>
+      </section>
+    </div>
+  </details>
 
   <section class="mood" aria-label="Memory map">
     <div class="mood-label">Memory map</div>
@@ -1026,16 +1062,16 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
   function fxSummary() {
     const style = document.getElementById("fxStyle"), time = document.getElementById("fxTime");
     document.getElementById("fxSummary").textContent =
-      `Hall ${val("fxRevDecay")} s · ${style.options[style.selectedIndex].text}, ${time.options[time.selectedIndex].text}`;
+      `${fx.hallOn === false ? "Hall off" : "Hall " + val("fxRevDecay") + " s"} · ${fx.delayOn === false ? "Delay off" : style.options[style.selectedIndex].text + ", " + time.options[time.selectedIndex].text}`;
   }
   function applyFx() {
     fxSummary();
     if (!fx.revOut) return;
     const t = ac.currentTime, beat = 60 / val("tempo"), T = Math.min(5, beat * val("fxTime"));
-    fx.revOut.gain.setTargetAtTime(val("fxRevLevel") / 100 * 1.6, t, 0.05);
+    fx.revOut.gain.setTargetAtTime(fx.hallOn === false ? 0 : val("fxRevLevel") / 100 * 1.6, t, 0.05);
     fx.pre.delayTime.setTargetAtTime(val("fxRevPre") / 1000, t, 0.05);
     updateHall();
-    fx.delayOut.gain.setTargetAtTime(val("fxDelay") / 50, t, 0.05);
+    fx.delayOut.gain.setTargetAtTime(fx.delayOn === false ? 0 : val("fxDelay") / 50, t, 0.05);
     const style = document.getElementById("fxStyle").value;
     Object.entries(fx.style).forEach(([k, g]) => g.gain.setTargetAtTime(k === style ? 1 : 0, t, 0.03));
     fx.fbs.forEach(g => g.gain.setTargetAtTime(val("fxEchoes") / 100 * g.scale, t, 0.05));
@@ -1052,8 +1088,84 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
     el.addEventListener("input", () => { document.getElementById(id + "Out").value = (fxUnits[id] || String)(el.value); applyFx(); });
   });
   ["fxTime", "fxStyle"].forEach(id => document.getElementById(id).addEventListener("change", applyFx));
+  // Knobs: each draws an SVG dial over a hidden range or select. Drag up or down, scroll, or use the arrow keys.
+  // Double-click (or double-tap) puts it back where it started.
+  const polar = (r, deg) => [32 + r * Math.sin(deg * Math.PI / 180), 32 - r * Math.cos(deg * Math.PI / 180)];
+  const arc = (r, a0, a1) => { const [x0, y0] = polar(r, a0), [x1, y1] = polar(r, a1); return `M${x0.toFixed(2)} ${y0.toFixed(2)} A${r} ${r} 0 ${a1 - a0 > 180 ? 1 : 0} 1 ${x1.toFixed(2)} ${y1.toFixed(2)}`; };
+  document.querySelectorAll(".kn").forEach(kn => {
+    const el = kn.querySelector("input, select"), out = kn.querySelector("output");
+    const isSel = el.tagName === "SELECT";
+    const min = isSel ? 0 : Number(el.min), max = isSel ? el.options.length - 1 : Number(el.max), step = isSel ? 1 : Number(el.step || 1);
+    const get = () => isSel ? el.selectedIndex : Number(el.value);
+    const start = get();
+    const knob = document.createElement("div");
+    knob.className = "knob"; knob.tabIndex = 0; knob.setAttribute("role", "slider");
+    knob.setAttribute("aria-label", kn.closest(".pedal").getAttribute("aria-label") + " " + el.dataset.label.toLowerCase());
+    knob.setAttribute("aria-valuemin", min); knob.setAttribute("aria-valuemax", max);
+    const ticks = isSel ? Array.from({ length: max + 1 }, (_, i) => { const [x, y] = polar(30.5, -135 + 270 * i / max); return `<circle cx="${x.toFixed(2)}" cy="${y.toFixed(2)}" r="1.4" fill="rgba(243,236,230,0.55)"/>`; }).join("") : "";
+    knob.innerHTML = `<svg viewBox="0 0 64 64" width="100%" height="100%" aria-hidden="true">
+      <path d="${arc(26, -135, 135)}" fill="none" stroke="rgba(243,236,230,0.13)" stroke-width="3.5" stroke-linecap="round"/>
+      <path class="kv" fill="none" stroke="var(--led)" stroke-width="3.5" stroke-linecap="round"/>
+      ${ticks}
+      <circle cx="32" cy="34" r="19" fill="rgba(0,0,0,0.45)"/>
+      <circle cx="32" cy="32" r="19" fill="#1d1719" stroke="rgba(255,255,255,0.14)" stroke-width="1"/>
+      <circle cx="32" cy="32" r="14" fill="none" stroke="rgba(255,255,255,0.05)" stroke-width="1"/>
+      <line class="kp" stroke="#f3ece6" stroke-width="2.6" stroke-linecap="round"/>
+    </svg>`;
+    const label = document.createElement("div"); label.className = "kn-label"; label.textContent = el.dataset.label;
+    kn.insertBefore(knob, el); kn.insertBefore(label, out);
+    const kv = knob.querySelector(".kv"), kp = knob.querySelector(".kp");
+    function draw() {
+      const f = (get() - min) / (max - min), a = -135 + 270 * f;
+      kv.setAttribute("d", f > 0.002 ? arc(26, -135, a) : "");
+      const [x0, y0] = polar(6, a), [x1, y1] = polar(16, a);
+      kp.setAttribute("x1", x0); kp.setAttribute("y1", y0); kp.setAttribute("x2", x1); kp.setAttribute("y2", y1);
+      knob.setAttribute("aria-valuenow", get());
+      knob.setAttribute("aria-valuetext", isSel ? el.options[el.selectedIndex].text : out.value || String(get()));
+    }
+    function set(v) {
+      v = Math.max(min, Math.min(max, Math.round((v - min) / step) * step + min));
+      if (v === get()) return;
+      if (isSel) { el.selectedIndex = v; out.value = el.options[v].text; el.dispatchEvent(new Event("change")); }
+      else { el.value = v; el.dispatchEvent(new Event("input")); }
+      draw();
+    }
+    let dragY = null, dragV = 0, acc = 0;
+    knob.addEventListener("pointerdown", e => { knob.setPointerCapture(e.pointerId); dragY = e.clientY; dragV = get(); acc = 0; knob.focus(); });
+    knob.addEventListener("pointermove", e => {
+      if (dragY === null) return;
+      const range = max - min, px = isSel ? 26 : (e.shiftKey ? 600 : 160);
+      if (isSel) { acc = (dragY - e.clientY) / px; set(dragV + Math.round(acc)); }
+      else set(dragV + (dragY - e.clientY) / px * range);
+    });
+    knob.addEventListener("pointerup", () => { dragY = null; });
+    knob.addEventListener("pointercancel", () => { dragY = null; });
+    knob.addEventListener("dblclick", () => set(start));
+    knob.addEventListener("wheel", e => { e.preventDefault(); set(get() + (e.deltaY < 0 ? 1 : -1) * (isSel ? 1 : Math.max(step, (max - min) / 50))); }, { passive: false });
+    knob.addEventListener("keydown", e => {
+      const big = isSel ? 1 : Math.max(step, (max - min) / 10), small = isSel ? 1 : Math.max(step, (max - min) / 100);
+      const d = { ArrowUp: small, ArrowRight: small, ArrowDown: -small, ArrowLeft: -small, PageUp: big, PageDown: -big }[e.key];
+      if (d !== undefined) { e.preventDefault(); set(get() + d); }
+      else if (e.key === "Home") { e.preventDefault(); set(min); }
+      else if (e.key === "End") { e.preventDefault(); set(max); }
+    });
+    draw();
+  });
+
+  // Footswitch lights: switch each pedal on or off
+  fx.hallOn = true; fx.delayOn = true;
+  [["hallOn", "Hall reverb"], ["delayOn", "Delay"]].forEach(([id, name]) => {
+    const b = document.getElementById(id);
+    b.addEventListener("click", () => {
+      fx[id] = !fx[id];
+      b.setAttribute("aria-pressed", String(fx[id]));
+      b.setAttribute("aria-label", `${name} ${fx[id] ? "on" : "off"}`);
+      applyFx();
+    });
+  });
+
   const fxWrap = document.getElementById("fxWrap");
-  try { if (localStorage.getItem("fxOpen") === "1") fxWrap.open = true; } catch (e) {}
+  try { if (localStorage.getItem("fxOpen") === "0") fxWrap.open = false; } catch (e) {}
   fxWrap.addEventListener("toggle", () => { try { localStorage.setItem("fxOpen", fxWrap.open ? "1" : "0"); } catch (e) {} });
   fxSummary();
   const buses = new Map();
