@@ -61,7 +61,15 @@ h1.custom { font-size: clamp(34px, 6.5vw, 76px); letter-spacing: 0.1em; }
 main { max-width: 1240px; margin: 0 auto; padding: 0 16px 80px; display: flex; flex-direction: column; gap: 40px; }
 
 .transport { display: grid; grid-template-columns: repeat(3, minmax(0, auto)); gap: 18px 40px; justify-content: center; align-items: start; padding: 22px 0; border-bottom: 1px solid var(--line); }
-.fxpanel { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 22px 48px; padding: 4px 0 24px; border-bottom: 1px solid var(--line); }
+.fxwrap { border-bottom: 1px solid var(--line); }
+.fxwrap > summary { list-style: none; display: flex; align-items: center; gap: 14px; min-height: 52px; cursor: pointer; padding: 6px 0; }
+.fxwrap > summary::-webkit-details-marker { display: none; }
+.fxwrap > summary::before { content: ""; width: 9px; height: 9px; border-right: 1.5px solid var(--ink); border-bottom: 1.5px solid var(--ink); transform: rotate(-45deg); transition: transform 0.2s; margin: 0 4px; }
+.fxwrap[open] > summary::before { transform: rotate(45deg); }
+.fxsum-title { font-family: var(--display); font-size: 18px; letter-spacing: 0.16em; text-transform: uppercase; }
+.fxsum-info { font-size: 12px; color: var(--ink-dim); letter-spacing: 0.04em; overflow-wrap: anywhere; }
+.fxwrap[open] .fxsum-info { opacity: 0.6; }
+.fxpanel { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 22px 48px; padding: 8px 0 24px; }
 .fxbox { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px 28px; align-content: start; min-width: 0; }
 .fxbox .tlabel { grid-column: 1 / -1; }
 .fxbox .field { justify-content: space-between; min-width: 0; }
@@ -263,6 +271,8 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
     </div>
   </section>
 
+  <details class="fxwrap" id="fxWrap">
+    <summary><span class="fxsum-title">Effects</span><span class="fxsum-info" id="fxSummary">Hall 4.5 s · Ping-pong, dotted 1/8</span></summary>
   <section class="fxpanel" aria-label="Effects">
     <div class="fxbox">
       <div class="tlabel">Hall reverb</div>
@@ -281,6 +291,7 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
       <label class="field" for="fxWobble">Wobble <input id="fxWobble" type="range" min="0" max="100" value="20"> <output id="fxWobbleOut">20</output></label>
     </div>
   </section>
+  </details>
 
   <section class="cities" id="cities" aria-label="Cities"></section>
   <nav class="dots" id="dots" aria-label="Choose a city"></nav>
@@ -1012,7 +1023,13 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
     applyFx();
   }
 
+  function fxSummary() {
+    const style = document.getElementById("fxStyle"), time = document.getElementById("fxTime");
+    document.getElementById("fxSummary").textContent =
+      `Hall ${val("fxRevDecay")} s · ${style.options[style.selectedIndex].text}, ${time.options[time.selectedIndex].text}`;
+  }
   function applyFx() {
+    fxSummary();
     if (!fx.revOut) return;
     const t = ac.currentTime, beat = 60 / val("tempo"), T = Math.min(5, beat * val("fxTime"));
     fx.revOut.gain.setTargetAtTime(val("fxRevLevel") / 100 * 1.6, t, 0.05);
@@ -1035,6 +1052,10 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
     el.addEventListener("input", () => { document.getElementById(id + "Out").value = (fxUnits[id] || String)(el.value); applyFx(); });
   });
   ["fxTime", "fxStyle"].forEach(id => document.getElementById(id).addEventListener("change", applyFx));
+  const fxWrap = document.getElementById("fxWrap");
+  try { if (localStorage.getItem("fxOpen") === "1") fxWrap.open = true; } catch (e) {}
+  fxWrap.addEventListener("toggle", () => { try { localStorage.setItem("fxOpen", fxWrap.open ? "1" : "0"); } catch (e) {} });
+  fxSummary();
   const buses = new Map();
 
   function impulse(seconds) {
