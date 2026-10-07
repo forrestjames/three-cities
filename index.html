@@ -599,6 +599,19 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
     });
   });
 
+  // Each visit starts with a different mix: every city gets reverb, delay, both or neither at random,
+  // with at least one city sending to each effect so both pedals are heard.
+  (function shuffleSends() {
+    const pick = () => cities.map(() => Math.random() < 0.5);
+    const atLeastOne = flags => { if (!flags.some(Boolean)) flags[Math.floor(Math.random() * flags.length)] = true; return flags; };
+    const rev = atLeastOne(pick()), del = atLeastOne(pick());
+    cities.forEach((c, i) => {
+      c.fxRev = rev[i]; c.fxDel = del[i];
+      c.ref.sendRev.setAttribute("aria-pressed", String(c.fxRev));
+      c.ref.sendDel.setAttribute("aria-pressed", String(c.fxDel));
+    });
+  })();
+
   // ---------- swapping cities ----------
   const DEFAULT_NAMES = cities.map(c => c.name);
   cities.forEach(c => { c.credit = CREDITS[c.key] || null; });
