@@ -60,7 +60,15 @@ h1.custom { font-size: clamp(34px, 6.5vw, 76px); letter-spacing: 0.1em; }
 
 main { max-width: 1240px; margin: 0 auto; padding: 0 16px 80px; display: flex; flex-direction: column; gap: 40px; }
 
-.transport { display: grid; grid-template-columns: repeat(4, minmax(0, auto)); gap: 18px 40px; justify-content: center; align-items: start; padding: 22px 0; border-bottom: 1px solid var(--line); }
+.transport { display: grid; grid-template-columns: repeat(3, minmax(0, auto)); gap: 18px 40px; justify-content: center; align-items: start; padding: 22px 0; border-bottom: 1px solid var(--line); }
+.fxpanel { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 22px 48px; padding: 4px 0 24px; border-bottom: 1px solid var(--line); }
+.fxbox { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px 28px; align-content: start; min-width: 0; }
+.fxbox .tlabel { grid-column: 1 / -1; }
+.fxbox .field { justify-content: space-between; min-width: 0; }
+.fxbox .field input[type="range"] { flex: 1; width: auto; min-width: 0; }
+.fxbox .field output { min-width: 5ch; text-align: right; }
+@media (max-width: 860px) { .fxpanel { grid-template-columns: minmax(0, 1fr); } }
+@media (max-width: 600px) { .fxbox { grid-template-columns: minmax(0, 1fr); } .fxbox .field select { flex: 1; min-height: 40px; } }
 .tgroup { display: flex; flex-direction: column; gap: 10px; min-width: 0; }
 .tlabel { font-family: var(--display); font-size: 18px; letter-spacing: 0.16em; text-transform: uppercase; color: var(--ink); }
 .tgroup .field { justify-content: space-between; }
@@ -93,9 +101,10 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
 .mood-q { font-family: var(--display); font-size: clamp(26px, 3.8vw, 40px); line-height: 1.15; letter-spacing: 0.05em; text-align: center;
           min-height: 2.4em; max-width: 24ch; display: flex; align-items: center; justify-content: center; text-wrap: balance; transition: opacity 0.6s ease; }
 .mood-q.fading { opacity: 0; }
-.mood { padding-top: 12px; border-top: 1px solid var(--line); }
-.mood-pad { display: block; width: 100%; max-width: 620px; aspect-ratio: 1.1; touch-action: none; cursor: grab; border-radius: 4px; }
+.mood { margin-top: 20px; padding-top: 56px; border-top: 1px solid var(--line); }
+.mood-pad { display: block; width: 100%; max-width: 1100px; aspect-ratio: 1.75; touch-action: none; cursor: grab; border-radius: 4px; }
 .mood-pad:active { cursor: grabbing; }
+@media (max-width: 760px) { .mood-pad { aspect-ratio: 1.05; } .mood { padding-top: 40px; } }
 .mood-row { display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 10px 14px; font-size: 12px; color: var(--ink-dim); letter-spacing: 0.04em; }
 .mood-row button { background: none; border: 1px solid var(--line); padding: 8px 14px; min-height: 40px; cursor: pointer; text-transform: uppercase; letter-spacing: 0.14em; font-size: 11px; color: var(--ink); }
 .mood-row button[aria-pressed="true"] { border-color: var(--ink); }
@@ -152,6 +161,10 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
 .octave-label { flex: 1; padding: 0 12px; font-size: 11px; text-transform: uppercase; letter-spacing: 0.14em; color: var(--ink-dim); }
 .octave button { background: none; border: 0; border-left: 1px solid var(--line); min-width: 44px; min-height: 40px; cursor: pointer; font-variant-numeric: tabular-nums; color: var(--ink-dim); }
 .octave button[aria-pressed="true"] { background: var(--accent); color: var(--ground); }
+.fxsends { grid-column: 1 / -1; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+.fxsend { background: none; border: 1px solid var(--line); min-height: 40px; cursor: pointer; text-transform: uppercase; letter-spacing: 0.14em; font-size: 11px; color: var(--ink-dim); }
+.fxsend[aria-pressed="true"] { border-color: var(--accent); color: var(--ink); }
+.fxsend[aria-pressed="true"]::before { content: ""; display: inline-block; width: 7px; height: 7px; border-radius: 50%; background: var(--accent); margin-right: 8px; vertical-align: 1px; }
 .mute { grid-column: 1 / -1; background: none; border: 1px solid var(--line); padding: 8px; text-transform: uppercase; letter-spacing: 0.16em; font-size: 11px; cursor: pointer; }
 .mute[aria-pressed="true"] { border-color: var(--accent); color: var(--accent); }
 .swap { display: flex; gap: 8px; }
@@ -243,17 +256,29 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
       <label class="field" for="scale">Scale <select id="scale"></select></label>
     </div>
     <div class="tgroup">
-      <div class="tlabel">Effects</div>
-      <label class="field" for="fxReverb">Reverb <input id="fxReverb" type="range" min="0" max="100" value="60"> <output id="fxReverbOut">60</output></label>
-      <label class="field" for="fxDelay">Delay <input id="fxDelay" type="range" min="0" max="100" value="50"> <output id="fxDelayOut">50</output></label>
-      <label class="field" for="fxEchoes">Echoes <input id="fxEchoes" type="range" min="0" max="85" value="32"> <output id="fxEchoesOut">32</output></label>
-      <label class="field" for="fxTime">Delay time <select id="fxTime"><option value="0.25">1/16</option><option value="0.5">1/8</option><option value="0.75" selected>dotted 1/8</option><option value="1">1/4</option></select></label>
-    </div>
-    <div class="tgroup">
       <div class="tlabel">Share &amp; MIDI</div>
       <button class="share" id="share" type="button" hidden>Copy link to these cities</button>
       <span class="share-note" id="shareNote" aria-live="polite"></span>
       <label class="field" for="midi">MIDI out <select id="midi"><option value="">Off</option></select></label>
+    </div>
+  </section>
+
+  <section class="fxpanel" aria-label="Effects">
+    <div class="fxbox">
+      <div class="tlabel">Hall reverb</div>
+      <label class="field" for="fxRevLevel">Level <input id="fxRevLevel" type="range" min="0" max="100" value="60"> <output id="fxRevLevelOut">60</output></label>
+      <label class="field" for="fxRevDecay">Decay <input id="fxRevDecay" type="range" min="0.5" max="24" step="0.5" value="4.5"> <output id="fxRevDecayOut">4.5 s</output></label>
+      <label class="field" for="fxRevPre">Pre-delay <input id="fxRevPre" type="range" min="0" max="200" step="5" value="30"> <output id="fxRevPreOut">30 ms</output></label>
+      <label class="field" for="fxRevTone">Tone <input id="fxRevTone" type="range" min="0" max="100" value="55"> <output id="fxRevToneOut">55</output></label>
+    </div>
+    <div class="fxbox">
+      <div class="tlabel">Delay</div>
+      <label class="field" for="fxStyle">Style <select id="fxStyle"><option value="single">Single</option><option value="pingpong" selected>Ping-pong</option><option value="taps">Three taps</option></select></label>
+      <label class="field" for="fxTime">Time <select id="fxTime"><option value="0.25">1/16</option><option value="0.5">1/8</option><option value="0.75" selected>dotted 1/8</option><option value="1">1/4</option><option value="1.5">dotted 1/4</option></select></label>
+      <label class="field" for="fxDelay">Level <input id="fxDelay" type="range" min="0" max="100" value="50"> <output id="fxDelayOut">50</output></label>
+      <label class="field" for="fxEchoes">Echoes <input id="fxEchoes" type="range" min="0" max="90" value="38"> <output id="fxEchoesOut">38</output></label>
+      <label class="field" for="fxDelTone">Tone <input id="fxDelTone" type="range" min="0" max="100" value="45"> <output id="fxDelToneOut">45</output></label>
+      <label class="field" for="fxWobble">Wobble <input id="fxWobble" type="range" min="0" max="100" value="20"> <output id="fxWobbleOut">20</output></label>
     </div>
   </section>
 
@@ -349,7 +374,7 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
       base: 60, degrees: [-2, -1, 0, 1, 2], rate: 1, source: "humidity" }
   ];
   cities.forEach((c, i) => Object.assign(c, {
-    index: i, w: null, density: 50, chance: 100, volume: 80, octave: 0, muted: false,
+    index: i, w: null, density: 50, chance: 100, volume: 80, octave: 0, muted: false, fxRev: true, fxDel: true,
     steps: 0, hits: 0, pattern: [], pos: 0, hitCount: 0,
     flashes: [], playhead: -1
   }));
@@ -468,6 +493,10 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
           <span class="octave-label">Octave</span>
           ${[-2, -1, 0, 1, 2].map(o => `<button type="button" data-oct="${o}" aria-pressed="${o === 0}">${o > 0 ? "+" + o : o < 0 ? "\u2212" + -o : "0"}</button>`).join("")}
         </div>
+        <div class="fxsends">
+          <button type="button" class="fxsend" aria-pressed="true" data-r="sendRev">Reverb</button>
+          <button type="button" class="fxsend" aria-pressed="true" data-r="sendDel">Delay</button>
+        </div>
         <button class="mute" type="button" aria-pressed="false" data-r="mute">Mute ${c.name}</button>
         <form class="swap" data-r="swap" style="grid-column: 1 / -1">
           <label for="${id}-swap" style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)">Swap city</label>
@@ -485,6 +514,11 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
     if (PHOTOS[c.key]) c.ref.photo.style.backgroundImage = `url(${PHOTOS[c.key]})`;
     else c.ref.photo.style.background = `radial-gradient(circle at 30% 30%, var(${c.color}), transparent 70%)`;
 
+    [["sendRev", "fxRev"], ["sendDel", "fxDel"]].forEach(([r, key]) => c.ref[r].addEventListener("click", () => {
+      c[key] = !c[key];
+      c.ref[r].setAttribute("aria-pressed", String(c[key]));
+      applySound(c);
+    }));
     c.ref.oct.querySelectorAll("button").forEach(b => b.addEventListener("click", () => {
       c.octave = Number(b.dataset.oct);
       c.ref.oct.querySelectorAll("button").forEach(x => x.setAttribute("aria-pressed", String(x === b)));
@@ -881,21 +915,126 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
   // ---------- sound ----------
   let ac = null, master, reverb, delay, playing = false;
   const fx = {};
-  // Global effects: reverb level, delay level, echoes (feedback) and delay time synced to the tempo
+  const val = id => Number(document.getElementById(id).value);
+
+  // Hall impulse: early reflections, then a long tail that darkens as it fades (decay = seconds to fade 60 dB)
+  function hallImpulse(decay, tone) {
+    const sr = ac.sampleRate, len = Math.floor(sr * (decay + 0.2));
+    const b = ac.createBuffer(2, len, sr);
+    const bright = 0.15 + 0.8 * tone;                 // starting brightness of the tail
+    const damp = (1.6 - 1.3 * tone) / decay;          // how quickly the highs die away
+    const level = 0.5 / Math.sqrt(Math.max(1, decay / 2.5));
+    for (let ch = 0; ch < 2; ch++) {
+      const d = b.getChannelData(ch);
+      let y = 0;
+      for (let i = 0; i < len; i++) {
+        const t = i / sr;
+        const a = Math.max(0.015, bright * Math.exp(-t * damp));
+        y += a * ((Math.random() * 2 - 1) - y);
+        const build = Math.min(1, t / 0.04);
+        d[i] = y * Math.exp(-6.9 * t / decay) * build * level * (1.2 + 1.5 * (1 - a));
+      }
+    }
+    // same overall energy for every decay length, so a longer hall doesn't jump in level
+    let e = 0;
+    for (let ch = 0; ch < 2; ch++) for (const v of b.getChannelData(ch)) e += v * v;
+    const norm = 82 / Math.sqrt(e / 2);
+    for (let ch = 0; ch < 2; ch++) {
+      const d = b.getChannelData(ch);
+      for (let i = 0; i < len; i++) d[i] *= norm;
+      for (let k = 0; k < 9; k++) {                   // soft early reflections, different each side
+        const at = Math.floor(sr * (0.008 + Math.random() * 0.075));
+        d[at] += (Math.random() < 0.5 ? -1 : 1) * (0.9 - k * 0.08);
+      }
+    }
+    return b;
+  }
+  let irKey = "", irTimer = null;
+  function updateHall(force) {
+    const key = val("fxRevDecay") + "|" + val("fxRevTone");
+    if (!fx.conv || (key === irKey && !force)) return;
+    clearTimeout(irTimer);
+    irTimer = setTimeout(() => { irKey = key; fx.conv.buffer = hallImpulse(val("fxRevDecay"), val("fxRevTone") / 100); }, force ? 0 : 220);
+  }
+
+  function buildEffects() {
+    // Hall reverb: sends -> low cut -> pre-delay -> convolver -> level
+    reverb = ac.createGain();
+    const revHp = ac.createBiquadFilter(); revHp.type = "highpass"; revHp.frequency.value = 140;
+    fx.pre = ac.createDelay(1);
+    fx.conv = ac.createConvolver();
+    fx.revOut = ac.createGain();
+    reverb.connect(revHp).connect(fx.pre).connect(fx.conv).connect(fx.revOut).connect(master);
+    updateHall(true);
+
+    // Delay: sends -> low cut -> tone -> one of three styles
+    delay = ac.createGain();
+    const dHp = ac.createBiquadFilter(); dHp.type = "highpass"; dHp.frequency.value = 160;
+    fx.tones = [];
+    const tone = () => { const f = ac.createBiquadFilter(); f.type = "lowpass"; fx.tones.push(f); return f; };
+    const inTone = tone();
+    delay.connect(dHp).connect(inTone);
+    fx.delayOut = ac.createGain(); fx.delayOut.connect(master);
+    fx.style = { single: ac.createGain(), pingpong: ac.createGain(), taps: ac.createGain() };
+    Object.values(fx.style).forEach(g => inTone.connect(g));
+    fx.lines = []; fx.fbs = [];
+    const line = () => { const d = ac.createDelay(8); fx.lines.push(d); return d; };
+    const fbk = scale => { const g = ac.createGain(); g.scale = scale; fx.fbs.push(g); return g; };
+    const pan = v => { const s = ac.createStereoPanner(); s.pan.value = v; return s; };
+
+    // Single: one line feeding back on itself, centred
+    fx.single = line();
+    fx.style.single.connect(fx.single).connect(fx.delayOut);
+    fx.single.connect(tone()).connect(fbk(1)).connect(fx.single);
+
+    // Ping-pong: left, then right, then left...
+    fx.ppL = line(); fx.ppR = line();
+    fx.style.pingpong.connect(fx.ppL);
+    fx.ppL.connect(pan(-0.85)).connect(fx.delayOut);
+    fx.ppR.connect(pan(0.85)).connect(fx.delayOut);
+    const toR = ac.createGain(); fx.ppL.connect(toR).connect(fx.ppR);           // first bounce always reaches the right
+    fx.ppR.connect(tone()).connect(fbk(1)).connect(fx.ppL);
+
+    // Three taps: a short rhythmic figure across the stereo field that repeats as a whole
+    const tapBus = ac.createGain();
+    fx.style.taps.connect(tapBus);
+    fx.taps = [line(), line(), line()];
+    [[-0.6, 0.85], [0.6, 0.6], [0, 0.45]].forEach(([pv, gv], i) => {
+      const g = ac.createGain(); g.gain.value = gv;
+      tapBus.connect(fx.taps[i]); fx.taps[i].connect(g).connect(pan(pv)).connect(fx.delayOut);
+    });
+    fx.taps[2].connect(tone()).connect(fbk(0.85)).connect(tapBus);
+
+    // Wobble: a slow wander in delay time, like tape
+    fx.lfo = ac.createOscillator(); fx.lfo.frequency.value = 0.37;
+    fx.wobble = ac.createGain(); fx.wobble.gain.value = 0;
+    fx.lfo.connect(fx.wobble); fx.lines.forEach(d => fx.wobble.connect(d.delayTime)); fx.lfo.start();
+    applyFx();
+  }
+
   function applyFx() {
     if (!fx.revOut) return;
-    const v = id => Number(document.getElementById(id).value);
-    const t = ac.currentTime, beat = 60 / Number(document.getElementById("tempo").value);
-    fx.revOut.gain.setTargetAtTime(v("fxReverb") / 100 * 1.5, t, 0.05);
-    fx.delayOut.gain.setTargetAtTime(v("fxDelay") / 50, t, 0.05);
-    fx.fb.gain.setTargetAtTime(v("fxEchoes") / 100, t, 0.05);
-    delay.delayTime.setTargetAtTime(Math.min(3.9, beat * v("fxTime")), t, 0.1);
+    const t = ac.currentTime, beat = 60 / val("tempo"), T = Math.min(5, beat * val("fxTime"));
+    fx.revOut.gain.setTargetAtTime(val("fxRevLevel") / 100 * 1.6, t, 0.05);
+    fx.pre.delayTime.setTargetAtTime(val("fxRevPre") / 1000, t, 0.05);
+    updateHall();
+    fx.delayOut.gain.setTargetAtTime(val("fxDelay") / 50, t, 0.05);
+    const style = document.getElementById("fxStyle").value;
+    Object.entries(fx.style).forEach(([k, g]) => g.gain.setTargetAtTime(k === style ? 1 : 0, t, 0.03));
+    fx.fbs.forEach(g => g.gain.setTargetAtTime(val("fxEchoes") / 100 * g.scale, t, 0.05));
+    const tv = val("fxDelTone") / 100;
+    fx.tones.forEach(f => f.frequency.setTargetAtTime(700 + tv * tv * 11000, t, 0.05));
+    fx.single.delayTime.setTargetAtTime(T, t, 0.1);
+    fx.ppL.delayTime.setTargetAtTime(T, t, 0.1); fx.ppR.delayTime.setTargetAtTime(T, t, 0.1);
+    [1, 1.5, 2].forEach((m, i) => fx.taps[i].delayTime.setTargetAtTime(Math.min(7.5, T * m), t, 0.1));
+    fx.wobble.gain.setTargetAtTime(val("fxWobble") / 100 * 0.006, t, 0.1);
   }
-  ["fxReverb", "fxDelay", "fxEchoes"].forEach(id => {
+  const fxUnits = { fxRevDecay: v => v + " s", fxRevPre: v => v + " ms" };
+  ["fxRevLevel", "fxRevDecay", "fxRevPre", "fxRevTone", "fxDelay", "fxEchoes", "fxDelTone", "fxWobble"].forEach(id => {
     const el = document.getElementById(id);
-    el.addEventListener("input", () => { document.getElementById(id + "Out").value = el.value; applyFx(); });
+    el.addEventListener("input", () => { document.getElementById(id + "Out").value = (fxUnits[id] || String)(el.value); applyFx(); });
   });
-  document.getElementById("fxTime").addEventListener("change", applyFx);
+  ["fxTime", "fxStyle"].forEach(id => document.getElementById(id).addEventListener("change", applyFx));
   const buses = new Map();
 
   function impulse(seconds) {
@@ -937,16 +1076,7 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
     comp.threshold.value = -16; comp.ratio.value = 3;
     master = ac.createGain(); master.gain.value = document.getElementById("volume").value / 100 * 0.9;
     master.connect(comp).connect(ac.destination);
-    reverb = ac.createConvolver(); reverb.buffer = impulse(3.4);
-    fx.revOut = ac.createGain();
-    reverb.connect(fx.revOut).connect(master);
-    delay = ac.createDelay(4);
-    fx.fb = ac.createGain();
-    fx.delayOut = ac.createGain();
-    const dTone = ac.createBiquadFilter(); dTone.type = "lowpass"; dTone.frequency.value = 2400;
-    delay.connect(dTone).connect(fx.fb).connect(delay);
-    dTone.connect(fx.delayOut).connect(master);
-    applyFx();
+    buildEffects();
     cities.forEach(c => {
       const input = ac.createGain();
       const filter = ac.createBiquadFilter(); filter.type = "lowpass"; filter.Q.value = 0.8;
@@ -970,8 +1100,8 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
     const t = ac.currentTime;
     b.filter.frequency.setTargetAtTime(650 + s.light * 250 + s.arc * 5200, t, 20);
     b.out.gain.setTargetAtTime(0.4 + 0.6 * s.light, t, 20);
-    b.rev.gain.setTargetAtTime(0.12 + (c.w.c / 100) * 0.5, t, 2);
-    b.del.gain.setTargetAtTime(["bell", "marimba", "kalimba", "epiano", "string"].includes(c.voice) ? 0.22 : 0.12, t, 0.1);
+    b.rev.gain.setTargetAtTime(c.fxRev ? 0.12 + (c.w.c / 100) * 0.5 : 0, t, c.fxRev ? 0.3 : 0.05);
+    b.del.gain.setTargetAtTime(c.fxDel ? (["bell", "marimba", "kalimba", "epiano", "string"].includes(c.voice) ? 0.22 : 0.12) : 0, t, 0.05);
     b.vol.gain.setTargetAtTime(Math.pow(c.volume / 100, 2) * 1.4, t, 0.05);
   }
   const mtof = m => 440 * Math.pow(2, (m - 69) / 12);
@@ -1317,7 +1447,8 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
     pg.setTransform(dpr, 0, 0, dpr, 0, 0);
     pg.font = LABEL_FONT;
     const half = i => pg.measureText(spaced(cities[i].name)).width / 2 + 14;
-    const mL = Math.max(48, half(1)), mR = Math.max(48, half(2));
+    const side = Math.max(0, (PW - PH * 1.35) / 2);   // on wide screens, keep the triangle a good shape
+    const mL = Math.max(48, half(1), side), mR = Math.max(48, half(2), side);
     corners = [[PW / 2, 84], [mL, PH - 84], [PW - mR, PH - 84]];
     if (!dot) dot = { w: [1 / 3, 1 / 3, 1 / 3] };
   }
