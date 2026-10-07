@@ -118,7 +118,7 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
 .sunbox { display: flex; flex-direction: column; align-items: center; gap: 6px; font-size: 11px; color: var(--ink-dim); letter-spacing: 0.1em; text-transform: uppercase; }
 .sun { width: 96px; height: 60px; }
 .bars { display: grid; gap: 7px; }
-.bar { display: grid; grid-template-columns: 52px minmax(0, 1fr) 74px; gap: 10px; align-items: center; font-size: 12px; color: var(--ink-dim); }
+.bar { display: grid; grid-template-columns: 72px minmax(0, 1fr) 74px; gap: 10px; align-items: center; font-size: 12px; color: var(--ink-dim); }
 .bar .track { height: 5px; background: rgba(243, 236, 230, 0.08); overflow: hidden; }
 .bar .fill { height: 100%; background: var(--accent); width: 0; transition: width 0.8s; }
 .bar .val { text-align: right; color: var(--ink); font-variant-numeric: tabular-nums; }
@@ -170,7 +170,7 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
   .temp { font-size: 44px; }
   .viz { grid-template-columns: minmax(0, 1fr) 84px; gap: 8px; }
   .sun { width: 84px; height: 53px; }
-  .bar { grid-template-columns: 46px minmax(0, 1fr) 70px; }
+  .bar { grid-template-columns: 68px minmax(0, 1fr) 66px; gap: 8px; }
   .controls { gap: 14px 12px; }
   .controls select, .swap input, .swap button, .mute { min-height: 44px; }
   .swap input, .mine input { font-size: 16px; }
@@ -387,7 +387,7 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
         <div class="sunbox"><canvas class="sun" data-r="sun" width="192" height="120" aria-hidden="true"></canvas><span data-r="sunlabel">–</span></div>
       </div>
       <div class="bars">
-        ${["hum", "wind", "cloud", "rain"].map(k => `<div class="bar"><span>${k}</span><div class="track"><div class="fill" data-r="b-${k}"></div></div><span class="val" data-r="v-${k}">–</span></div>`).join("")}
+        ${[["hum", "humidity"], ["wind", "wind"], ["cloud", "cloud"], ["rain", "rain"]].map(([k, label]) => `<div class="bar"><span>${label}</span><div class="track"><div class="fill" data-r="b-${k}"></div></div><span class="val" data-r="v-${k}">–</span></div>`).join("")}
       </div>
       <div class="pattern" data-r="pattern">–</div>
       <div class="controls">
@@ -411,8 +411,8 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
         </label>
         <button class="mute" type="button" aria-pressed="false" data-r="mute">Mute ${c.name}</button>
         <form class="swap" data-r="swap" style="grid-column: 1 / -1">
-          <label for="${id}-swap" style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)">Swap in another city</label>
-          <div class="ta"><input id="${id}-swap" type="text" placeholder="Swap in another city" autocomplete="off"></div>
+          <label for="${id}-swap" style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)">Swap city</label>
+          <div class="ta"><input id="${id}-swap" type="text" placeholder="Swap city" autocomplete="off"></div>
           <button type="submit">Swap</button>
         </form>
         <div class="swap-note" data-r="swapnote" style="grid-column: 1 / -1"></div>
