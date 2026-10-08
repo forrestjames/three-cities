@@ -1149,7 +1149,7 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
   function applyFx() {
     fxSummary();
     if (!fx.revOut) return;
-    const t = ac.currentTime, beat = 60 / val("tempo"), T = Math.min(5, beat * val("fxTime"));
+    const t = ac.currentTime, beat = 60 / bpmNow, T = Math.min(5, beat * val("fxTime"));
     fx.revOut.gain.setTargetAtTime(fx.hallOn === false ? 0 : val("fxRevLevel") / 100 * 1.6, t, 0.05);
     fx.pre.delayTime.setTargetAtTime(val("fxRevPre") / 1000, t, 0.05);
     updateHall();
@@ -1744,8 +1744,23 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
   // ---------- clock ----------
   let tick = 0, nextTime = 0, tickDur = 0.1, timer = null;
   const visualQueue = [];
+  // Like a DJ reading the room: the slider is the tempo with every city awake, and the set slows
+  // down as the cities fall asleep, to about three quarters of it when all three are in deep sleep
+  let bpmNow = 0;
+  function roomFactor() {
+    const ready = cities.filter(c => c.w);
+    if (!ready.length) return 1;
+    const awake = ready.reduce((a, c) => a + 1 - sleepOf(c).depth, 0) / ready.length;
+    return 0.74 + 0.26 * awake;
+  }
   function setTempo() {
-    const bpm = Number(document.getElementById("tempo").value);
+    const set = Number(document.getElementById("tempo").value);
+    const bpm = Math.round(set * roomFactor());
+    const out = document.getElementById("tempoOut");
+    out.value = bpm;
+    out.title = bpm < set ? `Set to ${set}, slowed while the cities sleep` : "";
+    if (bpm === bpmNow && tickDur) return;
+    bpmNow = bpm;
     tickDur = 60 / bpm / 8;   // one 32nd note
     applyFx();
   }
@@ -1838,7 +1853,7 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
   keySel.addEventListener("change", () => { keyRoot = Number(keySel.value); });
   scaleSel.addEventListener("change", () => { scale = SCALES[Number(scaleSel.value)][1]; });
   const tempo = document.getElementById("tempo");
-  tempo.addEventListener("input", () => { document.getElementById("tempoOut").value = tempo.value; setTempo(); });
+  tempo.addEventListener("input", () => { bpmNow = 0; setTempo(); });
   const vol = document.getElementById("volume");
   vol.addEventListener("input", () => {
     document.getElementById("volumeOut").value = vol.value;
@@ -2247,7 +2262,7 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
     cities.forEach(c => drawRing(c, now));
     drawMood(ms, Math.min(100, ms - (frame.last || ms))); frame.last = ms;
     const minute = Math.floor(Date.now() / 60000);
-    if (minute !== lastMinute) { lastMinute = minute; cities.forEach(render); }
+    if (minute !== lastMinute) { lastMinute = minute; cities.forEach(render); setTempo(); }
     requestAnimationFrame(frame);
   }
 
@@ -2256,6 +2271,7 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
   renderCredits();
   refreshAll().then(() => {
     if (!cities.some(c => c.w)) cities.forEach(c => { c.w = Object.assign({}, SNAPSHOT[c.key]); rebuild(c); });
+    setTempo();
     if (!live) return;
     let wanted = [];
     try { wanted = (new URLSearchParams(location.search).get("cities") || "").split(",").map(s => s.trim()).filter(Boolean).slice(0, 3); } catch (e) {}
