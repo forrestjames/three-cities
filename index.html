@@ -2548,8 +2548,9 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
     if (!b) return;
     const f = c.moodTarget, tau = instant ? 0.01 : FOLLOW[c.index] / 3;
     // far away is softer and duller, never silent
-    const cutoff = f >= 1 ? 6000 + (f - 1) * 6000 : 1400 * Math.pow(6000 / 1400, f);
-    const gain = f >= 1 ? 1 + (f - 1) * 0.12 : 0.62 + 0.38 * f;
+    // up close it opens only a little past the middle, so pulling the light in never gets harsh
+    const cutoff = f >= 1 ? 6000 + (f - 1) * 1000 : 1400 * Math.pow(6000 / 1400, f);
+    const gain = f >= 1 ? 1 + (f - 1) * 0.05 : 0.62 + 0.38 * f;
     b.mood.frequency.setTargetAtTime(cutoff, ac.currentTime, tau);
     b.moodGain.gain.setTargetAtTime(gain, ac.currentTime, tau);
     // where the city sits around you: relative to the light, left or right
