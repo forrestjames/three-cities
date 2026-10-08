@@ -924,11 +924,15 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
       c.ref["b-" + k].style.width = Math.max(1, vals[k][0] * 100) + "%";
       c.ref["v-" + k].textContent = vals[k][1];
     }
+    // kept short on the card; the longer explanation lives in the hover text
     const secs = Math.round(1 / breathOf(c).rate);
-    const span = secs < 90 ? `${secs} seconds` : `${Math.floor(secs / 60)} min${secs % 60 >= 10 ? " " + (secs % 60) + " s" : ""}`;
-    c.ref.pattern.innerHTML = `${c.steps} steps · ${c.hits} ${c.hits === 1 ? "hit" : "hits"} from ${c.source}<br><span class="shape">${c.pattern.map(x => x ? "x" : ".").join("")}</span>` +
-      (c.w.p != null ? `<br><span class="breath">Pressure ${Math.round(c.w.p)} hPa, ${pressureFeel(c.w.p).word}: ${c.rateByHand ? "rate set by hand" : "moving in " + pressureFeel(c.w.p).name + " notes"}${busyTrim(c) ? `, level ${busyTrim(c) > 0 ? "+" : "\u2212"}${Math.abs(busyTrim(c))} dB to keep the mix even` : ""}</span>` : "") +
-      `<br><span class="breath">Breathing with the wind: one breath for every 250 metres it travels, about every ${span}</span>`;
+    const span = secs < 90 ? `${secs} s` : `${Math.round(secs / 60)} min`;
+    const pf = pressureFeel(c.w.p), trim = busyTrim(c);
+    const facts = [];
+    if (pf) facts.push(`<span title="Air pressure sets the pace: ${pf.word}, ${c.rateByHand ? "rate set by hand" : pf.name + " notes"}${trim ? `, level ${trim > 0 ? "+" : "\u2212"}${Math.abs(trim)} dB to keep the mix even` : ""}">${Math.round(c.w.p)} hPa ${pf.word}</span>`);
+    facts.push(`<span title="One breath of the filter for every 250 metres the wind travels">breathes every ${span}</span>`);
+    c.ref.pattern.innerHTML = `${c.steps} steps · ${c.hits} ${c.hits === 1 ? "hit" : "hits"} · ${c.source}<br><span class="shape">${c.pattern.map(x => x ? "x" : ".").join("")}</span>` +
+      `<br><span class="breath">${facts.join(" · ")}</span>`;
     drawSun(c, s);
     applySound(c);
   }
