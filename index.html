@@ -69,6 +69,8 @@ main { max-width: 1240px; margin: 0 auto; padding: 0 16px 80px; display: flex; f
 .fxsum-title { font-family: var(--display); font-size: 18px; letter-spacing: 0.16em; text-transform: uppercase; }
 .fxsum-info { font-size: 12px; color: var(--ink-dim); letter-spacing: 0.04em; overflow-wrap: anywhere; }
 .fxwrap[open] .fxsum-info { opacity: 0.6; }
+.fxwrap > summary { flex-wrap: wrap; }
+.fxsum-hint { flex: 1 0 100%; font-size: 11px; color: var(--ink-faint); letter-spacing: 0.04em; padding-left: 31px; margin-top: -6px; }
 .fxwrap { border-top: 1px solid var(--line); }
 .pedals { display: flex; flex-wrap: wrap; gap: 18px; padding: 8px 0 28px; }
 .pedal { position: relative; flex: 4 1 330px; min-width: 0; border-radius: 16px; padding: 16px 20px 18px;
@@ -150,8 +152,13 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
 .mood-row { display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 10px 14px; font-size: 12px; color: var(--ink-dim); letter-spacing: 0.04em; }
 .mood-row button { background: none; border: 1px solid var(--line); padding: 8px 14px; min-height: 40px; cursor: pointer; text-transform: uppercase; letter-spacing: 0.14em; font-size: 11px; color: var(--ink); }
 .mood-row button[aria-pressed="true"] { border-color: var(--ink); }
-.mood-timer { width: 120px; height: 2px; background: var(--line); overflow: hidden; }
-.mood-timer i { display: block; height: 100%; width: 0; background: var(--ink-dim); }
+.mood-qrow { display: flex; align-items: center; justify-content: center; gap: 22px; max-width: 100%; }
+.q-next { flex: 0 0 52px; width: 52px; height: 52px; padding: 0; border: 0; border-radius: 50%; background: rgba(16,8,6,0.5); color: var(--ink); cursor: pointer; transition: transform 0.2s, background 0.2s; }
+.q-next:hover { background: rgba(243,236,230,0.08); transform: scale(1.06); }
+.q-next svg { width: 100%; height: 100%; display: block; }
+.q-track { fill: none; stroke: var(--line); stroke-width: 1.5; }
+.q-ring { fill: none; stroke: var(--ink-dim); stroke-width: 1.5; stroke-dasharray: 100; stroke-dashoffset: 100; stroke-linecap: round; transform: rotate(-90deg); transform-origin: 26px 26px; }
+@media (max-width: 600px) { .mood-qrow { gap: 12px; } .q-next { width: 44px; height: 44px; flex-basis: 44px; } }
 @media (prefers-reduced-motion: reduce) { .mood-q { transition: none; } }
 .dots { display: none; }
 @media (max-width: 960px) {
@@ -179,7 +186,7 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
 .city-head, .viz { text-shadow: 0 1px 10px rgba(0,0,0,0.75); }
 .city-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; }
 .city-head > div:first-child { flex: 1; min-width: 0; }
-.city-name { margin: 0; font-family: var(--display); font-weight: 400; font-size: clamp(22px, 2.3vw, 30px); letter-spacing: 0.12em; overflow-wrap: anywhere; line-height: 1.1; text-transform: uppercase; color: var(--accent); }
+.city-name { margin: 0; font-family: var(--display); font-weight: 400; font-size: clamp(22px, 2.3vw, 30px); letter-spacing: 0.12em; white-space: nowrap; overflow: hidden; line-height: 1.1; text-transform: uppercase; color: var(--accent); }
 .city-meta { font-size: 12px; color: var(--ink-dim); letter-spacing: 0.08em; }
 .temp { flex-shrink: 0; white-space: nowrap; font-family: var(--display); font-size: 52px; line-height: 0.9; letter-spacing: 0.04em; font-variant-numeric: tabular-nums; }
 .viz { display: grid; grid-template-columns: minmax(0, 1fr) 96px; gap: 14px; align-items: center; }
@@ -214,8 +221,33 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
 .fxsend { background: none; border: 1px solid var(--line); min-height: 40px; cursor: pointer; text-transform: uppercase; letter-spacing: 0.14em; font-size: 11px; color: var(--ink-dim); }
 .fxsend[aria-pressed="true"] { border-color: var(--accent); color: var(--ink); }
 .fxsend[aria-pressed="true"]::before { content: ""; display: inline-block; width: 7px; height: 7px; border-radius: 50%; background: var(--accent); margin-right: 8px; vertical-align: 1px; }
-.mute { grid-column: 1 / -1; background: none; border: 1px solid var(--line); padding: 8px; text-transform: uppercase; letter-spacing: 0.16em; font-size: 11px; cursor: pointer; }
+.glance { display: flex; flex-wrap: wrap; gap: 6px 8px; font-size: 12px; color: var(--ink-dim); letter-spacing: 0.04em; text-shadow: 0 1px 8px rgba(0,0,0,0.7); }
+.glance span { padding: 3px 8px; border: 1px solid var(--line); background: rgba(16,8,6,0.45); white-space: nowrap; }
+.glance .lead { color: var(--ink); }
+.glance b { font-weight: 400; color: var(--accent); }
+.cities.open .glance { display: none; }
+.quick { display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr) 36px 36px; gap: 10px; align-items: center; padding-top: 14px; border-top: 1px solid var(--line); }
+.quick select { width: 100%; min-height: 36px; background: rgba(16,8,6,0.6); font-size: 13px; }
+.quick input[type="range"] { width: 100%; accent-color: var(--accent); }
+.more-btn { width: 36px; height: 36px; display: grid; place-items: center; background: rgba(16,8,6,0.6); border: 1px solid var(--line); padding: 0; cursor: pointer; color: var(--ink-dim); transition: color 0.2s, border-color 0.2s, background 0.2s; }
+.more-btn svg { width: 18px; height: 18px; }
+.more-btn circle { fill: rgba(16,8,6,0.9); transition: transform 0.35s ease; }
+.more-btn:hover { color: var(--ink); }
+.more-btn[aria-expanded="true"] { color: var(--ground); background: var(--accent); border-color: var(--accent); }
+.more-btn[aria-expanded="true"] circle { fill: var(--accent); }
+.more-btn[aria-expanded="true"] circle:first-of-type { transform: translateX(-6px); }
+.more-btn[aria-expanded="true"] circle:last-of-type { transform: translateX(6px); }
+.mute { width: 36px; height: 36px; display: grid; place-items: center; background: rgba(16,8,6,0.6); border: 1px solid var(--line); padding: 0; cursor: pointer; color: var(--ink); }
+.mute svg { width: 18px; height: 18px; }
+.mute .off, .mute[aria-pressed="true"] .on { display: none; }
+.mute[aria-pressed="true"] .off { display: inline; }
 .mute[aria-pressed="true"] { border-color: var(--accent); color: var(--accent); }
+.cities:not(.open) .quick { margin-top: auto; }
+.more { display: none; flex-direction: column; gap: 18px; }
+.cities.open .more { display: flex; animation: moreIn 0.35s ease; }
+@keyframes moreIn { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: none; } }
+@media (prefers-reduced-motion: reduce) { .cities.open .more { animation: none; } }
+
 .swap { display: flex; gap: 8px; }
 .swap input { flex: 1; min-width: 0; background: rgba(16,8,6,0.6); border: 1px solid var(--line); padding: 8px 10px; }
 .swap button { background: none; border: 1px solid var(--line); padding: 8px 12px; cursor: pointer; text-transform: uppercase; letter-spacing: 0.12em; font-size: 11px; }
@@ -316,8 +348,9 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
   <section class="cities" id="cities" aria-label="Cities"></section>
   <nav class="dots" id="dots" aria-label="Choose a city"></nav>
 
-  <details class="fxwrap" id="fxWrap" open>
-    <summary><span class="fxsum-title">Effects</span><span class="fxsum-info" id="fxSummary"></span></summary>
+  <details class="fxwrap" id="fxWrap">
+    <summary><span class="fxsum-title">Effects</span><span class="fxsum-info" id="fxSummary"></span>
+      <span class="fxsum-hint">Open for the hall and delay pedals. Switch them on or off for each city with the sliders icon on its card.</span></summary>
     <div class="pedals">
       <section class="pedal pedal-hall" aria-label="Hall reverb">
         <div class="pedal-head">
@@ -352,12 +385,19 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
 
   <section class="mood" aria-label="Memory map">
     <div class="mood-label">Memory map</div>
-    <div class="mood-q" id="moodQ" aria-live="polite">Where were you happiest?</div>
+    <div class="mood-qrow">
+      <div class="mood-q" id="moodQ" aria-live="polite">Where were you happiest?</div>
+      <button class="q-next" id="moodNext" type="button" aria-label="Next question" title="Next question">
+        <svg viewBox="0 0 52 52" aria-hidden="true">
+          <circle class="q-track" cx="26" cy="26" r="24"/>
+          <circle class="q-ring" id="moodRing" cx="26" cy="26" r="24" pathLength="100"/>
+          <path d="M23 18l8 8-8 8" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </button>
+    </div>
     <canvas class="mood-pad" id="moodPad" tabindex="0" aria-label="Memory map. Drag the dot towards the city where it happened. Arrow keys move it too."></canvas>
     <div class="mood-row">
       <span>Drag the light towards where it happened</span>
-      <span class="mood-timer" aria-hidden="true"><i id="moodTimer"></i></span>
-      <button id="moodNext" type="button">Next question</button>
       <button id="moodPause" type="button" aria-pressed="false">Pause questions</button>
     </div>
   </section>
@@ -426,7 +466,8 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
   ];
   // a fresh key and scale every time the page loads
   let keyRoot = Math.floor(Math.random() * KEYS.length);
-  const scaleIndex = Math.floor(Math.random() * SCALES.length);
+  // on load only the pentatonic scales, which have no half steps, so three cities never grind against each other
+  const scaleIndex = Math.random() < 0.5 ? 0 : 1;
   let scale = SCALES[scaleIndex][1];
   // A city's notes are scale degrees around its own register, so they follow the key and scale.
   function noteFor(c, deg) {
@@ -549,6 +590,16 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
 
   // ---------- city cards ----------
   const wrap = document.getElementById("cities");
+  // Simple cards by default; the sliders icon on any card opens the rest of the controls on every city at once
+  function setMore(open) {
+    wrap.classList.toggle("open", open);
+    wrap.querySelectorAll(".more-btn").forEach(b => {
+      b.setAttribute("aria-expanded", String(open));
+      const t = open ? "Fewer controls" : "More controls";
+      b.setAttribute("aria-label", t); b.title = t;
+    });
+    try { localStorage.setItem("tc-more", open ? "1" : "0"); } catch (e) {}
+  }
   cities.forEach(c => {
     const id = c.key.toLowerCase();
     const el = document.createElement("article");
@@ -568,17 +619,25 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
         <canvas class="ring" data-r="ring" width="520" height="520" aria-label="${c.name} rhythm ring"></canvas>
         <div class="sunbox"><canvas class="sun" data-r="sun" width="192" height="120" aria-hidden="true"></canvas><span data-r="sunlabel">–</span></div>
       </div>
+      <div class="glance" data-r="glance"></div>
+      <div class="quick">
+        <select id="${id}-sound" aria-label="${c.name} sound">${SOUNDS.map(([v, n]) => `<option value="${v}"${v === c.voice ? " selected" : ""}>${n}</option>`).join("")}</select>
+        <input id="${id}-vol" type="range" min="0" max="100" value="${c.volume}" aria-label="${c.name} volume">
+        <button class="mute" type="button" aria-pressed="false" data-r="mute" aria-label="Mute ${c.name}" title="Mute ${c.name}">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9h4l5-4v14l-5-4H4z" fill="currentColor"/><path class="on" d="M16 9.5a4 4 0 0 1 0 5M18.5 7a7.5 7.5 0 0 1 0 10" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/><path class="off" d="M16.5 9.5l5 5m0-5l-5 5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+        </button>
+        <button class="more-btn" type="button" data-r="moreBtn" aria-expanded="false" aria-label="More controls" title="More controls">
+          <svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round">
+            <path d="M4 7h9M17 7h3M4 17h3M11 17h9"/><circle cx="15" cy="7" r="2"/><circle cx="9" cy="17" r="2"/>
+          </svg>
+        </button>
+      </div>
+      <div class="more">
       <div class="bars">
         ${[["hum", "humidity"], ["wind", "wind"], ["cloud", "cloud"], ["rain", "rain"]].map(([k, label]) => `<div class="bar"><span>${label}</span><div class="track"><div class="fill" data-r="b-${k}"></div></div><span class="val" data-r="v-${k}">–</span></div>`).join("")}
       </div>
       <div class="pattern" data-r="pattern">–</div>
       <div class="controls">
-        <label for="${id}-sound">Sound
-          <select id="${id}-sound">${SOUNDS.map(([v, n]) => `<option value="${v}"${v === c.voice ? " selected" : ""}>${n}</option>`).join("")}</select>
-        </label>
-        <label for="${id}-vol"><span class="row">Volume <output data-r="o-vol">${c.volume}</output></span>
-          <input id="${id}-vol" type="range" min="0" max="100" value="${c.volume}">
-        </label>
         <label for="${id}-src">Hits from
           <select id="${id}-src">${SOURCES.map(s => `<option${s === c.source ? " selected" : ""}>${s}</option>`).join("")}</select>
         </label>
@@ -599,18 +658,19 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
           <button type="button" class="fxsend" aria-pressed="true" data-r="sendRev">Reverb</button>
           <button type="button" class="fxsend" aria-pressed="true" data-r="sendDel">Delay</button>
         </div>
-        <button class="mute" type="button" aria-pressed="false" data-r="mute">Mute ${c.name}</button>
         <form class="swap" data-r="swap" style="grid-column: 1 / -1">
           <label for="${id}-swap" style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)">Swap city</label>
           <div class="ta"><input id="${id}-swap" type="text" placeholder="Swap city" autocomplete="off"></div>
           <button type="submit">Swap</button>
         </form>
         <div class="swap-note" data-r="swapnote" style="grid-column: 1 / -1"></div>
+      </div>
       </div>`;
     wrap.appendChild(el);
     c.el = el;
     c.ref = {};
     el.querySelectorAll("[data-r]").forEach(n => { c.ref[n.dataset.r] = n; });
+    c.ref.moreBtn.addEventListener("click", () => setMore(!wrap.classList.contains("open")));
     c.ringCtx = c.ref.ring.getContext("2d");
     c.sunCtx = c.ref.sun.getContext("2d");
     if (PHOTOS[c.key]) c.ref.photo.style.backgroundImage = `url(${PHOTOS[c.key]})`;
@@ -626,7 +686,7 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
       c.ref.oct.querySelectorAll("button").forEach(x => x.setAttribute("aria-pressed", String(x === b)));
     }));
     el.querySelector(`#${id}-sound`).addEventListener("change", e => { c.voice = e.target.value; if (ac && NEEDS[c.voice]) loadSamples(NEEDS[c.voice]); applySound(c); });
-    el.querySelector(`#${id}-vol`).addEventListener("input", e => { c.volume = Number(e.target.value); c.ref["o-vol"].value = c.volume; applySound(c); });
+    el.querySelector(`#${id}-vol`).addEventListener("input", e => { c.volume = Number(e.target.value); applySound(c); });
     el.querySelector(`#${id}-src`).addEventListener("change", e => { c.source = e.target.value; rebuild(c); });
     el.querySelector(`#${id}-rate`).addEventListener("change", e => { c.rate = Number(e.target.value); c.rateByHand = true; updateCycle(); render(c); });
     el.querySelector(`#${id}-dens`).addEventListener("input", e => { c.density = Number(e.target.value); c.ref["o-dens"].value = c.density + "%"; rebuild(c); });
@@ -634,7 +694,7 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
     c.ref.mute.addEventListener("click", () => {
       c.muted = !c.muted;
       c.ref.mute.setAttribute("aria-pressed", String(c.muted));
-      c.ref.mute.textContent = (c.muted ? "Unmute " : "Mute ") + c.name;
+      { const t = (c.muted ? "Unmute " : "Mute ") + c.name; c.ref.mute.setAttribute("aria-label", t); c.ref.mute.title = t; }
       updateCycle();
     });
     c.ref.swap.addEventListener("submit", e => {
@@ -643,6 +703,7 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
       if (q) setCity(c, q);
     });
   });
+  { let saved = false; try { saved = localStorage.getItem("tc-more") === "1"; } catch (e) {} setMore(saved); }
 
   // Each visit starts with a different mix: every city gets reverb, delay, both or neither at random,
   // with at least one city sending to each effect so both pedals are heard.
@@ -675,9 +736,9 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
       const hit = typed ? (await lookupPlaces(query, 1))[0] : query;
       if (!hit) { c.ref.swapnote.textContent = `Couldn't find "${query}". Try the city's English name.`; return false; }
       c.name = hit.name; c.lat = hit.latitude; c.lon = hit.longitude;
-      c.ref.name.textContent = c.name;
+      c.ref.name.textContent = c.name; fitName(c);
       if (c.dot) c.dot.textContent = c.name;
-      c.ref.mute.textContent = (c.muted ? "Unmute " : "Mute ") + c.name;
+      { const t = (c.muted ? "Unmute " : "Mute ") + c.name; c.ref.mute.setAttribute("aria-label", t); c.ref.mute.title = t; }
       await fetchCity(c);
       live = true; showLiveUI(); setStatus();
       c.ref.swapnote.textContent = `Now playing ${hit.name}${hit.country ? ", " + hit.country : ""}.`;
@@ -910,7 +971,22 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
     cities.forEach(c => io.observe(c.el));
   }
 
+  // long names shrink to fit on one line rather than breaking
+  function fitName(c) {
+    const el = c.ref && c.ref.name;
+    if (!el || !el.clientWidth) return;
+    el.style.fontSize = ""; el.style.letterSpacing = "";
+    if (el.scrollWidth > el.clientWidth + 1) el.style.letterSpacing = "0.04em";   // tighten first, then shrink
+    let size = parseFloat(getComputedStyle(el).fontSize);
+    while (el.scrollWidth > el.clientWidth + 1 && size > 13) { size -= 1; el.style.fontSize = size + "px"; }
+  }
+  addEventListener("resize", () => cities.forEach(fitName));
+  // refit whenever a card changes width or a font arrives
+  if (window.ResizeObserver) { const ro = new ResizeObserver(() => cities.forEach(fitName)); cities.forEach(c => c.ref && ro.observe(c.el)); }
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => cities.forEach(fitName));
+  [300, 1500, 4000].forEach(ms => setTimeout(() => cities.forEach(fitName), ms));
   function render(c) {
+    fitName(c);
     if (!c.w) return;
     const s = sunNow(c);
     c.el.classList.toggle("night", !s.day);
@@ -931,6 +1007,14 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
     const facts = [];
     if (pf) facts.push(`<span title="Air pressure sets the pace: ${pf.word}, ${c.rateByHand ? "rate set by hand" : pf.name + " notes"}${trim ? `, level ${trim > 0 ? "+" : "\u2212"}${Math.abs(trim)} dB to keep the mix even` : ""}">${Math.round(c.w.p)} hPa ${pf.word}</span>`);
     facts.push(`<span title="One breath of the filter for every 250 metres the wind travels">breathes every ${span}</span>`);
+    // at a glance: the weather doing the most musical work, each tagged with what it does
+    {
+      const w = c.w, src = { humidity: `${Math.round(w.h)}% humidity`, wind: `${Math.round(w.w)} km/h wind`, cloud: `${Math.round(w.c)}% cloud`, rain: `${w.r} mm rain` }[c.source];
+      const chips = [`<span class="lead" title="Sets how many notes play">${src} <b>\u2192 ${c.hits} of ${c.steps} hits</b></span>`];
+      if (c.source !== "wind") chips.push(`<span title="Sets how fast the filter breathes">${Math.round(w.w)} km/h wind</span>`);
+      if (pf) chips.push(`<span title="Air pressure sets the pace">${Math.round(w.p)} hPa \u00b7 ${c.rateByHand ? "set by hand" : pf.name}</span>`);
+      c.ref.glance.innerHTML = chips.join("");
+    }
     c.ref.pattern.innerHTML = `${c.steps} steps · ${c.hits} ${c.hits === 1 ? "hit" : "hits"} · ${c.source}<br><span class="shape">${c.pattern.map(x => x ? "x" : ".").join("")}</span>` +
       `<br><span class="breath">${facts.join(" · ")}</span>`;
     drawSun(c, s);
@@ -1323,8 +1407,7 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
   });
 
   const fxWrap = document.getElementById("fxWrap");
-  try { if (localStorage.getItem("fxOpen") === "0") fxWrap.open = false; } catch (e) {}
-  fxWrap.addEventListener("toggle", () => { try { localStorage.setItem("fxOpen", fxWrap.open ? "1" : "0"); } catch (e) {} });
+  // the pedals start hidden on every visit
   fxSummary();
   const buses = new Map();
 
@@ -2001,7 +2084,7 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
   ];
   const FOLLOW = [1.2, 5, 14];   // seconds each city takes to respond: quick, steady, slow
   const pad = document.getElementById("moodPad"), pg = pad.getContext("2d");
-  const qEl = document.getElementById("moodQ"), timerEl = document.getElementById("moodTimer");
+  const qEl = document.getElementById("moodQ"), ringEl = document.getElementById("moodRing");
   const QUESTION_MS = 20000;
   let order = [], qIndex = -1, qStart = performance.now(), paused = false, pausedAt = 0;
   let dot = null, dragging = false, movedThisQuestion = false;
@@ -2144,7 +2227,7 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
   function drawMood(now, dt) {
     if (!paused) {
       const k = Math.min(1, (now - qStart) / QUESTION_MS);
-      timerEl.style.width = (k * 100) + "%";
+      ringEl.style.strokeDashoffset = String(100 - k * 100);   // the ring fills as the next question approaches
       if (k >= 1) nextQuestion();
     }
     const secs = dt / 1000, t = reduceMotion ? 0 : now / 1000;
