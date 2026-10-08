@@ -533,7 +533,7 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
     { key: "Boston", name: "Boston", lat: 42.36, lon: -71.06, color: "--boston", voice: "marimba",
       base: 48, degrees: [0, -2, 1, -1, -3], rate: 2, source: "humidity" },
     { key: "Copenhagen", name: "Copenhagen", lat: 55.68, lon: 12.57, color: "--copenhagen", voice: "epiano",
-      base: 67, degrees: [0, 1, 2, 3, 4], rate: 1, source: "cloud", octave: -1 },
+      base: 67, degrees: [0, 1, 2, 3, 4], rate: 1, source: "cloud" },
     { key: "London", name: "London", lat: 51.51, lon: -0.13, color: "--london", voice: "sub",
       base: 60, degrees: [-2, -1, 0, 1, 2], rate: 1, source: "humidity" }
   ];
@@ -1811,10 +1811,10 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
       const car = ac.createOscillator(); car.frequency.value = f;
       const mod = ac.createOscillator(); mod.frequency.value = f;
       const mg = ac.createGain();
-      mg.gain.setValueAtTime(f * 1.6 * vel, t); mg.gain.exponentialRampToValueAtTime(f * 0.15, t + 0.6 * L);
+      mg.gain.setValueAtTime(f * 1.15 * vel, t); mg.gain.exponentialRampToValueAtTime(f * 0.12, t + 0.6 * L);
       mod.connect(mg).connect(car.frequency);
       const tine = ac.createOscillator(); tine.frequency.value = f * 14;
-      const tg = ac.createGain(); tg.gain.setValueAtTime(0.05 * vel, t); tg.gain.exponentialRampToValueAtTime(0.0001, t + 0.12 * L);
+      const tg = ac.createGain(); tg.gain.setValueAtTime(0.018 * vel, t); tg.gain.exponentialRampToValueAtTime(0.0001, t + 0.12 * L);
       car.connect(env); tine.connect(tg).connect(env);
       env.gain.linearRampToValueAtTime(0.24 * vel, t + 0.004);
       env.gain.exponentialRampToValueAtTime(0.0006, t + 1.8 * L);
