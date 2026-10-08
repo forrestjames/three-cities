@@ -2086,17 +2086,53 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
     const bars = Math.round((cyc.ticks - (tickNow % cyc.ticks)) / 32);
     GROOVE.note = `Auto: opening up as ${cyc.all ? "all three cities" : "two of the cities"} head for the one together, ${bars} ${bars === 1 ? "bar" : "bars"} away`;
   }
+  // Variation, so the beat keeps moving. Each bar it may pick up a stutter (the last beat replays an
+  // earlier slice, more likely when pressure is low and the weather is unsettled). Hats and snares
+  // sometimes ratchet into quick repeats, more often the gustier it is. Humid air adds ghost notes.
+  // The fourth bar of every phrase ends in a fill, and sometimes drops the kick to breathe before
+  // the next chord.
+  function grooveWeather() {
+    const ready = cities.filter(c => c.w);
+    const avg = f => ready.length ? ready.reduce((a, c) => a + f(c), 0) / ready.length : 0;
+    return {
+      gust: Math.min(1, avg(c => Math.max(0, (c.w.g || 0) - c.w.w)) / 25),
+      unsettled: Math.min(1, Math.max(0, (1016 - avg(c => c.w.p || 1013)) / 20)),
+      hum: avg(c => c.w.h / 100)
+    };
+  }
+  function ratchet(kind, t, vel, count) {
+    const sub = tickDur * 2 / count;
+    for (let i = 0; i < count; i++) drumHit(kind, t + i * sub, vel * (0.55 + 0.45 * (i + 1) / count));
+  }
   function grooveStep(j, t, tickNow) {
     if (!GROOVE.on || !GROOVE.bus) return;
     if (GROOVE.auto && j % 2 === 0) autoSweep(tickNow, t);
-    const r = GROOVE.rows, sl = grooveSleep(), accent = j % 4 === 0 ? 1 : 0.75;
+    const sl = grooveSleep(), wake = 1 - sl, wx = grooveWeather();
+    const bar = Math.floor(tickNow / 32), phrase = bar % 4;
+    if (j === 0) {
+      GROOVE.stutter = phrase !== 3 && Math.random() < (0.1 + wx.unsettled * 0.3) * wake
+        ? { from: [4, 8, 10][Math.floor(Math.random() * 3)], len: Math.random() < 0.5 ? 2 : 3 } : null;
+      GROOVE.dropKick = phrase === 3 && Math.random() < 0.35 * wake;
+    }
+    let src = j;
+    if (GROOVE.stutter && j >= 12) src = GROOVE.stutter.from + ((j - 12) % GROOVE.stutter.len);   // beat repeat
+    const r = GROOVE.rows, accent = j % 4 === 0 ? 1 : 0.75, fill = phrase === 3 && j >= 12;
     if (GROOVE.kit === "jazz" && j % 2) t += tickDur * 2 * 0.33;   // swing
-    if (r.kick[j]) drumHit("kick", t, accent);
-    if (r.snare[j] && Math.random() > sl * 0.5) drumHit("snare", t, 0.9);
-    if (r.hat[j] && Math.random() > sl * 0.7) drumHit("hat", t, (j % 2 ? 0.55 : 0.85) * (0.85 + Math.random() * 0.15));
-    if (r.rim[j] && Math.random() > sl * 0.6) drumHit("rim", t, 0.7);
+    if (r.kick[src] && !(GROOVE.dropKick && j >= 8)) drumHit("kick", t, accent);
+    if (fill && Math.random() < 0.85 * wake + 0.15) {                      // a fill into the next phrase
+      const v = 0.45 + (j - 12) * 0.15;
+      if (j >= 14 && Math.random() < 0.6) ratchet("snare", t, v, j === 15 ? 4 : 2); else drumHit("snare", t, v);
+    } else if (r.snare[src] && Math.random() > sl * 0.5) {
+      if (Math.random() < 0.06 + wx.gust * 0.12) ratchet("snare", t, 0.8, 2); else drumHit("snare", t, 0.9);
+    } else if (j % 2 && Math.random() < wx.hum * 0.14 * wake) drumHit("snare", t, 0.22);   // ghost note
+    if (r.hat[src] && Math.random() > sl * 0.7) {
+      const v = (j % 2 ? 0.55 : 0.85) * (0.8 + Math.random() * 0.2);
+      if (Math.random() < (0.05 + wx.gust * 0.25) * wake) ratchet("hat", t, v, Math.random() < 0.6 ? 2 : 3); else drumHit("hat", t, v);
+    }
+    if (r.rim[src] && Math.random() > sl * 0.6) drumHit("rim", t, 0.6 + Math.random() * 0.2);
     GROOVE.queue.push({ t, j });
   }
+
   {
     const on = document.getElementById("grooveOn"), sec = document.getElementById("groove");
     on.addEventListener("click", () => {
