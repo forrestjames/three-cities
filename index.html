@@ -424,8 +424,10 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
     ["in sen", [0, 1, 5, 7, 10]],
     ["whole tone", [0, 2, 4, 6, 8, 10]]
   ];
-  let keyRoot = 2;            // D
-  let scale = SCALES[0][1];   // minor pentatonic
+  // a fresh key and scale every time the page loads
+  let keyRoot = Math.floor(Math.random() * KEYS.length);
+  const scaleIndex = Math.floor(Math.random() * SCALES.length);
+  let scale = SCALES[scaleIndex][1];
   // A city's notes are scale degrees around its own register, so they follow the key and scale.
   function noteFor(c, deg) {
     const n = scale.length, o = Math.floor(deg / n), i = ((deg % n) + n) % n;
@@ -1829,7 +1831,7 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
   }
   const keySel = document.getElementById("key"), scaleSel = document.getElementById("scale");
   keySel.innerHTML = KEYS.map((k, i) => `<option value="${i}"${i === keyRoot ? " selected" : ""}>${k}</option>`).join("");
-  scaleSel.innerHTML = SCALES.map(([n], i) => `<option value="${i}"${i === 0 ? " selected" : ""}>${n}</option>`).join("");
+  scaleSel.innerHTML = SCALES.map(([n], i) => `<option value="${i}"${i === scaleIndex ? " selected" : ""}>${n}</option>`).join("");
   keySel.addEventListener("change", () => { keyRoot = Number(keySel.value); });
   scaleSel.addEventListener("change", () => { scale = SCALES[Number(scaleSel.value)][1]; });
   const tempo = document.getElementById("tempo");
