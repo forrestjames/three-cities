@@ -1465,7 +1465,9 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
     b.out.gain.setTargetAtTime((0.4 + 0.6 * s.light) * (1 - sl * 0.5), t, 20);   // and quieter still, the deeper the sleep
     b.rev.gain.setTargetAtTime(revSend(c), t, c.fxRev ? 0.3 : 0.05);
     b.del.gain.setTargetAtTime(c.fxDel ? (["bell", "marimba", "kalimba", "epiano", "string", "piano", "harp", "junokeys"].includes(c.voice) ? 0.22 : 0.12) : 0, t, 0.05);
-    b.vol.gain.setTargetAtTime(Math.pow(c.volume / 100, 2) * 1.4, t, 0.05);
+    // busier cities sit back a little, slower ones step forward, so pace changes don't upset the mix
+    const busy = { 1: -2, 2: 0, 4: 1.5 }[c.rate] ?? 2;   // dB: 1/32, 1/16, 1/8, slower
+    b.vol.gain.setTargetAtTime(Math.pow(c.volume / 100, 2) * 1.4 * Math.pow(10, busy / 20), t, 0.3);
     const br = breathOf(c);
     b.breathLfo.frequency.setTargetAtTime(br.rate, t, 2);
     b.breathDepth.gain.setTargetAtTime(br.depth, t, 2);
