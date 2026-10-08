@@ -71,7 +71,7 @@ main { max-width: 1240px; margin: 0 auto; padding: 0 16px 80px; display: flex; f
 .groove-info { font-size: 12px; color: var(--ink-faint); letter-spacing: 0.04em; flex: 1 1 320px; }
 .groove-body { display: grid; grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr); gap: 18px 28px; align-items: center; }
 .groove-off .groove-body { opacity: 0.4; }
-.groove-grid { display: grid; grid-template-columns: 52px repeat(16, minmax(0, 1fr)); gap: 3px; font-size: 10px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--ink-faint); align-items: center; }
+.groove-grid { display: grid; grid-template-columns: 86px repeat(16, minmax(0, 1fr)); gap: 3px; font-size: 10px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--ink-faint); align-items: center; }
 .groove-grid i { display: block; height: 12px; border-radius: 2px; background: rgba(243,236,230,0.06); }
 .groove-grid i.on { background: rgba(243,236,230,0.42); }
 .groove-grid i.now { outline: 1px solid rgba(255,217,138,0.8); }
@@ -84,7 +84,10 @@ main { max-width: 1240px; margin: 0 auto; padding: 0 16px 80px; display: flex; f
 .auto-btn { background: none; border: 1px solid var(--line); padding: 2px 8px; min-height: 22px; cursor: pointer; font-size: 10px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--ink-faint); border-radius: 11px; }
 .auto-btn[aria-pressed="true"] { color: var(--ground); background: #ffd98a; border-color: #ffd98a; }
 .groove-auto-note { font-size: 11px; color: var(--ink-faint); letter-spacing: 0.04em; grid-column: 1 / -1; min-height: 1.4em; }
-@media (max-width: 760px) { .groove-body { grid-template-columns: minmax(0, 1fr); } .groove-grid { grid-template-columns: 40px repeat(16, minmax(0, 1fr)); gap: 2px; } }
+@media (max-width: 760px) { .groove-body { grid-template-columns: minmax(0, 1fr); } .groove-grid { grid-template-columns: 76px repeat(16, minmax(0, 1fr)); gap: 2px; } }
+.gv { display: flex; align-items: center; justify-content: space-between; gap: 4px; background: none; border: 0; padding: 0 4px 0 0; cursor: pointer; font: inherit; letter-spacing: inherit; text-transform: inherit; color: inherit; min-height: 22px; }
+.gv-rev { font-size: 9px; padding: 1px 5px; border: 1px solid var(--line); border-radius: 8px; color: var(--ink-faint); }
+.gv[aria-pressed="true"] .gv-rev { background: #ffd98a; border-color: #ffd98a; color: var(--ground); }
 .fxwrap > summary { list-style: none; display: flex; align-items: center; gap: 14px; min-height: 52px; cursor: pointer; padding: 6px 0; }
 .fxwrap > summary::-webkit-details-marker { display: none; }
 .fxwrap > summary::before { content: ""; width: 9px; height: 9px; border-right: 1.5px solid var(--ink); border-bottom: 1.5px solid var(--ink); transform: rotate(-45deg); transition: transform 0.2s; margin: 0 4px; }
@@ -379,7 +382,7 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
     <div class="groove-body">
       <div class="groove-grid" id="grooveGrid" aria-hidden="true"></div>
       <div class="groove-controls">
-        <label>Kit <select id="grooveKit"><option value="soft">Soft</option><option value="lofi">Lo-fi</option><option value="808">808</option><option value="minimal">Minimal</option></select></label>
+        <label>Kit <select id="grooveKit"><option value="minimal" selected>Minimal</option><option value="soft">Soft</option><option value="lofi">Lo-fi</option><option value="808">808</option><option value="jazz">Jazz</option></select></label>
         <label>Volume <input id="grooveVol" type="range" min="0" max="100" value="40"></label>
         <label><span class="row">Filter <button class="auto-btn" id="grooveAuto" type="button" aria-pressed="false" title="Sweep towards the moment the cities line up">Auto</button></span><input id="grooveTone" type="range" min="0" max="100" value="55"></label>
         <span class="groove-auto-note" id="grooveAutoNote"></span>
@@ -1893,7 +1896,7 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
   // Each city's pattern is squeezed into one bar of sixteen steps. The kick plays where two or more
   // cities hit together, the hats wherever any city hits, the rim where exactly one city plays alone,
   // and the snare is a Euclidean backbeat whose count rises with the gustiest city's wind.
-  var GROOVE = { on: true, kit: "soft", vol: 0.4, tone: 0.55, rows: { kick: [], snare: [], hat: [], rim: [] }, step: -1, queue: [], bus: null, filter: null };
+  var GROOVE = { on: true, kit: "minimal", verb: { snare: false, hat: false, rim: false }, verbSend: null, vol: 0.4, tone: 0.55, rows: { kick: [], snare: [], hat: [], rim: [] }, step: -1, queue: [], bus: null, filter: null };
   function buildGroove() {
     if (!GROOVE) return;
     const ready = cities.filter(c => c.pattern && c.pattern.length);
@@ -1917,10 +1920,19 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
     if (!g) return;
     if (!g.childElementCount) {
       ["kick", "snare", "hat", "rim"].forEach(r => {
-        const l = document.createElement("span"); l.textContent = r; g.appendChild(l);
+        if (r === "kick") { const l = document.createElement("span"); l.textContent = r; g.appendChild(l); }
+        else {
+          const l = document.createElement("button"); l.type = "button"; l.className = "gv"; l.dataset.row = r;
+          l.setAttribute("aria-pressed", "false"); l.title = `Reverb on the ${r}`;
+          l.innerHTML = `<span class="gv-name">${r}</span><span class="gv-rev">rev</span>`;
+          l.addEventListener("click", () => { GROOVE.verb[r] = !GROOVE.verb[r]; l.setAttribute("aria-pressed", String(GROOVE.verb[r])); });
+          g.appendChild(l);
+        }
         for (let j = 0; j < 16; j++) { const i = document.createElement("i"); i.dataset.r = r; i.dataset.j = j; g.appendChild(i); }
       });
     }
+    const hatName = g.querySelector('.gv[data-row="hat"] .gv-name');
+    if (hatName) hatName.textContent = GROOVE.kit === "jazz" ? "ride" : "hat";
     g.querySelectorAll("i").forEach(i => {
       i.classList.toggle("on", !!GROOVE.rows[i.dataset.r][+i.dataset.j]);
       i.classList.toggle("now", +i.dataset.j === GROOVE.step);
@@ -1929,7 +1941,9 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
   function setupGroove() {
     GROOVE.bus = ac.createGain();
     GROOVE.filter = ac.createBiquadFilter(); GROOVE.filter.type = "lowpass"; GROOVE.filter.Q.value = 0.5;
-    const send = ac.createGain(); send.gain.value = 0.08;
+    const send = ac.createGain(); send.gain.value = 0.04;
+    GROOVE.verbSend = ac.createGain(); GROOVE.verbSend.gain.value = 0.9;   // per-drum reverb toggles feed the hall
+    GROOVE.verbSend.connect(reverb);
     GROOVE.bus.connect(GROOVE.filter).connect(master);
     GROOVE.filter.connect(send).connect(reverb);
     applyGroove();
@@ -1948,7 +1962,8 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
     soft:    { kick: [110, 46, 0.32, 0.8], snare: [1800, 0.8, 0.14, 1.1, 0], hat: [7000, 0.035, 0.5], rim: [880, 0.05, 0.44], drive: 0 },
     lofi:    { kick: [95, 44, 0.3, 0.45], snare: [2600, 0.6, 0.18, 0.22, 190], hat: [5200, 0.06, 0.1], rim: [620, 0.06, 0.14], drive: 2.5 },
     "808":   { kick: [150, 42, 0.85, 0.6], snare: [1500, 0.7, 0.2, 0.42, 185], hat: [0, 0.05, 0.5], rim: [1200, 0.03, 0.5], drive: 0, clap: true },
-    minimal: { kick: [70, 50, 0.14, 1.1], snare: [3200, 1.2, 0.05, 1.0, 400], hat: [9500, 0.016, 0.5], rim: [1400, 0.03, 0.5], drive: 0 }
+    minimal: { kick: [70, 50, 0.14, 1.1], snare: [3200, 1.2, 0.05, 1.0, 400], hat: [9500, 0.016, 0.5], rim: [1400, 0.03, 0.5], drive: 0 },
+    jazz:    { kick: [80, 48, 0.22, 0.7], snare: [2400, 0.5, 0.3, 0.5, 0], hat: [0, 0.9, 0.045], rim: [1700, 0.035, 0.45], drive: 0, jazz: true }
   };
   let driveCurve = null;
   function drumHit(kind, t, vel) {
@@ -1957,12 +1972,26 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
       if (!driveCurve) { driveCurve = new Float32Array(1024); for (let i = 0; i < 1024; i++) { const x = i / 511.5 - 1; driveCurve[i] = Math.tanh(x * 2.5) / Math.tanh(2.5); } }
       const ws = ac.createWaveShaper(); ws.curve = driveCurve; out.connect(ws).connect(GROOVE.bus);
     } else out.connect(GROOVE.bus);
+    if (GROOVE.verb[kind] && GROOVE.verbSend) out.connect(GROOVE.verbSend);
     const env = (node, peak, dec, att = 0.002) => {
       const g = ac.createGain(); g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(peak, t + att);
       g.gain.setValueAtTime(peak, t + att); g.gain.exponentialRampToValueAtTime(0.0005, t + att + dec);
       node.connect(g).connect(out); return g;
     };
     const noise = (start = Math.random() * 0.5) => { const n = ac.createBufferSource(); n.buffer = noiseBuf; n.start(t, start); n.stop(t + 1); return n; };
+    if (k.jazz && kind === "snare") {   // brushes: a soft swish that swells in rather than cracks
+      const [bp, q, dec, g] = k.snare, n = noise(), f = ac.createBiquadFilter(); f.type = "bandpass"; f.Q.value = q;
+      f.frequency.setValueAtTime(bp * 0.7, t); f.frequency.linearRampToValueAtTime(bp * 1.3, t + dec);
+      env(f, g * vel, dec * (0.7 + Math.random() * 0.6), 0.035); n.connect(f);
+      return;
+    }
+    if (k.jazz && kind === "hat") {     // ride: a cluster of metal partials with a long shimmer, a ping on top
+      const [, dec, g] = k.hat, hp = ac.createBiquadFilter(); hp.type = "highpass"; hp.frequency.value = 3000;
+      [3010, 3895, 4225, 5185, 6340, 7210].forEach(fr => { const o = ac.createOscillator(); o.type = "square"; o.frequency.value = fr * (0.995 + Math.random() * 0.01); o.connect(hp); o.start(t); o.stop(t + dec + 0.1); });
+      env(hp, g * vel * 0.5, dec, 0.001);
+      const ping = ac.createOscillator(); ping.frequency.value = 2650; env(ping, g * vel * 0.6, dec * 0.5, 0.001); ping.start(t); ping.stop(t + dec);
+      return;
+    }
     if (kind === "kick") {
       const [f0, f1, dec, g] = k.kick, o = ac.createOscillator();
       o.frequency.setValueAtTime(f0, t); o.frequency.exponentialRampToValueAtTime(f1, t + 0.09);
@@ -2016,6 +2045,7 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
     if (!GROOVE.on || !GROOVE.bus) return;
     if (GROOVE.auto && j % 2 === 0) autoSweep(tickNow, t);
     const r = GROOVE.rows, sl = grooveSleep(), accent = j % 4 === 0 ? 1 : 0.75;
+    if (GROOVE.kit === "jazz" && j % 2) t += tickDur * 2 * 0.33;   // swing
     if (r.kick[j]) drumHit("kick", t, accent);
     if (r.snare[j] && Math.random() > sl * 0.5) drumHit("snare", t, 0.9);
     if (r.hat[j] && Math.random() > sl * 0.7) drumHit("hat", t, (j % 2 ? 0.55 : 0.85) * (0.85 + Math.random() * 0.15));
@@ -2027,7 +2057,7 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
     on.addEventListener("click", () => {
       GROOVE.on = !GROOVE.on; on.setAttribute("aria-pressed", String(GROOVE.on)); sec.classList.toggle("groove-off", !GROOVE.on); applyGroove();
     });
-    document.getElementById("grooveKit").addEventListener("change", e => { GROOVE.kit = e.target.value; });
+    document.getElementById("grooveKit").addEventListener("change", e => { GROOVE.kit = e.target.value; drawGrooveGrid(); });
     document.getElementById("grooveVol").addEventListener("input", e => { GROOVE.vol = e.target.value / 100; applyGroove(); });
     document.getElementById("grooveTone").addEventListener("input", e => { GROOVE.tone = e.target.value / 100; applyGroove(); });
     const auto = document.getElementById("grooveAuto"), note = document.getElementById("grooveAutoNote");
