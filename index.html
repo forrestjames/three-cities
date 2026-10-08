@@ -526,12 +526,12 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
     { key: "Boston", name: "Boston", lat: 42.36, lon: -71.06, color: "--boston", voice: "marimba",
       base: 48, degrees: [0, -2, 1, -1, -3], rate: 2, source: "humidity" },
     { key: "Copenhagen", name: "Copenhagen", lat: 55.68, lon: 12.57, color: "--copenhagen", voice: "epiano",
-      base: 67, degrees: [0, 1, 2, 3, 4], rate: 1, source: "cloud" },
+      base: 67, degrees: [0, 1, 2, 3, 4], rate: 1, source: "cloud", octave: -1 },
     { key: "London", name: "London", lat: 51.51, lon: -0.13, color: "--london", voice: "sub",
       base: 60, degrees: [-2, -1, 0, 1, 2], rate: 1, source: "humidity" }
   ];
   cities.forEach((c, i) => Object.assign(c, {
-    index: i, w: null, density: 50, chance: 100, volume: 80, octave: 0, muted: false, fxRev: true, fxDel: true,
+    index: i, w: null, density: 50, chance: 100, volume: 80, octave: c.octave || 0, muted: false, fxRev: true, fxDel: true,
     steps: 0, hits: 0, pattern: [], pos: 0, hitCount: 0,
     flashes: [], playhead: -1
   }));
@@ -699,7 +699,7 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
         </label>
         <div class="octave" role="group" aria-label="${c.name} octave" data-r="oct">
           <span class="octave-label">Octave</span>
-          ${[-2, -1, 0, 1, 2].map(o => `<button type="button" data-oct="${o}" aria-pressed="${o === 0}">${o > 0 ? "+" + o : o < 0 ? "\u2212" + -o : "0"}</button>`).join("")}
+          ${[-2, -1, 0, 1, 2].map(o => `<button type="button" data-oct="${o}" aria-pressed="${o === c.octave}">${o > 0 ? "+" + o : o < 0 ? "\u2212" + -o : "0"}</button>`).join("")}
         </div>
         <div class="fxsends">
           <button type="button" class="fxsend" aria-pressed="true" data-r="sendRev">Reverb</button>
