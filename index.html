@@ -511,8 +511,8 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
   ];
   // a fresh key and scale every time the page loads
   let keyRoot = Math.floor(Math.random() * KEYS.length);
-  // on load only the pentatonic scales, which have no half steps, so three cities never grind against each other
-  const scaleIndex = Math.random() < 0.5 ? 0 : 1;
+  // any scale can come up; the shared chords below keep the three cities agreeing with each other
+  const scaleIndex = Math.floor(Math.random() * SCALES.length);
   let scale = SCALES[scaleIndex][1];
   // A city's notes are scale degrees around its own register, so they follow the key and scale.
   function noteFor(c, deg) {
@@ -1901,6 +1901,42 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
     });
   }
 
+  // ---------- melody: a shared chord progression, and a wandering line for each city ----------
+  // All three cities follow one slow progression, a new chord every 4 bars. Each city's melody walks
+  // the scale from wherever its last note was: calm air takes small steps, wind makes it leap, humid
+  // air repeats notes. On the downbeat, and more often than not elsewhere, it settles on a chord tone.
+  var HARM = { prog: null, root: 0 };
+  function progressionFor(n) {
+    const options = n >= 7 ? [[0, 5, 3, 4], [0, 3, 4, 0], [0, 4, 5, 3], [5, 3, 0, 4]]   // I vi IV V, I IV V I, I V vi IV, vi IV I V
+                  : n === 5 ? [[0, 3, 1, 2], [0, 2, 3, 1], [0, 3, 4, 2]]
+                  : [[0, 2, 4, 1], [0, 3, 1, 4]];
+    return options[Math.floor(Math.random() * options.length)];
+  }
+  function chordTones(n) { const r = HARM.root; return [r, r + 2, r + 4].map(d => ((d % n) + n) % n); }
+  function nextDegree(c, pos) {
+    const n = scale.length;
+    if (!HARM.prog || HARM.n !== n) { HARM.prog = progressionFor(n); HARM.n = n; }
+    if (c.mel == null) c.mel = ((HARM.root % n) + n) % n;
+    const wind = Math.min(c.w ? c.w.w : 10, 50) / 50, hum = c.w ? c.w.h / 100 : 0.5;
+    const lean = c.degrees ? Math.sign(c.degrees.reduce((a, b) => a + b, 0)) * 0.12 : 0;   // each city's old contour becomes a gentle lean
+    let d = c.mel, dir = 0;
+    if (Math.random() > hum * 0.18) {
+      const leap = Math.random() < 0.08 + wind * 0.45;
+      const size = leap ? 2 + Math.floor(Math.random() * (2 + Math.round(wind * 3))) : 1;
+      dir = Math.random() < 0.5 + lean ? 1 : -1;
+      if (c.mel > n + 2) dir = -1; else if (c.mel < -3) dir = 1;          // stay within about two octaves
+      d = c.mel + dir * size;
+    }
+    const tones = chordTones(n), isTone = x => tones.includes(((x % n) + n) % n);
+    if ((pos === 0 || Math.random() < 0.55) && !isTone(d)) {                 // lean onto the chord
+      const way = dir || (Math.random() < 0.5 ? 1 : -1);                     // keep moving the way the line was going
+      for (let k = 1; k <= 3; k++) { if (isTone(d + way * k) && d + way * k !== c.mel) { d += way * k; break; } }
+    }
+    if (d < -5) d += n; else if (d > n + 4) d -= n;                         // fold back into range by an octave
+    c.mel = d;
+    return d;
+  }
+
   // ---------- rhythm section: one drum part made from all three cities ----------
   // Each city's pattern is squeezed into one bar of sixteen steps. The kick plays where two or more
   // cities hit together, the hats wherever any city hits, the rim where exactly one city plays alone,
@@ -2107,7 +2143,7 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
     const sl = sleepOf(c).depth;
     const played = !c.muted && c.pattern[pos] && Math.random() * 100 < c.chance && Math.random() > sl * 0.75;   // asleep, most notes rest
     if (played) {
-      const deg = c.degrees[(c.hitCount + Math.abs(Math.round(c.w.t)) + (c.melodyShift || 0)) % c.degrees.length];
+      const deg = nextDegree(c, pos);
       const note = Math.max(12, Math.min(108, noteFor(c, deg) - (c.w.t < 0 ? 12 : 0) + 12 * c.octave));
       // closeness on the memory map, eased at the city's own pace: 0 far away, 1 the middle, 3 right on it
       const f = Math.max(0, Math.min(3, c.moodShown ?? 1));
@@ -2140,12 +2176,14 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
     while (nextTime < ac.currentTime + 0.12) {
       cities.forEach(c => { if (tick % sleepRate(c) === 0) stepCity(c, nextTime); });
       if (tick % 2 === 0) grooveStep((tick / 2) % 16, nextTime, tick);
+      if (tick % (32 * 4) === 0 && HARM.prog) HARM.root = HARM.prog[(tick / (32 * 4)) % HARM.prog.length];   // a new chord every 4 bars
       nextTime += tickDur;
       tick++;
       // long form, counted in 4/4 bars of 32 ticks: every 64 bars each city's melody moves on
       // a place or two; every 128 bars its rhythm rotates a step or two, so the groove turns over
       if (tick % (32 * 64) === 0) {
         const bars = tick / 32;
+        if (HARM.prog) { const k = 1 + Math.floor(Math.random() * 2); HARM.prog = HARM.prog.slice(k).concat(HARM.prog.slice(0, k)); }   // the chord sequence moves on a place or two
         cities.forEach(c => {
           c.melodyShift = (c.melodyShift || 0) + 1 + Math.floor(Math.random() * 2);
           if (bars % 128 === 0) { c.rot = (c.rot || 0) + 1 + Math.floor(Math.random() * 2); rebuild(c); }
@@ -2166,7 +2204,8 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
     if (!ac) setupAudio();
     await ac.resume();
     tick = 0; nextTime = ac.currentTime + 0.08;
-    cities.forEach(c => { c.pos = 0; c.hitCount = 0; });
+    cities.forEach(c => { c.pos = 0; c.hitCount = 0; c.mel = null; });
+    HARM.prog = null; HARM.root = 0;
     timer = setInterval(scheduler, 25);
     playing = true;
   }
