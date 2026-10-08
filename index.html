@@ -397,7 +397,8 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
     </div>
     <canvas class="mood-pad" id="moodPad" tabindex="0" aria-label="Memory map. Drag the dot towards the city where it happened. Arrow keys move it too."></canvas>
     <div class="mood-row">
-      <span>Drag the light towards where it happened</span>
+      <span>Drag the light towards where it happened. Each answer leaves a mark.</span>
+      <button id="moodClear" type="button">Clear my marks</button>
       <button id="moodPause" type="button" aria-pressed="false">Pause questions</button>
     </div>
   </section>
@@ -530,7 +531,8 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
     }
     c.steps = Math.max(2, Math.abs(Math.round(c.w.t)));
     c.hits = Math.max(1, Math.min(c.steps, Math.round(c.steps * sourceAmount(c) * c.density / 100)));
-    c.pattern = euclid(c.hits, c.steps);
+    const base = euclid(c.hits, c.steps), rot = (c.rot || 0) % c.steps;
+    c.pattern = base.slice(rot).concat(base.slice(0, rot));   // rotated by the long-form shifts below
     c.pos = c.pos % c.steps;
     render(c);
     updateCycle();
@@ -1876,7 +1878,7 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
     const sl = sleepOf(c).depth;
     const played = !c.muted && c.pattern[pos] && Math.random() * 100 < c.chance && Math.random() > sl * 0.75;   // asleep, most notes rest
     if (played) {
-      const deg = c.degrees[(c.hitCount + Math.abs(Math.round(c.w.t))) % c.degrees.length];
+      const deg = c.degrees[(c.hitCount + Math.abs(Math.round(c.w.t)) + (c.melodyShift || 0)) % c.degrees.length];
       const note = Math.max(12, Math.min(108, noteFor(c, deg) - (c.w.t < 0 ? 12 : 0) + 12 * c.octave));
       // closeness on the memory map, eased at the city's own pace: 0 far away, 1 the middle, 3 right on it
       const f = Math.max(0, Math.min(3, c.moodShown ?? 1));
@@ -1910,6 +1912,15 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
       cities.forEach(c => { if (tick % sleepRate(c) === 0) stepCity(c, nextTime); });
       nextTime += tickDur;
       tick++;
+      // long form, counted in 4/4 bars of 32 ticks: every 64 bars each city's melody moves on
+      // a place or two; every 128 bars its rhythm rotates a step or two, so the groove turns over
+      if (tick % (32 * 64) === 0) {
+        const bars = tick / 32;
+        cities.forEach(c => {
+          c.melodyShift = (c.melodyShift || 0) + 1 + Math.floor(Math.random() * 2);
+          if (bars % 128 === 0) { c.rot = (c.rot || 0) + 1 + Math.floor(Math.random() * 2); rebuild(c); }
+        });
+      }
     }
   }
   // On iPhone, Web Audio is muted by the silent switch unless a media element is also playing.
@@ -2088,12 +2099,23 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
   const QUESTION_MS = 20000;
   let order = [], qIndex = -1, qStart = performance.now(), paused = false, pausedAt = 0;
   let dot = null, dragging = false, movedThisQuestion = false;
-  const memories = [];   // { w: [three weights], q }
+  // ----- the atlas: your answers leave marks that develop the places underneath -----
+  const markKey = () => "tc-marks:" + cities.map(c => c.name).join("|");
+  let marks = [], marksFor = "";
+  function loadMarks() {
+    marksFor = markKey();
+    try { marks = JSON.parse(localStorage.getItem(marksFor)) || []; } catch (e) { marks = []; }
+  }
+  function saveMarks() { try { localStorage.setItem(marksFor, JSON.stringify(marks.slice(-240))); } catch (e) {} }
+  function addMark(w, q) {
+    marks.push({ w: w.map(v => Math.round(v * 1000) / 1000), q, t: Date.now() });
+    saveMarks(); atlasDirty = true;
+  }
   cities.forEach(c => { c.moodTarget = 1; c.moodShown = 1; });
 
   function shuffle(a) { for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; }
   function nextQuestion() {
-    if (movedThisQuestion && dot) { memories.push({ w: dot.w.slice() }); if (memories.length > 24) memories.shift(); }
+    if (movedThisQuestion && dot && qIndex >= 0) addMark(dot.w.slice(), order[qIndex]);
     movedThisQuestion = false;
     if (!order.length || qIndex >= order.length - 1) { order = shuffle(QUESTIONS.slice()); qIndex = -1; }
     qIndex++;
@@ -2118,8 +2140,81 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
     const mL = Math.max(48, half(1), side), mR = Math.max(48, half(2), side);
     corners = [[PW / 2, 84], [mL, PH - 84], [PW - mR, PH - 84]];
     if (!dot) dot = { w: [1 / 3, 1 / 3, 1 / 3] };
+    placesDirty = true;
   }
   const toXY = w => [0, 1].map(k => w[0] * corners[0][k] + w[1] * corners[1][k] + w[2] * corners[2][k]);
+
+  // the places themselves: each city's photo bleeds in from its corner, faint until a memory develops it
+  const placesCv = document.createElement("canvas"), maskCv = document.createElement("canvas"), revealCv = document.createElement("canvas");
+  const photoImgs = {};
+  let atlasDirty = true, placesDirty = true;
+  function photoOf(c) {
+    const m = c.ref && /url\(["']?(.*?)["']?\)$/.exec(c.ref.photo.style.backgroundImage || "");
+    return m ? m[1] : null;
+  }
+  function imgFor(url) {
+    if (!url) return null;
+    if (!photoImgs[url]) {
+      const im = new Image();
+      im.onload = () => { placesDirty = true; };
+      im.src = url;
+      photoImgs[url] = im;
+    }
+    const im = photoImgs[url];
+    return im.complete && im.naturalWidth ? im : null;
+  }
+  let photoSig = "";
+  function buildPlaces() {
+    placesCv.width = maskCv.width = revealCv.width = Math.max(1, Math.round(PW));
+    placesCv.height = maskCv.height = revealCv.height = Math.max(1, Math.round(PH));
+    const g = placesCv.getContext("2d");
+    g.clearRect(0, 0, PW, PH);
+    const tmp = document.createElement("canvas"); tmp.width = placesCv.width; tmp.height = placesCv.height;
+    const t = tmp.getContext("2d");
+    cities.forEach((c, i) => {
+      const im = imgFor(photoOf(c));
+      if (!im) return;
+      t.globalCompositeOperation = "source-over"; t.clearRect(0, 0, PW, PH);
+      const sc = Math.max(PW / im.naturalWidth, PH / im.naturalHeight) * 1.4;
+      const iw = im.naturalWidth * sc, ih = im.naturalHeight * sc;
+      const mid = [(corners[0][0] + corners[1][0] + corners[2][0]) / 3, (corners[0][1] + corners[1][1] + corners[2][1]) / 3];
+      const cx = corners[i][0] + (mid[0] - corners[i][0]) * 0.45, cy = corners[i][1] + (mid[1] - corners[i][1]) * 0.45;   // leaning in from its corner
+      t.filter = "saturate(1.15) contrast(1.05)";
+      t.drawImage(im, cx - iw / 2, cy - ih / 2, iw, ih);
+      t.filter = "none";
+      t.globalCompositeOperation = "destination-in";
+      const r = Math.max(PW, PH) * 0.62, gr = t.createRadialGradient(corners[i][0], corners[i][1], 0, corners[i][0], corners[i][1], r);
+      gr.addColorStop(0, "rgba(0,0,0,1)"); gr.addColorStop(0.55, "rgba(0,0,0,0.55)"); gr.addColorStop(1, "rgba(0,0,0,0)");
+      t.fillStyle = gr; t.fillRect(0, 0, PW, PH);
+      g.globalCompositeOperation = "lighter"; g.globalAlpha = 0.85;
+      g.drawImage(tmp, 0, 0);
+    });
+    g.globalCompositeOperation = "source-over"; g.globalAlpha = 1;
+    placesDirty = false; atlasDirty = true;
+  }
+  function buildReveal() {
+    const m = maskCv.getContext("2d");
+    m.clearRect(0, 0, PW, PH);
+    const now = Date.now(), R = Math.max(56, Math.min(PW, PH) * 0.15);
+    marks.forEach(mk => {
+      const [x, y] = toXY(mk.w), days = (now - mk.t) / 864e5;
+      const a = 0.35 + 0.55 * Math.exp(-days / 21);          // memories soften with time but never vanish
+      const gr = m.createRadialGradient(x, y, 0, x, y, R);
+      gr.addColorStop(0, `rgba(0,0,0,${a})`); gr.addColorStop(1, "rgba(0,0,0,0)");
+      m.fillStyle = gr; m.beginPath(); m.arc(x, y, R, 0, 7); m.fill();
+    });
+    const r = revealCv.getContext("2d");
+    r.globalCompositeOperation = "source-over"; r.clearRect(0, 0, PW, PH);
+    r.drawImage(placesCv, 0, 0);
+    r.globalCompositeOperation = "destination-in"; r.drawImage(maskCv, 0, 0);
+    r.globalCompositeOperation = "source-over";
+    atlasDirty = false;
+  }
+  function mixColour(w) {
+    const rgb = cities.map(c => { const h = colorOf(c).replace("#", ""); return [0, 2, 4].map(k => parseInt(h.slice(k, k + 2), 16)); });
+    const v = [0, 1, 2].map(k => Math.round(w[0] * rgb[0][k] + w[1] * rgb[1][k] + w[2] * rgb[2][k]));
+    return `rgb(${v[0]},${v[1]},${v[2]})`;
+  }
   function toWeights(x, y) {
     const [a, b, c] = corners;
     const d = (b[1] - c[1]) * (a[0] - c[0]) + (c[0] - b[0]) * (a[1] - c[1]);
@@ -2222,7 +2317,13 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
   });
   addEventListener("resize", sizePad);
   sizePad();
+  loadMarks();
   nextQuestion();
+  { const clr = document.getElementById("moodClear"); let armed = 0;
+    clr.addEventListener("click", () => {
+      if (Date.now() - armed > 4000) { armed = Date.now(); clr.textContent = "Tap again to clear"; setTimeout(() => { clr.textContent = "Clear my marks"; }, 4000); return; }
+      marks = []; saveMarks(); atlasDirty = true; armed = 0; clr.textContent = "Clear my marks";
+    }); }
 
   function drawMood(now, dt) {
     if (!paused) {
@@ -2237,13 +2338,23 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
     });
     const [dx, dy] = toXY(dot.w);
 
-    // night sky with a wash of each city's colour from its corner
+    // swapped cities bring new photos and new marks
+    if (markKey() !== marksFor) { loadMarks(); atlasDirty = true; }
+    const sig = cities.map(photoOf).join("|");
+    if (sig !== photoSig) { photoSig = sig; placesDirty = true; }
+    if (placesDirty) buildPlaces();
+    if (atlasDirty) buildReveal();
+
+    // night sky, the places faint beneath it, developed wherever you have left a memory
     pg.globalCompositeOperation = "source-over";
     pg.fillStyle = "#0d090b"; pg.fillRect(0, 0, PW, PH);
+    pg.globalAlpha = 0.2; pg.drawImage(placesCv, 0, 0, PW, PH);
+    pg.globalAlpha = 1; pg.drawImage(revealCv, 0, 0, PW, PH);
+    pg.globalAlpha = 1;
     cities.forEach((c, i) => {
       const [x, y] = corners[i], rr = Math.max(PW, PH) * (0.45 + 0.25 * Math.min(1.5, c.moodShown) / 1.5);
       const gr = pg.createRadialGradient(x, y, 0, x, y, rr);
-      gr.addColorStop(0, colorOf(c) + "40"); gr.addColorStop(1, colorOf(c) + "00");
+      gr.addColorStop(0, colorOf(c) + "26"); gr.addColorStop(1, colorOf(c) + "00");
       pg.fillStyle = gr; pg.fillRect(0, 0, PW, PH);
     });
     // twinkling stars
@@ -2256,13 +2367,32 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
     pg.strokeStyle = "rgba(243,236,230,0.14)"; pg.lineWidth = 1;
     pg.beginPath(); corners.forEach(([x, y], i) => i ? pg.lineTo(x, y) : pg.moveTo(x, y)); pg.closePath(); pg.stroke();
 
-    // past answers
-    memories.forEach((m, i) => {
-      const [x, y] = toXY(m.w);
-      pg.globalAlpha = 0.3 + 0.5 * (i + 1) / memories.length;
-      pg.fillStyle = "#f3ece6"; pg.beginPath(); pg.arc(x, y, 2.5, 0, 7); pg.fill();
-    });
-    pg.globalAlpha = 1;
+    // your marks: a thread through them in the order you left them, then each one as a small bloom
+    if (marks.length) {
+      const pts = marks.map(mk => toXY(mk.w)), nowMs = Date.now();
+      pg.strokeStyle = "rgba(255,240,220,0.22)"; pg.lineWidth = 1; pg.setLineDash([2, 5]);
+      pg.beginPath(); pts.forEach(([x, y], i) => i ? pg.lineTo(x, y) : pg.moveTo(x, y)); pg.stroke(); pg.setLineDash([]);
+      let near = -1, nearD = 70;
+      marks.forEach((mk, i) => {
+        const [x, y] = pts[i], days = (nowMs - mk.t) / 864e5, a = 0.45 + 0.55 * Math.exp(-days / 21), col = mixColour(mk.w);
+        const breathe = reduceMotion ? 0 : Math.sin(t * 1.1 + i) * 0.6;
+        pg.globalAlpha = 0.18 * a; pg.fillStyle = col; pg.beginPath(); pg.arc(x, y, 13 + breathe, 0, 7); pg.fill();
+        pg.globalAlpha = 0.7 * a; pg.strokeStyle = col; pg.lineWidth = 1; pg.beginPath(); pg.arc(x, y, 6.5, 0, 7); pg.stroke();
+        pg.globalAlpha = 0.95 * a; pg.fillStyle = "#fff6ea"; pg.beginPath(); pg.arc(x, y, 2, 0, 7); pg.fill();
+        const d = Math.hypot(x - dx, y - dy);
+        if (d < nearD) { nearD = d; near = i; }
+      });
+      // the memory you're closest to whispers its question; the newest one too, for a while
+      const label = i => {
+        const [x, y] = pts[i], txt = marks[i].q.replace(/\?$/, "");
+        pg.font = "italic 12px 'Source Code Pro', monospace"; pg.textAlign = "center";
+        pg.globalAlpha = 0.85; pg.fillStyle = "#f3ece6"; pg.fillText(txt, Math.min(PW - 8 - pg.measureText(txt).width / 2, Math.max(8 + pg.measureText(txt).width / 2, x)), y - 18);
+      };
+      if (near >= 0) label(near);
+      const last = marks.length - 1;
+      if (last !== near && nowMs - marks[last].t < 8000) label(last);
+      pg.globalAlpha = 1;
+    }
 
     // threads of light from the light to each city
     pg.globalCompositeOperation = "lighter";
