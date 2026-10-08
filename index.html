@@ -478,7 +478,7 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
     if (p <= 1020) return { rate: 2, word: "steady", name: "1/16" };
     return { rate: 4, word: "settled", name: "1/8" };
   }
-  const busyTrim = c => ({ 1: -2, 2: 0, 4: 1.5 }[c.rate] ?? 2);   // dB by pace: 1/32, 1/16, 1/8, slower
+  const busyTrim = c => ({ 1: -4, 2: 0, 4: 1.5 }[c.rate] ?? 2);   // dB by pace: 1/32, 1/16, 1/8, slower
   function rebuild(c) {
     if (!c.w) return;
     const pf = pressureFeel(c.w.p);
