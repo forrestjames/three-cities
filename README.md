@@ -14,6 +14,7 @@ You can swap in the cities you've lived in, then share a link to your version.
 - **Polymeter.** Each city runs its own pattern length and rate, so they drift in and out of phase.
 - **Air pressure.** Each city's pace follows its barometer: settled high pressure plays in 1/8 notes, ordinary weather in 1/16s, and low pressure before a storm gets restless in 1/32s.
 - **Long form.** Every 64 bars each city's melody moves on a place or two. Every 128 bars its rhythm rotates a step or two, so the groove turns over.
+- **Rhythm section.** One drum part made from all three cities, squeezed into a bar of 16: the kick lands where two or more cities hit together, hats wherever any city plays, a rim where one plays alone, and a backbeat snare that adds a hit when the wind gusts hard. Four kits, with volume and a filter.
 - **Memory map.** Questions about your life, answered by dragging a light between the three cities. Each answer leaves a mark that develops a photo of the places underneath, saved in your browser.
 - **The sun.** Each city's filter opens with the sun's height and fades out around sunset. Cloud cover adds reverb.
 - **Sound.** Everything is synthesised in the browser with the Web Audio API. Chrome can also send MIDI out, one channel per city.
