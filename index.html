@@ -249,7 +249,9 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
 .fxsend[aria-pressed="true"]::before { content: ""; display: inline-block; width: 7px; height: 7px; border-radius: 50%; background: var(--accent); margin-right: 8px; vertical-align: 1px; }
 .glance { display: flex; flex-wrap: wrap; gap: 6px 8px; font-size: 12px; color: var(--ink-dim); letter-spacing: 0.04em; text-shadow: 0 1px 8px rgba(0,0,0,0.7); }
 .glance span { padding: 3px 8px; border: 1px solid var(--line); background: rgba(16,8,6,0.45); white-space: nowrap; }
-.glance .lead { color: var(--ink); }
+.glance .lead { color: var(--ink); display: inline-flex; align-items: center; gap: 4px; padding: 0 8px 0 0; }
+.glance-src { background: transparent; border: 0; color: var(--ink); font: inherit; font-size: 12px; letter-spacing: 0.04em; padding: 3px 2px 3px 8px; cursor: pointer; }
+.glance-src option { background: #1a1210; color: var(--ink); }
 .glance b { font-weight: 400; color: var(--accent); }
 .cities.open .glance { display: none; }
 .quick { display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr) 36px 36px; gap: 10px; align-items: center; padding-top: 14px; border-top: 1px solid var(--line); }
@@ -733,6 +735,11 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
     el.querySelector(`#${id}-sound`).addEventListener("change", e => { c.voice = e.target.value; if (ac && NEEDS[c.voice]) loadSamples(NEEDS[c.voice]); applySound(c); });
     el.querySelector(`#${id}-vol`).addEventListener("input", e => { c.volume = Number(e.target.value); applySound(c); });
     el.querySelector(`#${id}-src`).addEventListener("change", e => { c.source = e.target.value; rebuild(c); });
+    // the hits tag on the simple card is a menu too, kept in step with the one in the full controls
+    c.ref.glance.addEventListener("change", e => {
+      if (!e.target.classList.contains("glance-src")) return;
+      c.source = e.target.value; el.querySelector(`#${id}-src`).value = c.source; rebuild(c);
+    });
     el.querySelector(`#${id}-rate`).addEventListener("change", e => { c.rate = Number(e.target.value); c.rateByHand = true; updateCycle(); render(c); });
     el.querySelector(`#${id}-dens`).addEventListener("input", e => { c.density = Number(e.target.value); c.ref["o-dens"].value = c.density + "%"; rebuild(c); });
     el.querySelector(`#${id}-chance`).addEventListener("input", e => { c.chance = Number(e.target.value); c.ref["o-chance"].value = c.chance + "%"; });
@@ -1055,7 +1062,9 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
     // at a glance: the weather doing the most musical work, each tagged with what it does
     {
       const w = c.w, src = { humidity: `${Math.round(w.h)}% humidity`, wind: `${Math.round(w.w)} km/h wind`, cloud: `${Math.round(w.c)}% cloud`, rain: `${w.r} mm rain` }[c.source];
-      const chips = [`<span class="lead" title="Sets how many notes play">${src} <b>\u2192 ${c.hits} of ${c.steps} hits</b></span>`];
+      const label = { humidity: `${Math.round(w.h)}% humidity`, wind: `${Math.round(w.w)} km/h wind`, cloud: `${Math.round(w.c)}% cloud`, rain: `${w.r} mm rain` };
+      const pick = `<select class="glance-src" aria-label="${c.name}: which weather sets the hits" title="Choose which weather sets how many notes play">${SOURCES.map(k => `<option value="${k}"${k === c.source ? " selected" : ""}>${label[k]}</option>`).join("")}</select>`;
+      const chips = [`<span class="lead">${pick} <b>\u2192 ${c.hits} of ${c.steps} hits</b></span>`];
       if (c.source !== "wind") chips.push(`<span title="Sets how fast the filter breathes">${Math.round(w.w)} km/h wind</span>`);
       if (pf) chips.push(`<span title="Air pressure sets the pace">${Math.round(w.p)} hPa \u00b7 ${c.rateByHand ? "set by hand" : pf.name}</span>`);
       c.ref.glance.innerHTML = chips.join("");
