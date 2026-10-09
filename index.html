@@ -147,6 +147,35 @@ main { max-width: 1240px; margin: 0 auto; padding: 0 16px 80px; display: flex; f
 .tgroup { display: flex; flex-direction: column; gap: 10px; min-width: 0; }
 .tlabel { font-family: var(--display); font-size: 18px; letter-spacing: 0.16em; text-transform: uppercase; color: var(--ink); }
 .tgroup .field { justify-content: space-between; }
+.rack { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.25fr) minmax(0, 1fr); gap: 4px; padding: 16px 12px; margin-top: 8px; border-radius: 6px;
+        background: linear-gradient(#0c0909, #0c0909) padding-box; position: relative; box-shadow: inset 0 0 0 1px rgba(255,255,255,0.04); }
+.rack::before, .rack::after { content: ""; position: absolute; left: 0; right: 0; height: 9px; background: repeating-linear-gradient(90deg, #2c2725 0 22px, #120f0e 22px 26px, #2c2725 26px 48px), linear-gradient(#3a3330, #1b1716);
+        background-blend-mode: multiply; border-radius: 3px; }
+.rack::before { top: 2px; } .rack::after { bottom: 2px; }
+.rack-mod { border-radius: 3px; padding: 18px 16px 18px; --led: #ffd98a;
+        background: repeating-linear-gradient(90deg, rgba(255,255,255,0.022) 0 1px, transparent 1px 3px), linear-gradient(180deg, var(--p1), var(--p2));
+        border: 1px solid rgba(255,255,255,0.08); box-shadow: inset 0 1px 0 rgba(255,255,255,0.08), inset 0 -1px 0 rgba(0,0,0,0.4); }
+.rack-mod::before, .rack-mod::after { top: 6px; width: 6px; height: 6px; }
+.mod-play { --p1: #2b2421; --p2: #1a1513; --led: #ffd98a; }
+.mod-harm { --p1: #262230; --p2: #17141e; --led: #c7a6ff; }
+.mod-share { --p1: #1f2826; --p2: #131917; --led: #74f0c4; }
+.mod-head { display: flex; align-items: center; gap: 10px; margin: 0 2px 14px; }
+.mod-name { font-family: var(--display); font-size: 17px; letter-spacing: 0.3em; text-transform: uppercase; color: var(--ink); flex: 1; }
+.mod-knobs { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.lcd { font: 12px/1 var(--mono); color: var(--led); background: #0a0808; border: 1px solid rgba(255,255,255,0.08); border-radius: 3px; padding: 5px 8px; min-width: 52px; text-align: center;
+       box-shadow: inset 0 1px 4px rgba(0,0,0,0.8); text-shadow: 0 0 6px color-mix(in srgb, var(--led) 60%, transparent); letter-spacing: 0.04em; }
+.kn output.lcd { color: var(--led); font-size: 12px; }
+.lcd-wide { max-width: 100%; white-space: normal; line-height: 1.25; }
+.beat-lamp { width: 8px; height: 8px; border-radius: 50%; background: #2a1d1d; border: 1.5px solid rgba(0,0,0,0.6); transition: background 0.08s, box-shadow 0.08s; }
+.beat-lamp.on { background: var(--led); box-shadow: 0 0 8px var(--led), 0 0 16px var(--led); }
+.mod-body { display: flex; flex-direction: column; gap: 12px; align-items: flex-start; }
+.push { background: linear-gradient(#3a3330, #221d1b); border: 1px solid rgba(255,255,255,0.14); border-radius: 4px; padding: 10px 16px; min-height: 40px; cursor: pointer;
+        font: 11px var(--mono); letter-spacing: 0.18em; text-transform: uppercase; color: var(--ink); box-shadow: 0 2px 0 rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.1); }
+.push:active { transform: translateY(1px); box-shadow: 0 1px 0 rgba(0,0,0,0.5); }
+.share-note { font-size: 11px; color: var(--ink-faint); letter-spacing: 0.04em; }
+.midi-port { display: flex; flex-direction: column; gap: 6px; }
+.midi-port select { min-width: 140px; text-align: left; }
+@media (max-width: 860px) { .rack { grid-template-columns: minmax(0, 1fr); gap: 6px; } }
 .ctlwrap > summary { list-style: none; display: flex; flex-wrap: wrap; align-items: center; gap: 14px; min-height: 52px; cursor: pointer; padding: 6px 0; }
 .ctlwrap > summary::-webkit-details-marker { display: none; }
 .ctlwrap > summary::before { content: ""; width: 9px; height: 9px; border-right: 1.5px solid var(--ink); border-bottom: 1.5px solid var(--ink); transform: rotate(-45deg); transition: transform 0.2s; margin: 0 4px; }
@@ -154,6 +183,7 @@ main { max-width: 1240px; margin: 0 auto; padding: 0 16px 80px; display: flex; f
 .ctlwrap { border-bottom: 1px solid var(--line); }
 .ctlwrap .transport { border-bottom: 0; padding-top: 6px; }
 .tlabel { display: flex; align-items: center; gap: 10px; }
+.mod-head { position: relative; }
 .info { position: relative; width: 20px; height: 20px; flex: 0 0 20px; border-radius: 50%; border: 1px solid var(--ink-faint); background: none; color: var(--ink-dim); cursor: help; padding: 0; font: 12px/1 var(--mono); }
 .info::before { content: "i"; }
 .info::after { content: attr(data-tip); position: absolute; z-index: 30; left: 50%; top: calc(100% + 10px); transform: translateX(-50%); width: min(300px, 80vw); padding: 12px 14px; background: #1f1613; border: 1px solid var(--line); box-shadow: 0 12px 30px rgba(0,0,0,0.5);
@@ -163,7 +193,7 @@ main { max-width: 1240px; margin: 0 auto; padding: 0 16px 80px; display: flex; f
 @media (max-width: 760px), (pointer: coarse) and (max-width: 1100px) {
   .midi-bit { display: none !important; }
   .tgroup-share:has(.share[hidden]) { display: none; }
-  .tlabel { position: relative; }
+  .tlabel, .mod-head { position: relative; }
   .info { position: static; }
   .info::after { left: 0; right: 0; width: auto; top: calc(100% + 8px); transform: none; }
 }
@@ -371,7 +401,6 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
         <label class="sr" for="mine1">First city</label><div class="ta"><input id="mine1" type="text" placeholder="Boston" autocomplete="off"><button class="dice" type="button" data-for="mine1" aria-label="Random city" title="Random city"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="4" width="16" height="16" rx="3.5" fill="none" stroke="currentColor" stroke-width="1.5"/><circle cx="8.6" cy="8.6" r="1.5" fill="currentColor"/><circle cx="12" cy="12" r="1.5" fill="currentColor"/><circle cx="15.4" cy="15.4" r="1.5" fill="currentColor"/></svg></button></div>
         <label class="sr" for="mine2">Second city</label><div class="ta"><input id="mine2" type="text" placeholder="Copenhagen" autocomplete="off"><button class="dice" type="button" data-for="mine2" aria-label="Random city" title="Random city"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="4" width="16" height="16" rx="3.5" fill="none" stroke="currentColor" stroke-width="1.5"/><circle cx="8.6" cy="8.6" r="1.5" fill="currentColor"/><circle cx="12" cy="12" r="1.5" fill="currentColor"/><circle cx="15.4" cy="15.4" r="1.5" fill="currentColor"/></svg></button></div>
         <label class="sr" for="mine3">Third city</label><div class="ta"><input id="mine3" type="text" placeholder="London" autocomplete="off"><button class="dice" type="button" data-for="mine3" aria-label="Random city" title="Random city"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="4" width="16" height="16" rx="3.5" fill="none" stroke="currentColor" stroke-width="1.5"/><circle cx="8.6" cy="8.6" r="1.5" fill="currentColor"/><circle cx="12" cy="12" r="1.5" fill="currentColor"/><circle cx="15.4" cy="15.4" r="1.5" fill="currentColor"/></svg></button></div>
-        <button class="ghost small dice-rest" type="button" id="diceRest" title="Fill any empty boxes with random cities">Random for the rest</button>
         <button class="ghost small" type="submit">Play these</button>
       </div>
     </form>
@@ -380,28 +409,30 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
 </header>
 
 <main>
-  <details class="ctlwrap" id="ctlWrap">
-    <summary><span class="fxsum-title">Controls</span><span class="fxsum-info" id="ctlSummary"></span>
-      <span class="fxsum-hint">Open for tempo, volume, key and scale, and to share your cities.</span></summary>
-  <section class="transport" aria-label="Controls">
-    <div class="tgroup">
-      <div class="tlabel">Play <button class="info" type="button" aria-label="How Play works" data-tip="Tempo is the speed with every city awake. As the cities fall asleep it slows, down to about three quarters of this in the dead of night, then picks up again as they wake. The number shows the tempo you're hearing. Volume is the level for everything, drums included."></button></div>
-      <label class="field" for="tempo">Tempo <input id="tempo" type="range" min="50" max="160" value="92"> <output id="tempoOut">92</output></label>
-      <label class="field" for="volume">Volume <input id="volume" type="range" min="0" max="100" value="75"> <output id="volumeOut">75</output></label>
+  <section class="rack" aria-label="Controls">
+    <div class="pedal rack-mod mod-play" aria-label="Play">
+      <div class="mod-head"><span class="mod-name">Play</span><span class="beat-lamp" id="beatLamp" aria-hidden="true"></span><button class="info" type="button" aria-label="How Play works" data-tip="Tempo is the speed with every city awake. As the cities fall asleep it slows, down to about three quarters of this in the dead of night, then picks up again as they wake. The display shows the tempo you're hearing, and the lamp blinks on the beat. Volume is the level for everything, drums included. Drag a knob up or down, scroll it, or use the arrow keys. Double-click resets it."></button></div>
+      <div class="knobs mod-knobs">
+        <div class="kn"><input class="kn-native" id="tempo" type="range" min="50" max="160" value="92" data-label="Tempo"><output id="tempoOut" class="lcd">92</output></div>
+        <div class="kn"><input class="kn-native" id="volume" type="range" min="0" max="100" value="75" data-label="Volume"><output id="volumeOut" class="lcd">75</output></div>
+      </div>
     </div>
-    <div class="tgroup">
-      <div class="tlabel">Harmony <button class="info" type="button" aria-label="How Harmony works" data-tip="All three cities share one key and scale, picked at random each time the page loads. Underneath, a slow chord progression moves every 4 bars and shifts every 64, and each city's melody leans onto the current chord. Change either menu and the cities follow from their next note."></button></div>
-      <label class="field" for="key">Key <select id="key"></select></label>
-      <label class="field" for="scale">Scale <select id="scale"></select></label>
+    <div class="pedal rack-mod mod-harm" aria-label="Harmony">
+      <div class="mod-head"><span class="mod-name">Harmony</span><button class="info" type="button" aria-label="How Harmony works" data-tip="All three cities share one key and scale, picked at random each time the page loads. Underneath, a slow chord progression moves every 4 bars and shifts every 64, and each city's melody leans onto the current chord. Turn either knob and the cities follow from their next note."></button></div>
+      <div class="knobs mod-knobs">
+        <div class="kn kn-late"><select class="kn-native" id="key" data-label="Key"></select><output id="keyOut" class="lcd"></output></div>
+        <div class="kn kn-late"><select class="kn-native" id="scale" data-label="Scale"></select><output id="scaleOut" class="lcd lcd-wide"></output></div>
+      </div>
     </div>
-    <div class="tgroup tgroup-share">
-      <div class="tlabel">Share<span class="midi-bit"> &amp; MIDI</span> <button class="info" type="button" aria-label="How Share and MIDI work" data-tip="Once you've swapped in your own cities, Copy link saves them into a link anyone can open to hear your version. MIDI out sends each city's notes to a synth or music app on its own channel: city 1 on channel 1, city 2 on 2, city 3 on 3. It works in Chrome and Edge on a computer."></button></div>
-      <button class="share" id="share" type="button" hidden>Copy link to these cities</button>
-      <span class="share-note" id="shareNote" aria-live="polite"></span>
-      <label class="field midi-bit" for="midi">MIDI out <select id="midi"><option value="">Off</option></select></label>
+    <div class="pedal rack-mod mod-share tgroup-share" aria-label="Share and MIDI">
+      <div class="mod-head"><span class="mod-name">Share<span class="midi-bit"> &amp; MIDI</span></span><button class="info" type="button" aria-label="How Share and MIDI work" data-tip="Once you've swapped in your own cities, Copy link saves them into a link anyone can open to hear your version. MIDI out sends each city's notes to a synth or music app on its own channel: city 1 on channel 1, city 2 on 2, city 3 on 3. It works in Chrome and Edge on a computer."></button></div>
+      <div class="mod-body">
+        <button class="share push" id="share" type="button" hidden>Copy link</button>
+        <span class="share-note" id="shareNote" aria-live="polite">Swap in your own cities above to get a link.</span>
+        <label class="midi-bit midi-port" for="midi"><span class="kn-label">MIDI out</span><select id="midi" class="lcd"><option value="">Off</option></select></label>
+      </div>
     </div>
   </section>
-  </details>
 
 
   <section class="cities" id="cities" aria-label="Cities"></section>
@@ -691,9 +722,6 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
     if (btn) { btn.classList.remove("rolled"); void btn.offsetWidth; btn.classList.add("rolled"); }
   }
   document.querySelectorAll(".dice").forEach(b => b.addEventListener("click", e => { e.preventDefault(); rollInto(document.getElementById(b.dataset.for), b); }));
-  document.getElementById("diceRest").addEventListener("click", () => {
-    ["mine1", "mine2", "mine3"].forEach(id => { const i = document.getElementById(id); if (!i.value.trim()) rollInto(i, i.parentElement.querySelector(".dice")); });
-  });
 
   // ---------- city cards ----------
   const wrap = document.getElementById("cities");
@@ -1040,6 +1068,7 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
   function showLiveUI() {
     document.getElementById("mine").hidden = false;
     document.getElementById("share").hidden = false;
+    { const n = document.getElementById("shareNote"); if (n && /Swap in/.test(n.textContent)) n.textContent = ""; }
   }
 
   document.getElementById("mine").addEventListener("submit", e => {
@@ -1394,7 +1423,7 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
   // Double-click (or double-tap) puts it back where it started.
   const polar = (r, deg) => [32 + r * Math.sin(deg * Math.PI / 180), 32 - r * Math.cos(deg * Math.PI / 180)];
   const arc = (r, a0, a1) => { const [x0, y0] = polar(r, a0), [x1, y1] = polar(r, a1); return `M${x0.toFixed(2)} ${y0.toFixed(2)} A${r} ${r} 0 ${a1 - a0 > 180 ? 1 : 0} 1 ${x1.toFixed(2)} ${y1.toFixed(2)}`; };
-  document.querySelectorAll(".kn:not(.kn-switch)").forEach(kn => {
+  function makeKnob(kn) {
     const el = kn.querySelector("input, select"), out = kn.querySelector("output");
     const isSel = el.tagName === "SELECT";
     const min = isSel ? 0 : Number(el.min), max = isSel ? el.options.length - 1 : Number(el.max), step = isSel ? 1 : Number(el.step || 1);
@@ -1452,7 +1481,8 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
       else if (e.key === "End") { e.preventDefault(); set(max); }
     });
     draw();
-  });
+  }
+  document.querySelectorAll(".kn:not(.kn-switch):not(.kn-late)").forEach(makeKnob);
 
   // Vintage bat-handle toggles for Freeze: chrome lever on a hex nut, with a jewel lamp
   document.querySelectorAll(".toggle-sw").forEach((b, n) => {
@@ -2211,6 +2241,7 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
 
   // ---------- clock ----------
   let tick = 0, nextTime = 0, tickDur = 0.1, timer = null;
+  const beatTimes = [];
   const visualQueue = [];
   // Like a DJ reading the room: the slider is the tempo with every city awake, and the set slows
   // down as the cities fall asleep, to about three quarters of it when all three are in deep sleep
@@ -2273,6 +2304,7 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
     while (nextTime < ac.currentTime + 0.12) {
       cities.forEach(c => { if (tick % sleepRate(c) === 0) stepCity(c, nextTime); });
       if (tick % 2 === 0) grooveStep((tick / 2) % 16, nextTime, tick);
+      if (tick % 8 === 0) beatTimes.push(nextTime);
       if (tick % (32 * 4) === 0 && HARM.prog) HARM.root = HARM.prog[(tick / (32 * 4)) % HARM.prog.length];   // a new chord every 4 bars
       nextTime += tickDur;
       tick++;
@@ -2332,11 +2364,14 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
   const keySel = document.getElementById("key"), scaleSel = document.getElementById("scale");
   keySel.innerHTML = KEYS.map((k, i) => `<option value="${i}"${i === keyRoot ? " selected" : ""}>${k}</option>`).join("");
   scaleSel.innerHTML = SCALES.map(([n], i) => `<option value="${i}"${i === scaleIndex ? " selected" : ""}>${n}</option>`).join("");
+  document.getElementById("keyOut").value = KEYS[keyRoot];
+  document.getElementById("scaleOut").value = SCALES[scaleIndex][0];
+  document.querySelectorAll(".kn-late").forEach(makeKnob);
   keySel.addEventListener("change", () => { keyRoot = Number(keySel.value); ctlSummary(); });
   scaleSel.addEventListener("change", () => { scale = SCALES[Number(scaleSel.value)][1]; ctlSummary(); });
   function ctlSummary() {
     const el = document.getElementById("ctlSummary");
-    if (!el) return;
+    if (!el) return;   // the rack shows everything, so there's no summary line any more
     el.textContent = `${document.getElementById("tempoOut").value || tempo.value} bpm · ${KEYS[keyRoot]} ${SCALES.find(x => x[1] === scale)[0]} · volume ${document.getElementById("volume").value}`;
   }
   const tempo = document.getElementById("tempo");
@@ -2869,6 +2904,10 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
     } else visualQueue.length = 0;
     const now = ac ? ac.currentTime : ms / 1000;
     cities.forEach(c => drawRing(c, now));
+    { const lamp = document.getElementById("beatLamp");
+      if (ac && playing) { let hit = false; while (beatTimes.length && beatTimes[0] <= now) { beatTimes.shift(); hit = true; }
+        if (hit) { lamp.classList.add("on"); clearTimeout(lamp._t); lamp._t = setTimeout(() => lamp.classList.remove("on"), 90); } }
+      else beatTimes.length = 0; }
     if (ac && playing) {
       let moved = false;
       while (GROOVE.queue.length && GROOVE.queue[0].t <= now) { GROOVE.step = GROOVE.queue.shift().j; moved = true; }
