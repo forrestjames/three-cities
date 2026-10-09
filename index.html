@@ -149,7 +149,7 @@ main { max-width: 1240px; margin: 0 auto; padding: 0 16px 80px; display: flex; f
 .tgroup { display: flex; flex-direction: column; gap: 10px; min-width: 0; }
 .tlabel { font-family: var(--display); font-size: 18px; letter-spacing: 0.16em; text-transform: uppercase; color: var(--ink); }
 .tgroup .field { justify-content: space-between; }
-.rack { display: grid; grid-template-columns: minmax(0, 0.95fr) minmax(0, 1.2fr) minmax(0, 0.65fr) minmax(0, 0.7fr) minmax(0, 1.3fr); margin-top: 8px; border-radius: 8px; position: relative; --led: #ffd98a;
+.rack { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.25fr) minmax(0, 0.7fr) minmax(0, 1.35fr); margin-top: 8px; border-radius: 8px; position: relative; --led: #ffd98a;
         background: repeating-linear-gradient(90deg, rgba(255,255,255,0.018) 0 1px, transparent 1px 3px), linear-gradient(180deg, #1c1715, #110d0c);
         border: 1px solid rgba(255,255,255,0.08); box-shadow: inset 0 1px 0 rgba(255,255,255,0.06), 0 10px 26px rgba(0,0,0,0.45); }
 .rack::before, .rack::after { content: ""; position: absolute; top: 7px; width: 6px; height: 6px; border-radius: 50%;
@@ -192,6 +192,7 @@ main { max-width: 1240px; margin: 0 auto; padding: 0 16px 80px; display: flex; f
 .lcd-select option { background: #1a1210; color: var(--ink); }
 .rack .kn-stack .kn-label { margin-bottom: 4px; }
 @media (max-width: 1100px) { .rack { grid-template-columns: minmax(0, 1fr) minmax(0, 1.35fr); } .rack-mod:nth-child(3) { border-left: 0; } .rack-mod:nth-child(n+3) { border-top: 1px solid rgba(255,255,255,0.07); } }
+.mine .share-note { font-size: 11px; color: var(--ink-dim); letter-spacing: 0.04em; min-height: 1em; }
 @media (max-width: 1000px) { .rack { grid-template-columns: minmax(0, 1fr); } .rack-mod + .rack-mod { border-left: 0; border-top: 1px solid rgba(255,255,255,0.07); } }
 @media (max-width: 520px) { .mod-knobs { justify-content: space-between; } .lcd-wide { max-width: 170px; } }
 .ctlwrap > summary { list-style: none; display: flex; flex-wrap: wrap; align-items: center; gap: 14px; min-height: 52px; cursor: pointer; padding: 6px 0; }
@@ -221,7 +222,12 @@ main { max-width: 1240px; margin: 0 auto; padding: 0 16px 80px; display: flex; f
 input[type="range"] { accent-color: var(--ink); width: 120px; }
 select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8px; text-transform: none; letter-spacing: 0.02em; }
 
-.cities { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 20px; margin-top: 24px; }
+.cities { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 20px; margin-top: 8px; }
+.units-row { display: flex; justify-content: flex-end; margin: 14px 0 -40px; }
+@media (max-width: 600px) { .units-row { margin-bottom: -28px; } }
+.units { display: inline-flex; border: 1px solid var(--line); border-radius: 14px; overflow: hidden; }
+.units button { background: none; border: 0; padding: 4px 10px; min-height: 26px; cursor: pointer; font: 11px var(--mono); color: var(--ink-faint); letter-spacing: 0.06em; }
+.units button[aria-pressed="true"] { background: rgba(243,236,230,0.12); color: var(--ink); }
 .ta { position: relative; flex: 1; min-width: 0; display: flex; }
 .ta input { flex: 1; }
 .suggest { position: absolute; left: 0; right: 0; top: calc(100% + 4px); z-index: 30; margin: 0; padding: 4px 0; list-style: none;
@@ -287,6 +293,10 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
 .city-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; }
 .city-head > div:first-child { flex: 1; min-width: 0; }
 .city-name { margin: 0; font-family: var(--display); font-weight: 400; font-size: clamp(22px, 2.3vw, 30px); letter-spacing: 0.12em; white-space: nowrap; overflow: hidden; line-height: 1.1; text-transform: uppercase; color: var(--accent); }
+.hit-led { display: inline-block; width: 7px; height: 7px; border-radius: 50%; margin-right: 8px; vertical-align: 1px; background: rgba(243,236,230,0.12); transition: background 0.25s, box-shadow 0.25s; }
+.hit-led.on { background: var(--accent); box-shadow: 0 0 8px var(--accent), 0 0 16px var(--accent); transition: none; }
+.city.hit { box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--accent) 55%, transparent); transition: none; }
+.city { transition: box-shadow 0.35s; }
 .city-meta { font-size: 12px; color: var(--ink-dim); letter-spacing: 0.08em; }
 .temp { flex-shrink: 0; white-space: nowrap; font-family: var(--display); font-size: 52px; line-height: 0.9; letter-spacing: 0.04em; font-variant-numeric: tabular-nums; }
 .viz { display: grid; grid-template-columns: minmax(0, 1fr) 96px; gap: 14px; align-items: center; }
@@ -420,7 +430,9 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
         <label class="sr" for="mine2">Second city</label><div class="ta"><input id="mine2" type="text" placeholder="Copenhagen" autocomplete="off"><button class="dice" type="button" data-for="mine2" aria-label="Random city" title="Random city"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="4" width="16" height="16" rx="3.5" fill="none" stroke="currentColor" stroke-width="1.5"/><circle cx="8.6" cy="8.6" r="1.5" fill="currentColor"/><circle cx="12" cy="12" r="1.5" fill="currentColor"/><circle cx="15.4" cy="15.4" r="1.5" fill="currentColor"/></svg></button></div>
         <label class="sr" for="mine3">Third city</label><div class="ta"><input id="mine3" type="text" placeholder="London" autocomplete="off"><button class="dice" type="button" data-for="mine3" aria-label="Random city" title="Random city"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="4" width="16" height="16" rx="3.5" fill="none" stroke="currentColor" stroke-width="1.5"/><circle cx="8.6" cy="8.6" r="1.5" fill="currentColor"/><circle cx="12" cy="12" r="1.5" fill="currentColor"/><circle cx="15.4" cy="15.4" r="1.5" fill="currentColor"/></svg></button></div>
         <button class="ghost small" type="submit">Play these</button>
+        <button class="ghost small share" id="share" type="button" hidden title="Copy a link to these three cities">Copy link</button>
       </div>
+      <span class="share-note" id="shareNote" aria-live="polite"></span>
     </form>
     <div class="status" id="status">Checking the weather…</div>
   </div>
@@ -429,6 +441,8 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
 <main>
 
 
+  <div class="units-row"><span class="units" role="group" aria-label="Temperature units">
+    <button type="button" data-unit="C" aria-pressed="true">°C</button><button type="button" data-unit="F" aria-pressed="false">°F</button></span></div>
   <section class="cities" id="cities" aria-label="Cities"></section>
   <nav class="dots" id="dots" aria-label="Choose a city"></nav>
 
@@ -451,13 +465,6 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
       <div class="mod-head"><span class="mod-name">Filter</span><button class="info" type="button" aria-label="How the filter works" data-tip="A DJ-style filter on the whole mix, cities and drums together. At 12 o'clock it does nothing. Turn left and a low-pass closes in, taking the top off until it's muffled. Turn right and a high-pass thins it out from the bottom up. Double-click to snap back to the middle."></button></div>
       <div class="knobs mod-knobs">
         <div class="kn"><input class="kn-native" id="djFilter" type="range" min="-100" max="100" step="1" value="0" data-label="LPF · HPF"><span class="kn-stack"><output id="djFilterOut" class="lcd">Off</output></span></div>
-      </div>
-    </div>
-    <div class="pedal rack-mod mod-share tgroup-share" aria-label="Share">
-      <div class="mod-head"><span class="mod-name">Share</span><button class="info" type="button" aria-label="How Share works" data-tip="Once you've swapped in your own cities, Copy link saves them into a link anyone can open to hear your version."></button></div>
-      <div class="mod-body">
-        <button class="share push" id="share" type="button" hidden>Copy link</button>
-        <span class="share-note" id="shareNote" aria-live="polite">Swap in your cities to get a link.</span>
       </div>
     </div>
     <div class="pedal rack-mod mod-midi midi-bit" aria-label="MIDI">
@@ -756,6 +763,18 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
   }
   document.querySelectorAll(".dice:not(.dice-swap)").forEach(b => b.addEventListener("click", e => { e.preventDefault(); rollInto(document.getElementById(b.dataset.for), b); }));
 
+  // ---------- temperature units: the music always runs on °C; this only changes what's shown ----------
+  var tempUnit = "C";
+  function fmtTemp(t, dp) {
+    const v = tempUnit === "F" ? t * 9 / 5 + 32 : t, m = Math.pow(10, dp);
+    return (Math.round(v * m) / m) + "°";
+  }
+  document.querySelectorAll(".units button").forEach(b => b.addEventListener("click", () => {
+    tempUnit = b.dataset.unit;
+    document.querySelectorAll(".units button").forEach(x => x.setAttribute("aria-pressed", String(x === b)));
+    cities.forEach(c => { if (c.w) render(c); });
+  }));
+
   // ---------- city cards ----------
   const wrap = document.getElementById("cities");
   // Simple cards by default; the sliders icon on any card opens the rest of the controls on every city at once
@@ -779,7 +798,7 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
       <div class="city-head">
         <div>
           <h3 class="city-name" data-r="name">${c.name}</h3>
-          <div class="city-meta" data-r="meta">–</div>
+          <div class="city-meta"><span class="hit-led" data-r="led" aria-hidden="true"></span><span data-r="meta">–</span></div>
         </div>
         <div class="temp" data-r="temp">–</div>
       </div>
@@ -1107,7 +1126,6 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
   function showLiveUI() {
     document.getElementById("mine").hidden = false;
     document.getElementById("share").hidden = false;
-    { const n = document.getElementById("shareNote"); if (n && /Swap in/.test(n.textContent)) n.textContent = ""; }
   }
 
   document.getElementById("mine").addEventListener("submit", e => {
@@ -1170,7 +1188,7 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
     if (!c.w) return;
     const s = sunNow(c);
     c.el.classList.toggle("night", !s.day);
-    c.ref.temp.textContent = (Math.round(c.w.t * 10) / 10) + "°";
+    c.ref.temp.textContent = fmtTemp(c.w.t, 1);
     c.ref.meta.textContent = `${localTime(c)} · ${s.day ? "day" : "night"}`;
     { const z = sleepOf(c);
       c.ref.sunlabel.textContent = s.day ? `sun ${Math.round(s.arc * 100)}%` : z.waking ? "stirring" : z.falling ? "drifting off" : "asleep"; }
@@ -2992,7 +3010,7 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
       pg.fillText(spaced(c.name), x, nameY);
       if (c.w) {
         pg.globalAlpha = 0.6; pg.font = "12px 'Source Code Pro', monospace";
-        pg.fillText(`${Math.round(c.w.t)}° · ${WORD[weatherKind(c)]}`, x, infoY);
+        pg.fillText(`${fmtTemp(c.w.t, 0)} · ${WORD[weatherKind(c)]}`, x, infoY);
       }
     });
     pg.globalAlpha = 1;
@@ -3007,7 +3025,12 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
       while (visualQueue.length && visualQueue[0].t <= now) {
         const v = visualQueue.shift();
         v.c.playhead = v.pos;
-        if (v.played) { v.c.flashes.push({ t: v.t, pos: v.pos }); v.c.pulse = 1; }
+        if (v.played) {
+          v.c.flashes.push({ t: v.t, pos: v.pos }); v.c.pulse = 1;
+          const led = v.c.ref.led, card = v.c.el;   // the card's lamp and edge flash on every hit
+          led.classList.add("on"); card.classList.add("hit");
+          clearTimeout(led._t); led._t = setTimeout(() => { led.classList.remove("on"); card.classList.remove("hit"); }, 110);
+        }
       }
     } else visualQueue.length = 0;
     const now = ac ? ac.currentTime : ms / 1000;
