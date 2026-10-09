@@ -4,8 +4,24 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#100806">
-<meta name="description" content="Three places I've called home, playing in real time. Boston, Copenhagen and London, played by their live weather.">
-<title>Three Cities</title>
+<meta name="description" content="A generative music piece by Forrest James. Boston, Copenhagen and London play live in your browser, shaped by each city's real-time weather. Try the cities you've lived in.">
+<meta name="author" content="Forrest James">
+<link rel="canonical" href="https://forrestjames.github.io/three-cities/">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Forrest James">
+<meta property="og:title" content="Three Cities by Forrest James">
+<meta property="og:description" content="Three places I've called home, playing in real time. Live weather from Boston, Copenhagen and London turned into music in your browser.">
+<meta property="og:url" content="https://forrestjames.github.io/three-cities/">
+<meta property="og:image" content="https://forrestjames.github.io/three-cities/og.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="Three Cities title over a grainy warm gradient">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Three Cities by Forrest James">
+<meta name="twitter:description" content="Live weather from Boston, Copenhagen and London, turned into music in your browser.">
+<meta name="twitter:image" content="https://forrestjames.github.io/three-cities/og.png">
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"CreativeWork","name":"Three Cities","alternateName":"Three Cities by Forrest James","creator":{"@type":"Person","name":"Forrest James","url":"https://forrestjamesmusic.com"},"genre":["Generative music","Ambient"],"url":"https://forrestjames.github.io/three-cities/","description":"A generative music piece played by the live weather in Boston, Copenhagen and London."}</script>
+<title>Three Cities by Forrest James · Music played by live weather</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Abel&family=Source+Code+Pro:wght@400;500&display=swap">
@@ -1125,7 +1141,7 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
     document.getElementById("ledeCities").textContent = cityList(names);
     document.getElementById("ledeMine").hidden = !isDefault;
     document.getElementById("ledeYours").hidden = isDefault;
-    document.title = isDefault ? "Three Cities" : names.join(" · ");
+    document.title = isDefault ? "Three Cities by Forrest James · Music played by live weather" : names.join(" · ") + " · Three Cities by Forrest James";
     try {
       const u = new URL(location.href);
       if (isDefault) u.searchParams.delete("cities"); else u.searchParams.set("cities", names.join(","));
