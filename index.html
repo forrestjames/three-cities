@@ -621,6 +621,7 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
     London: { title: "Albert Bridge at night", artist: "Diliff", license: "CC BY-SA 3.0", page: "https://commons.wikimedia.org/wiki/File:Albert_Bridge_at_night,_London,_UK_-_Diliff.jpg" }
   };
   const SOUNDS = [
+    ["felt", "Felt piano"], ["flute", "Warm flute"], ["mallet", "Soft mallets"], ["bowed", "Bowed swell"],
     ["pluck", "Pluck"], ["string", "Plucked string"], ["epiano", "Electric piano"], ["bell", "Bell"],
     ["kalimba", "Kalimba"], ["marimba", "Marimba"], ["soft", "Soft lead"], ["breath", "Breath"],
     ["pad", "Pad"], ["choir", "Choir"], ["acid", "Acid bass"], ["sub", "Sub bass"],
@@ -667,8 +668,8 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
   const cities = [
     { key: "Boston", name: "Boston", lat: 42.36, lon: -71.06, color: "--boston", voice: "marimba",
       base: 48, degrees: [0, -2, 1, -1, -3], rate: 2, source: "humidity" },
-    { key: "Copenhagen", name: "Copenhagen", lat: 55.68, lon: 12.57, color: "--copenhagen", voice: "epiano",
-      base: 67, degrees: [0, 1, 2, 3, 4], rate: 1, source: "cloud" },
+    { key: "Copenhagen", name: "Copenhagen", lat: 55.68, lon: 12.57, color: "--copenhagen", voice: "felt", ceil: 76,
+      base: 64, degrees: [0, 1, 2, 3, 4], rate: 1, source: "cloud" },
     { key: "London", name: "London", lat: 51.51, lon: -0.13, color: "--london", voice: "sub",
       base: 60, degrees: [-2, -1, 0, 1, 2], rate: 1, source: "humidity" }
   ];
@@ -706,7 +707,7 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
     if (p <= 1020) return { rate: 2, word: "steady", name: "1/16" };
     return { rate: 4, word: "settled", name: "1/8" };
   }
-  const busyTrim = c => ({ 1: -4, 2: 0, 4: 1.5 }[c.rate] ?? 2);   // dB by pace: 1/32, 1/16, 1/8, slower
+  const busyTrim = c => ({ 1: -11, 2: 0, 4: 1.5 }[c.rate] ?? 2);   // dB by pace: 1/32 sits well back, 1/16, 1/8, slower
   function rebuild(c) {
     if (!c.w) return;
     const pf = pressureFeel(c.w.p);
@@ -1798,19 +1799,26 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
     });
     setTempo();
   }
+  // How crowded a city's line is, 0 to 1: notes per beat, from its hits, loop length and pace
+  function crowdOf(c) {
+    if (!c.steps) return 0;
+    const perBeat = (c.hits / c.steps) * (8 / c.rate);   // 8 = 32nd ticks in a beat
+    return Math.max(0, Math.min(1, (perBeat - 0.6) / 1.6));
+  }
   function applySound(c) {
     const b = buses.get(c);
     if (!b || !c.w) return;
     const s = sunNow(c);
     const t = ac.currentTime;
     const sl = sleepOf(c).depth;
-    b.filter.frequency.setTargetAtTime((650 + s.light * 250 + s.arc * 5200) * (1 - sl * 0.45), t, 20);   // asleep, duller
+    const crowd = crowdOf(c);
+    b.filter.frequency.setTargetAtTime((650 + s.light * 250 + s.arc * 5200) * (1 - sl * 0.45) * (1 - 0.25 * crowd), t, 20);   // asleep or crowded, duller
     b.out.gain.setTargetAtTime((0.4 + 0.6 * s.light) * (1 - sl * 0.5), t, 20);   // and quieter still, the deeper the sleep
     b.rev.gain.setTargetAtTime(revSend(c), t, c.fxRev ? 0.3 : 0.05);
-    b.del.gain.setTargetAtTime(c.fxDel ? (["bell", "marimba", "kalimba", "epiano", "string", "piano", "harp", "junokeys"].includes(c.voice) ? 0.22 : 0.12) : 0, t, 0.05);
+    b.del.gain.setTargetAtTime(c.fxDel ? (["bell", "marimba", "kalimba", "epiano", "string", "piano", "harp", "junokeys", "felt", "mallet"].includes(c.voice) ? 0.22 : 0.12) : 0, t, 0.05);
     // busier cities sit back a little, slower ones step forward, so pace changes don't upset the mix
     const busy = busyTrim(c);
-    b.vol.gain.setTargetAtTime(Math.pow(c.volume / 100, 2) * 1.4 * Math.pow(10, busy / 20), t, 0.3);
+    b.vol.gain.setTargetAtTime(Math.pow(c.volume / 100, 2) * 1.4 * Math.pow(10, (busy - 3 * crowd) / 20), t, 0.3);
     const br = breathOf(c);
     b.breathLfo.frequency.setTargetAtTime(br.rate, t, 2);
     b.breathDepth.gain.setTargetAtTime(br.depth, t, 2);
@@ -1859,6 +1867,7 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
   const mtof = m => 440 * Math.pow(2, (m - 69) / 12);
 
   const PIANO_G = 1.25, HARP_G = 0.45, ORGAN_G = 0.085, JUNO_G = { pad: 0.1, strings: 0.13, keys: 0.11 }, GRAIN_G = { cloud: 4.5, shimmer: 3.4, dust: 6 };
+  const FELT_G = { felt: 0.13, flute: 0.105, mallet: 0.25, bowed: 0.042 };
   function voice(c, midi, vel, t, L = 1) {
     // recorded instruments still loading: play a close cousin until they arrive
     if (SAMPLE_SETS[c.voice] && !nearestSample(c.voice, midi)) {
@@ -1953,6 +1962,60 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
         env.gain.linearRampToValueAtTime(GRAIN_G.dust * vel, t + 0.01);
         env.gain.setValueAtTime(GRAIN_G.dust * vel, t + dur * 0.6); env.gain.setTargetAtTime(0, t + dur * 0.6, dur * 0.2);
       }
+    } else if (c.voice === "felt") {
+      // a piano with the practice felt down: round, muffled, a soft knock of the hammer and nothing sharp
+      const lp = ac.createBiquadFilter(); lp.type = "lowpass"; lp.Q.value = 0.4;
+      lp.frequency.setValueAtTime(Math.min(4000, f * 3.2), t); lp.frequency.setTargetAtTime(Math.min(2400, f * 1.4), t, 0.12 * L);
+      lp.connect(env);
+      const o = ac.createOscillator(); o.type = "triangle"; o.frequency.value = f; o.connect(lp);
+      const o2 = ac.createOscillator(); o2.frequency.value = f * 2.003;
+      const g2 = ac.createGain(); g2.gain.setValueAtTime(0.22, t); g2.gain.exponentialRampToValueAtTime(0.01, t + 0.5 * L);
+      o2.connect(g2).connect(lp);
+      const k = ac.createBufferSource(); k.buffer = noiseBuf;
+      const kb = ac.createBiquadFilter(); kb.type = "lowpass"; kb.frequency.value = 900;
+      const kg = ac.createGain(); kg.gain.setValueAtTime(0.06, t); kg.gain.exponentialRampToValueAtTime(0.0001, t + 0.03);
+      k.connect(kb).connect(kg).connect(env);
+      env.gain.linearRampToValueAtTime(FELT_G.felt * vel, t + 0.012);
+      env.gain.setTargetAtTime(FELT_G.felt * vel * 0.35, t + 0.012, 0.35 * L);
+      env.gain.setTargetAtTime(0, t + 1.2 * L, 0.35);
+      o.start(t); o2.start(t); k.start(t, Math.random() * 0.5); o.stop(t + 1.2 * L + 2); o2.stop(t + 1.2 * L + 2); k.stop(t + 0.05);
+    } else if (c.voice === "flute") {
+      // a warm wooden flute: a pure tone that breathes in rather than starting with a hit
+      const o = ac.createOscillator(); o.frequency.value = f; o.connect(env);
+      const o2 = ac.createOscillator(); o2.frequency.value = f * 2;
+      const g2 = ac.createGain(); g2.gain.value = 0.1; o2.connect(g2).connect(env);
+      const n = ac.createBufferSource(); n.buffer = noiseBuf; n.loop = true;
+      const bp = ac.createBiquadFilter(); bp.type = "bandpass"; bp.frequency.value = Math.min(5000, f * 2); bp.Q.value = 1.2;
+      const ng = ac.createGain(); ng.gain.setValueAtTime(0.5, t); ng.gain.setTargetAtTime(0.12, t + 0.06, 0.15);
+      n.connect(bp).connect(ng).connect(env);
+      env.gain.linearRampToValueAtTime(FELT_G.flute * vel, t + 0.07 + 0.08 * L);
+      env.gain.setTargetAtTime(FELT_G.flute * vel * 0.7, t + 0.15 + 0.08 * L, 0.3 * L);
+      env.gain.setTargetAtTime(0, t + 0.7 * L, 0.18 + 0.1 * L);
+      const end = t + 0.7 * L + 1.4;
+      o.start(t); o2.start(t); n.start(t, Math.random() * 0.5); o.stop(end); o2.stop(end); n.stop(end);
+    } else if (c.voice === "mallet") {
+      // vibraphone with yarn mallets: a round strike, a slow shimmer, no metal
+      const o = ac.createOscillator(); o.frequency.value = f;
+      const o2 = ac.createOscillator(); o2.frequency.value = f * 4;
+      const g2 = ac.createGain(); g2.gain.setValueAtTime(0.06, t); g2.gain.exponentialRampToValueAtTime(0.0005, t + 0.06 * L);
+      const trem = ac.createGain(); trem.gain.value = 0.85;
+      const lfo = ac.createOscillator(); lfo.frequency.value = 4.2 + Math.random() * 0.6;
+      const lg = ac.createGain(); lg.gain.value = 0.15; lfo.connect(lg).connect(trem.gain);
+      o.connect(trem); o2.connect(g2).connect(trem); trem.connect(env);
+      env.gain.linearRampToValueAtTime(FELT_G.mallet * vel, t + 0.01);
+      env.gain.exponentialRampToValueAtTime(0.0006, t + 1.6 * L);
+      [o, o2, lfo].forEach(x => { x.start(t); x.stop(t + 1.7 * L); });
+    } else if (c.voice === "bowed") {
+      // a bowed swell: each note fades up out of nothing and settles away again
+      const lp = ac.createBiquadFilter(); lp.type = "lowpass"; lp.Q.value = 0.6; lp.frequency.value = Math.min(3000, f * 1.8);
+      lp.connect(env);
+      const oscs = [-5, 5].map(d => { const x = ac.createOscillator(); x.type = "sawtooth"; x.frequency.value = f; x.detune.value = d; x.connect(lp); return x; });
+      const s1 = ac.createOscillator(); s1.frequency.value = f; const sg = ac.createGain(); sg.gain.value = 1.4; s1.connect(sg).connect(lp); oscs.push(s1);
+      env.gain.linearRampToValueAtTime(FELT_G.bowed * vel, t + 0.3 + 0.3 * L);
+      env.gain.setValueAtTime(FELT_G.bowed * vel, t + 0.3 + 0.6 * L);
+      env.gain.setTargetAtTime(0, t + 0.3 + 0.6 * L, 0.5 + 0.3 * L);
+      const end = t + 0.3 + 0.6 * L + 4;
+      oscs.forEach(x => { x.start(t); x.stop(end); });
     } else if (c.voice === "pluck") {
       const o = ac.createOscillator(); o.type = "sawtooth"; o.frequency.value = f;
       const lp = ac.createBiquadFilter(); lp.type = "lowpass"; lp.Q.value = 4;
@@ -2419,7 +2482,9 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
     const played = !c.muted && c.pattern[pos] && Math.random() * 100 < c.chance && Math.random() > sl * 0.75;   // asleep, most notes rest
     if (played) {
       const deg = nextDegree(c, pos);
-      const note = Math.max(12, Math.min(108, noteFor(c, deg) - (c.w.t < 0 ? 12 : 0) + 12 * c.octave));
+      let n0 = noteFor(c, deg) - (c.w.t < 0 ? 12 : 0);
+      if (c.ceil) while (n0 > c.ceil) n0 -= 12;   // keeps the top city from climbing over the others
+      const note = Math.max(12, Math.min(108, n0 + 12 * c.octave));
       // closeness on the memory map, eased at the city's own pace: 0 far away, 1 the middle, 3 right on it
       const f = Math.max(0, Math.min(3, c.moodShown ?? 1));
       const near = Math.max(0, Math.min(1, (f - 1) / 2)), far = Math.max(0, 1 - f);
