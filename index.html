@@ -166,7 +166,8 @@ main { max-width: 1240px; margin: 0 auto; padding: 0 16px 80px; display: flex; f
 .lcd { font: 11px/1 var(--mono); color: var(--led); background: #0a0808; border: 1px solid rgba(255,255,255,0.08); border-radius: 3px; padding: 4px 7px; min-width: 40px; text-align: center;
        box-shadow: inset 0 1px 4px rgba(0,0,0,0.8); text-shadow: 0 0 6px color-mix(in srgb, var(--led) 60%, transparent); letter-spacing: 0.04em; }
 .kn output.lcd { color: var(--led); font-size: 11px; }
-.lcd-wide { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 150px; }
+.lcd-wide { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 220px; }
+.mod-harm .lcd-select { min-height: 32px; padding: 5px 8px; font-size: 12px; }
 .beat-lamp { width: 7px; height: 7px; border-radius: 50%; background: #2a1d1d; border: 1.5px solid rgba(0,0,0,0.6); transition: background 0.08s, box-shadow 0.08s; }
 .beat-lamp.on { background: var(--led); box-shadow: 0 0 8px var(--led), 0 0 16px var(--led); }
 .mod-body { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; flex: 1; }
@@ -425,10 +426,10 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
       </div>
     </div>
     <div class="pedal rack-mod mod-harm" aria-label="Harmony">
-      <div class="mod-head"><span class="mod-name">Harmony</span><button class="info" type="button" aria-label="How Harmony works" data-tip="All three cities share one key and scale, picked at random each time the page loads. Underneath, a slow chord progression moves every 4 bars and shifts every 64, and each city's melody leans onto the current chord. Turn either knob and the cities follow from their next note."></button></div>
+      <div class="mod-head"><span class="mod-name">Harmony</span><button class="info" type="button" aria-label="How Harmony works" data-tip="All three cities share one key and scale, picked at random each time the page loads. Underneath, a slow chord progression moves every 4 bars and shifts every 64, and each city's melody leans onto the current chord. Change either menu and the cities follow from their next note."></button></div>
       <div class="knobs mod-knobs">
-        <div class="kn kn-late"><span class="kn-stack"><select id="key" class="lcd lcd-select" data-label="Key" aria-label="Key"></select><output id="keyOut" hidden></output></span></div>
-        <div class="kn kn-late"><span class="kn-stack"><select id="scale" class="lcd lcd-select lcd-wide" data-label="Scale" aria-label="Scale"></select><output id="scaleOut" hidden></output></span></div>
+        <label class="kn-stack" for="key"><span class="kn-label">Key</span><select id="key" class="lcd lcd-select"></select></label>
+        <label class="kn-stack" for="scale"><span class="kn-label">Scale</span><select id="scale" class="lcd lcd-select lcd-wide"></select></label>
       </div>
     </div>
     <div class="pedal rack-mod mod-share tgroup-share" aria-label="Share">
@@ -2378,9 +2379,7 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
   const keySel = document.getElementById("key"), scaleSel = document.getElementById("scale");
   keySel.innerHTML = KEYS.map((k, i) => `<option value="${i}"${i === keyRoot ? " selected" : ""}>${k}</option>`).join("");
   scaleSel.innerHTML = SCALES.map(([n], i) => `<option value="${i}"${i === scaleIndex ? " selected" : ""}>${n}</option>`).join("");
-  document.getElementById("keyOut").value = KEYS[keyRoot];
-  document.getElementById("scaleOut").value = SCALES[scaleIndex][0];
-  document.querySelectorAll(".kn-late").forEach(makeKnob);
+
   keySel.addEventListener("change", () => { keyRoot = Number(keySel.value); ctlSummary(); });
   scaleSel.addEventListener("change", () => { scale = SCALES[Number(scaleSel.value)][1]; ctlSummary(); });
   function ctlSummary() {
