@@ -459,7 +459,7 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
         <label class="sr" for="mine2">Second city</label><div class="ta"><input id="mine2" type="text" placeholder="Copenhagen" autocomplete="off"><button class="dice" type="button" data-for="mine2" aria-label="Random city" title="Random city"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="4" width="16" height="16" rx="3.5" fill="none" stroke="currentColor" stroke-width="1.5"/><circle cx="8.6" cy="8.6" r="1.5" fill="currentColor"/><circle cx="12" cy="12" r="1.5" fill="currentColor"/><circle cx="15.4" cy="15.4" r="1.5" fill="currentColor"/></svg></button></div>
         <label class="sr" for="mine3">Third city</label><div class="ta"><input id="mine3" type="text" placeholder="London" autocomplete="off"><button class="dice" type="button" data-for="mine3" aria-label="Random city" title="Random city"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="4" width="16" height="16" rx="3.5" fill="none" stroke="currentColor" stroke-width="1.5"/><circle cx="8.6" cy="8.6" r="1.5" fill="currentColor"/><circle cx="12" cy="12" r="1.5" fill="currentColor"/><circle cx="15.4" cy="15.4" r="1.5" fill="currentColor"/></svg></button></div>
         <button class="ghost small" type="submit">Play these</button>
-        <button class="share-btn share" id="share" type="button" hidden title="Copy a link to these three cities"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 15V4M8 8l4-4 4 4" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/><path d="M7 11H5.5A1.5 1.5 0 0 0 4 12.5v6A1.5 1.5 0 0 0 5.5 20h13a1.5 1.5 0 0 0 1.5-1.5v-6a1.5 1.5 0 0 0-1.5-1.5H17" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>Share</button>
+        <button class="share-btn share" id="share" type="button" hidden title="Copy a link to these cities, with your sounds and settings"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 15V4M8 8l4-4 4 4" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/><path d="M7 11H5.5A1.5 1.5 0 0 0 4 12.5v6A1.5 1.5 0 0 0 5.5 20h13a1.5 1.5 0 0 0 1.5-1.5v-6a1.5 1.5 0 0 0-1.5-1.5H17" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>Share</button>
       </div>
       <span class="share-note" id="shareNote" aria-live="polite"></span>
     </form>
@@ -1154,8 +1154,8 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
     try {
       const u = new URL(location.href);
       u.searchParams.set("cities", cities.map(c => c.name).join(","));
-      u.searchParams.set("key", KEYS[keyRoot]); u.searchParams.set("scale", String(SCALES.indexOf(SCALES.find(x => x[1] === scale))));
-      u.searchParams.set("kit", GROOVE.kit);
+      ["key", "scale", "kit"].forEach(k => u.searchParams.delete(k));   // older links; the mix below carries these now
+      u.searchParams.set("mix", b64u.enc(soundDiff()));
       return u.toString();
     } catch (e) { return ""; }
   }
@@ -3178,6 +3178,64 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
     if (minute !== lastMinute) { lastMinute = minute; cities.forEach(render); setTempo(); applyGroove(); }
     requestAnimationFrame(frame);
   }
+
+  // ---------- the mix as the visitor set it, carried in the share link ----------
+  // Every sound control on the page, under a name that stays put. MIDI routing and the
+  // freeze switches are left out: they belong to the listener's setup and the moment.
+  const SAVE_SKIP = new Set(["mine1", "mine2", "mine3", "midi", "filterCC", "moodPause", "hallFreeze", "delayFreeze"]);
+  function soundControls() {
+    const out = [];
+    document.querySelectorAll("main input[id], main select[id], main button[id][aria-pressed]").forEach(e => {
+      if (!SAVE_SKIP.has(e.id) && !e.id.endsWith("-swap") && e.type !== "text") out.push([e.id, e]);
+    });
+    cities.forEach((c, i) => ["mute", "sendRev", "sendDel"].forEach(r => { if (c.ref[r]) out.push([`c${i}.${r}`, c.ref[r]]); }));
+    drawGrooveGrid();   // makes sure the drum rows' reverb switches exist
+    document.querySelectorAll(".gv").forEach(e => out.push(["gv-" + e.dataset.row, e]));
+    return out;
+  }
+  function soundState() {
+    const st = {};
+    soundControls().forEach(([k, e]) => {
+      if (e.tagName === "BUTTON") { st[k] = e.getAttribute("aria-pressed") === "true" ? 1 : 0; return; }
+      const c = cities.find(c => k === c.key.toLowerCase() + "-rate");
+      if (c && !c.rateByHand) return;   // pace follows the weather unless it was set by hand
+      st[k] = e.value;
+    });
+    cities.forEach((c, i) => { st[`c${i}.oct`] = c.octave; });
+    st.unit = tempUnit;
+    return st;
+  }
+  // what every visitor starts with, so a link only needs the differences (plus the parts that are random each load)
+  const SOUND_DEFAULTS = soundState();
+  const ALWAYS_SAVE = /^(key|scale|grooveKit|c\d\.send(Rev|Del))$/;
+  function soundDiff() {
+    const st = soundState(), d = {};
+    for (const k in st) if (ALWAYS_SAVE.test(k) || String(st[k]) !== String(SOUND_DEFAULTS[k])) d[k] = st[k];
+    return d;
+  }
+  function applySoundState(st) {
+    const ctl = new Map(soundControls());
+    for (const k in st) {
+      const e = ctl.get(k), v = st[k];
+      if (!e) continue;
+      if (e.tagName === "BUTTON") { if ((e.getAttribute("aria-pressed") === "true") !== !!v) e.click(); continue; }
+      if (String(e.value) === String(v)) continue;
+      if (e.tagName === "SELECT" && ![...e.options].some(o => o.value === String(v))) continue;
+      e.value = v;
+      if (e.tagName === "INPUT") e.dispatchEvent(new Event("input", { bubbles: true }));
+      e.dispatchEvent(new Event("change", { bubbles: true }));
+    }
+    cities.forEach((c, i) => {
+      const o = st[`c${i}.oct`];
+      if (o != null && o !== c.octave) { const b = c.ref.oct.querySelector(`[data-oct="${o}"]`); if (b) b.click(); }
+    });
+    if (st.unit && st.unit !== tempUnit) { const b = document.querySelector(`.units [data-unit="${st.unit}"]`); if (b) b.click(); }
+  }
+  const b64u = {
+    enc: o => btoa(unescape(encodeURIComponent(JSON.stringify(o)))).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, ""),
+    dec: t => JSON.parse(decodeURIComponent(escape(atob(t.replace(/-/g, "+").replace(/_/g, "/")))))
+  };
+  try { const t = QS.get("mix"); if (t) applySoundState(b64u.dec(t)); } catch (e) {}
 
   // ---------- go ----------
   cities.forEach(c => { c.w = null; });
