@@ -418,6 +418,7 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
   .glance-src { min-height: 32px; }
 }
 .status.hint { color: var(--ink); }
+.mod-midi:not(.midi-live) .midi-chans, .mod-midi:not(.midi-live) .midi-fcc { display: none !important; }
 </style>
 </head>
 <body>
@@ -2561,7 +2562,7 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
       midiSel.options[0].textContent = "Off (MIDI blocked here)";
     }
   }
-  midiSel.addEventListener("change", () => { midiOut = midiAccess && midiSel.value ? midiAccess.outputs.get(midiSel.value) : null; ccStart(); });
+  midiSel.addEventListener("change", () => { midiOut = midiAccess && midiSel.value ? midiAccess.outputs.get(midiSel.value) : null; document.querySelector(".mod-midi").classList.toggle("midi-live", !!midiOut); ccStart(); });
   // switching to CC 19 also turns the TR-8S Master FX on (CC 15) so the knob has something to move
   function ccStart() {
     lastCC = -1;
