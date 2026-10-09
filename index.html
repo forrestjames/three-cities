@@ -147,18 +147,18 @@ main { max-width: 1240px; margin: 0 auto; padding: 0 16px 80px; display: flex; f
 .tgroup { display: flex; flex-direction: column; gap: 10px; min-width: 0; }
 .tlabel { font-family: var(--display); font-size: 18px; letter-spacing: 0.16em; text-transform: uppercase; color: var(--ink); }
 .tgroup .field { justify-content: space-between; }
-.rack { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.3fr) minmax(0, 1fr); margin-top: 8px; border-radius: 8px; position: relative; --led: #ffd98a;
+.rack { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.45fr) minmax(0, 0.85fr) minmax(0, 0.75fr); margin-top: 8px; border-radius: 8px; position: relative; --led: #ffd98a;
         background: repeating-linear-gradient(90deg, rgba(255,255,255,0.018) 0 1px, transparent 1px 3px), linear-gradient(180deg, #1c1715, #110d0c);
         border: 1px solid rgba(255,255,255,0.08); box-shadow: inset 0 1px 0 rgba(255,255,255,0.06), 0 10px 26px rgba(0,0,0,0.45); }
 .rack::before, .rack::after { content: ""; position: absolute; top: 7px; width: 6px; height: 6px; border-radius: 50%;
         background: radial-gradient(circle at 35% 35%, #d9d2cb, #6d6560 60%, #3a3431); box-shadow: 0 1px 1px rgba(0,0,0,0.6); }
 .rack::before { left: 7px; } .rack::after { right: 7px; }
-.rack-mod { padding: 12px 18px 12px; background: none; border: 0; box-shadow: none; border-radius: 0; display: flex; align-items: center; gap: 18px; min-width: 0; }
+.rack-mod { padding: 12px 18px 14px; background: none; border: 0; box-shadow: none; border-radius: 0; display: flex; flex-direction: column; align-items: stretch; gap: 8px; min-width: 0; }
 .rack-mod + .rack-mod { border-left: 1px solid rgba(255,255,255,0.07); }
 .rack-mod::before, .rack-mod::after { display: none; }
 .mod-head { display: flex; align-items: center; gap: 8px; margin: 0; flex: 0 0 auto; }
 .mod-name { font-family: var(--display); font-size: 15px; letter-spacing: 0.26em; text-transform: uppercase; color: var(--ink); }
-.mod-knobs { display: flex; gap: 14px; flex: 1; justify-content: space-around; }
+.mod-knobs { display: flex; gap: 18px; flex: 1; justify-content: flex-start; align-items: center; }
 .rack .kn { flex-direction: row; align-items: center; gap: 8px; }
 .rack .knob { width: 42px; height: 42px; flex: 0 0 42px; }
 .rack .kn-label { margin: 0 0 4px; font-size: 9px; }
@@ -176,9 +176,13 @@ main { max-width: 1240px; margin: 0 auto; padding: 0 16px 80px; display: flex; f
 .share-note { font-size: 11px; color: var(--ink-faint); letter-spacing: 0.04em; }
 .midi-port { display: flex; flex-direction: column; gap: 4px; }
 .midi-port .kn-label { margin: 0; }
-.midi-port select { min-width: 120px; text-align: left; }
+.midi-port select { min-width: 110px; max-width: 100%; text-align: left; }
+.lcd-select { cursor: pointer; text-align: left; padding: 4px 6px; font: 11px/1.2 var(--mono); }
+.lcd-select option { background: #1a1210; color: var(--ink); }
+.rack .kn-stack .kn-label { margin-bottom: 4px; }
+@media (max-width: 1100px) { .rack { grid-template-columns: minmax(0, 1fr) minmax(0, 1.35fr); } .rack-mod:nth-child(3) { border-left: 0; } .rack-mod:nth-child(n+3) { border-top: 1px solid rgba(255,255,255,0.07); } }
 @media (max-width: 1000px) { .rack { grid-template-columns: minmax(0, 1fr); } .rack-mod + .rack-mod { border-left: 0; border-top: 1px solid rgba(255,255,255,0.07); } }
-@media (max-width: 520px) { .rack-mod { flex-direction: column; align-items: stretch; gap: 10px; } .mod-knobs { justify-content: space-between; } .lcd-wide { max-width: 170px; } }
+@media (max-width: 520px) { .mod-knobs { justify-content: space-between; } .lcd-wide { max-width: 170px; } }
 .ctlwrap > summary { list-style: none; display: flex; flex-wrap: wrap; align-items: center; gap: 14px; min-height: 52px; cursor: pointer; padding: 6px 0; }
 .ctlwrap > summary::-webkit-details-marker { display: none; }
 .ctlwrap > summary::before { content: ""; width: 9px; height: 9px; border-right: 1.5px solid var(--ink); border-bottom: 1.5px solid var(--ink); transform: rotate(-45deg); transition: transform 0.2s; margin: 0 4px; }
@@ -423,16 +427,21 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
     <div class="pedal rack-mod mod-harm" aria-label="Harmony">
       <div class="mod-head"><span class="mod-name">Harmony</span><button class="info" type="button" aria-label="How Harmony works" data-tip="All three cities share one key and scale, picked at random each time the page loads. Underneath, a slow chord progression moves every 4 bars and shifts every 64, and each city's melody leans onto the current chord. Turn either knob and the cities follow from their next note."></button></div>
       <div class="knobs mod-knobs">
-        <div class="kn kn-late"><select class="kn-native" id="key" data-label="Key"></select><span class="kn-stack"><output id="keyOut" class="lcd"></output></span></div>
-        <div class="kn kn-late"><select class="kn-native" id="scale" data-label="Scale"></select><span class="kn-stack"><output id="scaleOut" class="lcd lcd-wide"></output></span></div>
+        <div class="kn kn-late"><span class="kn-stack"><select id="key" class="lcd lcd-select" data-label="Key" aria-label="Key"></select><output id="keyOut" hidden></output></span></div>
+        <div class="kn kn-late"><span class="kn-stack"><select id="scale" class="lcd lcd-select lcd-wide" data-label="Scale" aria-label="Scale"></select><output id="scaleOut" hidden></output></span></div>
       </div>
     </div>
-    <div class="pedal rack-mod mod-share tgroup-share" aria-label="Share and MIDI">
-      <div class="mod-head"><span class="mod-name">Share<span class="midi-bit"> &amp; MIDI</span></span><button class="info" type="button" aria-label="How Share and MIDI work" data-tip="Once you've swapped in your own cities, Copy link saves them into a link anyone can open to hear your version. MIDI out sends each city's notes to a synth or music app on its own channel: city 1 on channel 1, city 2 on 2, city 3 on 3. It works in Chrome and Edge on a computer."></button></div>
+    <div class="pedal rack-mod mod-share tgroup-share" aria-label="Share">
+      <div class="mod-head"><span class="mod-name">Share</span><button class="info" type="button" aria-label="How Share works" data-tip="Once you've swapped in your own cities, Copy link saves them into a link anyone can open to hear your version."></button></div>
       <div class="mod-body">
         <button class="share push" id="share" type="button" hidden>Copy link</button>
         <span class="share-note" id="shareNote" aria-live="polite">Swap in your cities to get a link.</span>
-        <label class="midi-bit midi-port" for="midi"><span class="kn-label">MIDI out</span><select id="midi" class="lcd"><option value="">Off</option></select></label>
+      </div>
+    </div>
+    <div class="pedal rack-mod mod-midi midi-bit" aria-label="MIDI">
+      <div class="mod-head"><span class="mod-name">MIDI</span><button class="info" type="button" aria-label="How MIDI works" data-tip="MIDI out sends each city's notes to a synth or music app on its own channel: city 1 on channel 1, city 2 on 2, city 3 on 3. It works in Chrome and Edge on a computer."></button></div>
+      <div class="mod-body">
+        <label class="midi-port" for="midi"><span class="kn-label">Out to</span><select id="midi" class="lcd"><option value="">Off</option></select></label>
       </div>
     </div>
   </section>
@@ -1447,7 +1456,8 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
       <line class="kp" stroke="#f3ece6" stroke-width="2.6" stroke-linecap="round"/>
     </svg>`;
     const label = document.createElement("div"); label.className = "kn-label"; label.textContent = el.dataset.label;
-    kn.insertBefore(knob, el); out.parentNode.insertBefore(label, out);
+    kn.insertBefore(knob, kn.firstChild);
+    if (out.parentNode.classList.contains("kn-stack")) out.parentNode.insertBefore(label, out.parentNode.firstChild); else out.parentNode.insertBefore(label, out);
     const kv = knob.querySelector(".kv"), kp = knob.querySelector(".kp");
     function draw() {
       const f = (get() - min) / (max - min), a = -135 + 270 * f;
@@ -1475,6 +1485,7 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
     knob.addEventListener("pointerup", () => { dragY = null; });
     knob.addEventListener("pointercancel", () => { dragY = null; });
     knob.addEventListener("dblclick", () => set(start));
+    el.addEventListener("change", () => { if (isSel && out) out.value = el.options[el.selectedIndex].text; draw(); });   // a dropdown change turns the knob too
     knob.addEventListener("wheel", e => { e.preventDefault(); set(get() + (e.deltaY < 0 ? 1 : -1) * (isSel ? 1 : Math.max(step, (max - min) / 50))); }, { passive: false });
     knob.addEventListener("keydown", e => {
       const big = isSel ? 1 : Math.max(step, (max - min) / 10), small = isSel ? 1 : Math.max(step, (max - min) / 100);
