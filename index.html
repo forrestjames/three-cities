@@ -141,6 +141,26 @@ main { max-width: 1240px; margin: 0 auto; padding: 0 16px 80px; display: flex; f
 .tgroup { display: flex; flex-direction: column; gap: 10px; min-width: 0; }
 .tlabel { font-family: var(--display); font-size: 18px; letter-spacing: 0.16em; text-transform: uppercase; color: var(--ink); }
 .tgroup .field { justify-content: space-between; }
+.ctlwrap > summary { list-style: none; display: flex; flex-wrap: wrap; align-items: center; gap: 14px; min-height: 52px; cursor: pointer; padding: 6px 0; }
+.ctlwrap > summary::-webkit-details-marker { display: none; }
+.ctlwrap > summary::before { content: ""; width: 9px; height: 9px; border-right: 1.5px solid var(--ink); border-bottom: 1.5px solid var(--ink); transform: rotate(-45deg); transition: transform 0.2s; margin: 0 4px; }
+.ctlwrap[open] > summary::before { transform: rotate(45deg); }
+.ctlwrap { border-bottom: 1px solid var(--line); }
+.ctlwrap .transport { border-bottom: 0; padding-top: 6px; }
+.tlabel { display: flex; align-items: center; gap: 10px; }
+.info { position: relative; width: 20px; height: 20px; flex: 0 0 20px; border-radius: 50%; border: 1px solid var(--ink-faint); background: none; color: var(--ink-dim); cursor: help; padding: 0; font: 12px/1 var(--mono); }
+.info::before { content: "i"; }
+.info::after { content: attr(data-tip); position: absolute; z-index: 30; left: 50%; top: calc(100% + 10px); transform: translateX(-50%); width: min(300px, 80vw); padding: 12px 14px; background: #1f1613; border: 1px solid var(--line); box-shadow: 0 12px 30px rgba(0,0,0,0.5);
+               font: 12px/1.55 var(--mono); letter-spacing: 0.02em; text-transform: none; color: var(--ink); text-align: left; white-space: normal; opacity: 0; pointer-events: none; transition: opacity 0.15s; }
+.info:hover::after, .info:focus::after { opacity: 1; }
+.info:hover, .info:focus { color: var(--ink); border-color: var(--ink-dim); }
+@media (max-width: 760px), (pointer: coarse) and (max-width: 1100px) {
+  .midi-bit { display: none !important; }
+  .tgroup-share:has(.share[hidden]) { display: none; }
+  .tlabel { position: relative; }
+  .info { position: static; }
+  .info::after { left: 0; right: 0; width: auto; top: calc(100% + 8px); transform: none; }
+}
 @media (max-width: 1100px) { .transport { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 .field { display: flex; align-items: center; gap: 10px; font-size: 12px; text-transform: uppercase; letter-spacing: 0.14em; color: var(--ink-dim); }
 .field output { color: var(--ink); min-width: 4ch; font-variant-numeric: tabular-nums; }
@@ -353,24 +373,28 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
 </header>
 
 <main>
+  <details class="ctlwrap" id="ctlWrap">
+    <summary><span class="fxsum-title">Controls</span><span class="fxsum-info" id="ctlSummary"></span>
+      <span class="fxsum-hint">Open for tempo, volume, key and scale, and to share your cities.</span></summary>
   <section class="transport" aria-label="Controls">
     <div class="tgroup">
-      <div class="tlabel">Play</div>
+      <div class="tlabel">Play <button class="info" type="button" aria-label="How Play works" data-tip="Tempo is the speed with every city awake. As the cities fall asleep it slows, down to about three quarters of this in the dead of night, then picks up again as they wake. The number shows the tempo you're hearing. Volume is the level for everything, drums included."></button></div>
       <label class="field" for="tempo">Tempo <input id="tempo" type="range" min="50" max="160" value="92"> <output id="tempoOut">92</output></label>
       <label class="field" for="volume">Volume <input id="volume" type="range" min="0" max="100" value="75"> <output id="volumeOut">75</output></label>
     </div>
     <div class="tgroup">
-      <div class="tlabel">Harmony</div>
+      <div class="tlabel">Harmony <button class="info" type="button" aria-label="How Harmony works" data-tip="All three cities share one key and scale, picked at random each time the page loads. Underneath, a slow chord progression moves every 4 bars and shifts every 64, and each city's melody leans onto the current chord. Change either menu and the cities follow from their next note."></button></div>
       <label class="field" for="key">Key <select id="key"></select></label>
       <label class="field" for="scale">Scale <select id="scale"></select></label>
     </div>
-    <div class="tgroup">
-      <div class="tlabel">Share &amp; MIDI</div>
+    <div class="tgroup tgroup-share">
+      <div class="tlabel">Share<span class="midi-bit"> &amp; MIDI</span> <button class="info" type="button" aria-label="How Share and MIDI work" data-tip="Once you've swapped in your own cities, Copy link saves them into a link anyone can open to hear your version. MIDI out sends each city's notes to a synth or music app on its own channel: city 1 on channel 1, city 2 on 2, city 3 on 3. It works in Chrome and Edge on a computer."></button></div>
       <button class="share" id="share" type="button" hidden>Copy link to these cities</button>
       <span class="share-note" id="shareNote" aria-live="polite"></span>
-      <label class="field" for="midi">MIDI out <select id="midi"><option value="">Off</option></select></label>
+      <label class="field midi-bit" for="midi">MIDI out <select id="midi"><option value="">Off</option></select></label>
     </div>
   </section>
+  </details>
 
 
   <section class="cities" id="cities" aria-label="Cities"></section>
@@ -2174,6 +2198,7 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
     const out = document.getElementById("tempoOut");
     out.value = bpm;
     out.title = bpm < set ? `Set to ${set}, slowed while the cities sleep` : "";
+    if (typeof ctlSummary === "function") try { ctlSummary(); } catch (e) {}
     if (bpm === bpmNow && tickDur) return;
     bpmNow = bpm;
     tickDur = 60 / bpm / 8;   // one 32nd note
@@ -2278,15 +2303,22 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
   const keySel = document.getElementById("key"), scaleSel = document.getElementById("scale");
   keySel.innerHTML = KEYS.map((k, i) => `<option value="${i}"${i === keyRoot ? " selected" : ""}>${k}</option>`).join("");
   scaleSel.innerHTML = SCALES.map(([n], i) => `<option value="${i}"${i === scaleIndex ? " selected" : ""}>${n}</option>`).join("");
-  keySel.addEventListener("change", () => { keyRoot = Number(keySel.value); });
-  scaleSel.addEventListener("change", () => { scale = SCALES[Number(scaleSel.value)][1]; });
+  keySel.addEventListener("change", () => { keyRoot = Number(keySel.value); ctlSummary(); });
+  scaleSel.addEventListener("change", () => { scale = SCALES[Number(scaleSel.value)][1]; ctlSummary(); });
+  function ctlSummary() {
+    const el = document.getElementById("ctlSummary");
+    if (!el) return;
+    el.textContent = `${document.getElementById("tempoOut").value || tempo.value} bpm · ${KEYS[keyRoot]} ${SCALES.find(x => x[1] === scale)[0]} · volume ${document.getElementById("volume").value}`;
+  }
   const tempo = document.getElementById("tempo");
   tempo.addEventListener("input", () => { bpmNow = 0; setTempo(); });
   const vol = document.getElementById("volume");
   vol.addEventListener("input", () => {
-    document.getElementById("volumeOut").value = vol.value;
+    document.getElementById("volumeOut").value = vol.value; ctlSummary();
     if (master) master.gain.setTargetAtTime(vol.value / 100 * 0.9, ac.currentTime, 0.05);
   });
+
+  ctlSummary();
 
   // ---------- MIDI out (Chrome, when the page is allowed to use it) ----------
   let midiOut = null;
