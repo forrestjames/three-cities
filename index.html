@@ -342,11 +342,11 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
 .glance-src option { background: #1a1210; color: var(--ink); }
 .glance b { font-weight: 400; color: var(--accent); }
 .cities.open .glance { display: none; }
-.quick { display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr) 36px 36px; gap: 10px; align-items: center; padding-top: 14px; border-top: 1px solid var(--line); }
+.quick { display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr) 36px auto; gap: 10px; align-items: center; padding-top: 14px; border-top: 1px solid var(--line); }
 .quick select { width: 100%; min-height: 36px; background: rgba(16,8,6,0.6); font-size: 11px; letter-spacing: 0; padding: 4px 4px 4px 6px; }
 .quick input[type="range"] { width: 100%; accent-color: var(--accent); }
-.more-btn { width: 36px; height: 36px; display: grid; place-items: center; background: rgba(16,8,6,0.6); border: 1px solid var(--line); padding: 0; cursor: pointer; color: var(--ink-dim); transition: color 0.2s, border-color 0.2s, background 0.2s; }
-.more-btn svg { width: 18px; height: 18px; }
+.more-btn { width: auto; min-width: 36px; height: 36px; display: inline-flex; align-items: center; gap: 6px; padding: 0 10px 0 8px !important; font: inherit; font-size: 11px; letter-spacing: 0.14em; text-transform: uppercase; background: rgba(16,8,6,0.6); border: 1px solid var(--line); padding: 0; cursor: pointer; color: var(--ink-dim); transition: color 0.2s, border-color 0.2s, background 0.2s; }
+.more-btn svg { width: 18px; height: 18px; flex: none; }
 .more-btn circle { fill: rgba(16,8,6,0.9); transition: transform 0.35s ease; }
 .more-btn:hover { color: var(--ink); }
 .more-btn[aria-expanded="true"] { color: var(--ground); background: var(--accent); border-color: var(--accent); }
@@ -411,6 +411,13 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
   .cycle { font-size: 34px; }
 }
 @media (prefers-reduced-motion: reduce) { .city, .bar .fill { transition: none; } }
+@media (pointer: coarse) {
+  .dice, .mute, .units button, .q-next { min-width: 44px; min-height: 44px; }
+  .more-btn { height: 44px; }
+  .info { width: 28px; height: 28px; flex-basis: 28px; }
+  .glance-src { min-height: 32px; }
+}
+.status.hint { color: var(--ink); }
 </style>
 </head>
 <body>
@@ -421,10 +428,10 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
     <h1 id="title">Three Cities</h1>
     <div class="lede" id="ledeMine">
       <p class="lede-lead">Three places I’ve called home, playing in real time.</p>
-      <p>Boston, Copenhagen and London become a constantly changing composition shaped by their live weather. Temperature sets the length of each rhythm, conditions scatter notes across it, and at sunset, each city falls silent.</p>
+      <p>Boston, Copenhagen and London become a constantly changing composition shaped by their live weather. Temperature sets the length of each rhythm, conditions scatter notes across it, and as night falls each city drifts off: quieter, slower, fewer notes.</p>
     </div>
     <div class="lede" id="ledeYours" hidden>
-      <p><span id="ledeCities"></span> become a constantly changing composition shaped by their live weather. Temperature sets the length of each rhythm, conditions scatter notes across it, and at sunset, each city falls silent.</p>
+      <p><span id="ledeCities"></span> become a constantly changing composition shaped by their live weather. Temperature sets the length of each rhythm, conditions scatter notes across it, and as night falls each city drifts off: quieter, slower, fewer notes.</p>
     </div>
     <button class="ghost" id="play" type="button" aria-pressed="false">Start listening</button>
     <form class="mine" id="mine" hidden>
@@ -500,7 +507,7 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
 
   <details class="fxwrap" id="fxWrap">
     <summary><span class="fxsum-title">Effects</span><span class="fxsum-info" id="fxSummary"></span>
-      <span class="fxsum-hint">Open for the hall and delay pedals. Switch them on or off for each city with the sliders icon on its card.</span></summary>
+      <span class="fxsum-hint">Open for the hall and delay pedals. Switch them on or off for each city with the More button on its card.</span></summary>
     <div class="pedals">
       <section class="pedal pedal-hall" aria-label="Hall reverb">
         <div class="pedal-head">
@@ -547,9 +554,10 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
     </div>
     <canvas class="mood-pad" id="moodPad" tabindex="0" aria-label="Memory map. Drag the dot towards the city where it happened. Arrow keys move it too."></canvas>
     <div class="mood-row">
-      <span>Drag the light towards where it happened. Each answer leaves a mark.</span>
+      <span>Drag the light towards where it happened. Each answer leaves a mark, kept only on this device.</span>
       <button id="moodClear" type="button">Clear my marks</button>
       <button id="moodPause" type="button" aria-pressed="false">Pause questions</button>
+      <button id="moodDeep" type="button" aria-pressed="false" title="Adds questions about loss, endings and mortality">Deeper questions</button>
     </div>
   </section>
 
@@ -623,9 +631,12 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
     ["open sus2 (like DADEAD)", [0, 2, 7]]
   ];
   // a fresh key and scale every time the page loads
+  const QS = (() => { try { return new URLSearchParams(location.search); } catch (e) { return new URLSearchParams(); } })();
   let keyRoot = Math.floor(Math.random() * KEYS.length);
+  if (QS.has("key") && KEYS.indexOf(QS.get("key")) >= 0) keyRoot = KEYS.indexOf(QS.get("key"));
   // any scale can come up; the shared chords below keep the three cities agreeing with each other
-  const scaleIndex = Math.floor(Math.random() * SCALES.length);
+  let scaleIndex = Math.floor(Math.random() * SCALES.length);
+  { const q = Number(QS.get("scale")); if (QS.has("scale") && q >= 0 && q < SCALES.length) scaleIndex = q; }
   let scale = SCALES[scaleIndex][1];
   // A city's notes are scale degrees around its own register, so they follow the key and scale.
   function noteFor(c, deg) {
@@ -771,7 +782,7 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
   var tempUnit = "C";
   function fmtTemp(t, dp) {
     const v = tempUnit === "F" ? t * 9 / 5 + 32 : t, m = Math.pow(10, dp);
-    return (Math.round(v * m) / m) + "°";
+    return (Math.round(v * m) / m) + "°" + tempUnit;
   }
   document.querySelectorAll(".units button").forEach(b => b.addEventListener("click", () => {
     tempUnit = b.dataset.unit;
@@ -788,6 +799,7 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
       b.setAttribute("aria-expanded", String(open));
       const t = open ? "Fewer controls" : "More controls";
       b.setAttribute("aria-label", t); b.title = t;
+      const w = b.querySelector(".more-word"); if (w) w.textContent = open ? "Less" : "More";
     });
     try { localStorage.setItem("tc-more", open ? "1" : "0"); } catch (e) {}
   }
@@ -820,7 +832,7 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
         <button class="more-btn" type="button" data-r="moreBtn" aria-expanded="false" aria-label="More controls" title="More controls">
           <svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round">
             <path d="M4 7h9M17 7h3M4 17h3M11 17h9"/><circle cx="15" cy="7" r="2"/><circle cx="9" cy="17" r="2"/>
-          </svg>
+          </svg><span class="more-word">More</span>
         </button>
       </div>
       <div class="more">
@@ -1123,6 +1135,8 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
     try {
       const u = new URL(location.href);
       u.searchParams.set("cities", cities.map(c => c.name).join(","));
+      u.searchParams.set("key", KEYS[keyRoot]); u.searchParams.set("scale", String(SCALES.indexOf(SCALES.find(x => x[1] === scale))));
+      u.searchParams.set("kit", GROOVE.kit);
       return u.toString();
     } catch (e) { return ""; }
   }
@@ -1221,9 +1235,13 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
       const w = c.w, src = { humidity: `${Math.round(w.h)}% humidity`, wind: `${Math.round(w.w)} km/h wind`, cloud: `${Math.round(w.c)}% cloud`, rain: `${w.r} mm rain` }[c.source];
       const label = { humidity: `${Math.round(w.h)}% humidity`, wind: `${Math.round(w.w)} km/h wind`, cloud: `${Math.round(w.c)}% cloud`, rain: `${w.r} mm rain` };
       const pick = `<select class="glance-src" aria-label="${c.name}: which weather sets the hits" title="Choose which weather sets how many notes play">${SOURCES.map(k => `<option value="${k}"${k === c.source ? " selected" : ""}>${label[k]}</option>`).join("")}</select>`;
-      const chips = [`<span class="lead">${pick} <b>\u2192 ${c.hits} of ${c.steps} hits</b></span>`];
-      if (c.source !== "wind") chips.push(`<span title="Sets how fast the filter breathes">${Math.round(w.w)} km/h wind</span>`);
-      if (pf) chips.push(`<span title="Air pressure sets the pace">${Math.round(w.p)} hPa \u00b7 ${c.rateByHand ? "set by hand" : pf.name}</span>`);
+      const sz = sleepOf(c), night = !s.day;
+      const pace = { 1: "very quick notes", 2: "quick notes", 4: "relaxed notes" }[c.rate] || "slow notes";
+      const chips = [
+        `<span title="Temperature sets how long ${c.name}'s loop is before it repeats">${fmtTemp(w.t, 0)} \u2192 <b>${c.steps}-step loop</b></span>`,
+        `<span class="lead">${pick} <b>\u2192 ${c.hits} ${c.hits === 1 ? "note plays" : "notes play"}</b></span>`];
+      if (pf) chips.push(`<span title="Air pressure (${Math.round(w.p)} hPa) sets the pace: ${pf.name} notes${c.rateByHand ? ", set by hand" : ""}">${pf.word} air \u2192 ${c.rateByHand ? "pace set by hand" : pace}</span>`);
+      if (night) chips.push(`<span title="At night each city drifts off: notes thin out, the tone darkens and the tempo eases">night \u2192 ${sz.waking ? "waking slowly" : "softer and sparser"}</span>`);
       c.ref.glance.innerHTML = chips.join("");
     }
     c.ref.pattern.innerHTML = `${c.steps} steps · ${c.hits} ${c.hits === 1 ? "hit" : "hits"} · ${c.source}<br><span class="shape">${c.pattern.map(x => x ? "x" : ".").join("")}</span>` +
@@ -2325,6 +2343,7 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
     on.addEventListener("click", () => {
       GROOVE.on = !GROOVE.on; on.setAttribute("aria-pressed", String(GROOVE.on)); sec.classList.toggle("groove-off", !GROOVE.on); applyGroove();
     });
+    { const k = QS.get("kit"), sel = document.getElementById("grooveKit"); if (k && [...sel.options].some(o => o.value === k)) { sel.value = k; GROOVE.kit = k; } }
     document.getElementById("grooveKit").addEventListener("change", e => { GROOVE.kit = e.target.value; drawGrooveGrid(); });
     document.getElementById("grooveVol").addEventListener("input", e => { GROOVE.vol = e.target.value / 100; applyGroove(); });
     document.getElementById("grooveTone").addEventListener("input", e => { GROOVE.tone = e.target.value / 100; applyGroove(); });
@@ -2438,8 +2457,16 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
       const pr = unlock.play(); if (pr && pr.catch) pr.catch(() => {});
     } catch (e) {}
   }
+  const isIOS = /iP(hone|ad|od)/.test(navigator.userAgent) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+  let iosHinted = false;
+  function closeTips() { const a = document.activeElement; if (a && a.classList && a.classList.contains("info")) a.blur(); }
+  window.addEventListener("scroll", closeTips, { passive: true });
+  document.addEventListener("keydown", e => { if (e.key === "Escape") closeTips(); });
+  document.addEventListener("pointerdown", e => { if (!e.target.closest || !e.target.closest(".info")) closeTips(); });
   async function start() {
+    try { if (navigator.audioSession) navigator.audioSession.type = "playback"; } catch (e) {}
     unlockIOS();
+    if (isIOS && !iosHinted) { iosHinted = true; setTimeout(() => { if (!playing) return; const st = document.getElementById("status"); st.textContent = "No sound? Check the silent switch on the side of your phone, and the volume."; st.classList.add("hint"); setTimeout(() => st.classList.remove("hint"), 12000); }, 5000); }
     if (!ac) setupAudio();
     await ac.resume();
     tick = 0; nextTime = ac.currentTime + 0.08;
@@ -2603,29 +2630,32 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
   // happened. The nearer a city, the brighter and louder it plays. Each city follows at its own pace.
   const QUESTIONS = [
     "Where were you happiest?", "Where did you fall in love?", "Where did you feel most at home?",
-    "Where did you make your closest friend?", "Where did you feel most lost?", "Where did you laugh the hardest?",
+    "Where did you make your closest friend?", "Where did you laugh the hardest?",
     "Where did you take your biggest risk?", "Where did you have your best meal?", "Where did you feel most free?",
     "Where did you grow up the most?", "Where would you go back to tomorrow?", "Where did you hear a song you still love?",
     "Where did you feel most creative?", "Where did you have your coldest winter?", "Where did you walk the most?",
-    "Where did you feel like a stranger?", "Where did you start something new?", "Where did you say a hard goodbye?",
+    "Where did you feel like a stranger?", "Where did you start something new?",
     "Where does your heart still live?", "Where did you dance the most?", "Where did you learn the most about yourself?",
     "Where did you feel most like you?",
     // everyday memories
-    "Where did you get your first real job?", "Where did you cry the hardest?", "Where did you learn to cook?",
+    "Where did you get your first real job?", "Where did you learn to cook?",
     "Where did you see the best sunset?", "Where did you get properly lost?", "Where did you first live alone?",
-    "Where did you meet someone who changed everything?", "Where did you feel most broke?", "Where did you get your heart broken?",
+    "Where did you meet someone who changed everything?", "Where did you feel most broke?",
     "Where did you sleep the worst?", "Where did you feel most proud?", "Where did you have the best night out?",
-    "Where did you feel the most alone?", "Where did you get caught in the rain?", "Where did you make a fool of yourself?",
+    "Where did you get caught in the rain?", "Where did you make a fool of yourself?",
     "Where did you find your favourite café?", "Where did you feel most homesick?", "Where did you get a second chance?",
     "Where did you hear the best live music?", "Where did you feel most grown up?", "Where did you start to feel old?",
     "Where did you first feel brave?", "Where did you feel the most seen?", "Where did you have your best birthday?",
-    "Where did you change your mind about something big?", "Where were you when you got the news?", "Where did you feel safest?",
-    "Where did you write something that mattered?", "Where did you lose touch with someone?", "Where did you feel most foreign?",
+    "Where did you change your mind about something big?", "Where did you feel safest?",
+    "Where did you write something that mattered?", "Where did you feel most foreign?",
     "Where did the seasons feel the strongest?", "Where did you learn to slow down?", "Where did you feel most ambitious?",
-    "Where did you find your people?", "Where did you hold a newborn?", "Where did you spend your loneliest Sunday?",
+    "Where did you find your people?", "Where did you hold a newborn?",
     "Where did you say yes when you should have said no?", "Where did you feel most like a kid again?",
     "Where did you have the conversation that changed you?", "Where did you make your best mistake?",
-    // the big ones
+  ];
+  // the big ones: only when the visitor asks for them
+  const DEEP = [
+    "Where did you cry the hardest?", "Where did you get your heart broken?", "Where did you feel the most alone?", "Where were you when you got the news?", "Where did you lose touch with someone?", "Where did you spend your loneliest Sunday?", "Where did you feel most lost?", "Where did you say a hard goodbye?",
     "Where did you first think about dying?", "Where did you feel most alive?", "Where would you want to be at the end?",
     "Where did you feel time pass the fastest?", "Where did you stop believing in something?", "Where did you start believing in something?",
     "Where did you feel small under the sky?", "Where did you last feel completely present?", "Where did you leave a version of yourself?",
@@ -2642,6 +2672,7 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
   const pad = document.getElementById("moodPad"), pg = pad.getContext("2d");
   const qEl = document.getElementById("moodQ"), ringEl = document.getElementById("moodRing");
   const QUESTION_MS = 20000;
+  const FIRST_Q = "Where were you happiest?"; let deep = false, firstRound = true;
   let order = [], qIndex = -1, qStart = performance.now(), paused = false, pausedAt = 0;
   let dot = null, dragging = false, movedThisQuestion = false;
   // ----- the atlas: your answers leave marks that develop the places underneath -----
@@ -2662,7 +2693,7 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
   function nextQuestion() {
     if (movedThisQuestion && dot && qIndex >= 0) addMark(dot.w.slice(), order[qIndex]);
     movedThisQuestion = false;
-    if (!order.length || qIndex >= order.length - 1) { order = shuffle(QUESTIONS.slice()); qIndex = -1; }
+    if (!order.length || qIndex >= order.length - 1) { order = shuffle(QUESTIONS.concat(deep ? DEEP : [])); qIndex = -1; if (firstRound) { order.splice(order.indexOf(FIRST_Q), 1); order.unshift(FIRST_Q); firstRound = false; } }
     qIndex++;
     qStart = performance.now();
     if (reduceMotion) { qEl.textContent = order[qIndex]; qEl.classList.toggle("long", order[qIndex].length > 42); return; }
@@ -2854,6 +2885,10 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
     trailTo(nx, ny);
   });
   document.getElementById("moodNext").addEventListener("click", nextQuestion);
+  document.getElementById("moodDeep").addEventListener("click", e => {
+    deep = !deep; e.currentTarget.setAttribute("aria-pressed", String(deep));
+    order = shuffle(QUESTIONS.concat(deep ? DEEP : [])); qIndex = -1; nextQuestion();
+  });
   const pauseBtn = document.getElementById("moodPause");
   pauseBtn.addEventListener("click", () => {
     paused = !paused;
