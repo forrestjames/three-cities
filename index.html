@@ -185,6 +185,7 @@ main { max-width: 1240px; margin: 0 auto; padding: 0 16px 80px; display: flex; f
 .midi-ch { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
 .midi-ch .kn-label { margin: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; display: flex; align-items: center; gap: 5px; }
 .midi-ch .kn-label i { width: 6px; height: 6px; border-radius: 50%; flex: 0 0 6px; background: var(--dot); }
+.midi-fcc { width: 100%; }
 .midi-ch select { padding: 3px 4px; font-size: 11px; min-width: 0; width: 100%; }
 .midi-port select { min-width: 110px; max-width: 100%; text-align: left; }
 .lcd-select { cursor: pointer; text-align: left; padding: 4px 6px; font: 11px/1.2 var(--mono); }
@@ -460,10 +461,12 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
       </div>
     </div>
     <div class="pedal rack-mod mod-midi midi-bit" aria-label="MIDI">
-      <div class="mod-head"><span class="mod-name">MIDI</span><button class="info" type="button" aria-label="How MIDI works" data-tip="MIDI out sends each city's notes to a synth or music app on its own channel. Pick each city's channel, and the drums', in the menus here, or turn any of them off. By default the cities use channels 1, 2 and 3 and the rhythm section uses channel 10, with standard General MIDI drum notes: kick 36, snare 38, rim 37, closed hat 42, ride 51 with the jazz kit, so any drum rack maps it. Fills, ratchets and ghost notes come through too. It works in Chrome and Edge on a computer."></button></div>
+      <div class="mod-head"><span class="mod-name">MIDI</span><button class="info" type="button" aria-label="How MIDI works" data-tip="MIDI out sends each city's notes to a synth or music app on its own channel. Pick each city's channel, and the drums', in the menus here, or turn any of them off. By default the cities use channels 1, 2 and 3 and the rhythm section uses channel 10, with standard General MIDI drum notes: kick 36, snare 38, rim 37, closed hat 42, ride 51 with the jazz kit, so any drum rack maps it. Fills, ratchets and ghost notes come through too. The rhythm section's filter, Auto sweeps included, goes out as a control change on the drums' channel so your drum machine's own filter follows. CC 19 drives the Roland TR-8S Master FX knob and switches its Master FX on. It works in Chrome and Edge on a computer."></button></div>
       <div class="mod-body">
         <label class="midi-port" for="midi"><span class="kn-label">Out to</span><select id="midi" class="lcd"><option value="">Off</option></select></label>
         <div class="midi-chans" id="midiChans" aria-label="MIDI channel for each part"></div>
+        <label class="midi-ch midi-fcc" for="filterCC" title="Send the rhythm section filter, Auto sweeps included, as a control change on the drums' channel"><span class="kn-label">Drum filter as CC</span>
+          <select id="filterCC" class="lcd"><option value="-1">Off</option><option value="19" selected>CC 19 · TR-8S Master FX</option><option value="74">CC 74 · Cutoff</option><option value="1">CC 1 · Mod wheel</option></select></label>
       </div>
     </div>
   </section>
@@ -2133,7 +2136,7 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
     if (!GROOVE.bus) return;
     const t = ac.currentTime, sl = grooveSleep();
     GROOVE.bus.gain.setTargetAtTime(GROOVE.on ? GROOVE.vol * GROOVE.vol * 1.3 * (1 - sl * 0.5) : 0, t, 0.08);
-    if (!GROOVE.auto) GROOVE.filter.frequency.setTargetAtTime(250 * Math.pow(16000 / 250, GROOVE.tone) * (1 - sl * 0.4), t, 0.08);
+    if (!GROOVE.auto) { GROOVE.filter.frequency.setTargetAtTime(250 * Math.pow(16000 / 250, GROOVE.tone) * (1 - sl * 0.4), t, 0.08); sendFilterCC(GROOVE.tone); }
   }
   const KITS = {   // [kick: start Hz, end Hz, decay s, level] [snare: band Hz, Q, decay, level, body Hz] [hat: highpass Hz, decay, level] [rim: Hz, decay, level]
     soft:    { kick: [110, 46, 0.32, 0.8], snare: [1800, 0.8, 0.14, 1.1, 0], hat: [7000, 0.035, 0.5], rim: [880, 0.05, 0.44], drive: 0 },
@@ -2145,6 +2148,18 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
   let driveCurve = null;
   const GM_DRUMS = { kick: 36, snare: 38, rim: 37, hat: 42, ride: 51 };
   let drumCh = 9;   // channel 10, as MIDI counts from 1
+  // The rhythm section filter can drive a drum machine's own filter: its position goes out as a
+  // control change on the drums' channel. CC 19 is the Roland TR-8S Master FX CTRL knob.
+  let filterCC = 19, lastCC = -1, lastCCAt = 0;
+  function sendFilterCC(norm, t) {
+    if (filterCC < 0 || drumCh < 0 || !midiOut) return;
+    const v = Math.max(0, Math.min(127, Math.round(norm * 127)));
+    const now = performance.now();
+    if (v === lastCC || now - lastCCAt < 25) return;
+    lastCC = v; lastCCAt = now;
+    const at = t != null && ac ? performance.now() + Math.max(0, t - ac.currentTime) * 1000 : undefined;
+    midiOut.send([0xB0 | drumCh, filterCC, v], at);
+  }
   function sendDrumMidi(kind, t, vel) {
     if (drumCh < 0 || !midiOut) return;
     const note = kind === "hat" && GROOVE.kit === "jazz" ? GM_DRUMS.ride : GM_DRUMS[kind];
@@ -2225,6 +2240,7 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
     const k = ph < 0.03 ? 1 - ph / 0.03 : Math.pow((ph - 0.03) / 0.97, 2.2);   // a quick drop just after the one, then a slow climb
     const f = low * Math.pow(top / low, Math.max(0, Math.min(1, k)));
     GROOVE.filter.frequency.setTargetAtTime(f * (1 - grooveSleep() * 0.4), t, ph < 0.03 ? 0.04 : 0.12);
+    sendFilterCC(Math.log(f / 250) / Math.log(16000 / 250), t);
     const bars = Math.round((cyc.ticks - (tickNow % cyc.ticks)) / 32);
     GROOVE.note = `Auto: opening up as ${cyc.all ? "all three cities" : "two of the cities"} head for the one together, ${bars} ${bars === 1 ? "bar" : "bars"} away`;
   }
@@ -2489,7 +2505,14 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
       midiSel.options[0].textContent = "Off (MIDI blocked here)";
     }
   }
-  midiSel.addEventListener("change", () => { midiOut = midiAccess && midiSel.value ? midiAccess.outputs.get(midiSel.value) : null; });
+  midiSel.addEventListener("change", () => { midiOut = midiAccess && midiSel.value ? midiAccess.outputs.get(midiSel.value) : null; ccStart(); });
+  // switching to CC 19 also turns the TR-8S Master FX on (CC 15) so the knob has something to move
+  function ccStart() {
+    lastCC = -1;
+    if (midiOut && filterCC === 19 && drumCh >= 0) midiOut.send([0xB0 | drumCh, 15, 127]);
+    if (!GROOVE.auto) sendFilterCC(GROOVE.tone);
+  }
+  document.getElementById("filterCC").addEventListener("change", e => { filterCC = Number(e.target.value); ccStart(); });
   function sendMidi(c, note, vel, t) {
     if (!midiOut) return;
     const at = performance.now() + (t - ac.currentTime) * 1000;
