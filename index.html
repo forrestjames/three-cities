@@ -149,7 +149,7 @@ main { max-width: 1240px; margin: 0 auto; padding: 0 16px 80px; display: flex; f
 .tgroup { display: flex; flex-direction: column; gap: 10px; min-width: 0; }
 .tlabel { font-family: var(--display); font-size: 18px; letter-spacing: 0.16em; text-transform: uppercase; color: var(--ink); }
 .tgroup .field { justify-content: space-between; }
-.rack { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.3fr) minmax(0, 0.7fr) minmax(0, 0.8fr) minmax(0, 0.7fr); margin-top: 8px; border-radius: 8px; position: relative; --led: #ffd98a;
+.rack { display: grid; grid-template-columns: minmax(0, 0.95fr) minmax(0, 1.2fr) minmax(0, 0.65fr) minmax(0, 0.7fr) minmax(0, 1.3fr); margin-top: 8px; border-radius: 8px; position: relative; --led: #ffd98a;
         background: repeating-linear-gradient(90deg, rgba(255,255,255,0.018) 0 1px, transparent 1px 3px), linear-gradient(180deg, #1c1715, #110d0c);
         border: 1px solid rgba(255,255,255,0.08); box-shadow: inset 0 1px 0 rgba(255,255,255,0.06), 0 10px 26px rgba(0,0,0,0.45); }
 .rack::before, .rack::after { content: ""; position: absolute; top: 7px; width: 6px; height: 6px; border-radius: 50%;
@@ -160,7 +160,7 @@ main { max-width: 1240px; margin: 0 auto; padding: 0 16px 80px; display: flex; f
 .rack-mod::before, .rack-mod::after { display: none; }
 .mod-head { display: flex; align-items: center; gap: 8px; margin: 0; flex: 0 0 auto; }
 .mod-name { font-family: var(--display); font-size: 15px; letter-spacing: 0.26em; text-transform: uppercase; color: var(--ink); }
-.mod-knobs { display: flex; gap: 18px; flex: 1; justify-content: flex-start; align-items: center; }
+.mod-knobs { display: flex; gap: 18px; flex: 0 0 auto; justify-content: flex-start; align-items: center; }
 .rack .kn { flex-direction: row; align-items: center; gap: 8px; }
 .rack .knob { width: 42px; height: 42px; flex: 0 0 42px; }
 .rack .kn-label { margin: 0 0 4px; font-size: 9px; }
@@ -170,17 +170,22 @@ main { max-width: 1240px; margin: 0 auto; padding: 0 16px 80px; display: flex; f
 .kn output.lcd { color: var(--led); font-size: 11px; }
 .lcd-wide { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 220px; }
 .mod-harm .lcd-select { min-height: 32px; padding: 5px 8px; font-size: 12px; }
+.mod-harm .lcd-wide { width: 100%; max-width: 190px; }
+.mod-harm .mod-knobs > .kn-stack:last-child { flex: 1; min-width: 0; }
 .beat-lamp { width: 7px; height: 7px; border-radius: 50%; background: #2a1d1d; border: 1.5px solid rgba(0,0,0,0.6); transition: background 0.08s, box-shadow 0.08s; }
 .beat-lamp.on { background: var(--led); box-shadow: 0 0 8px var(--led), 0 0 16px var(--led); }
-.mod-body { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; flex: 1; }
+.mod-body { display: flex; align-items: flex-start; gap: 10px 14px; flex-wrap: wrap; }
 .push { background: linear-gradient(#3a3330, #221d1b); border: 1px solid rgba(255,255,255,0.14); border-radius: 4px; padding: 8px 14px; min-height: 36px; cursor: pointer;
         font: 10px var(--mono); letter-spacing: 0.18em; text-transform: uppercase; color: var(--ink); box-shadow: 0 2px 0 rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.1); }
 .push:active { transform: translateY(1px); box-shadow: 0 1px 0 rgba(0,0,0,0.5); }
 .share-note { font-size: 11px; color: var(--ink-faint); letter-spacing: 0.04em; }
 .midi-port { display: flex; flex-direction: column; gap: 4px; }
 .midi-port .kn-label { margin: 0; }
-.midi-drums { padding: 6px 10px; min-height: 30px; font-size: 9px; letter-spacing: 0.14em; }
-.midi-drums[aria-pressed="true"] { color: var(--led); border-color: color-mix(in srgb, var(--led) 50%, transparent); }
+.midi-chans { display: grid; grid-template-columns: repeat(auto-fill, minmax(62px, 1fr)); gap: 6px 8px; width: 100%; }
+.midi-ch { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+.midi-ch .kn-label { margin: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; display: flex; align-items: center; gap: 5px; }
+.midi-ch .kn-label i { width: 6px; height: 6px; border-radius: 50%; flex: 0 0 6px; background: var(--dot); }
+.midi-ch select { padding: 3px 4px; font-size: 11px; min-width: 0; width: 100%; }
 .midi-port select { min-width: 110px; max-width: 100%; text-align: left; }
 .lcd-select { cursor: pointer; text-align: left; padding: 4px 6px; font: 11px/1.2 var(--mono); }
 .lcd-select option { background: #1a1210; color: var(--ink); }
@@ -450,10 +455,10 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
       </div>
     </div>
     <div class="pedal rack-mod mod-midi midi-bit" aria-label="MIDI">
-      <div class="mod-head"><span class="mod-name">MIDI</span><button class="info" type="button" aria-label="How MIDI works" data-tip="MIDI out sends each city's notes to a synth or music app on its own channel: city 1 on channel 1, city 2 on 2, city 3 on 3. The rhythm section goes out on channel 10 with standard General MIDI drum notes: kick 36, snare 38, rim 37, closed hat 42, ride 51 with the jazz kit, so any drum rack maps it. Fills, ratchets and ghost notes come through too. It works in Chrome and Edge on a computer."></button></div>
+      <div class="mod-head"><span class="mod-name">MIDI</span><button class="info" type="button" aria-label="How MIDI works" data-tip="MIDI out sends each city's notes to a synth or music app on its own channel. Pick each city's channel, and the drums', in the menus here, or turn any of them off. By default the cities use channels 1, 2 and 3 and the rhythm section uses channel 10, with standard General MIDI drum notes: kick 36, snare 38, rim 37, closed hat 42, ride 51 with the jazz kit, so any drum rack maps it. Fills, ratchets and ghost notes come through too. It works in Chrome and Edge on a computer."></button></div>
       <div class="mod-body">
         <label class="midi-port" for="midi"><span class="kn-label">Out to</span><select id="midi" class="lcd"><option value="">Off</option></select></label>
-        <button class="push midi-drums" id="midiDrums" type="button" aria-pressed="true" title="Send the rhythm section on channel 10">Drums ch 10</button>
+        <div class="midi-chans" id="midiChans" aria-label="MIDI channel for each part"></div>
       </div>
     </div>
   </section>
@@ -2138,13 +2143,13 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
   };
   let driveCurve = null;
   const GM_DRUMS = { kick: 36, snare: 38, rim: 37, hat: 42, ride: 51 };
-  let midiDrums = true;
+  let drumCh = 9;   // channel 10, as MIDI counts from 1
   function sendDrumMidi(kind, t, vel) {
-    if (!midiDrums || !midiOut) return;
+    if (drumCh < 0 || !midiOut) return;
     const note = kind === "hat" && GROOVE.kit === "jazz" ? GM_DRUMS.ride : GM_DRUMS[kind];
     const at = performance.now() + Math.max(0, t - ac.currentTime) * 1000;
-    midiOut.send([0x99, note, Math.max(1, Math.min(127, Math.round(vel * 110)))], at);   // channel 10
-    midiOut.send([0x89, note, 0], at + 60);
+    midiOut.send([0x90 | drumCh, note, Math.max(1, Math.min(127, Math.round(vel * 110)))], at);
+    midiOut.send([0x80 | drumCh, note, 0], at + 60);
   }
   function drumHit(kind, t, vel) {
     sendDrumMidi(kind, t, vel);
@@ -2446,8 +2451,21 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
 
   ctlSummary();
 
-  { const md = document.getElementById("midiDrums");
-    md.addEventListener("click", () => { midiDrums = !midiDrums; md.setAttribute("aria-pressed", String(midiDrums)); }); }
+  // a channel picker for each city and for the drums, defaults 1, 2, 3 and 10
+  cities.forEach(c => { if (c.midiCh == null) c.midiCh = c.index; });
+  function buildMidiChans() {
+    const box = document.getElementById("midiChans");
+    const opts = sel => `<option value="-1"${sel < 0 ? " selected" : ""}>Off</option>` + Array.from({ length: 16 }, (_, i) => `<option value="${i}"${i === sel ? " selected" : ""}>Ch ${i + 1}</option>`).join("");
+    box.innerHTML = cities.map(c => `<label class="midi-ch" style="--dot: var(${c.color})"><span class="kn-label"><i></i>${c.name}</span><select class="lcd" data-city="${c.index}">${opts(c.midiCh)}</select></label>`).join("")
+      + `<label class="midi-ch" style="--dot: #ffd98a"><span class="kn-label"><i></i>Drums</span><select class="lcd" data-drums="1">${opts(drumCh)}</select></label>`;
+  }
+  buildMidiChans();
+  document.getElementById("midiChans").addEventListener("change", e => {
+    const v = Number(e.target.value);
+    if (e.target.dataset.drums) drumCh = v; else cities[Number(e.target.dataset.city)].midiCh = v;
+  });
+  let midiNames = "";
+  setInterval(() => { const n = cities.map(c => c.name).join("|"); if (n !== midiNames) { midiNames = n; buildMidiChans(); } }, 2000);   // follow city swaps
 
   // ---------- MIDI out (Chrome, when the page is allowed to use it) ----------
   let midiOut = null;
@@ -2474,7 +2492,8 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
   function sendMidi(c, note, vel, t) {
     if (!midiOut) return;
     const at = performance.now() + (t - ac.currentTime) * 1000;
-    const ch = c.index;   // Boston ch 1, Copenhagen ch 2, London ch 3
+    const ch = c.midiCh ?? c.index;   // chosen in the MIDI section; defaults 1, 2, 3
+    if (ch < 0) return;
     midiOut.send([0x90 | ch, note, Math.max(1, Math.round(vel * 110))], at);
     midiOut.send([0x80 | ch, note, 0], at + tickDur * c.rate * 1000 * 0.9);
   }
