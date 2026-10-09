@@ -192,6 +192,10 @@ main { max-width: 1240px; margin: 0 auto; padding: 0 16px 80px; display: flex; f
 .lcd-select option { background: #1a1210; color: var(--ink); }
 .rack .kn-stack .kn-label { margin-bottom: 4px; }
 @media (max-width: 1100px) { .rack { grid-template-columns: minmax(0, 1fr) minmax(0, 1.35fr); } .rack-mod:nth-child(3) { border-left: 0; } .rack-mod:nth-child(n+3) { border-top: 1px solid rgba(255,255,255,0.07); } }
+.share-btn { display: inline-flex; align-items: center; gap: 8px; padding: 0 16px; min-height: 40px; border-radius: 20px; border: 1px solid rgba(243,236,230,0.45); background: rgba(16,8,6,0.35);
+             color: var(--ink); cursor: pointer; font: 12px var(--mono); letter-spacing: 0.08em; transition: background 0.2s, color 0.2s; }
+.share-btn svg { width: 16px; height: 16px; }
+.share-btn:hover { background: var(--ink); color: var(--ground); }
 .mine .share-note { font-size: 11px; color: var(--ink-dim); letter-spacing: 0.04em; min-height: 1em; }
 @media (max-width: 1000px) { .rack { grid-template-columns: minmax(0, 1fr); } .rack-mod + .rack-mod { border-left: 0; border-top: 1px solid rgba(255,255,255,0.07); } }
 @media (max-width: 520px) { .mod-knobs { justify-content: space-between; } .lcd-wide { max-width: 170px; } }
@@ -430,7 +434,7 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
         <label class="sr" for="mine2">Second city</label><div class="ta"><input id="mine2" type="text" placeholder="Copenhagen" autocomplete="off"><button class="dice" type="button" data-for="mine2" aria-label="Random city" title="Random city"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="4" width="16" height="16" rx="3.5" fill="none" stroke="currentColor" stroke-width="1.5"/><circle cx="8.6" cy="8.6" r="1.5" fill="currentColor"/><circle cx="12" cy="12" r="1.5" fill="currentColor"/><circle cx="15.4" cy="15.4" r="1.5" fill="currentColor"/></svg></button></div>
         <label class="sr" for="mine3">Third city</label><div class="ta"><input id="mine3" type="text" placeholder="London" autocomplete="off"><button class="dice" type="button" data-for="mine3" aria-label="Random city" title="Random city"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="4" width="16" height="16" rx="3.5" fill="none" stroke="currentColor" stroke-width="1.5"/><circle cx="8.6" cy="8.6" r="1.5" fill="currentColor"/><circle cx="12" cy="12" r="1.5" fill="currentColor"/><circle cx="15.4" cy="15.4" r="1.5" fill="currentColor"/></svg></button></div>
         <button class="ghost small" type="submit">Play these</button>
-        <button class="ghost small share" id="share" type="button" hidden title="Copy a link to these three cities">Copy link</button>
+        <button class="share-btn share" id="share" type="button" hidden title="Share these three cities"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 15V4M8 8l4-4 4 4" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/><path d="M7 11H5.5A1.5 1.5 0 0 0 4 12.5v6A1.5 1.5 0 0 0 5.5 20h13a1.5 1.5 0 0 0 1.5-1.5v-6a1.5 1.5 0 0 0-1.5-1.5H17" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>Share</button>
       </div>
       <span class="share-note" id="shareNote" aria-live="polite"></span>
     </form>
@@ -1144,9 +1148,10 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
     const url = shareURL(), note = document.getElementById("shareNote");
     if (!url) return;
     const fallback = () => { note.textContent = url; };
-    try {
-      navigator.clipboard.writeText(url).then(() => { note.textContent = "Link copied."; }, fallback);
-    } catch (e) { fallback(); }
+    const copy = () => { try { navigator.clipboard.writeText(url).then(() => { note.textContent = "Link copied."; }, fallback); } catch (e) { fallback(); } };
+    // phones and some browsers open the system share sheet; elsewhere the link is copied
+    if (navigator.share) navigator.share({ title: "Three Cities", text: "Three cities, played by their live weather", url }).catch(err => { if (err && err.name !== "AbortError") copy(); });
+    else copy();
   });
 
   // ---------- swipe dots (phones and tablets) ----------
