@@ -45,6 +45,12 @@ h1.custom { font-size: clamp(34px, 6.5vw, 76px); letter-spacing: 0.1em; }
 .mine-row { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; }
 .mine input { width: 150px; max-width: 100%; background: rgba(16, 8, 6, 0.6); border: 1px solid rgba(243, 236, 230, 0.3); padding: 10px 12px; }
 .mine input::placeholder { color: var(--ink-faint); }
+.mine input { padding-right: 38px; }
+.dice { position: absolute; right: 4px; top: 50%; transform: translateY(-50%); width: 30px; height: 30px; padding: 0; border: 0; background: none; cursor: pointer; color: var(--ink-dim); border-radius: 4px; }
+.dice svg { width: 22px; height: 22px; display: block; margin: auto; }
+.dice:hover { color: var(--ink); background: rgba(243,236,230,0.08); }
+.dice.rolled svg { animation: roll 0.4s ease; }
+@keyframes roll { from { transform: rotate(-180deg) scale(0.7); } to { transform: none; } }
 .ghost.small { padding: 10px 18px; font-size: 12px; }
 .share { background: none; border: 1px solid var(--line); padding: 7px 14px; cursor: pointer; text-transform: uppercase; letter-spacing: 0.14em; font-size: 11px; color: var(--ink); }
 .share-note { font-size: 12px; color: var(--ink-dim); overflow-wrap: anywhere; user-select: all; }
@@ -362,9 +368,10 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
     <form class="mine" id="mine" hidden>
       <div class="mine-label">Play the cities you've lived in</div>
       <div class="mine-row">
-        <label class="sr" for="mine1">First city</label><div class="ta"><input id="mine1" type="text" placeholder="Boston" autocomplete="off"></div>
-        <label class="sr" for="mine2">Second city</label><div class="ta"><input id="mine2" type="text" placeholder="Copenhagen" autocomplete="off"></div>
-        <label class="sr" for="mine3">Third city</label><div class="ta"><input id="mine3" type="text" placeholder="London" autocomplete="off"></div>
+        <label class="sr" for="mine1">First city</label><div class="ta"><input id="mine1" type="text" placeholder="Boston" autocomplete="off"><button class="dice" type="button" data-for="mine1" aria-label="Random city" title="Random city"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="4" width="16" height="16" rx="3.5" fill="none" stroke="currentColor" stroke-width="1.5"/><circle cx="8.6" cy="8.6" r="1.5" fill="currentColor"/><circle cx="12" cy="12" r="1.5" fill="currentColor"/><circle cx="15.4" cy="15.4" r="1.5" fill="currentColor"/></svg></button></div>
+        <label class="sr" for="mine2">Second city</label><div class="ta"><input id="mine2" type="text" placeholder="Copenhagen" autocomplete="off"><button class="dice" type="button" data-for="mine2" aria-label="Random city" title="Random city"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="4" width="16" height="16" rx="3.5" fill="none" stroke="currentColor" stroke-width="1.5"/><circle cx="8.6" cy="8.6" r="1.5" fill="currentColor"/><circle cx="12" cy="12" r="1.5" fill="currentColor"/><circle cx="15.4" cy="15.4" r="1.5" fill="currentColor"/></svg></button></div>
+        <label class="sr" for="mine3">Third city</label><div class="ta"><input id="mine3" type="text" placeholder="London" autocomplete="off"><button class="dice" type="button" data-for="mine3" aria-label="Random city" title="Random city"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="4" width="16" height="16" rx="3.5" fill="none" stroke="currentColor" stroke-width="1.5"/><circle cx="8.6" cy="8.6" r="1.5" fill="currentColor"/><circle cx="12" cy="12" r="1.5" fill="currentColor"/><circle cx="15.4" cy="15.4" r="1.5" fill="currentColor"/></svg></button></div>
+        <button class="ghost small dice-rest" type="button" id="diceRest" title="Fill any empty boxes with random cities">Random for the rest</button>
         <button class="ghost small" type="submit">Play these</button>
       </div>
     </form>
@@ -665,6 +672,28 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
     const bars = total / 32;
     el.textContent = (bars % 1 ? bars.toFixed(2) : bars) + (bars === 1 ? " bar" : " bars");
   }
+
+  // ---------- random cities for the hero form ----------
+  const RANDOM_CITIES = ["Lisbon", "Berlin", "Tokyo", "Mexico City", "Reykjavik", "Buenos Aires", "Cape Town", "Mumbai", "Istanbul", "Seoul",
+    "Melbourne", "Vancouver", "Marrakech", "Havana", "Stockholm", "Nairobi", "Lima", "Hanoi", "Athens", "Dublin", "Montreal", "New Orleans",
+    "Edinburgh", "Barcelona", "Kyoto", "Oslo", "Helsinki", "Prague", "Vienna", "Rome", "Paris", "Amsterdam", "Chicago", "Seattle", "Austin",
+    "Nashville", "Los Angeles", "San Francisco", "New York", "Toronto", "Rio de Janeiro", "Santiago", "Bogotá", "Lagos", "Cairo", "Tel Aviv",
+    "Dubai", "Bangkok", "Singapore", "Hong Kong", "Taipei", "Shanghai", "Sydney", "Auckland", "Wellington", "Bali", "Kathmandu", "Tbilisi",
+    "Budapest", "Kraków", "Glasgow", "Manchester", "Bristol", "Brooklyn", "Detroit", "Portland", "Honolulu", "Anchorage", "Ushuaia", "Tromsø"];
+  function randomCity(except) {
+    const pool = RANDOM_CITIES.filter(c => !except.includes(c.toLowerCase()));
+    return pool[Math.floor(Math.random() * pool.length)];
+  }
+  function rollInto(input, btn) {
+    const others = ["mine1", "mine2", "mine3"].map(id => document.getElementById(id).value.trim().toLowerCase()).filter(Boolean);
+    input.value = randomCity(others);
+    input.dispatchEvent(new Event("change"));
+    if (btn) { btn.classList.remove("rolled"); void btn.offsetWidth; btn.classList.add("rolled"); }
+  }
+  document.querySelectorAll(".dice").forEach(b => b.addEventListener("click", e => { e.preventDefault(); rollInto(document.getElementById(b.dataset.for), b); }));
+  document.getElementById("diceRest").addEventListener("click", () => {
+    ["mine1", "mine2", "mine3"].forEach(id => { const i = document.getElementById(id); if (!i.value.trim()) rollInto(i, i.parentElement.querySelector(".dice")); });
+  });
 
   // ---------- city cards ----------
   const wrap = document.getElementById("cities");
