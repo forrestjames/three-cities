@@ -18,7 +18,7 @@ You can swap in the cities you've lived in, then share a link to your version.
 - **Rhythm section.** One drum part made from all three cities, squeezed into a bar of 16: the kick lands where two or more cities hit together, hats wherever any city plays, a rim where one plays alone, and a backbeat snare that adds a hit when the wind gusts hard. It keeps moving: stutters that replay part of the bar (more when pressure is low), ratchets on hats and snare (more when it's gusty), ghost notes in humid air, and a fill at the end of every four bars. Five kits (Minimal, Soft, Lo-fi, 808 and a swung Jazz kit with brushes and ride), reverb toggles on the snare, hats and rim, volume, and a filter that can sweep on its own towards the moment the cities line up.
 - **Memory map.** Questions about your life, answered by dragging a light between the three cities. Each answer leaves a mark that develops a photo of the places underneath, saved in your browser.
 - **The sun.** Each city's filter opens with the sun's height and fades out around sunset. Cloud cover adds reverb.
-- **Sound.** Everything is synthesised in the browser with the Web Audio API. Chrome can also send MIDI out, one channel per city.
+- **Sound.** Everything is synthesised in the browser with the Web Audio API. A DJ-style filter on the whole mix goes low-pass to the left and high-pass to the right. Chrome and Edge can send MIDI out: one channel per city, and the drums on channel 10 with General MIDI notes.
 
 Weather from [Open-Meteo](https://open-meteo.com). Photos from Wikimedia Commons, credited on the page.
 

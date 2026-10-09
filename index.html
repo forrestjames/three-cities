@@ -45,9 +45,11 @@ h1.custom { font-size: clamp(34px, 6.5vw, 76px); letter-spacing: 0.1em; }
 .mine-row { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; }
 .mine input { width: 150px; max-width: 100%; background: rgba(16, 8, 6, 0.6); border: 1px solid rgba(243, 236, 230, 0.3); padding: 10px 12px; }
 .mine input::placeholder { color: var(--ink-faint); }
-.mine input { padding-right: 38px; }
+.mine input, .swap input { padding-right: 38px; }
 .dice { position: absolute; right: 4px; top: 50%; transform: translateY(-50%); width: 30px; height: 30px; padding: 0; border: 0; background: none; cursor: pointer; color: var(--ink-dim); border-radius: 4px; }
 .dice svg { width: 22px; height: 22px; display: block; margin: auto; }
+.swap .dice { border: 0; padding: 0; width: 30px; height: 30px; min-height: 0; background: none; letter-spacing: 0; }
+.swap .dice:hover { background: rgba(243,236,230,0.08); }
 .dice:hover { color: var(--ink); background: rgba(243,236,230,0.08); }
 .dice.rolled svg { animation: roll 0.4s ease; }
 @keyframes roll { from { transform: rotate(-180deg) scale(0.7); } to { transform: none; } }
@@ -147,7 +149,7 @@ main { max-width: 1240px; margin: 0 auto; padding: 0 16px 80px; display: flex; f
 .tgroup { display: flex; flex-direction: column; gap: 10px; min-width: 0; }
 .tlabel { font-family: var(--display); font-size: 18px; letter-spacing: 0.16em; text-transform: uppercase; color: var(--ink); }
 .tgroup .field { justify-content: space-between; }
-.rack { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.45fr) minmax(0, 0.85fr) minmax(0, 0.75fr); margin-top: 8px; border-radius: 8px; position: relative; --led: #ffd98a;
+.rack { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.3fr) minmax(0, 0.7fr) minmax(0, 0.8fr) minmax(0, 0.7fr); margin-top: 8px; border-radius: 8px; position: relative; --led: #ffd98a;
         background: repeating-linear-gradient(90deg, rgba(255,255,255,0.018) 0 1px, transparent 1px 3px), linear-gradient(180deg, #1c1715, #110d0c);
         border: 1px solid rgba(255,255,255,0.08); box-shadow: inset 0 1px 0 rgba(255,255,255,0.06), 0 10px 26px rgba(0,0,0,0.45); }
 .rack::before, .rack::after { content: ""; position: absolute; top: 7px; width: 6px; height: 6px; border-radius: 50%;
@@ -177,6 +179,8 @@ main { max-width: 1240px; margin: 0 auto; padding: 0 16px 80px; display: flex; f
 .share-note { font-size: 11px; color: var(--ink-faint); letter-spacing: 0.04em; }
 .midi-port { display: flex; flex-direction: column; gap: 4px; }
 .midi-port .kn-label { margin: 0; }
+.midi-drums { padding: 6px 10px; min-height: 30px; font-size: 9px; letter-spacing: 0.14em; }
+.midi-drums[aria-pressed="true"] { color: var(--led); border-color: color-mix(in srgb, var(--led) 50%, transparent); }
 .midi-port select { min-width: 110px; max-width: 100%; text-align: left; }
 .lcd-select { cursor: pointer; text-align: left; padding: 4px 6px; font: 11px/1.2 var(--mono); }
 .lcd-select option { background: #1a1210; color: var(--ink); }
@@ -432,6 +436,12 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
         <label class="kn-stack" for="scale"><span class="kn-label">Scale</span><select id="scale" class="lcd lcd-select lcd-wide"></select></label>
       </div>
     </div>
+    <div class="pedal rack-mod mod-filter" aria-label="Filter">
+      <div class="mod-head"><span class="mod-name">Filter</span><button class="info" type="button" aria-label="How the filter works" data-tip="A DJ-style filter on the whole mix, cities and drums together. At 12 o'clock it does nothing. Turn left and a low-pass closes in, taking the top off until it's muffled. Turn right and a high-pass thins it out from the bottom up. Double-click to snap back to the middle."></button></div>
+      <div class="knobs mod-knobs">
+        <div class="kn"><input class="kn-native" id="djFilter" type="range" min="-100" max="100" step="1" value="0" data-label="LPF · HPF"><span class="kn-stack"><output id="djFilterOut" class="lcd">Off</output></span></div>
+      </div>
+    </div>
     <div class="pedal rack-mod mod-share tgroup-share" aria-label="Share">
       <div class="mod-head"><span class="mod-name">Share</span><button class="info" type="button" aria-label="How Share works" data-tip="Once you've swapped in your own cities, Copy link saves them into a link anyone can open to hear your version."></button></div>
       <div class="mod-body">
@@ -440,9 +450,10 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
       </div>
     </div>
     <div class="pedal rack-mod mod-midi midi-bit" aria-label="MIDI">
-      <div class="mod-head"><span class="mod-name">MIDI</span><button class="info" type="button" aria-label="How MIDI works" data-tip="MIDI out sends each city's notes to a synth or music app on its own channel: city 1 on channel 1, city 2 on 2, city 3 on 3. It works in Chrome and Edge on a computer."></button></div>
+      <div class="mod-head"><span class="mod-name">MIDI</span><button class="info" type="button" aria-label="How MIDI works" data-tip="MIDI out sends each city's notes to a synth or music app on its own channel: city 1 on channel 1, city 2 on 2, city 3 on 3. The rhythm section goes out on channel 10 with standard General MIDI drum notes: kick 36, snare 38, rim 37, closed hat 42, ride 51 with the jazz kit, so any drum rack maps it. Fills, ratchets and ghost notes come through too. It works in Chrome and Edge on a computer."></button></div>
       <div class="mod-body">
         <label class="midi-port" for="midi"><span class="kn-label">Out to</span><select id="midi" class="lcd"><option value="">Off</option></select></label>
+        <button class="push midi-drums" id="midiDrums" type="button" aria-pressed="true" title="Send the rhythm section on channel 10">Drums ch 10</button>
       </div>
     </div>
   </section>
@@ -734,7 +745,7 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
     input.dispatchEvent(new Event("change"));
     if (btn) { btn.classList.remove("rolled"); void btn.offsetWidth; btn.classList.add("rolled"); }
   }
-  document.querySelectorAll(".dice").forEach(b => b.addEventListener("click", e => { e.preventDefault(); rollInto(document.getElementById(b.dataset.for), b); }));
+  document.querySelectorAll(".dice:not(.dice-swap)").forEach(b => b.addEventListener("click", e => { e.preventDefault(); rollInto(document.getElementById(b.dataset.for), b); }));
 
   // ---------- city cards ----------
   const wrap = document.getElementById("cities");
@@ -808,7 +819,7 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
         </div>
         <form class="swap" data-r="swap" style="grid-column: 1 / -1">
           <label for="${id}-swap" style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)">Swap city</label>
-          <div class="ta"><input id="${id}-swap" type="text" placeholder="Swap city" autocomplete="off"></div>
+          <div class="ta"><input id="${id}-swap" type="text" placeholder="Swap city" autocomplete="off"><button class="dice dice-swap" type="button" aria-label="Random city" title="Random city"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="4" width="16" height="16" rx="3.5" fill="none" stroke="currentColor" stroke-width="1.5"/><circle cx="8.6" cy="8.6" r="1.5" fill="currentColor"/><circle cx="12" cy="12" r="1.5" fill="currentColor"/><circle cx="15.4" cy="15.4" r="1.5" fill="currentColor"/></svg></button></div>
           <button type="submit">Swap</button>
         </form>
         <div class="swap-note" data-r="swapnote" style="grid-column: 1 / -1"></div>
@@ -837,6 +848,12 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
     el.querySelector(`#${id}-vol`).addEventListener("input", e => { c.volume = Number(e.target.value); applySound(c); });
     el.querySelector(`#${id}-src`).addEventListener("change", e => { c.source = e.target.value; rebuild(c); });
     // the hits tag on the simple card is a menu too, kept in step with the one in the full controls
+    { const d = el.querySelector(".dice-swap"), inp = el.querySelector(`#${id}-swap`);
+      d.addEventListener("click", e => {
+        e.preventDefault();
+        inp.value = randomCity(cities.map(x => x.name.toLowerCase()));
+        d.classList.remove("rolled"); void d.offsetWidth; d.classList.add("rolled");
+      }); }
     c.ref.glance.addEventListener("change", e => {
       if (!e.target.classList.contains("glance-src")) return;
       c.source = e.target.value; el.querySelector(`#${id}-src`).value = c.source; rebuild(c);
@@ -1462,7 +1479,8 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
     const kv = knob.querySelector(".kv"), kp = knob.querySelector(".kp");
     function draw() {
       const f = (get() - min) / (max - min), a = -135 + 270 * f;
-      kv.setAttribute("d", f > 0.002 ? arc(26, -135, a) : "");
+      if (min < 0 && max > 0) { const z = -135 + 270 * (0 - min) / (max - min); kv.setAttribute("d", Math.abs(a - z) > 0.5 ? arc(26, Math.min(a, z), Math.max(a, z)) : ""); }   // bipolar: grows out from 12 o'clock
+      else kv.setAttribute("d", f > 0.002 ? arc(26, -135, a) : "");
       const [x0, y0] = polar(6, a), [x1, y1] = polar(16, a);
       kp.setAttribute("x1", x0); kp.setAttribute("y1", y0); kp.setAttribute("x2", x1); kp.setAttribute("y2", y1);
       knob.setAttribute("aria-valuenow", get());
@@ -1656,7 +1674,10 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
     const comp = ac.createDynamicsCompressor();
     comp.threshold.value = -16; comp.ratio.value = 3;
     master = ac.createGain(); master.gain.value = document.getElementById("volume").value / 100 * 0.9;
-    master.connect(comp).connect(ac.destination);
+    djLP = ac.createBiquadFilter(); djLP.type = "lowpass"; djLP.frequency.value = 20000; djLP.Q.value = 0.9;
+    djHP = ac.createBiquadFilter(); djHP.type = "highpass"; djHP.frequency.value = 20; djHP.Q.value = 0.9;
+    master.connect(djLP).connect(djHP).connect(comp).connect(ac.destination);
+    applyDJ();
     buildEffects();
     setupGroove();
     cities.forEach(c => {
@@ -2116,7 +2137,17 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
     jazz:    { kick: [80, 48, 0.22, 0.7], snare: [2400, 0.5, 0.3, 0.5, 0], hat: [0, 0.9, 0.045], rim: [1700, 0.035, 0.45], drive: 0, jazz: true }
   };
   let driveCurve = null;
+  const GM_DRUMS = { kick: 36, snare: 38, rim: 37, hat: 42, ride: 51 };
+  let midiDrums = true;
+  function sendDrumMidi(kind, t, vel) {
+    if (!midiDrums || !midiOut) return;
+    const note = kind === "hat" && GROOVE.kit === "jazz" ? GM_DRUMS.ride : GM_DRUMS[kind];
+    const at = performance.now() + Math.max(0, t - ac.currentTime) * 1000;
+    midiOut.send([0x99, note, Math.max(1, Math.min(127, Math.round(vel * 110)))], at);   // channel 10
+    midiOut.send([0x89, note, 0], at + 60);
+  }
   function drumHit(kind, t, vel) {
+    sendDrumMidi(kind, t, vel);
     const k = KITS[GROOVE.kit] || KITS.soft, out = ac.createGain();
     if (k.drive) {
       if (!driveCurve) { driveCurve = new Float32Array(1024); for (let i = 0; i < 1024; i++) { const x = i / 511.5 - 1; driveCurve[i] = Math.tanh(x * 2.5) / Math.tanh(2.5); } }
@@ -2256,6 +2287,19 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
 
   // ---------- clock ----------
   let tick = 0, nextTime = 0, tickDur = 0.1, timer = null;
+  // DJ filter: one knob, centre is off, left closes a low-pass, right opens a high-pass
+  let djLP = null, djHP = null, djVal = 0;
+  const fmtHz = f => f >= 1000 ? (f / 1000).toFixed(f >= 10000 ? 0 : 1) + "k" : Math.round(f) + "";
+  function applyDJ() {
+    const out = document.getElementById("djFilterOut"), v = djVal / 100;
+    const lp = v < 0 ? 20000 * Math.pow(180 / 20000, -v) : 20000;     // down to about 180 Hz fully left
+    const hp = v > 0 ? 20 * Math.pow(4000 / 20, v) : 20;               // up to about 4 kHz fully right
+    if (out) out.value = v < 0 ? "LPF " + fmtHz(lp) : v > 0 ? "HPF " + fmtHz(hp) : "Off";
+    if (!djLP) return;
+    const t = ac.currentTime, q = 0.7 + Math.abs(v) * 2.3;            // a little resonance as it sweeps, like a mixer
+    djLP.frequency.setTargetAtTime(lp, t, 0.03); djLP.Q.setTargetAtTime(v < 0 ? q : 0.7, t, 0.03);
+    djHP.frequency.setTargetAtTime(hp, t, 0.03); djHP.Q.setTargetAtTime(v > 0 ? q : 0.7, t, 0.03);
+  }
   const beatTimes = [];
   const visualQueue = [];
   // Like a DJ reading the room: the slider is the tempo with every city awake, and the set slows
@@ -2387,6 +2431,11 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
     if (!el) return;   // the rack shows everything, so there's no summary line any more
     el.textContent = `${document.getElementById("tempoOut").value || tempo.value} bpm · ${KEYS[keyRoot]} ${SCALES.find(x => x[1] === scale)[0]} · volume ${document.getElementById("volume").value}`;
   }
+  document.getElementById("djFilter").addEventListener("input", e => {
+    let v = Number(e.target.value);
+    if (Math.abs(v) < 4) v = 0;   // a soft detent at 12 o'clock
+    djVal = v; applyDJ();
+  });
   const tempo = document.getElementById("tempo");
   tempo.addEventListener("input", () => { bpmNow = 0; setTempo(); });
   const vol = document.getElementById("volume");
@@ -2396,6 +2445,9 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
   });
 
   ctlSummary();
+
+  { const md = document.getElementById("midiDrums");
+    md.addEventListener("click", () => { midiDrums = !midiDrums; md.setAttribute("aria-pressed", String(midiDrums)); }); }
 
   // ---------- MIDI out (Chrome, when the page is allowed to use it) ----------
   let midiOut = null;
