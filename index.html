@@ -426,6 +426,11 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
 </header>
 
 <main>
+
+
+  <section class="cities" id="cities" aria-label="Cities"></section>
+  <nav class="dots" id="dots" aria-label="Choose a city"></nav>
+
   <section class="rack" aria-label="Controls">
     <div class="pedal rack-mod mod-play" aria-label="Play">
       <div class="mod-head"><span class="mod-name">Play</span><span class="beat-lamp" id="beatLamp" aria-hidden="true"></span><button class="info" type="button" aria-label="How Play works" data-tip="Tempo is the speed with every city awake. As the cities fall asleep it slows, down to about three quarters of this in the dead of night, then picks up again as they wake. The display shows the tempo you're hearing, and the lamp blinks on the beat. Volume is the level for everything, drums included. Drag a knob up or down, scroll it, or use the arrow keys. Double-click resets it."></button></div>
@@ -462,10 +467,6 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
       </div>
     </div>
   </section>
-
-
-  <section class="cities" id="cities" aria-label="Cities"></section>
-  <nav class="dots" id="dots" aria-label="Choose a city"></nav>
 
   <section class="groove" id="groove" aria-label="Rhythm section">
     <div class="groove-head">
