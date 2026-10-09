@@ -147,35 +147,38 @@ main { max-width: 1240px; margin: 0 auto; padding: 0 16px 80px; display: flex; f
 .tgroup { display: flex; flex-direction: column; gap: 10px; min-width: 0; }
 .tlabel { font-family: var(--display); font-size: 18px; letter-spacing: 0.16em; text-transform: uppercase; color: var(--ink); }
 .tgroup .field { justify-content: space-between; }
-.rack { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.25fr) minmax(0, 1fr); gap: 4px; padding: 16px 12px; margin-top: 8px; border-radius: 6px;
-        background: linear-gradient(#0c0909, #0c0909) padding-box; position: relative; box-shadow: inset 0 0 0 1px rgba(255,255,255,0.04); }
-.rack::before, .rack::after { content: ""; position: absolute; left: 0; right: 0; height: 9px; background: repeating-linear-gradient(90deg, #2c2725 0 22px, #120f0e 22px 26px, #2c2725 26px 48px), linear-gradient(#3a3330, #1b1716);
-        background-blend-mode: multiply; border-radius: 3px; }
-.rack::before { top: 2px; } .rack::after { bottom: 2px; }
-.rack-mod { border-radius: 3px; padding: 18px 16px 18px; --led: #ffd98a;
-        background: repeating-linear-gradient(90deg, rgba(255,255,255,0.022) 0 1px, transparent 1px 3px), linear-gradient(180deg, var(--p1), var(--p2));
-        border: 1px solid rgba(255,255,255,0.08); box-shadow: inset 0 1px 0 rgba(255,255,255,0.08), inset 0 -1px 0 rgba(0,0,0,0.4); }
-.rack-mod::before, .rack-mod::after { top: 6px; width: 6px; height: 6px; }
-.mod-play { --p1: #2b2421; --p2: #1a1513; --led: #ffd98a; }
-.mod-harm { --p1: #262230; --p2: #17141e; --led: #c7a6ff; }
-.mod-share { --p1: #1f2826; --p2: #131917; --led: #74f0c4; }
-.mod-head { display: flex; align-items: center; gap: 10px; margin: 0 2px 14px; }
-.mod-name { font-family: var(--display); font-size: 17px; letter-spacing: 0.3em; text-transform: uppercase; color: var(--ink); flex: 1; }
-.mod-knobs { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-.lcd { font: 12px/1 var(--mono); color: var(--led); background: #0a0808; border: 1px solid rgba(255,255,255,0.08); border-radius: 3px; padding: 5px 8px; min-width: 52px; text-align: center;
+.rack { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.3fr) minmax(0, 1fr); margin-top: 8px; border-radius: 8px; position: relative; --led: #ffd98a;
+        background: repeating-linear-gradient(90deg, rgba(255,255,255,0.018) 0 1px, transparent 1px 3px), linear-gradient(180deg, #1c1715, #110d0c);
+        border: 1px solid rgba(255,255,255,0.08); box-shadow: inset 0 1px 0 rgba(255,255,255,0.06), 0 10px 26px rgba(0,0,0,0.45); }
+.rack::before, .rack::after { content: ""; position: absolute; top: 7px; width: 6px; height: 6px; border-radius: 50%;
+        background: radial-gradient(circle at 35% 35%, #d9d2cb, #6d6560 60%, #3a3431); box-shadow: 0 1px 1px rgba(0,0,0,0.6); }
+.rack::before { left: 7px; } .rack::after { right: 7px; }
+.rack-mod { padding: 12px 18px 12px; background: none; border: 0; box-shadow: none; border-radius: 0; display: flex; align-items: center; gap: 18px; min-width: 0; }
+.rack-mod + .rack-mod { border-left: 1px solid rgba(255,255,255,0.07); }
+.rack-mod::before, .rack-mod::after { display: none; }
+.mod-head { display: flex; align-items: center; gap: 8px; margin: 0; flex: 0 0 auto; }
+.mod-name { font-family: var(--display); font-size: 15px; letter-spacing: 0.26em; text-transform: uppercase; color: var(--ink); }
+.mod-knobs { display: flex; gap: 14px; flex: 1; justify-content: space-around; }
+.rack .kn { flex-direction: row; align-items: center; gap: 8px; }
+.rack .knob { width: 42px; height: 42px; flex: 0 0 42px; }
+.rack .kn-label { margin: 0 0 4px; font-size: 9px; }
+.rack .kn-stack { display: flex; flex-direction: column; align-items: flex-start; }
+.lcd { font: 11px/1 var(--mono); color: var(--led); background: #0a0808; border: 1px solid rgba(255,255,255,0.08); border-radius: 3px; padding: 4px 7px; min-width: 40px; text-align: center;
        box-shadow: inset 0 1px 4px rgba(0,0,0,0.8); text-shadow: 0 0 6px color-mix(in srgb, var(--led) 60%, transparent); letter-spacing: 0.04em; }
-.kn output.lcd { color: var(--led); font-size: 12px; }
-.lcd-wide { max-width: 100%; white-space: normal; line-height: 1.25; }
-.beat-lamp { width: 8px; height: 8px; border-radius: 50%; background: #2a1d1d; border: 1.5px solid rgba(0,0,0,0.6); transition: background 0.08s, box-shadow 0.08s; }
+.kn output.lcd { color: var(--led); font-size: 11px; }
+.lcd-wide { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 150px; }
+.beat-lamp { width: 7px; height: 7px; border-radius: 50%; background: #2a1d1d; border: 1.5px solid rgba(0,0,0,0.6); transition: background 0.08s, box-shadow 0.08s; }
 .beat-lamp.on { background: var(--led); box-shadow: 0 0 8px var(--led), 0 0 16px var(--led); }
-.mod-body { display: flex; flex-direction: column; gap: 12px; align-items: flex-start; }
-.push { background: linear-gradient(#3a3330, #221d1b); border: 1px solid rgba(255,255,255,0.14); border-radius: 4px; padding: 10px 16px; min-height: 40px; cursor: pointer;
-        font: 11px var(--mono); letter-spacing: 0.18em; text-transform: uppercase; color: var(--ink); box-shadow: 0 2px 0 rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.1); }
+.mod-body { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; flex: 1; }
+.push { background: linear-gradient(#3a3330, #221d1b); border: 1px solid rgba(255,255,255,0.14); border-radius: 4px; padding: 8px 14px; min-height: 36px; cursor: pointer;
+        font: 10px var(--mono); letter-spacing: 0.18em; text-transform: uppercase; color: var(--ink); box-shadow: 0 2px 0 rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.1); }
 .push:active { transform: translateY(1px); box-shadow: 0 1px 0 rgba(0,0,0,0.5); }
 .share-note { font-size: 11px; color: var(--ink-faint); letter-spacing: 0.04em; }
-.midi-port { display: flex; flex-direction: column; gap: 6px; }
-.midi-port select { min-width: 140px; text-align: left; }
-@media (max-width: 860px) { .rack { grid-template-columns: minmax(0, 1fr); gap: 6px; } }
+.midi-port { display: flex; flex-direction: column; gap: 4px; }
+.midi-port .kn-label { margin: 0; }
+.midi-port select { min-width: 120px; text-align: left; }
+@media (max-width: 1000px) { .rack { grid-template-columns: minmax(0, 1fr); } .rack-mod + .rack-mod { border-left: 0; border-top: 1px solid rgba(255,255,255,0.07); } }
+@media (max-width: 520px) { .rack-mod { flex-direction: column; align-items: stretch; gap: 10px; } .mod-knobs { justify-content: space-between; } .lcd-wide { max-width: 170px; } }
 .ctlwrap > summary { list-style: none; display: flex; flex-wrap: wrap; align-items: center; gap: 14px; min-height: 52px; cursor: pointer; padding: 6px 0; }
 .ctlwrap > summary::-webkit-details-marker { display: none; }
 .ctlwrap > summary::before { content: ""; width: 9px; height: 9px; border-right: 1.5px solid var(--ink); border-bottom: 1.5px solid var(--ink); transform: rotate(-45deg); transition: transform 0.2s; margin: 0 4px; }
@@ -413,22 +416,22 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
     <div class="pedal rack-mod mod-play" aria-label="Play">
       <div class="mod-head"><span class="mod-name">Play</span><span class="beat-lamp" id="beatLamp" aria-hidden="true"></span><button class="info" type="button" aria-label="How Play works" data-tip="Tempo is the speed with every city awake. As the cities fall asleep it slows, down to about three quarters of this in the dead of night, then picks up again as they wake. The display shows the tempo you're hearing, and the lamp blinks on the beat. Volume is the level for everything, drums included. Drag a knob up or down, scroll it, or use the arrow keys. Double-click resets it."></button></div>
       <div class="knobs mod-knobs">
-        <div class="kn"><input class="kn-native" id="tempo" type="range" min="50" max="160" value="92" data-label="Tempo"><output id="tempoOut" class="lcd">92</output></div>
-        <div class="kn"><input class="kn-native" id="volume" type="range" min="0" max="100" value="75" data-label="Volume"><output id="volumeOut" class="lcd">75</output></div>
+        <div class="kn"><input class="kn-native" id="tempo" type="range" min="50" max="160" value="92" data-label="Tempo"><span class="kn-stack"><output id="tempoOut" class="lcd">92</output></span></div>
+        <div class="kn"><input class="kn-native" id="volume" type="range" min="0" max="100" value="75" data-label="Volume"><span class="kn-stack"><output id="volumeOut" class="lcd">75</output></span></div>
       </div>
     </div>
     <div class="pedal rack-mod mod-harm" aria-label="Harmony">
       <div class="mod-head"><span class="mod-name">Harmony</span><button class="info" type="button" aria-label="How Harmony works" data-tip="All three cities share one key and scale, picked at random each time the page loads. Underneath, a slow chord progression moves every 4 bars and shifts every 64, and each city's melody leans onto the current chord. Turn either knob and the cities follow from their next note."></button></div>
       <div class="knobs mod-knobs">
-        <div class="kn kn-late"><select class="kn-native" id="key" data-label="Key"></select><output id="keyOut" class="lcd"></output></div>
-        <div class="kn kn-late"><select class="kn-native" id="scale" data-label="Scale"></select><output id="scaleOut" class="lcd lcd-wide"></output></div>
+        <div class="kn kn-late"><select class="kn-native" id="key" data-label="Key"></select><span class="kn-stack"><output id="keyOut" class="lcd"></output></span></div>
+        <div class="kn kn-late"><select class="kn-native" id="scale" data-label="Scale"></select><span class="kn-stack"><output id="scaleOut" class="lcd lcd-wide"></output></span></div>
       </div>
     </div>
     <div class="pedal rack-mod mod-share tgroup-share" aria-label="Share and MIDI">
       <div class="mod-head"><span class="mod-name">Share<span class="midi-bit"> &amp; MIDI</span></span><button class="info" type="button" aria-label="How Share and MIDI work" data-tip="Once you've swapped in your own cities, Copy link saves them into a link anyone can open to hear your version. MIDI out sends each city's notes to a synth or music app on its own channel: city 1 on channel 1, city 2 on 2, city 3 on 3. It works in Chrome and Edge on a computer."></button></div>
       <div class="mod-body">
         <button class="share push" id="share" type="button" hidden>Copy link</button>
-        <span class="share-note" id="shareNote" aria-live="polite">Swap in your own cities above to get a link.</span>
+        <span class="share-note" id="shareNote" aria-live="polite">Swap in your cities to get a link.</span>
         <label class="midi-bit midi-port" for="midi"><span class="kn-label">MIDI out</span><select id="midi" class="lcd"><option value="">Off</option></select></label>
       </div>
     </div>
@@ -1444,7 +1447,7 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
       <line class="kp" stroke="#f3ece6" stroke-width="2.6" stroke-linecap="round"/>
     </svg>`;
     const label = document.createElement("div"); label.className = "kn-label"; label.textContent = el.dataset.label;
-    kn.insertBefore(knob, el); kn.insertBefore(label, out);
+    kn.insertBefore(knob, el); out.parentNode.insertBefore(label, out);
     const kv = knob.querySelector(".kv"), kp = knob.querySelector(".kp");
     function draw() {
       const f = (get() - min) / (max - min), a = -135 + 270 * f;
