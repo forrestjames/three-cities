@@ -1823,7 +1823,11 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
     b.del.gain.setTargetAtTime(c.fxDel ? (["bell", "marimba", "kalimba", "epiano", "string", "piano", "harp", "junokeys", "felt", "mallet"].includes(c.voice) ? 0.22 : 0.12) * (1 + 0.6 * grooveSleep()) : 0, t, 0.05);   // at night notes trail on into the gaps
     // busier cities sit back a little, slower ones step forward, so pace changes don't upset the mix
     const busy = busyTrim(c);
-    b.vol.gain.setTargetAtTime(Math.pow(c.volume / 100, 2) * 1.4 * Math.pow(10, (busy - 3 * crowd) / 20), t, 0.3);
+    // an awake city keeps its voice down while the others sleep, like someone moving quietly through a sleeping house:
+    // up to 4 dB softer when it's wide awake and the other two are deep asleep
+    const others = cities.filter(o => o !== c && o.w), restSleep = others.length ? others.reduce((a, o) => a + sleepOf(o).depth, 0) / others.length : 0;
+    const hushed = -4 * restSleep * (1 - sl);
+    b.vol.gain.setTargetAtTime(Math.pow(c.volume / 100, 2) * 1.4 * Math.pow(10, (busy - 3 * crowd + hushed) / 20), t, 0.3);
     const br = breathOf(c);
     b.breathLfo.frequency.setTargetAtTime(br.rate, t, 2);
     b.breathDepth.gain.setTargetAtTime(br.depth, t, 2);
