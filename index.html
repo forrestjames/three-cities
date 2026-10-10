@@ -1406,11 +1406,15 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
     return b;
   }
   let irKey = "", irTimer = null;
+  // At night the hall stretches and darkens with the three cities' average sleep: a 4.5 s tail grows towards 7 s.
+  // Sleep is rounded to tenths so the tail is only rebuilt now and then, not every minute.
   function updateHall(force) {
-    const key = val("fxRevDecay") + "|" + val("fxRevTone");
+    const n = Math.round(grooveSleep() * 10) / 10;
+    const decay = Math.min(24, val("fxRevDecay") * (1 + 0.55 * n)), tone = val("fxRevTone") / 100 * (1 - 0.45 * n);
+    const key = decay + "|" + tone;
     if (!fx.conv || (key === irKey && !force)) return;
     clearTimeout(irTimer);
-    irTimer = setTimeout(() => { irKey = key; fx.conv.buffer = hallImpulse(val("fxRevDecay"), val("fxRevTone") / 100); }, force ? 0 : 220);
+    irTimer = setTimeout(() => { irKey = key; fx.conv.buffer = hallImpulse(decay, tone); }, force ? 0 : 220);
   }
 
   function buildEffects() {
@@ -1508,11 +1512,12 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
     fx.delayOut.gain.setTargetAtTime(fx.delayOn === false ? 0 : val("fxDelay") / 50, t, 0.05);
     const style = document.getElementById("fxStyle").value;
     Object.entries(fx.style).forEach(([k, g]) => g.gain.setTargetAtTime(k === style ? 1 : 0, t, 0.03));
-    fx.fbs.forEach(g => g.gain.setTargetAtTime(fx.delayFrozen ? 0.995 : val("fxEchoes") / 100 * g.scale, t, 0.05));
+    const night = grooveSleep();   // the three cities' average sleep, 0 awake to 1 deep night
+    fx.fbs.forEach(g => g.gain.setTargetAtTime(fx.delayFrozen ? 0.995 : Math.min(0.9, val("fxEchoes") / 100 * (1 + 0.35 * night)) * g.scale, t, 0.05));
     fx.delGate.gain.setTargetAtTime(fx.delayFrozen ? 0 : 1, t, 0.08);
     fx.revGate.gain.setTargetAtTime(fx.hallFrozen ? 0 : 1, t, 0.25);
     const tv = val("fxDelTone") / 100;
-    fx.tones.forEach(f => f.frequency.setTargetAtTime(700 + tv * tv * 11000, t, 0.05));
+    fx.tones.forEach(f => f.frequency.setTargetAtTime((700 + tv * tv * 11000) * (1 - 0.45 * night), t, 0.05));   // repeats darken at night
     fx.single.delayTime.setTargetAtTime(T, t, 0.1);
     fx.ppL.delayTime.setTargetAtTime(T, t, 0.1); fx.ppR.delayTime.setTargetAtTime(T, t, 0.1);
     [1, 1.5, 2].forEach((m, i) => fx.taps[i].delayTime.setTargetAtTime(Math.min(7.5, T * m), t, 0.1));
@@ -1815,7 +1820,7 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
     b.filter.frequency.setTargetAtTime((650 + s.light * 250 + s.arc * 5200) * (1 - sl * 0.45) * (1 - 0.25 * crowd), t, 20);   // asleep or crowded, duller
     b.out.gain.setTargetAtTime((0.4 + 0.6 * s.light) * (1 - sl * 0.5), t, 20);   // and quieter still, the deeper the sleep
     b.rev.gain.setTargetAtTime(revSend(c), t, c.fxRev ? 0.3 : 0.05);
-    b.del.gain.setTargetAtTime(c.fxDel ? (["bell", "marimba", "kalimba", "epiano", "string", "piano", "harp", "junokeys", "felt", "mallet"].includes(c.voice) ? 0.22 : 0.12) : 0, t, 0.05);
+    b.del.gain.setTargetAtTime(c.fxDel ? (["bell", "marimba", "kalimba", "epiano", "string", "piano", "harp", "junokeys", "felt", "mallet"].includes(c.voice) ? 0.22 : 0.12) * (1 + 0.6 * grooveSleep()) : 0, t, 0.05);   // at night notes trail on into the gaps
     // busier cities sit back a little, slower ones step forward, so pace changes don't upset the mix
     const busy = busyTrim(c);
     b.vol.gain.setTargetAtTime(Math.pow(c.volume / 100, 2) * 1.4 * Math.pow(10, (busy - 3 * crowd) / 20), t, 0.3);
@@ -2254,6 +2259,10 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
     GROOVE.verbSend.connect(reverb);
     GROOVE.bus.connect(GROOVE.filter).connect(master);
     GROOVE.filter.connect(send).connect(reverb);
+    // at night the snare, hats and rim drift into the hall, like music from another room; the kick stays dry
+    GROOVE.nightSend = ac.createGain(); GROOVE.nightSend.gain.value = 0;
+    const nightTone = ac.createBiquadFilter(); nightTone.type = "lowpass"; nightTone.frequency.value = 3200;
+    GROOVE.nightSend.connect(nightTone).connect(reverb);
     applyGroove();
   }
   function grooveSleep() {
@@ -2263,6 +2272,7 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
   function applyGroove() {
     if (!GROOVE.bus) return;
     const t = ac.currentTime, sl = grooveSleep();
+    if (GROOVE.nightSend) GROOVE.nightSend.gain.setTargetAtTime(0.5 * sl, t, 2);
     GROOVE.bus.gain.setTargetAtTime(GROOVE.on ? GROOVE.vol * GROOVE.vol * 1.3 * (1 - sl * 0.5) : 0, t, 0.08);
     if (!GROOVE.auto) { GROOVE.filter.frequency.setTargetAtTime(250 * Math.pow(16000 / 250, GROOVE.tone) * (1 - sl * 0.4), t, 0.08); sendFilterCC(GROOVE.tone); }
   }
@@ -2303,6 +2313,7 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
       const ws = ac.createWaveShaper(); ws.curve = driveCurve; out.connect(ws).connect(GROOVE.bus);
     } else out.connect(GROOVE.bus);
     if (GROOVE.verb[kind] && GROOVE.verbSend) out.connect(GROOVE.verbSend);
+    if (kind !== "kick" && GROOVE.nightSend) out.connect(GROOVE.nightSend);
     const env = (node, peak, dec, att = 0.002) => {
       const g = ac.createGain(); g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(peak, t + att);
       g.gain.setValueAtTime(peak, t + att); g.gain.exponentialRampToValueAtTime(0.0005, t + att + dec);
@@ -2404,18 +2415,21 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
     if (GROOVE.stutter && j >= 12) src = GROOVE.stutter.from + ((j - 12) % GROOVE.stutter.len);   // beat repeat
     const r = GROOVE.rows, accent = j % 4 === 0 ? 1 : 0.75, fill = phrase === 3 && j >= 12;
     if (GROOVE.kit === "jazz" && j % 2) t += tickDur * 2 * 0.33;   // swing
-    if (r.kick[src] && !(GROOVE.dropKick && j >= 8)) drumHit("kick", t, accent);
-    if (fill && Math.random() < 0.85 * wake + 0.15) {                      // a fill into the next phrase
+    // hush: 0 until the three cities are mostly asleep, 1 when they're all deep in the night
+    const hush = Math.max(0, Math.min(1, (sl - 0.7) / 0.25)), soft = 1 - 0.45 * sl;
+    if (j === 0 && (r.kick[0] || sl > 0.5)) drumHit("kick", t, accent * soft);                          // the heartbeat on one carries on
+    else if (r.kick[src] && !(GROOVE.dropKick && j >= 8) && Math.random() > sl * 0.7 + hush) drumHit("kick", t, accent * soft);
+    if (fill && Math.random() < (0.85 * wake + 0.15) * (1 - hush)) {                      // a fill into the next phrase
       const v = 0.45 + (j - 12) * 0.15;
       if (j >= 14 && Math.random() < 0.6) ratchet("snare", t, v, j === 15 ? 4 : 2); else drumHit("snare", t, v);
-    } else if (r.snare[src] && Math.random() > sl * 0.5) {
+    } else if (r.snare[src] && Math.random() > sl * 0.5 + hush * 0.5) {
       if (Math.random() < 0.06 + wx.gust * 0.12) ratchet("snare", t, 0.8, 2); else drumHit("snare", t, 0.9);
     } else if (j % 2 && Math.random() < wx.hum * 0.14 * wake) drumHit("snare", t, 0.22);   // ghost note
-    if (r.hat[src] && Math.random() > sl * 0.7) {
-      const v = (j % 2 ? 0.55 : 0.85) * (0.8 + Math.random() * 0.2);
+    if (r.hat[src] && Math.random() > sl * 0.7 + hush * 0.25) {                                        // in deep night, just the odd soft hat
+      const v = (j % 2 ? 0.55 : 0.85) * (0.8 + Math.random() * 0.2) * (1 - 0.3 * sl);
       if (Math.random() < (0.05 + wx.gust * 0.25) * wake) ratchet("hat", t, v, Math.random() < 0.6 ? 2 : 3); else drumHit("hat", t, v);
     }
-    if (r.rim[src] && Math.random() > sl * 0.6) drumHit("rim", t, 0.6 + Math.random() * 0.2);
+    if (r.rim[src] && Math.random() > sl * 0.6 + hush * 0.4) drumHit("rim", t, 0.6 + Math.random() * 0.2);
     GROOVE.queue.push({ t, j });
   }
 
@@ -3175,7 +3189,7 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
     } else if (GROOVE.step !== -1) { GROOVE.step = -1; GROOVE.queue.length = 0; drawGrooveGrid(); }
     drawMood(ms, Math.min(100, ms - (frame.last || ms))); frame.last = ms;
     const minute = Math.floor(Date.now() / 60000);
-    if (minute !== lastMinute) { lastMinute = minute; cities.forEach(render); setTempo(); applyGroove(); }
+    if (minute !== lastMinute) { lastMinute = minute; cities.forEach(render); setTempo(); applyGroove(); applyFx(); }
     requestAnimationFrame(frame);
   }
 
