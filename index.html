@@ -1218,7 +1218,7 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
   // Share: one tap copies the link, and the button says so
   // Share: a line naming the cities travels with the link, so the message says what it is.
   // Phones get their own share sheet; computers copy the line and the link together.
-  function shareLine() { return `Listen to ${cityList(cities.map(c => c.name))} playing their weather right now.`; }
+  function shareLine() { return `Here's what ${cityList(cities.map(c => c.name))} sound like together right now. Add the places you've lived.`; }
   document.getElementById("share").addEventListener("click", () => {
     const btn = document.getElementById("share"), url = shareURL();
     if (!url) return;
