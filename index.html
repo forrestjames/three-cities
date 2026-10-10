@@ -784,12 +784,38 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
   }
 
   // ---------- random cities for the hero form ----------
-  const RANDOM_CITIES = ["Lisbon", "Berlin", "Tokyo", "Mexico City", "Reykjavik", "Buenos Aires", "Cape Town", "Mumbai", "Istanbul", "Seoul",
-    "Melbourne", "Vancouver", "Marrakech", "Havana", "Stockholm", "Nairobi", "Lima", "Hanoi", "Athens", "Dublin", "Montreal", "New Orleans",
-    "Edinburgh", "Barcelona", "Kyoto", "Oslo", "Helsinki", "Prague", "Vienna", "Rome", "Paris", "Amsterdam", "Chicago", "Seattle", "Austin",
-    "Nashville", "Los Angeles", "San Francisco", "New York", "Toronto", "Rio de Janeiro", "Santiago", "Bogotá", "Lagos", "Cairo", "Tel Aviv",
-    "Dubai", "Bangkok", "Singapore", "Hong Kong", "Taipei", "Shanghai", "Sydney", "Auckland", "Wellington", "Bali", "Kathmandu", "Tbilisi",
-    "Budapest", "Kraków", "Glasgow", "Manchester", "Bristol", "Brooklyn", "Detroit", "Portland", "Honolulu", "Anchorage", "Ushuaia", "Tromsø"];
+  // somewhere on every continent, from capitals to the far ends of the map
+  const RANDOM_CITIES = [
+    "Lisbon", "Porto", "Seville", "Valencia", "Bilbao", "Madrid", "Barcelona", "Granada", "Málaga", "Palma", "Bordeaux", "Lyon", "Marseille",
+    "Paris", "Nantes", "Strasbourg", "Toulouse", "Brussels", "Antwerp", "Ghent", "Bruges", "Amsterdam", "Rotterdam", "Utrecht", "Luxembourg",
+    "Berlin", "Hamburg", "Munich", "Cologne", "Leipzig", "Dresden", "Frankfurt", "Zurich", "Geneva", "Basel", "Lausanne", "Vienna", "Salzburg",
+    "Innsbruck", "Prague", "Brno", "Bratislava", "Budapest", "Kraków", "Warsaw", "Gdańsk", "Wrocław", "Vilnius", "Riga", "Tallinn", "Helsinki",
+    "Turku", "Stockholm", "Gothenburg", "Malmö", "Uppsala", "Oslo", "Bergen", "Trondheim", "Tromsø", "Copenhagen", "Aarhus", "Odense", "Reykjavik",
+    "Akureyri", "Tórshavn", "Dublin", "Galway", "Cork", "Belfast", "Edinburgh", "Glasgow", "Aberdeen", "Inverness", "Cardiff", "Swansea", "London",
+    "Manchester", "Liverpool", "Leeds", "Sheffield", "Bristol", "Brighton", "Oxford", "Norwich", "York", "Plymouth", "Penzance", "Rome", "Milan",
+    "Turin", "Venice", "Florence", "Bologna", "Naples", "Palermo", "Genoa", "Trieste", "Bari", "Athens", "Thessaloniki", "Heraklion", "Valletta",
+    "Ljubljana", "Zagreb", "Split", "Dubrovnik", "Sarajevo", "Belgrade", "Sofia", "Plovdiv", "Bucharest", "Cluj-Napoca", "Chișinău", "Odesa", "Kyiv",
+    "Lviv", "Tbilisi", "Yerevan", "Baku", "Istanbul", "Izmir", "Ankara", "Nicosia", "Beirut", "Amman", "Jerusalem", "Tel Aviv", "Cairo",
+    "Alexandria", "Tunis", "Algiers", "Casablanca", "Marrakech", "Fez", "Tangier", "Dakar", "Accra", "Lagos", "Abuja", "Addis Ababa", "Nairobi",
+    "Mombasa", "Kampala", "Kigali", "Dar es Salaam", "Zanzibar", "Lusaka", "Harare", "Windhoek", "Gaborone", "Johannesburg", "Cape Town", "Durban",
+    "Maputo", "Antananarivo", "Port Louis", "Luanda", "Kinshasa", "Dubai", "Abu Dhabi", "Doha", "Muscat", "Riyadh", "Tehran", "Isfahan", "Tashkent",
+    "Samarkand", "Almaty", "Karachi", "Lahore", "Delhi", "Mumbai", "Jaipur", "Varanasi", "Kolkata", "Chennai", "Bangalore", "Hyderabad", "Kochi",
+    "Kathmandu", "Thimphu", "Dhaka", "Colombo", "Yangon", "Bangkok", "Chiang Mai", "Phuket", "Vientiane", "Phnom Penh", "Hanoi", "Ho Chi Minh City",
+    "Hue", "Kuala Lumpur", "Singapore", "Jakarta", "Yogyakarta", "Bali", "Manila", "Cebu", "Hong Kong", "Macau", "Taipei", "Tainan", "Shanghai",
+    "Beijing", "Chengdu", "Xi'an", "Hangzhou", "Guangzhou", "Kunming", "Lhasa", "Ulaanbaatar", "Seoul", "Busan", "Jeju", "Tokyo", "Kyoto", "Osaka",
+    "Sapporo", "Fukuoka", "Hiroshima", "Nara", "Okinawa", "Vladivostok", "Sydney", "Melbourne", "Brisbane", "Perth", "Adelaide", "Hobart", "Darwin",
+    "Alice Springs", "Cairns", "Auckland", "Wellington", "Christchurch", "Queenstown", "Dunedin", "Suva", "Apia", "Nouméa", "Papeete", "Honolulu",
+    "Anchorage", "Fairbanks", "Juneau", "Vancouver", "Calgary", "Edmonton", "Winnipeg", "Toronto", "Ottawa", "Montreal", "Quebec City", "Halifax",
+    "St. John's", "Whitehorse", "Yellowknife", "Seattle", "Portland", "San Francisco", "Oakland", "Los Angeles", "San Diego", "Las Vegas", "Phoenix",
+    "Tucson", "Santa Fe", "Denver", "Salt Lake City", "Boise", "Austin", "Houston", "Dallas", "San Antonio", "New Orleans", "Memphis", "Nashville",
+    "Atlanta", "Savannah", "Miami", "Key West", "Orlando", "Chicago", "Detroit", "Minneapolis", "Milwaukee", "St. Louis", "Kansas City", "Cleveland",
+    "Pittsburgh", "Philadelphia", "Baltimore", "New York", "Providence", "Boston", "Mexico City", "Guadalajara", "Oaxaca", "Mérida", "Monterrey",
+    "Tijuana", "Havana", "San Juan", "Santo Domingo", "Port-au-Prince", "Bridgetown", "Guatemala City", "Antigua Guatemala", "San José",
+    "Panama City", "Medellín", "Bogotá", "Cartagena", "Cali", "Quito", "Guayaquil", "Lima", "Cusco", "Arequipa", "La Paz", "Santiago", "Valparaíso",
+    "Punta Arenas", "Buenos Aires", "Córdoba", "Mendoza", "Bariloche", "Ushuaia", "Montevideo", "Asunción", "São Paulo", "Rio de Janeiro",
+    "Salvador", "Recife", "Fortaleza", "Belém", "Manaus", "Brasília", "Florianópolis", "Porto Alegre", "Curitiba", "Caracas", "Paramaribo", "Nuuk",
+    "Longyearbyen"
+  ];
   function randomCity(except) {
     const pool = RANDOM_CITIES.filter(c => !except.includes(c.toLowerCase()));
     return pool[Math.floor(Math.random() * pool.length)];
