@@ -101,9 +101,7 @@ main { max-width: 1240px; margin: 0 auto; padding: 0 16px 80px; display: flex; f
 .groove-grid i.on { background: rgba(243,236,230,0.42); }
 .groove-grid i.now { outline: 1px solid rgba(255,217,138,0.8); }
 .groove-grid i.on.now { background: #ffd98a; }
-.groove-controls { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 14px; }
-.groove-controls .groove-auto-note { grid-column: 1 / -1; }
-@media (max-width: 1100px) { .groove-controls { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+.groove-controls { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; }
 .groove-controls label { display: flex; flex-direction: column; gap: 6px; font-size: 11px; text-transform: uppercase; letter-spacing: 0.14em; color: var(--ink-dim); }
 .groove-controls select { min-height: 36px; background: rgba(16,8,6,0.6); }
 .groove-controls input[type="range"] { width: 100%; accent-color: #ffd98a; }
@@ -520,7 +518,6 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
         <label>Kit <select id="grooveKit"><option value="minimal" selected>Minimal</option><option value="soft">Soft</option><option value="lofi">Lo-fi</option><option value="808">808</option><option value="jazz">Jazz</option></select></label>
         <label>Volume <input id="grooveVol" type="range" min="0" max="100" value="40"></label>
         <label><span class="row">Filter <button class="auto-btn" id="grooveAuto" type="button" aria-pressed="false" title="Sweep towards the moment the cities line up">Auto</button></span><input id="grooveTone" type="range" min="0" max="100" value="55"></label>
-        <label><span class="row">FX <button class="auto-btn" id="grooveEcho" type="button" aria-pressed="false" title="Send the snare, hats and rim into the delay">Echo</button></span><input id="grooveFx" type="range" min="0" max="100" value="30" aria-label="Rhythm section reverb amount" title="How much reverb the drums get. It's always on, whatever the Hall pedal is doing; switch a drum's rev off for a dry one."></label>
         <span class="groove-auto-note" id="grooveAutoNote"></span>
       </div>
     </div>
@@ -2212,7 +2209,7 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
   // Each city's pattern is squeezed into one bar of sixteen steps. The kick plays where two or more
   // cities hit together, the hats wherever any city hits, the rim where exactly one city plays alone,
   // and the snare is a Euclidean backbeat whose count rises with the gustiest city's wind.
-  var GROOVE = { on: true, kit: "minimal", fx: 0.3, echo: false, verb: { snare: true, hat: true, rim: true }, verbSend: null, vol: 0.4, tone: 0.55, rows: { kick: [], snare: [], hat: [], rim: [] }, step: -1, queue: [], bus: null, filter: null };
+  var GROOVE = { on: true, kit: "minimal", vol: 0.4, tone: 0.55, rows: { kick: [], snare: [], hat: [], rim: [] }, step: -1, queue: [], bus: null, filter: null };
   function buildGroove() {
     if (!GROOVE) return;
     const ready = cities.filter(c => c.pattern && c.pattern.length);
@@ -2236,18 +2233,11 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
     if (!g) return;
     if (!g.childElementCount) {
       ["kick", "snare", "hat", "rim"].forEach(r => {
-        if (r === "kick") { const l = document.createElement("span"); l.textContent = r; g.appendChild(l); }
-        else {
-          const l = document.createElement("button"); l.type = "button"; l.className = "gv"; l.dataset.row = r;
-          l.setAttribute("aria-pressed", String(GROOVE.verb[r])); l.title = `Reverb on the ${r}: switch off for a dry ${r}`;
-          l.innerHTML = `<span class="gv-name">${r}</span><span class="gv-rev">rev</span>`;
-          l.addEventListener("click", () => { GROOVE.verb[r] = !GROOVE.verb[r]; l.setAttribute("aria-pressed", String(GROOVE.verb[r])); });
-          g.appendChild(l);
-        }
+        { const l = document.createElement("span"); l.className = "gv-name"; l.dataset.row = r; l.textContent = r; g.appendChild(l); }
         for (let j = 0; j < 16; j++) { const i = document.createElement("i"); i.dataset.r = r; i.dataset.j = j; g.appendChild(i); }
       });
     }
-    const hatName = g.querySelector('.gv[data-row="hat"] .gv-name');
+    const hatName = g.querySelector('.gv-name[data-row="hat"]');
     if (hatName) hatName.textContent = GROOVE.kit === "jazz" ? "ride" : "hat";
     g.querySelectorAll("i").forEach(i => {
       i.classList.toggle("on", !!GROOVE.rows[i.dataset.r][+i.dataset.j]);
@@ -2257,23 +2247,7 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
   function setupGroove() {
     GROOVE.bus = ac.createGain();
     GROOVE.filter = ac.createBiquadFilter(); GROOVE.filter.type = "lowpass"; GROOVE.filter.Q.value = 0.5;
-    // The drums' own room: a short, always-on reverb like a mixing desk's drum plate. It doesn't depend on
-    // the Hall pedal, so switching the hall off never leaves the kit bone dry. FX sets how much goes in.
-    const room = ac.createGain(), roomHp = ac.createBiquadFilter(); roomHp.type = "highpass"; roomHp.frequency.value = 220;
-    const roomConv = ac.createConvolver(); roomConv.buffer = hallImpulse(1.3, 0.5);
-    const roomOut = ac.createGain(); roomOut.gain.value = 0.9;
-    room.connect(roomHp).connect(roomConv).connect(roomOut).connect(master);
-    const send = ac.createGain(); send.gain.value = 0.04; GROOVE.roomSend = send;          // a touch of the whole kit, kick included
-    GROOVE.verbSend = ac.createGain(); GROOVE.verbSend.gain.value = 0.5;                   // snare, hats and rim, each with its own rev switch
-    GROOVE.verbSend.connect(room);
-    GROOVE.bus.connect(GROOVE.filter).connect(master);
-    GROOVE.filter.connect(send).connect(room);
-    // at night the snare, hats and rim drift into the hall, like music from another room; the kick stays dry
-    GROOVE.nightSend = ac.createGain(); GROOVE.nightSend.gain.value = 0;
-    const nightTone = ac.createBiquadFilter(); nightTone.type = "lowpass"; nightTone.frequency.value = 3200;
-    GROOVE.nightSend.connect(nightTone).connect(reverb);
-    GROOVE.echoSend = ac.createGain(); GROOVE.echoSend.gain.value = 0;   // the Echo switch: snare, hats and rim into the delay
-    GROOVE.echoSend.connect(delay);
+    GROOVE.bus.connect(GROOVE.filter).connect(master);   // the drums stay dry: no reverb or delay
     applyGroove();
   }
   function grooveSleep() {
@@ -2283,12 +2257,6 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
   function applyGroove() {
     if (!GROOVE.bus) return;
     const t = ac.currentTime, sl = grooveSleep();
-    // FX sets how much of the drums reaches the hall: 30 is the old fixed amount, 0 is bone dry
-    const room = GROOVE.fx / 0.3;
-    if (GROOVE.roomSend) GROOVE.roomSend.gain.setTargetAtTime(0.06 * room, t, 0.08);
-    if (GROOVE.verbSend) GROOVE.verbSend.gain.setTargetAtTime(0.5 * room, t, 0.08);
-    if (GROOVE.nightSend) GROOVE.nightSend.gain.setTargetAtTime(0.5 * sl * Math.min(1.6, room), t, 2);
-    if (GROOVE.echoSend) GROOVE.echoSend.gain.setTargetAtTime(GROOVE.echo ? 0.3 : 0, t, 0.08);
     GROOVE.bus.gain.setTargetAtTime(GROOVE.on ? GROOVE.vol * GROOVE.vol * 1.3 * (1 - sl * 0.5) : 0, t, 0.08);
     if (!GROOVE.auto) { GROOVE.filter.frequency.setTargetAtTime(250 * Math.pow(16000 / 250, GROOVE.tone) * (1 - sl * 0.4), t, 0.08); sendFilterCC(GROOVE.tone); }
   }
@@ -2328,9 +2296,6 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
       if (!driveCurve) { driveCurve = new Float32Array(1024); for (let i = 0; i < 1024; i++) { const x = i / 511.5 - 1; driveCurve[i] = Math.tanh(x * 2.5) / Math.tanh(2.5); } }
       const ws = ac.createWaveShaper(); ws.curve = driveCurve; out.connect(ws).connect(GROOVE.bus);
     } else out.connect(GROOVE.bus);
-    if (GROOVE.verb[kind] && GROOVE.verbSend) out.connect(GROOVE.verbSend);
-    if (kind !== "kick" && GROOVE.nightSend) out.connect(GROOVE.nightSend);
-    if (kind !== "kick" && GROOVE.echoSend) out.connect(GROOVE.echoSend);
     const env = (node, peak, dec, att = 0.002) => {
       const g = ac.createGain(); g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(peak, t + att);
       g.gain.setValueAtTime(peak, t + att); g.gain.exponentialRampToValueAtTime(0.0005, t + att + dec);
@@ -2459,9 +2424,6 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
     document.getElementById("grooveKit").addEventListener("change", e => { GROOVE.kit = e.target.value; drawGrooveGrid(); });
     document.getElementById("grooveVol").addEventListener("input", e => { GROOVE.vol = e.target.value / 100; applyGroove(); });
     document.getElementById("grooveTone").addEventListener("input", e => { GROOVE.tone = e.target.value / 100; applyGroove(); });
-    document.getElementById("grooveFx").addEventListener("input", e => { GROOVE.fx = e.target.value / 100; applyGroove(); });
-    { const echo = document.getElementById("grooveEcho");
-      echo.addEventListener("click", () => { GROOVE.echo = !GROOVE.echo; echo.setAttribute("aria-pressed", String(GROOVE.echo)); applyGroove(); }); }
     const auto = document.getElementById("grooveAuto"), note = document.getElementById("grooveAutoNote");
     auto.addEventListener("click", () => {
       GROOVE.auto = !GROOVE.auto; auto.setAttribute("aria-pressed", String(GROOVE.auto));
@@ -3223,8 +3185,6 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
       if (!SAVE_SKIP.has(e.id) && !e.id.endsWith("-swap") && e.type !== "text") out.push([e.id, e]);
     });
     cities.forEach((c, i) => ["mute", "sendRev", "sendDel"].forEach(r => { if (c.ref[r]) out.push([`c${i}.${r}`, c.ref[r]]); }));
-    drawGrooveGrid();   // makes sure the drum rows' reverb switches exist
-    document.querySelectorAll(".gv").forEach(e => out.push(["gv-" + e.dataset.row, e]));
     return out;
   }
   function soundState() {
