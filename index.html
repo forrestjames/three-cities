@@ -101,6 +101,10 @@ main { max-width: 1240px; margin: 0 auto; padding: 0 16px 80px; display: flex; f
 .groove-grid i.on { background: rgba(243,236,230,0.42); }
 .groove-grid i.now { outline: 1px solid rgba(255,217,138,0.8); }
 .groove-grid i.on.now { background: #ffd98a; }
+.gv-name { background: none; border: 0; padding: 0; margin: 0; font: inherit; letter-spacing: inherit; text-transform: inherit; color: inherit; text-align: left; cursor: pointer; min-height: 22px; transition: color 0.2s, opacity 0.2s; }
+.gv-name:hover { color: var(--ink-dim); }
+.gv-name[aria-pressed="true"] { opacity: 0.6; text-decoration: line-through; text-decoration-thickness: 1px; }
+.groove-grid.mute-kick i[data-r="kick"], .groove-grid.mute-snare i[data-r="snare"], .groove-grid.mute-hat i[data-r="hat"], .groove-grid.mute-rim i[data-r="rim"] { opacity: 0.25; }
 .groove-controls { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; }
 .groove-controls label { display: flex; flex-direction: column; gap: 6px; font-size: 11px; text-transform: uppercase; letter-spacing: 0.14em; color: var(--ink-dim); }
 .groove-controls select { min-height: 36px; background: rgba(16,8,6,0.6); }
@@ -517,7 +521,7 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
       <span class="groove-info">One drum pattern made from all three cities: the kick lands where they agree, the hats wherever any of them plays, the rim where one plays alone.</span>
     </div>
     <div class="groove-body">
-      <div class="groove-grid" id="grooveGrid" aria-hidden="true"></div>
+      <div class="groove-grid" id="grooveGrid"></div>
       <div class="groove-controls">
         <label>Kit <select id="grooveKit"><option value="minimal" selected>Minimal</option><option value="soft">Soft</option><option value="lofi">Lo-fi</option><option value="808">808</option><option value="jazz">Jazz</option></select></label>
         <label>Volume <input id="grooveVol" type="range" min="0" max="100" value="40"></label>
@@ -2261,7 +2265,7 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
   // Each city's pattern is squeezed into one bar of sixteen steps. The kick plays where two or more
   // cities hit together, the hats wherever any city hits, the rim where exactly one city plays alone,
   // and the snare is a Euclidean backbeat whose count rises with the gustiest city's wind.
-  var GROOVE = { on: true, kit: "minimal", vol: 0.4, tone: 0.55, rows: { kick: [], snare: [], hat: [], rim: [] }, step: -1, queue: [], bus: null, filter: null };
+  var GROOVE = { on: true, kit: "minimal", mute: { kick: false, snare: false, hat: false, rim: false }, vol: 0.4, tone: 0.55, rows: { kick: [], snare: [], hat: [], rim: [] }, step: -1, queue: [], bus: null, filter: null };
   function buildGroove() {
     if (!GROOVE) return;
     const ready = cities.filter(c => c.pattern && c.pattern.length);
@@ -2285,7 +2289,16 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
     if (!g) return;
     if (!g.childElementCount) {
       ["kick", "snare", "hat", "rim"].forEach(r => {
-        { const l = document.createElement("span"); l.className = "gv-name"; l.dataset.row = r; l.textContent = r; g.appendChild(l); }
+        { // the row name is its mute switch, like a channel mute on a desk
+          const l = document.createElement("button"); l.type = "button"; l.className = "gv-name"; l.id = "gm-" + r; l.dataset.row = r; l.textContent = r;
+          l.setAttribute("aria-pressed", "false"); l.setAttribute("aria-label", "Mute " + r); l.title = "Mute " + r;
+          l.addEventListener("click", () => {
+            GROOVE.mute[r] = !GROOVE.mute[r];
+            l.setAttribute("aria-pressed", String(GROOVE.mute[r]));
+            g.classList.toggle("mute-" + r, GROOVE.mute[r]);
+            const t = (GROOVE.mute[r] ? "Unmute " : "Mute ") + l.textContent.toLowerCase(); l.setAttribute("aria-label", t); l.title = t;
+          });
+          g.appendChild(l); }
         for (let j = 0; j < 16; j++) { const i = document.createElement("i"); i.dataset.r = r; i.dataset.j = j; g.appendChild(i); }
       });
     }
@@ -2342,6 +2355,7 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
     midiOut.send([0x80 | drumCh, note, 0], at + 60);
   }
   function drumHit(kind, t, vel) {
+    if (GROOVE.mute[kind]) return;   // that channel is muted, MIDI included
     sendDrumMidi(kind, t, vel);
     const k = KITS[GROOVE.kit] || KITS.soft, out = ac.createGain();
     if (k.drive) {
@@ -3233,6 +3247,7 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
   const SAVE_SKIP = new Set(["mine1", "mine2", "mine3", "midi", "filterCC", "moodPause", "hallFreeze", "delayFreeze"]);
   function soundControls() {
     const out = [];
+    drawGrooveGrid();   // makes sure the drum mute switches exist
     document.querySelectorAll("main input[id], main select[id], main button[id][aria-pressed]").forEach(e => {
       if (!SAVE_SKIP.has(e.id) && !e.id.endsWith("-swap") && e.type !== "text") out.push([e.id, e]);
     });
