@@ -643,18 +643,23 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
     ["mixolydian", [0, 2, 4, 5, 7, 9, 10]],
     ["harmonic minor", [0, 2, 3, 5, 7, 8, 11]],
     ["blues", [0, 3, 5, 6, 7, 10]],
-    // guitar open tunings: just the notes of the open strings, ringing like strummed open chords
-    ["open major (like DADF#AD)", [0, 4, 7]],
-    ["open minor (like DADFAD)", [0, 3, 7]],
-    ["DADGAD", [0, 5, 7]],
-    ["open sus2 (like DADEAD)", [0, 2, 7]]
+    // open, gentle scales with no half-steps to rub against the chords
+    ["suspended pentatonic", [0, 2, 5, 7, 10]],
+    ["yo (Japanese folk)", [0, 2, 5, 7, 9]],
+    ["kumoi", [0, 2, 3, 7, 9]],
+    ["major hexatonic", [0, 2, 4, 7, 9, 11]],
+    ["minor hexatonic", [0, 2, 3, 5, 7, 10]],
+    ["ryukyu (Okinawan)", [0, 4, 5, 7, 11]]
   ];
+  // the scales a first listen can land on; the tenser ones stay in the menu for anyone who goes looking
+  const GENTLE = ["minor pentatonic", "major pentatonic", "dorian", "major", "lydian", "suspended pentatonic", "yo (Japanese folk)",
+    "kumoi", "major hexatonic", "minor hexatonic", "ryukyu (Okinawan)"].map(n => SCALES.findIndex(x => x[0] === n));
   // a fresh key and scale every time the page loads
   const QS = (() => { try { return new URLSearchParams(location.search); } catch (e) { return new URLSearchParams(); } })();
   let keyRoot = Math.floor(Math.random() * KEYS.length);
   if (QS.has("key") && KEYS.indexOf(QS.get("key")) >= 0) keyRoot = KEYS.indexOf(QS.get("key"));
   // any scale can come up; the shared chords below keep the three cities agreeing with each other
-  let scaleIndex = Math.floor(Math.random() * SCALES.length);
+  let scaleIndex = GENTLE[Math.floor(Math.random() * GENTLE.length)];
   { const q = Number(QS.get("scale")); if (QS.has("scale") && q >= 0 && q < SCALES.length) scaleIndex = q; }
   let scale = SCALES[scaleIndex][1];
   // A city's notes are scale degrees around its own register, so they follow the key and scale.
