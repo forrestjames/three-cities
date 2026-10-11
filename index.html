@@ -338,6 +338,13 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
 .city-meta { font-size: 12px; color: var(--ink-dim); letter-spacing: 0.08em; }
 .city-place { font-size: 12px; color: var(--ink); opacity: 0.78; letter-spacing: 0.08em; margin: 2px 0 1px; line-height: 1.35; text-shadow: 0 1px 8px rgba(0,0,0,0.7); }
 .city-place:empty { display: none; }
+.keys-panel { position: fixed; z-index: 60; right: 16px; bottom: 80px; padding: 14px 16px; background: #1f1613; border: 1px solid var(--line); box-shadow: 0 12px 30px rgba(0,0,0,0.5);
+  font: 12px/1.6 var(--mono); color: var(--ink-dim); letter-spacing: 0.02em; }
+.keys-panel b { display: block; margin-bottom: 6px; color: var(--ink); font-weight: 400; letter-spacing: 0.16em; text-transform: uppercase; font-size: 11px; }
+.keys-panel dl { display: grid; grid-template-columns: auto auto; gap: 2px 14px; margin: 0; }
+.keys-panel dt { color: var(--ink); } .keys-panel dd { margin: 0; }
+.keys-hint kbd { font: inherit; padding: 0 5px; border: 1px solid var(--line); border-radius: 3px; color: var(--ink); }
+@media (pointer: coarse) { .keys-hint { display: none; } }
 .city { transition: opacity 6s ease; }
 .city.is-back { opacity: 0.86; }
 .city.is-lead .city-name { text-shadow: 0 0 18px color-mix(in srgb, var(--accent) 45%, transparent); }
@@ -658,6 +665,7 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
   </section>
 
   <button class="fab" id="fab" type="button" hidden>Play</button>
+  <p class="foot keys-hint">Press <kbd>?</kbd> for keyboard shortcuts</p>
   <p class="foot">Weather from <a href="https://open-meteo.com" target="_blank" rel="noopener">Open-Meteo</a> · Forrest James</p>
   <p class="foot credits">Grand piano: <a href="https://archive.org/details/SalamanderGrandPianoV3" target="_blank" rel="noopener">Salamander Grand Piano</a> by Alexander Holm, CC BY 3.0 · Harp: <a href="https://vis.versilstudios.net/vsco-community.html" target="_blank" rel="noopener">VSCO 2 Community Edition</a>, CC0</p>
   <p class="foot credits" id="credits"></p>
@@ -3592,6 +3600,28 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
     if (!leadState.order) { shiftLead(true); return; }
     if (ac.currentTime >= leadState.next) shiftLead(false);
   }, 1000);
+
+  // ---------- keyboard: play the mutes like a performer ----------
+  // 1, 2, 3 mute the cities in card order. A, S, D, F mute kick, snare, hat and rim (home row, like four pads).
+  // Space starts and stops. ? shows the list. Keys are ignored while typing in a box or with Ctrl, Cmd or Alt held.
+  {
+    const keysPanel = document.createElement("div");
+    keysPanel.className = "keys-panel"; keysPanel.hidden = true; keysPanel.setAttribute("role", "dialog"); keysPanel.setAttribute("aria-label", "Keyboard shortcuts");
+    keysPanel.innerHTML = `<b>Keyboard</b><dl><dt>1 2 3</dt><dd>Mute a city</dd><dt>A S D F</dt><dd>Mute kick, snare, hat, rim</dd><dt>Space</dt><dd>Start or stop</dd><dt>?</dt><dd>Show or hide this</dd></dl>`;
+    document.body.appendChild(keysPanel);
+    const DRUM_KEYS = { a: "kick", s: "snare", d: "hat", f: "rim" };
+    document.addEventListener("keydown", e => {
+      if (e.ctrlKey || e.metaKey || e.altKey || e.repeat) return;
+      const t = e.target, tag = t && t.tagName;
+      if (tag === "INPUT" || tag === "SELECT" || tag === "TEXTAREA" || (t && t.isContentEditable)) return;
+      const k = e.key.toLowerCase();
+      if (k === "?") { keysPanel.hidden = !keysPanel.hidden; e.preventDefault(); return; }
+      if (k === "escape" && !keysPanel.hidden) { keysPanel.hidden = true; return; }
+      if (k === " " && !(tag === "BUTTON" || tag === "A" || tag === "SUMMARY" || tag === "CANVAS")) { e.preventDefault(); playBtn.click(); return; }
+      if (["1", "2", "3"].includes(k)) { const c = cities[Number(k) - 1]; if (c && c.ref && c.ref.mute) c.ref.mute.click(); return; }
+      if (DRUM_KEYS[k]) { const b = document.getElementById("gm-" + DRUM_KEYS[k]); if (b) b.click(); }
+    });
+  }
 
   // ---------- go ----------
   cities.forEach(c => { c.w = null; });
