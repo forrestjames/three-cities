@@ -1,0 +1,60 @@
+name: Daily clip
+
+# Records today's Three Cities as a 9:16 clip and posts it as a GitHub release,
+# with the caption in the release notes. Watch the repo's releases (Watch > Custom >
+# Releases) to get a notification on your phone each day.
+
+on:
+  schedule:
+    # 13:07 UTC: early afternoon in London, the one time of day all three cities are
+    # awake all year round. In midwinter Boston has only just woken and Copenhagen is
+    # nearly asleep, which you'll hear.
+    - cron: "7 13 * * *"
+  workflow_dispatch:
+    inputs:
+      seconds:
+        description: "Clip length in seconds"
+        default: "40"
+
+permissions:
+  contents: write
+
+jobs:
+  clip:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install Playwright, Chromium and ffmpeg
+        working-directory: tools
+        run: |
+          npm ci
+          npx playwright install --with-deps chromium
+          sudo apt-get update -q && sudo apt-get install -y -q ffmpeg
+
+      - name: Record
+        run: node tools/capture.mjs --seconds "${{ github.event.inputs.seconds || '40' }}" --out clips
+
+      - name: Publish as a release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          day=$(date -u +%F)
+          tag="clip-$day"
+          gh release delete "$tag" --yes --cleanup-tag 2>/dev/null || true
+          gh release create "$tag" "clips/three-cities-$day.mp4" \
+            --title "Three Cities, $(date -u '+%A %-d %B %Y')" \
+            --notes-file "clips/three-cities-$day.txt" \
+            --latest=false
+
+      - name: Keep the files with the run too
+        uses: actions/upload-artifact@v4
+        with:
+          name: three-cities-clip
+          path: clips/
+          retention-days: 14

@@ -766,6 +766,14 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
   // any scale can come up; the shared chords below keep the three cities agreeing with each other
   let scaleIndex = GENTLE[Math.floor(Math.random() * GENTLE.length)];
   { const q = Number(QS.get("scale")); if (QS.has("scale") && q >= 0 && q < SCALES.length) scaleIndex = q; }
+  // ?today (and the daily clip): the key and scale come from today's date instead, so
+  // everyone who opens the page today hears it in the same key as the posted clip
+  if ((QS.has("today") || QS.has("record")) && !QS.has("key") && !QS.has("scale")) {
+    const d = new Date(), seed = d.getUTCFullYear() * 10000 + (d.getUTCMonth() + 1) * 100 + d.getUTCDate();
+    let h = seed >>> 0; h = Math.imul(h ^ (h >>> 16), 0x45d9f3b); h = Math.imul(h ^ (h >>> 16), 0x45d9f3b); h = (h ^ (h >>> 16)) >>> 0;
+    keyRoot = h % KEYS.length;
+    scaleIndex = GENTLE[Math.floor(h / KEYS.length) % GENTLE.length];
+  }
   let scale = SCALES[scaleIndex][1];
   // A city's notes are scale degrees around its own register, so they follow the key and scale.
   function noteFor(c, deg) {
@@ -1588,7 +1596,7 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
   }
 
   // ---------- sound ----------
-  let ac = null, master, reverb, delay, playing = false;
+  let ac = null, master, outBus, reverb, delay, playing = false;
   const fx = {};
   const val = id => Number(document.getElementById(id).value);
 
@@ -1977,6 +1985,7 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
     djLP = ac.createBiquadFilter(); djLP.type = "lowpass"; djLP.frequency.value = 20000; djLP.Q.value = 0.9;
     djHP = ac.createBiquadFilter(); djHP.type = "highpass"; djHP.frequency.value = 20; djHP.Q.value = 0.9;
     master.connect(djLP).connect(djHP).connect(comp).connect(ac.destination);
+    outBus = comp;   // the finished mix, for record mode to tap
     applyDJ();
     buildEffects();
     setupGroove();
@@ -3725,6 +3734,77 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
   });
   setInterval(() => { if (live) refreshAll(); }, 10 * 60 * 1000);
   requestAnimationFrame(frame);
+
+  // ---------- record mode: ?record makes a 9:16 clip for social video ----------
+  // tools/capture.mjs opens the page with ?record, waits for the live weather, then calls
+  // window.threeCities.record(seconds). The page draws a vertical frame of its own, records
+  // it together with the finished mix, and hands the clip back as a WebM download.
+  if (QS.has("record")) setupRecord();
+  function setupRecord() {
+    const W = 1080, H = 1920;
+    const cv = document.createElement("canvas"); cv.width = W; cv.height = H;
+    cv.style.cssText = "position:fixed;right:8px;top:8px;width:216px;height:384px;z-index:9999;border:1px solid var(--line)";
+    document.body.appendChild(cv);
+    const g = cv.getContext("2d");
+    const ground = css.getPropertyValue("--ground").trim() || "#100806";
+    const dim = "rgba(243,236,230,0.62)";
+    const ABEL = px => `${px}px Abel, 'Arial Narrow', sans-serif`, MONO = px => `${px}px 'Source Code Pro', monospace`;
+    const today = new Date().toLocaleDateString("en-GB", { weekday: "long", day: "numeric", month: "long", year: "numeric", timeZone: "UTC" });
+    const keyName = () => KEYS[keyRoot] + " " + SCALES[scaleIndex][0];
+    // a plain word for each city's weather, kept short so it clears the app buttons on the right
+    const word = c => !c.w ? "" : c.w.r > 0.05 ? (c.w.t <= 1 ? "snow" : "rain") : c.w.w >= 28 ? "windy" : c.w.c >= 60 ? "cloudy" : "clear";
+    const deg = c => Math.round(c.w.t) + "°C";
+
+    function paint() {
+      g.globalAlpha = 1; g.fillStyle = ground; g.fillRect(0, 0, W, H);
+      g.textAlign = "center"; g.textBaseline = "alphabetic";
+      g.fillStyle = "#f3ece6"; g.font = ABEL(76); g.fillText(spaced("Three Cities"), W / 2, 190);
+      g.fillStyle = dim; g.font = MONO(30); g.fillText(today, W / 2, 250);
+      cities.forEach((c, i) => {
+        const top = 330 + i * 450, size = 400, cy = top + size / 2, tx = 510;
+        if (c.ringCtx) g.drawImage(c.ringCtx.canvas, 60, top, size, size);
+        g.textAlign = "left";
+        g.fillStyle = colorOf(c); g.font = ABEL(68); g.fillText(c.name, tx, cy - 36);
+        if (!c.w) return;
+        g.fillStyle = "#f3ece6"; g.font = MONO(40); g.fillText(`${deg(c)} · ${word(c)}`, tx, cy + 26);
+        g.fillStyle = dim; g.font = MONO(30); g.fillText(localTime(c) + (sunNow(c).day ? "" : " · asleep"), tx, cy + 80);
+      });
+      g.textAlign = "center"; g.fillStyle = dim; g.font = MONO(28);
+      g.fillText(`in ${keyName()} · playing live all day`, W / 2, 1720);
+      requestAnimationFrame(paint);
+    }
+    requestAnimationFrame(paint);
+
+    const caption = () =>
+      cities.map(c => `${c.name} ${deg(c)}, ${word(c)}.`).join(" ") +
+      `\n\nThree places I've called home, played live by today's weather. Today it's in ${keyName()}.`;
+
+    window.threeCities = {
+      ready: () => cities.every(c => c.w && c.pattern.length && c.ringCtx),
+      live: () => live,
+      caption,
+      async record(seconds) {
+        if (!playing) { await start(); syncButtons(); }
+        const dest = ac.createMediaStreamDestination();
+        outBus.connect(dest);
+        const stream = new MediaStream([...cv.captureStream(30).getVideoTracks(), ...dest.stream.getAudioTracks()]);
+        const type = ["video/webm;codecs=vp9,opus", "video/webm;codecs=vp8,opus", "video/webm"].find(t => MediaRecorder.isTypeSupported(t));
+        const rec = new MediaRecorder(stream, { mimeType: type, videoBitsPerSecond: 8e6, audioBitsPerSecond: 256000 });
+        const chunks = [];
+        rec.ondataavailable = e => { if (e.data.size) chunks.push(e.data); };
+        const stopped = new Promise(r => { rec.onstop = r; });
+        rec.start(1000);
+        await new Promise(r => setTimeout(r, seconds * 1000));
+        rec.stop(); await stopped;
+        outBus.disconnect(dest);
+        const blob = new Blob(chunks, { type: "video/webm" });
+        const a = document.createElement("a");
+        a.href = URL.createObjectURL(blob); a.download = "three-cities.webm";
+        document.body.appendChild(a); a.click();
+        return { bytes: blob.size, live, caption: caption() };
+      }
+    };
+  }
 })();
 </script>
 

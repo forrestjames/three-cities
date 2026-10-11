@@ -1,0 +1,11 @@
+{
+  "name": "three-cities-tools",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "clip": "node capture.mjs --out ../clips"
+  },
+  "dependencies": {
+    "playwright": "^1.48.0"
+  }
+}

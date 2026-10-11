@@ -20,6 +20,15 @@ You can swap in the cities you've lived in, then share a link to your version.
 - **The sun.** Each city's filter opens with the sun's height and fades out around sunset. Cloud cover adds reverb.
 - **Sound.** Everything is synthesised in the browser with the Web Audio API. A DJ-style filter on the whole mix goes low-pass to the left and high-pass to the right. Chrome and Edge can send MIDI out: one channel per city, and the drums on channel 10 with General MIDI notes.
 
+## Daily clip
+
+Once a day a GitHub Action records the piece as a 40-second vertical video for TikTok, Instagram Reels and Shorts, and posts it as a release with a ready-made caption.
+
+- `?record` lays the page out as a 9:16 frame and records it with the finished mix.
+- `?today` sets the key and scale from today's date, so the live page matches the day's clip. Record mode does this too.
+- `node tools/capture.mjs --seconds 40` makes a clip locally (after `npm ci` and `npx playwright install chromium` in `tools/`, plus ffmpeg).
+- The workflow runs at 13:07 UTC, the one time all three cities are awake all year. Run it by hand from the Actions tab too.
+
 Weather from [Open-Meteo](https://open-meteo.com). Photos from Wikimedia Commons, credited on the page.
 
 Grand piano samples: [Salamander Grand Piano](https://archive.org/details/SalamanderGrandPianoV3) by Alexander Holm, CC BY 3.0. Harp samples: [VSCO 2 Community Edition](https://vis.versilstudios.net/vsco-community.html), CC0. Both trimmed and re-encoded for the web.
