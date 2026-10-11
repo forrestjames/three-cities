@@ -2658,6 +2658,12 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
       node.connect(g).connect(out); return g;
     };
     const noise = (start = Math.random() * 0.5) => { const n = ac.createBufferSource(); n.buffer = noiseBuf; n.start(t, start); n.stop(t + 1); return n; };
+    if (kind === "rim") {   // every kit's rim is a ghost kick: a muffled low thump, felt more than heard, that stays under the melody
+      const v = vel * (0.6 + Math.random() * 0.4), o = ac.createOscillator(), lp = ac.createBiquadFilter(); lp.type = "lowpass"; lp.frequency.value = 260;
+      o.frequency.setValueAtTime(95, t); o.frequency.exponentialRampToValueAtTime(52, t + 0.07);
+      o.connect(lp); env(lp, 0.42 * v, 0.13, 0.004); o.start(t); o.stop(t + 0.2);
+      return;
+    }
     if (k.make && k.make(kind, t, vel, { env, noise, out })) return;
     if (k.jazz && kind === "snare") {   // brushes: a soft swish that swells in rather than cracks
       const [bp, q, dec, g] = k.snare, n = noise(), f = ac.createBiquadFilter(); f.type = "bandpass"; f.Q.value = q;
