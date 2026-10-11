@@ -350,8 +350,7 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
 .city { transition: opacity 6s ease; }
 .city.is-back { opacity: 0.86; }
 .city.is-lead .city-name { text-shadow: 0 0 18px color-mix(in srgb, var(--accent) 45%, transparent); }
-@media (max-width: 600px) { .city-place, .city-meta { font-size: 11px; letter-spacing: 0.02em; } .city-meta { white-space: nowrap; } } }
-@media (max-width: 420px) { .temp { font-size: 38px; } }
+@media (max-width: 600px) { .city-place, .city-meta { font-size: 11px; letter-spacing: 0.02em; } .city-meta { white-space: nowrap; } }
 .temp { flex-shrink: 0; white-space: nowrap; font-family: var(--display); font-size: 52px; line-height: 0.9; letter-spacing: 0.04em; font-variant-numeric: tabular-nums; }
 .viz { display: grid; grid-template-columns: minmax(0, 1fr) 96px; gap: 14px; align-items: center; }
 .ring { width: 100%; max-width: 260px; aspect-ratio: 1; justify-self: center; }
@@ -489,6 +488,7 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
 }
 .status.hint { color: var(--ink); }
 .mod-midi:not(.midi-live) .midi-chans, .mod-midi:not(.midi-live) .midi-fcc { display: none !important; }
+@media (max-width: 420px) { .temp { font-size: 38px; } .title-cities { font-size: 12px; letter-spacing: 0.1em; } }
 </style>
 </head>
 <body>
@@ -497,7 +497,7 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
   <div class="hero-inner">
     <div class="wordmark">Forrest James</div>
     <h1 id="title">Three Cities</h1>
-    <div class="title-cities" id="titleCities" hidden></div>
+    <div class="title-cities" id="titleCities">Boston&nbsp;· Copenhagen&nbsp;· London</div>
     <div class="lede" id="ledeMine">
       <p class="lede-lead">Three places I’ve called home, playing in real time.</p>
       <p>Boston, Copenhagen and London become a constantly changing composition shaped by their live weather. Temperature sets the length of each rhythm, conditions scatter notes across it, and as night falls each city drifts off: quieter, slower, fewer notes.</p>
@@ -1247,7 +1247,7 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
     const h1 = document.getElementById("title");
     h1.textContent = "Three Cities";   // the piece keeps its name; the cities playing sit underneath
     const sub = document.getElementById("titleCities");
-    sub.textContent = names.join(" · "); sub.hidden = isDefault;
+    sub.textContent = names.join("\u00a0· "); sub.hidden = false;   // a line can break after a dot, never before one   // always shown, the default three included
     document.getElementById("ledeCities").textContent = cityList(names);
     document.getElementById("ledeMine").hidden = !isDefault;
     document.getElementById("ledeYours").hidden = isDefault;
