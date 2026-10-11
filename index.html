@@ -65,9 +65,8 @@ h1 { margin: 0; font-family: var(--display); font-weight: 400; font-size: clamp(
 .invite-row .share-btn { min-height: 40px; }
 /* the main way in: big, on its own line, with three buildings for the three cities */
 .play-big { display: inline-flex; align-items: center; justify-content: center; gap: 14px; padding: 20px 46px; font-size: 16px; letter-spacing: 0.22em; min-width: 320px; }
-.play-icon { width: 28px; height: 22px; flex: none; }
-.play-icon .sky path { fill: currentColor; opacity: 0.75; }
-.play-icon .sky path:nth-child(2) { opacity: 1; }
+.play-icon { width: 42px; height: 24px; flex: none; }   /* Boston's Old North Church, Nyhavn's gables, London's Elizabeth Tower */
+.play-icon .sky path { fill: currentColor; }
 .play-icon .stop { fill: currentColor; display: none; }
 .play-big[aria-pressed="true"] .sky { display: none; }
 .play-big[aria-pressed="true"] .stop { display: inline; }
@@ -530,7 +529,7 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
       <p><span id="ledeCities"></span> become a constantly changing composition shaped by their live weather. Temperature sets the length of each rhythm, conditions scatter notes across it, and as night falls each city drifts off: quieter, slower, fewer notes.</p>
     </div>
     <div class="hero-actions">
-      <button class="ghost play-big" id="play" type="button" aria-pressed="false"><svg class="play-icon" viewBox="0 0 28 22" aria-hidden="true"><g class="sky"><path d="M1 21V11l3.5-4L8 11v10z"/><path d="M10 21V6h2.4V1.5h1.2V6H16v15z"/><path d="M18.5 21V9h2.5V6h3v3h2.5v12z"/></g><rect class="stop" x="8" y="5" width="12" height="12" rx="1"/></svg><span class="play-label">Start listening</span></button>
+      <button class="ghost play-big" id="play" type="button" aria-pressed="false"><svg class="play-icon" viewBox="0 0 42 24" aria-hidden="true"><g class="sky"><path d="M2 24V12.5h1.2V9.5h.8V7h.8V5.5h.6L6 0l.6 5.5h.6V7H8v2.5h.8v3H10V24z"/><path d="M13 24V12h1v-2h1.3V8h1.4V6.5h1.6V8h1.4v2H21v2h1v12z" opacity=".85"/><path d="M23 24V13l3-3.6 3 3.6v11z" opacity=".85"/><path fill-rule="evenodd" d="M32 24v-3.5h.6V9h-.4V7.6h1V5.4h.8L35.5 0l1.5 5.4h.8v2.2h1V9h-.4v11.5h.6V24zM35.5 10a1.7 1.7 0 1 0 0 3.4 1.7 1.7 0 0 0 0-3.4z"/></g><rect class="stop" x="15" y="6" width="12" height="12" rx="1"/></svg><span class="play-label">Start listening</span></button>
 
     </div>
     <div class="invite-row" id="inviteRow" hidden>
