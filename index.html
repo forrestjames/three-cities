@@ -159,8 +159,14 @@ main { max-width: 1240px; margin: 0 auto; padding: 0 16px 80px; display: flex; f
 .kn-native { display: none !important; }
 .toggle-sw { width: 64px; height: 64px; padding: 0; border: 0; background: none; cursor: pointer; display: block; }
 .toggle-sw:focus-visible { outline: 2px solid var(--led); outline-offset: 2px; border-radius: 8px; }
-.toggle-sw .lever { transition: transform 0.14s cubic-bezier(.5, 1.6, .5, 1); transform-origin: 32px 36px; transform: rotate(180deg); }
-.toggle-sw[aria-pressed="true"] .lever { transform: rotate(0deg); }
+/* A real bat-handle toggle seen from the front: the lever flips through its pivot (it foreshortens and comes out
+   the other side) in one quick, firm snap. No swing, no bounce. */
+.toggle-sw .lever { transition: transform 0.07s cubic-bezier(.7, 0, .3, 1); transform-origin: 32px 36px; transform: scaleY(-1); }
+.toggle-sw[aria-pressed="true"] .lever { transform: scaleY(1); }
+.toggle-sw svg { transition: transform 0.06s; }
+.toggle-sw:active svg { transform: translateY(0.6px) scale(0.985); }   /* a little give under your finger, then it holds */
+.toggle-sw .lever-shadow { transition: transform 0.07s cubic-bezier(.7, 0, .3, 1); transform-origin: 32px 36px; transform: scaleY(-1); }
+.toggle-sw[aria-pressed="true"] .lever-shadow { transform: scaleY(1); }
 .toggle-sw .jewel { transition: fill 0.2s, filter 0.2s; }
 .toggle-sw[aria-pressed="true"] .jewel { fill: #9fe6ff; filter: drop-shadow(0 0 4px #9fe6ff) drop-shadow(0 0 8px #6fd2ff); }
 .pedal.frozen { box-shadow: inset 0 0 40px rgba(150,220,255,0.18), inset 0 1px 0 rgba(255,255,255,0.12), 0 0 0 1px rgba(150,220,255,0.35), 0 14px 34px rgba(0,0,0,0.5); }
@@ -1730,6 +1736,7 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
       <text x="32" y="62" text-anchor="middle" font-size="6.5" letter-spacing="1" fill="rgba(243,236,230,0.6)" font-family="'Source Code Pro', monospace">OFF</text>
       <polygon points="32,25 41.5,30.5 41.5,41.5 32,47 22.5,41.5 22.5,30.5" fill="url(#${id}n)" stroke="rgba(0,0,0,0.5)" stroke-width="0.8"/>
       <circle cx="32" cy="36" r="5.5" fill="#2a2524" stroke="rgba(0,0,0,0.6)"/>
+      <path class="lever-shadow" d="M30.5 36 L31.6 16 L35.4 16 L36.2 36 Z" fill="rgba(0,0,0,0.35)"/>
       <g class="lever">
         <path d="M29.3 36 L30.2 15 L33.8 15 L34.7 36 Z" fill="url(#${id}c)" stroke="rgba(0,0,0,0.35)" stroke-width="0.6"/>
         <circle cx="32" cy="14" r="3.6" fill="url(#${id}c)" stroke="rgba(0,0,0,0.35)" stroke-width="0.6"/>
