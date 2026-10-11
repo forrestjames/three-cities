@@ -537,7 +537,7 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
     <div class="groove-body">
       <div class="groove-grid" id="grooveGrid"></div>
       <div class="groove-controls">
-        <label>Kit <select id="grooveKit"><option value="minimal" selected>Minimal</option><option value="soft">Soft</option><option value="lofi">Lo-fi</option><option value="808">808</option><option value="jazz">Jazz</option></select></label>
+        <label>Kit <select id="grooveKit"><option value="minimal" selected>Minimal</option><option value="soft">Soft</option><option value="lofi">Lo-fi</option><option value="808">808</option><option value="jazz">Jazz</option><option value="cr78">CR-78</option><option value="felt">Felt</option><option value="mallet">Mallets</option><option value="rain">Rain</option><option value="techno">Minimal techno</option></select></label>
         <label>Volume <input id="grooveVol" type="range" min="0" max="100" value="40"></label>
         <label><span class="row">Filter <button class="auto-btn" id="grooveAuto" type="button" aria-pressed="false" title="Sweep towards the moment the cities line up">Auto</button></span><input id="grooveTone" type="range" min="0" max="100" value="55"></label>
         <span class="groove-auto-note" id="grooveAutoNote"></span>
@@ -2392,8 +2392,92 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
     lofi:    { kick: [95, 44, 0.3, 0.45], snare: [2600, 0.6, 0.18, 0.22, 190], hat: [5200, 0.06, 0.1], rim: [620, 0.06, 0.14], drive: 2.5 },
     "808":   { kick: [150, 42, 0.85, 0.6], snare: [1500, 0.7, 0.2, 0.42, 185], hat: [0, 0.05, 0.5], rim: [1200, 0.03, 0.5], drive: 0, clap: true },
     minimal: { kick: [70, 50, 0.14, 1.1], snare: [3200, 1.2, 0.05, 1.0, 400], hat: [9500, 0.016, 0.5], rim: [1400, 0.03, 0.5], drive: 0 },
-    jazz:    { kick: [80, 48, 0.22, 0.7], snare: [2400, 0.5, 0.3, 0.5, 0], hat: [0, 0.9, 0.045], rim: [1700, 0.035, 0.45], drive: 0, jazz: true }
+    jazz:    { kick: [80, 48, 0.22, 0.7], snare: [2400, 0.5, 0.3, 0.5, 0], hat: [0, 0.9, 0.045], rim: [1700, 0.035, 0.45], drive: 0, jazz: true },
+    // a 1978 preset box: round little kick, papery snare, tiny hiss of a hat, woody tock for the rim
+    cr78:    { kick: [92, 52, 0.24, 0.85], snare: [2100, 1, 0.09, 0.75, 250], hat: [8600, 0.028, 0.3], rim: [1650, 0.045, 0.42], drive: 0, make: cr78Hit },
+    felt:    { make: feltHit },     // everything struck with felt: soft thumps and brushed paper
+    mallet:  { make: malletHit },   // tuned wooden mallets that follow the key and scale
+    rain:    { make: rainHit },     // droplets and splashes, busier when it's actually raining
+    techno:  { make: technoHit }    // tight clicks and blips, very precise
   };
+  // ---- the extra kits ----
+  const drumRoot = () => 48 + (keyRoot > 6 ? keyRoot - 12 : keyRoot);
+  const drumNote = deg => { const n = scale.length, o = Math.floor(deg / n); return drumRoot() + scale[((deg % n) + n) % n] + 12 * o; };
+  function cr78Hit(kind, t, vel, x) {
+    if (kind === "rim") {   // the CR-78's woodblock: a quick pitched tock
+      const o = ac.createOscillator(); o.frequency.setValueAtTime(1750, t); o.frequency.exponentialRampToValueAtTime(1500, t + 0.03);
+      x.env(o, 0.42 * vel, 0.045, 0.001); o.start(t); o.stop(t + 0.1); return true;
+    }
+    return false;   // the rest uses the standard drum shapes with the cr78 numbers
+  }
+  function feltHit(kind, t, vel, x) {
+    const lp = ac.createBiquadFilter(); lp.type = "lowpass"; lp.Q.value = 0.3;
+    if (kind === "kick") {
+      const o = ac.createOscillator(); o.frequency.setValueAtTime(78, t); o.frequency.exponentialRampToValueAtTime(46, t + 0.12);
+      lp.frequency.value = 400; o.connect(lp); x.env(lp, 1.0 * vel, 0.32, 0.008); o.start(t); o.stop(t + 0.45);
+    } else if (kind === "snare") {     // brushed paper with a soft felt body
+      const n = x.noise(), bp = ac.createBiquadFilter(); bp.type = "bandpass"; bp.frequency.value = 1100; bp.Q.value = 0.7;
+      lp.frequency.value = 2600; n.connect(bp).connect(lp); x.env(lp, 0.9 * vel, 0.14, 0.018);
+      const o = ac.createOscillator(); o.type = "triangle"; o.frequency.value = 175; x.env(o, 0.35 * vel, 0.08, 0.006); o.start(t); o.stop(t + 0.15);
+    } else if (kind === "hat") {
+      const n = x.noise(), bp = ac.createBiquadFilter(); bp.type = "bandpass"; bp.frequency.value = 5200; bp.Q.value = 0.9;
+      lp.frequency.value = 7000; n.connect(bp).connect(lp); x.env(lp, 0.32 * vel, 0.035, 0.004);
+    } else {
+      const o = ac.createOscillator(); o.frequency.value = 520; lp.frequency.value = 900; o.connect(lp); x.env(lp, 0.4 * vel, 0.06, 0.004); o.start(t); o.stop(t + 0.1);
+    }
+    return true;
+  }
+  function malletTone(f, t, vel, dec, x, g) {
+    const o = ac.createOscillator(); o.frequency.value = f;
+    const o2 = ac.createOscillator(); o2.frequency.value = f * 4;
+    const g2 = ac.createGain(); g2.gain.setValueAtTime(0.35, t); g2.gain.exponentialRampToValueAtTime(0.001, t + dec * 0.2);
+    o2.connect(g2); const sum = ac.createGain(); o.connect(sum); g2.connect(sum);
+    x.env(sum, g * vel, dec, 0.003); o.start(t); o2.start(t); o.stop(t + dec + 0.1); o2.stop(t + dec + 0.1);
+  }
+  function malletHit(kind, t, vel, x) {
+    if (kind === "kick") malletTone(mtof(drumNote(0) - 12), t, vel, 0.42, x, 0.8);
+    else if (kind === "snare") malletTone(mtof(drumNote(2)), t, vel, 0.3, x, 0.42);
+    else if (kind === "hat") malletTone(mtof(drumNote(4) + 12), t, vel, 0.09, x, 0.16);
+    else malletTone(mtof(drumNote(1) + 12), t, vel, 0.14, x, 0.3);
+    return true;
+  }
+  function droplet(t, vel, x, f, g) {   // a drop: a quick upward chirp
+    const o = ac.createOscillator(); o.frequency.setValueAtTime(f, t); o.frequency.exponentialRampToValueAtTime(f * 1.9, t + 0.018);
+    x.env(o, g * vel, 0.022, 0.001); o.start(t); o.stop(t + 0.05);
+  }
+  function rainHit(kind, t, vel, x) {
+    const ready = cities.filter(c => c.w), wet = ready.length ? ready.reduce((a, c) => a + Math.min(c.w.r || 0, 5) / 5, 0) / ready.length : 0;
+    if (kind === "kick") {      // a heavy drop on canvas
+      const o = ac.createOscillator(); o.frequency.setValueAtTime(130, t); o.frequency.exponentialRampToValueAtTime(58, t + 0.07);
+      x.env(o, 0.9 * vel, 0.2, 0.002); o.start(t); o.stop(t + 0.3);
+      const n = x.noise(), lp = ac.createBiquadFilter(); lp.type = "lowpass"; lp.frequency.value = 900; n.connect(lp); x.env(lp, 0.12 * vel, 0.05, 0.001);
+    } else if (kind === "snare") {   // a splash
+      const n = x.noise(), bp = ac.createBiquadFilter(); bp.type = "bandpass"; bp.frequency.value = 1700 + Math.random() * 600; bp.Q.value = 0.8;
+      n.connect(bp); x.env(bp, 0.75 * vel, 0.1 + wet * 0.08, 0.003);
+      droplet(t + 0.004, vel, x, 900 + Math.random() * 500, 0.35);
+    } else if (kind === "hat") {     // drips: more of them the wetter the cities are
+      const drops = 1 + Math.round(wet * 3 + Math.random());
+      for (let i = 0; i < drops; i++) droplet(t + i * (0.012 + Math.random() * 0.02), vel, x, 2200 + Math.random() * 2200, 0.22);
+    } else droplet(t, vel, x, 1100 + Math.random() * 900, 0.4);
+    return true;
+  }
+  function technoHit(kind, t, vel, x) {
+    if (kind === "kick") {      // tight, short, with a click on top
+      const o = ac.createOscillator(); o.frequency.setValueAtTime(150, t); o.frequency.exponentialRampToValueAtTime(52, t + 0.04);
+      x.env(o, 1.05 * vel, 0.17, 0.001); o.start(t); o.stop(t + 0.25);
+      const n = x.noise(), hp = ac.createBiquadFilter(); hp.type = "highpass"; hp.frequency.value = 3000; n.connect(hp); x.env(hp, 0.25 * vel, 0.004, 0.0005);
+    } else if (kind === "snare") {   // a blip
+      const o = ac.createOscillator(); o.frequency.value = 1760; x.env(o, 0.3 * vel, 0.03, 0.001); o.start(t); o.stop(t + 0.06);
+      const n = x.noise(), bp = ac.createBiquadFilter(); bp.type = "bandpass"; bp.frequency.value = 4000; bp.Q.value = 2; n.connect(bp); x.env(bp, 0.3 * vel, 0.012, 0.0005);
+    } else if (kind === "hat") {     // a click
+      const n = x.noise(), hp = ac.createBiquadFilter(); hp.type = "highpass"; hp.frequency.value = 9000; n.connect(hp); x.env(hp, 0.55 * vel, 0.006, 0.0005);
+    } else {                         // a bleep that hops between three pitches
+      const o = ac.createOscillator(); o.type = "square"; o.frequency.value = [1200, 1600, 2400][Math.floor(Math.random() * 3)];
+      const bp = ac.createBiquadFilter(); bp.type = "bandpass"; bp.frequency.value = o.frequency.value; bp.Q.value = 4; o.connect(bp);
+      x.env(bp, 0.4 * vel, 0.02, 0.0008); o.start(t); o.stop(t + 0.05);
+    }
+    return true;
+  }
   let driveCurve = null;
   const GM_DRUMS = { kick: 36, snare: 38, rim: 37, hat: 42, ride: 51 };
   let drumCh = 9;   // channel 10, as MIDI counts from 1
@@ -2430,6 +2514,7 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
       node.connect(g).connect(out); return g;
     };
     const noise = (start = Math.random() * 0.5) => { const n = ac.createBufferSource(); n.buffer = noiseBuf; n.start(t, start); n.stop(t + 1); return n; };
+    if (k.make && k.make(kind, t, vel, { env, noise, out })) return;
     if (k.jazz && kind === "snare") {   // brushes: a soft swish that swells in rather than cracks
       const [bp, q, dec, g] = k.snare, n = noise(), f = ac.createBiquadFilter(); f.type = "bandpass"; f.Q.value = q;
       f.frequency.setValueAtTime(bp * 0.7, t); f.frequency.linearRampToValueAtTime(bp * 1.3, t + dec);
