@@ -1227,9 +1227,10 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
   function shareURL() {
     try {
       const u = new URL(location.href);
-      u.searchParams.set("cities", cities.map(c => c.name).join(","));
-      ["key", "scale", "kit"].forEach(k => u.searchParams.delete(k));   // older links; the mix below carries these now
-      u.searchParams.set("mix", b64u.enc(soundDiff()));
+      ["cities", "key", "scale", "kit", "mix"].forEach(k => u.searchParams.delete(k));   // rebuilt below, by hand, so it reads cleanly
+      const enc = x => encodeURIComponent(x).replace(/%20/g, "+");
+      const extra = u.searchParams.toString();
+      u.search = "?cities=" + cities.map(c => enc(c.name)).join(",") + "&mix=" + mixCode.enc(soundDiff()) + (extra ? "&" + extra : "");
       return u.toString();
     } catch (e) { return ""; }
   }
@@ -3357,7 +3358,43 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
     enc: o => btoa(unescape(encodeURIComponent(JSON.stringify(o)))).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, ""),
     dec: t => JSON.parse(decodeURIComponent(escape(atob(t.replace(/-/g, "+").replace(/_/g, "/")))))
   };
-  try { const t = QS.get("mix"); if (t) applySoundState(b64u.dec(t)); } catch (e) {}
+  // Short, readable mix codes for links: "1s~felt_k~3_t~84" instead of a long base64 blob.
+  // Cities are 1, 2 and 3; everything else has a one or two letter name. Unknown names pass through as they are.
+  const MIX_CITY = { boston: "1", copenhagen: "2", london: "3" }, MIX_PART = { sound: "s", vol: "v", src: "w", rate: "r", dens: "d", chance: "p", mute: "m", sendRev: "R", sendDel: "D", oct: "o" };
+  const MIX_GLOBAL = { key: "k", scale: "sc", tempo: "t", volume: "V", djFilter: "f", grooveOn: "g", grooveKit: "gk", grooveVol: "gv", grooveTone: "gt", grooveAuto: "ga",
+    "gm-kick": "mk", "gm-snare": "ms", "gm-hat": "mh", "gm-rim": "mr", hallOn: "h", fxRevLevel: "hl", fxRevDecay: "hd", fxRevPre: "hp", fxRevTone: "ht",
+    delayOn: "e", fxStyle: "es", fxTime: "et", fxDelay: "el", fxEchoes: "ee", fxDelTone: "eo", fxWobble: "ew", moodDeep: "q", unit: "u" };
+  const shortKey = k => {
+    if (MIX_GLOBAL[k]) return MIX_GLOBAL[k];
+    let m = k.match(/^(boston|copenhagen|london)-(\w+)$/); if (m && MIX_PART[m[2]]) return MIX_CITY[m[1]] + MIX_PART[m[2]];
+    m = k.match(/^c(\d)\.(\w+)$/); if (m && MIX_PART[m[2]]) return (Number(m[1]) + 1) + MIX_PART[m[2]];
+    return k;
+  };
+  const longKey = (() => {
+    const back = {};
+    for (const k in MIX_GLOBAL) back[MIX_GLOBAL[k]] = k;
+    const cityIds = Object.keys(MIX_CITY);
+    for (const part in MIX_PART) [1, 2, 3].forEach(n => {
+      back[n + MIX_PART[part]] = ["mute", "sendRev", "sendDel", "oct"].includes(part) ? `c${n - 1}.${part}` : `${cityIds[n - 1]}-${part}`;
+    });
+    return k => back[k] || k;
+  })();
+  const mixCode = {
+    enc: o => {
+      // the six reverb and delay switches on the cards travel as one six-digit code
+      const sw = ["c0.sendRev", "c0.sendDel", "c1.sendRev", "c1.sendDel", "c2.sendRev", "c2.sendDel"], rest = Object.assign({}, o);
+      let x = "";
+      if (sw.every(k => k in rest)) { x = "x~" + sw.map(k => rest[k] ? 1 : 0).join(""); sw.forEach(k => delete rest[k]); }
+      return Object.entries(rest).map(([k, v]) => shortKey(k) + "~" + encodeURIComponent(String(v))).concat(x ? [x] : []).join("_");
+    },
+    dec: t => { const o = {};
+      const xm = t.match(/(?:^|_)x~([01]{6})(?:_|$)/);
+      if (xm) ["c0.sendRev", "c0.sendDel", "c1.sendRev", "c1.sendDel", "c2.sendRev", "c2.sendDel"].forEach((k, i) => { o[k] = Number(xm[1][i]); }); t.split("_").forEach(pair => { const i = pair.indexOf("~"); if (i > 0) { const v = decodeURIComponent(pair.slice(i + 1)); o[longKey(pair.slice(0, i))] = /^-?\d+(\.\d+)?$/.test(v) ? Number(v) : v; } }); return o; }
+  };
+  try {
+    const t = QS.get("mix");
+    if (t) applySoundState(t.includes("~") ? mixCode.dec(t) : b64u.dec(t));   // older links used the long base64 form
+  } catch (e) {}
 
   // ---------- contact: the address is only put together when someone asks for it ----------
   { const btn = document.getElementById("emailReveal");
