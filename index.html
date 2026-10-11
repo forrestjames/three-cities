@@ -60,7 +60,19 @@ h1 { margin: 0; font-family: var(--display); font-weight: 400; font-size: clamp(
 .mine-label { font-size: 12px; text-transform: uppercase; letter-spacing: 0.2em; color: var(--ink); }
 .mine-row { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; }
 .mine input { width: 150px; max-width: 100%; background: rgba(16, 8, 6, 0.6); border: 1px solid rgba(243, 236, 230, 0.3); padding: 10px 12px; }
-.mine input::placeholder { color: var(--ink-faint); }
+.mine input::placeholder { color: var(--ink-faint); font-style: italic; }
+.hero-actions { display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 12px; }
+.hero-actions .share-btn { min-height: 44px; }
+.invite-row { display: flex; flex-wrap: wrap; justify-content: center; gap: 6px 18px; margin-top: -6px; }
+.mine-toggle, .back-mine { background: none; border: 0; border-bottom: 1px solid var(--ink-faint); color: var(--ink-dim); padding: 6px 2px; font: inherit; font-size: 13px; letter-spacing: 0.06em; cursor: pointer; text-decoration: none; }
+.mine-toggle:hover, .back-mine:hover, .mine-toggle[aria-expanded="true"] { color: var(--ink); border-color: var(--ink); }
+.mine-toggle span { display: inline-block; margin-left: 2px; transition: transform 0.2s; }
+.mine-toggle[aria-expanded="true"] span { transform: rotate(45deg); }
+.mood-cta { margin: 6px 0 14px; text-align: center; color: var(--ink-dim); font-size: 13px; letter-spacing: 0.02em; }
+.invite-btn { margin-left: 8px; background: none; border: 1px solid var(--line); color: var(--ink); font: inherit; font-size: 11px; letter-spacing: 0.14em; text-transform: uppercase; padding: 8px 12px; min-height: 36px; cursor: pointer; }
+.invite-btn:hover { border-color: var(--ink-dim); }
+.project .invite-btn { margin-left: 0; }
+.mood .mine, .project .mine { margin: 0 auto 18px; max-width: 760px; }
 .mine input, .swap input { padding-right: 38px; }
 .dice { position: absolute; right: 4px; top: 50%; transform: translateY(-50%); width: 30px; height: 30px; padding: 0; border: 0; background: none; cursor: pointer; color: var(--ink-dim); border-radius: 4px; }
 .dice svg { width: 22px; height: 22px; display: block; margin: auto; }
@@ -102,7 +114,8 @@ main { max-width: 1240px; margin: 0 auto; padding: 0 16px 80px; display: flex; f
 .groove-grid i.now { outline: 1px solid rgba(255,217,138,0.8); }
 .groove-grid i.on.now { background: #ffd98a; }
 .gv-name { background: none; border: 0; padding: 0; margin: 0; font: inherit; letter-spacing: inherit; text-transform: inherit; color: inherit; text-align: left; cursor: pointer; min-height: 22px; transition: color 0.2s, opacity 0.2s; }
-.gv-name:hover { color: var(--ink-dim); }
+.gv-name { color: var(--ink-dim); }
+.gv-name:hover { color: var(--ink); }
 .gv-cell { display: flex; align-items: center; gap: 4px; min-width: 0; }
 .gv-cell .gv-name { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .gv-send { width: 18px; height: 18px; flex: none; border-radius: 50%; border: 1px solid var(--line); background: none; color: var(--ink-faint);
@@ -112,7 +125,9 @@ main { max-width: 1240px; margin: 0 auto; padding: 0 16px 80px; display: flex; f
 @media (pointer: coarse) { .gv-send { width: 24px; height: 24px; font-size: 9px; } }
 .gv-name[aria-pressed="true"] { opacity: 0.6; text-decoration: line-through; text-decoration-thickness: 1px; }
 .groove-grid.mute-kick i[data-r="kick"], .groove-grid.mute-snare i[data-r="snare"], .groove-grid.mute-hat i[data-r="hat"], .groove-grid.mute-rim i[data-r="rim"] { opacity: 0.25; }
-.groove-controls { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; }
+.groove-controls { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 14px; }
+.groove-controls .groove-auto-note { grid-column: 1 / -1; }
+@media (max-width: 1100px) { .groove-controls { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 .groove-controls label { display: flex; flex-direction: column; gap: 6px; font-size: 11px; text-transform: uppercase; letter-spacing: 0.14em; color: var(--ink-dim); }
 .groove-controls select { min-height: 36px; background: rgba(16,8,6,0.6); }
 .groove-controls input[type="range"] { width: 100%; accent-color: #ffd98a; }
@@ -505,18 +520,24 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
     <div class="lede" id="ledeYours" hidden>
       <p><span id="ledeCities"></span> become a constantly changing composition shaped by their live weather. Temperature sets the length of each rhythm, conditions scatter notes across it, and as night falls each city drifts off: quieter, slower, fewer notes.</p>
     </div>
-    <button class="ghost" id="play" type="button" aria-pressed="false">Start listening</button>
+    <div class="hero-actions">
+      <button class="ghost" id="play" type="button" aria-pressed="false">Start listening</button>
+      <button class="share-btn share" id="share" type="button" hidden title="Share these cities, with your sounds and settings"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 15V4M8 8l4-4 4 4" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/><path d="M7 11H5.5A1.5 1.5 0 0 0 4 12.5v6A1.5 1.5 0 0 0 5.5 20h13a1.5 1.5 0 0 0 1.5-1.5v-6a1.5 1.5 0 0 0-1.5-1.5H17" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>Share</button>
+    </div>
+    <div class="invite-row" id="inviteRow" hidden>
+      <button class="mine-toggle" id="mineToggle" type="button" aria-expanded="false" aria-controls="mine">Try your own cities <span aria-hidden="true">+</span></button>
+      <a class="back-mine" id="backMine" href="./" hidden>Back to Forrest's cities</a>
+    </div>
     <form class="mine" id="mine" hidden>
       <div class="mine-label">Play the cities you've lived in</div>
       <div class="mine-row">
-        <label class="sr" for="mine1">First city</label><div class="ta"><input id="mine1" type="text" placeholder="Boston" autocomplete="off"><button class="dice" type="button" data-for="mine1" aria-label="Random city" title="Random city"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="4" width="16" height="16" rx="3.5" fill="none" stroke="currentColor" stroke-width="1.5"/><circle cx="8.6" cy="8.6" r="1.5" fill="currentColor"/><circle cx="12" cy="12" r="1.5" fill="currentColor"/><circle cx="15.4" cy="15.4" r="1.5" fill="currentColor"/></svg></button></div>
-        <label class="sr" for="mine2">Second city</label><div class="ta"><input id="mine2" type="text" placeholder="Copenhagen" autocomplete="off"><button class="dice" type="button" data-for="mine2" aria-label="Random city" title="Random city"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="4" width="16" height="16" rx="3.5" fill="none" stroke="currentColor" stroke-width="1.5"/><circle cx="8.6" cy="8.6" r="1.5" fill="currentColor"/><circle cx="12" cy="12" r="1.5" fill="currentColor"/><circle cx="15.4" cy="15.4" r="1.5" fill="currentColor"/></svg></button></div>
-        <label class="sr" for="mine3">Third city</label><div class="ta"><input id="mine3" type="text" placeholder="London" autocomplete="off"><button class="dice" type="button" data-for="mine3" aria-label="Random city" title="Random city"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="4" width="16" height="16" rx="3.5" fill="none" stroke="currentColor" stroke-width="1.5"/><circle cx="8.6" cy="8.6" r="1.5" fill="currentColor"/><circle cx="12" cy="12" r="1.5" fill="currentColor"/><circle cx="15.4" cy="15.4" r="1.5" fill="currentColor"/></svg></button></div>
+        <label class="sr" for="mine1">First city</label><div class="ta"><input id="mine1" type="text" placeholder="e.g. Tokyo" autocomplete="off"><button class="dice" type="button" data-for="mine1" aria-label="Random city" title="Random city"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="4" width="16" height="16" rx="3.5" fill="none" stroke="currentColor" stroke-width="1.5"/><circle cx="8.6" cy="8.6" r="1.5" fill="currentColor"/><circle cx="12" cy="12" r="1.5" fill="currentColor"/><circle cx="15.4" cy="15.4" r="1.5" fill="currentColor"/></svg></button></div>
+        <label class="sr" for="mine2">Second city</label><div class="ta"><input id="mine2" type="text" placeholder="e.g. Lagos" autocomplete="off"><button class="dice" type="button" data-for="mine2" aria-label="Random city" title="Random city"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="4" width="16" height="16" rx="3.5" fill="none" stroke="currentColor" stroke-width="1.5"/><circle cx="8.6" cy="8.6" r="1.5" fill="currentColor"/><circle cx="12" cy="12" r="1.5" fill="currentColor"/><circle cx="15.4" cy="15.4" r="1.5" fill="currentColor"/></svg></button></div>
+        <label class="sr" for="mine3">Third city</label><div class="ta"><input id="mine3" type="text" placeholder="e.g. Montréal" autocomplete="off"><button class="dice" type="button" data-for="mine3" aria-label="Random city" title="Random city"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="4" width="16" height="16" rx="3.5" fill="none" stroke="currentColor" stroke-width="1.5"/><circle cx="8.6" cy="8.6" r="1.5" fill="currentColor"/><circle cx="12" cy="12" r="1.5" fill="currentColor"/><circle cx="15.4" cy="15.4" r="1.5" fill="currentColor"/></svg></button></div>
         <button class="ghost small" type="submit">Play these</button>
-        <button class="share-btn share" id="share" type="button" hidden title="Share these cities, with your sounds and settings"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 15V4M8 8l4-4 4 4" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/><path d="M7 11H5.5A1.5 1.5 0 0 0 4 12.5v6A1.5 1.5 0 0 0 5.5 20h13a1.5 1.5 0 0 0 1.5-1.5v-6a1.5 1.5 0 0 0-1.5-1.5H17" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>Share</button>
       </div>
-      <span class="share-note" id="shareNote" aria-live="polite"></span>
     </form>
+    <span class="share-note" id="shareNote" aria-live="polite"></span>
     <div class="status" id="status">Checking the weather…</div>
   </div>
 </header>
@@ -572,6 +593,7 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
         <label>Kit <select id="grooveKit"><option value="minimal" selected>Minimal</option><option value="soft">Soft</option><option value="lofi">Lo-fi</option><option value="808">808</option><option value="jazz">Jazz</option><option value="cr78">CR-78</option><option value="felt">Felt</option><option value="mallet">Mallets</option><option value="rain">Rain</option><option value="techno">Minimal techno</option></select></label>
         <label>Volume <input id="grooveVol" type="range" min="0" max="100" value="40"></label>
         <label><span class="row">Filter <button class="auto-btn" id="grooveAuto" type="button" aria-pressed="false" title="Sweep towards the moment the cities line up">Auto</button></span><input id="grooveTone" type="range" min="0" max="100" value="55"></label>
+        <label title="How likely each drum hit is to play. Lower it and the beat thins out at random">Chance <input id="grooveChance" type="range" min="0" max="100" value="100" aria-label="Rhythm section chance"></label>
         <span class="groove-auto-note" id="grooveAutoNote"></span>
       </div>
     </div>
@@ -614,6 +636,7 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
 
   <section class="mood" aria-label="Memory map">
     <div class="mood-label">Memory map</div>
+    <p class="mood-cta" id="moodCta" hidden>This map holds the places I've lived. Try it with yours. <button class="invite-btn" type="button" data-invite="moodCta">Use my cities</button></p>
     <div class="mood-qrow">
       <div class="mood-q" id="moodQ" aria-live="polite">Where were you happiest?</div>
       <button class="q-next" id="moodNext" type="button" aria-label="Next question" title="Next question">
@@ -639,6 +662,7 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
       <p>Three Cities is a piece about the places I've called home. I studied music in Boston, lived in Copenhagen, and now live and make music in London. Here, each of those cities plays live from its own weather: its temperature, its clouds and wind, its sunrise and its sunset. The sky never repeats, so neither does the music.</p>
       <p>I trained as a traditional musician, but I've always been drawn to machines that make music. Sequencers, drum machines, modular synths, rules that play themselves. Generative music lets me set up the conditions and then listen to what the world does with them.</p>
       <p>For many years I made interactive and experiential work for the cultural sector, including as creative director at the Peabody Essex Museum. This project brings those threads together: places, memory and a soundtrack that keeps changing. Swap in the cities you've lived in and it becomes yours.</p>
+      <p id="aboutInvite" hidden><button class="invite-btn" type="button" data-invite="aboutInvite">Try your own cities</button></p>
     </div>
     <aside class="project-side">
       <h3>Forrest James</h3>
@@ -1280,6 +1304,7 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
       history.replaceState(null, "", u);
     } catch (e) {}
     updateCycle();
+    if (typeof updateInvites === "function") updateInvites();
   }
   function shareURL() {
     try {
@@ -1292,9 +1317,32 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
     } catch (e) { return ""; }
   }
 
+  // Your own cities: the boxes stay folded away until someone asks for them, from the top, the memory map or
+  // the About section. The same form moves to wherever they asked, so nobody is bounced back up the page.
+  const mineForm = document.getElementById("mine"), mineToggle = document.getElementById("mineToggle");
+  function openMine(anchor) {
+    anchor.after(mineForm);
+    mineForm.hidden = false; mineForm.classList.add("open");
+    mineToggle.setAttribute("aria-expanded", String(anchor === document.getElementById("inviteRow")));
+    setTimeout(() => { mineForm.scrollIntoView({ behavior: reduceMotion ? "auto" : "smooth", block: "nearest" }); document.getElementById("mine1").focus({ preventScroll: true }); }, 60);
+  }
+  function closeMine() { mineForm.hidden = true; mineForm.classList.remove("open"); mineToggle.setAttribute("aria-expanded", "false"); }
+  mineToggle.addEventListener("click", () => {
+    const row = document.getElementById("inviteRow");
+    if (!mineForm.hidden && mineForm.previousElementSibling === row) closeMine(); else openMine(row);
+  });
+  document.querySelectorAll(".invite-btn").forEach(b => b.addEventListener("click", () => openMine(document.getElementById(b.dataset.invite))));
+  function updateInvites() {
+    const isDefault = cities.map(c => c.name).join("|") === DEFAULT_NAMES.join("|");
+    mineToggle.firstChild.textContent = isDefault ? "Try your own cities " : "Change cities ";
+    document.getElementById("backMine").hidden = isDefault;
+    document.getElementById("moodCta").hidden = !isDefault;
+    document.getElementById("aboutInvite").hidden = !isDefault;
+  }
   function showLiveUI() {
-    document.getElementById("mine").hidden = false;
+    document.getElementById("inviteRow").hidden = false;
     document.getElementById("share").hidden = false;
+    updateInvites();
   }
 
   // When someone starts listening from the top, bring the cities into view so they can see what's playing.
@@ -1320,6 +1368,7 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
     if (!qs.some(Boolean)) return;
     if (!playing) playBtn.click();   // start the sound inside the click, before the lookups
     qs.forEach((q, i) => { if (q) setCity(cities[i], q); });
+    closeMine();
   });
 
   // Share: one tap copies the link, and the button says so
@@ -2393,7 +2442,7 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
   // Each city's pattern is squeezed into one bar of sixteen steps. The kick plays where two or more
   // cities hit together, the hats wherever any city hits, the rim where exactly one city plays alone,
   // and the snare is a Euclidean backbeat whose count rises with the gustiest city's wind.
-  var GROOVE = { on: true, kit: "minimal", mute: { kick: false, snare: false, hat: false, rim: false },
+  var GROOVE = { on: true, kit: "minimal", chance: 100, mute: { kick: false, snare: false, hat: false, rim: false },
     send: { kick: { h: false, d: false }, snare: { h: false, d: false }, hat: { h: false, d: false }, rim: { h: false, d: false } }, vol: 0.4, tone: 0.55, rows: { kick: [], snare: [], hat: [], rim: [] }, step: -1, queue: [], bus: null, filter: null };
   function buildGroove() {
     if (!GROOVE) return;
@@ -2579,6 +2628,7 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
   }
   function drumHit(kind, t, vel) {
     if (GROOVE.mute[kind]) return;   // that channel is muted, MIDI included
+    if (Math.random() * 100 >= GROOVE.chance) return;   // probability: some hits simply don't happen
     sendDrumMidi(kind, t, vel);
     const k = KITS[GROOVE.kit] || KITS.soft, out = ac.createGain();
     if (k.drive) {
@@ -2717,6 +2767,7 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
     document.getElementById("grooveKit").addEventListener("change", e => { GROOVE.kit = e.target.value; drawGrooveGrid(); });
     document.getElementById("grooveVol").addEventListener("input", e => { GROOVE.vol = e.target.value / 100; applyGroove(); });
     document.getElementById("grooveTone").addEventListener("input", e => { GROOVE.tone = e.target.value / 100; applyGroove(); });
+    document.getElementById("grooveChance").addEventListener("input", e => { GROOVE.chance = Number(e.target.value); });
     const auto = document.getElementById("grooveAuto"), note = document.getElementById("grooveAutoNote");
     auto.addEventListener("click", () => {
       GROOVE.auto = !GROOVE.auto; auto.setAttribute("aria-pressed", String(GROOVE.auto));
@@ -3528,7 +3579,7 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
   // Short, readable mix codes for links: "1s~felt_k~3_t~84" instead of a long base64 blob.
   // Cities are 1, 2 and 3; everything else has a one or two letter name. Unknown names pass through as they are.
   const MIX_CITY = { boston: "1", copenhagen: "2", london: "3" }, MIX_PART = { sound: "s", vol: "v", src: "w", rate: "r", dens: "d", chance: "p", mute: "m", sendRev: "R", sendDel: "D", oct: "o" };
-  const MIX_GLOBAL = { key: "k", scale: "sc", tempo: "t", volume: "V", djFilter: "f", grooveOn: "g", grooveKit: "gk", grooveVol: "gv", grooveTone: "gt", grooveAuto: "ga",
+  const MIX_GLOBAL = { key: "k", scale: "sc", tempo: "t", volume: "V", djFilter: "f", grooveOn: "g", grooveKit: "gk", grooveVol: "gv", grooveTone: "gt", grooveAuto: "ga", grooveChance: "gc",
     "gm-kick": "mk", "gm-snare": "ms", "gm-hat": "mh", "gm-rim": "mr",
     "gh-kick": "hk", "gh-snare": "hs", "gh-hat": "hh", "gh-rim": "hr", "gd-kick": "dk", "gd-snare": "ds", "gd-hat": "dh", "gd-rim": "dr", hallOn: "h", fxRevLevel: "hl", fxRevDecay: "hd", fxRevPre: "hp", fxRevTone: "ht",
     delayOn: "e", fxStyle: "es", fxTime: "et", fxDelay: "el", fxEchoes: "ee", fxDelTone: "eo", fxWobble: "ew", moodDeep: "q", unit: "u" };
