@@ -516,6 +516,18 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
 .top-mark { display: block; margin: 0 auto -10px; height: clamp(28px, 3.4vw, 40px); width: auto; aspect-ratio: 35.4 / 24; fill: currentColor; opacity: 0.9; filter: drop-shadow(0 2px 12px rgba(0,0,0,0.35)); }
 .play-big[aria-pressed="false"] .play-icon { display: none; }
 .play-big .play-icon .sky { display: none; }
+
+/* phones: the city's sound and volume get room to be used with a thumb */
+@media (max-width: 600px), (pointer: coarse) and (max-width: 1100px) {
+  .quick { grid-template-columns: minmax(0, 1fr) 44px auto; row-gap: 12px; }
+  .quick select { grid-column: 1 / -1; min-height: 46px; font-size: 15px; letter-spacing: 0.02em; padding: 8px 12px; }
+  .quick input[type="range"] { --tpad: 13; -webkit-appearance: none; appearance: none; height: 44px; margin: 0; background: transparent; cursor: pointer; }
+  .quick input[type="range"]::-webkit-slider-runnable-track { height: 6px; border-radius: 3px; background: linear-gradient(90deg, var(--accent) var(--fill, 50%), rgba(243,236,230,0.22) var(--fill, 50%)); }
+  .quick input[type="range"]::-moz-range-track { height: 6px; border-radius: 3px; background: linear-gradient(90deg, var(--accent) var(--fill, 50%), rgba(243,236,230,0.22) var(--fill, 50%)); }
+  .quick input[type="range"]::-webkit-slider-thumb { -webkit-appearance: none; width: 26px; height: 26px; margin-top: -10px; border-radius: 50%; background: var(--accent); border: 2px solid rgba(16,8,6,0.55); box-shadow: 0 1px 6px rgba(0,0,0,0.45); }
+  .quick input[type="range"]::-moz-range-thumb { width: 26px; height: 26px; border-radius: 50%; background: var(--accent); border: 2px solid rgba(16,8,6,0.55); box-sizing: border-box; }
+  .vol-swell { height: 6px; margin-top: -3px; }
+}
 </style>
 </head>
 <body>
@@ -3681,11 +3693,14 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
   }
   // Show the swell on each card's volume slider: the stretch of the fill between the level you set and the
   // level the city is actually sitting at right now is shaded out, and slides as the roles change.
+  function syncVolFill() { document.querySelectorAll(".quick input[type=range]").forEach(i => i.style.setProperty("--fill", ((i.value - i.min) / (i.max - i.min) * 100) + "%")); }
+  document.addEventListener("input", e => { if (e.target.matches && e.target.matches(".quick input[type=range]")) syncVolFill(); });
+  setInterval(syncVolFill, 400); requestAnimationFrame(syncVolFill);
   function showSwell(c, now) {
     const el = c.ref && c.ref.volSwell, inp = c.el && c.el.querySelector(`#${c.key.toLowerCase()}-vol`);
     if (!el || !inp) return;
     const db = c.swellDb || 0, set = c.volume, eff = set * Math.pow(10, db / 40);   // the slider is squared into gain, so half the dB
-    const w = inp.offsetWidth, pad = 8, span = w - pad * 2;                          // roughly where the native track sits
+    const w = inp.offsetWidth, pad = parseFloat(getComputedStyle(inp).getPropertyValue("--tpad")) || 8, span = w - pad * 2;   // where the track sits: native, or the phone slider's bigger thumb
     if (now) { el.style.transition = "none"; void el.offsetWidth; }
     el.style.left = (pad + span * eff / 100) + "px";
     el.style.width = Math.max(0, span * (set - eff) / 100) + "px";
