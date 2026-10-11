@@ -62,8 +62,16 @@ h1 { margin: 0; font-family: var(--display); font-weight: 400; font-size: clamp(
 .mine input { width: 150px; max-width: 100%; background: rgba(16, 8, 6, 0.6); border: 1px solid rgba(243, 236, 230, 0.3); padding: 10px 12px; }
 .mine input::placeholder { color: var(--ink-faint); font-style: italic; }
 .hero-actions { display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 12px; }
-.hero-actions .share-btn { min-height: 44px; }
-.invite-row { display: flex; flex-wrap: wrap; justify-content: center; gap: 6px 18px; margin-top: -6px; }
+.invite-row .share-btn { min-height: 40px; }
+/* the main way in: big, on its own line, with three buildings for the three cities */
+.play-big { display: inline-flex; align-items: center; justify-content: center; gap: 14px; padding: 20px 46px; font-size: 16px; letter-spacing: 0.22em; min-width: 320px; }
+.play-icon { width: 28px; height: 22px; flex: none; }
+.play-icon .sky path { fill: currentColor; opacity: 0.75; }
+.play-icon .sky path:nth-child(2) { opacity: 1; }
+.play-icon .stop { fill: currentColor; display: none; }
+.play-big[aria-pressed="true"] .sky { display: none; }
+.play-big[aria-pressed="true"] .stop { display: inline; }
+.invite-row { display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 10px 22px; }
 .mine-toggle, .back-mine { background: none; border: 0; border-bottom: 1px solid var(--ink-faint); color: var(--ink-dim); padding: 6px 2px; font: inherit; font-size: 13px; letter-spacing: 0.06em; cursor: pointer; text-decoration: none; }
 .mine-toggle:hover, .back-mine:hover, .mine-toggle[aria-expanded="true"] { color: var(--ink); border-color: var(--ink); }
 .mine-toggle span { display: inline-block; margin-left: 2px; transition: transform 0.2s; }
@@ -503,6 +511,7 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
 }
 .status.hint { color: var(--ink); }
 .mod-midi:not(.midi-live) .midi-chans, .mod-midi:not(.midi-live) .midi-fcc { display: none !important; }
+@media (max-width: 600px) { .play-big { min-width: 0; width: 100%; max-width: 360px; padding: 18px 20px; font-size: 15px; } }
 @media (max-width: 420px) { .temp { font-size: 38px; } .title-cities { font-size: 12px; letter-spacing: 0.1em; } }
 </style>
 </head>
@@ -521,10 +530,11 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
       <p><span id="ledeCities"></span> become a constantly changing composition shaped by their live weather. Temperature sets the length of each rhythm, conditions scatter notes across it, and as night falls each city drifts off: quieter, slower, fewer notes.</p>
     </div>
     <div class="hero-actions">
-      <button class="ghost" id="play" type="button" aria-pressed="false">Start listening</button>
-      <button class="share-btn share" id="share" type="button" hidden title="Share these cities, with your sounds and settings"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 15V4M8 8l4-4 4 4" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/><path d="M7 11H5.5A1.5 1.5 0 0 0 4 12.5v6A1.5 1.5 0 0 0 5.5 20h13a1.5 1.5 0 0 0 1.5-1.5v-6a1.5 1.5 0 0 0-1.5-1.5H17" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>Share</button>
+      <button class="ghost play-big" id="play" type="button" aria-pressed="false"><svg class="play-icon" viewBox="0 0 28 22" aria-hidden="true"><g class="sky"><path d="M1 21V11l3.5-4L8 11v10z"/><path d="M10 21V6h2.4V1.5h1.2V6H16v15z"/><path d="M18.5 21V9h2.5V6h3v3h2.5v12z"/></g><rect class="stop" x="8" y="5" width="12" height="12" rx="1"/></svg><span class="play-label">Start listening</span></button>
+
     </div>
     <div class="invite-row" id="inviteRow" hidden>
+<button class="share-btn share" id="share" type="button" hidden title="Share these cities, with your sounds and settings"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 15V4M8 8l4-4 4 4" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/><path d="M7 11H5.5A1.5 1.5 0 0 0 4 12.5v6A1.5 1.5 0 0 0 5.5 20h13a1.5 1.5 0 0 0 1.5-1.5v-6a1.5 1.5 0 0 0-1.5-1.5H17" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>Share</button>
       <button class="mine-toggle" id="mineToggle" type="button" aria-expanded="false" aria-controls="mine">Try your own cities <span aria-hidden="true">+</span></button>
       <a class="back-mine" id="backMine" href="./" hidden>Back to Forrest's cities</a>
     </div>
@@ -2911,7 +2921,7 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
   const playBtn = document.getElementById("play");
   const fab = document.getElementById("fab");
   function syncButtons() {
-    playBtn.textContent = playing ? "Stop" : "Start listening";
+    playBtn.querySelector(".play-label").textContent = playing ? "Stop" : "Start listening";
     playBtn.setAttribute("aria-pressed", String(playing));
     fab.textContent = playing ? "Stop" : "Play";
   }
