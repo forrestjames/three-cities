@@ -343,6 +343,8 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
 .keys-panel b { display: block; margin-bottom: 6px; color: var(--ink); font-weight: 400; letter-spacing: 0.16em; text-transform: uppercase; font-size: 11px; }
 .keys-panel dl { display: grid; grid-template-columns: auto auto; gap: 2px 14px; margin: 0; }
 .keys-panel dt { color: var(--ink); } .keys-panel dd { margin: 0; }
+.keys-hint button { background: none; border: 0; padding: 4px 0; font: inherit; color: inherit; letter-spacing: inherit; text-transform: inherit; cursor: pointer; }
+.keys-hint button:hover { color: var(--ink); }
 .keys-hint kbd { font: inherit; padding: 0 5px; border: 1px solid var(--line); border-radius: 3px; color: var(--ink); }
 @media (pointer: coarse) { .keys-hint { display: none; } }
 .city { transition: opacity 6s ease; }
@@ -665,7 +667,7 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
   </section>
 
   <button class="fab" id="fab" type="button" hidden>Play</button>
-  <p class="foot keys-hint">Press <kbd>?</kbd> for keyboard shortcuts</p>
+  <p class="foot keys-hint"><button type="button" id="keysHint">Press <kbd>?</kbd> for keyboard shortcuts</button></p>
   <p class="foot">Weather from <a href="https://open-meteo.com" target="_blank" rel="noopener">Open-Meteo</a> · Forrest James</p>
   <p class="foot credits">Grand piano: <a href="https://archive.org/details/SalamanderGrandPianoV3" target="_blank" rel="noopener">Salamander Grand Piano</a> by Alexander Holm, CC BY 3.0 · Harp: <a href="https://vis.versilstudios.net/vsco-community.html" target="_blank" rel="noopener">VSCO 2 Community Edition</a>, CC0</p>
   <p class="foot credits" id="credits"></p>
@@ -3609,14 +3611,16 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
     keysPanel.className = "keys-panel"; keysPanel.hidden = true; keysPanel.setAttribute("role", "dialog"); keysPanel.setAttribute("aria-label", "Keyboard shortcuts");
     keysPanel.innerHTML = `<b>Keyboard</b><dl><dt>1 2 3</dt><dd>Mute a city</dd><dt>A S D F</dt><dd>Mute kick, snare, hat, rim</dd><dt>Space</dt><dd>Start or stop</dd><dt>?</dt><dd>Show or hide this</dd></dl>`;
     document.body.appendChild(keysPanel);
+    document.getElementById("keysHint").addEventListener("click", () => { keysPanel.hidden = !keysPanel.hidden; });
     const DRUM_KEYS = { a: "kick", s: "snare", d: "hat", f: "rim" };
     document.addEventListener("keydown", e => {
       if (e.ctrlKey || e.metaKey || e.altKey || e.repeat) return;
-      const t = e.target, tag = t && t.tagName;
-      if (tag === "INPUT" || tag === "SELECT" || tag === "TEXTAREA" || (t && t.isContentEditable)) return;
-      const k = e.key.toLowerCase();
-      if (k === "?") { keysPanel.hidden = !keysPanel.hidden; e.preventDefault(); return; }
+      const t = e.target, tag = t && t.tagName, typing = (tag === "INPUT" && /^(text|search|email|url)$/.test(t.type)) || tag === "TEXTAREA" || (t && t.isContentEditable);
+      const k = (e.key || "").toLowerCase();
       if (k === "escape" && !keysPanel.hidden) { keysPanel.hidden = true; return; }
+      // ? on any layout, or / without Shift, unless you're typing words in a box
+      if (!typing && (k === "?" || k === "/" || e.code === "Slash")) { keysPanel.hidden = !keysPanel.hidden; e.preventDefault(); return; }
+      if (typing || tag === "INPUT" || tag === "SELECT") return;
       if (k === " " && !(tag === "BUTTON" || tag === "A" || tag === "SUMMARY" || tag === "CANVAS")) { e.preventDefault(); playBtn.click(); return; }
       if (["1", "2", "3"].includes(k)) { const c = cities[Number(k) - 1]; if (c && c.ref && c.ref.mute) c.ref.mute.click(); return; }
       if (DRUM_KEYS[k]) { const b = document.getElementById("gm-" + DRUM_KEYS[k]); if (b) b.click(); }
