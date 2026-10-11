@@ -1312,6 +1312,7 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
         `<span title="Temperature sets how long ${c.name}'s loop is before it repeats">${fmtTemp(w.t, 0)} \u2192 <b>${c.steps}-step loop</b></span>`,
         `<span class="lead">${pick} <b>\u2192 ${c.hits} ${c.hits === 1 ? "note plays" : "notes play"}</b></span>`];
       if (pf) chips.push(`<span title="Air pressure (${Math.round(w.p)} hPa) sets the pace: ${pf.name} notes${c.rateByHand ? ", set by hand" : ""}">${pf.word} air \u2192 ${c.rateByHand ? "pace set by hand" : pace}</span>`);
+      if (c.voice === "sub" && loneAwake(c)) chips.push(`<span title="With the other two cities asleep, sub bass would almost vanish on most speakers, so this city plays soft mallets until another one wakes">awake alone \u2192 soft mallets</span>`);
       if (night) chips.push(`<span title="At night each city drifts off: notes thin out, the tone darkens and the tempo eases">night \u2192 ${sz.waking ? "waking slowly" : "softer and sparser"}</span>`);
       c.ref.glance.innerHTML = chips.join("");
     }
@@ -1929,11 +1930,22 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
 
   const PIANO_G = 1.25, HARP_G = 0.45, ORGAN_G = 0.085, JUNO_G = { pad: 0.1, strings: 0.13, keys: 0.11 }, GRAIN_G = { cloud: 4.5, shimmer: 3.4, dust: 6 };
   const FELT_G = { felt: 0.13, flute: 0.105, mallet: 0.25, bowed: 0.042 };
+  // awake while the other two sleep
+  function loneAwake(c) {
+    const others = cities.filter(o => o !== c && o.w);
+    return !!c.w && others.length > 0 && sleepOf(c).depth < 0.3 && others.every(o => sleepOf(o).depth > 0.6);
+  }
   function voice(c, midi, vel, t, L = 1) {
     // recorded instruments still loading: play a close cousin until they arrive
     if (SAMPLE_SETS[c.voice] && !nearestSample(c.voice, midi)) {
       const v = c.voice; c.voice = SAMPLE_SETS[v].fallback;
       try { voice(c, midi, vel, t, L); } finally { c.voice = v; }
+      return;
+    }
+    // a lone awake city can't be carried by sub bass alone (most speakers barely play it), so it takes up soft mallets
+    if (c.voice === "sub" && loneAwake(c)) {
+      c.voice = "mallet";
+      try { voice(c, midi, vel, t, L); } finally { c.voice = "sub"; }
       return;
     }
     const b = buses.get(c), f = mtof(midi);
@@ -2157,6 +2169,10 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
       const o = ac.createOscillator(); o.type = "sine";
       o.frequency.value = f > 160 ? f / 4 : f / 2;
       o.connect(env);
+      // a soft second and third harmonic, so laptop and phone speakers still hear the note: the ear fills in the low root
+      const h = ac.createGain(); h.gain.value = 1;
+      [[2, 0.42], [3, 0.16]].forEach(([m, g]) => { const x = ac.createOscillator(); x.frequency.value = o.frequency.value * m; const xg = ac.createGain(); xg.gain.value = g; x.connect(xg).connect(h); x.start(t); x.stop(t + 1.2 * L); });
+      h.connect(env);
       env.gain.linearRampToValueAtTime(0.3 * vel, t + 0.012);
       env.gain.exponentialRampToValueAtTime(0.0006, t + 1.1 * L);
       o.start(t); o.stop(t + 1.2 * L);
