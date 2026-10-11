@@ -54,7 +54,7 @@ button, select, input { font: inherit; color: inherit; }
 .hero-inner { position: relative; display: flex; flex-direction: column; align-items: center; gap: 22px; max-width: 900px; }
 .wordmark { font-family: var(--mono); font-size: 12px; letter-spacing: 0.28em; text-transform: uppercase; color: var(--ink-dim); }
 h1 { margin: 0; font-family: var(--display); font-weight: 400; font-size: clamp(48px, 10vw, 112px); line-height: 1; letter-spacing: 0.14em; text-transform: uppercase; text-wrap: balance; text-shadow: 0 2px 30px rgba(0,0,0,0.35); }
-h1.custom { font-size: clamp(34px, 6.5vw, 76px); letter-spacing: 0.1em; }
+.title-cities { margin-top: -6px; font-family: var(--display); font-size: clamp(15px, 2.2vw, 22px); letter-spacing: 0.24em; text-transform: uppercase; color: var(--ink); opacity: 0.85; text-shadow: 0 1px 12px rgba(0,0,0,0.6); }
 .sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
 .mine { display: flex; flex-direction: column; align-items: center; gap: 10px; padding: 18px 20px; background: rgba(16, 8, 6, 0.42); border: 1px solid rgba(243, 236, 230, 0.25); backdrop-filter: blur(6px); }
 .mine-label { font-size: 12px; text-transform: uppercase; letter-spacing: 0.2em; color: var(--ink); }
@@ -465,6 +465,7 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
   <div class="hero-inner">
     <div class="wordmark">Forrest James</div>
     <h1 id="title">Three Cities</h1>
+    <div class="title-cities" id="titleCities" hidden></div>
     <div class="lede" id="ledeMine">
       <p class="lede-lead">Three places I’ve called home, playing in real time.</p>
       <p>Boston, Copenhagen and London become a constantly changing composition shaped by their live weather. Temperature sets the length of each rhythm, conditions scatter notes across it, and as night falls each city drifts off: quieter, slower, fewer notes.</p>
@@ -1209,12 +1210,13 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
     const names = cities.map(c => c.name);
     const isDefault = names.join("|") === DEFAULT_NAMES.join("|");
     const h1 = document.getElementById("title");
-    h1.textContent = isDefault ? "Three Cities" : names.join(" · ");
-    h1.classList.toggle("custom", !isDefault);
+    h1.textContent = "Three Cities";   // the piece keeps its name; the cities playing sit underneath
+    const sub = document.getElementById("titleCities");
+    sub.textContent = names.join(" · "); sub.hidden = isDefault;
     document.getElementById("ledeCities").textContent = cityList(names);
     document.getElementById("ledeMine").hidden = !isDefault;
     document.getElementById("ledeYours").hidden = isDefault;
-    document.title = isDefault ? "Three Cities by Forrest James · Music played by live weather" : names.join(" · ") + " · Three Cities by Forrest James";
+    document.title = isDefault ? "Three Cities by Forrest James · Music played by live weather" : "Three Cities · " + cityList(names) + " · Forrest James";
     try {
       const u = new URL(location.href);
       if (isDefault) u.searchParams.delete("cities"); else u.searchParams.set("cities", names.join(","));
@@ -1237,8 +1239,21 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
     document.getElementById("share").hidden = false;
   }
 
+  // When someone starts listening from the top, bring the cities into view so they can see what's playing.
+  // Skipped if they've already scrolled, if the cards are already on screen, or if they prefer less motion.
+  function revealCards() {
+    const y0 = window.scrollY;
+    setTimeout(() => {
+      if (Math.abs(window.scrollY - y0) > 40) return;   // they're already on their way somewhere
+      const el = document.getElementById("cities"), r = el.getBoundingClientRect();
+      if (r.top >= 0 && r.bottom <= innerHeight) return;
+      el.scrollIntoView({ behavior: reduceMotion ? "auto" : "smooth", block: r.height > innerHeight * 0.9 ? "start" : "center" });
+    }, 700);
+  }
+  document.getElementById("play").addEventListener("click", e => { if (e.isTrusted && !playing) revealCards(); });   // runs before the start, so not-yet-playing means starting
   document.getElementById("mine").addEventListener("submit", e => {
     e.preventDefault();
+    revealCards();
     const inputs = [1, 2, 3].map(i => document.getElementById("mine" + i));
     const qs = inputs.map(inp => {
       const v = inp.value.trim();
