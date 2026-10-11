@@ -394,6 +394,19 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
 .swap button { background: none; border: 1px solid var(--line); padding: 8px 12px; cursor: pointer; text-transform: uppercase; letter-spacing: 0.12em; font-size: 11px; }
 .swap-note { font-size: 11px; color: var(--ink-faint); min-height: 1.4em; }
 
+.project { display: grid; grid-template-columns: minmax(0, 1.7fr) minmax(0, 1fr); gap: 28px 56px; padding-top: 28px; border-top: 1px solid var(--line); }
+@media (max-width: 860px) { .project { grid-template-columns: minmax(0, 1fr); } }
+.project h2 { margin: 0 0 14px; font-family: var(--display); font-weight: 400; font-size: 22px; letter-spacing: 0.16em; text-transform: uppercase; }
+.project h3 { margin: 0 0 6px; font-family: var(--display); font-weight: 400; font-size: 15px; letter-spacing: 0.16em; text-transform: uppercase; }
+.project p { margin: 0 0 14px; color: var(--ink-dim); max-width: 64ch; line-height: 1.65; }
+.project-main p:first-of-type { color: var(--ink); }
+.project-side { padding-left: 24px; border-left: 1px solid var(--line); }
+.project-side h3:not(:first-child) { margin-top: 18px; }
+@media (max-width: 860px) { .project-side { padding: 20px 0 0; border-left: 0; border-top: 1px solid var(--line); } }
+.project a, .email-link { color: var(--ink); text-decoration: underline; text-decoration-color: var(--ink-faint); text-underline-offset: 3px; }
+.project-links { display: flex; flex-wrap: wrap; gap: 6px 18px; }
+.email-reveal { background: none; border: 1px solid var(--line); color: var(--ink); font: inherit; font-size: 12px; letter-spacing: 0.14em; text-transform: uppercase; padding: 10px 14px; min-height: 40px; cursor: pointer; }
+.email-reveal:hover { border-color: var(--ink-dim); }
 .about { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 28px; padding-top: 28px; border-top: 1px solid var(--line); }
 @media (max-width: 860px) { .about { grid-template-columns: minmax(0, 1fr); } }
 .about h2 { margin: 0 0 8px; font-family: var(--display); font-weight: 400; font-size: 22px; letter-spacing: 0.16em; text-transform: uppercase; }
@@ -585,6 +598,23 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
       <button id="moodPause" type="button" aria-pressed="false">Pause questions</button>
       <button id="moodDeep" type="button" aria-pressed="false" title="Adds questions about loss, endings and mortality">Deeper questions</button>
     </div>
+  </section>
+
+  <section class="project" aria-labelledby="projectTitle">
+    <div class="project-main">
+      <h2 id="projectTitle">About Three Cities</h2>
+      <p>Three Cities is a piece about the places I've called home. I studied music in Boston, lived in Copenhagen, and now live and make music in London. Here, each of those cities plays live from its own weather: its temperature, its clouds and wind, its sunrise and its sunset. The sky never repeats, so neither does the music.</p>
+      <p>I trained as a traditional musician, but I've always been drawn to machines that make music. Sequencers, drum machines, modular synths, rules that play themselves. Generative music lets me set up the conditions and then listen to what the world does with them.</p>
+      <p>For many years I made interactive and experiential work for the cultural sector, including as creative director at the Peabody Essex Museum. This project brings those threads together: places, memory and a soundtrack that keeps changing. Swap in the cities you've lived in and it becomes yours.</p>
+    </div>
+    <aside class="project-side">
+      <h3>Forrest James</h3>
+      <p>Musician, songwriter, producer and teacher working from a studio in London.</p>
+      <p class="project-links"><a href="https://forrestjamesmusic.com" target="_blank" rel="noopener">forrestjamesmusic.com</a><a href="https://open.spotify.com/artist/14xv3fvOMsrHGIwGOTPm90" target="_blank" rel="noopener">Spotify</a><a href="https://forrestjames.bandcamp.com" target="_blank" rel="noopener">Bandcamp</a><a href="https://www.instagram.com/forrest_james" target="_blank" rel="noopener">Instagram</a></p>
+      <h3>Press and contact</h3>
+      <p>For press, interviews or commissions:</p>
+      <p><button class="email-reveal" id="emailReveal" type="button">Show email</button></p>
+    </aside>
   </section>
 
   <section class="about" aria-label="How it works">
@@ -3313,6 +3343,15 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
     dec: t => JSON.parse(decodeURIComponent(escape(atob(t.replace(/-/g, "+").replace(/_/g, "/")))))
   };
   try { const t = QS.get("mix"); if (t) applySoundState(b64u.dec(t)); } catch (e) {}
+
+  // ---------- contact: the address is only put together when someone asks for it ----------
+  { const btn = document.getElementById("emailReveal");
+    if (btn) btn.addEventListener("click", () => {
+      const parts = ["moc", "cisumsemajtserrof", "sserp"].map(x => x.split("").reverse().join(""));
+      const addr = parts[2] + "\u0040" + parts[1] + "." + parts[0];
+      const a = document.createElement("a"); a.className = "email-link"; a.href = "mai" + "lto:" + addr + "?subject=" + encodeURIComponent("Three Cities"); a.textContent = addr;
+      btn.replaceWith(a); a.focus();
+    }); }
 
   // ---------- go ----------
   cities.forEach(c => { c.w = null; });
