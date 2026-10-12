@@ -622,6 +622,7 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
 .reel.min { inset: auto 12px 12px auto; padding: 0; background: none; grid-template-rows: auto; }
 .reel.min canvas { display: none; }
 
+.chord-row { margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--line); align-items: center; }
 .chord-on { font-size: 11px; letter-spacing: 0.14em; padding: 3px 8px; min-height: 26px; margin-left: auto; }
 .chord-on::before { width: 6px; height: 6px; margin-right: 6px; }
 </style>
@@ -689,7 +690,13 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
       <div class="knobs mod-knobs">
         <label class="kn-stack" for="key"><span class="kn-label">Key</span><select id="key" class="lcd lcd-select"></select></label>
         <label class="kn-stack" for="scale"><span class="kn-label">Scale</span><select id="scale" class="lcd lcd-select lcd-wide"></select></label>
+      </div>
+      <div class="knobs mod-knobs chord-row">
         <div class="kn"><input class="kn-native" id="chordLevel" type="range" min="0" max="100" step="1" value="40" data-label="Chords"><span class="kn-stack"><output id="chordLevelOut" class="lcd">40</output></span></div>
+        <label class="kn-stack" for="chordSound"><span class="kn-label">Chord sound</span><select id="chordSound" class="lcd lcd-select">
+          <option value="warm">Warm pad</option><option value="glass">Glass</option><option value="air">Air</option><option value="tape">Tape strings</option>
+          <option value="strings">Strings</option><option value="choir">Choir</option><option value="organ">Soft organ</option><option value="bowed">Bowed</option><option value="shimmer">Shimmer</option>
+        </select></label>
       </div>
     </div>
     <div class="pedal rack-mod mod-filter" aria-label="Filter">
@@ -3401,7 +3408,66 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
   // Off by default. Each chord swells in over a couple of seconds, holds for its four bars and fades as the next arrives.
   // Root, third and fifth of the current chord in the shared scale, with the root again an octave below.
   // As the cities fall asleep the bed gets darker and quieter, like the rest of the piece.
-  const CHORD = { on: false, level: 0.4, bus: null, voices: [] };
+  const CHORD = { on: false, level: 0.4, bus: null, voices: [], sound: "warm" };
+  // The chord bed's sounds. Each one builds a single held note into "out" and returns its sources so they can be stopped.
+  // bright scales the bed's filter (which darkens as the cities sleep), gain evens out the levels, attack and release are in seconds.
+  const padOsc = (type, f, out, t, end, gain = 1, det = 0) => {
+    const o = ac.createOscillator(); o.type = type; o.frequency.value = f; o.detune.value = det;
+    const g = ac.createGain(); g.gain.value = gain; o.connect(g).connect(out); o.start(t); o.stop(end); return o;
+  };
+  const padLfo = (rate, depth, param, t, end) => {
+    const l = ac.createOscillator(); l.frequency.value = rate; const d = ac.createGain(); d.gain.value = depth;
+    l.connect(d).connect(param); l.start(t); l.stop(end); return l;
+  };
+  const PADS = {
+    // the original: two soft saws and a sine, muted and velvety
+    warm:    { bright: 1, gain: 1, attack: 2.4, release: 1.4, make: (f, out, t, end) =>
+               [padOsc("sawtooth", f, out, t, end, 0.35, -6), padOsc("sawtooth", f, out, t, end, 0.35, 6), padOsc("sine", f, out, t, end, 0.9)] },
+    // glass: pure sines and their soft overtones, with a slow shimmer of vibrato
+    glass:   { bright: 5, gain: 1.15, attack: 3, release: 2, make: (f, out, t, end) => {
+               const a = padOsc("sine", f, out, t, end, 0.9), b = padOsc("sine", f * 2, out, t, end, 0.28), c = padOsc("sine", f * 3, out, t, end, 0.08);
+               return [a, b, c, padLfo(0.18 + Math.random() * 0.08, 4, a.detune, t, end), padLfo(0.23, 6, b.detune, t, end)]; } },
+    // air: breath through a pitched filter, a whisper of a chord
+    air:     { bright: 4, gain: 4, attack: 3.5, release: 2.2, make: (f, out, t, end) => {
+               const n = ac.createBufferSource(); n.buffer = noiseBuf; n.loop = true;
+               const bp = ac.createBiquadFilter(); bp.type = "bandpass"; bp.frequency.value = f * 2; bp.Q.value = 28;
+               const bp2 = ac.createBiquadFilter(); bp2.type = "bandpass"; bp2.frequency.value = f * 4; bp2.Q.value = 34;
+               const ng = ac.createGain(); ng.gain.value = 1.6; n.connect(bp).connect(ng).connect(out); n.connect(bp2).connect(ng);
+               n.start(t, Math.random() * 0.5); n.stop(end);
+               return [n, padOsc("sine", f, out, t, end, 0.25)]; } },
+    // tape strings: a cluster of saws with a gentle wow, like an old string machine on a tired tape
+    tape:    { bright: 1.5, gain: 2.8, attack: 2.2, release: 1.6, make: (f, out, t, end) => {
+               const os = [-11, -3, 4, 12].map(d => padOsc("sawtooth", f, out, t, end, 0.26, d + Math.random() * 3));
+               return os.concat(os.map(o => padLfo(0.32 + Math.random() * 0.1, 7, o.detune, t, end))); } },
+    // strings: a smoother ensemble, a little brighter
+    strings: { bright: 2.4, gain: 3.6, attack: 1.8, release: 1.4, make: (f, out, t, end) =>
+               [padOsc("sawtooth", f, out, t, end, 0.3, -7), padOsc("sawtooth", f, out, t, end, 0.3, 7), padOsc("triangle", f * 2, out, t, end, 0.12)] },
+    // choir: voices singing "ah", shaped by vowel formants, with a slow vibrato
+    choir:   { bright: 3.5, gain: 10, attack: 2.6, release: 1.8, make: (f, out, t, end) => {
+               const mix = ac.createGain(), vib = [];
+               [[700, 6, 1], [1220, 8, 0.5], [2600, 10, 0.25]].forEach(([fr, q, g]) => {
+                 const bp = ac.createBiquadFilter(); bp.type = "bandpass"; bp.frequency.value = fr; bp.Q.value = q;
+                 const gg = ac.createGain(); gg.gain.value = g; mix.connect(bp).connect(gg).connect(out); });
+               const os = [-5, 5].map(d => padOsc("sawtooth", f, mix, t, end, 0.5, d));
+               os.forEach(o => vib.push(padLfo(4.6 + Math.random() * 0.6, 9, o.detune, t, end)));
+               return os.concat(vib); } },
+    // soft organ: gentle drawbars, the top ones pushed in, with a slow tremolo
+    organ:   { bright: 2.6, gain: 0.9, attack: 1.2, release: 1, make: (f, out, t, end) => {
+               const trem = ac.createGain(); trem.gain.value = 0.85; trem.connect(out);
+               const os = [[0.5, 0.45], [1, 0.8], [2, 0.3], [3, 0.12]].map(([m, g]) => padOsc("sine", f * m, trem, t, end, g));
+               return os.concat([padLfo(0.9, 0.12, trem.gain, t, end)]); } },
+    // bowed: a saw and triangle that bloom open slowly, like a long bow stroke
+    bowed:   { bright: 1.8, gain: 2.2, attack: 3.2, release: 2, make: (f, out, t, end) => {
+               const lp = ac.createBiquadFilter(); lp.type = "lowpass"; lp.Q.value = 1.2; lp.connect(out);
+               lp.frequency.setValueAtTime(f * 1.2, t); lp.frequency.linearRampToValueAtTime(f * 4, t + 3.5);
+               return [padOsc("sawtooth", f, lp, t, end, 0.45, -3), padOsc("triangle", f, lp, t, end, 0.6, 3), padLfo(5, 6, lp.detune, t, end)]; } },
+    // shimmer: octaves above the chord, flickering softly, mostly in the hall
+    shimmer: { bright: 8, gain: 0.9, attack: 4, release: 2.6, wet: 1.2, make: (f, out, t, end) => {
+               const fl = ac.createGain(); fl.gain.value = 0.6; fl.connect(out);
+               return [padOsc("sine", f * 2, fl, t, end, 0.7), padOsc("sine", f * 4, fl, t, end, 0.3, 5), padOsc("sine", f * 1, out, t, end, 0.3),
+                       padLfo(0.4 + Math.random() * 0.4, 0.35, fl.gain, t, end)]; } }
+  };
+
   function chordBus() {
     if (!CHORD.bus) {
       CHORD.bus = ac.createGain(); CHORD.bus.gain.value = 1;
@@ -3425,12 +3491,14 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
       const peak = CHORD.level * (i === 0 ? 0.03 : 0.019) * (1 - 0.35 * sl);   // a bed, not a fourth city
       g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(peak, t + 2.4);
       g.gain.setValueAtTime(peak, t + len); g.gain.setTargetAtTime(0, t + len, 1.4);
-      const oscs = [["sawtooth", -6], ["sawtooth", 6], ["sine", 0]].map(([type, det]) => {
-        const o = ac.createOscillator(); o.type = type; o.frequency.value = f; o.detune.value = det + (Math.random() * 4 - 2);
-        const og = ac.createGain(); og.gain.value = type === "sine" ? 0.9 : 0.35; o.connect(og).connect(lp); o.start(t); o.stop(t + len + 8); return o;
-      });
+      const kind = PADS[CHORD.sound] ? CHORD.sound : "warm", P = PADS[kind];
+      lp.frequency.value = Math.min(16000, bright * P.bright);
+      g.gain.value = 0; g.gain.cancelScheduledValues(t); g.gain.setValueAtTime(0, t);
+      g.gain.linearRampToValueAtTime(peak * P.gain, t + P.attack); g.gain.setValueAtTime(peak * P.gain, t + len); g.gain.setTargetAtTime(0, t + len, P.release);
+      const srcs = P.make(f, lp, t, t + len + 8, i);
       lp.connect(g).connect(chordBus());
-      return { g, stop: when => oscs.forEach(o => { try { o.stop(when); } catch (e) {} }) };
+      if (P.wet) { const ws = ac.createGain(); ws.gain.value = P.wet; g.connect(ws).connect(reverb); }
+      return { g, stop: when => srcs.forEach(o => { try { o.stop(when); } catch (e) {} }) };
     });
   }
   { const btn = document.getElementById("chordOn"), lvl = document.getElementById("chordLevel");
@@ -3441,7 +3509,8 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
       if (CHORD.on && playing) chordBed(ac.currentTime + 0.05);
       else CHORD.voices.forEach(v => { v.g.gain.cancelScheduledValues(ac.currentTime); v.g.gain.setTargetAtTime(0, ac.currentTime, 0.8); v.stop(ac.currentTime + 4); });
     });
-    lvl.addEventListener("input", sync); sync(); }
+    lvl.addEventListener("input", sync); sync();
+    document.getElementById("chordSound").addEventListener("change", e => { CHORD.sound = e.target.value; if (CHORD.on && playing) chordBed(ac.currentTime + 0.05); }); }
   const playBtn = document.getElementById("play");
   const fab = document.getElementById("fab");
   function syncButtons() {
@@ -4116,7 +4185,7 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
   const MIX_GLOBAL = { key: "k", scale: "sc", tempo: "t", volume: "V", djFilter: "f", grooveOn: "g", grooveKit: "gk", grooveVol: "gv", grooveTone: "gt", grooveAuto: "ga", grooveChance: "gc",
     "gm-kick": "mk", "gm-snare": "ms", "gm-hat": "mh", "gm-rim": "mr",
     "gh-kick": "hk", "gh-snare": "hs", "gh-hat": "hh", "gh-rim": "hr", "gd-kick": "dk", "gd-snare": "ds", "gd-hat": "dh", "gd-rim": "dr", hallOn: "h", fxRevLevel: "hl", fxRevDecay: "hd", fxRevPre: "hp", fxRevTone: "ht",
-    delayOn: "e", fxStyle: "es", fxTime: "et", fxDelay: "el", fxEchoes: "ee", fxDelTone: "eo", fxWobble: "ew", moodDeep: "q", unit: "u", chordOn: "cb", chordLevel: "cv" };
+    delayOn: "e", fxStyle: "es", fxTime: "et", fxDelay: "el", fxEchoes: "ee", fxDelTone: "eo", fxWobble: "ew", moodDeep: "q", unit: "u", chordOn: "cb", chordLevel: "cv", chordSound: "cs" };
   const shortKey = k => {
     if (MIX_GLOBAL[k]) return MIX_GLOBAL[k];
     let m = k.match(/^(boston|copenhagen|london)-(\w+)$/); if (m && MIX_PART[m[2]]) return MIX_CITY[m[1]] + MIX_PART[m[2]];
