@@ -457,6 +457,7 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
 .project h3 { margin: 0 0 6px; font-family: var(--display); font-weight: 400; font-size: 15px; letter-spacing: 0.16em; text-transform: uppercase; }
 .project p { margin: 0 0 14px; color: var(--ink-dim); max-width: 64ch; line-height: 1.65; }
 .project-main p:first-of-type { color: var(--ink); }
+.project-lead { font-family: var(--display); font-size: 21px; letter-spacing: 0.04em; line-height: 1.35; margin-bottom: 18px !important; }
 .project-side { padding-left: 24px; border-left: 1px solid var(--line); }
 .project-side h3:not(:first-child) { margin-top: 40px; }
 @media (max-width: 860px) { .project-side { padding: 20px 0 0; border-left: 0; border-top: 1px solid var(--line); } }
@@ -689,9 +690,13 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
   <section class="project" aria-labelledby="projectTitle">
     <div class="project-main">
       <h2 id="projectTitle">About Three Cities</h2>
-      <p>Three Cities is a piece about the places I've called home. I studied music in Boston, lived in Copenhagen, and now live and make music in London. Here, each of those cities plays live from its own weather: its temperature, its clouds and wind, its sunrise and its sunset. The sky never repeats, so neither does the music.</p>
-      <p>I trained as a traditional musician, but I've always been drawn to machines that make music. Sequencers, drum machines, modular synths, rules that play themselves. Generative music lets me set up the conditions and then listen to what the world does with them.</p>
-      <p>For many years I made interactive and experiential work for the cultural sector, including as creative director at the Peabody Essex Museum. This project brings those threads together: places, memory and a soundtrack that keeps changing. Swap in the cities you've lived in and it becomes yours.</p>
+      <p class="project-lead">Three cities, three rhythms, nobody controlling the weather.</p>
+      <p>I made Three Cities, a generative music piece using the live weather in three places I’ve called home. I grew up and studied music in Boston, lived and performed in Copenhagen, and now live in London, where I produce and teach music and build instruments like this.</p>
+      <p>Each city runs its own Euclidean rhythm. Temperature sets the pattern length, clouds and wind shape what happens within it, and each city goes quiet after sunset. Depending on when you listen, you hear a different combination of cities and patterns.</p>
+      <p>The idea came from wanting to make something about these places without writing a conventional piece of music about them. Letting their weather play felt like an interesting way to keep them connected.</p>
+      <p>My training combined traditional music, production and studio engineering, followed by experimental music using Max/MSP at Harvestworks in New York. I love randomness and surprise in music as much as I love a beautifully crafted song. Sequencers, drum machines and modular synths give me that pleasure of setting something in motion and hearing it do something I didn’t expect. Here, the weather keeps moving the conditions around.</p>
+      <p>I also spent years making interactive and educational work and installations for the cultural sector, including at the Peabody Essex Museum. This brings those threads together: music, places, memory and a system that keeps changing.</p>
+      <p>You can replace my cities with your own and hear a different personal map. I’d be interested to hear how others approach weather-driven music and choose mappings that stay musically interesting over time. I’m also curious how you use Euclidean rhythms in your own compositions—whether as the starting point for a track, a way to build interlocking parts, or something you let evolve as you play.</p>
       <p id="aboutInvite" hidden><button class="invite-btn" type="button" data-invite="aboutInvite">Try your own cities</button></p>
     </div>
     <aside class="project-side">
