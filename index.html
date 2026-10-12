@@ -548,7 +548,8 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
 .more-card p { margin: 0 0 14px; font-size: 13px; color: var(--ink-dim); line-height: 1.5; }
 .more-card .more-links { display: flex; flex-wrap: wrap; gap: 10px; }
 .more-card .more-links a { display: inline-flex; align-items: center; min-height: 40px; padding: 8px 14px; border: 1px solid var(--ink-dim); color: var(--ink); text-decoration: none; font-size: 12px; letter-spacing: 0.12em; text-transform: uppercase; }
-.more-card .more-links a:first-child { background: var(--ink); color: var(--ground); border-color: var(--ink); }
+.more-card .more-links a:first-child { flex: 1 0 100%; justify-content: center; background: var(--ink); color: var(--ground); border-color: var(--ink); }
+.more-card .more-links a:not(:first-child) { flex: 1; justify-content: center; }
 .more-card .more-close { position: absolute; top: 6px; right: 6px; width: 36px; height: 36px; border: 0; background: none; color: var(--ink-dim); font-size: 20px; line-height: 1; cursor: pointer; }
 @media (max-width: 600px) { .more-card { bottom: calc(80px + env(safe-area-inset-bottom, 0px)); } }
 @media (prefers-reduced-motion: reduce) { .more-card { transition: opacity .3s; transform: none; } }
@@ -749,7 +750,7 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
     <button class="more-close" type="button" aria-label="Close">×</button>
     <h3>More from Forrest James</h3>
     <p>Enjoying this? There’s more of my music, songs and other projects on my site.</p>
-    <div class="more-links"><a href="https://forrestjamesmusic.com" target="_blank" rel="noopener">forrestjamesmusic.com</a><a href="https://open.spotify.com/artist/14xv3fvOMsrHGIwGOTPm90" target="_blank" rel="noopener">Spotify</a></div>
+    <div class="more-links"><a href="https://forrestjamesmusic.com" target="_blank" rel="noopener">forrestjamesmusic.com</a><a href="https://open.spotify.com/artist/14xv3fvOMsrHGIwGOTPm90" target="_blank" rel="noopener">Spotify</a><a href="https://forrestjames.bandcamp.com" target="_blank" rel="noopener">Bandcamp</a></div>
   </aside>
   <p class="foot">Weather from <a href="https://open-meteo.com" target="_blank" rel="noopener">Open-Meteo</a> · Forrest James</p>
   <p class="foot credits">Grand piano: <a href="https://archive.org/details/SalamanderGrandPianoV3" target="_blank" rel="noopener">Salamander Grand Piano</a> by Alexander Holm, CC BY 3.0 · Harp: <a href="https://vis.versilstudios.net/vsco-community.html" target="_blank" rel="noopener">VSCO 2 Community Edition</a>, CC0</p>
