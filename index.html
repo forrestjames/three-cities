@@ -579,6 +579,24 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
 .rec-note { font-size: 12px; color: var(--ink); text-shadow: 0 1px 8px rgba(0,0,0,0.6); letter-spacing: 0.04em; display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 10px; }
 .rec-note a, .rec-note button { color: var(--ink); background: rgba(16,8,6,0.35); border: 1px solid var(--ink-dim); text-shadow: none; padding: 6px 12px; font: 12px var(--mono); letter-spacing: 0.08em; text-decoration: none; cursor: pointer; }
 @media (prefers-reduced-motion: reduce) { .rec-main[aria-pressed="true"] .rec-dot { animation: none; } }
+
+/* suggestions: a country heading, and the sun or moon with local time on every city */
+.suggest li.ta-head { min-height: 0; padding: 8px 12px 4px; cursor: default; font-size: 11px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--ink-dim); }
+.suggest li.ta-head:hover { background: none; }
+.suggest li { position: relative; padding-right: 74px; }
+.suggest .sky-tag { position: absolute; right: 12px; top: 50%; transform: translateY(-50%); font-size: 12px; font-variant-numeric: tabular-nums; color: var(--ink-dim); white-space: nowrap; }
+.suggest .sky-tag.day { color: var(--sun); }
+/* Surprise me */
+.surprise { display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 8px; }
+.surprise-label { font-size: 11px; letter-spacing: 0.16em; text-transform: uppercase; color: var(--ink-dim); margin-right: 2px; }
+.surprise button { min-height: 34px; padding: 0 14px; border-radius: 17px; border: 1px solid rgba(243,236,230,0.4); background: rgba(16,8,6,0.35); color: var(--ink); font: 12px var(--mono); letter-spacing: 0.06em; cursor: pointer; transition: background .2s, color .2s; }
+.surprise button:hover { background: var(--ink); color: var(--ground); }
+.surprise-note { min-height: 1.4em; font-size: 12px; color: var(--ink); letter-spacing: 0.04em; white-space: pre-wrap; text-align: center; }
+.country-note { font-size: 12px; color: var(--ink); text-shadow: 0 1px 8px rgba(0,0,0,0.6); letter-spacing: 0.04em; text-align: center; max-width: 52ch; }
+#mine button[type=submit].nudge { animation: nudge 0.9s ease 2; }
+@keyframes nudge { 50% { background: var(--ink); color: var(--ground); } }
+@media (pointer: coarse) { .surprise button { min-height: 44px; } }
+@media (prefers-reduced-motion: reduce) { #mine button[type=submit].nudge { animation: none; } }
 </style>
 </head>
 <body>
@@ -613,8 +631,11 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
         <label class="sr" for="mine3">Third city</label><div class="ta"><input id="mine3" type="text" placeholder="e.g. Montréal" autocomplete="off"><button class="dice" type="button" data-for="mine3" aria-label="Random city" title="Random city"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="4" width="16" height="16" rx="3.5" fill="none" stroke="currentColor" stroke-width="1.5"/><circle cx="8.6" cy="8.6" r="1.5" fill="currentColor"/><circle cx="12" cy="12" r="1.5" fill="currentColor"/><circle cx="15.4" cy="15.4" r="1.5" fill="currentColor"/></svg></button></div>
         <button class="ghost small" type="submit">Play these</button>
       </div>
+      <div class="surprise" role="group" aria-label="Surprise me"><span class="surprise-label">Surprise me</span><button type="button" data-sky="day" title="Three cities where the sun is up right now">☀ Awake</button><button type="button" data-sky="night" title="Three cities where it's night right now">☾ Asleep</button><button type="button" data-sky="mix" title="Some awake, some asleep">☀☾ Mix</button></div>
+      <div class="surprise-note" id="surpriseNote" aria-live="polite"></div>
     </form>
     <div class="rec-note" id="recNote" aria-live="polite" hidden></div>
+    <div class="country-note" id="countryNote" aria-live="polite" hidden></div>
     <span class="share-note" id="shareNote" aria-live="polite"></span>
     <div class="status" id="status">Checking the weather…</div>
   </div>
@@ -1035,6 +1056,87 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
     if (btn) { btn.classList.remove("rolled"); void btn.offsetWidth; btn.classList.add("rolled"); }
   }
   document.querySelectorAll(".dice:not(.dice-swap)").forEach(b => b.addEventListener("click", e => { e.preventDefault(); rollInto(document.getElementById(b.dataset.for), b); }));
+  // ---------- countries, and who's awake ----------
+  // Typing a country offers its best-known cities; every suggestion shows its local time and whether the sun is up there.
+  // Capital first, so a country typed on its own becomes its capital. "Shown=Searched" where the weather service knows it by another name.
+  const COUNTRIES = [{"cc":"AF","name":"Afghanistan","aka":[],"cities":["Kabul","Herat","Kandahar","Mazar-i-Sharif"]},{"cc":"AL","name":"Albania","aka":[],"cities":["Tirana","Durrës","Shkodër","Vlorë"]},{"cc":"DZ","name":"Algeria","aka":[],"cities":["Algiers","Oran","Constantine","Annaba"]},{"cc":"AD","name":"Andorra","aka":[],"cities":["Andorra la Vella"]},{"cc":"AO","name":"Angola","aka":[],"cities":["Luanda","Huambo","Lobito","Benguela"]},{"cc":"AR","name":"Argentina","aka":[],"cities":["Buenos Aires","Córdoba","Rosario","Mendoza","Bariloche","Ushuaia"]},{"cc":"AM","name":"Armenia","aka":[],"cities":["Yerevan","Gyumri","Vanadzor"]},{"cc":"AU","name":"Australia","aka":["Aus","Oz"],"cities":["Canberra","Sydney","Melbourne","Brisbane","Perth","Adelaide","Hobart"]},{"cc":"AT","name":"Austria","aka":[],"cities":["Vienna","Salzburg","Innsbruck","Graz","Linz"]},{"cc":"AZ","name":"Azerbaijan","aka":[],"cities":["Baku","Ganja","Sheki"]},{"cc":"BS","name":"Bahamas","aka":["The Bahamas"],"cities":["Nassau","Freeport"]},{"cc":"BH","name":"Bahrain","aka":[],"cities":["Manama","Muharraq"]},{"cc":"BD","name":"Bangladesh","aka":[],"cities":["Dhaka","Chittagong","Sylhet","Khulna"]},{"cc":"BB","name":"Barbados","aka":[],"cities":["Bridgetown"]},{"cc":"BY","name":"Belarus","aka":[],"cities":["Minsk","Brest","Grodno","Vitebsk"]},{"cc":"BE","name":"Belgium","aka":[],"cities":["Brussels","Antwerp","Ghent","Bruges","Liège"]},{"cc":"BZ","name":"Belize","aka":[],"cities":["Belmopan","Belize City","San Ignacio"]},{"cc":"BJ","name":"Benin","aka":[],"cities":["Porto-Novo","Cotonou","Parakou"]},{"cc":"BT","name":"Bhutan","aka":[],"cities":["Thimphu","Paro","Punakha"]},{"cc":"BO","name":"Bolivia","aka":[],"cities":["La Paz","Santa Cruz de la Sierra","Cochabamba","Sucre"]},{"cc":"BA","name":"Bosnia and Herzegovina","aka":["Bosnia"],"cities":["Sarajevo","Mostar","Banja Luka"]},{"cc":"BW","name":"Botswana","aka":[],"cities":["Gaborone","Francistown","Maun"]},{"cc":"BR","name":"Brazil","aka":["Brasil"],"cities":["Brasília","São Paulo","Rio de Janeiro","Salvador","Recife","Manaus","Porto Alegre"]},{"cc":"BN","name":"Brunei","aka":[],"cities":["Bandar Seri Begawan"]},{"cc":"BG","name":"Bulgaria","aka":[],"cities":["Sofia","Plovdiv","Varna","Burgas"]},{"cc":"BF","name":"Burkina Faso","aka":[],"cities":["Ouagadougou","Bobo-Dioulasso"]},{"cc":"BI","name":"Burundi","aka":[],"cities":["Gitega","Bujumbura"]},{"cc":"CV","name":"Cape Verde","aka":["Cabo Verde"],"cities":["Praia","Mindelo"]},{"cc":"KH","name":"Cambodia","aka":[],"cities":["Phnom Penh","Siem Reap","Battambang","Kampot"]},{"cc":"CM","name":"Cameroon","aka":[],"cities":["Yaoundé","Douala","Bamenda"]},{"cc":"CA","name":"Canada","aka":[],"cities":["Ottawa","Toronto","Montreal","Vancouver","Calgary","Halifax","Quebec City=Québec"]},{"cc":"CF","name":"Central African Republic","aka":["CAR"],"cities":["Bangui"]},{"cc":"TD","name":"Chad","aka":[],"cities":["N'Djamena","Moundou"]},{"cc":"CL","name":"Chile","aka":[],"cities":["Santiago","Valparaíso","Concepción","Punta Arenas"]},{"cc":"CN","name":"China","aka":["PRC"],"cities":["Beijing","Shanghai","Guangzhou","Chengdu","Xi'an","Hangzhou","Kunming"]},{"cc":"CO","name":"Colombia","aka":[],"cities":["Bogotá","Medellín","Cartagena","Cali","Barranquilla"]},{"cc":"KM","name":"Comoros","aka":[],"cities":["Moroni"]},{"cc":"CG","name":"Republic of the Congo","aka":["Congo-Brazzaville"],"cities":["Brazzaville","Pointe-Noire"]},{"cc":"CD","name":"Democratic Republic of the Congo","aka":["DRC","DR Congo","Congo","Congo-Kinshasa"],"cities":["Kinshasa","Lubumbashi","Goma","Kisangani"]},{"cc":"CR","name":"Costa Rica","aka":[],"cities":["San José","Liberia","Puntarenas","Limón"]},{"cc":"CI","name":"Ivory Coast","aka":["Côte d'Ivoire","Cote d'Ivoire"],"cities":["Yamoussoukro","Abidjan","Bouaké"]},{"cc":"HR","name":"Croatia","aka":[],"cities":["Zagreb","Split","Dubrovnik","Rijeka","Zadar"]},{"cc":"CU","name":"Cuba","aka":[],"cities":["Havana","Santiago de Cuba","Trinidad","Camagüey"]},{"cc":"CY","name":"Cyprus","aka":[],"cities":["Nicosia","Limassol","Larnaca","Paphos"]},{"cc":"CZ","name":"Czechia","aka":["Czech Republic"],"cities":["Prague","Brno","Ostrava","Plzeň","Český Krumlov"]},{"cc":"DK","name":"Denmark","aka":[],"cities":["Copenhagen","Aarhus","Odense","Aalborg","Esbjerg"]},{"cc":"DJ","name":"Djibouti","aka":[],"cities":["Djibouti"]},{"cc":"DM","name":"Dominica","aka":[],"cities":["Roseau"]},{"cc":"DO","name":"Dominican Republic","aka":[],"cities":["Santo Domingo","Santiago de los Caballeros","Puerto Plata","Punta Cana"]},{"cc":"EC","name":"Ecuador","aka":[],"cities":["Quito","Guayaquil","Cuenca","Puerto Ayora"]},{"cc":"EG","name":"Egypt","aka":[],"cities":["Cairo","Alexandria","Luxor","Aswan","Giza"]},{"cc":"SV","name":"El Salvador","aka":[],"cities":["San Salvador","Santa Ana","San Miguel"]},{"cc":"GQ","name":"Equatorial Guinea","aka":[],"cities":["Malabo","Bata"]},{"cc":"ER","name":"Eritrea","aka":[],"cities":["Asmara","Massawa"]},{"cc":"EE","name":"Estonia","aka":[],"cities":["Tallinn","Tartu","Pärnu"]},{"cc":"SZ","name":"Eswatini","aka":["Swaziland"],"cities":["Mbabane","Manzini"]},{"cc":"ET","name":"Ethiopia","aka":[],"cities":["Addis Ababa","Gondar","Lalibela","Bahir Dar","Dire Dawa"]},{"cc":"FJ","name":"Fiji","aka":[],"cities":["Suva","Nadi","Lautoka"]},{"cc":"FI","name":"Finland","aka":["Suomi"],"cities":["Helsinki","Turku","Tampere","Oulu","Rovaniemi"]},{"cc":"FR","name":"France","aka":[],"cities":["Paris","Lyon","Marseille","Nice","Bordeaux","Toulouse","Strasbourg"]},{"cc":"GA","name":"Gabon","aka":[],"cities":["Libreville","Port-Gentil"]},{"cc":"GM","name":"Gambia","aka":["The Gambia"],"cities":["Banjul","Serekunda"]},{"cc":"GE","name":"Georgia","aka":["Sakartvelo"],"cities":["Tbilisi","Batumi","Kutaisi"]},{"cc":"DE","name":"Germany","aka":["Deutschland"],"cities":["Berlin","Munich","Hamburg","Cologne","Frankfurt","Leipzig","Dresden"]},{"cc":"GH","name":"Ghana","aka":[],"cities":["Accra","Kumasi","Tamale","Cape Coast"]},{"cc":"GR","name":"Greece","aka":["Hellas"],"cities":["Athens","Thessaloniki","Heraklion","Patras","Rhodes"]},{"cc":"GD","name":"Grenada","aka":[],"cities":["Saint George's"]},{"cc":"GT","name":"Guatemala","aka":[],"cities":["Guatemala City","Antigua Guatemala","Quetzaltenango","Flores"]},{"cc":"GN","name":"Guinea","aka":[],"cities":["Conakry","Kankan"]},{"cc":"GW","name":"Guinea-Bissau","aka":[],"cities":["Bissau"]},{"cc":"GY","name":"Guyana","aka":[],"cities":["Georgetown","Linden"]},{"cc":"HT","name":"Haiti","aka":[],"cities":["Port-au-Prince","Cap-Haïtien","Jacmel"]},{"cc":"HN","name":"Honduras","aka":[],"cities":["Tegucigalpa","San Pedro Sula","La Ceiba"]},{"cc":"HU","name":"Hungary","aka":[],"cities":["Budapest","Debrecen","Szeged","Pécs"]},{"cc":"IS","name":"Iceland","aka":[],"cities":["Reykjavik","Akureyri","Ísafjörður","Vík"]},{"cc":"IN","name":"India","aka":["Bharat"],"cities":["Delhi","Mumbai","Kolkata","Chennai","Bangalore=Bengaluru","Jaipur","Varanasi"]},{"cc":"ID","name":"Indonesia","aka":[],"cities":["Jakarta","Yogyakarta","Surabaya","Bandung","Denpasar","Makassar"]},{"cc":"IR","name":"Iran","aka":[],"cities":["Tehran","Isfahan","Shiraz","Tabriz","Mashhad"]},{"cc":"IQ","name":"Iraq","aka":[],"cities":["Baghdad","Basra","Erbil","Mosul"]},{"cc":"IE","name":"Ireland","aka":["Eire","Éire","Republic of Ireland"],"cities":["Dublin","Cork","Galway","Limerick","Kilkenny"]},{"cc":"IL","name":"Israel","aka":[],"cities":["Jerusalem","Tel Aviv","Haifa","Eilat"]},{"cc":"IT","name":"Italy","aka":["Italia"],"cities":["Rome","Milan","Venice","Florence","Naples","Turin","Palermo"]},{"cc":"JM","name":"Jamaica","aka":[],"cities":["Kingston","Montego Bay","Ocho Rios","Negril"]},{"cc":"JP","name":"Japan","aka":["Nippon"],"cities":["Tokyo","Kyoto","Osaka","Sapporo","Fukuoka","Hiroshima","Nara"]},{"cc":"JO","name":"Jordan","aka":[],"cities":["Amman","Aqaba","Irbid","Madaba"]},{"cc":"KZ","name":"Kazakhstan","aka":[],"cities":["Astana","Almaty","Shymkent","Aktau"]},{"cc":"KE","name":"Kenya","aka":[],"cities":["Nairobi","Mombasa","Kisumu","Nakuru","Lamu"]},{"cc":"KI","name":"Kiribati","aka":[],"cities":["Tarawa"]},{"cc":"KW","name":"Kuwait","aka":[],"cities":["Kuwait City"]},{"cc":"KG","name":"Kyrgyzstan","aka":[],"cities":["Bishkek","Osh","Karakol"]},{"cc":"LA","name":"Laos","aka":[],"cities":["Vientiane","Luang Prabang","Pakse"]},{"cc":"LV","name":"Latvia","aka":[],"cities":["Riga","Daugavpils","Liepāja"]},{"cc":"LB","name":"Lebanon","aka":[],"cities":["Beirut","Tripoli","Byblos","Tyre"]},{"cc":"LS","name":"Lesotho","aka":[],"cities":["Maseru"]},{"cc":"LR","name":"Liberia","aka":[],"cities":["Monrovia","Gbarnga"]},{"cc":"LY","name":"Libya","aka":[],"cities":["Tripoli","Benghazi","Misrata"]},{"cc":"LI","name":"Liechtenstein","aka":[],"cities":["Vaduz"]},{"cc":"LT","name":"Lithuania","aka":[],"cities":["Vilnius","Kaunas","Klaipėda"]},{"cc":"LU","name":"Luxembourg","aka":[],"cities":["Luxembourg","Esch-sur-Alzette"]},{"cc":"MG","name":"Madagascar","aka":[],"cities":["Antananarivo","Toamasina","Antsirabe","Mahajanga"]},{"cc":"MW","name":"Malawi","aka":[],"cities":["Lilongwe","Blantyre","Mzuzu"]},{"cc":"MY","name":"Malaysia","aka":[],"cities":["Kuala Lumpur","George Town","Malacca","Kota Kinabalu","Kuching"]},{"cc":"MV","name":"Maldives","aka":[],"cities":["Malé","Addu City"]},{"cc":"ML","name":"Mali","aka":[],"cities":["Bamako","Timbuktu","Mopti"]},{"cc":"MT","name":"Malta","aka":[],"cities":["Valletta","Mdina","Sliema"]},{"cc":"MH","name":"Marshall Islands","aka":[],"cities":["Majuro"]},{"cc":"MR","name":"Mauritania","aka":[],"cities":["Nouakchott","Nouadhibou"]},{"cc":"MU","name":"Mauritius","aka":[],"cities":["Port Louis","Curepipe"]},{"cc":"MX","name":"Mexico","aka":["México"],"cities":["Mexico City","Guadalajara","Monterrey","Oaxaca","Mérida","Cancún","Tijuana"]},{"cc":"FM","name":"Micronesia","aka":[],"cities":["Palikir"]},{"cc":"MD","name":"Moldova","aka":[],"cities":["Chișinău","Bălți"]},{"cc":"MC","name":"Monaco","aka":[],"cities":["Monaco"]},{"cc":"MN","name":"Mongolia","aka":[],"cities":["Ulaanbaatar","Erdenet","Darkhan"]},{"cc":"ME","name":"Montenegro","aka":[],"cities":["Podgorica","Kotor","Budva"]},{"cc":"MA","name":"Morocco","aka":[],"cities":["Rabat","Casablanca","Marrakech=Marrakesh","Fez","Tangier","Chefchaouen"]},{"cc":"MZ","name":"Mozambique","aka":[],"cities":["Maputo","Beira","Nampula","Inhambane"]},{"cc":"MM","name":"Myanmar","aka":["Burma"],"cities":["Naypyidaw","Yangon","Mandalay","Bagan"]},{"cc":"NA","name":"Namibia","aka":[],"cities":["Windhoek","Swakopmund","Walvis Bay"]},{"cc":"NR","name":"Nauru","aka":[],"cities":["Yaren"]},{"cc":"NP","name":"Nepal","aka":[],"cities":["Kathmandu","Pokhara","Lalitpur","Bhaktapur"]},{"cc":"NL","name":"Netherlands","aka":["Holland","The Netherlands","Nederland"],"cities":["Amsterdam","Rotterdam","The Hague","Utrecht","Eindhoven","Groningen"]},{"cc":"NZ","name":"New Zealand","aka":["Aotearoa","NZ"],"cities":["Wellington","Auckland","Christchurch","Queenstown","Dunedin"]},{"cc":"NI","name":"Nicaragua","aka":[],"cities":["Managua","León","Granada"]},{"cc":"NE","name":"Niger","aka":[],"cities":["Niamey","Agadez","Zinder"]},{"cc":"NG","name":"Nigeria","aka":[],"cities":["Abuja","Lagos","Kano","Ibadan","Port Harcourt"]},{"cc":"KP","name":"North Korea","aka":["DPRK"],"cities":["Pyongyang"]},{"cc":"MK","name":"North Macedonia","aka":["Macedonia"],"cities":["Skopje","Ohrid","Bitola"]},{"cc":"NO","name":"Norway","aka":["Norge"],"cities":["Oslo","Bergen","Trondheim","Stavanger","Tromsø"]},{"cc":"OM","name":"Oman","aka":[],"cities":["Muscat","Salalah","Nizwa","Sur"]},{"cc":"PK","name":"Pakistan","aka":[],"cities":["Islamabad","Karachi","Lahore","Peshawar","Quetta"]},{"cc":"PW","name":"Palau","aka":[],"cities":["Ngerulmud","Koror"]},{"cc":"PS","name":"Palestine","aka":[],"cities":["Ramallah","Gaza","Bethlehem","Hebron","Nablus"]},{"cc":"PA","name":"Panama","aka":[],"cities":["Panama City","Colón","David","Bocas del Toro"]},{"cc":"PG","name":"Papua New Guinea","aka":["PNG"],"cities":["Port Moresby","Lae","Mount Hagen"]},{"cc":"PY","name":"Paraguay","aka":[],"cities":["Asunción","Ciudad del Este","Encarnación"]},{"cc":"PE","name":"Peru","aka":[],"cities":["Lima","Cusco","Arequipa","Trujillo","Iquitos"]},{"cc":"PH","name":"Philippines","aka":[],"cities":["Manila","Cebu","Davao","Baguio","Iloilo"]},{"cc":"PL","name":"Poland","aka":["Polska"],"cities":["Warsaw","Kraków","Gdańsk","Wrocław","Poznań"]},{"cc":"PT","name":"Portugal","aka":[],"cities":["Lisbon","Porto","Faro","Coimbra","Funchal"]},{"cc":"QA","name":"Qatar","aka":[],"cities":["Doha","Al Wakrah"]},{"cc":"RO","name":"Romania","aka":[],"cities":["Bucharest","Cluj-Napoca","Brașov","Timișoara","Iași"]},{"cc":"RU","name":"Russia","aka":["Russian Federation"],"cities":["Moscow","Saint Petersburg","Kazan","Novosibirsk","Vladivostok","Murmansk"]},{"cc":"RW","name":"Rwanda","aka":[],"cities":["Kigali","Butare","Gisenyi"]},{"cc":"KN","name":"Saint Kitts and Nevis","aka":["St Kitts"],"cities":["Basseterre"]},{"cc":"LC","name":"Saint Lucia","aka":["St Lucia"],"cities":["Castries"]},{"cc":"VC","name":"Saint Vincent and the Grenadines","aka":["St Vincent"],"cities":["Kingstown"]},{"cc":"WS","name":"Samoa","aka":[],"cities":["Apia"]},{"cc":"SM","name":"San Marino","aka":[],"cities":["San Marino"]},{"cc":"ST","name":"São Tomé and Príncipe","aka":["Sao Tome"],"cities":["São Tomé"]},{"cc":"SA","name":"Saudi Arabia","aka":[],"cities":["Riyadh","Jeddah","Mecca","Medina","Dammam"]},{"cc":"SN","name":"Senegal","aka":[],"cities":["Dakar","Saint-Louis","Thiès","Ziguinchor"]},{"cc":"RS","name":"Serbia","aka":[],"cities":["Belgrade","Novi Sad","Niš"]},{"cc":"SC","name":"Seychelles","aka":[],"cities":["Victoria"]},{"cc":"SL","name":"Sierra Leone","aka":[],"cities":["Freetown","Bo"]},{"cc":"SG","name":"Singapore","aka":[],"cities":["Singapore"]},{"cc":"SK","name":"Slovakia","aka":[],"cities":["Bratislava","Košice","Banská Bystrica"]},{"cc":"SI","name":"Slovenia","aka":[],"cities":["Ljubljana","Maribor","Piran","Bled"]},{"cc":"SB","name":"Solomon Islands","aka":[],"cities":["Honiara"]},{"cc":"SO","name":"Somalia","aka":[],"cities":["Mogadishu","Hargeisa","Kismayo"]},{"cc":"ZA","name":"South Africa","aka":[],"cities":["Pretoria","Cape Town","Johannesburg","Durban","Port Elizabeth"]},{"cc":"KR","name":"South Korea","aka":["Korea","Republic of Korea"],"cities":["Seoul","Busan","Incheon","Daegu","Jeju City","Gyeongju"]},{"cc":"SS","name":"South Sudan","aka":[],"cities":["Juba"]},{"cc":"ES","name":"Spain","aka":["España","Espana"],"cities":["Madrid","Barcelona","Seville","Valencia","Bilbao","Granada","Málaga"]},{"cc":"LK","name":"Sri Lanka","aka":[],"cities":["Colombo","Kandy","Galle","Jaffna"]},{"cc":"SD","name":"Sudan","aka":[],"cities":["Khartoum","Omdurman","Port Sudan"]},{"cc":"SR","name":"Suriname","aka":[],"cities":["Paramaribo"]},{"cc":"SE","name":"Sweden","aka":["Sverige"],"cities":["Stockholm","Gothenburg","Malmö","Uppsala","Kiruna"]},{"cc":"CH","name":"Switzerland","aka":["Schweiz","Suisse","Svizzera"],"cities":["Bern","Zurich","Geneva","Basel","Lausanne","Lucerne"]},{"cc":"SY","name":"Syria","aka":[],"cities":["Damascus","Aleppo","Homs","Latakia"]},{"cc":"TW","name":"Taiwan","aka":[],"cities":["Taipei","Kaohsiung","Taichung","Tainan"]},{"cc":"TJ","name":"Tajikistan","aka":[],"cities":["Dushanbe","Khujand"]},{"cc":"TZ","name":"Tanzania","aka":[],"cities":["Dodoma","Dar es Salaam","Arusha","Zanzibar City=Zanzibar","Mwanza"]},{"cc":"TH","name":"Thailand","aka":[],"cities":["Bangkok","Chiang Mai","Phuket","Pattaya","Krabi"]},{"cc":"TL","name":"Timor-Leste","aka":["East Timor"],"cities":["Dili"]},{"cc":"TG","name":"Togo","aka":[],"cities":["Lomé","Kara"]},{"cc":"TO","name":"Tonga","aka":[],"cities":["Nukuʻalofa=Nuku'alofa"]},{"cc":"TT","name":"Trinidad and Tobago","aka":["Trinidad"],"cities":["Port of Spain","San Fernando","Scarborough"]},{"cc":"TN","name":"Tunisia","aka":[],"cities":["Tunis","Sfax","Sousse","Djerba"]},{"cc":"TR","name":"Turkey","aka":["Türkiye","Turkiye"],"cities":["Ankara","Istanbul","Izmir","Antalya","Bursa"]},{"cc":"TM","name":"Turkmenistan","aka":[],"cities":["Ashgabat","Türkmenabat"]},{"cc":"TV","name":"Tuvalu","aka":[],"cities":["Funafuti"]},{"cc":"UG","name":"Uganda","aka":[],"cities":["Kampala","Entebbe","Jinja","Gulu"]},{"cc":"UA","name":"Ukraine","aka":[],"cities":["Kyiv","Lviv","Odesa","Kharkiv","Dnipro"]},{"cc":"AE","name":"United Arab Emirates","aka":["UAE","Emirates"],"cities":["Abu Dhabi","Dubai","Sharjah","Al Ain"]},{"cc":"GB","name":"United Kingdom","aka":["UK","U.K.","Britain","Great Britain","GB"],"cities":["London","Edinburgh","Manchester","Glasgow","Cardiff","Belfast","Bristol"]},{"cc":"GB","name":"England","aka":[],"cities":["London","Manchester","Liverpool","Bristol","Birmingham","Leeds","Brighton"]},{"cc":"GB","name":"Scotland","aka":[],"cities":["Edinburgh","Glasgow","Aberdeen","Inverness","Dundee"]},{"cc":"GB","name":"Wales","aka":["Cymru"],"cities":["Cardiff","Swansea","Newport","Aberystwyth"]},{"cc":"GB","name":"Northern Ireland","aka":[],"cities":["Belfast","Derry","Newry"]},{"cc":"US","name":"United States","aka":["USA","U.S.A.","US","U.S.","America","United States of America","the States"],"cities":["Washington, D.C.=Washington","New York","Los Angeles","Chicago","New Orleans","San Francisco","Boston"]},{"cc":"UY","name":"Uruguay","aka":[],"cities":["Montevideo","Punta del Este","Colonia del Sacramento","Salto"]},{"cc":"UZ","name":"Uzbekistan","aka":[],"cities":["Tashkent","Samarkand","Bukhara","Khiva"]},{"cc":"VU","name":"Vanuatu","aka":[],"cities":["Port Vila","Luganville"]},{"cc":"VA","name":"Vatican City","aka":["Vatican","Holy See"],"cities":["Vatican City"]},{"cc":"VE","name":"Venezuela","aka":[],"cities":["Caracas","Maracaibo","Valencia","Mérida"]},{"cc":"VN","name":"Vietnam","aka":["Viet Nam"],"cities":["Hanoi","Ho Chi Minh City","Da Nang","Hue","Hoi An"]},{"cc":"YE","name":"Yemen","aka":[],"cities":["Sanaa","Aden","Taiz"]},{"cc":"ZM","name":"Zambia","aka":[],"cities":["Lusaka","Livingstone","Ndola","Kitwe"]},{"cc":"ZW","name":"Zimbabwe","aka":[],"cities":["Harare","Bulawayo","Victoria Falls","Mutare"]},{"cc":"GL","name":"Greenland","aka":["Kalaallit Nunaat"],"cities":["Nuuk","Ilulissat","Sisimiut"]},{"cc":"FO","name":"Faroe Islands","aka":["Faroes"],"cities":["Tórshavn","Klaksvík"]},{"cc":"PR","name":"Puerto Rico","aka":[],"cities":["San Juan","Ponce","Mayagüez"]},{"cc":"HK","name":"Hong Kong","aka":[],"cities":["Hong Kong"]},{"cc":"XK","name":"Kosovo","aka":[],"cities":["Pristina","Prizren","Peja"]}];
+  // The dice and Surprise me pool, each with its country so "Venice" is Venice, Italy.
+  const POOL = ["Lisbon|PT","Porto|PT","Seville|ES","Valencia|ES","Bilbao|ES","Madrid|ES","Barcelona|ES","Granada|ES","Málaga|ES","Palma|ES","Bordeaux|FR","Lyon|FR","Marseille|FR","Paris|FR","Nantes|FR","Strasbourg|FR","Toulouse|FR","Brussels|BE","Antwerp|BE","Ghent|BE","Bruges|BE","Amsterdam|NL","Rotterdam|NL","Utrecht|NL","Luxembourg|LU","Berlin|DE","Hamburg|DE","Munich|DE","Cologne|DE","Leipzig|DE","Dresden|DE","Frankfurt|DE","Zurich|CH","Geneva|CH","Basel|CH","Lausanne|CH","Vienna|AT","Salzburg|AT","Innsbruck|AT","Prague|CZ","Brno|CZ","Bratislava|SK","Budapest|HU","Kraków|PL","Warsaw|PL","Gdańsk|PL","Wrocław|PL","Vilnius|LT","Riga|LV","Tallinn|EE","Helsinki|FI","Turku|FI","Stockholm|SE","Gothenburg|SE","Malmö|SE","Uppsala|SE","Oslo|NO","Bergen|NO","Trondheim|NO","Tromsø|NO","Copenhagen|DK","Aarhus|DK","Odense|DK","Reykjavik|IS","Akureyri|IS","Tórshavn|FO","Dublin|IE","Galway|IE","Cork|IE","Belfast|GB","Edinburgh|GB","Glasgow|GB","Aberdeen|GB","Inverness|GB","Cardiff|GB","Swansea|GB","London|GB","Manchester|GB","Liverpool|GB","Leeds|GB","Sheffield|GB","Bristol|GB","Brighton|GB","Oxford|GB","Norwich|GB","York|GB","Plymouth|GB","Penzance|GB","Rome|IT","Milan|IT","Turin|IT","Venice|IT","Florence|IT","Bologna|IT","Naples|IT","Palermo|IT","Genoa|IT","Trieste|IT","Bari|IT","Athens|GR","Thessaloniki|GR","Heraklion|GR","Valletta|MT","Ljubljana|SI","Zagreb|HR","Split|HR","Dubrovnik|HR","Sarajevo|BA","Belgrade|RS","Sofia|BG","Plovdiv|BG","Bucharest|RO","Cluj-Napoca|RO","Chișinău|MD","Odesa|UA","Kyiv|UA","Lviv|UA","Tbilisi|GE","Yerevan|AM","Baku|AZ","Istanbul|TR","Izmir|TR","Ankara|TR","Nicosia|CY","Beirut|LB","Amman|JO","Jerusalem|IL","Tel Aviv|IL","Cairo|EG","Alexandria|EG","Tunis|TN","Algiers|DZ","Casablanca|MA","Marrakech|MA|Marrakesh","Fez|MA","Tangier|MA","Dakar|SN","Accra|GH","Lagos|NG","Abuja|NG","Addis Ababa|ET","Nairobi|KE","Mombasa|KE","Kampala|UG","Kigali|RW","Dar es Salaam|TZ","Zanzibar|TZ","Lusaka|ZM","Harare|ZW","Windhoek|NA","Gaborone|BW","Johannesburg|ZA","Cape Town|ZA","Durban|ZA","Maputo|MZ","Antananarivo|MG","Port Louis|MU","Luanda|AO","Kinshasa|CD","Dubai|AE","Abu Dhabi|AE","Doha|QA","Muscat|OM","Riyadh|SA","Tehran|IR","Isfahan|IR","Tashkent|UZ","Samarkand|UZ","Almaty|KZ","Karachi|PK","Lahore|PK","Delhi|IN","Mumbai|IN","Jaipur|IN","Varanasi|IN","Kolkata|IN","Chennai|IN","Bangalore|IN|Bengaluru","Hyderabad|IN","Kochi|IN","Kathmandu|NP","Thimphu|BT","Dhaka|BD","Colombo|LK","Yangon|MM","Bangkok|TH","Chiang Mai|TH","Phuket|TH","Vientiane|LA","Phnom Penh|KH","Hanoi|VN","Ho Chi Minh City|VN","Hue|VN","Kuala Lumpur|MY","Singapore|SG","Jakarta|ID","Yogyakarta|ID","Bali|ID|Ubud","Manila|PH","Cebu|PH","Hong Kong|HK","Macau|MO","Taipei|TW","Tainan|TW","Shanghai|CN","Beijing|CN","Chengdu|CN","Xi'an|CN","Hangzhou|CN","Guangzhou|CN","Kunming|CN","Lhasa|CN","Ulaanbaatar|MN","Seoul|KR","Busan|KR","Jeju|KR|Jeju City","Tokyo|JP","Kyoto|JP","Osaka|JP","Sapporo|JP","Fukuoka|JP","Hiroshima|JP","Nara|JP","Okinawa|JP|Naha","Vladivostok|RU","Sydney|AU","Melbourne|AU","Brisbane|AU","Perth|AU","Adelaide|AU","Hobart|AU","Darwin|AU","Alice Springs|AU","Cairns|AU","Auckland|NZ","Wellington|NZ","Christchurch|NZ","Queenstown|NZ","Dunedin|NZ","Suva|FJ","Apia|WS","Nouméa|NC","Papeete|PF","Honolulu|US","Anchorage|US","Fairbanks|US","Juneau|US","Vancouver|CA","Calgary|CA","Edmonton|CA","Winnipeg|CA","Toronto|CA","Ottawa|CA","Montreal|CA","Quebec City|CA|Québec","Halifax|CA","St. John's|CA","Whitehorse|CA","Yellowknife|CA","Seattle|US","Portland|US","San Francisco|US","Oakland|US","Los Angeles|US","San Diego|US","Las Vegas|US","Phoenix|US","Tucson|US","Santa Fe|US","Denver|US","Salt Lake City|US","Boise|US","Austin|US","Houston|US","Dallas|US","San Antonio|US","New Orleans|US","Memphis|US","Nashville|US","Atlanta|US","Savannah|US","Miami|US","Key West|US","Orlando|US","Chicago|US","Detroit|US","Minneapolis|US","Milwaukee|US","St. Louis|US","Kansas City|US","Cleveland|US","Pittsburgh|US","Philadelphia|US","Baltimore|US","New York|US","Providence|US","Boston|US","Mexico City|MX","Guadalajara|MX","Oaxaca|MX","Mérida|MX","Monterrey|MX","Tijuana|MX","Havana|CU","San Juan|PR","Santo Domingo|DO","Port-au-Prince|HT","Bridgetown|BB","Guatemala City|GT","Antigua Guatemala|GT","San José|CR","Panama City|PA","Medellín|CO","Bogotá|CO","Cartagena|CO","Cali|CO","Quito|EC","Guayaquil|EC","Lima|PE","Cusco|PE","Arequipa|PE","La Paz|BO","Santiago|CL","Valparaíso|CL","Punta Arenas|CL","Buenos Aires|AR","Córdoba|AR","Mendoza|AR","Bariloche|AR","Ushuaia|AR","Montevideo|UY","Asunción|PY","São Paulo|BR","Rio de Janeiro|BR","Salvador|BR","Recife|BR","Fortaleza|BR","Belém|BR","Manaus|BR","Brasília|BR","Florianópolis|BR","Porto Alegre|BR","Curitiba|BR","Caracas|VE","Paramaribo|SR","Nuuk|GL","Longyearbyen|SJ"].map(s => { const [name, cc, q] = s.split("|"); return { name, country_code: cc, _q: q || name }; });
+  const foldName = s => String(s || "").normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase().replace(/[.'’]/g, "").replace(/\s+/g, " ").trim().replace(/^the /, "");
+  const COUNTRY_INDEX = new Map();
+  COUNTRIES.forEach(k => [k.name, ...k.aka].forEach(n => { const f = foldName(n); if (!COUNTRY_INDEX.has(f)) COUNTRY_INDEX.set(f, k); }));
+  function countryFor(q) {
+    const f = foldName(q);
+    if (!f) return null;
+    if (COUNTRY_INDEX.has(f)) return COUNTRY_INDEX.get(f);
+    if (f.length < 4) return null;   // a few letters in, finish the word only when it can only be one country and isn't also a city
+    const hits = COUNTRIES.filter(k => [k.name, ...k.aka].some(n => foldName(n).startsWith(f)));
+    return hits.length === 1 && !POOL.some(p => foldName(p.name).startsWith(f)) && !hits[0].cities.some(c => foldName(c).startsWith(f)) ? hits[0] : null;
+  }
+  const countryHit = (k, entry) => { const [name, q] = entry.split("="); return { name, country: k.name, country_code: k.cc, _q: q || name }; };
+
+  // Places resolved once, then remembered: a name and country in, coordinates and time zone out.
+  const placeCache = new Map();
+  function resolvePlace(h) {
+    if (h.latitude != null) return Promise.resolve(h);
+    const key = h.country_code + "|" + h.name;
+    if (!placeCache.has(key)) {
+      placeCache.set(key, lookupPlaces(h._q || h.name, 1, h.country_code).then(r => {
+        const g = r[0]; if (!g) { placeCache.delete(key); return null; }
+        return Object.assign({}, g, { name: h.name, country: h.country || g.country, country_code: h.country_code || g.country_code });
+      }).catch(e => { placeCache.delete(key); throw e; }));
+    }
+    return placeCache.get(key);
+  }
+
+  // Is the sun up? Solar altitude from position and time (good to a minute or two, which is all a sun or a moon needs).
+  function sunUpAt(lat, lon, when = Date.now()) {
+    const r = Math.PI / 180, n = when / 864e5 - 10957.5;
+    const g = (357.529 + 0.98560028 * n) * r, q = 280.459 + 0.98564736 * n;
+    const L = (q + 1.915 * Math.sin(g) + 0.02 * Math.sin(2 * g)) * r, e = (23.439 - 0.00000036 * n) * r;
+    const dec = Math.asin(Math.sin(e) * Math.sin(L)), ra = Math.atan2(Math.cos(e) * Math.sin(L), Math.cos(L)) / r;
+    const gmst = (280.46061837 + 360.98564736629 * n) % 360, ha = (gmst + lon - ra) * r;
+    const alt = Math.asin(Math.sin(lat * r) * Math.sin(dec) + Math.cos(lat * r) * Math.cos(dec) * Math.cos(ha)) / r;
+    return alt > -0.833;
+  }
+  const hmFmt = {};
+  function clockIn(tz, when = Date.now()) {
+    try { return (hmFmt[tz] = hmFmt[tz] || new Intl.DateTimeFormat("en-GB", { timeZone: tz, hour: "2-digit", minute: "2-digit", hourCycle: "h23" })).format(when); }
+    catch (e) { return ""; }
+  }
+  function skyTag(h) {
+    if (h.latitude == null || h.longitude == null) return "";
+    const t = h.timezone ? clockIn(h.timezone) : "";
+    return `${sunUpAt(h.latitude, h.longitude) ? "☀" : "☾"}${t ? " " + t : ""}`;
+  }
+
+  // Surprise me: three cities that are all awake, all asleep, or a mix, right now.
+  async function surpriseCities(kind) {
+    const order = POOL.slice().sort(() => Math.random() - 0.5), day = [], night = [], taken = [];
+    const want = kind === "day" ? [3, 0] : kind === "night" ? [0, 3] : Math.random() < 0.5 ? [2, 1] : [1, 2];
+    const add = (list, h) => { if (taken.some(t => t.timezone === h.timezone)) return; list.push(h); taken.push(h); };   // spread out: one city per time zone
+    for (let i = 0; i < order.length && (day.length < want[0] || night.length < want[1]); i += 12) {
+      const batch = (await Promise.all(order.slice(i, i + 12).map(p => resolvePlace(p).catch(() => null)))).filter(Boolean);
+      batch.forEach(h => {
+        const up = sunUpAt(h.latitude, h.longitude);
+        if (up && day.length < want[0]) add(day, h); else if (!up && night.length < want[1]) add(night, h);
+      });
+    }
+    return [...day, ...night].sort(() => Math.random() - 0.5);
+  }
+  document.querySelectorAll(".surprise button[data-sky]").forEach(b => b.addEventListener("click", async () => {
+    const note = document.getElementById("surpriseNote"), btns = document.querySelectorAll(".surprise button");
+    btns.forEach(x => x.disabled = true); note.textContent = b.dataset.sky === "night" ? "Finding sleepy cities…" : "Looking around the world…";
+    try {
+      const picks = await surpriseCities(b.dataset.sky);
+      if (picks.length < 3) throw new Error("not enough");
+      picks.forEach((h, i) => { const inp = document.getElementById("mine" + (i + 1)); inp.value = h.name; inp._picked = { hit: h, label: h.name }; });
+      note.textContent = picks.map(h => `${skyTag(h)} ${h.name}`).join("   ");
+      const go = document.querySelector("#mine button[type=submit]");
+      go.classList.remove("nudge"); void go.offsetWidth; go.classList.add("nudge");
+    } catch (e) { note.textContent = "Couldn't reach the map just now. Try the dice instead."; }
+    btns.forEach(x => x.disabled = false);
+  }));
 
   // ---------- temperature units: the music always runs on °C; this only changes what's shown ----------
   var tempUnit = "C";
@@ -1195,8 +1297,8 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
   const DEFAULT_NAMES = cities.map(c => c.name);
   cities.forEach(c => { c.credit = CREDITS[c.key] || null; });
 
-  async function lookupPlaces(q, count) {
-    const g = await getJSON(`https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(q)}&count=${count}&language=en`);
+  async function lookupPlaces(q, count, cc) {
+    const g = await getJSON(`https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(q)}&count=${count}&language=en${cc ? "&countryCode=" + cc : ""}`);
     return g.results || [];
   }
   function placeLabel(h) { return [h.admin1, h.country].filter(Boolean).filter((v, i, a) => a.indexOf(v) === i).join(", "); }
@@ -1206,7 +1308,10 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
     const typed = typeof query === "string";
     c.ref.swapnote.textContent = "Looking up " + (typed ? query : query.name) + "…";
     try {
-      const hit = typed ? (await lookupPlaces(query, 1))[0] : query;
+      const k = typed ? countryFor(query) : null;
+      const pooled = typed && !k ? POOL.find(p => foldName(p.name) === foldName(query)) : null;   // dice picks know their country
+      let hit = k ? countryHit(k, k.cities[0]) : pooled ? pooled : typed ? (await lookupPlaces(query, 1))[0] : query;
+      if (hit && hit.latitude == null) hit = await resolvePlace(hit);
       if (!hit) { c.ref.swapnote.textContent = `Couldn't find "${query}". Try the city's English name.`; return false; }
       c.name = hit.name; c.lat = hit.latitude; c.lon = hit.longitude;
       // where it is, in a few words: the state and USA for US cities, otherwise the country
@@ -1217,6 +1322,13 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
       await fetchCity(c);
       live = true; showLiveUI(); setStatus();
       c.ref.swapnote.textContent = `Now playing ${hit.name}${hit.country ? ", " + hit.country : ""}.`;
+      if (k) {
+        const others = k.cities.slice(1, 3).map(e => e[0]);
+        const msg = `${k.name} is a country, so I picked ${hit.name}.${others.length ? ` Try ${others.join(" or ")} too.` : ""}`;
+        c.ref.swapnote.textContent = msg;
+        const hn = document.getElementById("countryNote"); hn.hidden = false;
+        hn.textContent = hn._at && Date.now() - hn._at < 3000 ? hn.textContent + " " + msg : msg; hn._at = Date.now();
+      }
       setPhoto(c, null);
       findPhoto(hit.name).then(ph => { if (ph && c.name === hit.name) setPhoto(c, ph); }).catch(() => {});
       updateIdentity();
@@ -1269,13 +1381,15 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
     const close = () => { settle(); list.hidden = true; input.setAttribute("aria-expanded", "false"); active = -1; input.removeAttribute("aria-activedescendant"); };
     const highlight = i => {
       active = i;
-      [...list.children].forEach((li, n) => li.setAttribute("aria-selected", String(n === i)));
-      if (i >= 0 && list.children[i]) { input.setAttribute("aria-activedescendant", list.children[i].id); list.children[i].scrollIntoView({ block: "nearest" }); }
+      const opts = [...list.querySelectorAll('[role="option"]')];
+      opts.forEach((li, n) => li.setAttribute("aria-selected", String(n === i)));
+      if (i >= 0 && opts[i]) { input.setAttribute("aria-activedescendant", opts[i].id); opts[i].scrollIntoView({ block: "nearest" }); }
     };
     const pick = i => { const h = items[i]; if (!h) return; close(); onPick(h); };
 
-    function show(results, q) {
+    function show(results, q, heading) {
       items = results; list.textContent = "";
+      if (heading) { const hd = document.createElement("li"); hd.className = "ta-head"; hd.setAttribute("role", "presentation"); hd.textContent = heading; list.appendChild(hd); }
       if (!results.length) {
         const li = document.createElement("li"); li.className = "empty"; li.textContent = `No places called "${q}"`;
         list.appendChild(li);
@@ -1285,6 +1399,8 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
         li.id = id + "-" + i; li.setAttribute("role", "option");
         const a = document.createElement("span"); a.className = "place"; a.textContent = h.name;
         const b = document.createElement("span"); b.className = "where"; b.textContent = placeLabel(h);
+        const sky = skyTag(h);
+        if (sky) { const k = document.createElement("span"); k.className = "sky-tag" + (sky[0] === "☀" ? " day" : " night"); k.textContent = sky; k.title = sky[0] === "☀" ? "Sun's up there now" : "Night there now"; li.append(k); }
         li.append(a, b);
         li.addEventListener("mousedown", e => e.preventDefault());   // keep focus in the box
         li.addEventListener("click", () => pick(i));
@@ -1325,6 +1441,16 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
       clearTimeout(timer);
       if (q.length < 2) { close(); return; }
       const mine = ++seq;
+      const k = countryFor(q);
+      if (k) {   // a country: offer its best-known cities straight away, then add each one's sun or moon as they're found
+        const base = k.cities.map(e => countryHit(k, e)), head = `Cities in ${k.name}`;
+        show(base, q, head);
+        Promise.all(base.map(h => resolvePlace(h).catch(() => null))).then(rs => {
+          if (mine !== seq || input.value.trim() !== q || list.hidden) return;
+          const a = active; show(base.map((h, i) => rs[i] || h), q, head); highlight(a);
+        });
+        return;
+      }
       timer = setTimeout(async () => {
         try { const r = await lookupPlaces(q, 6); if (mine === seq && input.value.trim() === q) show(r, q); }
         catch (e) { close(); }
