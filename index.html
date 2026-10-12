@@ -3280,22 +3280,24 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
     const sl = grooveSleep(), wake = 1 - sl, wx = grooveWeather();
     const bar = Math.floor(tickNow / 32), phrase = bar % 4;
     if (j === 0) {
-      GROOVE.stutter = phrase !== 3 && Math.random() < (0.1 + wx.unsettled * 0.3) * wake
+      GROOVE.stutter = phrase !== 3 && Math.random() < (0.03 + wx.unsettled * 0.1) * wake
         ? { from: [4, 8, 10][Math.floor(Math.random() * 3)], len: Math.random() < 0.5 ? 2 : 3 } : null;
-      GROOVE.dropKick = phrase === 3 && Math.random() < 0.35 * wake;
+      // a fill is likelier at the end of every eighth bar than every fourth, and plenty of phrases just roll on without one
+      GROOVE.fill = phrase === 3 && Math.random() < (bar % 8 === 7 ? 0.5 : 0.15) * wake;
+      GROOVE.dropKick = GROOVE.fill && Math.random() < 0.3;
       // ratchets are a treat, not a habit: at most one hat and one snare ratchet in a bar, and most bars have none
       GROOVE.hatRatchet = Math.random() < (0.1 + wx.gust * 0.25) * wake ? [7, 11, 13, 15][Math.floor(Math.random() * 4)] : -1;
       GROOVE.snareRatchet = phrase !== 3 && Math.random() < (0.03 + wx.gust * 0.08) * wake;
     }
     let src = j;
     if (GROOVE.stutter && j >= 12) src = GROOVE.stutter.from + ((j - 12) % GROOVE.stutter.len);   // beat repeat
-    const r = GROOVE.rows, accent = j % 4 === 0 ? 1 : 0.75, fill = phrase === 3 && j >= 12;
+    const r = GROOVE.rows, accent = j % 4 === 0 ? 1 : 0.75, fill = phrase === 3 && GROOVE.fill && j >= 12;
     if (GROOVE.kit === "jazz" && j % 2) t += tickDur * 2 * 0.33;   // swing
     // hush: 0 until the three cities are mostly asleep, 1 when they're all deep in the night
     const hush = Math.max(0, Math.min(1, (sl - 0.7) / 0.25)), soft = 1 - 0.45 * sl;
     if (j === 0 && (r.kick[0] || sl > 0.5)) drumHit("kick", t, accent * soft);                          // the heartbeat on one carries on
     else if (r.kick[src] && !(GROOVE.dropKick && j >= 8) && Math.random() > sl * 0.7 + hush) drumHit("kick", t, accent * soft);
-    if (fill && Math.random() < (0.85 * wake + 0.15) * (1 - hush)) {                      // a fill into the next phrase
+    if (fill && Math.random() < 0.85 * (1 - hush)) {                      // a fill into the next phrase
       const v = 0.45 + (j - 12) * 0.15;
       if (j >= 14 && Math.random() < 0.35) ratchet("snare", t, v, j === 15 ? 4 : 2); else drumHit("snare", t, v);
     } else if (r.snare[src] && Math.random() > sl * 0.5 + hush * 0.5) {
