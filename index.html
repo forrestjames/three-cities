@@ -611,6 +611,16 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
 .samp-hint { font-size: 11px; color: var(--ink-faint); }
 .city.drop { outline: 2px dashed var(--accent); outline-offset: -6px; }
 @media (pointer: coarse) { .samp-shape button, .samp-load { min-height: 40px; } }
+
+/* reel mode */
+.reel { position: fixed; inset: 0; z-index: 200; background: #050302; display: grid; grid-template-rows: 1fr auto; justify-items: center; align-items: center; padding: 12px 12px 0; }
+.reel canvas { height: calc(100vh - 84px); width: auto; aspect-ratio: 9 / 16; max-width: 100%; background: #100806; box-shadow: 0 10px 40px rgba(0,0,0,0.6); }
+.reel-bar { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; justify-content: center; padding: 12px; }
+.reel-bar button { min-height: 40px; padding: 0 16px; border: 1px solid rgba(243,236,230,0.5); background: rgba(16,8,6,0.6); color: var(--ink); font: 12px var(--mono); letter-spacing: 0.1em; text-transform: uppercase; cursor: pointer; }
+.reel-bar button[data-a="record"] { border-color: #e0604f; }
+.reel-status { font-size: 12px; color: var(--ink-dim); max-width: 46ch; }
+.reel.min { inset: auto 12px 12px auto; padding: 0; background: none; grid-template-rows: auto; }
+.reel.min canvas { display: none; }
 </style>
 </head>
 <body>
@@ -3930,7 +3940,7 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
         const v = visualQueue.shift();
         v.c.playhead = v.pos;
         if (v.played) {
-          v.c.flashes.push({ t: v.t, pos: v.pos }); v.c.pulse = 1;
+          v.c.flashes.push({ t: v.t, pos: v.pos }); v.c.pulse = 1; if (REEL) REEL.hit(v.c);
           const led = v.c.ref.led, card = v.c.el;   // the card's lamp and edge flash on every hit
           led.classList.add("on"); card.classList.add("hit");
           clearTimeout(led._t); led._t = setTimeout(() => { led.classList.remove("on"); card.classList.remove("hit"); }, 110);
@@ -4139,6 +4149,200 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
     });
   }
 
+  // ---------- reel: a 9:16 collage of today's three cities, recorded with the music ----------
+  // Open with ?reel=Hottest,Coldest,Wildest (labels for the three cities). The studio page (/reel) picks the cities.
+  const REEL = (() => {
+    let qs; try { qs = new URLSearchParams(location.search); } catch (e) { return null; }
+    if (!qs.has("reel")) return null;
+    const tags = (qs.get("reel") || "").split(",").map(s => s.trim()).filter(Boolean);
+    const W = 1080, H = 1920, DUR = 26;
+    const wrap = document.createElement("div"); wrap.className = "reel";
+    wrap.innerHTML = `<canvas width="${W}" height="${H}" aria-label="Reel preview"></canvas>
+      <div class="reel-bar"><button type="button" data-a="preview">▶ Preview</button><button type="button" data-a="record">● Record reel</button><button type="button" data-a="hide">Hide</button><span class="reel-status" aria-live="polite">Getting the weather and photos…</span></div>`;
+    document.body.appendChild(wrap);
+    const cv = wrap.querySelector("canvas"), g = cv.getContext("2d"), status = wrap.querySelector(".reel-status");
+    const css = getComputedStyle(document.documentElement);
+    const col = c => (css.getPropertyValue(c.color) || "#f3ece6").trim();
+    const ease = x => x < 0 ? 0 : x > 1 ? 1 : 1 - Math.pow(1 - x, 3);
+    const clamp01 = x => Math.max(0, Math.min(1, x));
+    // grain, made once
+    const grainCv = document.createElement("canvas"); grainCv.width = grainCv.height = 256;
+    { const gx = grainCv.getContext("2d"), im = gx.createImageData(256, 256);
+      for (let i = 0; i < im.data.length; i += 4) { const v = Math.random() * 255; im.data[i] = im.data[i + 1] = im.data[i + 2] = v; im.data[i + 3] = 40; }
+      gx.putImageData(im, 0, 0); }
+    // photos: a few per city, leaning on its weather ("snow" for the cold one, "storm" for the wild one)
+    const photos = new Map();
+    const FLAVOUR = { hottest: "sun", coldest: "snow", wildest: "storm", windiest: "wind", wettest: "rain" };
+    async function photosFor(c, tag) {
+      const words = [`${c.name} skyline`, `${c.name} street`, `${c.name} ${FLAVOUR[(tag || "").toLowerCase()] || "weather"}`];
+      const out = [];
+      for (const q of words) {
+        try {
+          const u = "https://commons.wikimedia.org/w/api.php?action=query&format=json&origin=*&generator=search&gsrnamespace=6&gsrlimit=8" +
+            "&gsrsearch=" + encodeURIComponent(q + " filetype:bitmap") + "&prop=imageinfo&iiprop=url|size|mime&iiurlwidth=1080";
+          const j = await getJSON(u);
+          const pages = Object.values((j.query && j.query.pages) || {}).sort((x, y) => x.index - y.index);
+          for (const pg of pages) {
+            const i = pg.imageinfo && pg.imageinfo[0];
+            if (!i || i.mime !== "image/jpeg" || out.some(o => o.src === i.thumburl)) continue;
+            const img = new Image(); img.crossOrigin = "anonymous"; img.src = i.thumburl;
+            await new Promise(r => { img.onload = r; img.onerror = r; setTimeout(r, 6000); });
+            if (img.naturalWidth) { out.push(img); break; }
+          }
+        } catch (e) {}
+      }
+      return out;
+    }
+    // draw an image to cover a box, with a slow drift; duotone in the city's colour
+    function cover(img, x, y, w, h, drift, tint, alpha = 1) {
+      if (!img) { g.fillStyle = tint; g.globalAlpha = alpha * 0.5; g.fillRect(x, y, w, h); g.globalAlpha = 1; return; }
+      const s = Math.max(w / img.naturalWidth, h / img.naturalHeight) * (1.12 + 0.08 * drift);
+      const iw = img.naturalWidth * s, ih = img.naturalHeight * s;
+      const ox = x + (w - iw) / 2 + (drift - 0.5) * 60, oy = y + (h - ih) / 2;
+      g.save(); g.beginPath(); g.rect(x, y, w, h); g.clip();
+      g.globalAlpha = alpha; g.filter = "grayscale(1) contrast(1.25) brightness(0.95)";
+      g.drawImage(img, ox, oy, iw, ih); g.filter = "none";
+      g.globalCompositeOperation = "multiply"; g.fillStyle = tint; g.fillRect(x, y, w, h);
+      g.globalCompositeOperation = "screen"; g.fillStyle = "rgba(40,20,16,0.35)"; g.fillRect(x, y, w, h);
+      g.globalCompositeOperation = "source-over"; g.restore(); g.globalAlpha = 1;
+    }
+    function ring(c, cx, cy, r, alpha) {
+      if (!c.pattern || !c.pattern.length) return;
+      const n = c.pattern.length, p = c._reelPulse || 0;
+      g.save(); g.globalAlpha = alpha;
+      g.strokeStyle = "rgba(243,236,230,0.35)"; g.lineWidth = 2; g.setLineDash([3, 10]); g.beginPath(); g.arc(cx, cy, r, 0, 7); g.stroke(); g.setLineDash([]);
+      for (let i = 0; i < n; i++) {
+        const a = -Math.PI / 2 + i * 2 * Math.PI / n, hit = c.pattern[i], on = i === c.playhead;
+        g.fillStyle = hit ? col(c) : "rgba(243,236,230,0.55)";
+        g.beginPath(); g.arc(cx + r * Math.cos(a), cy + r * Math.sin(a), hit ? (on ? 14 + 10 * p : 11) : (on ? 7 : 4), 0, 7); g.fill();
+      }
+      g.fillStyle = "#f3ece6"; g.textAlign = "center"; g.font = `${Math.round(r * 0.55)}px Abel, sans-serif`;
+      g.fillText(String(n), cx, cy + r * 0.18); g.font = `${Math.round(r * 0.13)}px "Source Code Pro", monospace`; g.fillText("STEPS", cx, cy + r * 0.42);
+      g.restore();
+    }
+    function label(text, x, y, size, opts = {}) {
+      g.save(); g.font = `${opts.weight || ""} ${size}px ${opts.mono ? '"Source Code Pro", monospace' : "Abel, sans-serif"}`.trim();
+      g.textAlign = opts.align || "left"; g.fillStyle = opts.color || "#f3ece6"; g.globalAlpha = opts.alpha ?? 1;
+      if (opts.spacing) g.letterSpacing = opts.spacing + "px";
+      g.shadowColor = "rgba(0,0,0,0.55)"; g.shadowBlur = opts.shadow ?? 18;
+      g.fillText(text, x, y); g.restore();
+    }
+    const statLine = (c, tag) => {
+      const w = c.w || {}, t = (tag || "").toLowerCase();
+      if (t.includes("wild") || t.includes("wind")) return `gusts ${Math.round(w.g || 0)} km/h${w.r ? ` · rain ${w.r} mm` : ""}`;
+      if (t.includes("wet")) return `rain ${w.r || 0} mm this hour`;
+      return `humidity ${Math.round(w.h || 0)}% · wind ${Math.round(w.w || 0)} km/h`;
+    };
+    const tempTxt = c => c.w ? fmtTemp(c.w.t, Math.abs(c.w.t) < 10 ? 1 : 0) : "";
+    // the timeline
+    let t0 = 0, run = false, rec = null, chunks = [], lastCut = 0, cutSeed = 0, idleAt = 1.6;
+    function scene(now) {
+      const s = (now - t0) / 1000, cs = cities;
+      g.fillStyle = "#100806"; g.fillRect(0, 0, W, H);
+      cs.forEach(c => { c._reelPulse = Math.max(0, (c._reelPulse || 0) - 0.06); });
+      const ph = c => photos.get(c) || [];
+      if (s < 3) {   // title
+        const a = ease(s / 0.8) * (1 - ease((s - 2.5) / 0.5));
+        cs.forEach((c, i) => cover(ph(c)[0], i * W / 3, 0, W / 3 + 1, H, (s / 3 + i * 0.3) % 1, col(c), 0.55 * a));
+        label("TODAY'S", W / 2, 760, 64, { align: "center", alpha: a, spacing: 18 });
+        label("THREE CITIES", W / 2, 900, 132, { align: "center", alpha: a, spacing: 14 });
+        label((tags.length ? tags.join(" · ") : "three places, live weather").toUpperCase(), W / 2, 1010, 34, { align: "center", alpha: a * 0.85, mono: true, spacing: 6 });
+        label(new Date().toLocaleDateString("en-GB", { weekday: "long", day: "numeric", month: "long" }), W / 2, 1090, 30, { align: "center", alpha: a * 0.7, mono: true });
+      } else if (s < 18) {   // one city at a time, the earlier ones left behind as fragments
+        const k = Math.min(2, Math.floor((s - 3) / 5)), ls = (s - 3) - k * 5, c = cs[k];
+        for (let j = 0; j < k; j++) {   // collage memory of the cities already shown
+          const pc = cs[j], y = 160 + j * 260;
+          cover(ph(pc)[1] || ph(pc)[0], j % 2 ? 620 : 60, y, 400, 220, (s / 9 + j) % 1, col(pc), 0.5);
+        }
+        const wipe = ease(ls / 0.7);
+        g.save(); g.beginPath(); g.moveTo(0, 0); g.lineTo((W + 400) * wipe, 0); g.lineTo((W + 400) * wipe - 400, H); g.lineTo(0, H); g.clip();
+        cover(ph(c)[Math.floor(ls / 1.7) % Math.max(1, ph(c).length)], 0, 0, W, H, ls / 5, col(c), 0.95);
+        g.restore();
+        // beat cuts: on a hit, a strip of another photo slices across
+        if (c._reelPulse > 0.6 && now - lastCut > 240) { lastCut = now; cutSeed = Math.random(); }
+        if (now - lastCut < 200) { const y = 300 + cutSeed * 1200; cover(ph(c)[(Math.floor(cutSeed * 9)) % Math.max(1, ph(c).length)], 0, y, W, 90 + cutSeed * 140, cutSeed, col(c), 0.9); }
+        const ta = ease((ls - 0.4) / 0.6);
+        label(((tags[k] || "") + " right now").toUpperCase(), 80, 1180, 40, { alpha: ta, mono: true, spacing: 8, color: col(c) });
+        label(c.name.toUpperCase(), 80, 1330, c.name.length > 11 ? 104 : 140, { alpha: ta, spacing: 10 });
+        label(c.place || "", 84, 1395, 34, { alpha: ta * 0.85, mono: true });
+        label(tempTxt(c), W - 80, 1600, 210, { alpha: ease((ls - 0.8) / 0.6), align: "right" });
+        label(`${localTime(c)} local · ${statLine(c, tags[k])}`, 84, 1690, 30, { alpha: ease((ls - 1.1) / 0.6), mono: true });
+        label(c.w ? `${Math.abs(Math.round(c.w.t))}° makes a ${c.pattern.length}-step loop` : "", 84, 1745, 30, { alpha: ease((ls - 1.4) / 0.6), mono: true, color: col(c) });
+        ring(c, 290, 760, 190 + 20 * (c._reelPulse || 0), ease((ls - 0.6) / 0.6) * 0.95);
+      } else if (s < 23) {   // all three together: strips that slide at their own pace, like their loops
+        const ls = s - 18;
+        cs.forEach((c, i) => {
+          const x = i * W / 3, sp = (c.pattern.length || 8) / 16;
+          cover(ph(c)[(Math.floor(ls * sp) + i) % Math.max(1, ph(c).length)], x, 0, W / 3 + 1, H, (ls * sp * 0.2) % 1, col(c), 0.9);
+          if (c._reelPulse > 0.5) { g.fillStyle = col(c); g.globalAlpha = 0.18 * c._reelPulse; g.fillRect(x, 0, W / 3, H); g.globalAlpha = 1; }
+          ring(c, x + W / 6, 820, 120 + 14 * (c._reelPulse || 0), ease(ls / 0.8));
+          label(c.name.toUpperCase(), x + W / 6, 1120, c.name.length > 9 ? 44 : 56, { align: "center", spacing: 4, alpha: ease(ls / 0.8) });
+          label(tempTxt(c), x + W / 6, 1220, 76, { align: "center", alpha: ease((ls - 0.3) / 0.8) });
+          label((tags[i] || "").toUpperCase(), x + W / 6, 1290, 26, { align: "center", mono: true, color: col(c), alpha: ease((ls - 0.5) / 0.8) });
+        });
+        label("PLAYING TOGETHER, LIVE", W / 2, 420, 46, { align: "center", mono: true, spacing: 8, alpha: ease(ls / 1) });
+      } else {   // end card
+        const ls = s - 23, a = ease(ls / 0.6);
+        cs.forEach((c, i) => cover(ph(c)[0], i * W / 3, 0, W / 3 + 1, H, 0.5, col(c), 0.35 * a));
+        g.save(); g.globalAlpha = a; g.translate(W / 2 - 212, 640); g.scale(12, 12); g.fillStyle = "#f3ece6"; g.fill(SKYLINE); g.restore();
+        label("THREE CITIES", W / 2, 1060, 120, { align: "center", spacing: 12, alpha: a });
+        label("by Forrest James", W / 2, 1140, 40, { align: "center", mono: true, alpha: a * 0.85 });
+        label("Play your cities:", W / 2, 1380, 36, { align: "center", mono: true, alpha: ease((ls - 0.4) / 0.6) });
+        label("threecities.forrestjamesmusic.com", W / 2, 1440, 40, { align: "center", mono: true, alpha: ease((ls - 0.4) / 0.6) });
+      }
+      // grain and a soft vignette over everything
+      g.save(); g.globalAlpha = 0.5; g.fillStyle = g.createPattern(grainCv, "repeat"); g.translate(-Math.random() * 256, -Math.random() * 256); g.fillRect(0, 0, W + 256, H + 256); g.restore();
+      const vg = g.createRadialGradient(W / 2, H / 2, H * 0.3, W / 2, H / 2, H * 0.75); vg.addColorStop(0, "rgba(0,0,0,0)"); vg.addColorStop(1, "rgba(0,0,0,0.45)");
+      g.fillStyle = vg; g.fillRect(0, 0, W, H);
+      return s;
+    }
+    const SKYLINE = new Path2D([...document.querySelectorAll(".top-mark path")].map(p => p.getAttribute("d")).join(" "));
+    function loop(now) {
+      const s = scene(run ? now : t0 + idleAt * 1000);   // idle: hold on the title, or the end card once it has played
+      if (run && s >= DUR) { run = false; idleAt = DUR - 0.5; if (rec) rec.stop(); else status.textContent = "Done. Preview again, or record it."; }
+      requestAnimationFrame(loop);
+    }
+    async function begin(record) {
+      if (!playing) { await start(); syncButtons(); }
+      chunks = [];
+      if (record) {
+        const types = ["video/mp4;codecs=avc1.42E01E,mp4a.40.2", "video/mp4", "video/webm;codecs=vp9,opus", "video/webm"];
+        const type = types.find(t => window.MediaRecorder && MediaRecorder.isTypeSupported(t));
+        const stream = new MediaStream([...cv.captureStream(30).getVideoTracks(), ...recTap().stream.getAudioTracks()]);
+        rec = new MediaRecorder(stream, Object.assign({ videoBitsPerSecond: 8e6, audioBitsPerSecond: 192000 }, type ? { mimeType: type } : {}));
+        rec.ondataavailable = e => { if (e.data.size) chunks.push(e.data); };
+        rec.onstop = () => {
+          const t = rec.mimeType || "video/webm", blob = new Blob(chunks, { type: t }), ext = /mp4/.test(t) ? "mp4" : "webm";
+          const a = document.createElement("a"); a.href = URL.createObjectURL(blob);
+          a.download = `Three Cities reel - ${cities.map(c => c.name).join(", ")} - ${new Date().toISOString().slice(0, 10)}.${ext}`.replace(/[\\/:*?"<>|]/g, "");
+          document.body.appendChild(a); a.click(); a.remove();
+          status.textContent = `Saved the reel (${(blob.size / 1e6).toFixed(1)} MB, .${ext}).${ext === "webm" ? " Instagram wants MP4: Safari records MP4 directly." : ""}`;
+          rec = null;
+        };
+        rec.start(500);
+        status.textContent = "Recording the reel… keep this tab in front.";
+      } else status.textContent = "Previewing…";
+      t0 = performance.now(); run = true;
+    }
+    wrap.querySelector(".reel-bar").addEventListener("click", e => {
+      const a = e.target.closest("button")?.dataset.a; if (!a) return;
+      if (a === "hide") { wrap.classList.toggle("min"); e.target.textContent = wrap.classList.contains("min") ? "Show reel" : "Hide"; return; }
+      if (run) return;
+      begin(a === "record").catch(err => { status.textContent = "Couldn't start: " + err.message; });
+    });
+    // get photos once the cities are in place
+    let tries = 0;
+    (async function ready() {
+      const wanted = (qs.get("cities") || "").split(",").map(s => s.split("@")[0].trim().toLowerCase()).filter(Boolean);
+      const settled = cities.every(c => c.w && c.pattern && c.pattern.length) && (!wanted.length || wanted.every((n, i) => cities[i] && cities[i].name.toLowerCase() === n));
+      if (!settled && tries++ < 40) { setTimeout(ready, 500); return; }
+      await Promise.all(cities.map(async (c, i) => photos.set(c, await photosFor(c, tags[i]))));
+      status.textContent = "Ready. Preview it, then record. About 26 seconds.";
+    })();
+    t0 = performance.now(); requestAnimationFrame(loop);
+    return { hit(c) { c._reelPulse = 1; } };
+  })();
+
   // ---------- go ----------
   cities.forEach(c => { c.w = null; });
   renderCredits();
@@ -4148,7 +4352,11 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
     if (!live) return;
     let wanted = [];
     try { wanted = (new URLSearchParams(location.search).get("cities") || "").split(",").map(s => s.trim()).filter(Boolean).slice(0, 3); } catch (e) {}
-    wanted.forEach((q, i) => { document.getElementById("mine" + (i + 1)).value = q; setCity(cities[i], q); });
+    wanted.forEach((q, i) => {
+      const m = q.match(/^(.+?)@(-?[\d.]+)@(-?[\d.]+)(?:@(.+))?$/);
+      const target = m ? { name: m[1], latitude: +m[2], longitude: +m[3], country: m[4] || "" } : q;
+      document.getElementById("mine" + (i + 1)).value = m ? m[1] : q; setCity(cities[i], target);
+    });
   });
   setInterval(() => { if (live) refreshAll(); }, 10 * 60 * 1000);
   requestAnimationFrame(frame);
