@@ -621,6 +621,9 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
 .reel-status { font-size: 12px; color: var(--ink-dim); max-width: 46ch; }
 .reel.min { inset: auto 12px 12px auto; padding: 0; background: none; grid-template-rows: auto; }
 .reel.min canvas { display: none; }
+
+.chord-on { font-size: 11px; letter-spacing: 0.14em; padding: 3px 8px; min-height: 26px; margin-left: auto; }
+.chord-on::before { width: 6px; height: 6px; margin-right: 6px; }
 </style>
 </head>
 <body>
@@ -682,10 +685,11 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
       </div>
     </div>
     <div class="pedal rack-mod mod-harm" aria-label="Harmony">
-      <div class="mod-head"><span class="mod-name">Harmony</span><button class="info" type="button" aria-label="How Harmony works" data-tip="All three cities share one key and scale, picked at random each time the page loads. Underneath, a slow chord progression moves every 4 bars and shifts every 64, and each city's melody leans onto the current chord. Change either menu and the cities follow from their next note."></button></div>
+      <div class="mod-head"><span class="mod-name">Harmony</span><button class="info" type="button" aria-label="How Harmony works" data-tip="All three cities share one key and scale, picked at random each time the page loads. Underneath, a slow chord progression moves every 4 bars and shifts every 64, and each city's melody leans onto the current chord. Change either menu and the cities follow from their next note."></button><button class="groove-on chord-on" id="chordOn" type="button" aria-pressed="false" title="A slow bed of the shared chords underneath the cities">Chords</button></div>
       <div class="knobs mod-knobs">
         <label class="kn-stack" for="key"><span class="kn-label">Key</span><select id="key" class="lcd lcd-select"></select></label>
         <label class="kn-stack" for="scale"><span class="kn-label">Scale</span><select id="scale" class="lcd lcd-select lcd-wide"></select></label>
+        <div class="kn"><input class="kn-native" id="chordLevel" type="range" min="0" max="100" step="1" value="40" data-label="Chords"><span class="kn-stack"><output id="chordLevelOut" class="lcd">40</output></span></div>
       </div>
     </div>
     <div class="pedal rack-mod mod-filter" aria-label="Filter">
@@ -859,6 +863,7 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
     ["piano", "Grand piano"], ["organ", "Organ"], ["harp", "Harp"],
     ["junopad", "Juno pad"], ["junostrings", "Juno strings"], ["junokeys", "Juno keys"],
     ["graincloud", "Grain cloud"], ["grainshimmer", "Grain shimmer"], ["graindust", "Grain dust"],
+    ["handdrum", "Hand drum"], ["woodblock", "Woodblock"], ["tongue", "Tongue drum"], ["clave", "Clave"],
     ["sample", "Your sample…"]
   ];
   const KEYS = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"];
@@ -1250,7 +1255,7 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
             <span class="samp-label">Steps shape</span>
             <button type="button" data-shape="vel" aria-pressed="true" title="Loud at the top of the loop, softer towards the middle">Velocity</button>
             <button type="button" data-shape="filter" aria-pressed="true" title="The filter opens step by step across the loop">Filter</button>
-            <button type="button" data-shape="start" aria-pressed="true" title="Each step plays from further into your sound, like a tape head scanning across it">Start</button>
+            <button type="button" data-shape="start" aria-pressed="true" title="Each step plays from further into your sound, and the whole pattern drifts on with the wind every lap">Start</button>
             <button type="button" data-shape="pitch" aria-pressed="true" title="Tuned to the melody, with your sound's own pitch as middle C. Off plays it as recorded">Pitch</button>
           </div>
           <div class="samp-hint">Drop a sound anywhere on this card, or load one. It stays on your device.</div>
@@ -2370,6 +2375,16 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
     const others = cities.filter(o => o !== c && o.w);
     return !!c.w && others.length > 0 && sleepOf(c).depth < 0.3 && others.every(o => sleepOf(o).depth > 0.6);
   }
+  // Your sample's slices move on to a new stretch of the sound on an even bar line: every 4 bars in calm air,
+  // every 2 when it's windy. How far they move depends on the wind too: calm air creeps along, a gale jumps.
+  function sampleShift(bar) {
+    cities.forEach(c => {
+      if (c.voice !== "sample" || !c.samp) return;
+      const wind = Math.min(50, c.w ? c.w.w : 10) / 50;
+      if (bar % 4 !== 0 && wind < 0.4) return;
+      c._sampDrift = ((c._sampDrift || 0) + 0.06 + wind * 0.3 + Math.random() * 0.05) % 1;
+    });
+  }
   // Load a listener's own sound into a city. Decoded here, normalised, and kept in memory only.
   async function loadUserSample(c, file) {
     if (!ac) setupAudio();
@@ -2384,6 +2399,7 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
     } catch (err) { c.ref.sampName.textContent = "Couldn't read that file. Try a WAV, MP3 or M4A."; }
   }
   const SAMPLE_USER_G = 0.32;
+  const PERC_G = { handdrum: 0.36, woodblock: 0.3, tongue: 0.2, clave: 0.6 };
   function voice(c, midi, vel, t, L = 1) {
     // Your sample, not loaded yet (or the link came from someone else's computer): felt piano keeps the seat warm
     if (c.voice === "sample" && !(c.samp && c.samp.buf)) {
@@ -2403,7 +2419,10 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
       const lp = ac.createBiquadFilter(); lp.type = "lowpass";
       if (sh.filter) { lp.frequency.value = 220 * Math.pow(2, ph * 6.4); lp.Q.value = 3; } // opens step by step, about six octaves a lap
       else { lp.frequency.value = 16000; lp.Q.value = 0.5; }
-      const off = sh.start ? ph * Math.max(0, buf.duration - 0.06) : 0;                  // the tape head moves along with the loop
+      // The tape head moves along with the loop. The slices hold still while the loop repeats (odd lengths and all),
+      // then move on to a new stretch of your sound on an even bar line, so the change lands on the beat (see sampleShift).
+      const where = (ph + (c._sampDrift || 0)) % 1;
+      const off = sh.start ? where * Math.max(0, buf.duration - 0.06) : 0;
       const hold = Math.max(0.05, Math.min((buf.duration - off) / rate, 0.18 + 0.85 * L));
       const lvl = SAMPLE_USER_G * sp.norm * v;
       src.connect(lp).connect(env0);
@@ -2686,6 +2705,30 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
       [-8, 0, 8].forEach(d => { const o = ac.createOscillator(); o.type = "sawtooth"; o.frequency.value = f; o.detune.value = d; o.connect(mix); o.start(t); o.stop(t + 3.2 * L); });
       env.gain.linearRampToValueAtTime(0.17 * vel, t + 0.4 * L);
       env.gain.setTargetAtTime(0, t + 0.9 * L, 0.6);
+    } else if (c.voice === "handdrum" || c.voice === "woodblock" || c.voice === "tongue" || c.voice === "clave") {
+      // Tuned percussion: each hit still follows the melody, folded into the range where that instrument lives
+      const fold = (x, lo, hi) => { while (x < lo) x *= 2; while (x > hi) x /= 2; return x; };
+      const tone = (type, fr, peak, dec, att = 0.002, from) => {
+        const o = ac.createOscillator(), g = ac.createGain(); o.type = type;
+        if (from) { o.frequency.setValueAtTime(from, t); o.frequency.exponentialRampToValueAtTime(fr, t + 0.045); } else o.frequency.value = fr;
+        g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(peak, t + att); g.gain.exponentialRampToValueAtTime(0.0005, t + att + dec);
+        o.connect(g).connect(env); o.start(t); o.stop(t + att + dec + 0.05);
+      };
+      const click = (fr, q, peak, dec) => {
+        const n = ac.createBufferSource(); n.buffer = noiseBuf; const bp = ac.createBiquadFilter(); bp.type = "bandpass"; bp.frequency.value = fr; bp.Q.value = q;
+        const g = ac.createGain(); g.gain.setValueAtTime(peak, t); g.gain.exponentialRampToValueAtTime(0.0005, t + dec);
+        n.connect(bp).connect(g).connect(env); n.start(t, Math.random() * 0.5); n.stop(t + dec + 0.02);
+      };
+      env.gain.setValueAtTime(PERC_G[c.voice] * Math.min(1.2, vel), t);
+      if (c.voice === "handdrum") {            // a skin struck by the hand: a pitch that drops into place, and the slap of the palm
+        const fr = fold(f, 90, 280); tone("sine", fr, 1, 0.32 * Math.max(0.6, L), 0.003, fr * 1.5); tone("sine", fr * 1.6, 0.25, 0.08); click(1600, 0.9, 0.5, 0.025);
+      } else if (c.voice === "woodblock") {    // a hollow wooden tock
+        const fr = fold(f, 520, 1300); tone("sine", fr, 1, 0.07); tone("triangle", fr * 2.76, 0.3, 0.035); click(fr * 1.5, 4, 0.35, 0.015);
+      } else if (c.voice === "tongue") {       // a steel tongue drum: round and long, with a soft overtone
+        const fr = fold(f, 196, 784); tone("sine", fr, 1, 1.4 * Math.max(0.6, L), 0.004); tone("sine", fr * 2, 0.22, 0.5, 0.004); tone("sine", fr * 3.01, 0.08, 0.18, 0.003);
+      } else {                                 // clave: two hardwood sticks, very short and bright
+        const fr = fold(f, 1800, 3200); tone("sine", fr, 1, 0.045, 0.001); tone("sine", fr * 1.48, 0.25, 0.02, 0.001);
+      }
     } else {
       const o1 = ac.createOscillator(); o1.type = "triangle"; o1.frequency.value = f;
       const o2 = ac.createOscillator(); o2.type = "square"; o2.frequency.value = f; o2.detune.value = 7;
@@ -3181,6 +3224,8 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
       if (tick % 2 === 0) grooveStep((tick / 2) % 16, nextTime, tick);
       if (tick % 8 === 0) beatTimes.push(nextTime);
       if (tick % (32 * 4) === 0 && HARM.prog) HARM.root = HARM.prog[(tick / (32 * 4)) % HARM.prog.length];   // a new chord every 4 bars
+      if (tick % (32 * 4) === 0) chordBed(nextTime);                                                            // and the bed moves with it
+      if (tick % (32 * 2) === 0 && tick) sampleShift(tick / 32);                                                // samples move on, on even bars
       nextTime += tickDur;
       tick++;
       // long form, counted in 4/4 bars of 32 ticks: every 64 bars each city's melody moves on
@@ -3351,6 +3396,52 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
     }
   }
   recBtn.addEventListener("click", () => { if (REC.on) recStop(); else recStart().catch(err => { REC.on = false; recNote.hidden = false; recNote.textContent = "Recording didn't start in this browser. Try Chrome, Safari or Firefox."; console.warn(err); }); });
+
+  // ---------- chord bed: slow chords from the shared progression, underneath everything ----------
+  // Off by default. Each chord swells in over a couple of seconds, holds for its four bars and fades as the next arrives.
+  // Root, third and fifth of the current chord in the shared scale, with the root again an octave below.
+  // As the cities fall asleep the bed gets darker and quieter, like the rest of the piece.
+  const CHORD = { on: false, level: 0.4, bus: null, voices: [] };
+  function chordBus() {
+    if (!CHORD.bus) {
+      CHORD.bus = ac.createGain(); CHORD.bus.gain.value = 1;
+      CHORD.bus.connect(master);
+      const rs = ac.createGain(); rs.gain.value = 0.55; CHORD.bus.connect(rs).connect(reverb);
+    }
+    return CHORD.bus;
+  }
+  function chordBed(t) {
+    if (!CHORD.on || !ac || CHORD.level <= 0) return;
+    const n = scale.length, root = HARM.root || 0, len = 32 * 4 * tickDur;
+    const ready = cities.filter(c => c.w), sl = ready.length ? ready.reduce((a, c) => a + sleepOf(c).depth, 0) / ready.length : 0;
+    const k = keyRoot > 6 ? keyRoot - 12 : keyRoot;
+    const note = d => 48 + k + scale[((d % n) + n) % n] + 12 * Math.floor(d / n);
+    const notes = [note(root) - 12, note(root), note(root + 2), note(root + 4)];
+    const bright = 550 + 900 * (1 - sl);
+    CHORD.voices.forEach(v => { try { v.g.gain.cancelScheduledValues(t); v.g.gain.setTargetAtTime(0, t, 1.2); v.stop(t + 5); } catch (e) {} });
+    CHORD.voices = notes.map((m, i) => {
+      const f = 440 * Math.pow(2, (m - 69) / 12), g = ac.createGain(), lp = ac.createBiquadFilter();
+      lp.type = "lowpass"; lp.frequency.value = bright; lp.Q.value = 0.4;
+      const peak = CHORD.level * (i === 0 ? 0.03 : 0.019) * (1 - 0.35 * sl);   // a bed, not a fourth city
+      g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(peak, t + 2.4);
+      g.gain.setValueAtTime(peak, t + len); g.gain.setTargetAtTime(0, t + len, 1.4);
+      const oscs = [["sawtooth", -6], ["sawtooth", 6], ["sine", 0]].map(([type, det]) => {
+        const o = ac.createOscillator(); o.type = type; o.frequency.value = f; o.detune.value = det + (Math.random() * 4 - 2);
+        const og = ac.createGain(); og.gain.value = type === "sine" ? 0.9 : 0.35; o.connect(og).connect(lp); o.start(t); o.stop(t + len + 8); return o;
+      });
+      lp.connect(g).connect(chordBus());
+      return { g, stop: when => oscs.forEach(o => { try { o.stop(when); } catch (e) {} }) };
+    });
+  }
+  { const btn = document.getElementById("chordOn"), lvl = document.getElementById("chordLevel");
+    const sync = () => { CHORD.level = Number(lvl.value) / 100; document.getElementById("chordLevelOut").value = lvl.value; CHORD.voices.forEach(v => v.lvl && v.lvl.gain.setTargetAtTime(1, ac.currentTime, 0.1)); };
+    btn.addEventListener("click", () => {
+      CHORD.on = !CHORD.on; btn.setAttribute("aria-pressed", String(CHORD.on));
+      if (!ac) return;
+      if (CHORD.on && playing) chordBed(ac.currentTime + 0.05);
+      else CHORD.voices.forEach(v => { v.g.gain.cancelScheduledValues(ac.currentTime); v.g.gain.setTargetAtTime(0, ac.currentTime, 0.8); v.stop(ac.currentTime + 4); });
+    });
+    lvl.addEventListener("input", sync); sync(); }
   const playBtn = document.getElementById("play");
   const fab = document.getElementById("fab");
   function syncButtons() {
@@ -4025,7 +4116,7 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
   const MIX_GLOBAL = { key: "k", scale: "sc", tempo: "t", volume: "V", djFilter: "f", grooveOn: "g", grooveKit: "gk", grooveVol: "gv", grooveTone: "gt", grooveAuto: "ga", grooveChance: "gc",
     "gm-kick": "mk", "gm-snare": "ms", "gm-hat": "mh", "gm-rim": "mr",
     "gh-kick": "hk", "gh-snare": "hs", "gh-hat": "hh", "gh-rim": "hr", "gd-kick": "dk", "gd-snare": "ds", "gd-hat": "dh", "gd-rim": "dr", hallOn: "h", fxRevLevel: "hl", fxRevDecay: "hd", fxRevPre: "hp", fxRevTone: "ht",
-    delayOn: "e", fxStyle: "es", fxTime: "et", fxDelay: "el", fxEchoes: "ee", fxDelTone: "eo", fxWobble: "ew", moodDeep: "q", unit: "u" };
+    delayOn: "e", fxStyle: "es", fxTime: "et", fxDelay: "el", fxEchoes: "ee", fxDelTone: "eo", fxWobble: "ew", moodDeep: "q", unit: "u", chordOn: "cb", chordLevel: "cv" };
   const shortKey = k => {
     if (MIX_GLOBAL[k]) return MIX_GLOBAL[k];
     let m = k.match(/^(boston|copenhagen|london)-(\w+)$/); if (m && MIX_PART[m[2]]) return MIX_CITY[m[1]] + MIX_PART[m[2]];
