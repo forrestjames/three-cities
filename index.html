@@ -24,6 +24,7 @@
 <meta name="twitter:title" content="Three Cities · Forrest James">
 <meta name="twitter:description" content="Listen to three cities play their live weather. Try the places you've lived.">
 <meta name="twitter:image" content="https://threecities.forrestjamesmusic.com/og.png">
+<!-- Cloudflare Web Analytics: no cookies, counts visits only --><script defer src="https://static.cloudflareinsights.com/beacon.min.js" data-cf-beacon='{"token": "2bb10de0b5244f7fb0497218233424f5"}'></script>
 <script type="application/ld+json">{"@context":"https://schema.org","@type":"CreativeWork","name":"Three Cities","alternateName":"Three Cities by Forrest James","creator":{"@type":"Person","name":"Forrest James","url":"https://forrestjamesmusic.com"},"genre":["Generative music","Ambient"],"url":"https://threecities.forrestjamesmusic.com/","description":"A generative music piece played by the live weather in Boston, Copenhagen and London."}</script>
 <title>Three Cities by Forrest James · Music played by live weather</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -4357,7 +4358,7 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
     const W = 1080, H = 1920, DUR = 26;
     const wrap = document.createElement("div"); wrap.className = "reel";
     wrap.innerHTML = `<canvas width="${W}" height="${H}" aria-label="Reel preview"></canvas>
-      <div class="reel-bar"><button type="button" data-a="preview">▶ Preview</button><button type="button" data-a="record">● Record reel</button><button type="button" data-a="hide">Hide</button><span class="reel-status" aria-live="polite">Getting the weather and photos…</span></div>`;
+      <div class="reel-bar"><button type="button" data-a="preview">▶ Preview</button><button type="button" data-a="record">● Record reel</button><button type="button" data-a="hide">Hide</button><button type="button" data-a="close" aria-label="Close reel mode">✕ Close</button><span class="reel-status" aria-live="polite">Getting the weather and photos…</span></div>`;
     document.body.appendChild(wrap);
     const cv = wrap.querySelector("canvas"), g = cv.getContext("2d"), status = wrap.querySelector(".reel-status");
     const css = getComputedStyle(document.documentElement);
@@ -4496,7 +4497,9 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
       return s;
     }
     const SKYLINE = new Path2D([...document.querySelectorAll(".top-mark path")].map(p => p.getAttribute("d")).join(" "));
+    let closed = false;
     function loop(now) {
+      if (closed) return;
       const s = scene(run ? now : t0 + idleAt * 1000);   // idle: hold on the title, or the end card once it has played
       if (run && s >= DUR) { run = false; idleAt = DUR - 0.5; if (rec) rec.stop(); else status.textContent = "Done. Preview again, or record it."; }
       requestAnimationFrame(loop);
@@ -4525,10 +4528,19 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
     }
     wrap.querySelector(".reel-bar").addEventListener("click", e => {
       const a = e.target.closest("button")?.dataset.a; if (!a) return;
+      if (a === "close") { closeReel(); return; }
       if (a === "hide") { wrap.classList.toggle("min"); e.target.textContent = wrap.classList.contains("min") ? "Show reel" : "Hide"; return; }
       if (run) return;
       begin(a === "record").catch(err => { status.textContent = "Couldn't start: " + err.message; });
     });
+    // Close: leave reel mode for good, and take ?reel= out of the address so it doesn't come back on reload or in shared links
+    function closeReel() {
+      closed = true; run = false;
+      try { if (rec && rec.state !== "inactive") { rec.onstop = null; rec.stop(); } } catch (e) {}   // closing mid-take throws the take away
+      wrap.remove();
+      try { const u = new URL(location.href); u.searchParams.delete("reel"); history.replaceState(null, "", u); } catch (e) {}
+    }
+    document.addEventListener("keydown", e => { if (e.key === "Escape" && !closed && !run) closeReel(); });
     // get photos once the cities are in place
     let tries = 0;
     (async function ready() {
@@ -4539,7 +4551,7 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
       status.textContent = "Ready. Preview it, then record. About 26 seconds.";
     })();
     t0 = performance.now(); requestAnimationFrame(loop);
-    return { hit(c) { c._reelPulse = 1; } };
+    return { hit(c) { if (!closed) c._reelPulse = 1; } };
   })();
 
   // ---------- go ----------
