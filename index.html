@@ -598,6 +598,19 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
 @keyframes nudge { 50% { background: var(--ink); color: var(--ground); } }
 @media (pointer: coarse) { .surprise button { min-height: 44px; } }
 @media (prefers-reduced-motion: reduce) { #mine button[type=submit].nudge { animation: none; } }
+
+/* Your sample */
+.samp { display: grid; gap: 8px; padding: 10px 12px; border: 1px dashed var(--line); }
+.samp-head { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.samp-name { flex: 1; min-width: 0; font-size: 12px; color: var(--ink); overflow-wrap: anywhere; }
+.samp-load { min-height: 32px; padding: 0 12px; border: 1px solid var(--ink-dim); background: rgba(16,8,6,0.5); color: var(--ink); font: 11px var(--mono); letter-spacing: 0.08em; text-transform: uppercase; cursor: pointer; }
+.samp-shape { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+.samp-label { font-size: 11px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--ink-dim); margin-right: 4px; }
+.samp-shape button { min-height: 30px; padding: 0 10px; border-radius: 15px; border: 1px solid var(--line); background: none; color: var(--ink-dim); font: 11px var(--mono); cursor: pointer; }
+.samp-shape button[aria-pressed="true"] { border-color: var(--accent); color: var(--ink); background: color-mix(in srgb, var(--accent) 22%, transparent); }
+.samp-hint { font-size: 11px; color: var(--ink-faint); }
+.city.drop { outline: 2px dashed var(--accent); outline-offset: -6px; }
+@media (pointer: coarse) { .samp-shape button, .samp-load { min-height: 40px; } }
 </style>
 </head>
 <body>
@@ -835,7 +848,8 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
     ["drum", "Drum"], ["shaker", "Shaker"],
     ["piano", "Grand piano"], ["organ", "Organ"], ["harp", "Harp"],
     ["junopad", "Juno pad"], ["junostrings", "Juno strings"], ["junokeys", "Juno keys"],
-    ["graincloud", "Grain cloud"], ["grainshimmer", "Grain shimmer"], ["graindust", "Grain dust"]
+    ["graincloud", "Grain cloud"], ["grainshimmer", "Grain shimmer"], ["graindust", "Grain dust"],
+    ["sample", "Your sample…"]
   ];
   const KEYS = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"];
   const SCALES = [
@@ -1220,6 +1234,17 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
           <span class="octave-label">Octave</span>
           ${[-2, -1, 0, 1, 2].map(o => `<button type="button" data-oct="${o}" aria-pressed="${o === c.octave}">${o > 0 ? "+" + o : o < 0 ? "\u2212" + -o : "0"}</button>`).join("")}
         </div>
+        <div class="samp" data-r="samp" ${c.voice === "sample" ? "" : "hidden"} style="grid-column: 1 / -1">
+          <div class="samp-head"><span class="samp-name" data-r="sampName">No sample yet</span><button type="button" class="samp-load" data-r="sampLoad">Load a sound</button><input type="file" accept="audio/*" data-r="sampFile" hidden></div>
+          <div class="samp-shape" role="group" aria-label="What the steps change">
+            <span class="samp-label">Steps shape</span>
+            <button type="button" data-shape="vel" aria-pressed="true" title="Loud at the top of the loop, softer towards the middle">Velocity</button>
+            <button type="button" data-shape="filter" aria-pressed="true" title="The filter opens step by step across the loop">Filter</button>
+            <button type="button" data-shape="start" aria-pressed="true" title="Each step plays from further into your sound, like a tape head scanning across it">Start</button>
+            <button type="button" data-shape="pitch" aria-pressed="true" title="Tuned to the melody, with your sound's own pitch as middle C. Off plays it as recorded">Pitch</button>
+          </div>
+          <div class="samp-hint">Drop a sound anywhere on this card, or load one. It stays on your device.</div>
+        </div>
         <div class="fxsends">
           <button type="button" class="fxsend" aria-pressed="true" data-r="sendRev">Reverb</button>
           <button type="button" class="fxsend" aria-pressed="true" data-r="sendDel">Delay</button>
@@ -1251,7 +1276,25 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
       c.octave = Number(b.dataset.oct);
       c.ref.oct.querySelectorAll("button").forEach(x => x.setAttribute("aria-pressed", String(x === b)));
     }));
-    el.querySelector(`#${id}-sound`).addEventListener("change", e => { c.voice = e.target.value; if (ac && NEEDS[c.voice]) loadSamples(NEEDS[c.voice]); applySound(c); });
+    el.querySelector(`#${id}-sound`).addEventListener("change", e => {
+      c.voice = e.target.value; if (ac && NEEDS[c.voice]) loadSamples(NEEDS[c.voice]); applySound(c);
+      c.ref.samp.hidden = c.voice !== "sample";
+      if (c.voice === "sample" && !c.samp && e.isTrusted) c.ref.sampFile.click();   // first time: straight to the file picker (only when a person chose it, not a shared link)
+    });
+    // Your sample: a sound of your own, cut up and shaped by where each note falls in the loop
+    c.sampShape = c.sampShape || { vel: true, filter: true, start: true, pitch: true };
+    c.ref.samp.querySelectorAll("[data-shape]").forEach(b => {
+      b.setAttribute("aria-pressed", String(c.sampShape[b.dataset.shape]));
+      b.addEventListener("click", () => { const k = b.dataset.shape; c.sampShape[k] = !c.sampShape[k]; b.setAttribute("aria-pressed", String(c.sampShape[k])); });
+    });
+    c.ref.sampLoad.addEventListener("click", () => c.ref.sampFile.click());
+    c.ref.sampFile.addEventListener("change", e => { const f = e.target.files && e.target.files[0]; if (f) loadUserSample(c, f); e.target.value = ""; });
+    el.addEventListener("dragover", e => { if ([...(e.dataTransfer?.items || [])].some(i => i.kind === "file")) { e.preventDefault(); el.classList.add("drop"); } });
+    el.addEventListener("dragleave", e => { if (!el.contains(e.relatedTarget)) el.classList.remove("drop"); });
+    el.addEventListener("drop", e => {
+      const f = [...(e.dataTransfer?.files || [])].find(x => /^audio\//.test(x.type) || /\.(wav|aiff?|mp3|m4a|ogg|flac|caf)$/i.test(x.name));
+      el.classList.remove("drop"); if (!f) return; e.preventDefault(); loadUserSample(c, f);
+    });
     el.querySelector(`#${id}-vol`).addEventListener("input", e => { c.volume = Number(e.target.value); applySound(c); showSwell(c, true); });
     el.querySelector(`#${id}-src`).addEventListener("change", e => { c.source = e.target.value; rebuild(c); });
     // the hits tag on the simple card is a menu too, kept in step with the one in the full controls
@@ -2317,7 +2360,48 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
     const others = cities.filter(o => o !== c && o.w);
     return !!c.w && others.length > 0 && sleepOf(c).depth < 0.3 && others.every(o => sleepOf(o).depth > 0.6);
   }
+  // Load a listener's own sound into a city. Decoded here, normalised, and kept in memory only.
+  async function loadUserSample(c, file) {
+    if (!ac) setupAudio();
+    c.ref.sampName.textContent = "Loading " + file.name + "…";
+    try {
+      const buf = await new Promise((res, rej) => file.arrayBuffer().then(a => ac.decodeAudioData(a, res, rej)).catch(rej));
+      let peak = 0;
+      for (let ch = 0; ch < buf.numberOfChannels; ch++) { const d = buf.getChannelData(ch); for (let i = 0; i < d.length; i += 4) peak = Math.max(peak, Math.abs(d[i])); }
+      c.samp = { buf, name: file.name.replace(/\.[^.]+$/, ""), norm: peak > 0.001 ? 0.9 / peak : 1 };
+      c.ref.sampName.textContent = `${c.samp.name} · ${buf.duration < 10 ? buf.duration.toFixed(1) : Math.round(buf.duration)} s`;
+      c.voice = "sample"; { const sel = c.el.querySelector("select[id$='-sound']"); if (sel) sel.value = "sample"; } c.ref.samp.hidden = false; applySound(c);
+    } catch (err) { c.ref.sampName.textContent = "Couldn't read that file. Try a WAV, MP3 or M4A."; }
+  }
+  const SAMPLE_USER_G = 0.32;
   function voice(c, midi, vel, t, L = 1) {
+    // Your sample, not loaded yet (or the link came from someone else's computer): felt piano keeps the seat warm
+    if (c.voice === "sample" && !(c.samp && c.samp.buf)) {
+      c.voice = "felt";
+      try { voice(c, midi, vel, t, L); } finally { c.voice = "sample"; }
+      return;
+    }
+    if (c.voice === "sample") {
+      // Where this note falls in the city's loop, 0 to 1. A 21-step city (21°C) cuts your sound into 21 places.
+      const sp = c.samp, buf = sp.buf, sh = c.sampShape, ph = c.steps ? (c.pos % c.steps) / c.steps : 0;
+      const b0 = buses.get(c), env0 = ac.createGain(); env0.connect(b0.input); env0.gain.setValueAtTime(0, t);
+      const src = ac.createBufferSource(); src.buffer = buf;
+      const rate = sh.pitch ? Math.pow(2, (midi - 60) / 12) : 1;
+      src.playbackRate.value = rate;
+      let v = vel;
+      if (sh.vel) v *= 0.3 + 0.7 * (0.5 + 0.5 * Math.cos(ph * 2 * Math.PI));            // loudest on the one, a dip halfway round
+      const lp = ac.createBiquadFilter(); lp.type = "lowpass";
+      if (sh.filter) { lp.frequency.value = 220 * Math.pow(2, ph * 6.4); lp.Q.value = 3; } // opens step by step, about six octaves a lap
+      else { lp.frequency.value = 16000; lp.Q.value = 0.5; }
+      const off = sh.start ? ph * Math.max(0, buf.duration - 0.06) : 0;                  // the tape head moves along with the loop
+      const hold = Math.max(0.05, Math.min((buf.duration - off) / rate, 0.18 + 0.85 * L));
+      const lvl = SAMPLE_USER_G * sp.norm * v;
+      src.connect(lp).connect(env0);
+      env0.gain.linearRampToValueAtTime(lvl, t + 0.004);
+      env0.gain.setValueAtTime(lvl, t + hold); env0.gain.linearRampToValueAtTime(0, t + hold + 0.08);
+      src.start(t, off); src.stop(t + hold + 0.12);
+      return;
+    }
     // recorded instruments still loading: play a close cousin until they arrive
     if (SAMPLE_SETS[c.voice] && !nearestSample(c.voice, midi)) {
       const v = c.voice; c.voice = SAMPLE_SETS[v].fallback;
