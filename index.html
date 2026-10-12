@@ -553,6 +553,20 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
 .more-card .more-close { position: absolute; top: 6px; right: 6px; width: 36px; height: 36px; border: 0; background: none; color: var(--ink-dim); font-size: 20px; line-height: 1; cursor: pointer; }
 @media (max-width: 600px) { .more-card { bottom: calc(80px + env(safe-area-inset-bottom, 0px)); } }
 @media (prefers-reduced-motion: reduce) { .more-card { transition: opacity .3s; transform: none; } }
+
+/* record: captures what's playing and saves it straight to the listener's device */
+.rec-wrap { display: inline-flex; align-items: center; gap: 6px; }
+.rec-dot { width: 9px; height: 9px; border-radius: 50%; background: #e0604f; flex: none; }
+.rec-btn[aria-pressed="true"] { border-color: #e0604f; }
+.rec-btn[aria-pressed="true"] .rec-dot { animation: recBlink 1.2s steps(2, jump-none) infinite; }
+@keyframes recBlink { 50% { opacity: 0.25; } }
+.rec-fmt { min-height: 32px; padding: 0 10px; border-radius: 16px; border: 1px solid rgba(243,236,230,0.45); background: rgba(16,8,6,0.35); color: var(--ink-dim); font: 11px var(--mono); letter-spacing: 0.1em; cursor: pointer; }
+.rec-fmt[aria-pressed="true"] { color: var(--ink); border-color: var(--ink); }
+.rec-fmt:disabled { opacity: 0.55; cursor: default; }
+.rec-note { font-size: 12px; color: var(--ink); text-shadow: 0 1px 8px rgba(0,0,0,0.6); letter-spacing: 0.04em; display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 10px; }
+.rec-note a, .rec-note button { color: var(--ink); background: rgba(16,8,6,0.35); border: 1px solid var(--ink-dim); text-shadow: none; padding: 6px 12px; font: 12px var(--mono); letter-spacing: 0.08em; text-decoration: none; cursor: pointer; }
+@media (pointer: coarse) { .rec-fmt { min-height: 40px; min-width: 52px; } }
+@media (prefers-reduced-motion: reduce) { .rec-btn[aria-pressed="true"] .rec-dot { animation: none; } }
 </style>
 </head>
 <body>
@@ -575,6 +589,7 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
     </div>
     <div class="invite-row" id="inviteRow" hidden>
 <button class="share-btn share" id="share" type="button" hidden title="Share these cities, with your sounds and settings"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 15V4M8 8l4-4 4 4" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/><path d="M7 11H5.5A1.5 1.5 0 0 0 4 12.5v6A1.5 1.5 0 0 0 5.5 20h13a1.5 1.5 0 0 0 1.5-1.5v-6a1.5 1.5 0 0 0-1.5-1.5H17" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>Share</button>
+      <span class="rec-wrap" id="recWrap" hidden><button class="share-btn rec-btn" id="rec" type="button" aria-pressed="false" title="Record what's playing and save it to your device"><i class="rec-dot" aria-hidden="true"></i><span class="rec-label">Record</span></button><button class="rec-fmt" id="recFmt" type="button" aria-pressed="false" title="Save as a WAV file instead: full quality, about 10 MB a minute">WAV</button></span>
       <button class="mine-toggle" id="mineToggle" type="button" aria-expanded="false" aria-controls="mine">Try your own cities <span aria-hidden="true">+</span></button>
       <a class="back-mine" id="backMine" href="./" hidden>Back to Forrest's cities</a>
     </div>
@@ -587,6 +602,7 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
         <button class="ghost small" type="submit">Play these</button>
       </div>
     </form>
+    <div class="rec-note" id="recNote" aria-live="polite" hidden></div>
     <span class="share-note" id="shareNote" aria-live="polite"></span>
     <div class="status" id="status">Checking the weather…</div>
   </div>
@@ -1402,6 +1418,7 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
   function showLiveUI() {
     document.getElementById("inviteRow").hidden = false;
     document.getElementById("share").hidden = false;
+    if (REC.supported()) document.getElementById("recWrap").hidden = false;
     updateInvites();
   }
 
@@ -1639,7 +1656,7 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
   }
 
   // ---------- sound ----------
-  let ac = null, master, reverb, delay, playing = false;
+  let ac = null, master, reverb, delay, playing = false, outNode = null;   // outNode: the very end of the chain, where Record listens
   const fx = {};
   const val = id => Number(document.getElementById(id).value);
 
@@ -2022,7 +2039,7 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
     ac = new (window.AudioContext || window.webkitAudioContext)();
     noiseBuf = ac.createBuffer(1, ac.sampleRate, ac.sampleRate);
     { const d = noiseBuf.getChannelData(0); for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1; }
-    const comp = ac.createDynamicsCompressor();
+    const comp = ac.createDynamicsCompressor(); outNode = comp;
     comp.threshold.value = -16; comp.ratio.value = 3;
     master = ac.createGain(); master.gain.value = document.getElementById("volume").value / 100 * 0.9;
     djLP = ac.createBiquadFilter(); djLP.type = "lowpass"; djLP.frequency.value = 20000; djLP.Q.value = 0.9;
@@ -2965,6 +2982,7 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
     HARM.prog = null; HARM.root = 0;
     timer = setInterval(scheduler, 25);
     playing = true;
+    if (REC.supported()) { document.getElementById("recWrap").hidden = false; document.getElementById("inviteRow").hidden = false; }
     listenFrom = Date.now(); clearTimeout(moreTimer); moreTimer = setTimeout(() => { if (playing) showMore(); }, 4 * 60 * 1000);   // a few minutes in
   }
   // the invitation: once per visit, after a few minutes of listening or when someone stops after a good listen
@@ -2978,6 +2996,7 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
     document.addEventListener("keydown", e => { if (e.key === "Escape") close(); });
   }
   function stop() {
+    if (REC.on) recStop();   // the music stopping ends the take
     clearInterval(timer); timer = null; clearTimeout(moreTimer);
     if (listenFrom && Date.now() - listenFrom > 45000) setTimeout(showMore, 900);
     playing = false;
@@ -2986,6 +3005,102 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
     if (unlock) unlock.pause();
   }
 
+
+  // ---------- record ----------
+  // Everything stays in the listener's browser: the take builds up in memory and downloads to their device. Nothing is uploaded.
+  const REC = {
+    on: false, wav: false, t0: 0, timer: null, tap: null, mr: null, chunks: [], node: null, pcm: [], frames: 0, url: null,
+    LIMIT: { comp: 60 * 60, wav: 20 * 60 },   // seconds, so a long take can't run a phone out of memory
+    supported() { return !!(window.MediaRecorder || (window.AudioWorkletNode && window.AudioContext)); }
+  };
+  const recBtn = document.getElementById("rec"), recFmt = document.getElementById("recFmt"), recNote = document.getElementById("recNote");
+  if (!window.MediaRecorder) { REC.wav = true; recFmt.setAttribute("aria-pressed", "true"); recFmt.disabled = true; }
+  if (!window.AudioWorkletNode) { recFmt.hidden = true; }
+  recFmt.addEventListener("click", () => { if (REC.on) return; REC.wav = !REC.wav; recFmt.setAttribute("aria-pressed", String(REC.wav)); });
+  const mmss = s => `${String(Math.floor(s / 60)).padStart(2, "0")}:${String(Math.floor(s % 60)).padStart(2, "0")}`;
+  const mb = n => n < 1e6 ? `${Math.max(1, Math.round(n / 1e3))} KB` : `${(n / 1e6).toFixed(1)} MB`;
+  // the file says where and when: each city's local time and temperature as the take began, then the date
+  function recFileName(ext) {
+    const d = new Date(REC.t0 || Date.now()), pad = n => String(n).padStart(2, "0");
+    const date = `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+    const parts = (REC.snap || []).join(" - ");
+    return `Three Cities - ${parts} - ${date}.${ext}`.replace(/[\\/:*?"<>|]/g, "");
+  }
+  function recTap() {
+    if (!REC.tap) { REC.tap = ac.createMediaStreamDestination(); outNode.connect(REC.tap); }   // after the master filter and compressor: exactly what you hear
+    return REC.tap;
+  }
+  async function recStart() {
+    if (!playing) { await start(); syncButtons(); }
+    REC.chunks = []; REC.pcm = []; REC.frames = 0;
+    if (REC.wav) {
+      if (!REC.workletReady) {
+        const code = `registerProcessor("tc-rec", class extends AudioWorkletProcessor { process(inputs) { const i = inputs[0]; if (i && i.length) this.port.postMessage([i[0].slice(0), (i[1] || i[0]).slice(0)]); return true; } });`;
+        await ac.audioWorklet.addModule(URL.createObjectURL(new Blob([code], { type: "application/javascript" })));
+        REC.workletReady = true;
+      }
+      REC.node = new AudioWorkletNode(ac, "tc-rec", { numberOfInputs: 1, numberOfOutputs: 0, channelCount: 2, channelCountMode: "explicit" });
+      REC.node.port.onmessage = e => {   // keep 16-bit samples, interleaved, to halve the memory
+        const [l, r] = e.data, n = l.length, out = new Int16Array(n * 2);
+        for (let k = 0; k < n; k++) { out[2 * k] = Math.max(-1, Math.min(1, l[k])) * 0x7fff; out[2 * k + 1] = Math.max(-1, Math.min(1, r[k])) * 0x7fff; }
+        REC.pcm.push(out); REC.frames += n;
+      };
+      outNode.connect(REC.node);
+    } else {
+      const types = ["audio/mp4;codecs=mp4a.40.2", "audio/mp4", "audio/webm;codecs=opus", "audio/webm"];
+      const type = types.find(t => MediaRecorder.isTypeSupported && MediaRecorder.isTypeSupported(t)) || "";
+      REC.mr = new MediaRecorder(recTap().stream, Object.assign({ audioBitsPerSecond: 160000 }, type ? { mimeType: type } : {}));
+      REC.mr.ondataavailable = e => { if (e.data && e.data.size) REC.chunks.push(e.data); };
+      REC.mr.start(1000);
+    }
+    REC.on = true; REC.t0 = Date.now();
+    REC.snap = cities.map(c => `${c.name} ${localTime(c).replace(":", ".")}${c.w ? " " + fmtTemp(c.w.t, 0).replace("°", "") : ""}`);   // e.g. London 06.28 13C (Chrome rejects a degree sign in file names)
+    recBtn.setAttribute("aria-pressed", "true"); recFmt.disabled = true;
+    const tick = () => {
+      const sec = (Date.now() - REC.t0) / 1000, lim = REC.wav ? REC.LIMIT.wav : REC.LIMIT.comp;
+      recBtn.querySelector(".rec-label").textContent = `${mmss(sec)} · Stop`;
+      if (sec >= lim) recStop(`Stopped at the ${lim / 60}-minute limit.`);
+    };
+    tick(); REC.timer = setInterval(tick, 500);
+    const coarse = matchMedia("(pointer: coarse)").matches;
+    recNote.hidden = false;
+    recNote.textContent = `Recording${REC.wav ? " as WAV" : ""}. It saves to this device when you stop.${coarse ? " Keep this tab open and the screen on while recording." : ""}`;
+  }
+  function recSave(blob, ext, extra) {
+    if (REC.url) URL.revokeObjectURL(REC.url);
+    REC.url = URL.createObjectURL(blob);
+    const name = recFileName(ext), secs = (Date.now() - REC.t0) / 1000;
+    recNote.hidden = false; recNote.innerHTML = "";
+    const msg = document.createElement("span"); msg.textContent = `${extra ? extra + " " : ""}Your recording: ${mmss(secs)}, ${mb(blob.size)}.`;
+    const a = document.createElement("a"); a.href = REC.url; a.download = name; a.textContent = "Save again";
+    recNote.append(msg, a);
+    a.click();   // straight into Downloads; the link stays for a second copy or if the browser held it back
+  }
+  function recStop(extra) {
+    if (!REC.on) return;
+    REC.on = false; clearInterval(REC.timer);
+    recBtn.setAttribute("aria-pressed", "false"); recBtn.querySelector(".rec-label").textContent = "Record";
+    recFmt.disabled = !window.MediaRecorder;
+    if (REC.wav && REC.node) {
+      try { outNode.disconnect(REC.node); } catch (e) {}
+      REC.node.port.onmessage = null; REC.node = null;
+      const rate = ac.sampleRate, data = REC.frames * 4, buf = new ArrayBuffer(44), v = new DataView(buf);
+      const str = (o, t) => { for (let k = 0; k < t.length; k++) v.setUint8(o + k, t.charCodeAt(k)); };
+      str(0, "RIFF"); v.setUint32(4, 36 + data, true); str(8, "WAVE"); str(12, "fmt "); v.setUint32(16, 16, true); v.setUint16(20, 1, true); v.setUint16(22, 2, true);
+      v.setUint32(24, rate, true); v.setUint32(28, rate * 4, true); v.setUint16(32, 4, true); v.setUint16(34, 16, true); str(36, "data"); v.setUint32(40, data, true);
+      const blob = new Blob([buf, ...REC.pcm], { type: "audio/wav" }); REC.pcm = [];
+      recSave(blob, "wav", extra);
+    } else if (REC.mr) {
+      const mr = REC.mr; REC.mr = null;
+      mr.onstop = () => {
+        const type = mr.mimeType || (REC.chunks[0] && REC.chunks[0].type) || "audio/webm";
+        const blob = new Blob(REC.chunks, { type }); REC.chunks = [];
+        recSave(blob, /mp4|m4a|aac/.test(type) ? "m4a" : "webm", extra);
+      };
+      mr.stop();
+    }
+  }
+  recBtn.addEventListener("click", () => { if (REC.on) recStop(); else recStart().catch(err => { REC.on = false; recNote.hidden = false; recNote.textContent = "Recording didn't start in this browser. Try Chrome, Safari or Firefox."; console.warn(err); }); });
   const playBtn = document.getElementById("play");
   const fab = document.getElementById("fab");
   function syncButtons() {
