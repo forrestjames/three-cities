@@ -3283,6 +3283,9 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
       GROOVE.stutter = phrase !== 3 && Math.random() < (0.1 + wx.unsettled * 0.3) * wake
         ? { from: [4, 8, 10][Math.floor(Math.random() * 3)], len: Math.random() < 0.5 ? 2 : 3 } : null;
       GROOVE.dropKick = phrase === 3 && Math.random() < 0.35 * wake;
+      // ratchets are a treat, not a habit: at most one hat and one snare ratchet in a bar, and most bars have none
+      GROOVE.hatRatchet = Math.random() < (0.1 + wx.gust * 0.25) * wake ? [7, 11, 13, 15][Math.floor(Math.random() * 4)] : -1;
+      GROOVE.snareRatchet = phrase !== 3 && Math.random() < (0.03 + wx.gust * 0.08) * wake;
     }
     let src = j;
     if (GROOVE.stutter && j >= 12) src = GROOVE.stutter.from + ((j - 12) % GROOVE.stutter.len);   // beat repeat
@@ -3294,13 +3297,13 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
     else if (r.kick[src] && !(GROOVE.dropKick && j >= 8) && Math.random() > sl * 0.7 + hush) drumHit("kick", t, accent * soft);
     if (fill && Math.random() < (0.85 * wake + 0.15) * (1 - hush)) {                      // a fill into the next phrase
       const v = 0.45 + (j - 12) * 0.15;
-      if (j >= 14 && Math.random() < 0.6) ratchet("snare", t, v, j === 15 ? 4 : 2); else drumHit("snare", t, v);
+      if (j >= 14 && Math.random() < 0.35) ratchet("snare", t, v, j === 15 ? 4 : 2); else drumHit("snare", t, v);
     } else if (r.snare[src] && Math.random() > sl * 0.5 + hush * 0.5) {
-      if (Math.random() < 0.06 + wx.gust * 0.12) ratchet("snare", t, 0.8, 2); else drumHit("snare", t, 0.9);
+      if (GROOVE.snareRatchet && j >= 8) { GROOVE.snareRatchet = false; ratchet("snare", t, 0.8, 2); } else drumHit("snare", t, 0.9);
     } else if (j % 2 && Math.random() < wx.hum * 0.14 * wake) drumHit("snare", t, 0.22);   // ghost note
     if (r.hat[src] && Math.random() > sl * 0.7 + hush * 0.25) {                                        // in deep night, just the odd soft hat
       const v = (j % 2 ? 0.55 : 0.85) * (0.8 + Math.random() * 0.2) * (1 - 0.3 * sl);
-      if (Math.random() < (0.05 + wx.gust * 0.25) * wake) ratchet("hat", t, v, Math.random() < 0.6 ? 2 : 3); else drumHit("hat", t, v);
+      if (j === GROOVE.hatRatchet) ratchet("hat", t, v, Math.random() < 0.6 ? 2 : 3); else drumHit("hat", t, v);
     }
     if (r.rim[src] && Math.random() > sl * 0.6 + hush * 0.4) drumHit("rim", t, 0.6 + Math.random() * 0.2);
     GROOVE.queue.push({ t, j });
