@@ -3018,9 +3018,9 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
             g.classList.toggle("mute-" + r, GROOVE.mute[r]);
             const t = (GROOVE.mute[r] ? "Unmute " : "Mute ") + l.textContent.toLowerCase(); l.setAttribute("aria-label", t); l.title = t;
           });
-          // and two little send switches beside it: H to the hall, D to the delay
+          // and two little send switches beside it: R to the reverb, D to the delay (ids keep their old "h" so share links still work)
           const cell = document.createElement("span"); cell.className = "gv-cell"; cell.appendChild(l);
-          [["h", "H", "hall"], ["d", "D", "delay"]].forEach(([k, letter, name]) => {
+          [["h", "R", "reverb"], ["d", "D", "delay"]].forEach(([k, letter, name]) => {
             const b = document.createElement("button"); b.type = "button"; b.className = "gv-send gv-send-" + k; b.id = "g" + k + "-" + r; b.textContent = letter;
             b.setAttribute("aria-pressed", "false"); b.setAttribute("aria-label", `Send ${r} to the ${name}`); b.title = `Send ${r} to the ${name}`;
             b.addEventListener("click", () => { GROOVE.send[r][k] = !GROOVE.send[r][k]; b.setAttribute("aria-pressed", String(GROOVE.send[r][k])); });
