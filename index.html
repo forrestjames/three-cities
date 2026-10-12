@@ -1903,6 +1903,7 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
   }
 
   // ---------- sound ----------
+  const MIX_MAKEUP = 1.25;   // a little lift after the glue compressor (which adds its own makeup too)
   let ac = null, master, reverb, delay, playing = false, outNode = null;   // outNode: the very end of the chain, where Record listens
   const fx = {};
   const val = id => Number(document.getElementById(id).value);
@@ -2357,12 +2358,18 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
     ac = new (window.AudioContext || window.webkitAudioContext)();
     noiseBuf = ac.createBuffer(1, ac.sampleRate, ac.sampleRate);
     { const d = noiseBuf.getChannelData(0); for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1; }
-    const comp = ac.createDynamicsCompressor(); outNode = comp;
-    comp.threshold.value = -16; comp.ratio.value = 3;
+    // Mix bus: a gentle glue compressor pulls everything together, makeup gain brings it up to a
+    // healthy level, and a fast limiter at the end catches the peaks so it never clips.
+    const comp = ac.createDynamicsCompressor();
+    comp.threshold.value = -26; comp.knee.value = 12; comp.ratio.value = 2.5; comp.attack.value = 0.03; comp.release.value = 0.3;
+    const makeup = ac.createGain(); makeup.gain.value = MIX_MAKEUP;
+    const limiter = ac.createDynamicsCompressor();
+    limiter.threshold.value = -4.5; limiter.knee.value = 0; limiter.ratio.value = 20; limiter.attack.value = 0.002; limiter.release.value = 0.12;
+    comp.connect(makeup).connect(limiter); outNode = limiter;
     master = ac.createGain(); master.gain.value = document.getElementById("volume").value / 100 * 0.9;
     djLP = ac.createBiquadFilter(); djLP.type = "lowpass"; djLP.frequency.value = 20000; djLP.Q.value = 0.9;
     djHP = ac.createBiquadFilter(); djHP.type = "highpass"; djHP.frequency.value = 20; djHP.Q.value = 0.9;
-    master.connect(djLP).connect(djHP).connect(comp).connect(ac.destination);
+    master.connect(djLP).connect(djHP).connect(comp); limiter.connect(ac.destination);
     applyDJ();
     buildEffects();
     setupGroove();
