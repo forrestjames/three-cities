@@ -116,7 +116,7 @@ kbd { display: inline-block; min-width: 26px; text-align: center; border: 1.5px 
     <li><a href="#sample">Your own sample</a></li>
     <li><a href="#rack">The rack</a></li>
     <li><a href="#drums">The rhythm section</a></li>
-    <li><a href="#fx">Hall and delay</a></li>
+    <li><a href="#fx">Effects</a></li>
     <li><a href="#cities">Your own cities</a></li>
     <li><a href="#record">Recording and sharing</a></li>
     <li><a href="#midi">MIDI out</a></li>
@@ -293,7 +293,7 @@ kbd { display: inline-block; min-width: 26px; text-align: center; border: 1.5px 
     <tr><th>Module</th><th>Controls</th></tr>
     <tr><td>Play</td><td>Tempo and volume. Tempo is the speed with every city awake. The display shows what you're actually hearing, and the lamp blinks on the beat.</td></tr>
     <tr><td>Harmony</td><td>Key and scale for all three cities. Seventeen scales, from minor pentatonic to Japanese yo and Okinawan ryukyu. Change them and the cities follow from their next note.</td></tr>
-    <tr><td>Chords</td><td>Its own panel, next to Harmony. Press the lamp to switch on the chord bed: slow, soft chords from the shared progression, underneath everything. Each chord swells in, holds for four bars and fades as the next arrives. The knob sets how loud it sits, and Chord sound picks the voice: Warm pad, Glass (pure, slowly shimmering sines), Air (breath through a pitched filter), Tape strings (an old string machine on a tired tape), Strings, Choir, Soft organ, Bowed (each chord blooms open like a long bow stroke) or Shimmer (octaves above, mostly in the hall). As the cities fall asleep the bed gets darker and quieter too.</td></tr>
+    <tr><td>Chords</td><td>Its own panel, next to Harmony. Press the lamp to switch on the chord bed: slow, soft chords from the shared progression, underneath everything. Each chord swells in, holds for four bars and fades as the next arrives. The knob sets how loud it sits, and Chord sound picks the voice: Bowed (the default, each chord blooms open like a long bow stroke), Warm pad, Glass (pure, slowly shimmering sines), Air (breath through a pitched filter), Tape strings (an old string machine on a tired tape), Strings, Choir, Soft organ or Shimmer (octaves above, mostly in the hall). As the cities fall asleep the bed gets darker and quieter too.</td></tr>
     <tr><td>Filter</td><td>A DJ-style filter on the whole mix. Left is low-pass, right is high-pass, 12 o'clock is off.</td></tr>
     <tr><td>MIDI</td><td>Sends everything to your synths. See <a href="#midi">MIDI out</a>.</td></tr>
   </table>
@@ -323,18 +323,39 @@ kbd { display: inline-block; min-width: 26px; text-align: center; border: 1.5px 
 
 <section class="sec" id="fx">
   <span class="sec-no">08</span>
-  <h2>Hall and delay</h2>
-  <p class="kicker">Two pedals on the floor. Open Effects to see them.</p>
+  <h2>Effects</h2>
+  <p class="kicker">Seven pedals on the floor. Open Effects to see them. Each lamp switches its pedal on.</p>
   <div class="two">
     <div>
       <h3>Hall</h3>
       <p>A big reverb, 4.5 seconds by default. At night it stretches and darkens with the cities' sleep, up to about seven seconds. Cloudy cities get more of it.</p>
+      <p><b>Shimmer</b> sends the tail up an octave and back into the hall, so it blooms upward like light. It shines most under clear skies.</p>
       <p><b>Freeze</b> holds whatever is in the hall and lets it ring forever. The switch is deliberately chunky.</p>
     </div>
     <div>
       <h3>Delay</h3>
-      <p>Single, ping-pong or three taps, timed to the tempo from 1/16 to dotted 1/4.</p>
+      <p>Single, ping-pong, three taps or tape, timed to the tempo from 1/16 to dotted 1/4. Tape is an old echo machine: each repeat a little darker, a little rougher, wobbling as it goes.</p>
       <p><b>Freeze</b> catches the echoes and keeps them going round, so you can play over a loop the weather made.</p>
+    </div>
+    <div>
+      <h3>Phaser</h3>
+      <p>A slow swirl over the whole mix. Mix and Depth are yours. The speed is not: the wind sets it. Still air barely turns. A gale spins.</p>
+    </div>
+    <div>
+      <h3>Radio</h3>
+      <p>Makes a city sound like it's coming through a little transistor radio. Amount sets a touch for everyone. Distance adds more for the cities you've dragged far away on the memory map, so far away sounds far away.</p>
+    </div>
+    <div>
+      <h3>Dust</h3>
+      <p>Tape hiss and vinyl crackle underneath everything. When it rains, there's more of it.</p>
+    </div>
+    <div>
+      <h3>Pump</h3>
+      <p>Sidechain. Every kick ducks the cities and the chords for a moment, then lets them swell back. Depth is how far they dip. Release is how slowly they come back.</p>
+    </div>
+    <div>
+      <h3>Storm</h3>
+      <p>One knob for bad weather. Turn it up and the mix darkens, roughens, swirls through the phaser, gathers dust and echoes longer. Light the lamp and the storm follows the sky instead: low pressure and strong gusts in the stormiest city turn it up on their own.</p>
     </div>
   </div>
 </section>
@@ -455,6 +476,7 @@ kbd { display: inline-block; min-width: 26px; text-align: center; border: 1.5px 
   <p class="kicker">This manual is kept up to date with the instrument. Newest first.</p>
   <dl class="log">
     <dt>12 October 2026</dt>
+    <dd>Five new pedals: Phaser (its speed set by the wind), Radio (far away cities sound far away), Dust (hiss and crackle, more in the rain), Pump (the kick ducks everything, sidechain style) and Storm (one knob for bad weather, or let the sky turn it). Shimmer on the hall. Tape on the delay. The chord bed now starts on Bowed. And a little manual cover on the front page, under Press and contact, so you can find this.</dd>
     <dd>Chords moved into its own panel. The sound menu is sorted into families. Copenhagen now starts on soft mallets, with its hits from humidity like the others.</dd>
     <dd>Chord bed: switch on Chords in the Harmony module for slow chords underneath everything, with nine pad sounds to choose from. Four tuned percussion sounds: hand drum, woodblock, tongue drum and clave. Your sample's start points now hold while the loop repeats and move on with the wind, on an even bar line.</dd>
     <dd>Your own sample: load or drop a sound onto any city, and the loop's steps shape its velocity, filter, start point and pitch. This manual.</dd>
