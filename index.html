@@ -612,6 +612,9 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
 .samp-shape button { min-height: 30px; padding: 0 10px; border-radius: 15px; border: 1px solid var(--line); background: none; color: var(--ink-dim); font: 11px var(--mono); cursor: pointer; }
 .samp-shape button[aria-pressed="true"] { border-color: var(--accent); color: var(--ink); background: color-mix(in srgb, var(--accent) 22%, transparent); }
 .samp-hint { font-size: 11px; color: var(--ink-faint); }
+.samp-load.nudge { border-color: var(--accent); background: color-mix(in srgb, var(--accent) 30%, transparent); animation: sampNudge 1.2s ease-in-out 3; }
+@keyframes sampNudge { 50% { box-shadow: 0 0 0 6px color-mix(in srgb, var(--accent) 35%, transparent); } }
+@media (prefers-reduced-motion: reduce) { .samp-load.nudge { animation: none; } }
 .city.drop { outline: 2px dashed var(--accent); outline-offset: -6px; }
 @media (pointer: coarse) { .samp-shape button, .samp-load { min-height: 40px; } }
 
@@ -1215,6 +1218,7 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
   // ---------- city cards ----------
   const wrap = document.getElementById("cities");
   // Simple cards by default; the sliders icon on any card opens the rest of the controls on every city at once
+  const SAMP_ACCEPT = matchMedia("(pointer: coarse)").matches ? "" : 'accept="audio/*,.mp3,.wav,.m4a,.aac,.aif,.aiff,.ogg,.flac,.caf"';
   function setMore(open) {
     wrap.classList.toggle("open", open);
     wrap.querySelectorAll(".more-btn").forEach(b => {
@@ -1281,7 +1285,7 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
           ${[-2, -1, 0, 1, 2].map(o => `<button type="button" data-oct="${o}" aria-pressed="${o === c.octave}">${o > 0 ? "+" + o : o < 0 ? "\u2212" + -o : "0"}</button>`).join("")}
         </div>
         <div class="samp" data-r="samp" ${c.voice === "sample" ? "" : "hidden"} style="grid-column: 1 / -1">
-          <div class="samp-head"><span class="samp-name" data-r="sampName">No sample yet</span><button type="button" class="samp-load" data-r="sampLoad">Load a sound</button><input type="file" accept="audio/*" data-r="sampFile" hidden></div>
+          <div class="samp-head"><span class="samp-name" data-r="sampName">No sample yet</span><button type="button" class="samp-load" data-r="sampLoad">Load a sound</button><input type="file" ${SAMP_ACCEPT} data-r="sampFile" hidden></div>
           <div class="samp-shape" role="group" aria-label="What the steps change">
             <span class="samp-label">Steps shape</span>
             <button type="button" data-shape="vel" aria-pressed="true" title="Loud at the top of the loop, softer towards the middle">Velocity</button>
@@ -1289,7 +1293,7 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
             <button type="button" data-shape="start" aria-pressed="true" title="Each step plays from further into your sound, and the whole pattern drifts on with the wind every lap">Start</button>
             <button type="button" data-shape="pitch" aria-pressed="true" title="Tuned to the melody, with your sound's own pitch as middle C. Off plays it as recorded">Pitch</button>
           </div>
-          <div class="samp-hint">Drop a sound anywhere on this card, or load one. It stays on your device.</div>
+          <div class="samp-hint">${SAMP_ACCEPT ? "Drop a sound anywhere on this card, or load one." : "Tap Load a sound to pick one from your phone: MP3, WAV, M4A and most others."} It stays on your device.</div>
         </div>
         <div class="fxsends">
           <button type="button" class="fxsend" aria-pressed="true" data-r="sendRev">Reverb</button>
@@ -1325,7 +1329,7 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
     el.querySelector(`#${id}-sound`).addEventListener("change", e => {
       c.voice = e.target.value; if (ac && NEEDS[c.voice]) loadSamples(NEEDS[c.voice]); applySound(c);
       c.ref.samp.hidden = c.voice !== "sample";
-      if (c.voice === "sample" && !c.samp && e.isTrusted) c.ref.sampFile.click();   // first time: straight to the file picker (only when a person chose it, not a shared link)
+      if (c.voice === "sample" && e.isTrusted) showSampPanel(c, !c.samp);   // a person chose it (not a shared link): open the panel and bring it into view
     });
     // Your sample: a sound of your own, cut up and shaped by where each note falls in the loop
     c.sampShape = c.sampShape || { vel: true, filter: true, start: true, pitch: true };
@@ -1333,7 +1337,7 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
       b.setAttribute("aria-pressed", String(c.sampShape[b.dataset.shape]));
       b.addEventListener("click", () => { const k = b.dataset.shape; c.sampShape[k] = !c.sampShape[k]; b.setAttribute("aria-pressed", String(c.sampShape[k])); });
     });
-    c.ref.sampLoad.addEventListener("click", () => c.ref.sampFile.click());
+    c.ref.sampLoad.addEventListener("click", () => { c.ref.sampLoad.classList.remove("nudge"); c.ref.sampFile.click(); });
     c.ref.sampFile.addEventListener("change", e => { const f = e.target.files && e.target.files[0]; if (f) loadUserSample(c, f); e.target.value = ""; });
     el.addEventListener("dragover", e => { if ([...(e.dataTransfer?.items || [])].some(i => i.kind === "file")) { e.preventDefault(); el.classList.add("drop"); } });
     el.addEventListener("dragleave", e => { if (!el.contains(e.relatedTarget)) el.classList.remove("drop"); });
@@ -2419,6 +2423,15 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
     });
   }
   // Load a listener's own sound into a city. Decoded here, normalised, and kept in memory only.
+  // Phones only open the file picker from a real tap, so choosing "Your sample…" opens the panel, scrolls to it and lights up Load a sound.
+  // On a computer the picker opens straight away too.
+  function showSampPanel(c, pick) {
+    setMore(true); c.ref.samp.hidden = false;
+    requestAnimationFrame(() => c.ref.samp.scrollIntoView({ behavior: "smooth", block: "center" }));
+    if (!pick) return;
+    c.ref.sampLoad.classList.remove("nudge"); void c.ref.sampLoad.offsetWidth; c.ref.sampLoad.classList.add("nudge");
+    if (!matchMedia("(pointer: coarse)").matches) { try { c.ref.sampFile.click(); } catch (e) {} }
+  }
   async function loadUserSample(c, file) {
     if (!ac) setupAudio();
     c.ref.sampName.textContent = "Loading " + file.name + "…";
@@ -2429,7 +2442,7 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
       c.samp = { buf, name: file.name.replace(/\.[^.]+$/, ""), norm: peak > 0.001 ? 0.9 / peak : 1 };
       c.ref.sampName.textContent = `${c.samp.name} · ${buf.duration < 10 ? buf.duration.toFixed(1) : Math.round(buf.duration)} s`;
       c.voice = "sample"; { const sel = c.el.querySelector("select[id$='-sound']"); if (sel) sel.value = "sample"; } c.ref.samp.hidden = false; applySound(c);
-    } catch (err) { c.ref.sampName.textContent = "Couldn't read that file. Try a WAV, MP3 or M4A."; }
+    } catch (err) { c.ref.sampName.textContent = "Couldn't read that file. Try a WAV, MP3 or M4A."; c.ref.sampLoad.classList.add("nudge"); }
   }
   const SAMPLE_USER_G = 0.32;
   const PERC_G = { handdrum: 0.36, woodblock: 0.3, tongue: 0.2, clave: 0.6 };
