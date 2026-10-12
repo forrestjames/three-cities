@@ -555,18 +555,30 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
 @media (prefers-reduced-motion: reduce) { .more-card { transition: opacity .3s; transform: none; } }
 
 /* record: captures what's playing and saves it straight to the listener's device */
-.rec-wrap { display: inline-flex; align-items: center; gap: 6px; }
+.rec-wrap { position: relative; display: inline-flex; }
+.rec-split { display: inline-flex; align-items: stretch; min-height: 40px; border-radius: 20px; border: 1px solid rgba(243,236,230,0.45); background: rgba(16,8,6,0.35); overflow: hidden; }
+.rec-split button { background: none; border: 0; color: var(--ink); font: 12px var(--mono); letter-spacing: 0.08em; cursor: pointer; transition: background 0.2s, color 0.2s; }
+.rec-main { display: inline-flex; align-items: center; gap: 8px; padding: 0 12px 0 16px; font-variant-numeric: tabular-nums; }
+.rec-caret { display: grid; place-items: center; width: 36px; border-left: 1px solid rgba(243,236,230,0.3) !important; }
+.rec-caret svg { width: 12px; height: 12px; transition: transform 0.2s; }
+.rec-caret[aria-expanded="true"] svg { transform: rotate(180deg); }
+.rec-split button:hover:not(:disabled) { background: rgba(243,236,230,0.14); }
+.rec-caret:disabled { opacity: 0.35; cursor: default; }
+.rec-wrap:has(.rec-main[aria-pressed="true"]) .rec-split { border-color: #e0604f; }
+.rec-menu { position: absolute; z-index: 30; top: calc(100% + 8px); left: 50%; transform: translateX(-50%); width: 250px; display: flex; flex-direction: column; padding: 6px; background: rgba(26,18,16,0.98); border: 1px solid var(--line); box-shadow: 0 10px 30px rgba(0,0,0,0.5); text-align: left; }
+.rec-menu button { display: grid; gap: 2px; padding: 10px 12px 10px 34px; background: none; border: 0; color: var(--ink); text-align: left; cursor: pointer; position: relative; font: 12px var(--mono); }
+.rec-menu button:hover { background: rgba(243,236,230,0.08); }
+.rec-menu button b { font-weight: 400; letter-spacing: 0.06em; }
+.rec-menu button small { color: var(--ink-dim); font-size: 11px; }
+.rec-menu button[aria-pressed="true"]::before { content: ""; position: absolute; left: 13px; top: 15px; width: 8px; height: 8px; border-radius: 50%; background: var(--ink); }
+.rec-menu button[aria-pressed="false"]::before { content: ""; position: absolute; left: 12px; top: 14px; width: 8px; height: 8px; border-radius: 50%; border: 1px solid var(--ink-dim); }
+@media (pointer: coarse) { .rec-split { min-height: 44px; } .rec-caret { width: 44px; } .rec-menu button { min-height: 48px; } }
 .rec-dot { width: 9px; height: 9px; border-radius: 50%; background: #e0604f; flex: none; }
-.rec-btn[aria-pressed="true"] { border-color: #e0604f; }
-.rec-btn[aria-pressed="true"] .rec-dot { animation: recBlink 1.2s steps(2, jump-none) infinite; }
+.rec-main[aria-pressed="true"] .rec-dot { animation: recBlink 1.2s steps(2, jump-none) infinite; }
 @keyframes recBlink { 50% { opacity: 0.25; } }
-.rec-fmt { min-height: 32px; padding: 0 10px; border-radius: 16px; border: 1px solid rgba(243,236,230,0.45); background: rgba(16,8,6,0.35); color: var(--ink-dim); font: 11px var(--mono); letter-spacing: 0.1em; cursor: pointer; }
-.rec-fmt[aria-pressed="true"] { color: var(--ink); border-color: var(--ink); }
-.rec-fmt:disabled { opacity: 0.55; cursor: default; }
 .rec-note { font-size: 12px; color: var(--ink); text-shadow: 0 1px 8px rgba(0,0,0,0.6); letter-spacing: 0.04em; display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 10px; }
 .rec-note a, .rec-note button { color: var(--ink); background: rgba(16,8,6,0.35); border: 1px solid var(--ink-dim); text-shadow: none; padding: 6px 12px; font: 12px var(--mono); letter-spacing: 0.08em; text-decoration: none; cursor: pointer; }
-@media (pointer: coarse) { .rec-fmt { min-height: 40px; min-width: 52px; } }
-@media (prefers-reduced-motion: reduce) { .rec-btn[aria-pressed="true"] .rec-dot { animation: none; } }
+@media (prefers-reduced-motion: reduce) { .rec-main[aria-pressed="true"] .rec-dot { animation: none; } }
 </style>
 </head>
 <body>
@@ -589,7 +601,7 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
     </div>
     <div class="invite-row" id="inviteRow" hidden>
 <button class="share-btn share" id="share" type="button" hidden title="Share these cities, with your sounds and settings"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 15V4M8 8l4-4 4 4" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/><path d="M7 11H5.5A1.5 1.5 0 0 0 4 12.5v6A1.5 1.5 0 0 0 5.5 20h13a1.5 1.5 0 0 0 1.5-1.5v-6a1.5 1.5 0 0 0-1.5-1.5H17" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>Share</button>
-      <span class="rec-wrap" id="recWrap" hidden><button class="share-btn rec-btn" id="rec" type="button" aria-pressed="false" title="Record what's playing and save it to your device"><i class="rec-dot" aria-hidden="true"></i><span class="rec-label">Record</span></button><button class="rec-fmt" id="recFmt" type="button" aria-pressed="false" title="Save as a WAV file instead: full quality, about 10 MB a minute">WAV</button></span>
+      <span class="rec-wrap" id="recWrap" hidden><span class="rec-split"><button class="rec-main" id="rec" type="button" aria-pressed="false" title="Record what's playing and save it to your device"><i class="rec-dot" aria-hidden="true"></i><span class="rec-label">Record</span></button><button class="rec-caret" id="recFmt" type="button" aria-haspopup="true" aria-expanded="false" aria-controls="recMenu" aria-label="Recording format" title="Recording format"><svg viewBox="0 0 12 12" aria-hidden="true"><path d="M3 4.5l3 3 3-3" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg></button></span><span class="rec-menu" id="recMenu" role="group" aria-label="Recording format" hidden><button type="button" data-fmt="comp" aria-pressed="true"><b class="rec-comp-name">Compressed (.m4a)</b><small>Small, good for sharing</small></button><button type="button" data-fmt="wav" aria-pressed="false"><b>WAV</b><small>Full quality, about 10 MB a minute</small></button></span></span>
       <button class="mine-toggle" id="mineToggle" type="button" aria-expanded="false" aria-controls="mine">Try your own cities <span aria-hidden="true">+</span></button>
       <a class="back-mine" id="backMine" href="./" hidden>Back to Forrest's cities</a>
     </div>
@@ -3013,10 +3025,22 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
     LIMIT: { comp: 60 * 60, wav: 20 * 60 },   // seconds, so a long take can't run a phone out of memory
     supported() { return !!(window.MediaRecorder || (window.AudioWorkletNode && window.AudioContext)); }
   };
-  const recBtn = document.getElementById("rec"), recFmt = document.getElementById("recFmt"), recNote = document.getElementById("recNote");
-  if (!window.MediaRecorder) { REC.wav = true; recFmt.setAttribute("aria-pressed", "true"); recFmt.disabled = true; }
-  if (!window.AudioWorkletNode) { recFmt.hidden = true; }
-  recFmt.addEventListener("click", () => { if (REC.on) return; REC.wav = !REC.wav; recFmt.setAttribute("aria-pressed", String(REC.wav)); });
+  const recBtn = document.getElementById("rec"), recFmt = document.getElementById("recFmt"), recNote = document.getElementById("recNote"), recMenu = document.getElementById("recMenu");
+  const compExt = window.MediaRecorder && MediaRecorder.isTypeSupported && (MediaRecorder.isTypeSupported("audio/mp4") || MediaRecorder.isTypeSupported("audio/mp4;codecs=mp4a.40.2")) ? "m4a" : "webm";
+  recMenu.querySelector(".rec-comp-name").textContent = `Compressed (.${compExt})`;
+  function recIdleLabel() { recBtn.querySelector(".rec-label").textContent = REC.wav ? "Record · WAV" : "Record"; }
+  function setRecFmt(wav) {
+    REC.wav = wav;
+    recMenu.querySelectorAll("button").forEach(b => b.setAttribute("aria-pressed", String((b.dataset.fmt === "wav") === wav)));
+    if (!REC.on) recIdleLabel();
+  }
+  function recMenuOpen(open) { recMenu.hidden = !open; recFmt.setAttribute("aria-expanded", String(open)); if (open) recMenu.querySelector('[aria-pressed="true"]').focus(); }
+  if (!window.MediaRecorder) { setRecFmt(true); recMenu.querySelector('[data-fmt="comp"]').disabled = true; }
+  if (!window.AudioWorkletNode) { recMenu.querySelector('[data-fmt="wav"]').disabled = true; recFmt.hidden = true; }
+  recFmt.addEventListener("click", e => { e.stopPropagation(); if (!REC.on) recMenuOpen(recMenu.hidden); });
+  recMenu.addEventListener("click", e => { const b = e.target.closest("button[data-fmt]"); if (!b || b.disabled) return; setRecFmt(b.dataset.fmt === "wav"); recMenuOpen(false); recFmt.focus(); });
+  document.addEventListener("click", e => { if (!recMenu.hidden && !e.target.closest(".rec-wrap")) recMenuOpen(false); });
+  document.addEventListener("keydown", e => { if (e.key === "Escape" && !recMenu.hidden) { recMenuOpen(false); recFmt.focus(); } });
   const mmss = s => `${String(Math.floor(s / 60)).padStart(2, "0")}:${String(Math.floor(s % 60)).padStart(2, "0")}`;
   const mb = n => n < 1e6 ? `${Math.max(1, Math.round(n / 1e3))} KB` : `${(n / 1e6).toFixed(1)} MB`;
   // the file says where and when: each city's local time and temperature as the take began, then the date
@@ -3055,10 +3079,10 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
     }
     REC.on = true; REC.t0 = Date.now();
     REC.snap = cities.map(c => `${c.name} ${localTime(c).replace(":", ".")}${c.w ? " " + fmtTemp(c.w.t, 0).replace("°", "") : ""}`);   // e.g. London 06.28 13C (Chrome rejects a degree sign in file names)
-    recBtn.setAttribute("aria-pressed", "true"); recFmt.disabled = true;
+    recBtn.setAttribute("aria-pressed", "true"); recFmt.disabled = true; recMenuOpen(false);
     const tick = () => {
       const sec = (Date.now() - REC.t0) / 1000, lim = REC.wav ? REC.LIMIT.wav : REC.LIMIT.comp;
-      recBtn.querySelector(".rec-label").textContent = `${mmss(sec)} · Stop`;
+      recBtn.querySelector(".rec-label").textContent = `Stop · ${mmss(sec)} · ${REC.wav ? "WAV" : compExt.toUpperCase()}`;
       if (sec >= lim) recStop(`Stopped at the ${lim / 60}-minute limit.`);
     };
     tick(); REC.timer = setInterval(tick, 500);
@@ -3079,8 +3103,8 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
   function recStop(extra) {
     if (!REC.on) return;
     REC.on = false; clearInterval(REC.timer);
-    recBtn.setAttribute("aria-pressed", "false"); recBtn.querySelector(".rec-label").textContent = "Record";
-    recFmt.disabled = !window.MediaRecorder;
+    recBtn.setAttribute("aria-pressed", "false"); recIdleLabel();
+    recFmt.disabled = false;
     if (REC.wav && REC.node) {
       try { outNode.disconnect(REC.node); } catch (e) {}
       REC.node.port.onmessage = null; REC.node = null;
