@@ -117,7 +117,7 @@ kbd { display: inline-block; min-width: 26px; text-align: center; border: 1.5px 
     <li><a href="#sample">Your own sample</a></li>
     <li><a href="#rack">The rack</a></li>
     <li><a href="#drums">The rhythm section</a></li>
-    <li><a href="#fx">Hall and delay</a></li>
+    <li><a href="#fx">Reverb and delay</a></li>
     <li><a href="#cities">Your own cities</a></li>
     <li><a href="#record">Recording and sharing</a></li>
     <li><a href="#midi">MIDI out</a></li>
@@ -183,7 +183,7 @@ kbd { display: inline-block; min-width: 26px; text-align: center; border: 1.5px 
     <div><svg viewBox="0 0 44 44"><path d="M22 6v22"/><circle cx="22" cy="33" r="6"/><path d="M28 12h4M28 18h4M28 24h4"/></svg><b>Temperature</b><span>Sets the number of steps. 21°C is a 21-step loop. Below zero it uses the number without the minus and drops an octave.</span></div>
     <div><svg viewBox="0 0 44 44"><path d="M22 8c6 9 10 14 10 19a10 10 0 0 1-20 0c0-5 4-10 10-19z"/></svg><b>Humidity, wind, cloud, rain</b><span>One of these sets how many hits land in the loop. You choose which in the card's More panel. Humidity is the default.</span></div>
     <div><svg viewBox="0 0 44 44"><circle cx="22" cy="22" r="7"/><path d="M22 5v5M22 34v5M5 22h5M34 22h5M10 10l3.5 3.5M30.5 30.5L34 34M10 34l3.5-3.5M30.5 13.5L34 10"/></svg><b>The sun</b><span>Its height opens each city's filter. After sunset a city drifts off to sleep: softer, slower, fewer notes. It stirs again before dawn.</span></div>
-    <div><svg viewBox="0 0 44 44"><path d="M12 30h20a7 7 0 0 0 0-14 10 10 0 0 0-19-2 8 8 0 0 0-1 16z"/></svg><b>Cloud</b><span>Cloudier cities sound foggier, with more of the hall reverb on them.</span></div>
+    <div><svg viewBox="0 0 44 44"><path d="M12 30h20a7 7 0 0 0 0-14 10 10 0 0 0-19-2 8 8 0 0 0-1 16z"/></svg><b>Cloud</b><span>Cloudier cities sound foggier, with more of the reverb on them.</span></div>
     <div><svg viewBox="0 0 44 44"><path d="M6 16h22a5 5 0 1 0-5-5M6 24h30a5 5 0 1 1-5 5M6 32h14"/></svg><b>Wind and gusts</b><span>Wind makes melodies leap further and sets how fast each city's filter breathes. Gusts make the filter swell and the hats and snares ratchet.</span></div>
     <div><svg viewBox="0 0 44 44"><circle cx="22" cy="24" r="13"/><path d="M22 24l7-6"/><path d="M14 14l2 2M30 14l-2 2"/></svg><b>Air pressure</b><span>Like a barometer you can hear. High pressure moves in slow notes, ordinary weather in 1/16s, and the low pressure before a storm gets restless.</span></div>
     <div><svg viewBox="0 0 44 44"><path d="M12 22h20a7 7 0 0 0 0-14 10 10 0 0 0-19-2 8 8 0 0 0-1 16z"/><path d="M14 28l-2 6M22 28l-2 6M30 28l-2 6"/></svg><b>Chance of rain</b><span>Thins a city's line. Below 10% nothing changes. At 100% about a third of the notes rest.</span></div>
@@ -249,7 +249,7 @@ kbd { display: inline-block; min-width: 26px; text-align: center; border: 1.5px 
     <tr><td>Density</td><td>Scales the number of hits up or down from what the weather says.</td></tr>
     <tr><td>Chance</td><td>The chance each hit actually plays. Lower it for a looser, breathier line.</td></tr>
     <tr><td>Octave</td><td>Moves the city from two octaves down to two up.</td></tr>
-    <tr><td>Reverb, Delay</td><td>Sends this city to the hall and the delay. Each visit starts with a random mix, so both pedals get used.</td></tr>
+    <tr><td>Reverb, Delay</td><td>Sends this city to the reverb and the delay. Each visit starts with a random mix, so both pedals get used.</td></tr>
     <tr><td>Swap city</td><td>Type a place, or roll the dice, to replace this city.</td></tr>
   </table>
 
@@ -317,7 +317,7 @@ kbd { display: inline-block; min-width: 26px; text-align: center; border: 1.5px 
     <tr><th>Control</th><th>What it does</th></tr>
     <tr><td>Kit</td><td>Minimal, Soft, Lo-fi, 808, Jazz (with brushes and swing), CR-78, Felt, Mallets (they follow the key), Rain and Minimal techno.</td></tr>
     <tr><td>Mutes</td><td>Tap a row's name to mute kick, snare, hat or rim. Or use <kbd>A</kbd> <kbd>S</kbd> <kbd>D</kbd> <kbd>F</kbd>.</td></tr>
-    <tr><td>H and D</td><td>Little switches on each drum row that send it to the Hall or the Delay. Snare to the hall, hat to the delay: you get the idea.</td></tr>
+    <tr><td>H and D</td><td>Little switches on each drum row that send it to the reverb or the delay. Snare to the reverb, hat to the delay: you get the idea.</td></tr>
     <tr><td>Volume, Filter</td><td>Level and tone. Auto sweeps the filter open as the cities head towards landing on the one together.</td></tr>
     <tr><td>Chance</td><td>Probability for the whole kit. At 60% some hits simply don't happen, and it starts to sound like a person.</td></tr>
   </table>
@@ -326,17 +326,35 @@ kbd { display: inline-block; min-width: 26px; text-align: center; border: 1.5px 
 
 <section class="sec" id="fx">
   <span class="sec-no">08</span>
-  <h2>Hall and delay</h2>
-  <p class="kicker">Two pedals on the floor. Open Effects to see them.</p>
+  <h2>Reverb and delay</h2>
+  <p class="kicker">Two pedals on the floor. Open Effects to see them. The little screen on each one picks what kind of pedal it is.</p>
   <div class="two">
     <div>
-      <h3>Hall</h3>
-      <p>A big reverb, 4.5 seconds by default. At night it stretches and darkens with the cities' sleep, up to about seven seconds. Cloudy cities get more of it.</p>
-      <p><b>Freeze</b> holds whatever is in the hall and lets it ring forever. The switch is deliberately chunky.</p>
+      <h3>Reverb</h3>
+      <p>Seven kinds of space. Decay stretches each one, and at night it grows and darkens with the cities' sleep. Cloudy cities get more of it.</p>
+      <table>
+        <tr><td>Hall</td><td>The default. A big, soft concert hall, 4.5 seconds.</td></tr>
+        <tr><td>Room</td><td>Small and close, like playing in the next room. Short, whatever Decay says.</td></tr>
+        <tr><td>Plate</td><td>Bright and smooth with no gap before it. The classic studio sheen.</td></tr>
+        <tr><td>Spring</td><td>The drippy, boingy one from old guitar amps.</td></tr>
+        <tr><td>Cathedral</td><td>Huge and dark, more than twice as long as the hall.</td></tr>
+        <tr><td>Shimmer</td><td>The tail goes up an octave and feeds back, so it blooms upward like light.</td></tr>
+        <tr><td>Reverse</td><td>Backwards. Each note's echo swells up after it and stops dead.</td></tr>
+      </table>
+      <p><b>Freeze</b> holds whatever is in the reverb and lets it ring forever. The switch is deliberately chunky.</p>
     </div>
     <div>
       <h3>Delay</h3>
-      <p>Single, ping-pong or three taps, timed to the tempo from 1/16 to dotted 1/4.</p>
+      <p>Seven kinds of echo, timed to the tempo from 1/16 to dotted 1/4.</p>
+      <table>
+        <tr><td>Digital</td><td>Clean repeats, straight down the middle.</td></tr>
+        <tr><td>Ping-pong</td><td>The default. Left, right, left.</td></tr>
+        <tr><td>Three taps</td><td>A little rhythm across the speakers that repeats as a whole.</td></tr>
+        <tr><td>Tape echo</td><td>An old tape machine. Each repeat darker and wobblier.</td></tr>
+        <tr><td>Analog</td><td>A warm, murky echo chip. The repeats melt away.</td></tr>
+        <tr><td>Dub</td><td>A narrow, long echo that drifts from speaker to speaker.</td></tr>
+        <tr><td>Slapback</td><td>One quick repeat and nothing else, like a 1950s vocal. It ignores Time and Echoes.</td></tr>
+      </table>
       <p><b>Freeze</b> catches the echoes and keeps them going round, so you can play over a loop the weather made.</p>
     </div>
   </div>
@@ -458,6 +476,7 @@ kbd { display: inline-block; min-width: 26px; text-align: center; border: 1.5px 
   <p class="kicker">This manual is kept up to date with the instrument. Newest first.</p>
   <dl class="log">
     <dt>12 October 2026</dt>
+    <dd>The Hall pedal is now Reverb, with a screen to pick Hall, Room, Plate, Spring, Cathedral, Shimmer or Reverse. Delay has one too: Digital, Ping-pong, Three taps, Tape echo, Analog, Dub or Slapback. Long echoes can no longer pile up and swamp the mix.</dd>
     <dd>The chord bed now starts on Bowed. A Read the manual button on the front page, under Press and contact. More breathing room above Effects. On phones, choosing Your sample… now takes you straight to Load a sound, and the file picker shows all your audio files. I now count visits, without cookies (see Questions).</dd>
     <dd>Load a sound and Three Cities finds its key and moves to match. Soft mallets have a rounder strike, so Copenhagen no longer jumps out. Fixed card text running off the edge on phones.</dd>
     <dd>Chords moved into its own panel. The sound menu is sorted into families. Copenhagen now starts on soft mallets, with its hits from humidity like the others.</dd>
