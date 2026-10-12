@@ -2756,6 +2756,14 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
       o.connect(trem); o2.connect(g2).connect(trem); trem.connect(env);
       env.gain.linearRampToValueAtTime(FELT_G.mallet * vel, t + 0.022);   // a rounder, slower yarn strike
       env.gain.exponentialRampToValueAtTime(0.0006, t + 1.6 * L);
+      // the damper: a note a step away cuts the last one short, so neighbouring notes don't ring on into a cluster
+      const last = c._malLast;
+      if (last && last.end > t && Math.abs(last.midi - midi) <= 2 && last.midi !== midi) {
+        const g = last.env.gain, k = Math.max(0, Math.min(1, (t - last.peakAt) / (last.end - last.peakAt)));
+        const now = last.peak * Math.pow(0.0006 / last.peak, k);   // where its fade had got to, so the cut is smooth
+        try { if (g.cancelAndHoldAtTime) g.cancelAndHoldAtTime(t); else { g.cancelScheduledValues(t); g.setValueAtTime(now, t); } g.setTargetAtTime(0, t, 0.06); } catch (e) {}
+      }
+      c._malLast = { env, midi, peak: Math.max(0.001, FELT_G.mallet * vel), peakAt: t + 0.022, end: t + 1.6 * L };
       [o, o2, lfo].forEach(x => { x.start(t); x.stop(t + 1.7 * L); });
     } else if (c.voice === "bowed") {
       // a bowed swell: each note fades up out of nothing and settles away again
@@ -2971,7 +2979,8 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
       d = c.mel + dir * size;
     }
     const tones = chordTones(n), isTone = x => tones.includes(((x % n) + n) % n);
-    if ((pos === 0 || Math.random() < 0.55) && !isTone(d)) {                 // lean onto the chord
+    const pull = c.base >= 62 ? 0.8 : 0.55;   // the top voice is the most exposed, so it sits on the chord more often
+    if ((pos === 0 || Math.random() < pull) && !isTone(d)) {                 // lean onto the chord
       const way = dir || (Math.random() < 0.5 ? 1 : -1);                     // keep moving the way the line was going
       for (let k = 1; k <= 3; k++) { if (isTone(d + way * k) && d + way * k !== c.mel) { d += way * k; break; } }
     }
