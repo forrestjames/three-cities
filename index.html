@@ -209,7 +209,7 @@ main { max-width: 1240px; margin: 0 auto; padding: 0 16px 80px; display: flex; f
 .tgroup { display: flex; flex-direction: column; gap: 10px; min-width: 0; }
 .tlabel { font-family: var(--display); font-size: 18px; letter-spacing: 0.16em; text-transform: uppercase; color: var(--ink); }
 .tgroup .field { justify-content: space-between; }
-.rack { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.25fr) minmax(0, 0.7fr) minmax(0, 1.35fr); margin-top: 8px; border-radius: 8px; position: relative; --led: #ffd98a;
+.rack { display: grid; grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr) minmax(0, 1.2fr) minmax(0, 0.55fr) minmax(0, 1.25fr); margin-top: 8px; border-radius: 8px; position: relative; --led: #ffd98a;
         background: repeating-linear-gradient(90deg, rgba(255,255,255,0.018) 0 1px, transparent 1px 3px), linear-gradient(180deg, #1c1715, #110d0c);
         border: 1px solid rgba(255,255,255,0.08); box-shadow: inset 0 1px 0 rgba(255,255,255,0.06), 0 10px 26px rgba(0,0,0,0.45); }
 .rack::before, .rack::after { content: ""; position: absolute; top: 7px; width: 6px; height: 6px; border-radius: 50%;
@@ -251,7 +251,7 @@ main { max-width: 1240px; margin: 0 auto; padding: 0 16px 80px; display: flex; f
 .lcd-select { cursor: pointer; text-align: left; padding: 4px 6px; font: 11px/1.2 var(--mono); }
 .lcd-select option { background: #1a1210; color: var(--ink); }
 .rack .kn-stack .kn-label { margin-bottom: 4px; }
-@media (max-width: 1100px) { .rack { grid-template-columns: minmax(0, 1fr) minmax(0, 1.35fr); } .rack-mod:nth-child(3) { border-left: 0; } .rack-mod:nth-child(n+3) { border-top: 1px solid rgba(255,255,255,0.07); } }
+@media (max-width: 1100px) { .rack { grid-template-columns: minmax(0, 1fr) minmax(0, 1.35fr); } .rack-mod:nth-child(odd) { border-left: 0; } .rack-mod:nth-child(n+3) { border-top: 1px solid rgba(255,255,255,0.07); } }
 .share-btn { display: inline-flex; align-items: center; gap: 8px; padding: 0 16px; min-height: 40px; border-radius: 20px; border: 1px solid rgba(243,236,230,0.45); background: rgba(16,8,6,0.35);
              color: var(--ink); cursor: pointer; font: 12px var(--mono); letter-spacing: 0.08em; transition: background 0.2s, color 0.2s; }
 .share-btn svg { width: 16px; height: 16px; }
@@ -622,9 +622,10 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
 .reel.min { inset: auto 12px 12px auto; padding: 0; background: none; grid-template-rows: auto; }
 .reel.min canvas { display: none; }
 
-.chord-row { margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--line); align-items: center; }
-.chord-on { font-size: 11px; letter-spacing: 0.14em; padding: 3px 8px; min-height: 26px; margin-left: auto; }
-.chord-on::before { width: 6px; height: 6px; margin-right: 6px; }
+.mod-chords .pedal-led { margin-left: auto; }
+.rack .mod-chords .mod-knobs { column-gap: 18px; }
+.rack .mod-chords .kn { flex: 0 0 auto; min-width: 104px; }
+@media (max-width: 1100px) { .rack-mod:last-child:nth-child(odd) { grid-column: 1 / -1; } }
 </style>
 </head>
 <body>
@@ -686,14 +687,18 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
       </div>
     </div>
     <div class="pedal rack-mod mod-harm" aria-label="Harmony">
-      <div class="mod-head"><span class="mod-name">Harmony</span><button class="info" type="button" aria-label="How Harmony works" data-tip="All three cities share one key and scale, picked at random each time the page loads. Underneath, a slow chord progression moves every 4 bars and shifts every 64, and each city's melody leans onto the current chord. Change either menu and the cities follow from their next note."></button><button class="groove-on chord-on" id="chordOn" type="button" aria-pressed="false" title="A slow bed of the shared chords underneath the cities">Chords</button></div>
+      <div class="mod-head"><span class="mod-name">Harmony</span><button class="info" type="button" aria-label="How Harmony works" data-tip="All three cities share one key and scale, picked at random each time the page loads. Underneath, a slow chord progression moves every 4 bars and shifts every 64, and each city's melody leans onto the current chord. Change either menu and the cities follow from their next note."></button></div>
       <div class="knobs mod-knobs">
         <label class="kn-stack" for="key"><span class="kn-label">Key</span><select id="key" class="lcd lcd-select"></select></label>
         <label class="kn-stack" for="scale"><span class="kn-label">Scale</span><select id="scale" class="lcd lcd-select lcd-wide"></select></label>
       </div>
-      <div class="knobs mod-knobs chord-row">
-        <div class="kn"><input class="kn-native" id="chordLevel" type="range" min="0" max="100" step="1" value="40" data-label="Chords"><span class="kn-stack"><output id="chordLevelOut" class="lcd">40</output></span></div>
-        <label class="kn-stack" for="chordSound"><span class="kn-label">Chord sound</span><select id="chordSound" class="lcd lcd-select">
+
+    </div>
+    <div class="pedal rack-mod mod-chords" aria-label="Chords">
+      <div class="mod-head"><span class="mod-name">Chords</span><button class="info" type="button" aria-label="How Chords works" data-tip="A slow bed of chords underneath the cities, from the same progression their melodies lean on: a new chord every four bars, each one swelling in and fading as the next arrives. Switch it on with the lamp, set how loud it sits with the knob, and pick a pad sound. As the cities fall asleep it gets darker and quieter too."></button><button class="pedal-led" type="button" id="chordOn" aria-pressed="false" aria-label="Chords on" title="Chord bed on or off"></button></div>
+      <div class="knobs mod-knobs">
+        <div class="kn"><input class="kn-native" id="chordLevel" type="range" min="0" max="100" step="1" value="40" data-label="Level"><span class="kn-stack"><output id="chordLevelOut" class="lcd">40</output></span></div>
+        <label class="kn-stack" for="chordSound"><span class="kn-label">Sound</span><select id="chordSound" class="lcd lcd-select">
           <option value="warm">Warm pad</option><option value="glass">Glass</option><option value="air">Air</option><option value="tape">Tape strings</option>
           <option value="strings">Strings</option><option value="choir">Choir</option><option value="organ">Soft organ</option><option value="bowed">Bowed</option><option value="shimmer">Shimmer</option>
         </select></label>
@@ -873,6 +878,19 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
     ["handdrum", "Hand drum"], ["woodblock", "Woodblock"], ["tongue", "Tongue drum"], ["clave", "Clave"],
     ["sample", "Your sample…"]
   ];
+  // The menu, sorted into families
+  const SOUND_NAME = Object.fromEntries(SOUNDS);
+  const SOUND_GROUPS = [
+    ["Keys", ["felt", "piano", "epiano", "junokeys", "organ"]],
+    ["Mallets and bells", ["mallet", "marimba", "kalimba", "bell"]],
+    ["Plucked", ["pluck", "string", "harp"]],
+    ["Breath and leads", ["flute", "breath", "soft"]],
+    ["Pads and strings", ["bowed", "pad", "choir", "junopad", "junostrings"]],
+    ["Grain textures", ["graincloud", "grainshimmer", "graindust"]],
+    ["Bass", ["sub", "acid"]],
+    ["Percussion", ["handdrum", "woodblock", "tongue", "clave", "drum", "shaker"]],
+    ["Your own", ["sample"]]
+  ].map(([g, vs]) => [g, vs.filter(v => SOUND_NAME[v])]);
   const KEYS = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"];
   const SCALES = [
     ["minor pentatonic", [0, 3, 5, 7, 10]],
@@ -916,8 +934,8 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
   const cities = [
     { key: "Boston", name: "Boston", place: "Massachusetts, USA", lat: 42.36, lon: -71.06, color: "--boston", voice: "marimba",
       base: 48, degrees: [0, -2, 1, -1, -3], rate: 2, source: "humidity" },
-    { key: "Copenhagen", name: "Copenhagen", place: "Denmark", lat: 55.68, lon: 12.57, color: "--copenhagen", voice: "felt", ceil: 76,
-      base: 64, degrees: [0, 1, 2, 3, 4], rate: 2, source: "cloud" },
+    { key: "Copenhagen", name: "Copenhagen", place: "Denmark", lat: 55.68, lon: 12.57, color: "--copenhagen", voice: "mallet", ceil: 76,
+      base: 64, degrees: [0, 1, 2, 3, 4], rate: 2, source: "humidity" },
     { key: "London", name: "London", place: "United Kingdom", lat: 51.51, lon: -0.13, color: "--london", voice: "sub",
       base: 60, degrees: [-2, -1, 0, 1, 2], rate: 2, source: "humidity" }
   ];
@@ -1223,7 +1241,7 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
       </div>
       <div class="glance" data-r="glance"></div>
       <div class="quick">
-        <select id="${id}-sound" aria-label="${c.name} sound">${SOUNDS.map(([v, n]) => `<option value="${v}"${v === c.voice ? " selected" : ""}>${n}</option>`).join("")}</select>
+        <select id="${id}-sound" aria-label="${c.name} sound">${SOUND_GROUPS.map(([g, vs]) => `<optgroup label="${g}">${vs.map(v => `<option value="${v}"${v === c.voice ? " selected" : ""}>${SOUND_NAME[v]}</option>`).join("")}</optgroup>`).join("")}</select>
         <span class="vol-wrap"><input id="${id}-vol" type="range" min="0" max="100" value="${c.volume}" aria-label="${c.name} volume"><i class="vol-swell" data-r="volSwell" aria-hidden="true"></i></span>
         <button class="mute" type="button" aria-pressed="false" data-r="mute" aria-label="Mute ${c.name}" title="Mute ${c.name}">
           <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9h4l5-4v14l-5-4H4z" fill="currentColor"/><path class="on" d="M16 9.5a4 4 0 0 1 0 5M18.5 7a7.5 7.5 0 0 1 0 10" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/><path class="off" d="M16.5 9.5l5 5m0-5l-5 5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
