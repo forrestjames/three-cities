@@ -170,12 +170,6 @@ main { max-width: 1240px; margin: 0 auto; padding: 0 16px 80px; display: flex; f
 .pedal-delay { flex: 6 1 460px; }
 .pedal-hall { --p1: #3c2b42; --p2: #20172a; --led: #ff8a62; }
 .pedal-delay { --p1: #1e3b38; --p2: #11221f; --led: #74f0c4; }
-.pedal-phaser, .pedal-radio, .pedal-dust, .pedal-pump, .pedal-storm { flex: 2 1 220px; }
-.pedal-phaser { --p1: #3d3420; --p2: #221c10; --led: #ffd36a; }
-.pedal-radio { --p1: #3e2a1f; --p2: #231711; --led: #ffb36b; }
-.pedal-dust { --p1: #352f2a; --p2: #1d1915; --led: #e8d6b8; }
-.pedal-pump { --p1: #401f27; --p2: #241015; --led: #ff6f8a; }
-.pedal-storm { --p1: #1f2b3d; --p2: #111823; --led: #9cc8ff; }
 .pedal-head { display: flex; justify-content: space-between; align-items: center; margin: 2px 6px 12px; }
 .pedal-name { font-family: var(--display); font-size: 24px; letter-spacing: 0.34em; text-transform: uppercase; color: var(--ink); text-shadow: 0 1px 0 rgba(0,0,0,0.5); }
 .pedal-led { width: 44px; height: 44px; margin: -10px -10px -10px 0; border: 0; background: none; cursor: pointer; display: grid; place-items: center; }
@@ -466,23 +460,9 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
 .project-lead { font-family: var(--display); font-size: 21px; letter-spacing: 0.04em; line-height: 1.35; margin-bottom: 18px !important; }
 .project-side { padding-left: 24px; border-left: 1px solid var(--line); }
 .project-side h3:not(:first-child) { margin-top: 40px; }
-.project a.manual-card { display: flex; box-sizing: border-box; max-width: 100%; margin-right: 4px; gap: 18px; align-items: center; margin-top: 40px; padding: 18px 18px 18px 16px; border-radius: 14px; text-decoration: none; color: #1d1714 !important;
-  background: #f3ede2 repeating-linear-gradient(0deg, transparent 0 27px, rgba(29,23,20,0.05) 27px 28px); box-shadow: 0 1px 0 rgba(255,255,255,0.4) inset, 0 12px 30px rgba(0,0,0,0.35);
-  transform: rotate(-0.8deg); transition: transform 0.25s ease, box-shadow 0.25s ease; }
-.project a.manual-card:hover, .project a.manual-card:focus-visible { transform: rotate(0deg) translateY(-3px); box-shadow: 0 18px 40px rgba(0,0,0,0.45); }
-.mc-book { flex: none; width: 76px; height: 100px; perspective: 400px; }
-.mc-cover { position: relative; display: flex; flex-direction: column; align-items: center; justify-content: space-between; width: 100%; height: 100%; padding: 9px 6px 8px 10px; box-sizing: border-box;
-  background: #1d1714; color: #f3ede2; border-radius: 3px 6px 6px 3px; box-shadow: inset 4px 0 0 rgba(255,255,255,0.08), 3px 3px 0 #d9a03f; transform-origin: left center; transition: transform 0.35s ease; }
-.manual-card:hover .mc-cover, .manual-card:focus-visible .mc-cover { transform: rotateY(-22deg); }
-.mc-cover svg { width: 46px; fill: #f6d97a; }
-.mc-tag { font: 600 7px/1 var(--mono, monospace); letter-spacing: 0.3em; opacity: 0.7; }
-.mc-title { font: 13px/1 var(--display); letter-spacing: 0.18em; text-align: center; }
-.mc-text { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
-.mc-kicker { font: 600 10px/1.2 var(--mono, monospace); letter-spacing: 0.22em; text-transform: uppercase; color: #7a6e66; }
-.mc-head { font: 26px/1.05 var(--display); letter-spacing: 0.04em; }
-.mc-sub { font-size: 13px; line-height: 1.45; color: #4a403a; }
-.mc-cta { margin-top: 4px; font: 600 12px var(--mono, monospace); letter-spacing: 0.08em; background: linear-gradient(transparent 55%, #f6d97a 55%); align-self: flex-start; padding: 0 2px; }
-@media (prefers-reduced-motion: reduce) { .manual-card, .mc-cover { transition: none; } }
+.project a.manual-btn { display: inline-flex; align-items: center; gap: 10px; padding: 10px 16px; border: 1px solid var(--line); text-decoration: none; font-size: 12px; letter-spacing: 0.14em; text-transform: uppercase; transition: border-color 0.2s; }
+.project a.manual-btn:hover, .project a.manual-btn:focus-visible { border-color: var(--ink); }
+.manual-btn svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 1.5; stroke-linejoin: round; }
 @media (max-width: 860px) { .project-side { padding: 20px 0 0; border-left: 0; border-top: 1px solid var(--line); } }
 .project a, .email-link { color: var(--ink); text-decoration: underline; text-decoration-color: var(--ink-faint); text-underline-offset: 3px; }
 .project-links { display: flex; flex-wrap: wrap; gap: 6px 18px; }
@@ -650,8 +630,6 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
 .rack .mod-chords .kn { flex: 0 0 auto; min-width: 104px; }
 @media (max-width: 1100px) { .rack-mod:last-child:nth-child(odd) { grid-column: 1 / -1; } }
 
-.kn-read { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; min-width: 64px; }
-.kn-read output { font-size: 12px; color: var(--ink); }
 </style>
 </head>
 <body>
@@ -766,7 +744,7 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
 
   <details class="fxwrap" id="fxWrap">
     <summary><span class="fxsum-title">Effects</span><span class="fxsum-info" id="fxSummary"></span>
-      <span class="fxsum-hint">Open for the pedals: hall, delay, phaser, radio, dust, pump and storm. Send each city to the hall and delay with the More button on its card.</span></summary>
+      <span class="fxsum-hint">Open for the pedals. Send each city to the hall and delay with the More button on its card.</span></summary>
     <div class="pedals">
       <section class="pedal pedal-hall" aria-label="Hall reverb">
         <div class="pedal-head">
@@ -778,7 +756,6 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
           <div class="kn"><input class="kn-native" id="fxRevDecay" type="range" min="0.5" max="24" step="0.5" value="4.5" data-label="Decay"><output id="fxRevDecayOut">4.5 s</output></div>
           <div class="kn"><input class="kn-native" id="fxRevPre" type="range" min="0" max="200" step="5" value="30" data-label="Pre-delay"><output id="fxRevPreOut">30 ms</output></div>
           <div class="kn"><input class="kn-native" id="fxRevTone" type="range" min="0" max="100" value="55" data-label="Tone"><output id="fxRevToneOut">55</output></div>
-          <div class="kn"><input class="kn-native" id="fxShimmer" type="range" min="0" max="100" value="0" data-label="Shimmer"><output id="fxShimmerOut">0</output></div>
           <div class="kn kn-switch"><button class="toggle-sw" type="button" id="hallFreeze" aria-pressed="false" aria-label="Freeze hall reverb"></button><div class="kn-label">Freeze</div><output id="hallFreezeOut">Off</output></div>
         </div>
       </section>
@@ -788,49 +765,13 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
           <button class="pedal-led" type="button" id="delayOn" aria-pressed="true" aria-label="Delay on"></button>
         </div>
         <div class="knobs">
-          <div class="kn"><select class="kn-native" id="fxStyle" data-label="Style"><option value="single">Single</option><option value="pingpong" selected>Ping-pong</option><option value="taps">Three taps</option><option value="tape">Tape</option></select><output id="fxStyleOut">Ping-pong</output></div>
+          <div class="kn"><select class="kn-native" id="fxStyle" data-label="Style"><option value="single">Single</option><option value="pingpong" selected>Ping-pong</option><option value="taps">Three taps</option></select><output id="fxStyleOut">Ping-pong</output></div>
           <div class="kn"><select class="kn-native" id="fxTime" data-label="Time"><option value="0.25">1/16</option><option value="0.5">1/8</option><option value="0.75" selected>dotted 1/8</option><option value="1">1/4</option><option value="1.5">dotted 1/4</option></select><output id="fxTimeOut">dotted 1/8</output></div>
           <div class="kn"><input class="kn-native" id="fxDelay" type="range" min="0" max="100" value="50" data-label="Level"><output id="fxDelayOut">50</output></div>
           <div class="kn"><input class="kn-native" id="fxEchoes" type="range" min="0" max="90" value="38" data-label="Echoes"><output id="fxEchoesOut">38</output></div>
           <div class="kn"><input class="kn-native" id="fxDelTone" type="range" min="0" max="100" value="45" data-label="Tone"><output id="fxDelToneOut">45</output></div>
           <div class="kn"><input class="kn-native" id="fxWobble" type="range" min="0" max="100" value="20" data-label="Wobble"><output id="fxWobbleOut">20</output></div>
           <div class="kn kn-switch"><button class="toggle-sw" type="button" id="delayFreeze" aria-pressed="false" aria-label="Freeze delay"></button><div class="kn-label">Freeze</div><output id="delayFreezeOut">Off</output></div>
-        </div>
-      </section>
-      <section class="pedal pedal-phaser" aria-label="Phaser">
-        <div class="pedal-head"><span class="pedal-name">Phaser</span><button class="pedal-led" type="button" id="xPhaseOn" aria-pressed="false" aria-label="Phaser off"></button></div>
-        <div class="knobs">
-          <div class="kn"><input class="kn-native" id="xPhaseMix" type="range" min="0" max="100" value="45" data-label="Mix"><output id="xPhaseMixOut">45</output></div>
-          <div class="kn"><input class="kn-native" id="xPhaseDepth" type="range" min="0" max="100" value="60" data-label="Depth"><output id="xPhaseDepthOut">60</output></div>
-          <div class="kn kn-read"><div class="kn-label">Speed (wind)</div><output id="xPhaseRateOut">–</output></div>
-        </div>
-      </section>
-      <section class="pedal pedal-radio" aria-label="Radio">
-        <div class="pedal-head"><span class="pedal-name">Radio</span><button class="pedal-led" type="button" id="xRadioOn" aria-pressed="false" aria-label="Radio off"></button></div>
-        <div class="knobs">
-          <div class="kn"><input class="kn-native" id="xRadio" type="range" min="0" max="100" value="15" data-label="Amount"><output id="xRadioOut">15</output></div>
-          <div class="kn"><input class="kn-native" id="xRadioFar" type="range" min="0" max="100" value="70" data-label="Distance"><output id="xRadioFarOut">70</output></div>
-        </div>
-      </section>
-      <section class="pedal pedal-dust" aria-label="Dust">
-        <div class="pedal-head"><span class="pedal-name">Dust</span><button class="pedal-led" type="button" id="xDustOn" aria-pressed="false" aria-label="Dust off"></button></div>
-        <div class="knobs">
-          <div class="kn"><input class="kn-native" id="xDust" type="range" min="0" max="100" value="40" data-label="Hiss"><output id="xDustOut">40</output></div>
-          <div class="kn"><input class="kn-native" id="xCrackle" type="range" min="0" max="100" value="50" data-label="Crackle"><output id="xCrackleOut">50</output></div>
-        </div>
-      </section>
-      <section class="pedal pedal-pump" aria-label="Pump">
-        <div class="pedal-head"><span class="pedal-name">Pump</span><button class="pedal-led" type="button" id="xPumpOn" aria-pressed="false" aria-label="Pump off"></button></div>
-        <div class="knobs">
-          <div class="kn"><input class="kn-native" id="xPumpDepth" type="range" min="0" max="100" value="45" data-label="Depth"><output id="xPumpDepthOut">45</output></div>
-          <div class="kn"><input class="kn-native" id="xPumpRelease" type="range" min="0" max="100" value="40" data-label="Release"><output id="xPumpReleaseOut">40</output></div>
-        </div>
-      </section>
-      <section class="pedal pedal-storm" aria-label="Storm">
-        <div class="pedal-head"><span class="pedal-name">Storm</span><button class="pedal-led" type="button" id="xStormAuto" aria-pressed="false" aria-label="Storm follows the weather off" title="Auto: the storm follows the stormiest city"></button></div>
-        <div class="knobs">
-          <div class="kn"><input class="kn-native" id="xStorm" type="range" min="0" max="100" value="0" data-label="Storm"><output id="xStormOut">0</output></div>
-          <div class="kn kn-read storm-note"><div class="kn-label">Lamp on</div><output>follows the sky</output></div>
         </div>
       </section>
     </div>
@@ -877,10 +818,9 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
       <h3>Press and contact</h3>
       <p>For press, interviews or commissions:</p>
       <p><button class="email-reveal" id="emailReveal" type="button">Show email</button></p>
-      <a class="manual-card" href="manual">
-        <span class="mc-book" aria-hidden="true"><span class="mc-cover"><span class="mc-tag">MANUAL</span><svg viewBox="0 0 35.4 24"><path d="M0.5 24v-6.6h11V24zM1.6 17.4v-1.6h8.8v1.6zM3 15.8v-2.4h6v2.4zM2.9 13.4a3.1 3.1 0 0 1 6.2 0zM5.4 10.4V8.2h1.2v2.2zM5.2 8.2L6 6.6l.8 1.6z"/><path fill-rule="evenodd" d="M13.4 24V13h12.6v11h-3.6v-5.2a2.7 2.7 0 0 0-5.4 0V24zM13 13v-1.4h13.4V13zM15.8 11.6a3.9 3.9 0 0 1 7.8 0zM19.3 7.7V5.6h.8v2.1zM19.1 5.6l.6-1.8.6 1.8zM13.6 11.6v-1.8h.9v1.8zM24.9 11.6v-1.8h.9v1.8zM13.4 9.8l.65-1.4.65 1.4zM24.7 9.8l.65-1.4.65 1.4z"/><path fill-rule="evenodd" d="M27.9 24v-3.5h.6V9h-.4V7.6h1V5.4h.8L31.4 0l1.5 5.4h.8v2.2h1V9h-.4v11.5h.6V24zM31.4 10a1.7 1.7 0 1 0 0 3.4 1.7 1.7 0 0 0 0-3.4z"/></svg><span class="mc-title">THREE<br>CITIES</span></span></span>
-        <span class="mc-text"><span class="mc-kicker">The operator's manual</span><span class="mc-head">How to play the sky</span><span class="mc-sub">Every knob, every pedal, and what the weather is doing to them. Seventeen short sections and a few patch ideas.</span><span class="mc-cta">Open the manual <span aria-hidden="true">→</span></span></span>
-      </a>
+      <h3>The manual</h3>
+      <p>How to play the sky: every control, and a few patch ideas.</p>
+      <p><a class="manual-btn" href="manual"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 4.5h6a2 2 0 0 1 2 2V20a1.5 1.5 0 0 0-1.5-1.5H4zM20 4.5h-6a2 2 0 0 0-2 2V20a1.5 1.5 0 0 1 1.5-1.5H20z"/></svg>Read the manual</a></p>
     </aside>
   </section>
 
@@ -2028,9 +1968,6 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
       damp.connect(merge, 0, i % 2);
     });
     fx.conv.connect(fx.fdnIn);
-    { const sh = makeShifter(); fx.shimG = ac.createGain(); fx.shimG.gain.value = 0;
-      const shHp = ac.createBiquadFilter(); shHp.type = "highpass"; shHp.frequency.value = 500;
-      fx.conv.connect(sh.input); sh.out.connect(shHp).connect(fx.shimG).connect(fx.pre); }
     merge.connect(fx.fdnOut).connect(fx.revOut);
     updateHall(true);
 
@@ -2043,7 +1980,7 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
     fx.delGate = ac.createGain();
     delay.connect(fx.delGate).connect(dHp).connect(inTone);
     fx.delayOut = ac.createGain(); fx.delayOut.connect(master);
-    fx.style = { single: ac.createGain(), pingpong: ac.createGain(), taps: ac.createGain(), tape: ac.createGain() };
+    fx.style = { single: ac.createGain(), pingpong: ac.createGain(), taps: ac.createGain() };
     Object.values(fx.style).forEach(g => inTone.connect(g));
     fx.lines = []; fx.fbs = [];
     const line = () => { const d = ac.createDelay(8); fx.lines.push(d); return d; };
@@ -2073,15 +2010,6 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
     });
     fx.taps[2].connect(tone()).connect(fbk(0.85)).connect(tapBus);
 
-    // Tape: one head through warm saturation, each repeat a little darker and a little more worn, with a flutter of its own
-    { const sat = ac.createWaveShaper(); { const n = 1024, cv = new Float32Array(n); for (let i = 0; i < n; i++) { const x = i / (n - 1) * 2 - 1; cv[i] = Math.tanh(x * 1.8) / Math.tanh(1.8); } sat.curve = cv; }
-      fx.tape = line();
-      const wear = ac.createBiquadFilter(); wear.type = "lowpass"; wear.frequency.value = 2400; wear.Q.value = 0.5;
-      const lowCut = ac.createBiquadFilter(); lowCut.type = "highpass"; lowCut.frequency.value = 220;
-      fx.style.tape.connect(sat).connect(fx.tape).connect(fx.delayOut);
-      fx.tape.connect(tone()).connect(wear).connect(lowCut).connect(fbk(1.02)).connect(sat);
-      const flut = ac.createOscillator(); flut.frequency.value = 5.3; const fd = ac.createGain(); fd.gain.value = 0.00045; flut.connect(fd).connect(fx.tape.delayTime); flut.start(); }
-
     // Wobble: a slow wander in delay time, like tape
     fx.lfo = ac.createOscillator(); fx.lfo.frequency.value = 0.37;
     fx.wobble = ac.createGain(); fx.wobble.gain.value = 0;
@@ -2105,8 +2033,7 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
     const style = document.getElementById("fxStyle").value;
     Object.entries(fx.style).forEach(([k, g]) => g.gain.setTargetAtTime(k === style ? 1 : 0, t, 0.03));
     const night = grooveSleep();   // the three cities' average sleep, 0 awake to 1 deep night
-    const storm = (typeof XFX !== "undefined" && XFX.storm) || 0;
-    fx.fbs.forEach(g => g.gain.setTargetAtTime(fx.delayFrozen ? 0.995 : Math.min(0.92, val("fxEchoes") / 100 * (1 + 0.35 * night) + storm * 0.3) * g.scale, t, 0.05));
+    fx.fbs.forEach(g => g.gain.setTargetAtTime(fx.delayFrozen ? 0.995 : Math.min(0.92, val("fxEchoes") / 100 * (1 + 0.35 * night)) * g.scale, t, 0.05));
     fx.delGate.gain.setTargetAtTime(fx.delayFrozen ? 0 : 1, t, 0.08);
     fx.revGate.gain.setTargetAtTime(fx.hallFrozen ? 0 : 1, t, 0.25);
     const tv = val("fxDelTone") / 100;
@@ -2188,7 +2115,7 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
     });
     draw();
   }
-  document.querySelectorAll(".kn:not(.kn-switch):not(.kn-late):not(.kn-read)").forEach(makeKnob);
+  document.querySelectorAll(".kn:not(.kn-switch):not(.kn-late)").forEach(makeKnob);
 
   // Vintage bat-handle toggles for Freeze: chrome lever on a hex nut, with a jewel lamp
   document.querySelectorAll(".toggle-sw").forEach((b, n) => {
@@ -2350,9 +2277,8 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
     master = ac.createGain(); master.gain.value = document.getElementById("volume").value / 100 * 0.9;
     djLP = ac.createBiquadFilter(); djLP.type = "lowpass"; djLP.frequency.value = 20000; djLP.Q.value = 0.9;
     djHP = ac.createBiquadFilter(); djHP.type = "highpass"; djHP.frequency.value = 20; djHP.Q.value = 0.9;
-    djLP.connect(djHP).connect(comp).connect(ac.destination);   // master reaches djLP through the phaser and storm (buildExtraFx)
+    master.connect(djLP).connect(djHP).connect(comp).connect(ac.destination);
     applyDJ();
-    buildExtraFx();
     buildEffects();
     setupGroove();
     cities.forEach(c => {
@@ -2394,11 +2320,11 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
       const swellTone = ac.createBiquadFilter(); swellTone.type = "lowpass"; swellTone.frequency.value = 18000; swellTone.Q.value = 0.5;
       const swell = ac.createGain();
       input.connect(filter).connect(breath).connect(mood);
-      const radio = radioPath(mood, moodGain);
-      moodGain.connect(pan).connect(out).connect(swellTone).connect(swell).connect(vol).connect(duckBus);
+      mood.connect(moodGain);
+      moodGain.connect(pan).connect(out).connect(swellTone).connect(swell).connect(vol).connect(master);
       vol.connect(rev).connect(reverb);
       vol.connect(del).connect(delay);
-      buses.set(c, { radio, input, filter, out, swell, swellTone, vol, rev, del, mood, moodGain, breath, breathLfo, breathDepth, gust, pan, panDrift, chorusIn });
+      buses.set(c, { input, filter, out, swell, swellTone, vol, rev, del, mood, moodGain, breath, breathLfo, breathDepth, gust, pan, panDrift, chorusIn });
       applyMood(c, true);
       applySound(c);
     });
@@ -3095,7 +3021,6 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
     if (GROOVE.mute[kind]) return;   // that channel is muted, MIDI included
     if (Math.random() * 100 >= GROOVE.chance) return;   // probability: some hits simply don't happen
     sendDrumMidi(kind, t, vel);
-    if (kind === "kick") pumpHit(t);
     const k = KITS[GROOVE.kit] || KITS.soft, out = ac.createGain();
     if (k.drive) {
       if (!driveCurve) { driveCurve = new Float32Array(1024); for (let i = 0; i < 1024; i++) { const x = i / 511.5 - 1; driveCurve[i] = Math.tanh(x * 2.5) / Math.tanh(2.5); } }
@@ -3572,7 +3497,7 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
   function chordBus() {
     if (!CHORD.bus) {
       CHORD.bus = ac.createGain(); CHORD.bus.gain.value = 1;
-      CHORD.bus.connect(duckBus || master);
+      CHORD.bus.connect(master);
       const rs = ac.createGain(); rs.gain.value = 0.55; CHORD.bus.connect(rs).connect(reverb);
     }
     return CHORD.bus;
@@ -3612,123 +3537,6 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
     });
     lvl.addEventListener("input", sync); sync();
     document.getElementById("chordSound").addEventListener("change", e => { CHORD.sound = e.target.value; if (CHORD.on && playing) chordBed(ac.currentTime + 0.05); }); }
-  // ---------- more pedals: phaser, radio, dust, pump (sidechain), and the storm macro ----------
-  // Signal path for the whole mix: master -> phaser -> storm -> DJ filter -> compressor.
-  // The cities and the chord bed reach master through duckBus, which the kick pumps when Pump is on.
-  var XFX = { phaser: false, radio: false, dust: false, pump: false, stormAuto: false, storm: 0, built: false };
-  var duckBus = null;
-  function buildExtraFx() {
-    duckBus = ac.createGain(); duckBus.connect(master);
-    // Phaser: six all-pass stages swept by an LFO whose speed follows the wind
-    const phIn = ac.createGain(), phDry = ac.createGain(), phWet = ac.createGain(), phOut = ac.createGain();
-    master.connect(phIn); phIn.connect(phDry).connect(phOut);
-    let node = phIn; XFX.aps = [];
-    for (let i = 0; i < 6; i++) { const ap = ac.createBiquadFilter(); ap.type = "allpass"; ap.frequency.value = 700; ap.Q.value = 0.7; node.connect(ap); node = ap; XFX.aps.push(ap); }
-    const phFb = ac.createGain(); phFb.gain.value = 0.45; node.connect(phFb).connect(XFX.aps[0]);
-    node.connect(phWet).connect(phOut);
-    XFX.phLfo = ac.createOscillator(); XFX.phLfo.frequency.value = 0.2;
-    XFX.phDepth = ac.createGain(); XFX.phDepth.gain.value = 0;
-    XFX.phLfo.connect(XFX.phDepth); XFX.aps.forEach(ap => XFX.phDepth.connect(ap.detune)); XFX.phLfo.start();
-    XFX.phDry = phDry; XFX.phWet = phWet; phWet.gain.value = 0;
-    // Storm: the whole mix darkens and roughens as the weather turns
-    XFX.stormLP = ac.createBiquadFilter(); XFX.stormLP.type = "lowpass"; XFX.stormLP.frequency.value = 20000; XFX.stormLP.Q.value = 0.6;
-    const drive = ac.createWaveShaper(); { const n = 1024, c = new Float32Array(n); for (let i = 0; i < n; i++) { const x = i / (n - 1) * 2 - 1; c[i] = Math.tanh(x * 3) / Math.tanh(3); } drive.curve = c; }
-    XFX.stormDry = ac.createGain(); XFX.stormWet = ac.createGain(); XFX.stormWet.gain.value = 0;
-    phOut.connect(XFX.stormLP); XFX.stormLP.connect(XFX.stormDry).connect(djLP); XFX.stormLP.connect(drive).connect(XFX.stormWet).connect(djLP);
-    // Dust: tape hiss and vinyl crackle under everything, louder when it's raining
-    const crackle = ac.createBuffer(1, ac.sampleRate * 4, ac.sampleRate);
-    { const d = crackle.getChannelData(0); for (let i = 0; i < d.length; i++) { if (Math.random() < 0.00045) { const a = (Math.random() * 0.8 + 0.2) * (Math.random() < 0.5 ? -1 : 1); for (let k = 0; k < 24 && i + k < d.length; k++) d[i + k] += a * Math.exp(-k / 4); } } }
-    const cr = ac.createBufferSource(); cr.buffer = crackle; cr.loop = true;
-    const crHp = ac.createBiquadFilter(); crHp.type = "highpass"; crHp.frequency.value = 900;
-    XFX.crackleG = ac.createGain(); XFX.crackleG.gain.value = 0; cr.connect(crHp).connect(XFX.crackleG).connect(djLP); cr.start();
-    const hs = ac.createBufferSource(); hs.buffer = noiseBuf; hs.loop = true;
-    const hsBp = ac.createBiquadFilter(); hsBp.type = "bandpass"; hsBp.frequency.value = 5200; hsBp.Q.value = 0.5;
-    XFX.hissG = ac.createGain(); XFX.hissG.gain.value = 0; hs.connect(hsBp).connect(XFX.hissG).connect(djLP); hs.start();
-    XFX.built = true;
-    applyXfx();
-  }
-  // A city's radio path: far away on the memory map (or with the Radio pedal turned up) it sounds like a transistor radio
-  function radioPath(mood, moodGain) {
-    const dry = ac.createGain(), bp = ac.createBiquadFilter(), hp = ac.createBiquadFilter(), sh = ac.createWaveShaper(), wet = ac.createGain();
-    bp.type = "bandpass"; bp.frequency.value = 1500; bp.Q.value = 1.1; hp.type = "highpass"; hp.frequency.value = 450;
-    { const n = 512, c = new Float32Array(n); for (let i = 0; i < n; i++) { const x = i / (n - 1) * 2 - 1; c[i] = Math.tanh(x * 4) / Math.tanh(4); } sh.curve = c; }
-    wet.gain.value = 0;
-    mood.connect(dry).connect(moodGain);
-    mood.connect(hp).connect(bp).connect(sh).connect(wet).connect(moodGain);
-    return { dry, wet };
-  }
-  // Shimmer for the hall: an octave-up pitch shifter fed back into the reverb, so the tail blooms upward
-  function makeShifter() {
-    const W = 0.08, sr = ac.sampleRate, len = Math.round(W * sr);
-    const ramp = ac.createBuffer(1, len, sr), fade = ac.createBuffer(1, len, sr), r = ramp.getChannelData(0), f = fade.getChannelData(0);
-    for (let i = 0; i < len; i++) { r[i] = 1 - i / len; f[i] = Math.sin(Math.PI * i / len); }   // delay falling W -> 0 over W seconds plays twice as fast: an octave up
-    const input = ac.createGain(), out = ac.createGain(), t0 = ac.currentTime + 0.05;
-    [0, 1].forEach(k => {
-      const d = ac.createDelay(1); d.delayTime.value = 0;
-      const mod = ac.createBufferSource(); mod.buffer = ramp; mod.loop = true; const mg = ac.createGain(); mg.gain.value = W; mod.connect(mg).connect(d.delayTime);
-      const fs = ac.createBufferSource(); fs.buffer = fade; fs.loop = true; const vca = ac.createGain(); vca.gain.value = 0; fs.connect(vca.gain);
-      input.connect(d).connect(vca).connect(out);
-      mod.start(t0 + k * W / 2); fs.start(t0 + k * W / 2);
-    });
-    return { input, out };
-  }
-  // Pump: every kick ducks the cities and the chord bed for a moment, the classic sidechain breath
-  function pumpHit(t) {
-    if (!XFX.pump || !duckBus) return;
-    const depth = val("xPumpDepth") / 100 * 0.7, rel = 0.06 + val("xPumpRelease") / 100 * 0.5;
-    const g = duckBus.gain; g.cancelScheduledValues(t);
-    g.setValueAtTime(g.value, t); g.linearRampToValueAtTime(1 - depth, t + 0.008); g.setTargetAtTime(1, t + 0.02, rel / 3);
-  }
-  // How stormy the sky is, 0 to 1: the stormiest city's low pressure and gusts
-  function stormSky() {
-    return Math.max(0, ...cities.filter(c => c.w).map(c => {
-      const low = Math.max(0, Math.min(1, (1010 - (c.w.p || 1013)) / 22)), gust = Math.max(0, Math.min(1, ((c.w.g || 0) - 20) / 60));
-      return Math.min(1, low * 0.65 + gust * 0.55);
-    }));
-  }
-  function applyXfx() {
-    const ready = cities.filter(c => c.w);
-    const avg = k => ready.length ? ready.reduce((a, c) => a + (c.w[k] || 0), 0) / ready.length : 0;
-    const wind = Math.min(1, avg("w") / 40), rain = Math.min(1, avg("r") / 2 + Math.max(0, ...ready.map(c => c.w.pp || 0)) / 200), cloud = avg("c") / 100;
-    const storm = XFX.stormAuto ? stormSky() : val("xStorm") / 100;
-    XFX.storm = storm;
-    { const o = document.getElementById("xStormOut"); if (o) o.value = XFX.stormAuto ? "Auto " + Math.round(storm * 100) : String(Math.round(storm * 100)); }
-    { const o = document.getElementById("xPhaseRateOut"); if (o) o.value = (0.04 + wind * 0.5).toFixed(2) + " Hz"; }
-    if (!XFX.built) return;
-    const t = ac.currentTime;
-    // phaser: on, or pulled in by the storm
-    const phMix = Math.min(1, (XFX.phaser ? val("xPhaseMix") / 100 : 0) + storm * 0.45);
-    XFX.phWet.gain.setTargetAtTime(phMix * 0.8, t, 0.2); XFX.phDry.gain.setTargetAtTime(1 - phMix * 0.35, t, 0.2);
-    XFX.phLfo.frequency.setTargetAtTime(0.04 + wind * 0.5 + storm * 0.4, t, 1);
-    XFX.phDepth.gain.setTargetAtTime((XFX.phaser ? val("xPhaseDepth") / 100 : 0.4) * 2400 * (phMix > 0 ? 1 : 0), t, 0.3);
-    // storm: darker and a touch of drive
-    XFX.stormLP.frequency.setTargetAtTime(20000 * Math.pow(2500 / 20000, storm), t, 0.4);
-    XFX.stormWet.gain.setTargetAtTime(storm * 0.2, t, 0.3); XFX.stormDry.gain.setTargetAtTime(1 - storm * 0.3, t, 0.3);
-    // dust: level, more in the rain and in a storm
-    const dust = (XFX.dust ? val("xDust") / 100 : 0) * (0.6 + 0.8 * rain) + storm * 0.25;
-    XFX.hissG.gain.setTargetAtTime(dust * 0.012, t, 0.5);
-    XFX.crackleG.gain.setTargetAtTime(dust * (XFX.dust ? val("xCrackle") / 100 : 0.4) * 0.22, t, 0.5);
-    // radio: a base amount for every city, more for the ones far away on the memory map
-    cities.forEach(c => {
-      const b = buses.get(c); if (!b || !b.radio) return;
-      const far = Math.max(0, Math.min(1, 1 - (c.moodTarget ?? 1)));
-      const r = XFX.radio ? Math.min(1, val("xRadio") / 100 + far * val("xRadioFar") / 100) : 0;
-      b.radio.wet.gain.setTargetAtTime(r * 1.3, t, 0.3); b.radio.dry.gain.setTargetAtTime(1 - r * 0.9, t, 0.3);
-    });
-    // shimmer: more under clear skies
-    if (fx.shimG) fx.shimG.gain.setTargetAtTime(val("fxShimmer") / 100 * 0.42 * (1 - 0.5 * cloud), t, 0.3);
-    // the storm leans on the delay too
-    if (Math.abs((XFX._stormFx || 0) - storm) > 0.01) { XFX._stormFx = storm; applyFx(); }
-  }
-  [["xPhaseOn", "phaser", "Phaser"], ["xRadioOn", "radio", "Radio"], ["xDustOn", "dust", "Dust"], ["xPumpOn", "pump", "Pump"], ["xStormAuto", "stormAuto", "Storm follows the weather"]].forEach(([id, key, name]) => {
-    const b = document.getElementById(id); if (!b) return;
-    b.addEventListener("click", () => { XFX[key] = !XFX[key]; b.setAttribute("aria-pressed", String(XFX[key])); b.setAttribute("aria-label", `${name} ${XFX[key] ? "on" : "off"}`); applyXfx(); if (!XFX.stormAuto) applyFx(); });
-  });
-  ["xPhaseMix", "xPhaseDepth", "xRadio", "xRadioFar", "xDust", "xCrackle", "xPumpDepth", "xPumpRelease", "xStorm", "fxShimmer"].forEach(id => {
-    const el = document.getElementById(id); if (!el) return;
-    el.addEventListener("input", () => { const o = document.getElementById(id + "Out"); if (o && id !== "xStorm") o.value = el.value; if (id === "xStorm") applyFx(); applyXfx(); });
-  });
-  setInterval(() => { if (XFX.built) applyXfx(); }, 3000);   // wind, rain and storm keep moving
   const playBtn = document.getElementById("play");
   const fab = document.getElementById("fab");
   function syncButtons() {
