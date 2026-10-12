@@ -3221,17 +3221,17 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
   function drawGrain(time) {
     const W = grain.width, H = grain.height;
     gg.globalCompositeOperation = "source-over";
-    gg.fillStyle = "#d9a48f"; gg.fillRect(0, 0, W, H);   // peach ground, from the painting
+    gg.fillStyle = "#2a1712"; gg.fillRect(0, 0, W, H);
     const tt = reduceMotion ? 0 : time / 9000;
     const blobs = [
-      [0.22 + 0.06 * Math.sin(tt), 0.35 + 0.08 * Math.cos(tt * 0.8), 0.55, "232,166,135"],
-      [0.78 + 0.05 * Math.cos(tt * 0.9), 0.3 + 0.07 * Math.sin(tt * 1.1), 0.5, "143,170,122"],
-      [0.55 + 0.07 * Math.sin(tt * 0.7 + 2), 0.85 + 0.05 * Math.cos(tt), 0.6, "138,154,208"],
-      [0.5, 0.2 + 0.04 * Math.sin(tt * 1.3), 0.35, "228,186,190"]
+      [0.22 + 0.06 * Math.sin(tt), 0.35 + 0.08 * Math.cos(tt * 0.8), 0.55, "208,138,106"],
+      [0.78 + 0.05 * Math.cos(tt * 0.9), 0.3 + 0.07 * Math.sin(tt * 1.1), 0.5, "111,163,140"],
+      [0.55 + 0.07 * Math.sin(tt * 0.7 + 2), 0.85 + 0.05 * Math.cos(tt), 0.6, "169,139,196"],
+      [0.5, 0.2 + 0.04 * Math.sin(tt * 1.3), 0.35, "200,120,110"]
     ];
     blobs.forEach(([x, y, r, rgb], i) => {
       const c = cities[i];
-      const lift = c && c.w ? (sunNow(c).day ? 0.9 + 0.1 * sunNow(c).arc : 0.85) : 0.95;   // the painting palette stays full; daylight only nudges it
+      const lift = c && c.w ? (sunNow(c).day ? 0.55 + 0.45 * sunNow(c).arc : 0.25) : 0.7;
       const grd = gg.createRadialGradient(x * W, y * H, 0, x * W, y * H, r * Math.max(W, H));
       grd.addColorStop(0, `rgba(${rgb},${0.95 * lift})`);
       grd.addColorStop(1, `rgba(${rgb},0)`);
@@ -3240,7 +3240,7 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
     gg.fillStyle = gg.createPattern(noise, "repeat");
     const ox = reduceMotion ? 0 : (Math.random() * 160) | 0, oy = reduceMotion ? 0 : (Math.random() * 160) | 0;
     gg.save(); gg.translate(-ox, -oy); gg.fillRect(0, 0, W + 160, H + 160); gg.restore();
-    gg.fillStyle = "rgba(40,20,16,0.30)"; gg.fillRect(0, 0, W, H);
+    gg.fillStyle = "rgba(16,8,6,0.28)"; gg.fillRect(0, 0, W, H);
   }
 
   // ---------- memory map ----------
