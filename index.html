@@ -2366,6 +2366,14 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
     const limiter = ac.createDynamicsCompressor();
     limiter.threshold.value = -4.5; limiter.knee.value = 0; limiter.ratio.value = 20; limiter.attack.value = 0.002; limiter.release.value = 0.12;
     comp.connect(makeup).connect(limiter); outNode = limiter;
+    // As the cities fall asleep the compressor lets go, so the night-time hush stays a real hush.
+    // Awake: ratio 2.5 from -26 dB. Deep night: hardly any compression (ratio 1 from -6 dB), and less makeup.
+    const easeBus = () => {
+      const sl = grooveSleep(), t = ac.currentTime;
+      comp.ratio.setTargetAtTime(2.5 - 1.5 * sl, t, 2); comp.threshold.setTargetAtTime(-26 + 20 * sl, t, 2);
+      makeup.gain.setTargetAtTime(MIX_MAKEUP * (1 - 0.3 * sl), t, 2);
+    };
+    easeBus(); setInterval(easeBus, 4000);
     master = ac.createGain(); master.gain.value = document.getElementById("volume").value / 100 * 0.9;
     djLP = ac.createBiquadFilter(); djLP.type = "lowpass"; djLP.frequency.value = 20000; djLP.Q.value = 0.9;
     djHP = ac.createBiquadFilter(); djHP.type = "highpass"; djHP.frequency.value = 20; djHP.Q.value = 0.9;
