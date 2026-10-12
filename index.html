@@ -1634,11 +1634,15 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
     return r.json();
   }
   async function fetchCity(c) {
+    // Only the newest request for the city in this card may land. A slow reply for the city that used to be here
+    // (from the 10-minute refresh, or the first load racing a swap) would otherwise paint its weather and clock on the new city.
+    const seq = c.fetchSeq = (c.fetchSeq || 0) + 1, lat = c.lat, lon = c.lon;
     const j = await getJSON("https://api.open-meteo.com/v1/forecast" +
-      `?latitude=${c.lat}&longitude=${c.lon}` +
+      `?latitude=${lat}&longitude=${lon}` +
       "&current=temperature_2m,relative_humidity_2m,wind_speed_10m,wind_gusts_10m,cloud_cover,precipitation,pressure_msl" +
       "&hourly=precipitation_probability,pressure_msl&past_hours=3&forecast_hours=1" +
       "&daily=sunrise,sunset&timezone=auto&timeformat=unixtime&forecast_days=1");
+    if (seq !== c.fetchSeq || c.lat !== lat || c.lon !== lon) return;   // stale: this card has moved on
     const k = j.current;
     c.w = { t: k.temperature_2m, h: k.relative_humidity_2m, w: k.wind_speed_10m, g: k.wind_gusts_10m ?? k.wind_speed_10m * 1.7, c: k.cloud_cover, r: k.precipitation, p: k.pressure_msl,
             off: j.utc_offset_seconds || 0, rise: j.daily.sunrise[0], set: j.daily.sunset[0],
@@ -1653,7 +1657,7 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
       live = true; lastUpdate = new Date();
       showLiveUI();
     } catch (e) {
-      if (!live) cities.forEach(c => { if (!c.w) { c.w = Object.assign({}, SNAPSHOT[c.key]); rebuild(c); } });
+      if (!live) cities.forEach(c => { if (!c.w && c.name === c.key) { c.w = Object.assign({}, SNAPSHOT[c.key]); rebuild(c); } });   // the saved snapshot only fits the city it was taken for
     }
     setStatus();
   }
