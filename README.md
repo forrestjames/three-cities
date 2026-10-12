@@ -4,7 +4,9 @@ Three places I've called home, playing in real time.
 
 Boston, Copenhagen and London become a constantly changing composition shaped by their live weather. Temperature sets the length of each rhythm, conditions scatter notes across it, and at sunset, each city falls silent.
 
-**Play it:** https://forrestjames.github.io/three-cities/
+**Play it:** https://threecities.forrestjamesmusic.com
+
+**Manual:** https://threecities.forrestjamesmusic.com/manual
 
 You can swap in the cities you've lived in, then share a link to your version.
 
@@ -25,3 +27,7 @@ Weather from [Open-Meteo](https://open-meteo.com). Photos from Wikimedia Commons
 Grand piano samples: [Salamander Grand Piano](https://archive.org/details/SalamanderGrandPianoV3) by Alexander Holm, CC BY 3.0. Harp samples: [VSCO 2 Community Edition](https://vis.versilstudios.net/vsco-community.html), CC0. Both trimmed and re-encoded for the web.
 
 Made by Forrest James.
+
+## Keeping the manual current
+
+`manual.html` is the user manual. Any change to what the instrument does or how it's controlled updates the manual in the same commit: the section that describes it, and a line in "What's new" with the date.

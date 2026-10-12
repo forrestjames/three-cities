@@ -1,0 +1,461 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Three Cities Manual</title>
+<meta name="description" content="The operator's manual for Three Cities by Forrest James: how the weather plays the music, every control, patch ideas and a few honest answers.">
+<link rel="canonical" href="https://threecities.forrestjamesmusic.com/manual">
+<meta property="og:title" content="Three Cities · Operator's Manual">
+<meta property="og:description" content="How three cities' weather becomes music, every knob explained, and some patch ideas.">
+<meta property="og:image" content="https://threecities.forrestjamesmusic.com/og.png">
+<link rel="icon" href="/favicon.ico?v=4" sizes="any">
+<link rel="icon" href="/favicon.svg?v=4" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Abel&family=Source+Code+Pro:wght@400;600&display=swap" rel="stylesheet">
+<style>
+/* An operator's manual in the old style: cream paper, black ink, numbered callouts, a sense of humour. */
+:root {
+  --paper: #f3ede2; --paper-2: #ebe3d5; --ink: #1d1714; --ink-2: #4a403a; --ink-3: #7a6e66; --rule: rgba(29,23,20,0.18);
+  --boston: #c46a49; --copenhagen: #4f8a6f; --london: #7e64a6; --sun: #d9a03f; --hl: #f6d97a;
+  --display: "Abel", "Arial Narrow", sans-serif; --mono: "Source Code Pro", ui-monospace, Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --paper: #1b1613; --paper-2: #241d19; --ink: #f1e9dd; --ink-2: #cfc3b5; --ink-3: #9d9084; --rule: rgba(241,233,221,0.18); --hl: #6b5520; } }
+:root[data-theme="dark"] { --paper: #1b1613; --paper-2: #241d19; --ink: #f1e9dd; --ink-2: #cfc3b5; --ink-3: #9d9084; --rule: rgba(241,233,221,0.18); --hl: #6b5520; }
+* { box-sizing: border-box; }
+html { background: var(--paper); color: var(--ink); scroll-behavior: smooth; }
+body { margin: 0; font: 15px/1.65 var(--mono); letter-spacing: 0.01em; background: var(--paper);
+  background-image: radial-gradient(rgba(0,0,0,0.035) 1px, transparent 1.2px); background-size: 5px 5px; }
+a { color: inherit; text-decoration-thickness: 1px; text-underline-offset: 3px; }
+svg { display: block; }
+.wrap { max-width: 860px; margin: 0 auto; padding: 0 20px 80px; }
+h1, h2, h3 { font-family: var(--display); font-weight: 400; letter-spacing: 0.08em; line-height: 1.1; }
+h2 { font-size: 34px; margin: 0 0 6px; text-transform: uppercase; }
+h3 { font-size: 21px; margin: 28px 0 6px; text-transform: uppercase; letter-spacing: 0.1em; }
+p { margin: 0 0 14px; }
+.sec { padding: 56px 0 8px; border-top: 2px solid var(--ink); margin-top: 56px; position: relative; }
+.sec-no { position: absolute; top: -15px; left: 0; background: var(--paper); padding: 0 10px 0 0; font: 600 12px var(--mono); letter-spacing: 0.2em; }
+.kicker { color: var(--ink-3); font-size: 13px; margin-bottom: 22px; }
+.mark { background: linear-gradient(transparent 55%, var(--hl) 55%); padding: 0 2px; }
+/* cover */
+.cover { min-height: 92vh; display: grid; align-content: center; justify-items: center; text-align: center; gap: 18px; padding: 40px 0; }
+.cover .issue { font-size: 12px; letter-spacing: 0.3em; text-transform: uppercase; border: 1.5px solid var(--ink); padding: 6px 12px; }
+.cover h1 { font-size: clamp(54px, 13vw, 128px); margin: 0; letter-spacing: 0.14em; }
+.cover .sub { font: 400 clamp(18px, 3vw, 24px) var(--display); letter-spacing: 0.3em; text-transform: uppercase; }
+.cover .by { font-size: 13px; color: var(--ink-2); }
+.cover .skyline { width: min(380px, 80vw); height: auto; fill: var(--ink); }
+.stamp { display: inline-block; transform: rotate(-4deg); border: 2px solid var(--boston); color: var(--boston); padding: 4px 10px; font: 600 11px var(--mono); letter-spacing: 0.2em; text-transform: uppercase; }
+/* contents */
+.toc { columns: 2; column-gap: 32px; padding: 0; list-style: none; margin: 0; counter-reset: toc; }
+.toc li { counter-increment: toc; break-inside: avoid; display: flex; gap: 10px; padding: 6px 0; border-bottom: 1px dotted var(--rule); }
+.toc li::before { content: counter(toc, decimal-leading-zero); color: var(--ink-3); }
+.toc a { text-decoration: none; }
+.toc a:hover { text-decoration: underline; }
+@media (max-width: 600px) { .toc { columns: 1; } }
+/* boxes */
+.note, .warn, .tip { border: 1.5px solid var(--ink); padding: 14px 16px 2px; margin: 18px 0; position: relative; background: var(--paper-2); }
+.note::before, .warn::before, .tip::before { position: absolute; top: -11px; left: 12px; background: var(--ink); color: var(--paper); font: 600 10px var(--mono); letter-spacing: 0.2em; padding: 3px 8px; text-transform: uppercase; }
+.note::before { content: "Note"; } .warn::before { content: "Careful"; background: var(--boston); } .tip::before { content: "Tip"; background: var(--copenhagen); }
+/* tables */
+table { width: 100%; border-collapse: collapse; margin: 14px 0 20px; font-size: 14px; }
+th, td { text-align: left; vertical-align: top; padding: 8px 10px; border-bottom: 1px solid var(--rule); }
+th { font: 600 11px var(--mono); letter-spacing: 0.16em; text-transform: uppercase; border-bottom: 2px solid var(--ink); }
+td:first-child { white-space: nowrap; font-weight: 600; }
+@media (max-width: 600px) { td:first-child { white-space: normal; } table { font-size: 13px; } }
+/* callout list */
+.callouts { list-style: none; padding: 0; margin: 10px 0; display: grid; gap: 10px; }
+.callouts li { display: grid; grid-template-columns: 28px 1fr; gap: 10px; align-items: start; }
+.num { display: inline-grid; place-items: center; width: 24px; height: 24px; border-radius: 50%; background: var(--ink); color: var(--paper); font: 600 12px var(--mono); }
+.figure { margin: 22px 0; padding: 18px; border: 1.5px solid var(--ink); background: var(--paper-2); }
+.figure figcaption { font-size: 12px; color: var(--ink-3); margin-top: 10px; letter-spacing: 0.04em; }
+.figure svg { width: 100%; height: auto; }
+.figure svg text { font-family: var(--mono); }
+.two { display: grid; grid-template-columns: 1fr 1fr; gap: 28px; }
+@media (max-width: 700px) { .two { grid-template-columns: 1fr; } }
+/* weather lexicon */
+.lex { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 14px; margin: 18px 0; }
+.lex div { border: 1.5px solid var(--ink); padding: 12px 14px; background: var(--paper); }
+.lex svg { width: 44px; height: 44px; margin-bottom: 6px; stroke: var(--ink); fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.lex b { font: 400 18px var(--display); letter-spacing: 0.1em; text-transform: uppercase; display: block; }
+.lex span { font-size: 13px; color: var(--ink-2); }
+/* recipes */
+.recipe { border-left: 4px solid var(--ink); padding: 4px 0 4px 16px; margin: 18px 0; }
+.recipe b { font: 400 20px var(--display); letter-spacing: 0.1em; text-transform: uppercase; }
+.recipe .ing { font-size: 13px; color: var(--ink-2); }
+kbd { display: inline-block; min-width: 26px; text-align: center; border: 1.5px solid var(--ink); border-bottom-width: 3px; border-radius: 4px; padding: 0 6px; font: 600 13px var(--mono); background: var(--paper); }
+.steps { counter-reset: st; list-style: none; padding: 0; margin: 14px 0; }
+.steps li { counter-increment: st; position: relative; padding: 0 0 14px 46px; }
+.steps li::before { content: counter(st); position: absolute; left: 0; top: -2px; width: 32px; height: 32px; border: 2px solid var(--ink); border-radius: 50%; display: grid; place-items: center; font: 400 18px var(--display); }
+.log dt { font-weight: 600; margin-top: 10px; }
+.log dd { margin: 2px 0 0 0; color: var(--ink-2); }
+.back { position: fixed; right: 16px; bottom: 16px; background: var(--ink); color: var(--paper); text-decoration: none; padding: 10px 16px; font: 600 12px var(--mono); letter-spacing: 0.14em; text-transform: uppercase; box-shadow: 0 6px 20px rgba(0,0,0,0.25); }
+.foot { text-align: center; font-size: 12px; color: var(--ink-3); margin-top: 60px; }
+@media print { .back { display: none; } body { background: #fff; } .sec { break-before: page; } .cover { min-height: auto; } }
+</style>
+</head>
+<body>
+<a class="back" href="/">Play it</a>
+<div class="wrap">
+
+<header class="cover">
+  <span class="issue">Operator's manual · Issue 1</span>
+  <svg class="skyline" viewBox="0 0 35.4 24" aria-hidden="true"><path d="M0.5 24v-6.6h11V24zM1.6 17.4v-1.6h8.8v1.6zM3 15.8v-2.4h6v2.4zM2.9 13.4a3.1 3.1 0 0 1 6.2 0zM5.4 10.4V8.2h1.2v2.2zM5.2 8.2L6 6.6l.8 1.6z"/><path fill-rule="evenodd" d="M13.4 24V13h12.6v11h-3.6v-5.2a2.7 2.7 0 0 0-5.4 0V24zM13 13v-1.4h13.4V13zM15.8 11.6a3.9 3.9 0 0 1 7.8 0zM19.3 7.7V5.6h.8v2.1zM19.1 5.6l.6-1.8.6 1.8zM13.6 11.6v-1.8h.9v1.8zM24.9 11.6v-1.8h.9v1.8zM13.4 9.8l.65-1.4.65 1.4zM24.7 9.8l.65-1.4.65 1.4z"/><path fill-rule="evenodd" d="M27.9 24v-3.5h.6V9h-.4V7.6h1V5.4h.8L31.4 0l1.5 5.4h.8v2.2h1V9h-.4v11.5h.6V24zM31.4 10a1.7 1.7 0 1 0 0 3.4 1.7 1.7 0 0 0 0-3.4z"/></svg>
+  <h1>Three Cities</h1>
+  <div class="sub">A weather-played instrument</div>
+  <div class="by">by Forrest James · Boston, Copenhagen, London</div>
+  <span class="stamp">No batteries required</span>
+</header>
+
+<nav aria-label="Contents">
+  <h2>Contents</h2>
+  <ol class="toc">
+    <li><a href="#hello">Hello</a></li>
+    <li><a href="#quick">Quick start</a></li>
+    <li><a href="#weather">How the weather plays</a></li>
+    <li><a href="#card">The city card</a></li>
+    <li><a href="#rack">The rack</a></li>
+    <li><a href="#drums">The rhythm section</a></li>
+    <li><a href="#fx">Hall and delay</a></li>
+    <li><a href="#cities">Your own cities</a></li>
+    <li><a href="#record">Recording and sharing</a></li>
+    <li><a href="#midi">MIDI out</a></li>
+    <li><a href="#map">The memory map</a></li>
+    <li><a href="#keys">Keyboard</a></li>
+    <li><a href="#recipes">Patch ideas</a></li>
+    <li><a href="#faq">Questions</a></li>
+    <li><a href="#specs">Specifications</a></li>
+    <li><a href="#changes">What's new</a></li>
+  </ol>
+</nav>
+
+<section class="sec" id="hello">
+  <span class="sec-no">01</span>
+  <h2>Hello</h2>
+  <p class="kicker">Thank you for not buying this. It's free.</p>
+  <p>Three Cities is a piece of music that nobody is playing. Well, nobody human. The weather in three cities plays it, live, right now, in your browser.</p>
+  <p>I grew up and studied music in Boston, lived and performed in Copenhagen, and now live in London. I wanted to make something about those places without writing a song about them. So I gave each city an instrument and let its sky decide what to play.</p>
+  <p>You can listen and do nothing at all. That's a perfectly good way to use it. Or you can open every panel, swap in the cities you've lived in, send it all to your synths and record what happens. This manual covers both.</p>
+  <div class="note"><p>Nothing here is random in the coin-toss sense. When something changes, it's because the air somewhere changed. If it sounds different at breakfast and at midnight, that's the point.</p></div>
+</section>
+
+<section class="sec" id="quick">
+  <span class="sec-no">02</span>
+  <h2>Quick start</h2>
+  <p class="kicker">Under a minute, kettle optional.</p>
+  <ol class="steps">
+    <li><b>Press Start listening.</b> The three cities begin, each in its own rhythm. On an iPhone, flick the silent switch off first.</li>
+    <li><b>Look at the cards.</b> Each one shows a city's temperature, local time, its rhythm ring and the sun. Those numbers are the score.</li>
+    <li><b>Change a sound.</b> Pick a new instrument from the menu at the bottom of any card. Felt piano, flute and grain clouds are good places to start.</li>
+    <li><b>Try your own cities.</b> Type three places you've lived, or tap Surprise me, then Play these.</li>
+    <li><b>Share it.</b> The Share button copies a link with your cities, sounds and settings in it. Whoever opens it hears your version, with today's weather.</li>
+  </ol>
+</section>
+
+<section class="sec" id="weather">
+  <span class="sec-no">03</span>
+  <h2>How the weather plays</h2>
+  <p class="kicker">The whole idea in one table. Everything else is detail.</p>
+  <p>Each city plays a <span class="mark">Euclidean rhythm</span>: a number of notes spread as evenly as possible across a number of steps. It's Euclid's oldest algorithm, and it turns up in music all over the world. Three notes in eight steps is the Cuban tresillo. The weather chooses both numbers.</p>
+  <figure class="figure">
+    <svg viewBox="0 0 760 230" role="img" aria-label="Diagram: 13 degrees makes a 13-step ring with 4 hits spread evenly">
+      <g fill="none" stroke="currentColor" stroke-width="2">
+        <circle cx="130" cy="115" r="80" stroke-dasharray="2 6"/>
+      </g>
+      <g id="ring"></g>
+      <text x="130" y="112" text-anchor="middle" font-size="34" fill="currentColor" style="font-family:Abel">13</text>
+      <text x="130" y="134" text-anchor="middle" font-size="12" fill="currentColor">steps</text>
+      <g font-size="14" fill="currentColor">
+        <text x="260" y="70">13°C outside</text>
+        <text x="260" y="92" style="fill:var(--ink-3)">becomes a loop 13 steps long</text>
+        <text x="260" y="132">56% humidity</text>
+        <text x="260" y="154" style="fill:var(--ink-3)">becomes 4 notes, spread out evenly</text>
+        <text x="260" y="194">So:  x . . . x . . x . . x . .</text>
+      </g>
+      <path d="M215 70 h35" stroke="currentColor" stroke-width="1.5" marker-end="url(#a)"/><path d="M215 132 h35" stroke="currentColor" stroke-width="1.5" marker-end="url(#a)"/>
+      <defs><marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" fill="currentColor"/></marker></defs>
+    </svg>
+    <figcaption>Fig. 1 · Boston on a mild, damp afternoon. The orange dots are the hits.</figcaption>
+  </figure>
+
+  <div class="lex">
+    <div><svg viewBox="0 0 44 44"><path d="M22 6v22"/><circle cx="22" cy="33" r="6"/><path d="M28 12h4M28 18h4M28 24h4"/></svg><b>Temperature</b><span>Sets the number of steps. 21°C is a 21-step loop. Below zero it uses the number without the minus and drops an octave.</span></div>
+    <div><svg viewBox="0 0 44 44"><path d="M22 8c6 9 10 14 10 19a10 10 0 0 1-20 0c0-5 4-10 10-19z"/></svg><b>Humidity, wind, cloud, rain</b><span>One of these sets how many hits land in the loop. You choose which in the card's More panel. Humidity is the default.</span></div>
+    <div><svg viewBox="0 0 44 44"><circle cx="22" cy="22" r="7"/><path d="M22 5v5M22 34v5M5 22h5M34 22h5M10 10l3.5 3.5M30.5 30.5L34 34M10 34l3.5-3.5M30.5 13.5L34 10"/></svg><b>The sun</b><span>Its height opens each city's filter. After sunset a city drifts off to sleep: softer, slower, fewer notes. It stirs again before dawn.</span></div>
+    <div><svg viewBox="0 0 44 44"><path d="M12 30h20a7 7 0 0 0 0-14 10 10 0 0 0-19-2 8 8 0 0 0-1 16z"/></svg><b>Cloud</b><span>Cloudier cities sound foggier, with more of the hall reverb on them.</span></div>
+    <div><svg viewBox="0 0 44 44"><path d="M6 16h22a5 5 0 1 0-5-5M6 24h30a5 5 0 1 1-5 5M6 32h14"/></svg><b>Wind and gusts</b><span>Wind makes melodies leap further and sets how fast each city's filter breathes. Gusts make the filter swell and the hats and snares ratchet.</span></div>
+    <div><svg viewBox="0 0 44 44"><circle cx="22" cy="24" r="13"/><path d="M22 24l7-6"/><path d="M14 14l2 2M30 14l-2 2"/></svg><b>Air pressure</b><span>Like a barometer you can hear. High pressure moves in slow notes, ordinary weather in 1/16s, and the low pressure before a storm gets restless.</span></div>
+    <div><svg viewBox="0 0 44 44"><path d="M12 22h20a7 7 0 0 0 0-14 10 10 0 0 0-19-2 8 8 0 0 0-1 16z"/><path d="M14 28l-2 6M22 28l-2 6M30 28l-2 6"/></svg><b>Chance of rain</b><span>Thins a city's line. Below 10% nothing changes. At 100% about a third of the notes rest.</span></div>
+    <div><svg viewBox="0 0 44 44"><path d="M8 28l8-8 6 6 14-14"/><path d="M30 12h6v6"/></svg><b>Unsettled skies</b><span>Bring flourishes: quick ornaments in 32nd notes. None in steady air, up to one note in five in a proper storm.</span></div>
+  </div>
+
+  <h3>Three cities, one band</h3>
+  <p>Each city runs its own loop length, so they drift in and out of step with each other. That's <span class="mark">polymeter</span>. The panel under the cards tells you when all three will next land on the one together, which can be a while.</p>
+  <p>They share one key and scale, picked when the page loads, and a slow chord progression that moves every four bars. Each melody walks the scale from its last note: calm air takes small steps, wind makes it leap, humid air repeats itself.</p>
+  <p>Only one city is ever fully up front. Every minute or two the lead passes to another with a slow swell, and the volume slider shows a striped stretch while a city sits back. Awake cities are more likely to lead.</p>
+  <div class="tip"><p>The tempo slows as the cities fall asleep, down to about three quarters at the dead of night. Listen at 3am London time and you'll hear London yawning.</p></div>
+</section>
+
+<section class="sec" id="card">
+  <span class="sec-no">04</span>
+  <h2>The city card</h2>
+  <p class="kicker">One per city. Read it like a front panel.</p>
+  <figure class="figure">
+    <svg viewBox="0 0 760 420" role="img" aria-label="Labelled diagram of a city card">
+      <rect x="20" y="16" width="330" height="390" fill="none" stroke="currentColor" stroke-width="2"/>
+      <text x="40" y="58" font-size="26" style="font-family:Abel;letter-spacing:3px" fill="#c46a49">BOSTON</text>
+      <text x="40" y="78" font-size="11" fill="currentColor">Massachusetts, USA</text>
+      <text x="40" y="96" font-size="11" fill="currentColor">● 14:20 · day</text>
+      <text x="330" y="66" text-anchor="end" font-size="38" style="font-family:Abel" fill="currentColor">13°C</text>
+      <circle cx="120" cy="190" r="56" fill="none" stroke="currentColor" stroke-dasharray="2 5"/>
+      <g fill="#c46a49"><circle cx="120" cy="134" r="6"/><circle cx="170" cy="215" r="6"/><circle cx="85" cy="234" r="6"/><circle cx="66" cy="172" r="6"/></g>
+      <text x="120" y="196" text-anchor="middle" font-size="26" style="font-family:Abel" fill="currentColor">13</text>
+      <path d="M240 210a40 40 0 0 1 80 0" fill="none" stroke="currentColor"/><line x1="232" y1="210" x2="328" y2="210" stroke="currentColor"/><circle cx="300" cy="183" r="6" fill="#d9a03f"/>
+      <text x="280" y="232" text-anchor="middle" font-size="11" fill="currentColor">SUN 60%</text>
+      <rect x="40" y="268" width="170" height="22" fill="none" stroke="currentColor"/><text x="48" y="283" font-size="11" fill="currentColor">13°C → 13-step loop</text>
+      <rect x="40" y="296" width="200" height="22" fill="none" stroke="currentColor"/><text x="48" y="311" font-size="11" fill="currentColor">56% humidity → 4 notes play</text>
+      <line x1="40" y1="334" x2="330" y2="334" stroke="currentColor" stroke-opacity=".3"/>
+      <rect x="40" y="346" width="110" height="34" fill="none" stroke="currentColor"/><text x="50" y="368" font-size="12" fill="currentColor">Marimba ▾</text>
+      <line x1="162" y1="363" x2="232" y2="363" stroke="#c46a49" stroke-width="4"/><circle cx="210" cy="363" r="7" fill="#c46a49"/>
+      <rect x="244" y="346" width="34" height="34" fill="none" stroke="currentColor"/><text x="261" y="368" text-anchor="middle" font-size="13" fill="currentColor">♪</text>
+      <rect x="284" y="346" width="48" height="34" fill="none" stroke="currentColor"/><text x="308" y="368" text-anchor="middle" font-size="10" fill="currentColor">MORE</text>
+      <g font-size="12" fill="currentColor">
+        <g transform="translate(372,0)"></g>
+      </g>
+      <g stroke="currentColor" stroke-width="1"><polyline fill="none" points="150,34 250,24 400,24"/><line x1="335" y1="58" x2="400" y2="80"/><line x1="130" y1="96" x2="400" y2="120"/><polyline fill="none" points="162,150 230,150 400,160"/><line x1="322" y1="190" x2="400" y2="200"/><line x1="242" y1="300" x2="400" y2="240"/><line x1="150" y1="363" x2="400" y2="280"/><polyline fill="none" points="210,354 210,334 400,320"/><line x1="278" y1="356" x2="400" y2="360"/><line x1="332" y1="372" x2="400" y2="398"/></g>
+      <g font-size="12" fill="currentColor">
+        <g><circle cx="412" cy="24" r="11"/><text x="412" y="28" text-anchor="middle" style="fill:var(--paper)" font-weight="600">1</text><text x="432" y="28">City name and where it is</text></g>
+        <g><circle cx="412" cy="80" r="11"/><text x="412" y="84" text-anchor="middle" style="fill:var(--paper)" font-weight="600">2</text><text x="432" y="84">Temperature: the number of steps</text></g>
+        <g><circle cx="412" cy="120" r="11"/><text x="412" y="124" text-anchor="middle" style="fill:var(--paper)" font-weight="600">3</text><text x="432" y="124">Local time, and day or night</text></g>
+        <g><circle cx="412" cy="160" r="11"/><text x="412" y="164" text-anchor="middle" style="fill:var(--paper)" font-weight="600">4</text><text x="432" y="164">Rhythm ring, with a moving playhead</text></g>
+        <g><circle cx="412" cy="200" r="11"/><text x="412" y="204" text-anchor="middle" style="fill:var(--paper)" font-weight="600">5</text><text x="432" y="204">The sun's arc, or the moon</text></g>
+        <g><circle cx="412" cy="240" r="11"/><text x="412" y="244" text-anchor="middle" style="fill:var(--paper)" font-weight="600">6</text><text x="432" y="244">What the weather is doing to the music</text></g>
+        <g><circle cx="412" cy="280" r="11"/><text x="412" y="284" text-anchor="middle" style="fill:var(--paper)" font-weight="600">7</text><text x="432" y="284">Sound</text></g>
+        <g><circle cx="412" cy="320" r="11"/><text x="412" y="324" text-anchor="middle" style="fill:var(--paper)" font-weight="600">8</text><text x="432" y="324">Volume (stripes: sitting back)</text></g>
+        <g><circle cx="412" cy="360" r="11"/><text x="412" y="364" text-anchor="middle" style="fill:var(--paper)" font-weight="600">9</text><text x="432" y="364">Mute</text></g>
+        <g><circle cx="412" cy="398" r="11"/><text x="412" y="402" text-anchor="middle" style="fill:var(--paper)" font-weight="600">10</text><text x="432" y="402">More: the deep controls</text></g>
+      </g>
+    </svg>
+    <figcaption>Fig. 2 · A city card. The chips at 6 are tappable: the hits chip lets you change which weather sets the hits.</figcaption>
+  </figure>
+
+  <h3>Behind the More button</h3>
+  <table>
+    <tr><th>Control</th><th>What it does</th></tr>
+    <tr><td>Weather bars</td><td>Humidity, wind, cloud and rain, as they are right now.</td></tr>
+    <tr><td>Hits from</td><td>Which weather sets the number of hits: humidity, wind, cloud or rain. Rain is the sparse one. On a dry day it's almost silence.</td></tr>
+    <tr><td>Rate</td><td>How long each step lasts, from 1/32 to a whole bar. The weather nudges it too, through air pressure.</td></tr>
+    <tr><td>Density</td><td>Scales the number of hits up or down from what the weather says.</td></tr>
+    <tr><td>Chance</td><td>The chance each hit actually plays. Lower it for a looser, breathier line.</td></tr>
+    <tr><td>Octave</td><td>Moves the city from two octaves down to two up.</td></tr>
+    <tr><td>Reverb, Delay</td><td>Sends this city to the hall and the delay. Each visit starts with a random mix, so both pedals get used.</td></tr>
+    <tr><td>Swap city</td><td>Type a place, or roll the dice, to replace this city.</td></tr>
+  </table>
+
+  <h3>Sounds</h3>
+  <p>Twenty-seven, from gentle to unhinged. A few favourites:</p>
+  <table>
+    <tr><th>Sound</th><th>Character</th></tr>
+    <tr><td>Felt piano</td><td>A piano with felt on the hammers. Soft, close, a little bit sad.</td></tr>
+    <tr><td>Warm flute, Breath</td><td>Breath follows the wind: the filter sweeps open and closed with it, and gusts make it swell.</td></tr>
+    <tr><td>Bowed swell</td><td>Each note fades up out of nothing and settles away again.</td></tr>
+    <tr><td>Grand piano, Harp</td><td>Real recorded instruments, credited at the bottom of the page.</td></tr>
+    <tr><td>Juno pad, strings, keys</td><td>In the spirit of an old Roland polysynth. Chorus included.</td></tr>
+    <tr><td>Grain cloud, shimmer, dust</td><td>Tiny slices of sound scattered into a haze. Best on slow, cloudy cities.</td></tr>
+    <tr><td>Sub bass, Acid bass</td><td>The low end. When only one city is awake it never gets the sub bass, so the night doesn't rumble.</td></tr>
+  </table>
+</section>
+
+<section class="sec" id="rack">
+  <span class="sec-no">05</span>
+  <h2>The rack</h2>
+  <p class="kicker">Above the cards, the controls that affect everything.</p>
+  <table>
+    <tr><th>Module</th><th>Controls</th></tr>
+    <tr><td>Play</td><td>Tempo and volume. Tempo is the speed with every city awake. The display shows what you're actually hearing, and the lamp blinks on the beat.</td></tr>
+    <tr><td>Harmony</td><td>Key and scale for all three cities. Seventeen scales, from minor pentatonic to Japanese yo and Okinawan ryukyu. Change them and the cities follow from their next note.</td></tr>
+    <tr><td>Filter</td><td>A DJ-style filter on the whole mix. Left is low-pass, right is high-pass, 12 o'clock is off.</td></tr>
+    <tr><td>MIDI</td><td>Sends everything to your synths. See <a href="#midi">MIDI out</a>.</td></tr>
+  </table>
+  <div class="tip"><p>Knobs: drag up or down, scroll, or use the arrow keys. Double-click any knob to reset it.</p></div>
+</section>
+
+<section class="sec" id="drums">
+  <span class="sec-no">06</span>
+  <h2>The rhythm section</h2>
+  <p class="kicker">One drummer, listening to all three cities at once.</p>
+  <p>The drums aren't programmed. They're built from the three city patterns. <span class="mark">The kick lands where the cities agree, the hats wherever any of them plays, and the rim where one plays alone.</span> The snare is its own Euclidean backbeat, and it gets busier as the gustiest city's wind picks up.</p>
+  <ul>
+    <li>Every fourth bar ends in a fill, and sometimes drops the kick to breathe before the next chord.</li>
+    <li>Unsettled weather adds stutters, where the last beat replays an earlier slice. Gusts make hats and snares ratchet. Humid air adds ghost notes.</li>
+    <li>As the cities fall asleep the drums thin out, and when all three are deep in the night they mostly stop.</li>
+  </ul>
+  <table>
+    <tr><th>Control</th><th>What it does</th></tr>
+    <tr><td>Kit</td><td>Minimal, Soft, Lo-fi, 808, Jazz (with brushes and swing), CR-78, Felt, Mallets (they follow the key), Rain and Minimal techno.</td></tr>
+    <tr><td>Mutes</td><td>Tap a row's name to mute kick, snare, hat or rim. Or use <kbd>A</kbd> <kbd>S</kbd> <kbd>D</kbd> <kbd>F</kbd>.</td></tr>
+    <tr><td>H and D</td><td>Little switches on each drum row that send it to the Hall or the Delay. Snare to the hall, hat to the delay: you get the idea.</td></tr>
+    <tr><td>Volume, Filter</td><td>Level and tone. Auto sweeps the filter open as the cities head towards landing on the one together.</td></tr>
+    <tr><td>Chance</td><td>Probability for the whole kit. At 60% some hits simply don't happen, and it starts to sound like a person.</td></tr>
+  </table>
+  <div class="note"><p>The rim is a ghost kick: a soft, low thump that pushes the groove along without getting in the way of the melodies.</p></div>
+</section>
+
+<section class="sec" id="fx">
+  <span class="sec-no">07</span>
+  <h2>Hall and delay</h2>
+  <p class="kicker">Two pedals on the floor. Open Effects to see them.</p>
+  <div class="two">
+    <div>
+      <h3>Hall</h3>
+      <p>A big reverb, 4.5 seconds by default. At night it stretches and darkens with the cities' sleep, up to about seven seconds. Cloudy cities get more of it.</p>
+      <p><b>Freeze</b> holds whatever is in the hall and lets it ring forever. The switch is deliberately chunky.</p>
+    </div>
+    <div>
+      <h3>Delay</h3>
+      <p>Single, ping-pong or three taps, timed to the tempo from 1/16 to dotted 1/4.</p>
+      <p><b>Freeze</b> catches the echoes and keeps them going round, so you can play over a loop the weather made.</p>
+    </div>
+  </div>
+</section>
+
+<section class="sec" id="cities">
+  <span class="sec-no">08</span>
+  <h2>Your own cities</h2>
+  <p class="kicker">The piece is about places that matter to someone. Use yours.</p>
+  <p>Press <b>Try your own cities</b>, type three places you've lived and press <b>Play these</b>. The suggestions show each city's local time with a ☀ or ☾, so you can see who's up.</p>
+  <table>
+    <tr><th>Thing</th><th>What happens</th></tr>
+    <tr><td>Type a country</td><td>You get its best-known cities to choose from. If you play a country anyway, it picks the capital and tells you. "France" becomes Paris.</td></tr>
+    <tr><td>The dice</td><td>Rolls a random city into that box from about 350 around the world.</td></tr>
+    <tr><td>Surprise me</td><td>☀ Awake fills all three boxes with cities in daylight right now. ☾ Asleep picks cities in the dark. ☀☾ Mix gives you some of each. They're always spread across the world.</td></tr>
+    <tr><td>Swap one</td><td>Every card has a Swap box under More, to change one city at a time.</td></tr>
+  </table>
+  <div class="tip"><p>Try three asleep cities with Grain dust and the hall frozen. Then try three awake ones with the 808. Same instrument, very different evening.</p></div>
+</section>
+
+<section class="sec" id="record">
+  <span class="sec-no">09</span>
+  <h2>Recording and sharing</h2>
+  <p class="kicker">Keep a moment. Send it to someone.</p>
+  <h3>Record</h3>
+  <p>Press <b>● Record</b> and it captures exactly what you hear, effects and filter included. Press it again and the file goes straight to your device. Nothing is uploaded anywhere.</p>
+  <p>The little arrow next to it chooses the format: <b>Compressed (.m4a)</b>, small and good for sharing, or <b>WAV</b>, full quality at about 10 MB a minute. Takes stop by themselves at 60 minutes, or 20 for WAV.</p>
+  <p>Files are named after the moment, like <i>Three Cities - Boston 01.32 13C - Copenhagen 07.32 16C - London 06.32 13C - 2026-10-12.m4a</i>.</p>
+  <div class="warn"><p>On a phone, keep the tab open and the screen on while recording. Phones like to pause audio in the background.</p></div>
+  <h3>Share</h3>
+  <p>The Share button makes a link that carries your cities, sounds, key, scale, kit, mutes and effects. It doesn't carry the weather. Whoever opens it hears your setup with their own moment's sky.</p>
+</section>
+
+<section class="sec" id="midi">
+  <span class="sec-no">10</span>
+  <h2>MIDI out</h2>
+  <p class="kicker">Let the weather play your synths. Chrome and Edge, on a computer.</p>
+  <p>Pick a MIDI output in the rack and the channel menus appear. Each city plays on its own channel, and the drums play standard General MIDI notes, so any drum rack maps them.</p>
+  <table>
+    <tr><th>Part</th><th>Default</th></tr>
+    <tr><td>City 1, 2, 3</td><td>Channels 1, 2, 3</td></tr>
+    <tr><td>Rhythm section</td><td>Channel 10</td></tr>
+    <tr><td>Kick</td><td>Note 36</td></tr>
+    <tr><td>Snare</td><td>Note 38</td></tr>
+    <tr><td>Rim</td><td>Note 37</td></tr>
+    <tr><td>Closed hat</td><td>Note 42 (ride 51 with the Jazz kit)</td></tr>
+    <tr><td>Drum filter</td><td>A control change on the drums' channel. CC 19 drives the Roland TR-8S Master FX knob.</td></tr>
+  </table>
+  <p>Fills, ratchets and ghost notes all come through, so a TR-8S or Digitakt on channel 10 gets the whole performance.</p>
+</section>
+
+<section class="sec" id="map">
+  <span class="sec-no">11</span>
+  <h2>The memory map</h2>
+  <p class="kicker">A night sky with your places faint beneath it.</p>
+  <p>Further down the page there's a dark map holding the three cities. It asks small questions, like where you were happiest. Drag the light towards the place where it happened. Each answer leaves a glowing mark, and the places you choose come forward in the music: they're likelier to lead, and they sit a little drier and closer.</p>
+  <p>Your marks stay on your device. Clear them any time, or turn the questions off.</p>
+</section>
+
+<section class="sec" id="keys">
+  <span class="sec-no">12</span>
+  <h2>Keyboard</h2>
+  <table>
+    <tr><th>Key</th><th>Does</th></tr>
+    <tr><td><kbd>Space</kbd></td><td>Start or stop</td></tr>
+    <tr><td><kbd>1</kbd> <kbd>2</kbd> <kbd>3</kbd></td><td>Mute a city</td></tr>
+    <tr><td><kbd>A</kbd> <kbd>S</kbd> <kbd>D</kbd> <kbd>F</kbd></td><td>Mute kick, snare, hat, rim</td></tr>
+    <tr><td><kbd>?</kbd></td><td>Show or hide the shortcuts</td></tr>
+  </table>
+</section>
+
+<section class="sec" id="recipes">
+  <span class="sec-no">13</span>
+  <h2>Patch ideas</h2>
+  <p class="kicker">Starting points. Change one thing and see what the weather does with it.</p>
+  <div class="recipe"><b>Insomnia</b><div class="ing">Surprise me ☾ Asleep · Grain dust, Bowed swell, Felt piano · Hall frozen · no drums</div><p>Three cities that should be in bed. Slow, soft and wide. Good for reading, or not sleeping.</p></div>
+  <div class="recipe"><b>Weather report</b><div class="ing">Your three cities · Hits from rain on all three · Kit: Rain</div><p>Only the rain plays. On a dry day you get a few lonely notes. On a wet one, a downpour.</p></div>
+  <div class="recipe"><b>Sunday jazz</b><div class="ing">Kit: Jazz · Electric piano, Plucked string, Sub bass · Dorian · Chance 70%</div><p>Brushes, swing and a bass that only turns up when someone's awake. Coffee strongly advised.</p></div>
+  <div class="recipe"><b>Studio night</b><div class="ing">MIDI out · cities on 1, 2, 3 to three synths · drums on 10 to a drum machine · Record the audio as WAV</div><p>The weather plays your hardware while you twiddle filters. Record the MIDI in your DAW so you can keep the good bits.</p></div>
+  <div class="recipe"><b>Around the world in 3 minutes</b><div class="ing">Surprise me ☀☾ Mix · Felt piano everywhere · Record</div><p>Someone's morning, someone's lunch, someone's midnight. Send the file to whoever is awake.</p></div>
+</section>
+
+<section class="sec" id="faq">
+  <span class="sec-no">14</span>
+  <h2>Questions</h2>
+  <h3>I can't hear anything</h3>
+  <p>Press Start listening. On an iPhone, check the silent switch on the side. Check each card isn't muted. If it's the middle of the night in all three cities, it is meant to be quiet.</p>
+  <h3>Why is it so slow?</h3>
+  <p>The cities are probably asleep. Tempo eases down to about three quarters overnight. Pick some awake cities, or wait for sunrise.</p>
+  <h3>It sounded better yesterday</h3>
+  <p>Yesterday had different weather. Take it up with the sky.</p>
+  <h3>Is the weather real?</h3>
+  <p>Yes. It comes from Open-Meteo and refreshes every ten minutes. If the page can't reach it, it falls back to a snapshot and tells you so under the play button.</p>
+  <h3>Can I use recordings in my own music?</h3>
+  <p>Please do. A credit to Forrest James and a link back would be lovely.</p>
+  <h3>Do you collect anything?</h3>
+  <p>No accounts, no tracking, no uploads. Settings live in the share link, and memory map marks stay on your device.</p>
+</section>
+
+<section class="sec" id="specs">
+  <span class="sec-no">15</span>
+  <h2>Specifications</h2>
+  <table>
+    <tr><td>Format</td><td>One web page</td></tr>
+    <tr><td>Cities</td><td>3 at a time, from anywhere with weather</td></tr>
+    <tr><td>Polyphony</td><td>Plenty. The weather rarely needs more</td></tr>
+    <tr><td>Pattern length</td><td>1 to 50ish steps, depending on how hot it gets</td></tr>
+    <tr><td>Sounds</td><td>27, plus 10 drum kits</td></tr>
+    <tr><td>Scales</td><td>17</td></tr>
+    <tr><td>Outputs</td><td>Stereo audio, 4 MIDI channels, files</td></tr>
+    <tr><td>Power</td><td>One browser tab. The sun does the rest</td></tr>
+    <tr><td>Weight</td><td>About 400 KB, lighter than a cloud</td></tr>
+  </table>
+</section>
+
+<section class="sec" id="changes">
+  <span class="sec-no">16</span>
+  <h2>What's new</h2>
+  <p class="kicker">This manual is kept up to date with the instrument. Newest first.</p>
+  <dl class="log">
+    <dt>12 October 2026</dt>
+    <dd>Type a country and get its cities. Every suggestion shows ☀ or ☾ and local time. Surprise me: Awake, Asleep or Mix. Dice cities always land in the right country. Record button with a format menu. Recordings named after each city's time and temperature. Fixed cards that could show another city's time after a swap.</dd>
+    <dt>11 October 2026</dt>
+    <dd>Rim became a ghost kick. Bigger sound and volume controls on phones. Skyline logo and favicon. Links home to forrestjamesmusic.com.</dd>
+    <dt>October 2026</dt>
+    <dd>First public version: three cities, live weather, rhythm section, hall and delay, MIDI out, memory map and share links.</dd>
+  </dl>
+</section>
+
+<p class="foot">Three Cities by <a href="https://forrestjamesmusic.com">Forrest James</a> · Weather from <a href="https://open-meteo.com">Open-Meteo</a> · <a href="/">Back to the music</a></p>
+</div>
+<script>
+// Fig. 1: draw the 13-step ring with 4 evenly spread hits
+(function () {
+  const g = document.getElementById("ring"), n = 13, k = 4, cx = 130, cy = 115, r = 80, ns = "http://www.w3.org/2000/svg";
+  for (let i = 0; i < n; i++) {
+    const hit = Math.floor(i * k / n) !== Math.floor((i - 1) * k / n) || i === 0, a = -Math.PI / 2 + i * 2 * Math.PI / n;
+    const c = document.createElementNS(ns, "circle");
+    c.setAttribute("cx", cx + r * Math.cos(a)); c.setAttribute("cy", cy + r * Math.sin(a)); c.setAttribute("r", hit ? 8 : 3);
+    c.setAttribute("fill", hit ? "#c46a49" : "currentColor"); g.appendChild(c);
+  }
+})();
+</script>
+</body>
+</html>
