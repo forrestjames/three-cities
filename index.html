@@ -583,7 +583,8 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
 /* suggestions: a country heading, and the sun or moon with local time on every city */
 .suggest li.ta-head { min-height: 0; padding: 8px 12px 4px; cursor: default; font-size: 11px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--ink-dim); }
 .suggest li.ta-head:hover { background: none; }
-.suggest li { position: relative; padding-right: 74px; }
+.suggest li { position: relative; padding-right: 84px; }
+.mine .suggest:not(.sheet) { right: auto; min-width: 100%; width: max-content; max-width: min(340px, 92vw); }   /* room for the place, its region, and the time */
 .suggest .sky-tag { position: absolute; right: 12px; top: 50%; transform: translateY(-50%); font-size: 12px; font-variant-numeric: tabular-nums; color: var(--ink-dim); white-space: nowrap; }
 .suggest .sky-tag.day { color: var(--sun); }
 /* Surprise me */
