@@ -4832,7 +4832,7 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
       label(new Date().toLocaleDateString("en-GB", { weekday: "long", day: "numeric", month: "long" }), W / 2, 1420, 30, { align: "center", alpha: a * 0.7, mono: true });
     }
     // the timeline
-    let t0 = 0, run = false, rec = null, chunks = [], lastCut = 0, cutSeed = 0, idleAt = 1.6;
+    let t0 = 0, run = false, rec = null, chunks = [], lastCut = 0, cutSeed = 0, idleAt = rQ ? 2.3 : 1.6;   // idle shows the whole question
     function scene(now) {
       const s = (now - t0) / 1000, cs = cities;
       g.fillStyle = "#100806"; g.fillRect(0, 0, W, H);
@@ -4856,7 +4856,7 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
         const d = ease(ls / 0.7), c = cs[k];
         postcard(c, k, W / 2 + rest[k][1], -700 + (880 + 700) * d, 1, rest[k][0] + 0.25 * (1 - d), s);
         ring(c, 170, 1720, 90 + 12 * (c._reelPulse || 0), ease((ls - 0.6) / 0.6) * 0.95);
-        label(c.w ? `${Math.abs(Math.round(c.w.t))}° makes a ${c.pattern.length}-step loop` : "", 300, 1735, 28, { alpha: ease((ls - 1) / 0.6), mono: true, color: col(c) });
+        label(c.w ? `${Math.abs(Math.round(c.w.t))}° makes ${/^(8|11|18)$/.test(String(c.pattern.length)) || String(c.pattern.length).startsWith("8") ? "an" : "a"} ${c.pattern.length}-step loop` : "", 300, 1735, 28, { alpha: ease((ls - 1) / 0.6), mono: true, color: col(c) });
       } else if (s < 18 && rLook === "weather") {   // the weather acting on the picture
         const k = Math.min(2, Math.floor((s - 3) / 5)), ls = (s - 3) - k * 5, c = cs[k];
         const imgs = ph(c), img = imgs[Math.floor(ls / 2.5) % Math.max(1, imgs.length)];
@@ -4900,7 +4900,7 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
         label(c.place || "", 84, 1395, 34, { alpha: ta * 0.85, mono: true });
         label(tempTxt(c), W - 80, 1600, 210, { alpha: ease((ls - 0.8) / 0.6), align: "right" });
         label(rStats[k] ? rStats[k] : `${localTime(c)} local · ${statLine(c, tags[k])}`, 84, 1690, rStats[k] && rStats[k].length > 44 ? 26 : 30, { alpha: ease((ls - 1.1) / 0.6), mono: true });
-        label(c.w ? `${Math.abs(Math.round(c.w.t))}° makes a ${c.pattern.length}-step loop` : "", 84, 1745, 30, { alpha: ease((ls - 1.4) / 0.6), mono: true, color: col(c) });
+        label(c.w ? `${Math.abs(Math.round(c.w.t))}° makes ${/^(8|11|18)$/.test(String(c.pattern.length)) || String(c.pattern.length).startsWith("8") ? "an" : "a"} ${c.pattern.length}-step loop` : "", 84, 1745, 30, { alpha: ease((ls - 1.4) / 0.6), mono: true, color: col(c) });
         ring(c, 290, 760, 190 + 20 * (c._reelPulse || 0), ease((ls - 0.6) / 0.6) * 0.95);
       } else if (s < 23 && rLook === "postcard") {   // the three postcards fanned out, nodding to their beats
         const ls = s - 18, e = ease(ls / 0.8);
