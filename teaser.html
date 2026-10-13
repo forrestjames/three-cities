@@ -231,9 +231,50 @@ function cutIndex(t, from, minGap = 0.45) {   // counts the strong beats since `
   for (const o of onsets) { const x = o.t - st; if (x < from) continue; if (x > t) break; if (o.s > 0.35 && x - lastT >= minGap) { n++; lastT = x; } }
   return n;
 }
+// a detail of the real interface, cut into a shape and revealed in a beat: no zooming
+function tile(name, crop, x, y, w, h, shape, p, col, settle = true) {
+  const im = SHOTS[name]; if (!im || !im.naturalWidth) return;
+  const r = ease(p / 0.35); if (r <= 0) return;
+  const sc = settle ? 1.03 - 0.03 * ease(p / 0.5) : 1, cx = x + w / 2, cy = y + h / 2;
+  g.save();
+  g.beginPath();
+  if (shape === "circle") g.arc(cx, cy, Math.min(w, h) / 2 * r, 0, 7);
+  else { const rw = w * r; rr(x, y, rw, h, 18); }
+  g.save(); g.shadowColor = "rgba(0,0,0,0.6)"; g.shadowBlur = 40; g.fillStyle = "#100806"; g.fill(); g.restore();
+  g.clip();
+  const [sx, sy, sw, sh] = crop, k = Math.max(w / sw, h / sh) * sc, dw = sw * k, dh = sh * k;
+  g.drawImage(im, sx, sy, sw, sh, cx - dw / 2, cy - dh / 2, dw, dh);
+  g.restore();
+  g.save(); g.globalAlpha = 0.7 * r; g.strokeStyle = col; g.lineWidth = 3; g.beginPath();
+  if (shape === "circle") g.arc(cx, cy, Math.min(w, h) / 2 * r, 0, 7); else rr(x, y, w * r, h, 18);
+  g.stroke(); g.restore();
+}
+// the product chapters: a kicker, a statement in big type, one or two details
+const CROP = {
+  ringC: ["cards", 68, 115, 300, 300], ringH: ["cards", 590, 115, 300, 300], headC: ["cards", 26, 8, 500, 112], headH: ["cards", 548, 8, 500, 112], headM: ["cards", 1070, 8, 500, 112],
+  chips: ["cards", 50, 430, 380, 130], japan: ["mine-japan", 400, 400, 280, 400], surprise: ["mine-form", 470, 380, 640, 190], filter: ["rack", 930, 10, 300, 170],
+  drums: ["drums", 20, 20, 700, 170], reverb: ["fx", 40, 110, 640, 270], delay: ["fx", 680, 110, 880, 270], map: ["map", 500, 180, 600, 600], record: ["record", 460, 810, 580, 220]
+};
+const T_ = (key, x, y, w, h, shape, delay = 0.55) => (p, col) => tile(CROP[key][0], CROP[key].slice(1), x, y, w, h, shape, p - delay, col);
+const CH = [
+  { kicker: "LIVE", parts: [{ say: () => ["Live weather.", "Real music."], tile: (p, col) => { T_("headC", 80, 860, 920, 230, "rect", 0.5)(p, COLORS[0]); T_("headH", 80, 1130, 920, 230, "rect", 0.8)(p, COLORS[1]); T_("headM", 80, 1400, 920, 230, "rect", 1.1)(p, COLORS[2]); } }] },
+  { kicker: "THE LOOP", c: 0, parts: [{ say: () => [`${CITY[0].temp}° makes`, `a ${Math.abs(Math.round(+CITY[0].temp || 0))}-step loop.`], tile: T_("ringC", 240, 860, 760, 760, "circle"), note: () => `${CITY[0].name.toUpperCase()} · ${CITY[0].time} LOCAL` }] },
+  { kicker: "THE NOTES", c: 0, parts: [{ say: () => ["The sky decides", "what lands."], tile: T_("chips", 80, 960, 920, 315, "rect"), note: () => "HUMIDITY, WIND, CLOUD, RAIN" }] },
+  { kicker: "NIGHT", c: 1, parts: [{ say: () => [`At ${CITY[1].time},`, `${CITY[1].name} sleeps.`], tile: (p, col) => { T_("ringH", 300, 820, 640, 640, "circle")(p, col); T_("headH", 80, 1520, 920, 240, "rect", 1.1)(p, col); } }] },
+  { kicker: "YOUR CITIES", c: 2, parts: [
+    { say: () => ["Type a country.", "Hear its cities."], tile: T_("japan", 300, 760, 560, 800, "rect") },
+    { say: () => ["Or let it", "surprise you."], tile: T_("surprise", 80, 860, 920, 273, "rect") }] },
+  { kicker: "THE STUDIO", c: 0, parts: [
+    { say: () => ["Chords."], size: 170, tile: T_("filter", 180, 820, 720, 410, "rect", 0.25) },
+    { say: () => ["Reverbs."], size: 170, tile: T_("reverb", 80, 840, 920, 390, "rect", 0.25) },
+    { say: () => ["Delays."], size: 170, tile: T_("delay", 80, 840, 920, 285, "rect", 0.25) },
+    { say: () => ["Drums."], size: 170, tile: T_("drums", 80, 860, 920, 225, "rect", 0.25) }] },
+  { kicker: "MEMORY", c: 1, parts: [{ say: () => ["Where were you", "happiest?"], tile: T_("map", 240, 860, 760, 760, "circle") }] },
+  { kicker: "KEEP IT", c: 2, parts: [{ say: () => ["Record it.", "Share it."], tile: T_("record", 80, 920, 920, 350, "rect") }] }
+];
 function frame(t, T) {
   // the chapters, as fractions of the whole teaser
-  const C = { open: 0.065, cities: 0.21, live: 0.33, loop: 0.45, sleep: 0.53, mine: 0.65, studio: 0.79, map: 0.86, rec: 0.91 };
+  const C = { open: 0.065, cities: 0.21, product: 0.91, rec: 0.91 };
   const at = k => C[k] * T, { pulse } = beatInfo(t);
   g.fillStyle = "#100806"; g.fillRect(0, 0, W, H);
   const date = recDate ? new Date(recDate + "T12:00:00Z").toLocaleDateString("en-GB", { day: "numeric", month: "long" }) : "";
@@ -259,57 +300,17 @@ function frame(t, T) {
     label(`${c.time} local${date ? " · " + date : ""}`, 84, 1690, 32, { mono: true, alpha: ease((ls - 0.8) / 0.5) });
     const temp = Math.max(2, Math.abs(Math.round(+c.temp || 8)));
     ring(k, 290, 700, 190 + 22 * pulse, ease((ls - 0.4) / 0.5) * 0.95, temp, Math.max(1, Math.round(temp * 0.4)), t, pulse);
-  } else if (t < at("live")) {   // the interface itself
-    const t0 = at("cities"), p = (t - t0) / (at("live") - t0);
-    backdrop(t, 0.5);
-    label("ONE INSTRUMENT,", W / 2, 260, 52, { align: "center", mono: true, spacing: 10, alpha: ease(p / 0.15) });
-    label("PLAYED BY THE WEATHER", W / 2, 330, 52, { align: "center", mono: true, spacing: 10, alpha: ease((p - 0.08) / 0.15) });
-    if (p < 0.45) shot("hero", [300, 40, 1000], [480, 120, 640], p / 0.45, { x: 40, y: 520, w: 1000, h: 820 }, ease(p / 0.1));
-    else shot("cards", [0, 0, 1600], [20, 0, 1100], (p - 0.45) / 0.55, { x: 40, y: 560, w: 1000, h: 760 }, 1);
-  } else if (t < at("loop")) {   // how it plays: zoom card to card
-    const t0 = at("live"), span = at("loop") - t0, k = Math.min(2, Math.floor((t - t0) / (span / 3))), ls = (t - t0) - k * span / 3, p = ls / (span / 3);
-    backdrop(t, 0.45);
-    const xs = [20, 545, 1065], c = CITY[k];
-    shot("cards", [xs[k], 0, 520], [xs[k] + 20, 30, 480], p, { x: 140, y: 380, w: 800, h: 1080 }, 1);
-    const temp = Math.abs(Math.round(+c.temp || 0));
-    const lines = [[`${c.temp}° in ${c.name}`, `makes a ${temp}-step loop`], ["The humidity decides", "how many notes land"], [`${c.time} in ${c.name}:`, "the city is asleep, softer, sparser"]][k];
-    label(lines[0].toUpperCase(), W / 2, 1580, 48, { align: "center", mono: true, spacing: 6, color: COLORS[k], alpha: ease(p / 0.2), max: 980 });
-    label(lines[1], W / 2, 1670, 64, { align: "center", alpha: ease((p - 0.1) / 0.2), max: 980 });
-    label("HOW IT PLAYS", W / 2, 260, 44, { align: "center", mono: true, spacing: 12, alpha: 0.85 });
-  } else if (t < at("sleep")) {   // in your pocket
-    const t0 = at("loop"), p = (t - t0) / (at("sleep") - t0);
-    backdrop(t, 0.5);
-    const which = p < 0.5 ? "phone-cards" : "phone-cards2", lp = p < 0.5 ? p / 0.5 : (p - 0.5) / 0.5;
-    shot(which, [0, 0, 780], [0, 120, 780], lp, { x: 250, y: 300, w: 580, h: 1255 }, 1);
-    label("IN YOUR POCKET", W / 2, 1700, 52, { align: "center", mono: true, spacing: 12, alpha: ease(p / 0.15) });
-    label("Swipe from city to city", W / 2, 1780, 48, { align: "center", alpha: ease((p - 0.1) / 0.15) });
-  } else if (t < at("mine")) {   // your own cities
-    const t0 = at("sleep"), p = (t - t0) / (at("mine") - t0);
-    backdrop(t, 0.5);
-    label("PLAY THE PLACES", W / 2, 250, 60, { align: "center", mono: true, spacing: 10, alpha: ease(p / 0.12) });
-    label("YOU'VE LIVED", W / 2, 330, 60, { align: "center", mono: true, spacing: 10, alpha: ease((p - 0.05) / 0.12) });
-    if (p < 0.55) shot("mine-japan", [300, 250, 1000], [380, 420, 600], p / 0.55, { x: 40, y: 480, w: 1000, h: 1000 }, 1);
-    else shot("mine-form", [300, 280, 1000], [380, 360, 840], (p - 0.55) / 0.45, { x: 40, y: 560, w: 1000, h: 600 }, 1);
-    label(p < 0.55 ? "Type a country, get its cities" : "Or let it surprise you: awake, or asleep", W / 2, 1720, 50, { align: "center", alpha: ease(((p < 0.55 ? p : p - 0.55) - 0.05) / 0.15), max: 980 });
-  } else if (t < at("studio")) {   // the studio, cut on the beat
-    const t0 = at("mine"), p = (t - t0) / (at("studio") - t0), n = cutIndex(t, t0, 0.9);
-    backdrop(t, 0.45);
-    const V = [["rack", [0, 0, 1600], [700, 0, 900], "Chords, a filter that swells by itself"], ["fx", [0, 40, 1600], [0, 60, 1000], "Seven reverbs, seven delays"], ["drums", [0, 0, 1600], [0, 0, 900], "A rhythm section made from all three cities"], ["more", [0, 360, 560], [0, 420, 520], "Every voice, every loop, your own samples"]];
-    const v = V[n % V.length], lp = ((t - t0) % 2.4) / 2.4;
-    shot(v[0], v[1], v[2], lp, { x: 40, y: 520, w: 1000, h: 820 }, 1);
-    label("A STUDIO, WHEN YOU WANT ONE", W / 2, 300, 46, { align: "center", mono: true, spacing: 8, alpha: ease(p / 0.1), max: 1000 });
-    label(v[3], W / 2, 1520, 52, { align: "center", alpha: 0.95, max: 980 });
-  } else if (t < at("map")) {   // the memory map
-    const t0 = at("studio"), p = (t - t0) / (at("map") - t0);
-    backdrop(t, 0.45);
-    shot("map", [100, 120, 1400], [300, 160, 900], p, { x: 40, y: 460, w: 1000, h: 1000 }, 1);
-    label("Where were you happiest?", W / 2, 300, 72, { align: "center", alpha: ease(p / 0.15) });
-    label("A MEMORY MAP THAT MIXES THE CITIES", W / 2, 1660, 34, { align: "center", mono: true, spacing: 6, alpha: ease((p - 0.15) / 0.2), max: 1000 });
-  } else if (t < at("rec")) {   // record and share
-    const t0 = at("map"), p = (t - t0) / (at("rec") - t0);
-    backdrop(t, 0.45);
-    shot("record", [300, 500, 1000], [420, 760, 600], p, { x: 40, y: 560, w: 1000, h: 760 }, 1);
-    label("RECORD IT. SHARE IT.", W / 2, 360, 60, { align: "center", mono: true, spacing: 10, alpha: ease(p / 0.15) });
+  } else if (t < at("product")) {   // the product, in designed frames: one statement, one detail, cut on the beat
+    const t0 = at("cities"), span = (at("product") - t0) / CH.length, k = Math.min(CH.length - 1, Math.floor((t - t0) / span)), ls = t - t0 - k * span, ch = CH[k], col = COLORS[ch.c ?? k % 3];
+    // a plain ground with one soft glow in the chapter's colour
+    const glow = g.createRadialGradient(W * 0.7, H * 0.62, 50, W * 0.7, H * 0.62, H * 0.6); glow.addColorStop(0, col + "33"); glow.addColorStop(1, "#10080600"); g.fillStyle = glow; g.fillRect(0, 0, W, H);
+    const sub = ch.parts.length > 1 ? Math.min(ch.parts.length - 1, Math.floor(ls / (span / ch.parts.length))) : 0, ps = ls - sub * span / ch.parts.length, part = ch.parts[sub];
+    label(`${String(k + 1).padStart(2, "0")} · ${ch.kicker}`, 80, 230, 30, { mono: true, spacing: 8, color: col, alpha: ease(ls / 0.3) });
+    g.fillStyle = col; g.globalAlpha = ease(ls / 0.4) * 0.8; g.fillRect(80, 262, 120 * ease(ls / 0.5), 3); g.globalAlpha = 1;
+    const lines = part.say(), size = part.size || 118;
+    lines.forEach((ln, i) => words(ln, 76, 420 + i * size * 1.05, size, ps - 0.05 - i * 0.35, 0.16, { alpha: 1, max: 940 }));
+    if (part.tile) part.tile(ps, col);
+    if (part.note) label(part.note(), 80, 1760, 30, { mono: true, alpha: ease((ps - 0.9) / 0.4) * 0.75, max: 920 });
   } else {   // the end card
     const t0 = at("rec"), ls = t - t0, a = ease(ls / 0.8), out = 1 - ease((t - (T - 0.6)) / 0.6);
     for (let i = 0; i < 3; i++) cover(photos[i][0], i * W / 3, 0, W / 3 + 1, H, 0.5, COLORS[i], 0.35 * a);
@@ -319,7 +320,7 @@ function frame(t, T) {
     label(RELEASED ? "threecities.forrestjamesmusic.com" : "COMING SOON", W / 2, 1360, RELEASED ? 40 : 60, { align: "center", mono: true, spacing: RELEASED ? 0 : 14, alpha: ease((ls - 0.5) / 0.6) * out });
     label(`You're hearing ${CITY.map(c => c.name).join(", ").replace(/, ([^,]*)$/, " and $1")}${date ? ", " + date : ""}`, W / 2, 1520, 28, { align: "center", mono: true, alpha: ease((ls - 1) / 0.6) * out * 0.75, max: 980 });
   }
-  if (pulse > 0.7 && t > at("open") && t < at("rec")) { g.fillStyle = `rgba(243,236,230,${0.05 * pulse})`; g.fillRect(0, 0, W, H); }   // a breath of light on the big hits
+  if (pulse > 0.7 && t > at("open") && t < at("cities")) { g.fillStyle = `rgba(243,236,230,${0.05 * pulse})`; g.fillRect(0, 0, W, H); }   // a breath of light on the big hits
   finish();
 }
 
