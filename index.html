@@ -4614,6 +4614,8 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
     let qs; try { qs = new URLSearchParams(location.search); } catch (e) { return null; }
     if (!qs.has("reel")) return null;
     const tags = (qs.get("reel") || "").split(",").map(s => s.trim()).filter(Boolean);
+    // from the Reel Studio's themes: a title for the opening card, a stat line per city, and words to find fitting photos
+    const rTitle = (qs.get("rt") || "").trim(), rStats = (qs.get("rs") || "").split("|").map(s => s.trim()), rFlav = (qs.get("rp") || "").split("|").map(s => s.trim());
     const W = 1080, H = 1920, DUR = 26;
     const wrap = document.createElement("div"); wrap.className = "reel";
     wrap.innerHTML = `<canvas width="${W}" height="${H}" aria-label="Reel preview"></canvas>
@@ -4632,8 +4634,8 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
     // photos: a few per city, leaning on its weather ("snow" for the cold one, "storm" for the wild one)
     const photos = new Map();
     const FLAVOUR = { hottest: "sun", coldest: "snow", wildest: "storm", windiest: "wind", wettest: "rain" };
-    async function photosFor(c, tag) {
-      const words = [`${c.name} skyline`, `${c.name} street`, `${c.name} ${FLAVOUR[(tag || "").toLowerCase()] || "weather"}`];
+    async function photosFor(c, tag, flav) {
+      const words = [`${c.name} skyline`, `${c.name} street`, `${c.name} ${flav || FLAVOUR[(tag || "").toLowerCase()] || "weather"}`];
       const out = [];
       for (const q of words) {
         try {
@@ -4705,7 +4707,7 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
         cs.forEach((c, i) => cover(ph(c)[0], i * W / 3, 0, W / 3 + 1, H, (s / 3 + i * 0.3) % 1, col(c), 0.55 * a));
         label("TODAY'S", W / 2, 760, 64, { align: "center", alpha: a, spacing: 18 });
         label("THREE CITIES", W / 2, 900, 132, { align: "center", alpha: a, spacing: 14 });
-        label((tags.length ? tags.join(" · ") : "three places, live weather").toUpperCase(), W / 2, 1010, 34, { align: "center", alpha: a * 0.85, mono: true, spacing: 6 });
+        label((rTitle || (tags.length ? tags.join(" · ") : "three places, live weather")).toUpperCase(), W / 2, 1010, rTitle.length > 30 ? 28 : 34, { align: "center", alpha: a * 0.85, mono: true, spacing: rTitle.length > 30 ? 4 : 6 });
         label(new Date().toLocaleDateString("en-GB", { weekday: "long", day: "numeric", month: "long" }), W / 2, 1090, 30, { align: "center", alpha: a * 0.7, mono: true });
       } else if (s < 18) {   // one city at a time, the earlier ones left behind as fragments
         const k = Math.min(2, Math.floor((s - 3) / 5)), ls = (s - 3) - k * 5, c = cs[k];
@@ -4721,11 +4723,11 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
         if (c._reelPulse > 0.6 && now - lastCut > 240) { lastCut = now; cutSeed = Math.random(); }
         if (now - lastCut < 200) { const y = 300 + cutSeed * 1200; cover(ph(c)[(Math.floor(cutSeed * 9)) % Math.max(1, ph(c).length)], 0, y, W, 90 + cutSeed * 140, cutSeed, col(c), 0.9); }
         const ta = ease((ls - 0.4) / 0.6);
-        label(((tags[k] || "") + " right now").toUpperCase(), 80, 1180, 40, { alpha: ta, mono: true, spacing: 8, color: col(c) });
+        label(((tags[k] || "") + (rTitle ? "" : " right now")).toUpperCase(), 80, 1180, 40, { alpha: ta, mono: true, spacing: 8, color: col(c) });
         label(c.name.toUpperCase(), 80, 1330, c.name.length > 11 ? 104 : 140, { alpha: ta, spacing: 10 });
         label(c.place || "", 84, 1395, 34, { alpha: ta * 0.85, mono: true });
         label(tempTxt(c), W - 80, 1600, 210, { alpha: ease((ls - 0.8) / 0.6), align: "right" });
-        label(`${localTime(c)} local · ${statLine(c, tags[k])}`, 84, 1690, 30, { alpha: ease((ls - 1.1) / 0.6), mono: true });
+        label(rStats[k] ? rStats[k] : `${localTime(c)} local · ${statLine(c, tags[k])}`, 84, 1690, rStats[k] && rStats[k].length > 44 ? 26 : 30, { alpha: ease((ls - 1.1) / 0.6), mono: true });
         label(c.w ? `${Math.abs(Math.round(c.w.t))}° makes a ${c.pattern.length}-step loop` : "", 84, 1745, 30, { alpha: ease((ls - 1.4) / 0.6), mono: true, color: col(c) });
         ring(c, 290, 760, 190 + 20 * (c._reelPulse || 0), ease((ls - 0.6) / 0.6) * 0.95);
       } else if (s < 23) {   // all three together: strips that slide at their own pace, like their loops
@@ -4797,7 +4799,7 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
       closed = true; run = false;
       try { if (rec && rec.state !== "inactive") { rec.onstop = null; rec.stop(); } } catch (e) {}   // closing mid-take throws the take away
       wrap.remove();
-      try { const u = new URL(location.href); u.searchParams.delete("reel"); history.replaceState(null, "", u); } catch (e) {}
+      try { const u = new URL(location.href); ["reel", "rt", "rs", "rp"].forEach(k => u.searchParams.delete(k)); history.replaceState(null, "", u); } catch (e) {}
     }
     document.addEventListener("keydown", e => { if (e.key === "Escape" && !closed && !run) closeReel(); });
     // get photos once the cities are in place
@@ -4806,7 +4808,7 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
       const wanted = (qs.get("cities") || "").split(",").map(s => s.split("@")[0].trim().toLowerCase()).filter(Boolean);
       const settled = cities.every(c => c.w && c.pattern && c.pattern.length) && (!wanted.length || wanted.every((n, i) => cities[i] && cities[i].name.toLowerCase() === n));
       if (!settled && tries++ < 40) { setTimeout(ready, 500); return; }
-      await Promise.all(cities.map(async (c, i) => photos.set(c, await photosFor(c, tags[i]))));
+      await Promise.all(cities.map(async (c, i) => photos.set(c, await photosFor(c, tags[i], rFlav[i]))));
       status.textContent = "Ready. Preview it, then record. About 26 seconds.";
     })();
     t0 = performance.now(); requestAnimationFrame(loop);

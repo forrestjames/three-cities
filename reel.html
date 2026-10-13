@@ -9,124 +9,515 @@
 <link href="https://fonts.googleapis.com/css2?family=Abel&family=Source+Code+Pro:wght@400;600&display=swap" rel="stylesheet">
 <style>
 :root { --ground: #100806; --panel: #1a1210; --ink: #f3ece6; --dim: rgba(243,236,230,0.62); --faint: rgba(243,236,230,0.34); --line: rgba(243,236,230,0.14);
-  --hot: #e0784f; --cold: #8fb8d8; --wild: #a98bc4; --display: "Abel", "Arial Narrow", sans-serif; --mono: "Source Code Pro", ui-monospace, monospace; color-scheme: dark; }
+  --a0: #e0784f; --a1: #8fb8d8; --a2: #a98bc4; --display: "Abel", "Arial Narrow", sans-serif; --mono: "Source Code Pro", ui-monospace, monospace; color-scheme: dark; }
 * { box-sizing: border-box; }
 html, body { margin: 0; background: var(--ground); color: var(--ink); font: 14px/1.6 var(--mono); }
-.wrap { max-width: 1040px; margin: 0 auto; padding: 32px 16px 80px; }
+.wrap { max-width: 1080px; margin: 0 auto; padding: 32px 16px 80px; }
 h1 { font: 400 44px var(--display); letter-spacing: 0.14em; text-transform: uppercase; margin: 0; }
 h2 { font: 400 22px var(--display); letter-spacing: 0.14em; text-transform: uppercase; margin: 36px 0 12px; }
-.sub { color: var(--dim); margin: 6px 0 24px; }
+.sub { color: var(--dim); margin: 6px 0 20px; }
+.themes { display: grid; gap: 14px; margin: 0 0 22px; }
+.tgroup { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.tgroup-name { width: 92px; flex: none; font-size: 10px; letter-spacing: 0.18em; text-transform: uppercase; color: var(--faint); }
+@media (max-width: 640px) { .tgroup-name { width: 100%; } }
+.chip { min-height: 34px; padding: 0 12px; border-radius: 17px; border: 1px solid var(--line); background: none; color: var(--dim); font: 12px var(--mono); cursor: pointer; }
+.chip:hover { color: var(--ink); border-color: var(--dim); }
+.chip[aria-pressed="true"] { background: var(--ink); color: var(--ground); border-color: var(--ink); }
+.chip.empty { opacity: 0.35; text-decoration: line-through; }
+.chip.auto { border-color: var(--a0); color: var(--ink); }
+.theme-title { font: 400 30px var(--display); letter-spacing: 0.08em; margin: 8px 0 2px; }
+.theme-why { color: var(--dim); font-size: 12px; margin: 0 0 14px; max-width: 72ch; }
 .picks { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; }
 @media (max-width: 760px) { .picks { grid-template-columns: 1fr; } }
-.pick { background: var(--panel); border: 1px solid var(--line); padding: 18px; position: relative; }
+.pick { background: var(--panel); border: 1px solid var(--line); padding: 18px; position: relative; min-width: 0; }
 .pick .tag { font-size: 11px; letter-spacing: 0.2em; text-transform: uppercase; }
-.pick .name { font: 400 34px var(--display); letter-spacing: 0.08em; margin: 6px 0 0; }
+.pick .name { font: 400 32px var(--display); letter-spacing: 0.06em; margin: 6px 0 0; overflow-wrap: anywhere; }
 .pick .where { color: var(--dim); font-size: 12px; }
-.pick .big { font: 400 56px var(--display); margin: 10px 0 4px; }
+.pick .big { font: 400 48px var(--display); margin: 10px 0 4px; line-height: 1.05; }
 .pick .stat { color: var(--dim); font-size: 12px; }
 .pick select { margin-top: 12px; width: 100%; background: var(--ground); color: var(--ink); border: 1px solid var(--line); padding: 6px; font: 12px var(--mono); }
-.hot .tag, .hot .big { color: var(--hot); } .cold .tag, .cold .big { color: var(--cold); } .wild .tag, .wild .big { color: var(--wild); }
+.s0 .tag, .s0 .big { color: var(--a0); } .s1 .tag, .s1 .big { color: var(--a1); } .s2 .tag, .s2 .big { color: var(--a2); }
 .go { display: flex; flex-wrap: wrap; gap: 12px; margin: 22px 0; align-items: center; }
 .btn { display: inline-flex; align-items: center; min-height: 46px; padding: 0 22px; background: var(--ink); color: var(--ground); text-decoration: none; font: 600 13px var(--mono); letter-spacing: 0.14em; text-transform: uppercase; border: 0; cursor: pointer; }
 .btn.ghost { background: none; color: var(--ink); border: 1px solid var(--dim); }
-textarea { width: 100%; min-height: 150px; background: var(--panel); color: var(--ink); border: 1px solid var(--line); padding: 14px; font: 13px/1.6 var(--mono); }
+.btn[aria-disabled="true"] { opacity: 0.4; pointer-events: none; }
+textarea { width: 100%; min-height: 170px; background: var(--panel); color: var(--ink); border: 1px solid var(--line); padding: 14px; font: 13px/1.6 var(--mono); }
 .notes { color: var(--dim); }
 .notes b { color: var(--ink); font-weight: 600; }
 .notes li { margin-bottom: 8px; }
 .status { color: var(--faint); font-size: 12px; }
-table { width: 100%; border-collapse: collapse; font-size: 12px; }
-td, th { text-align: left; padding: 6px 8px; border-bottom: 1px solid var(--line); }
-th { color: var(--faint); font-weight: 400; letter-spacing: 0.12em; text-transform: uppercase; font-size: 11px; }
+.recent { color: var(--faint); font-size: 12px; }
+.recent button { background: none; border: 0; color: var(--dim); text-decoration: underline; font: inherit; cursor: pointer; padding: 0; }
+.nothing { color: var(--dim); padding: 18px; border: 1px dashed var(--line); }
 </style>
 </head>
 <body>
 <div class="wrap">
   <h1>Reel Studio</h1>
-  <p class="sub">Today's three cities: the hottest, the coldest and the wildest weather on Earth right now, from about a hundred places that tend to get extreme.</p>
+  <p class="sub">A different question every day, answered by the live weather in about 250 places. Pick a theme, or let it pick for you.</p>
   <p class="status" id="status">Checking the planet…</p>
+  <div class="themes" id="themes"></div>
+  <div class="theme-title" id="themeTitle"></div>
+  <p class="theme-why" id="themeWhy"></p>
   <div class="picks" id="picks"></div>
   <div class="go">
-    <a class="btn" id="open" href="#">Open the reel</a>
+    <a class="btn" id="open" href="#" aria-disabled="true">Open the reel</a>
     <button class="btn ghost" id="copy" type="button">Copy caption</button>
     <span class="status">The reel opens on the instrument with these three cities. Press Preview, then Record reel. It saves a 9:16 video with the music.</span>
   </div>
+  <p class="recent" id="recent"></p>
   <h2>Caption</h2>
   <textarea id="caption" aria-label="Caption for the post"></textarea>
 
   <h2>The series</h2>
   <ol class="notes">
-    <li><b>The hook.</b> One post a day: "Right now it's 46°C in Kuwait City and −41°C in Yakutsk. Here's what they sound like together." The extremes change daily, so the series never repeats, which is the whole idea of the piece.</li>
-    <li><b>The shape.</b> 26 seconds. A title card, then each city revealed with its photos, its temperature, local time and the loop the weather made, then all three playing together as sliding strips, then the end card with the link. Photos are duotoned in each city's colour and cut on the beat, so it looks like a collage rather than an app screenshot.</li>
-    <li><b>The ritual.</b> Same time every day, ideally when it's morning in London and night somewhere extreme. The caption template below names the three and their numbers. Pin a post explaining the idea, and keep the format identical so it's recognisable at a glance.</li>
-    <li><b>Variations for the week.</b> Mondays "the three coldest". Wednesdays "where it's raining hardest". Fridays "three cities that just woke up" (use Surprise me ☀). Sundays a follower's three cities, from the comments.</li>
-    <li><b>Invite people in.</b> End every caption with "Comment three places you've lived and I'll play them tomorrow." That gives you Sunday's post and gets people to the site.</li>
-    <li><b>Where it goes.</b> Instagram Reels and TikTok as the main 9:16 video. YouTube Shorts as a mirror. A weekly carousel of stills from the reels for the grid.</li>
+    <li><b>The hook.</b> One post a day, one question a day. "Where's the best autumn break right now?" "Which three cities are at exactly 14° and living completely different days?" The answers come from the live weather, so the series never repeats.</li>
+    <li><b>The rhythm of the week.</b> Pick for me follows a weekly shape: Monday travel, Tuesday mood, Wednesday time of day, Thursday contrasts, Friday something playful, Saturday the extremes, Sunday a follower's cities from the comments.</li>
+    <li><b>Fresh faces.</b> Cities you've opened a reel with in the last two weeks sit out, so the same places don't keep coming back. Clear the list if you want them back.</li>
+    <li><b>The shape.</b> 26 seconds. A title card with the question, each city revealed with its photos, its number and the loop its weather made, all three playing together, then the end card with the link.</li>
+    <li><b>Invite people in.</b> Every caption ends by asking for three places people have lived. That's Sunday's post, and it brings people to the site.</li>
+    <li><b>Where it goes.</b> Instagram Reels and TikTok as the main 9:16 video. YouTube Shorts as a mirror. A weekly carousel of stills for the grid.</li>
   </ol>
-
-  <h2>Runners-up</h2>
-  <table id="table"><tr><th>Place</th><th>Temp</th><th>Gusts</th><th>Rain</th></tr></table>
 </div>
 <script>
-// Places that tend to make the news for their weather, plus some big cities for contrast. [name, lat, lon, country]
+// [name, lat, lon, where, flags]. Flags: c capital, s by the sea, l famous autumn colour, g famously green
 const PLACES = [
-  ["Kuwait City",29.37,47.98,"Kuwait"],["Basra",30.51,47.81,"Iraq"],["Ahvaz",31.32,48.67,"Iran"],["Riyadh",24.71,46.68,"Saudi Arabia"],["Doha",25.29,51.53,"Qatar"],
-  ["Dubai",25.2,55.27,"United Arab Emirates"],["Jacobabad",28.28,68.44,"Pakistan"],["Furnace Creek",36.46,-116.87,"Death Valley, USA"],["Phoenix",33.45,-112.07,"Arizona, USA"],
-  ["Las Vegas",36.17,-115.14,"Nevada, USA"],["Timbuktu",16.77,-3.01,"Mali"],["Niamey",13.51,2.11,"Niger"],["Khartoum",15.5,32.56,"Sudan"],["Alice Springs",-23.7,133.88,"Australia"],
-  ["Marble Bar",-21.17,119.75,"Australia"],["Mexicali",32.62,-115.45,"Mexico"],["Aswan",24.09,32.9,"Egypt"],["Delhi",28.61,77.21,"India"],["Chennai",13.08,80.27,"India"],
-  ["Bangkok",13.76,100.5,"Thailand"],["Djibouti",11.59,43.15,"Djibouti"],["Mecca",21.39,39.86,"Saudi Arabia"],["Darwin",-12.46,130.84,"Australia"],["Asunción",-25.26,-57.58,"Paraguay"],
-  ["Oymyakon",63.46,142.79,"Russia"],["Yakutsk",62.03,129.73,"Russia"],["Norilsk",69.35,88.2,"Russia"],["Verkhoyansk",67.55,133.39,"Russia"],["Dikson",73.51,80.55,"Russia"],
-  ["Utqiagvik",71.29,-156.79,"Alaska, USA"],["Fairbanks",64.84,-147.72,"Alaska, USA"],["Yellowknife",62.45,-114.37,"Canada"],["Iqaluit",63.75,-68.52,"Canada"],
-  ["Nuuk",64.18,-51.72,"Greenland"],["Qaanaaq",77.47,-69.23,"Greenland"],["Longyearbyen",78.22,15.65,"Svalbard"],["Ulaanbaatar",47.89,106.91,"Mongolia"],
-  ["Murmansk",68.97,33.08,"Russia"],["Tromsø",69.65,18.96,"Norway"],["Harbin",45.8,126.53,"China"],["Winnipeg",49.9,-97.14,"Canada"],["McMurdo Station",-77.85,166.67,"Antarctica"],
-  ["Ushuaia",-54.8,-68.3,"Argentina"],["Lhasa",29.65,91.14,"Tibet, China"],["La Paz",-16.5,-68.15,"Bolivia"],
-  ["Wellington",-41.29,174.78,"New Zealand"],["Punta Arenas",-53.16,-70.91,"Chile"],["Stanley",-51.7,-57.85,"Falkland Islands"],["Tórshavn",62.01,-6.77,"Faroe Islands"],
-  ["Cherrapunji",25.27,91.73,"India"],["Mawsynram",25.3,91.58,"India"],["Quibdó",5.69,-76.66,"Colombia"],["Hilo",19.72,-155.08,"Hawaii, USA"],["Bergen",60.39,5.32,"Norway"],
-  ["Mumbai",19.08,72.88,"India"],["Manila",14.6,120.98,"Philippines"],["Hong Kong",22.32,114.17,"China"],["Naha",26.21,127.68,"Okinawa, Japan"],["Miami",25.76,-80.19,"Florida, USA"],
-  ["Havana",23.11,-82.37,"Cuba"],["Cape Town",-33.92,18.42,"South Africa"],["St. John's",47.56,-52.71,"Canada"],["Galway",53.27,-9.05,"Ireland"],["Stornoway",58.21,-6.39,"Scotland"],
-  ["Lerwick",60.15,-1.15,"Shetland, Scotland"],["Reykjavik",64.15,-21.94,"Iceland"],["Chicago",41.88,-87.63,"Illinois, USA"],["Valparaíso",-33.05,-71.62,"Chile"],["Kolkata",22.57,88.36,"India"],
-  ["Dhaka",23.81,90.41,"Bangladesh"],["Singapore",1.35,103.82,"Singapore"],["Kuala Lumpur",3.14,101.69,"Malaysia"],["Belém",-1.46,-48.49,"Brazil"],["Manaus",-3.12,-60.02,"Brazil"],
-  ["Lagos",6.52,3.38,"Nigeria"],["Cairns",-16.92,145.77,"Australia"],["Taipei",25.03,121.57,"Taiwan"],["Tokyo",35.68,139.69,"Japan"],["Seoul",37.57,126.98,"South Korea"],
-  ["Boston",42.36,-71.06,"Massachusetts, USA"],["Copenhagen",55.68,12.57,"Denmark"],["London",51.51,-0.13,"United Kingdom"],["New York",40.71,-74.01,"New York, USA"],
-  ["Los Angeles",34.05,-118.24,"California, USA"],["Mexico City",19.43,-99.13,"Mexico"],["São Paulo",-23.55,-46.63,"Brazil"],["Buenos Aires",-34.6,-58.38,"Argentina"],
-  ["Lima",-12.05,-77.04,"Peru"],["Bogotá",4.71,-74.07,"Colombia"],["Paris",48.86,2.35,"France"],["Berlin",52.52,13.4,"Germany"],["Moscow",55.76,37.62,"Russia"],
-  ["Istanbul",41.01,28.98,"Türkiye"],["Cairo",30.04,31.24,"Egypt"],["Nairobi",-1.29,36.82,"Kenya"],["Johannesburg",-26.2,28.05,"South Africa"],["Sydney",-33.87,151.21,"Australia"],
-  ["Auckland",-36.85,174.76,"New Zealand"],["Beijing",39.9,116.41,"China"],["Shanghai",31.23,121.47,"China"],["Jakarta",-6.21,106.85,"Indonesia"],["Karachi",24.86,67.01,"Pakistan"],
-  ["Tehran",35.69,51.39,"Iran"],["Denver",39.74,-104.99,"Colorado, USA"],["Anchorage",61.22,-149.9,"Alaska, USA"],["Honolulu",21.31,-157.86,"Hawaii, USA"]
+  // heat
+  ["Kuwait City",29.37,47.98,"Kuwait","cs"],["Basra",30.51,47.81,"Iraq",""],["Ahvaz",31.32,48.67,"Iran",""],["Riyadh",24.71,46.68,"Saudi Arabia","c"],["Doha",25.29,51.53,"Qatar","cs"],
+  ["Dubai",25.2,55.27,"United Arab Emirates","s"],["Muscat",23.59,58.41,"Oman","cs"],["Jacobabad",28.28,68.44,"Pakistan",""],["Furnace Creek",36.46,-116.87,"Death Valley, USA",""],["Phoenix",33.45,-112.07,"Arizona, USA",""],
+  ["Las Vegas",36.17,-115.14,"Nevada, USA",""],["Timbuktu",16.77,-3.01,"Mali",""],["Niamey",13.51,2.11,"Niger","c"],["Khartoum",15.5,32.56,"Sudan","c"],["Alice Springs",-23.7,133.88,"Australia",""],
+  ["Marble Bar",-21.17,119.75,"Australia",""],["Mexicali",32.62,-115.45,"Mexico",""],["Aswan",24.09,32.9,"Egypt",""],["Delhi",28.61,77.21,"India","c"],["Chennai",13.08,80.27,"India","s"],
+  ["Bangkok",13.76,100.5,"Thailand","c"],["Djibouti",11.59,43.15,"Djibouti","cs"],["Mecca",21.39,39.86,"Saudi Arabia",""],["Darwin",-12.46,130.84,"Australia","s"],["Asunción",-25.26,-57.58,"Paraguay","c"],
+  ["Marrakesh",31.63,-7.99,"Morocco",""],["Luxor",25.69,32.64,"Egypt",""],["Windhoek",-22.56,17.08,"Namibia","c"],
+  // cold
+  ["Oymyakon",63.46,142.79,"Russia",""],["Yakutsk",62.03,129.73,"Russia",""],["Norilsk",69.35,88.2,"Russia",""],["Verkhoyansk",67.55,133.39,"Russia",""],["Dikson",73.51,80.55,"Russia","s"],
+  ["Utqiagvik",71.29,-156.79,"Alaska, USA","s"],["Fairbanks",64.84,-147.72,"Alaska, USA",""],["Yellowknife",62.45,-114.37,"Canada",""],["Iqaluit",63.75,-68.52,"Canada","s"],
+  ["Nuuk",64.18,-51.72,"Greenland","cs"],["Qaanaaq",77.47,-69.23,"Greenland","s"],["Longyearbyen",78.22,15.65,"Svalbard","s"],["Ulaanbaatar",47.89,106.91,"Mongolia","c"],
+  ["Murmansk",68.97,33.08,"Russia","s"],["Tromsø",69.65,18.96,"Norway","s"],["Harbin",45.8,126.53,"China",""],["Winnipeg",49.9,-97.14,"Canada",""],["McMurdo Station",-77.85,166.67,"Antarctica","s"],
+  ["Ushuaia",-54.8,-68.3,"Argentina","s"],["Lhasa",29.65,91.14,"Tibet, China",""],["La Paz",-16.5,-68.15,"Bolivia","c"],["Kiruna",67.86,20.23,"Sweden",""],["Rovaniemi",66.5,25.73,"Finland",""],
+  // wind and rain
+  ["Wellington",-41.29,174.78,"New Zealand","cs"],["Punta Arenas",-53.16,-70.91,"Chile","s"],["Stanley",-51.7,-57.85,"Falkland Islands","cs"],["Tórshavn",62.01,-6.77,"Faroe Islands","cs"],
+  ["Cherrapunji",25.27,91.73,"India","g"],["Mawsynram",25.3,91.58,"India","g"],["Quibdó",5.69,-76.66,"Colombia","g"],["Hilo",19.72,-155.08,"Hawaii, USA","sg"],["Bergen",60.39,5.32,"Norway","sg"],
+  ["Mumbai",19.08,72.88,"India","s"],["Manila",14.6,120.98,"Philippines","cs"],["Hong Kong",22.32,114.17,"China","s"],["Naha",26.21,127.68,"Okinawa, Japan","s"],["Miami",25.76,-80.19,"Florida, USA","s"],
+  ["Havana",23.11,-82.37,"Cuba","cs"],["Cape Town",-33.92,18.42,"South Africa","s"],["St. John's",47.56,-52.71,"Canada","s"],["Galway",53.27,-9.05,"Ireland","sg"],["Stornoway",58.21,-6.39,"Scotland","s"],
+  ["Lerwick",60.15,-1.15,"Shetland, Scotland","s"],["Reykjavik",64.15,-21.94,"Iceland","cs"],["Valparaíso",-33.05,-71.62,"Chile","s"],["Kolkata",22.57,88.36,"India",""],
+  ["Dhaka",23.81,90.41,"Bangladesh","c"],["Singapore",1.35,103.82,"Singapore","cs"],["Kuala Lumpur",3.14,101.69,"Malaysia","c"],["Belém",-1.46,-48.49,"Brazil",""],["Manaus",-3.12,-60.02,"Brazil","g"],
+  ["Lagos",6.52,3.38,"Nigeria","s"],["Cairns",-16.92,145.77,"Australia","s"],["Taipei",25.03,121.57,"Taiwan","c"],
+  // big cities
+  ["Tokyo",35.68,139.69,"Japan","c"],["Seoul",37.57,126.98,"South Korea","cl"],["Boston",42.36,-71.06,"Massachusetts, USA","sl"],["Copenhagen",55.68,12.57,"Denmark","cs"],["London",51.51,-0.13,"United Kingdom","c"],
+  ["New York",40.71,-74.01,"New York, USA","sl"],["Los Angeles",34.05,-118.24,"California, USA","s"],["Mexico City",19.43,-99.13,"Mexico","c"],["São Paulo",-23.55,-46.63,"Brazil",""],
+  ["Buenos Aires",-34.6,-58.38,"Argentina","c"],["Lima",-12.05,-77.04,"Peru","cs"],["Bogotá",4.71,-74.07,"Colombia","c"],["Paris",48.86,2.35,"France","c"],["Berlin",52.52,13.4,"Germany","c"],
+  ["Moscow",55.76,37.62,"Russia","c"],["Istanbul",41.01,28.98,"Türkiye","s"],["Cairo",30.04,31.24,"Egypt","c"],["Nairobi",-1.29,36.82,"Kenya","c"],["Johannesburg",-26.2,28.05,"South Africa",""],
+  ["Sydney",-33.87,151.21,"Australia","s"],["Auckland",-36.85,174.76,"New Zealand","sg"],["Beijing",39.9,116.41,"China","cl"],["Shanghai",31.23,121.47,"China","s"],["Jakarta",-6.21,106.85,"Indonesia","cs"],
+  ["Karachi",24.86,67.01,"Pakistan","s"],["Tehran",35.69,51.39,"Iran","c"],["Denver",39.74,-104.99,"Colorado, USA",""],["Anchorage",61.22,-149.9,"Alaska, USA","s"],["Honolulu",21.31,-157.86,"Hawaii, USA","s"],
+  ["Chicago",41.88,-87.63,"Illinois, USA","l"],["Toronto",43.65,-79.38,"Canada","l"],["Vancouver",49.28,-123.12,"Canada","sg"],["San Francisco",37.77,-122.42,"California, USA","s"],["Seattle",47.61,-122.33,"Washington, USA","sg"],
+  ["Rome",41.9,12.5,"Italy","c"],["Madrid",40.42,-3.7,"Spain","c"],["Lisbon",38.72,-9.14,"Portugal","cs"],["Athens",37.98,23.73,"Greece","cs"],["Vienna",48.21,16.37,"Austria","cl"],
+  ["Prague",50.08,14.44,"Czechia","cl"],["Budapest",47.5,19.04,"Hungary","cl"],["Warsaw",52.23,21.01,"Poland","c"],["Stockholm",59.33,18.07,"Sweden","cs"],["Oslo",59.91,10.75,"Norway","cs"],
+  ["Helsinki",60.17,24.94,"Finland","cs"],["Amsterdam",52.37,4.9,"Netherlands","cg"],["Brussels",50.85,4.35,"Belgium","c"],["Dublin",53.35,-6.26,"Ireland","csg"],["Edinburgh",55.95,-3.19,"Scotland","l"],
+  ["Bern",46.95,7.45,"Switzerland","cl"],["Kyiv",50.45,30.52,"Ukraine","cl"],["Bucharest",44.43,26.1,"Romania","c"],["Belgrade",44.79,20.45,"Serbia","c"],["Tbilisi",41.72,44.79,"Georgia","cl"],
+  ["Ankara",39.93,32.86,"Türkiye","c"],["Jerusalem",31.77,35.21,"Israel",""],["Amman",31.95,35.93,"Jordan","c"],["Baghdad",33.31,44.36,"Iraq","c"],["Kabul",34.53,69.17,"Afghanistan","c"],
+  ["Tashkent",41.3,69.24,"Uzbekistan","c"],["Astana",51.17,71.45,"Kazakhstan","c"],["Kathmandu",27.72,85.32,"Nepal","c"],["Colombo",6.93,79.86,"Sri Lanka","s"],["Hanoi",21.03,105.85,"Vietnam","c"],
+  ["Ho Chi Minh City",10.82,106.63,"Vietnam",""],["Phnom Penh",11.56,104.92,"Cambodia","c"],["Yangon",16.84,96.17,"Myanmar",""],["Osaka",34.69,135.5,"Japan","s"],["Sapporo",43.06,141.35,"Japan","l"],
+  ["Ottawa",45.42,-75.7,"Canada","cl"],["Washington",38.9,-77.04,"D.C., USA","cl"],["Atlanta",33.75,-84.39,"Georgia, USA","g"],["New Orleans",29.95,-90.07,"Louisiana, USA",""],["Austin",30.27,-97.74,"Texas, USA",""],
+  ["Montreal",45.5,-73.57,"Canada","l"],["Quebec City",46.81,-71.21,"Canada","l"],["Halifax",44.65,-63.58,"Canada","s"],["Guatemala City",14.63,-90.51,"Guatemala","c"],["Panama City",8.98,-79.52,"Panama","cs"],
+  ["San José",9.93,-84.08,"Costa Rica","cg"],["Kingston",17.97,-76.79,"Jamaica","cs"],["Santo Domingo",18.49,-69.93,"Dominican Republic","cs"],["Caracas",10.48,-66.9,"Venezuela","c"],["Quito",-0.18,-78.47,"Ecuador","c"],
+  ["Santiago",-33.45,-70.67,"Chile","c"],["Montevideo",-34.9,-56.16,"Uruguay","cs"],["Rio de Janeiro",-22.91,-43.17,"Brazil","s"],["Brasília",-15.79,-47.88,"Brazil","c"],["Salvador",-12.97,-38.5,"Brazil","s"],
+  ["Accra",5.6,-0.19,"Ghana","cs"],["Dakar",14.72,-17.47,"Senegal","cs"],["Addis Ababa",9.03,38.74,"Ethiopia","c"],["Kampala",0.35,32.58,"Uganda","cg"],["Kigali",-1.95,30.06,"Rwanda","cg"],
+  ["Dar es Salaam",-6.79,39.21,"Tanzania","s"],["Antananarivo",-18.88,47.51,"Madagascar","c"],["Lusaka",-15.39,28.32,"Zambia","c"],["Tunis",36.81,10.18,"Tunisia","cs"],["Algiers",36.75,3.06,"Algeria","cs"],
+  ["Casablanca",33.57,-7.59,"Morocco","s"],["Perth",-31.95,115.86,"Australia","s"],["Melbourne",-37.81,144.96,"Australia","s"],["Brisbane",-27.47,153.03,"Australia","s"],["Hobart",-42.88,147.33,"Tasmania, Australia","sg"],
+  ["Christchurch",-43.53,172.64,"New Zealand","l"],["Queenstown",-45.03,168.66,"New Zealand","gl"],["Suva",-18.14,178.44,"Fiji","cs"],["Nouméa",-22.27,166.44,"New Caledonia","s"],["Port Moresby",-9.44,147.18,"Papua New Guinea","cs"],
+  // autumn colour and green places
+  ["Kyoto",35.01,135.77,"Japan","l"],["Nikko",36.75,139.6,"Japan","l"],["Burlington",44.48,-73.21,"Vermont, USA","l"],["Stowe",44.47,-72.69,"Vermont, USA","l"],["Asheville",35.6,-82.55,"North Carolina, USA","l"],
+  ["Bar Harbor",44.39,-68.2,"Maine, USA","ls"],["Lenox",42.36,-73.28,"Massachusetts, USA","l"],["Banff",51.18,-115.57,"Canada","l"],["Munich",48.14,11.58,"Germany","l"],["Black Forest",48.0,8.2,"Germany","lg"],
+  ["Bled",46.37,14.11,"Slovenia","l"],["Kraków",50.06,19.94,"Poland","l"],["Ambleside",54.43,-2.96,"Lake District, England","lg"],["Killarney",52.06,-9.5,"Ireland","g"],["Snowdonia",53.07,-4.08,"Wales","g"],
+  ["Pitlochry",56.7,-3.73,"Scotland","l"],["Cotswolds",51.83,-1.83,"England","g"],["Normandy",49.18,-0.37,"France","g"],["Lake Como",46.0,9.26,"Italy","l"],["Tuscany",43.47,11.2,"Italy",""],
+  ["Bordeaux",44.84,-0.58,"France",""],["Porto",41.15,-8.61,"Portugal","s"],["Seville",37.39,-5.98,"Spain",""],["Nice",43.7,7.27,"France","s"],["Dubrovnik",42.65,18.09,"Croatia","s"],
+  ["Mykonos",37.45,25.33,"Greece","s"],["Antalya",36.9,30.7,"Türkiye","s"],["Tenerife",28.29,-16.63,"Canary Islands, Spain","s"],["Madeira",32.65,-16.91,"Portugal","sg"],["Valletta",35.9,14.51,"Malta","cs"],
+  // beaches
+  ["Bali",-8.65,115.22,"Indonesia","s"],["Phuket",7.89,98.4,"Thailand","s"],["Malé",4.18,73.51,"Maldives","cs"],["Zanzibar",-6.16,39.19,"Tanzania","s"],["Port Louis",-20.16,57.5,"Mauritius","cs"],
+  ["Victoria",-4.62,55.45,"Seychelles","cs"],["Goa",15.5,73.83,"India","s"],["Cancún",21.16,-86.85,"Mexico","s"],["Bridgetown",13.1,-59.61,"Barbados","cs"],["Nassau",25.05,-77.36,"Bahamas","cs"],
+  ["San Juan",18.47,-66.11,"Puerto Rico","s"],["Oranjestad",12.52,-70.03,"Aruba","s"],["Florianópolis",-27.6,-48.55,"Brazil","s"],["Gold Coast",-28.02,153.4,"Australia","s"],["Papeete",-17.53,-149.57,"Tahiti","s"],
+  ["Waikiki",21.28,-157.83,"Hawaii, USA","s"],["Cabo San Lucas",22.89,-109.92,"Mexico","s"],["Sharm el-Sheikh",27.91,34.33,"Egypt","s"],["Langkawi",6.35,99.8,"Malaysia","s"],["Boracay",11.97,121.92,"Philippines","s"],
+  // snow and mountains
+  ["Zermatt",46.02,7.75,"Switzerland",""],["Chamonix",45.92,6.87,"France",""],["Innsbruck",47.27,11.39,"Austria","l"],["Aspen",39.19,-106.82,"Colorado, USA","l"],["Whistler",50.12,-122.95,"Canada",""],
+  ["Niseko",42.86,140.69,"Japan",""],["Bariloche",-41.13,-71.31,"Argentina","l"],["Erzurum",39.9,41.27,"Türkiye",""],["Asahikawa",43.77,142.36,"Japan",""],["Cortina",46.54,12.14,"Italy",""]
 ];
 const $ = id => document.getElementById(id);
-let rows = [], chosen = {};
-const wildScore = r => r.g / 60 + r.r / 4;   // gusts in km/h and rain in mm this hour, roughly equal weight
-async function scan() {
-  const lat = PLACES.map(p => p[1]).join(","), lon = PLACES.map(p => p[2]).join(",");
-  const r = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,wind_gusts_10m,precipitation,weather_code&timezone=auto`);
-  const j = await r.json(), list = Array.isArray(j) ? j : [j];
-  rows = list.map((d, i) => ({ p: PLACES[i], t: d.current.temperature_2m, g: d.current.wind_gusts_10m || 0, r: d.current.precipitation || 0, tz: d.timezone }))
-    .filter(x => typeof x.t === "number");
-  const byT = rows.slice().sort((a, b) => b.t - a.t), byW = rows.slice().sort((a, b) => wildScore(b) - wildScore(a));
-  const hot = byT.slice(0, 6), cold = byT.slice(-6).reverse(), wild = byW.filter(x => !hot.slice(0, 1).includes(x) && !cold.slice(0, 1).includes(x)).slice(0, 6);
-  chosen = { hot: hot[0], cold: cold[0], wild: wild[0] };
-  render({ hot, cold, wild });
-  $("status").textContent = `Checked ${rows.length} places at ${new Date().toTimeString().slice(0, 5)}.`;
-  const tb = $("table");
-  byT.slice(0, 8).concat(byT.slice(-8)).forEach(x => { const tr = document.createElement("tr"); tr.innerHTML = `<td>${x.p[0]}, ${x.p[3]}</td><td>${x.t}°C</td><td>${Math.round(x.g)} km/h</td><td>${x.r} mm</td>`; tb.appendChild(tr); });
+const CODES = { 0: "clear", 1: "mostly clear", 2: "partly cloudy", 3: "overcast", 45: "fog", 48: "freezing fog", 51: "light drizzle", 53: "drizzle", 55: "heavy drizzle", 56: "freezing drizzle", 57: "freezing drizzle",
+  61: "light rain", 63: "rain", 65: "heavy rain", 66: "freezing rain", 67: "freezing rain", 71: "light snow", 73: "snow", 75: "heavy snow", 77: "snow grains", 80: "showers", 81: "showers", 82: "heavy showers",
+  85: "snow showers", 86: "snow showers", 95: "thunderstorm", 96: "thunderstorm with hail", 99: "thunderstorm with hail" };
+const desc = r => CODES[r.code] || "";
+const wet = r => (r.code >= 51 && r.code <= 67) || (r.code >= 80 && r.code <= 82) || r.pr > 0.1;
+const round1 = x => Math.round(x * 10) / 10;
+const deg = x => (Math.abs(x) < 10 ? round1(x) : Math.round(x)) + "°";
+const hm = s => `${Math.floor(s / 3600)}h ${String(Math.round((s % 3600) / 60)).padStart(2, "0")}m`;
+const clock = (r, unix) => { const d = new Date((unix + r.off) * 1000); return String(d.getUTCHours()).padStart(2, "0") + ":" + String(d.getUTCMinutes()).padStart(2, "0"); };
+const localNow = r => clock(r, Date.now() / 1000);
+const localHour = r => { const d = new Date(Date.now() + r.off * 1000); return d.getUTCHours() + d.getUTCMinutes() / 60; };
+const km = (a, b) => { const R = 6371, dl = (b.lat - a.lat) * Math.PI / 180, dn = (b.lon - a.lon) * Math.PI / 180, x = Math.sin(dl / 2) ** 2 + Math.cos(a.lat * Math.PI / 180) * Math.cos(b.lat * Math.PI / 180) * Math.sin(dn / 2) ** 2; return 2 * R * Math.asin(Math.sqrt(x)); };
+const month = new Date().getUTCMonth();
+const autumnHere = r => r.lat >= 0 ? month >= 8 && month <= 10 : month >= 2 && month <= 4;
+const has = (r, f) => r.flags.includes(f);
+const fix = (x, n = 0) => x == null ? "–" : (Math.round(x * 10 ** n) / 10 ** n).toString();
+
+// ---------- recent cities: kept out of the picks for two weeks ----------
+const RECENT_KEY = "reel-recent";
+const loadRecent = () => { try { const now = Date.now(); return (JSON.parse(localStorage.getItem(RECENT_KEY)) || []).filter(x => now - x.t < 14 * 864e5); } catch (e) { return []; } };
+const saveRecent = list => { try { localStorage.setItem(RECENT_KEY, JSON.stringify(list)); } catch (e) {} };
+let recent = loadRecent();
+const isRecent = r => recent.some(x => x.name === r.name);
+
+// rank by score, best first, leaving out recent cities when there are enough others
+function ranked(rows, score, filter = () => true, n = 8) {
+  const ok = rows.filter(r => { try { return filter(r); } catch (e) { return false; } }).map(r => ({ r, s: score(r) })).filter(x => Number.isFinite(x.s));
+  ok.sort((a, b) => b.s - a.s);
+  const fresh = ok.filter(x => !isRecent(x.r));
+  return (fresh.length >= 3 ? fresh : ok).slice(0, n).map(x => x.r);
 }
-function localTime(tz) { try { return new Intl.DateTimeFormat("en-GB", { timeZone: tz, hour: "2-digit", minute: "2-digit", hourCycle: "h23" }).format(new Date()); } catch (e) { return ""; } }
-function render(opts) {
+// three slots, each with its own ranking; a city only appears in one slot
+function slots(defs) {
+  const used = new Set(), out = [];
+  for (const d of defs) {
+    const cands = d.list.filter(r => r && !used.has(r.name));
+    if (!cands.length) return null;
+    used.add(cands[0].name);
+    out.push({ label: d.label, cands, big: d.big, stat: d.stat, flav: d.flav || "weather" });
+  }
+  return out;
+}
+// one ranking, the top three take the three labels
+function top3(list, labels, big, stat, flav) {
+  if (list.length < 3) return null;
+  return labels.map((label, i) => ({ label, cands: [list[i]].concat(list.filter((_, j) => j !== i)), big, stat, flav }));
+}
+
+// ---------- the themes ----------
+const THEMES = [
+  { id: "extremes", group: "Extremes", name: "Hottest, coldest, wildest", title: "Hottest, coldest, wildest",
+    why: "The original: the highest and lowest temperatures on Earth right now, and the wildest wind and rain.",
+    pick: R => slots([
+      { label: "Hottest", list: ranked(R, r => r.t), big: r => deg(r.t), stat: r => `feels like ${deg(r.feels)} · ${desc(r)}`, flav: "sun" },
+      { label: "Coldest", list: ranked(R, r => -r.t), big: r => deg(r.t), stat: r => `feels like ${deg(r.feels)} · ${desc(r)}`, flav: "snow" },
+      { label: "Wildest", list: ranked(R, r => r.g / 60 + r.pr / 4), big: r => `${Math.round(r.g)} km/h`, stat: r => `gusts · ${desc(r)}${r.pr ? `, ${r.pr} mm rain` : ""}`, flav: "storm" }]),
+    caption: p => `Right now it's ${deg(p[0].t)} in ${p[0].name} and ${deg(p[1].t)} in ${p[1].name}, while ${p[2].name} is getting ${Math.round(p[2].g)} km/h gusts.`,
+    tags: "#extremeweather #weather" },
+
+  { id: "autumn", group: "Travel", name: "Best autumn break", title: "Best autumn break right now",
+    why: "Places in autumn right now with crisp, sunny days around 12 to 18°, dry and calm.",
+    pick: R => top3(ranked(R, r => -Math.abs(r.tmax - 16) * 0.8 + r.sunH * 0.5 - r.rainToday * 1.5 - r.w / 10 + (r.code <= 2 ? 1 : 0) + (has(r, "l") ? 0.8 : 0), r => autumnHere(r) && Math.abs(r.lat) > 28 && Math.abs(r.lat) < 62),
+      ["Best autumn break", "Runner-up", "Also lovely"], r => deg(r.tmax), r => `${fix(r.sunH, 1)} h of sun · ${desc(r)}`, "autumn"),
+    caption: p => `The best autumn weather on Earth today: ${p[0].name} (${deg(p[0].tmax)} and ${fix(p[0].sunH, 1)} hours of sun), ${p[1].name} and ${p[2].name}.`,
+    tags: "#autumn #autumnvibes #fall #travel" },
+
+  { id: "leaves", group: "Travel", name: "Beautiful leaves", title: "Most likely to have beautiful leaves",
+    why: "Leaves turn best after sunny days and cold nights, about 2 to 9°. These places have exactly that right now.",
+    pick: R => top3(ranked(R, r => r.sunH * 0.6 - Math.abs(r.tmin - 5) * 0.7 - Math.abs(r.tmax - 15) * 0.3 + (has(r, "l") ? 2.5 : 0) - r.rainToday,
+        r => autumnHere(r) && (has(r, "l") || Math.abs(r.lat) > 40) && Math.abs(r.lat) > 33 && Math.abs(r.lat) < 63 && r.tmin > -2 && r.tmin < 11),
+      ["Peak colour", "Turning gold", "Turning red"], r => `${deg(r.tmin)} / ${deg(r.tmax)}`, r => `cold night, ${fix(r.sunH, 1)} h of sun`, "autumn leaves"),
+    caption: p => `Where the leaves are probably putting on a show today: ${p[0].name}, ${p[1].name} and ${p[2].name}. Sunny days and cold nights, the recipe for red and gold.`,
+    tags: "#autumnleaves #fallcolors #foliage #autumn" },
+
+  { id: "green", group: "Travel", name: "Greenest grass", title: "Greenest grass right now",
+    why: "A wet week, mild temperatures and no frost: where everything is growing fastest.",
+    pick: R => top3(ranked(R, r => Math.min(r.rain7, 70) / 10 - Math.abs(r.tmax - 18) * 0.2 + (has(r, "g") ? 1.5 : 0), r => r.tmin > 3 && r.tmax < 30 && r.rain7 > 8),
+      ["Greenest", "Lushest", "Freshly watered"], r => `${Math.round(r.rain7)} mm`, r => `of rain this week · ${deg(r.t)} now`, "green landscape"),
+    caption: p => `The greenest grass on Earth this week, probably: ${p[0].name} (${Math.round(p[0].rain7)} mm of rain in seven days), ${p[1].name} and ${p[2].name}.`,
+    tags: "#green #rain #nature" },
+
+  { id: "sunscreen", group: "Travel", name: "Sunscreen optional", title: "Sunscreen essential, or optional",
+    why: "The highest and lowest UV on Earth today, and one place right in the middle.",
+    pick: R => slots([
+      { label: "Sunscreen essential", list: ranked(R, r => r.uvmax), big: r => `UV ${fix(r.uvmax)}`, stat: r => `today's peak · ${desc(r)}`, flav: "sun" },
+      { label: "Sunscreen optional", list: ranked(R, r => -r.uvmax, r => r.day), big: r => `UV ${fix(r.uvmax)}`, stat: r => `today's peak · ${desc(r)}`, flav: "clouds" },
+      { label: "A little sunscreen", list: ranked(R, r => -Math.abs(r.uvmax - 3.5), r => r.day), big: r => `UV ${fix(r.uvmax)}`, stat: r => `today's peak · ${desc(r)}`, flav: "park" }]),
+    caption: p => `Sunscreen essential in ${p[0].name} today (UV ${fix(p[0].uvmax)}). Completely optional in ${p[1].name} (UV ${fix(p[1].uvmax)}). And ${p[2].name}, somewhere in between.`,
+    tags: "#sunscreen #sunshine #weather" },
+
+  { id: "beach", group: "Travel", name: "Still beach weather", title: "Still beach weather",
+    why: "The warmest sea, the calmest water and the sunniest sand, among warm, dry places right now.",
+    pick: R => { const beachy = r => has(r, "s") && r.sst != null && r.t >= 22 && r.rainToday < 2;
+      return slots([
+        { label: "Warmest sea", list: ranked(R, r => r.sst, beachy), big: r => `${deg(r.sst)} sea`, stat: r => `air ${deg(r.t)} · waves ${fix(r.wave, 1)} m`, flav: "beach" },
+        { label: "Calmest water", list: ranked(R, r => -(r.wave ?? 9) + r.sst / 20, r => beachy(r) && r.sst >= 24), big: r => `${fix(r.wave, 1)} m`, stat: r => `waves · sea ${deg(r.sst)}`, flav: "beach" },
+        { label: "Sunniest sand", list: ranked(R, r => r.sunH + r.t / 20, r => beachy(r) && r.sst >= 23), big: r => `${fix(r.sunH, 1)} h`, stat: r => `of sun today · sea ${deg(r.sst)}`, flav: "beach" }]); },
+    caption: p => `Still beach weather: ${p[0].name} has the warmest sea on Earth right now at ${deg(p[0].sst)}. ${p[1].name} has the calmest water, ${p[2].name} the most sunshine.`,
+    tags: "#beach #beachlife #travel #ocean" },
+
+  { id: "snow", group: "Travel", name: "First snow", title: "Fresh snow today",
+    why: "Where it's snowing today, with a bonus for places that hadn't seen any all week: the first snow.",
+    pick: R => top3(ranked(R, r => r.snowToday * 2 + r.snowNow * 4 + (r.snowWeek === 0 ? 3 : 0), r => r.snowToday > 0 || r.snowNow > 0),
+      ["Fresh snow", "Snowing now", "Snow day"], r => `${fix(r.snowToday, 1)} cm`, r => r.snowWeek === 0 ? "today, the first this week" : `today · ${deg(r.t)}`, "snow"),
+    caption: p => `Fresh snow today in ${p[0].name} (${fix(p[0].snowToday, 1)} cm), ${p[1].name} and ${p[2].name}.`,
+    tags: "#snow #firstsnow #winter" },
+
+  { id: "run", group: "Travel", name: "Perfect running weather", title: "Perfect running weather",
+    why: "About 8 to 12°, light wind, dry and clean air, in daylight.",
+    pick: R => top3(ranked(R, r => -Math.abs(r.t - 10) * 0.7 - r.w / 8 - r.pr * 3 - (r.pm25 ?? 12) / 12 - (r.h > 85 ? 1 : 0), r => r.day && !wet(r)),
+      ["Perfect run", "Great run", "Good run"], r => deg(r.t), r => `wind ${Math.round(r.w)} km/h${r.pm25 != null ? ` · PM2.5 ${fix(r.pm25)}` : ""}`, "park"),
+    caption: p => `Perfect running weather right now: ${p[0].name} (${deg(p[0].t)}, wind ${Math.round(p[0].w)} km/h), ${p[1].name} and ${p[2].name}. Lace up.`,
+    tags: "#running #runner #weather" },
+
+  { id: "cosy", group: "Mood", name: "Cosiest city", title: "Cosiest city right now",
+    why: "Cold, drizzly, grey and dark: candle and blanket weather.",
+    pick: R => top3(ranked(R, r => -Math.abs(r.t - 6) * 0.4 + (wet(r) ? 3 : 0) + r.cloud / 40 + (r.day ? 0 : 1.5) - r.g / 40, r => r.t > -3 && r.t < 13),
+      ["Cosiest", "Blanket weather", "Kettle on"], r => deg(r.t), r => `${desc(r)} · ${localNow(r)} local`, "night street"),
+    caption: p => `The cosiest places on Earth right now: ${p[0].name} (${deg(p[0].t)} and ${desc(p[0])}), ${p[1].name} and ${p[2].name}. Kettle on.`,
+    tags: "#cosy #hygge #rainyday" },
+
+  { id: "drama", group: "Mood", name: "Most dramatic sky", title: "Most dramatic sky",
+    why: "Thunderstorms first, then strong gusts under broken, moving cloud.",
+    pick: R => top3(ranked(R, r => (r.code >= 95 ? 6 : 0) + r.g / 15 + (r.cloud > 35 && r.cloud < 95 ? 1.5 : 0) + (wet(r) ? 1 : 0)),
+      ["Most dramatic sky", "Storm brewing", "Wild sky"], r => `${Math.round(r.g)} km/h`, r => `gusts · ${desc(r)}`, "storm clouds"),
+    caption: p => `The most dramatic skies on Earth right now: ${p[0].name} (${desc(p[0])}, ${Math.round(p[0].g)} km/h gusts), ${p[1].name} and ${p[2].name}.`,
+    tags: "#storm #sky #clouds" },
+
+  { id: "calm", group: "Mood", name: "Calmest place", title: "The calmest place on Earth",
+    why: "No wind, clear sky, settled high pressure.",
+    pick: R => top3(ranked(R, r => -r.w / 2 - r.g / 6 - r.cloud / 30 + (r.p - 1013) / 6 - (wet(r) ? 4 : 0)),
+      ["Calmest", "Stillest", "Quietest"], r => `${fix(r.w, 1)} km/h`, r => `wind · ${r.cloud}% cloud · ${Math.round(r.p)} hPa`, "lake"),
+    caption: p => `The calmest places on Earth right now: ${p[0].name} (${fix(p[0].w, 1)} km/h of wind), ${p[1].name} and ${p[2].name}. Breathe out.`,
+    tags: "#calm #peaceful #stillness" },
+
+  { id: "fog", group: "Mood", name: "Foggiest", title: "Foggiest place right now",
+    why: "The shortest visibility on Earth right now. Spooky.",
+    pick: R => top3(ranked(R, r => -(r.vis ?? 1e5) + (r.code === 45 || r.code === 48 ? 5000 : 0), r => r.vis != null && r.vis < 6000),
+      ["Foggiest", "Murky", "Misty"], r => r.vis < 1000 ? `${Math.round(r.vis)} m` : `${fix(r.vis / 1000, 1)} km`, r => `visibility · ${desc(r)}`, "fog"),
+    caption: p => `Foggiest places on Earth right now: in ${p[0].name} you can see about ${p[0].vis < 1000 ? Math.round(p[0].vis) + " metres" : fix(p[0].vis / 1000, 1) + " km"}. ${p[1].name} and ${p[2].name} aren't far behind.`,
+    tags: "#fog #mist #moody" },
+
+  { id: "clear", group: "Mood", name: "Clearest air", title: "Clearest air on Earth",
+    why: "The longest views and the cleanest air right now.",
+    pick: R => top3(ranked(R, r => (r.vis ?? 0) / 10000 - (r.pm25 ?? 15) / 4 - r.cloud / 50, r => r.vis != null),
+      ["Clearest air", "Crystal clear", "Fresh air"], r => r.pm25 != null ? `PM2.5 ${fix(r.pm25)}` : `${fix(r.vis / 1000)} km`, r => `you can see ${fix(r.vis / 1000)} km · ${desc(r)}`, "landscape"),
+    caption: p => `The clearest air on Earth right now: ${p[0].name}, ${p[1].name} and ${p[2].name}. Deep breath.`,
+    tags: "#cleanair #freshair #blueskies" },
+
+  { id: "golden", group: "Time", name: "Golden hour now", title: "Golden hour right now",
+    why: "Three places where the sun is setting as you watch.",
+    pick: R => { const now = Date.now() / 1000;
+      return top3(ranked(R, r => -Math.abs((r.sunset - now) / 60 - 10), r => (r.sunset - now) / 60 > -15 && (r.sunset - now) / 60 < 45 && r.cloud < 85),
+        ["Golden hour", "Sun going down", "Last light"], r => clock(r, r.sunset), r => `sunset · ${desc(r)} · ${deg(r.t)}`, "sunset"); },
+    caption: p => `It's golden hour right now in ${p[0].name}, ${p[1].name} and ${p[2].name}. Here's what their sunsets sound like.`,
+    tags: "#goldenhour #sunset" },
+
+  { id: "waking", group: "Time", name: "Just waking up", title: "Just waking up",
+    why: "Three places where the sun is coming up this minute.",
+    pick: R => { const now = Date.now() / 1000;
+      return top3(ranked(R, r => -Math.abs((r.sunrise - now) / 60), r => Math.abs((r.sunrise - now) / 60) < 45),
+        ["Just waking up", "First light", "Sunrise"], r => clock(r, r.sunrise), r => `sunrise · ${desc(r)} · ${deg(r.t)}`, "sunrise"); },
+    caption: p => `Good morning ${p[0].name}, ${p[1].name} and ${p[2].name}. The sun's coming up there right now.`,
+    tags: "#sunrise #goodmorning" },
+
+  { id: "daylight", group: "Time", name: "Longest and shortest day", title: "Longest day, shortest day",
+    why: "The most and the least daylight on Earth today, and a place with an even split.",
+    pick: R => slots([
+      { label: "Longest day", list: ranked(R, r => r.daylen), big: r => hm(r.daylen), stat: r => `of daylight · sunset ${clock(r, r.sunset)}`, flav: "sun" },
+      { label: "Shortest day", list: ranked(R, r => -r.daylen), big: r => hm(r.daylen), stat: r => r.daylen < 600 ? "the sun isn't coming up" : `of daylight · sunset ${clock(r, r.sunset)}`, flav: "night" },
+      { label: "Even split", list: ranked(R, r => -Math.abs(r.daylen - 43200)), big: r => hm(r.daylen), stat: r => `of daylight, the rest dark`, flav: "street" }]),
+    caption: p => `Today ${p[0].name} gets ${hm(p[0].daylen)} of daylight. ${p[1].name} gets ${hm(p[1].daylen)}. ${p[2].name} splits it right down the middle.`,
+    tags: "#daylight #seasons" },
+
+  { id: "dark", group: "Time", name: "Dark at breakfast", title: "Still dark at breakfast",
+    why: "It's breakfast time there, and the sun isn't up yet.",
+    pick: R => { const now = Date.now() / 1000;
+      return top3(ranked(R, r => r.sunrise - now, r => localHour(r) >= 6.5 && localHour(r) <= 9.5 && !r.day && r.sunrise > now),
+        ["Breakfast in the dark", "Still dark", "Lights on"], r => localNow(r), r => `local · sunrise at ${clock(r, r.sunrise)}`, "night"); },
+    caption: p => `It's ${localNow(p[0])} in ${p[0].name} and the sun won't be up until ${clock(p[0], p[0].sunrise)}. Breakfast in the dark there, and in ${p[1].name} and ${p[2].name}.`,
+    tags: "#morning #darkmornings" },
+
+  { id: "sametemp", group: "Contrast", name: "Same temperature, different worlds", title: "Same temperature, different worlds",
+    why: "Three places at the same temperature living completely different days: one sunny, one wet, one at night.",
+    pick: R => {
+      let best = null;
+      for (let T = -30; T <= 45; T++) {
+        const g = R.filter(r => Math.abs(r.t - T) <= 0.6 && !isRecent(r));
+        const sunny = g.filter(r => r.day && r.code <= 2), rainy = g.filter(r => wet(r)), night = g.filter(r => !r.day && !wet(r));
+        if (sunny.length && rainy.length && night.length && (!best || g.length > best.g.length)) best = { T, g, sunny, rainy, night };
+      }
+      if (!best) return null;
+      const b = r => deg(r.t);
+      return slots([
+        { label: "Sunny", list: best.sunny, big: b, stat: r => `${desc(r)} · ${localNow(r)} local`, flav: "sunny street" },
+        { label: "Raining", list: best.rainy, big: b, stat: r => `${desc(r)} · ${localNow(r)} local`, flav: "rain" },
+        { label: "At night", list: best.night, big: b, stat: r => `${desc(r)} · ${localNow(r)} local`, flav: "night" }]); },
+    caption: p => `It's about ${deg(p[0].t)} in ${p[0].name}, ${p[1].name} and ${p[2].name} right now. Sunny in one, ${desc(p[1])} in another, the middle of the night in the third. Same number, different worlds.`,
+    tags: "#weather #perspective" },
+
+  { id: "sametz", group: "Contrast", name: "Same clock, different weather", title: "Same time, different weather",
+    why: "Three places in the same time zone with the biggest spread of temperature and sky.",
+    pick: R => {
+      const groups = {}; R.forEach(r => (groups[r.off] = groups[r.off] || []).push(r));
+      let best = null;
+      Object.values(groups).forEach(g => { g = g.filter(r => !isRecent(r)); if (g.length < 3) return;
+        const s = g.slice().sort((a, b) => a.t - b.t), spread = s[s.length - 1].t - s[0].t;
+        if (!best || spread > best.spread) best = { s, spread }; });
+      if (!best) return null;
+      const s = best.s, mid = s[Math.floor(s.length / 2)];
+      return slots([
+        { label: "Warmest", list: s.slice().reverse(), big: r => deg(r.t), stat: r => `${localNow(r)} local · ${desc(r)}`, flav: "street" },
+        { label: "Coldest", list: s, big: r => deg(r.t), stat: r => `${localNow(r)} local · ${desc(r)}`, flav: "street" },
+        { label: "In between", list: [mid].concat(s), big: r => deg(r.t), stat: r => `${localNow(r)} local · ${desc(r)}`, flav: "street" }]); },
+    caption: p => `Same clock, ${localNow(p[0])}, three very different days: ${deg(p[0].t)} in ${p[0].name}, ${deg(p[1].t)} in ${p[1].name}, ${deg(p[2].t)} in ${p[2].name}.`,
+    tags: "#timezones #weather" },
+
+  { id: "twins", group: "Contrast", name: "Weather twins", title: "Weather twins",
+    why: "Two places thousands of km apart with nearly identical weather right now, and the place most unlike them.",
+    pick: R => {
+      const F = R.filter(r => !isRecent(r)), d = (a, b) => Math.abs(a.t - b.t) / 2 + Math.abs(a.h - b.h) / 10 + Math.abs(a.w - b.w) / 6 + Math.abs(a.cloud - b.cloud) / 25 + (a.day !== b.day) * 3 + (wet(a) !== wet(b)) * 3;
+      let best = null;
+      for (let i = 0; i < F.length; i++) for (let j = i + 1; j < F.length; j++) { if (km(F[i], F[j]) < 4000) continue; const x = d(F[i], F[j]); if (!best || x < best.x) best = { a: F[i], b: F[j], x }; }
+      if (!best) return null;
+      const opp = F.slice().sort((x, y) => d(y, best.a) - d(x, best.a));
+      return slots([
+        { label: "Weather twin", list: [best.a], big: r => deg(r.t), stat: r => `${desc(r)} · humidity ${Math.round(r.h)}%`, flav: "street" },
+        { label: "Weather twin", list: [best.b], big: r => deg(r.t), stat: r => `${desc(r)} · humidity ${Math.round(r.h)}%`, flav: "street" },
+        { label: "Total opposite", list: opp, big: r => deg(r.t), stat: r => `${desc(r)} · humidity ${Math.round(r.h)}%`, flav: "weather" }]); },
+    caption: p => `${p[0].name} and ${p[1].name} are ${Math.round(km(p[0], p[1])).toLocaleString("en-GB")} km apart, with almost exactly the same weather right now. ${p[2].name} is having the opposite day.`,
+    tags: "#weathertwins #weather" },
+
+  { id: "home", group: "Contrast", name: "London vs its opposite", title: "London and its opposite",
+    why: "Home, the place with the opposite weather right now, and London's weather twin somewhere far away.",
+    pick: R => {
+      const home = R.find(r => r.name === "London"); if (!home) return null;
+      const d = b => Math.abs(home.t - b.t) / 2 + Math.abs(home.h - b.h) / 10 + Math.abs(home.w - b.w) / 6 + Math.abs(home.cloud - b.cloud) / 25 + (home.day !== b.day) * 3 + (wet(home) !== wet(b)) * 3;
+      return slots([
+        { label: "Home", list: [home], big: r => deg(r.t), stat: r => `${desc(r)} · ${localNow(r)}`, flav: "street" },
+        { label: "The opposite", list: ranked(R, r => d(r), r => r !== home, 6), big: r => deg(r.t), stat: r => `${desc(r)} · ${localNow(r)} local`, flav: "weather" },
+        { label: "Weather twin", list: ranked(R, r => -d(r), r => r !== home && km(home, r) > 1500, 6), big: r => deg(r.t), stat: r => `${desc(r)} · ${localNow(r)} local`, flav: "street" }]); },
+    caption: p => `London right now: ${deg(p[0].t)} and ${desc(p[0])}. The opposite is ${p[1].name}, ${deg(p[1].t)} and ${desc(p[1])}. And London's weather twin? ${p[2].name}.`,
+    tags: "#london #weather" },
+
+  { id: "hair", group: "Playful", name: "Hair day forecast", title: "Hair day forecast",
+    why: "Humidity and wind: the best hair day on Earth, the frizziest, and the place to wear a hat.",
+    pick: R => slots([
+      { label: "Good hair day", list: ranked(R, r => -Math.abs(r.h - 42) / 8 - r.w / 8 - (wet(r) ? 5 : 0), r => r.day), big: r => `${Math.round(r.h)}%`, stat: r => `humidity · wind ${Math.round(r.w)} km/h`, flav: "street" },
+      { label: "Frizz alert", list: ranked(R, r => r.h / 8 + r.t / 10 + (wet(r) ? 2 : 0)), big: r => `${Math.round(r.h)}%`, stat: r => `humidity · ${deg(r.t)}`, flav: "rain" },
+      { label: "Hat recommended", list: ranked(R, r => r.g), big: r => `${Math.round(r.g)} km/h`, stat: r => `gusts · humidity ${Math.round(r.h)}%`, flav: "wind" }]),
+    caption: p => `Today's hair forecast: a good hair day in ${p[0].name} (${Math.round(p[0].h)}% humidity), frizz alert in ${p[1].name} (${Math.round(p[1].h)}%), and wear a hat in ${p[2].name} (${Math.round(p[2].g)} km/h gusts).`,
+    tags: "#hairday #weather #humidity" },
+
+  { id: "washing", group: "Playful", name: "Washing line weather", title: "Washing line weather",
+    why: "A steady breeze, sunshine, dry air and no rain coming: where your sheets dry fastest.",
+    pick: R => top3(ranked(R, r => -Math.abs(r.w - 18) / 6 + r.sunH / 3 - r.h / 25 + r.t / 10 - (r.pp ?? 0) / 25, r => r.day && !wet(r) && r.rainToday < 0.2 && r.t > 8),
+      ["Best drying", "Sheets out", "Pegs ready"], r => `${Math.round(r.w)} km/h`, r => `breeze · ${Math.round(r.h)}% humidity · ${deg(r.t)}`, "garden"),
+    caption: p => `Best washing line weather on Earth right now: ${p[0].name} (${Math.round(p[0].w)} km/h breeze, ${Math.round(p[0].h)}% humidity), ${p[1].name} and ${p[2].name}. Pegs at the ready.`,
+    tags: "#laundryday #washingline #weather" },
+
+  { id: "umbrella", group: "Playful", name: "Umbrella-free capitals", title: "Umbrella-free capitals",
+    why: "Capital cities with no rain all week and none coming today.",
+    pick: R => top3(ranked(R, r => -r.rain7 * 5 - (r.pp ?? 0) / 10 + r.sunH / 4, r => has(r, "c") && !wet(r) && r.rainToday < 0.1),
+      ["Driest capital", "Bone dry", "No umbrella"], r => `${fix(r.rain7, 1)} mm`, r => `of rain in 7 days · ${desc(r)}`, "city"),
+    caption: p => `Leave the umbrella at home in ${p[0].name}, ${p[1].name} and ${p[2].name}. Barely a drop all week.`,
+    tags: "#capitals #sunnyday #weather" }
+];
+// a weekly shape for Pick for me: weekday -> group
+const WEEK = { 1: "Travel", 2: "Mood", 3: "Time", 4: "Contrast", 5: "Playful", 6: "Extremes", 0: "Extremes" };
+const GROUPS = ["Extremes", "Travel", "Mood", "Time", "Contrast", "Playful"];
+
+// ---------- data ----------
+async function getJSON(u) { const r = await fetch(u); if (!r.ok) throw new Error(r.status); return r.json(); }
+async function batched(base, params, list, size = 80) {
+  const out = [];
+  for (let i = 0; i < list.length; i += size) {
+    const part = list.slice(i, i + size), lat = part.map(p => p[1]).join(","), lon = part.map(p => p[2]).join(",");
+    try { const j = await getJSON(`${base}?latitude=${lat}&longitude=${lon}&${params}`); const arr = Array.isArray(j) ? j : [j]; part.forEach((_, k) => out.push(arr[k] || null)); }
+    catch (e) { part.forEach(() => out.push(null)); }
+  }
+  return out;
+}
+let rows = [], themeId = null, autoId = null, chosen = [], slotsNow = null;
+async function scan() {
+  const F = await batched("https://api.open-meteo.com/v1/forecast",
+    "current=temperature_2m,apparent_temperature,relative_humidity_2m,is_day,precipitation,snowfall,weather_code,cloud_cover,pressure_msl,wind_speed_10m,wind_gusts_10m,visibility,uv_index" +
+    "&daily=temperature_2m_max,temperature_2m_min,sunrise,sunset,daylight_duration,sunshine_duration,uv_index_max,precipitation_sum,snowfall_sum,precipitation_probability_max" +
+    "&past_days=7&forecast_days=1&timezone=auto&timeformat=unixtime", PLACES);
+  if (!F.some(Boolean)) throw new Error("no weather");
+  $("status").textContent = "Checking the seas and the air…";
+  const sea = PLACES.filter(p => p[4].includes("s"));
+  const [M, A] = await Promise.all([
+    batched("https://marine-api.open-meteo.com/v1/marine", "current=wave_height,sea_surface_temperature", sea),
+    batched("https://air-quality-api.open-meteo.com/v1/air-quality", "current=pm2_5", PLACES)]);
+  rows = [];
+  PLACES.forEach((p, i) => {
+    const d = F[i]; if (!d || !d.current || typeof d.current.temperature_2m !== "number") return;
+    const c = d.current, dl = d.daily || {}, n = (dl.time || []).length - 1, past = k => (dl[k] || []).slice(0, Math.max(0, n)).reduce((a, b) => a + (b || 0), 0), today = (k, f = 0) => ((dl[k] || [])[n] ?? f);
+    const si = sea.indexOf(p), m = si >= 0 ? M[si] : null, a = A[i];
+    rows.push({
+      name: p[0], lat: p[1], lon: p[2], where: p[3], flags: p[4], off: d.utc_offset_seconds || 0,
+      t: c.temperature_2m, feels: c.apparent_temperature ?? c.temperature_2m, h: c.relative_humidity_2m ?? 50, day: !!c.is_day, pr: c.precipitation || 0, snowNow: c.snowfall || 0,
+      code: c.weather_code ?? 0, cloud: c.cloud_cover ?? 0, p: c.pressure_msl ?? 1013, w: c.wind_speed_10m ?? 0, g: c.wind_gusts_10m ?? 0, vis: c.visibility ?? null,
+      tmax: today("temperature_2m_max", c.temperature_2m), tmin: today("temperature_2m_min", c.temperature_2m),
+      sunrise: today("sunrise"), sunset: today("sunset"), daylen: today("daylight_duration"), sunH: today("sunshine_duration") / 3600,
+      uvmax: today("uv_index_max"), rainToday: today("precipitation_sum"), rain7: past("precipitation_sum"), snowToday: today("snowfall_sum"), snowWeek: past("snowfall_sum"),
+      pp: today("precipitation_probability_max", null),
+      sst: m && m.current ? m.current.sea_surface_temperature ?? null : null, wave: m && m.current ? m.current.wave_height ?? null : null,
+      pm25: a && a.current ? a.current.pm2_5 ?? null : null
+    });
+  });
+  $("status").textContent = `Checked ${rows.length} places at ${new Date().toTimeString().slice(0, 5)}.`;
+  pickAuto(); drawThemes(); choose(autoId);
+}
+// Pick for me: today's group, rotating through its themes week by week, skipping any with nothing to show
+function pickAuto() {
+  const wk = Math.floor(Date.now() / (7 * 864e5)), grp = WEEK[new Date().getDay()], inGroup = THEMES.filter(t => t.group === grp);
+  const order = inGroup.map((_, k) => inGroup[(wk + k) % inGroup.length]).concat(THEMES);
+  autoId = (order.find(t => safePick(t)) || THEMES[0]).id;
+}
+function safePick(t) { try { const s = t.pick(rows); return s && s.length === 3 ? s : null; } catch (e) { console.warn(t.id, e); return null; } }
+
+// ---------- UI ----------
+function drawThemes() {
+  const box = $("themes"); box.textContent = "";
+  const auto = document.createElement("div"); auto.className = "tgroup";
+  auto.innerHTML = `<span class="tgroup-name">Today</span>`;
+  const a = document.createElement("button"); a.type = "button"; a.className = "chip auto"; a.dataset.id = autoId;
+  a.textContent = "Pick for me: " + THEMES.find(t => t.id === autoId).name; a.addEventListener("click", () => choose(autoId)); auto.appendChild(a); box.appendChild(auto);
+  GROUPS.forEach(g => {
+    const row = document.createElement("div"); row.className = "tgroup";
+    row.innerHTML = `<span class="tgroup-name">${g}</span>`;
+    THEMES.filter(t => t.group === g).forEach(t => {
+      const b = document.createElement("button"); b.type = "button"; b.className = "chip"; b.dataset.id = t.id; b.textContent = t.name;
+      if (!safePick(t)) { b.classList.add("empty"); b.title = "Nothing on Earth fits this one right now"; }
+      b.addEventListener("click", () => choose(t.id)); row.appendChild(b);
+    });
+    box.appendChild(row);
+  });
+}
+function choose(id) {
+  themeId = id;
+  document.querySelectorAll(".chip:not(.auto)").forEach(b => b.setAttribute("aria-pressed", String(b.dataset.id === id)));
+  const t = THEMES.find(x => x.id === id);
+  $("themeTitle").textContent = t.title; $("themeWhy").textContent = t.why;
+  slotsNow = safePick(t);
+  chosen = slotsNow ? slotsNow.map(s => s.cands[0]) : [];
+  render();
+}
+function render() {
   const box = $("picks"); box.textContent = "";
-  [["hot", "Hottest"], ["cold", "Coldest"], ["wild", "Wildest"]].forEach(([k, label]) => {
-    const x = chosen[k], d = document.createElement("div"); d.className = "pick " + k;
-    const big = k === "wild" ? `${Math.round(x.g)} km/h` : `${x.t}°C`;
-    const stat = k === "wild" ? `${x.t}°C · rain ${x.r} mm · ${localTime(x.tz)} local` : `gusts ${Math.round(x.g)} km/h · ${localTime(x.tz)} local`;
-    d.innerHTML = `<div class="tag">${label} right now</div><div class="name">${x.p[0]}</div><div class="where">${x.p[3]}</div><div class="big">${big}</div><div class="stat">${stat}</div>
-      <select aria-label="Choose the ${label.toLowerCase()} city">${opts[k].map((o, i) => `<option value="${i}">${o.p[0]} (${k === "wild" ? Math.round(o.g) + " km/h" : o.t + "°C"})</option>`).join("")}</select>`;
-    d.querySelector("select").addEventListener("change", e => { chosen[k] = opts[k][+e.target.value]; render(opts); });
-    d.querySelector("select").value = String(opts[k].indexOf(x));
+  const t = THEMES.find(x => x.id === themeId);
+  if (!slotsNow) {
+    box.innerHTML = `<div class="nothing" style="grid-column:1/-1">Nothing on Earth fits this one right now. Try it later, or pick another theme.</div>`;
+    $("open").setAttribute("aria-disabled", "true"); $("caption").value = ""; drawRecent(); return;
+  }
+  slotsNow.forEach((s, i) => {
+    const x = chosen[i], d = document.createElement("div"); d.className = "pick s" + i;
+    const others = s.cands.filter(r => r.name === x.name || !chosen.some(c => c.name === r.name)).slice(0, 8);
+    d.innerHTML = `<div class="tag">${s.label}</div><div class="name">${x.name}</div><div class="where">${x.where}</div><div class="big">${s.big(x)}</div><div class="stat">${s.stat(x)}</div>
+      <select aria-label="Choose another city for ${s.label}">${others.map(o => `<option value="${o.name}"${o.name === x.name ? " selected" : ""}>${o.name} (${s.big(o)})${isRecent(o) ? " · used lately" : ""}</option>`).join("")}</select>`;
+    d.querySelector("select").addEventListener("change", e => { chosen[i] = s.cands.find(r => r.name === e.target.value); render(); });
     box.appendChild(d);
   });
-  const enc = x => `${x.p[0]}@${x.p[1]}@${x.p[2]}@${x.p[3]}`;
-  $("open").href = "/?cities=" + encodeURIComponent([chosen.hot, chosen.cold, chosen.wild].map(enc).join(",")) + "&reel=" + encodeURIComponent("Hottest,Coldest,Wildest");
+  const enc = x => `${x.name}@${x.lat}@${x.lon}@${x.where}`, clean = s => String(s).replace(/\s*,\s*/g, " · ").replace(/\|/g, " ");
+  $("open").href = "/?cities=" + encodeURIComponent(chosen.map(enc).join(",")) +
+    "&reel=" + encodeURIComponent(slotsNow.map(s => clean(s.label)).join(",")) +
+    "&rt=" + encodeURIComponent(t.title) +
+    "&rs=" + encodeURIComponent(slotsNow.map((s, i) => clean(`${s.big(chosen[i])} · ${s.stat(chosen[i])}`)).join("|")) +
+    "&rp=" + encodeURIComponent(slotsNow.map(s => s.flav).join("|"));
+  $("open").setAttribute("aria-disabled", "false");
   $("caption").value =
-`Right now it's ${chosen.hot.t}°C in ${chosen.hot.p[0]} and ${chosen.cold.t}°C in ${chosen.cold.p[0]}, while ${chosen.wild.p[0]} is getting ${Math.round(chosen.wild.g)} km/h gusts.
+`${t.title}.
+
+${t.caption(chosen)}
 
 This is what the three of them sound like together. Each city's live weather plays its own rhythm: the temperature sets the length of the loop, the rest of the sky decides what lands in it.
 
@@ -134,10 +525,21 @@ Three Cities, a weather-played instrument. Play the places you've lived: threeci
 
 Comment three places you've lived and I'll play them tomorrow.
 
-#generativemusic #ambient #weather #euclideanrhythm #synth #electronicmusic #forrestjames`;
+${t.tags} #generativemusic #ambient #euclideanrhythm #electronicmusic #forrestjames`;
+  drawRecent();
 }
+function drawRecent() {
+  const el = $("recent");
+  if (!recent.length) { el.textContent = "No cities resting yet. Ones you open a reel with sit out for two weeks."; return; }
+  el.innerHTML = `Resting for two weeks: ${recent.map(x => x.name).join(", ")}. <button type="button" id="clearRecent">Clear</button>`;
+  $("clearRecent").addEventListener("click", () => { recent = []; saveRecent(recent); pickAuto(); drawThemes(); choose(themeId); });
+}
+$("open").addEventListener("click", () => {
+  const now = Date.now(); chosen.forEach(r => { if (!recent.some(x => x.name === r.name)) recent.push({ name: r.name, t: now }); }); saveRecent(recent);
+  setTimeout(drawRecent, 100);
+});
 $("copy").addEventListener("click", async () => { try { await navigator.clipboard.writeText($("caption").value); $("copy").textContent = "Copied"; } catch (e) { $("caption").select(); } setTimeout(() => $("copy").textContent = "Copy caption", 1600); });
-scan().catch(e => { $("status").textContent = "Couldn't reach the weather service. Try again in a minute."; });
+scan().catch(e => { console.error(e); $("status").textContent = "Couldn't reach the weather service. Try again in a minute."; });
 </script>
 </body>
 </html>
