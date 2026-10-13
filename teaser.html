@@ -1,0 +1,378 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Teaser Studio</title>
+<meta name="robots" content="noindex">
+<link rel="icon" href="/favicon.svg?v=4" type="image/svg+xml">
+<link href="https://fonts.googleapis.com/css2?family=Abel&family=Source+Code+Pro:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root { --ground: #100806; --panel: #1a1210; --ink: #f3ece6; --dim: rgba(243,236,230,0.62); --faint: rgba(243,236,230,0.34); --line: rgba(243,236,230,0.14);
+  --display: "Abel", "Arial Narrow", sans-serif; --mono: "Source Code Pro", ui-monospace, monospace; color-scheme: dark; }
+* { box-sizing: border-box; }
+html, body { margin: 0; background: var(--ground); color: var(--ink); font: 14px/1.6 var(--mono); }
+.wrap { display: grid; grid-template-columns: minmax(0, 420px) minmax(0, 1fr); gap: 28px; max-width: 1180px; margin: 0 auto; padding: 28px 16px 60px; align-items: start; }
+@media (max-width: 860px) { .wrap { grid-template-columns: 1fr; } }
+h1 { font: 400 40px var(--display); letter-spacing: 0.14em; text-transform: uppercase; margin: 0; }
+.sub { color: var(--dim); margin: 6px 0 18px; }
+label { display: block; font-size: 11px; letter-spacing: 0.16em; text-transform: uppercase; color: var(--faint); margin: 14px 0 6px; }
+input, select { width: 100%; background: var(--panel); color: var(--ink); border: 1px solid var(--line); padding: 8px 10px; font: 13px var(--mono); }
+.row3 { display: grid; grid-template-columns: 1.4fr 0.8fr 0.7fr; gap: 6px; margin-bottom: 6px; }
+.row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.btns { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 20px; }
+.btn { min-height: 46px; padding: 0 20px; background: var(--ink); color: var(--ground); border: 0; font: 600 13px var(--mono); letter-spacing: 0.14em; text-transform: uppercase; cursor: pointer; }
+.btn.ghost { background: none; color: var(--ink); border: 1px solid var(--dim); }
+.btn.rec { background: none; color: var(--ink); border: 1px solid #e0604f; }
+.btn[disabled] { opacity: 0.4; cursor: default; }
+.status { color: var(--dim); font-size: 12px; margin-top: 14px; min-height: 2.4em; }
+.stage { position: relative; display: flex; justify-content: center; }
+canvas { width: min(100%, 420px); height: auto; aspect-ratio: 9 / 16; background: #100806; box-shadow: 0 14px 40px rgba(0,0,0,0.6); }
+.hint { color: var(--faint); font-size: 12px; }
+.out button { margin: 8px 8px 0 0; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div>
+    <h1>Teaser</h1>
+    <p class="sub">A one-minute teaser in the classic collage style: your recording as the soundtrack, the real interface, photos of the three cities, cut on the music's own beats.</p>
+    <label for="audio">Soundtrack</label>
+    <input id="audio" type="file" accept="audio/*,.m4a,.mp3,.wav,.aac">
+    <p class="hint">A recording from Three Cities. Its name tells the teaser which cities, times and temperatures it heard.</p>
+    <label>The three cities (name, local time, temperature)</label>
+    <div id="cities"></div>
+    <div class="row2">
+      <div><label for="len">Length</label><select id="len"><option value="45">45 seconds</option><option value="60">60 seconds</option><option value="66" selected>66 seconds</option><option value="75">75 seconds</option><option value="90">90 seconds</option></select></div>
+      <div><label for="start">Start the music at (seconds)</label><input id="start" type="number" min="0" step="1" value="0"></div>
+    </div>
+    <p class="hint" id="startHint"></p>
+    <div class="btns">
+      <button class="btn ghost" id="preview" type="button" disabled>▶ Preview</button>
+      <button class="btn rec" id="record" type="button" disabled>● Record teaser</button>
+    </div>
+    <p class="status" id="status" aria-live="polite">Load your recording to begin.</p>
+    <div class="out" id="out"></div>
+  </div>
+  <div class="stage"><canvas id="cv" width="1080" height="1920" aria-label="Teaser preview"></canvas></div>
+</div>
+<script>
+const $ = id => document.getElementById(id);
+const W = 1080, H = 1920, COLORS = ["#d08a6a", "#6fa38c", "#a98bc4"];
+const RELEASED = false;
+const cv = $("cv"), g = cv.getContext("2d");
+const ease = x => x <= 0 ? 0 : x >= 1 ? 1 : 1 - Math.pow(1 - x, 3);
+const inout = x => x <= 0 ? 0 : x >= 1 ? 1 : x < 0.5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2;
+const clamp01 = x => Math.max(0, Math.min(1, x));
+const seeded = i => { const x = Math.sin(i * 127.1 + 311.7) * 43758.5453; return x - Math.floor(x); };
+
+// ---------- the cities ----------
+let CITY = [{ name: "Cologne", time: "09:00", temp: "12" }, { name: "Halifax", time: "04:00", temp: "5" }, { name: "Mexico City", time: "01:00", temp: "15" }];
+function drawCityInputs() {
+  $("cities").innerHTML = CITY.map((c, i) => `<div class="row3"><input data-i="${i}" data-k="name" value="${c.name}" aria-label="City ${i + 1}"><input data-i="${i}" data-k="time" value="${c.time}" aria-label="Local time"><input data-i="${i}" data-k="temp" value="${c.temp}" aria-label="Temperature"></div>`).join("");
+  $("cities").querySelectorAll("input").forEach(el => el.addEventListener("change", () => { CITY[+el.dataset.i][el.dataset.k] = el.value.trim(); if (el.dataset.k === "name") loadPhotos(); }));
+}
+drawCityInputs();
+// "Three Cities - Cologne 09.00 12C - Halifax 04.00 5C - Mexico City 01.00 15C - 2026-10-13.m4a"
+let recDate = "";
+function fromFilename(n) {
+  const parts = n.replace(/\.[^.]+$/, "").replace(/_/g, " ").split(/\s+-\s+/).slice(1);
+  const out = [];
+  parts.forEach(p => { const m = p.match(/^(.*?)\s+(\d{1,2})[.:](\d{2})\s+(-?\d+(?:\.\d+)?)\s*[CF]?$/i); if (m) out.push({ name: m[1].trim(), time: `${m[2].padStart(2, "0")}:${m[3]}`, temp: m[4] }); else if (/^\d{4}-\d{2}-\d{2}$/.test(p)) recDate = p; });
+  return out.length === 3 ? out : null;
+}
+
+// ---------- pictures: the interface, and photos of the cities ----------
+const SHOTS = {};
+["hero", "cards", "mine-japan", "mine-form", "rack", "fx", "drums", "more", "map", "record", "phone-cards", "phone-cards2", "phone-hero"].forEach(n => {
+  const im = new Image(); im.src = `/teaser/${n}.jpg`; SHOTS[n] = im;
+});
+const photos = [[], [], []];
+async function photosFor(name) {
+  const out = [];
+  for (const q of [`${name} skyline`, `${name} street`, `${name} night`, `${name} landmark`]) {
+    try {
+      const u = "https://commons.wikimedia.org/w/api.php?action=query&format=json&origin=*&generator=search&gsrnamespace=6&gsrlimit=8" +
+        "&gsrsearch=" + encodeURIComponent(q + " filetype:bitmap") + "&prop=imageinfo&iiprop=url|size|mime&iiurlwidth=1080";
+      const j = await (await fetch(u)).json();
+      const pages = Object.values((j.query && j.query.pages) || {}).sort((x, y) => x.index - y.index);
+      for (const pg of pages) {
+        const i = pg.imageinfo && pg.imageinfo[0];
+        if (!i || i.mime !== "image/jpeg" || out.some(o => o.src === i.thumburl)) continue;
+        const img = new Image(); img.crossOrigin = "anonymous"; img.src = i.thumburl;
+        await new Promise(r => { img.onload = r; img.onerror = r; setTimeout(r, 7000); });
+        if (img.naturalWidth) { out.push(img); break; }
+      }
+    } catch (e) {}
+  }
+  return out;
+}
+let photosReady = Promise.resolve();
+function loadPhotos() {
+  $("status").textContent = "Finding photos of " + CITY.map(c => c.name).join(", ") + "…";
+  photosReady = Promise.all(CITY.map(async (c, i) => { photos[i] = await photosFor(c.name); })).then(() => { if (audioBuf) $("status").textContent = "Ready. Preview it, then record."; });
+}
+
+// ---------- drawing ----------
+const grain = document.createElement("canvas"); grain.width = grain.height = 256;
+{ const gx = grain.getContext("2d"), im = gx.createImageData(256, 256); for (let i = 0; i < im.data.length; i += 4) { const v = Math.random() * 255; im.data[i] = im.data[i + 1] = im.data[i + 2] = v; im.data[i + 3] = 40; } gx.putImageData(im, 0, 0); }
+const SKYLINE = new Path2D("M0.5 24v-6.6h11V24zM1.6 17.4v-1.6h8.8v1.6zM3 15.8v-2.4h6v2.4zM2.9 13.4a3.1 3.1 0 0 1 6.2 0zM5.4 10.4V8.2h1.2v2.2zM5.2 8.2L6 6.6l.8 1.6z M13.4 24V13h12.6v11h-3.6v-5.2a2.7 2.7 0 0 0-5.4 0V24zM13 13v-1.4h13.4V13zM15.8 11.6a3.9 3.9 0 0 1 7.8 0zM19.3 7.7V5.6h.8v2.1zM19.1 5.6l.6-1.8.6 1.8zM13.6 11.6v-1.8h.9v1.8zM24.9 11.6v-1.8h.9v1.8zM13.4 9.8l.65-1.4.65 1.4zM24.7 9.8l.65-1.4.65 1.4z M27.9 24v-3.5h.6V9h-.4V7.6h1V5.4h.8L31.4 0l1.5 5.4h.8v2.2h1V9h-.4v11.5h.6V24zM31.4 10a1.7 1.7 0 1 0 0 3.4 1.7 1.7 0 0 0 0-3.4z");
+// a photo covering a box, duotoned in a city's colour, with a slow drift
+function cover(img, x, y, w, h, drift, tint, alpha = 1) {
+  if (!img || !img.naturalWidth) { g.save(); g.globalAlpha = alpha * 0.55; g.fillStyle = tint; g.fillRect(x, y, w, h); g.restore(); return; }
+  const s = Math.max(w / img.naturalWidth, h / img.naturalHeight) * (1.12 + 0.08 * drift);
+  const iw = img.naturalWidth * s, ih = img.naturalHeight * s, ox = x + (w - iw) / 2 + (drift - 0.5) * 60, oy = y + (h - ih) / 2;
+  g.save(); g.beginPath(); g.rect(x, y, w, h); g.clip();
+  g.globalAlpha = alpha; g.filter = "grayscale(1) contrast(1.25) brightness(0.95)"; g.drawImage(img, ox, oy, iw, ih); g.filter = "none";
+  g.globalCompositeOperation = "multiply"; g.fillStyle = tint; g.fillRect(x, y, w, h);
+  g.globalCompositeOperation = "screen"; g.fillStyle = "rgba(40,20,16,0.35)"; g.fillRect(x, y, w, h);
+  g.restore();
+}
+// a piece of the real interface, zooming from one region of the screenshot to another, shown in a soft-cornered frame
+function shot(name, from, to, p, box, alpha = 1) {
+  const im = SHOTS[name]; if (!im || !im.naturalWidth) return;
+  const k = inout(p), r = { x: from[0] + (to[0] - from[0]) * k, y: from[1] + (to[1] - from[1]) * k, w: from[2] + (to[2] - from[2]) * k };
+  const iw = im.naturalWidth, ih = im.naturalHeight;
+  r.w = Math.min(r.w, iw); r.x = Math.max(0, Math.min(r.x, iw - r.w));
+  let sc = box.w / r.w, rh = box.h / sc;
+  if (rh > ih) { box = Object.assign({}, box, { y: box.y + (box.h - ih * sc) / 2, h: ih * sc }); rh = ih; }   // never draw past the bottom of the screenshot
+  r.y = Math.max(0, Math.min(r.y, ih - rh));
+  g.save(); g.globalAlpha = alpha;
+  g.shadowColor = "rgba(0,0,0,0.6)"; g.shadowBlur = 50; g.shadowOffsetY = 18;
+  rr(box.x, box.y, box.w, box.h, 22); g.fillStyle = "#100806"; g.fill(); g.shadowColor = "transparent";
+  rr(box.x, box.y, box.w, box.h, 22); g.clip();
+  g.drawImage(im, r.x, r.y, r.w, rh, box.x, box.y, box.w, box.h);
+  g.restore();
+  g.save(); g.globalAlpha = alpha * 0.4; rr(box.x, box.y, box.w, box.h, 22); g.strokeStyle = "rgba(243,236,230,0.5)"; g.lineWidth = 2; g.stroke(); g.restore();
+}
+function rr(x, y, w, h, r) { g.beginPath(); g.moveTo(x + r, y); g.arcTo(x + w, y, x + w, y + h, r); g.arcTo(x + w, y + h, x, y + h, r); g.arcTo(x, y + h, x, y, r); g.arcTo(x, y, x + w, y, r); g.closePath(); }
+function label(text, x, y, size, o = {}) {
+  g.save(); g.font = `${size}px ${o.mono ? '"Source Code Pro", monospace' : "Abel, sans-serif"}`; g.textAlign = o.align || "left"; g.fillStyle = o.color || "#f3ece6"; g.globalAlpha = o.alpha ?? 1;
+  if (o.spacing) g.letterSpacing = o.spacing + "px";
+  if (o.max) { const mw = g.measureText(text).width; if (mw > o.max) g.font = `${Math.floor(size * o.max / mw)}px ${o.mono ? '"Source Code Pro", monospace' : "Abel, sans-serif"}`; }
+  g.shadowColor = "rgba(0,0,0,0.6)"; g.shadowBlur = o.shadow ?? 18; g.fillText(text, x, y); g.restore();
+}
+// words arriving one at a time, on the beat
+function words(text, x, y, size, t, perWord, o = {}) {
+  const ws = text.split(" "), n = Math.min(ws.length, Math.floor(t / perWord) + 1);
+  label(ws.slice(0, Math.max(0, n)).join(" "), x, y, size, o);
+}
+// a city's loop as a ring of dots, lit as the music hits
+function ring(i, cx, cy, r, alpha, steps, hits, t, pulse) {
+  g.save(); g.globalAlpha = alpha;
+  g.strokeStyle = "rgba(243,236,230,0.35)"; g.lineWidth = 2; g.setLineDash([3, 10]); g.beginPath(); g.arc(cx, cy, r, 0, 7); g.stroke(); g.setLineDash([]);
+  const play = Math.floor(t * 4) % steps;
+  for (let k = 0; k < steps; k++) {
+    const a = -Math.PI / 2 + k * 2 * Math.PI / steps, hit = (k * hits) % steps < hits, on = k === play;
+    g.fillStyle = hit ? COLORS[i] : "rgba(243,236,230,0.55)";
+    g.beginPath(); g.arc(cx + r * Math.cos(a), cy + r * Math.sin(a), hit ? (on ? 14 + 12 * pulse : 11) : (on ? 7 : 4), 0, 7); g.fill();
+  }
+  g.fillStyle = "#f3ece6"; g.textAlign = "center"; g.font = `${Math.round(r * 0.55)}px Abel, sans-serif`; g.fillText(String(steps), cx, cy + r * 0.18);
+  g.font = `${Math.round(r * 0.13)}px "Source Code Pro", monospace`; g.fillText("STEPS", cx, cy + r * 0.42);
+  g.restore();
+}
+function finish() {
+  g.save(); g.globalAlpha = 0.5; g.fillStyle = g.createPattern(grain, "repeat"); g.translate(-Math.random() * 256, -Math.random() * 256); g.fillRect(0, 0, W + 256, H + 256); g.restore();
+  const vg = g.createRadialGradient(W / 2, H / 2, H * 0.3, W / 2, H / 2, H * 0.75); vg.addColorStop(0, "rgba(0,0,0,0)"); vg.addColorStop(1, "rgba(0,0,0,0.45)"); g.fillStyle = vg; g.fillRect(0, 0, W, H);
+}
+// a blurred city collage behind the interface shots
+function backdrop(t, a = 0.5) {
+  for (let i = 0; i < 3; i++) cover(photos[i][(Math.floor(t / 4) + i) % Math.max(1, photos[i].length)], i * W / 3, 0, W / 3 + 1, H, (t / 9 + i * 0.3) % 1, COLORS[i], a);
+  g.fillStyle = "rgba(16,8,6,0.45)"; g.fillRect(0, 0, W, H);
+}
+
+// ---------- the music: beats from the recording itself ----------
+let audioBuf = null, onsets = [], audioFile = null;
+function findOnsets(buf) {
+  const d = buf.getChannelData(0), sr = buf.sampleRate, hop = 512, out = [];
+  let prev = 0; const flux = [];
+  for (let i = 0; i + hop < d.length; i += hop) { let e = 0; for (let k = i + 1; k < i + hop; k++) { const x = d[k] - d[k - 1]; e += x * x; } e = Math.sqrt(e / hop); flux.push(Math.max(0, e - prev)); prev = e; }
+  const sorted = flux.filter(x => x > 0).sort((a, b) => a - b), med = sorted[Math.floor(sorted.length / 2)] || 1e-9, p99 = sorted[Math.floor(sorted.length * 0.99)] || 1e-9;
+  let lastT = -1;
+  for (let i = 8; i < flux.length - 8; i++) {
+    let m = 0; for (let k = i - 8; k <= i + 8; k++) m += flux[k]; m /= 17;
+    const t = i * hop / sr;
+    if (flux[i] > m * 1.5 && flux[i] > med * 6 && flux[i] >= flux[i - 1] && flux[i] >= flux[i + 1] && t - lastT > 0.1) { out.push({ t, s: Math.min(1, flux[i] / p99) }); lastT = t; }
+  }
+  return out;
+}
+// the busiest stretch makes the liveliest teaser
+function busiest(len) {
+  const dur = audioBuf.duration; let best = 0, bestN = -1;
+  for (let s = 0; s + len <= dur; s += 2) { const n = onsets.filter(o => o.t >= s && o.t < s + len).reduce((a, o) => a + o.s, 0); if (n > bestN) { bestN = n; best = s; } }
+  return best;
+}
+$("audio").addEventListener("change", async e => {
+  const f = e.target.files && e.target.files[0]; if (!f) return;
+  audioFile = f; $("status").textContent = "Reading the recording…";
+  const parsed = fromFilename(f.name); if (parsed) { CITY = parsed; drawCityInputs(); }
+  loadPhotos();
+  try {
+    const ac = new (window.AudioContext || window.webkitAudioContext)();
+    audioBuf = await ac.decodeAudioData(await f.arrayBuffer()); ac.close();
+    onsets = findOnsets(audioBuf);
+    const len = +$("len").value; $("start").value = busiest(len);
+    $("startHint").textContent = `The recording is ${Math.floor(audioBuf.duration / 60)}:${String(Math.round(audioBuf.duration % 60)).padStart(2, "0")} long. Starting at the busiest stretch, ${$("start").value} s in.`;
+    $("preview").disabled = $("record").disabled = false;
+    await photosReady; $("status").textContent = "Ready. Preview it, then record.";
+  } catch (err) { $("status").textContent = "Couldn't read that file: " + err.message; }
+});
+$("len").addEventListener("change", () => { if (audioBuf) { $("start").value = busiest(+$("len").value); } });
+
+// ---------- the timeline ----------
+// beats near time t (seconds into the teaser), and how hard the latest one was
+function beatInfo(t) {
+  const st = +$("start").value; let last = null;
+  for (const o of onsets) { const x = o.t - st; if (x > t) break; last = { t: x, s: o.s }; }
+  return { pulse: last ? Math.max(0, 1 - (t - last.t) / 0.25) * last.s : 0, last: last ? last.t : -1 };
+}
+function cutIndex(t, from, minGap = 0.45) {   // counts the strong beats since `from`, for cutting on the music
+  const st = +$("start").value; let n = 0, lastT = -9;
+  for (const o of onsets) { const x = o.t - st; if (x < from) continue; if (x > t) break; if (o.s > 0.35 && x - lastT >= minGap) { n++; lastT = x; } }
+  return n;
+}
+function frame(t, T) {
+  // the chapters, as fractions of the whole teaser
+  const C = { open: 0.065, cities: 0.21, live: 0.33, loop: 0.45, sleep: 0.53, mine: 0.65, studio: 0.79, map: 0.86, rec: 0.91 };
+  const at = k => C[k] * T, { pulse } = beatInfo(t);
+  g.fillStyle = "#100806"; g.fillRect(0, 0, W, H);
+  const date = recDate ? new Date(recDate + "T12:00:00Z").toLocaleDateString("en-GB", { day: "numeric", month: "long" }) : "";
+  if (t < at("open")) {   // the question
+    const p = t / at("open"), a = 1 - ease((p - 0.85) / 0.15);
+    backdrop(t, 0.32 * a);
+    const st = ease(t / 0.6);
+    g.save(); g.globalAlpha = a * st; g.translate(W / 2 - 106 * (0.85 + 0.15 * st), 520); g.scale(6 * (0.85 + 0.15 * st), 6 * (0.85 + 0.15 * st)); g.fillStyle = "#f3ece6"; g.fill(SKYLINE); g.restore();
+    words("What does the", W / 2, 900, 112, t - 0.5, 0.35, { align: "center", alpha: a });
+    words("weather sound like?", W / 2, 1030, 112, t - 1.2, 0.35, { align: "center", alpha: a });
+  } else if (t < at("cities")) {   // the three cities, one by one, cut on the beat
+    const t0 = at("open"), span = at("cities") - t0, k = Math.min(2, Math.floor((t - t0) / (span / 3))), ls = t - t0 - k * span / 3;
+    const c = CITY[k], imgs = photos[k], cut = cutIndex(t, t0 + k * span / 3);
+    const wipe = ease(ls / 0.6);
+    g.save(); g.beginPath(); g.moveTo(0, 0); g.lineTo((W + 400) * wipe, 0); g.lineTo((W + 400) * wipe - 400, H); g.lineTo(0, H); g.clip();
+    cover(imgs[cut % Math.max(1, imgs.length)], 0, 0, W, H, (ls / 4) % 1, COLORS[k], 0.95);
+    g.restore();
+    if (pulse > 0.6) { const y = 300 + seeded(Math.floor(t * 8)) * 1200; cover(imgs[(cut + 1) % Math.max(1, imgs.length)], 0, y, W, 120, seeded(t), COLORS[k], 0.9); }
+    const ta = ease((ls - 0.3) / 0.5);
+    label("PLAYING LIVE", 80, 1180, 40, { mono: true, spacing: 10, color: COLORS[k], alpha: ta });
+    label(c.name.toUpperCase(), 80, 1330, 140, { spacing: 10, alpha: ta, max: 920 });
+    label(`${c.temp}°`, W - 80, 1600, 210, { align: "right", alpha: ease((ls - 0.6) / 0.5) });
+    label(`${c.time} local${date ? " · " + date : ""}`, 84, 1690, 32, { mono: true, alpha: ease((ls - 0.8) / 0.5) });
+    const temp = Math.max(2, Math.abs(Math.round(+c.temp || 8)));
+    ring(k, 290, 700, 190 + 22 * pulse, ease((ls - 0.4) / 0.5) * 0.95, temp, Math.max(1, Math.round(temp * 0.4)), t, pulse);
+  } else if (t < at("live")) {   // the interface itself
+    const t0 = at("cities"), p = (t - t0) / (at("live") - t0);
+    backdrop(t, 0.5);
+    label("ONE INSTRUMENT,", W / 2, 260, 52, { align: "center", mono: true, spacing: 10, alpha: ease(p / 0.15) });
+    label("PLAYED BY THE WEATHER", W / 2, 330, 52, { align: "center", mono: true, spacing: 10, alpha: ease((p - 0.08) / 0.15) });
+    if (p < 0.45) shot("hero", [300, 40, 1000], [480, 120, 640], p / 0.45, { x: 40, y: 520, w: 1000, h: 820 }, ease(p / 0.1));
+    else shot("cards", [0, 0, 1600], [20, 0, 1100], (p - 0.45) / 0.55, { x: 40, y: 560, w: 1000, h: 760 }, 1);
+  } else if (t < at("loop")) {   // how it plays: zoom card to card
+    const t0 = at("live"), span = at("loop") - t0, k = Math.min(2, Math.floor((t - t0) / (span / 3))), ls = (t - t0) - k * span / 3, p = ls / (span / 3);
+    backdrop(t, 0.45);
+    const xs = [20, 545, 1065], c = CITY[k];
+    shot("cards", [xs[k], 0, 520], [xs[k] + 20, 30, 480], p, { x: 140, y: 380, w: 800, h: 1080 }, 1);
+    const temp = Math.abs(Math.round(+c.temp || 0));
+    const lines = [[`${c.temp}° in ${c.name}`, `makes a ${temp}-step loop`], ["The humidity decides", "how many notes land"], [`${c.time} in ${c.name}:`, "the city is asleep, softer, sparser"]][k];
+    label(lines[0].toUpperCase(), W / 2, 1580, 48, { align: "center", mono: true, spacing: 6, color: COLORS[k], alpha: ease(p / 0.2), max: 980 });
+    label(lines[1], W / 2, 1670, 64, { align: "center", alpha: ease((p - 0.1) / 0.2), max: 980 });
+    label("HOW IT PLAYS", W / 2, 260, 44, { align: "center", mono: true, spacing: 12, alpha: 0.85 });
+  } else if (t < at("sleep")) {   // in your pocket
+    const t0 = at("loop"), p = (t - t0) / (at("sleep") - t0);
+    backdrop(t, 0.5);
+    const which = p < 0.5 ? "phone-cards" : "phone-cards2", lp = p < 0.5 ? p / 0.5 : (p - 0.5) / 0.5;
+    shot(which, [0, 0, 780], [0, 120, 780], lp, { x: 250, y: 300, w: 580, h: 1255 }, 1);
+    label("IN YOUR POCKET", W / 2, 1700, 52, { align: "center", mono: true, spacing: 12, alpha: ease(p / 0.15) });
+    label("Swipe from city to city", W / 2, 1780, 48, { align: "center", alpha: ease((p - 0.1) / 0.15) });
+  } else if (t < at("mine")) {   // your own cities
+    const t0 = at("sleep"), p = (t - t0) / (at("mine") - t0);
+    backdrop(t, 0.5);
+    label("PLAY THE PLACES", W / 2, 250, 60, { align: "center", mono: true, spacing: 10, alpha: ease(p / 0.12) });
+    label("YOU'VE LIVED", W / 2, 330, 60, { align: "center", mono: true, spacing: 10, alpha: ease((p - 0.05) / 0.12) });
+    if (p < 0.55) shot("mine-japan", [300, 250, 1000], [380, 420, 600], p / 0.55, { x: 40, y: 480, w: 1000, h: 1000 }, 1);
+    else shot("mine-form", [300, 280, 1000], [380, 360, 840], (p - 0.55) / 0.45, { x: 40, y: 560, w: 1000, h: 600 }, 1);
+    label(p < 0.55 ? "Type a country, get its cities" : "Or let it surprise you: awake, or asleep", W / 2, 1720, 50, { align: "center", alpha: ease(((p < 0.55 ? p : p - 0.55) - 0.05) / 0.15), max: 980 });
+  } else if (t < at("studio")) {   // the studio, cut on the beat
+    const t0 = at("mine"), p = (t - t0) / (at("studio") - t0), n = cutIndex(t, t0, 0.9);
+    backdrop(t, 0.45);
+    const V = [["rack", [0, 0, 1600], [700, 0, 900], "Chords, a filter that swells by itself"], ["fx", [0, 40, 1600], [0, 60, 1000], "Seven reverbs, seven delays"], ["drums", [0, 0, 1600], [0, 0, 900], "A rhythm section made from all three cities"], ["more", [0, 360, 560], [0, 420, 520], "Every voice, every loop, your own samples"]];
+    const v = V[n % V.length], lp = ((t - t0) % 2.4) / 2.4;
+    shot(v[0], v[1], v[2], lp, { x: 40, y: 520, w: 1000, h: 820 }, 1);
+    label("A STUDIO, WHEN YOU WANT ONE", W / 2, 300, 46, { align: "center", mono: true, spacing: 8, alpha: ease(p / 0.1), max: 1000 });
+    label(v[3], W / 2, 1520, 52, { align: "center", alpha: 0.95, max: 980 });
+  } else if (t < at("map")) {   // the memory map
+    const t0 = at("studio"), p = (t - t0) / (at("map") - t0);
+    backdrop(t, 0.45);
+    shot("map", [100, 120, 1400], [300, 160, 900], p, { x: 40, y: 460, w: 1000, h: 1000 }, 1);
+    label("Where were you happiest?", W / 2, 300, 72, { align: "center", alpha: ease(p / 0.15) });
+    label("A MEMORY MAP THAT MIXES THE CITIES", W / 2, 1660, 34, { align: "center", mono: true, spacing: 6, alpha: ease((p - 0.15) / 0.2), max: 1000 });
+  } else if (t < at("rec")) {   // record and share
+    const t0 = at("map"), p = (t - t0) / (at("rec") - t0);
+    backdrop(t, 0.45);
+    shot("record", [300, 500, 1000], [420, 760, 600], p, { x: 40, y: 560, w: 1000, h: 760 }, 1);
+    label("RECORD IT. SHARE IT.", W / 2, 360, 60, { align: "center", mono: true, spacing: 10, alpha: ease(p / 0.15) });
+  } else {   // the end card
+    const t0 = at("rec"), ls = t - t0, a = ease(ls / 0.8), out = 1 - ease((t - (T - 0.6)) / 0.6);
+    for (let i = 0; i < 3; i++) cover(photos[i][0], i * W / 3, 0, W / 3 + 1, H, 0.5, COLORS[i], 0.35 * a);
+    g.save(); g.globalAlpha = a * out; g.translate(W / 2 - 212, 600); g.scale(12, 12); g.fillStyle = "#f3ece6"; g.fill(SKYLINE); g.restore();
+    label("THREE CITIES", W / 2, 1020, 120, { align: "center", spacing: 12, alpha: a * out });
+    label("by Forrest James", W / 2, 1100, 40, { align: "center", mono: true, alpha: a * out * 0.85 });
+    label(RELEASED ? "threecities.forrestjamesmusic.com" : "COMING SOON", W / 2, 1360, RELEASED ? 40 : 60, { align: "center", mono: true, spacing: RELEASED ? 0 : 14, alpha: ease((ls - 0.5) / 0.6) * out });
+    label(`You're hearing ${CITY.map(c => c.name).join(", ").replace(/, ([^,]*)$/, " and $1")}${date ? ", " + date : ""}`, W / 2, 1520, 28, { align: "center", mono: true, alpha: ease((ls - 1) / 0.6) * out * 0.75, max: 980 });
+  }
+  if (pulse > 0.7 && t > at("open") && t < at("rec")) { g.fillStyle = `rgba(243,236,230,${0.05 * pulse})`; g.fillRect(0, 0, W, H); }   // a breath of light on the big hits
+  finish();
+}
+
+// ---------- play and record ----------
+let running = false, actx = null;
+async function go(record) {
+  if (!audioBuf || running) return;
+  await photosReady; await document.fonts.ready;
+  const T = +$("len").value, start = +$("start").value;
+  actx = actx || new (window.AudioContext || window.webkitAudioContext)();
+  await actx.resume();
+  const src = actx.createBufferSource(); src.buffer = audioBuf;
+  const fade = actx.createGain(), now = actx.currentTime + 0.15;
+  fade.gain.setValueAtTime(0, now); fade.gain.linearRampToValueAtTime(1, now + 0.6); fade.gain.setValueAtTime(1, now + T - 1.4); fade.gain.linearRampToValueAtTime(0, now + T);
+  const dest = actx.createMediaStreamDestination();
+  src.connect(fade); fade.connect(actx.destination); fade.connect(dest);
+  let rec = null, chunks = [];
+  if (record) {
+    const types = ["video/mp4;codecs=avc1.42E01E,mp4a.40.2", "video/mp4", "video/webm;codecs=vp9,opus", "video/webm"];
+    const type = types.find(x => window.MediaRecorder && MediaRecorder.isTypeSupported(x));
+    rec = new MediaRecorder(new MediaStream([...cv.captureStream(30).getVideoTracks(), ...dest.stream.getAudioTracks()]), Object.assign({ videoBitsPerSecond: 9e6, audioBitsPerSecond: 256000 }, type ? { mimeType: type } : {}));
+    rec.ondataavailable = e => { if (e.data.size) chunks.push(e.data); };
+    rec.onstop = () => save(new Blob(chunks, { type: rec.mimeType || "video/webm" }), rec.mimeType || "video/webm");
+    rec.start(500);
+  }
+  running = true; $("preview").disabled = $("record").disabled = true; $("out").textContent = "";
+  $("status").textContent = record ? "Recording the teaser… keep this tab in front." : "Previewing…";
+  src.start(now, start, T);
+  (function loop() {
+    const t = actx.currentTime - now;
+    frame(Math.max(0, t), T);
+    if (t < T) requestAnimationFrame(loop);
+    else { running = false; $("preview").disabled = $("record").disabled = false; if (rec) rec.stop(); else $("status").textContent = "Done. Preview again, or record it."; }
+  })();
+}
+function save(blob, type) {
+  const ext = /mp4/.test(type) ? "mp4" : "webm", name = `Three Cities teaser - ${CITY.map(c => c.name).join(", ")}.${ext}`.replace(/[\\/:*?"<>|]/g, "");
+  const size = `${(blob.size / 1e6).toFixed(1)} MB, .${ext}`;
+  let file = null; try { file = new File([blob], name, { type }); } catch (e) {}
+  if (file && navigator.canShare && navigator.canShare({ files: [file] }) && matchMedia("(pointer: coarse)").matches) {
+    $("status").textContent = `Your teaser is ready (${size}).`;
+    const sb = document.createElement("button"); sb.className = "btn"; sb.textContent = "Save to Photos";
+    sb.addEventListener("click", () => navigator.share({ files: [file], title: "Three Cities teaser" }).catch(() => {}));
+    $("out").appendChild(sb);
+  }
+  const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = name;
+  if (!(file && navigator.canShare && matchMedia("(pointer: coarse)").matches)) { document.body.appendChild(a); a.click(); a.remove(); $("status").textContent = `Saved the teaser (${size}).${ext === "webm" ? " Instagram wants MP4: Safari records MP4 directly." : ""}`; }
+}
+$("preview").addEventListener("click", () => go(false));
+$("record").addEventListener("click", () => go(true));
+loadPhotos();
+document.fonts.ready.then(() => frame(1.9, 66));
+setTimeout(() => frame(1.9, 66), 1500);
+</script>
+</body>
+</html>
