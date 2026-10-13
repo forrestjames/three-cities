@@ -745,12 +745,14 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
       </div>
     </div>
     <div class="pedal rack-mod mod-midi midi-bit" aria-label="MIDI">
-      <div class="mod-head"><span class="mod-name">MIDI</span><button class="info" type="button" aria-label="How MIDI works" data-tip="MIDI out sends each city's notes to a synth or music app on its own channel. Pick each city's channel, the chords' and the drums' in the menus here, or turn any of them off. By default the cities use channels 1, 2 and 3, the chords channel 4 (held until the next chord, when the Chords lamp is on) and the rhythm section channel 10, with standard General MIDI drum notes: kick 36, snare 38, rim 37, closed hat 42, ride 51 with the jazz kit, so any drum rack maps it. Fills, ratchets and ghost notes come through too. The rhythm section's filter, Auto sweeps included, goes out as a control change on the drums' channel so your drum machine's own filter follows. CC 19 drives the Roland TR-8S Master FX knob and switches its Master FX on. It works in Chrome and Edge on a computer."></button></div>
+      <div class="mod-head"><span class="mod-name">MIDI</span><button class="info" type="button" aria-label="How MIDI works" data-tip="MIDI out sends each city's notes to a synth or music app on its own channel. Pick each city's channel, the chords' and the drums' in the menus here, or turn any of them off. By default the cities use channels 1, 2 and 3, the chords channel 4 (held until the next chord, when the Chords lamp is on) and the rhythm section channel 10, with standard General MIDI drum notes: kick 36, snare 38, rim 37, closed hat 42, ride 51 with the jazz kit, so any drum rack maps it. Fills, ratchets and ghost notes come through too. Clock out sends MIDI clock, 24 pulses a beat, with Start and Stop, to this output or to every output, so drum machines, sequencers and synced delays keep time with the cities, slowing with them as they fall asleep. Turn it on mid-song and it starts them on the next bar. The rhythm section's filter, Auto sweeps included, goes out as a control change on the drums' channel so your drum machine's own filter follows. CC 19 drives the Roland TR-8S Master FX knob and switches its Master FX on. It works in Chrome and Edge on a computer."></button></div>
       <div class="mod-body">
         <label class="midi-port" for="midi"><span class="kn-label">Out to</span><select id="midi" class="lcd"><option value="">Off</option></select></label>
         <div class="midi-chans" id="midiChans" aria-label="MIDI channel for each part"></div>
         <label class="midi-ch midi-fcc" for="filterCC" title="Send the rhythm section filter, Auto sweeps included, as a control change on the drums' channel"><span class="kn-label">Drum filter as CC</span>
           <select id="filterCC" class="lcd"><option value="-1">Off</option><option value="19" selected>CC 19 · TR-8S Master FX</option><option value="74">CC 74 · Cutoff</option><option value="1">CC 1 · Mod wheel</option></select></label>
+        <label class="midi-ch midi-fcc" for="midiClock" title="Send MIDI clock with Start and Stop, so drum machines, sequencers and delays follow the tempo"><span class="kn-label">Clock out</span>
+          <select id="midiClock" class="lcd"><option value="off" selected>Off</option><option value="one">To this output</option><option value="all">To every output</option></select></label>
       </div>
     </div>
   </section>
@@ -3219,6 +3221,19 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
   let driveCurve = null;
   const GM_DRUMS = { kick: 36, snare: 38, rim: 37, hat: 42, ride: 51 };
   let drumCh = 9;   // channel 10, as MIDI counts from 1
+  // ---------- MIDI clock: 24 pulses a quarter note, 3 for each of our 32nd-note ticks ----------
+  let clockMode = "off", clockRunning = false;
+  const clockOuts = () => !midiOut || clockMode === "off" ? [] : clockMode === "all" && midiAccess ? [...midiAccess.outputs.values()] : [midiOut];
+  const midiAt = t => performance.now() + Math.max(0, t - ac.currentTime) * 1000;
+  function clockTick(tk, t) {
+    const outs = clockOuts(); if (!outs.length) return;
+    if (!clockRunning) { if (tk % 32) return; outs.forEach(o => o.send([0xFA], midiAt(t))); clockRunning = true; }   // Start, always on a bar line
+    for (let k = 0; k < 3; k++) { const at = midiAt(t + k * tickDur / 3); outs.forEach(o => o.send([0xF8], at)); }
+  }
+  function clockStop() {
+    if (clockRunning) { const outs = clockOuts().length ? clockOuts() : midiOut ? [midiOut] : []; outs.forEach(o => o.send([0xFC])); }
+    clockRunning = false;
+  }
   let chordCh = 3, chordHeld = [];   // the chord bed on channel 4, and the notes it's holding
   function chordMidiOff(t) {
     if (midiOut && chordHeld.length) { const at = ac ? performance.now() + Math.max(0, t - ac.currentTime) * 1000 : performance.now(); chordHeld.forEach(([ch, m]) => midiOut.send([0x80 | ch, m, 0], at)); }
@@ -3540,6 +3555,7 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
     while (nextTime < ac.currentTime + 0.12) {
       cities.forEach(c => { if (tick % sleepRate(c) === 0) stepCity(c, nextTime); });
       if (tick % 2 === 0) grooveStep((tick / 2) % 16, nextTime, tick);
+      clockTick(tick, nextTime);
       if (tick % 8 === 0) beatTimes.push(nextTime);
       if (tick % (32 * 4) === 0 && HARM.prog) HARM.root = HARM.prog[(tick / (32 * 4)) % HARM.prog.length];   // a new chord every 4 bars
       if (tick % (32 * 4) === 0) chordBed(nextTime);                                                            // and the bed moves with it
@@ -3601,7 +3617,7 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
     if (REC.on) recStop();   // the music stopping ends the take
     clearInterval(timer); timer = null; clearTimeout(moreTimer);
     if (listenFrom && Date.now() - listenFrom > 45000) setTimeout(showMore, 900);
-    playing = false; chordMidiOff(0);
+    playing = false; chordMidiOff(0); clockStop();
     cities.forEach(c => { c.playhead = -1; });
     if (ac) ac.suspend();
     if (unlock) unlock.pause();
@@ -3921,7 +3937,7 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
       midiSel.options[0].textContent = "Off (MIDI blocked here)";
     }
   }
-  midiSel.addEventListener("change", () => { chordMidiOff(0); midiOut = midiAccess && midiSel.value ? midiAccess.outputs.get(midiSel.value) : null; document.querySelector(".mod-midi").classList.toggle("midi-live", !!midiOut); ccStart(); });
+  midiSel.addEventListener("change", () => { chordMidiOff(0); clockStop(); midiOut = midiAccess && midiSel.value ? midiAccess.outputs.get(midiSel.value) : null; document.querySelector(".mod-midi").classList.toggle("midi-live", !!midiOut); ccStart(); });
   // switching to CC 19 also turns the TR-8S Master FX on (CC 15) so the knob has something to move
   function ccStart() {
     lastCC = -1;
@@ -3929,6 +3945,7 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
     if (!GROOVE.auto) sendFilterCC(GROOVE.tone);
   }
   document.getElementById("filterCC").addEventListener("change", e => { filterCC = Number(e.target.value); ccStart(); });
+  document.getElementById("midiClock").addEventListener("change", e => { clockStop(); clockMode = e.target.value; });   // restarts on the next bar
   function sendMidi(c, note, vel, t) {
     if (!midiOut) return;
     const at = performance.now() + (t - ac.currentTime) * 1000;
