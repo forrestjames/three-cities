@@ -85,7 +85,7 @@ function fromFilename(n) {
 // ---------- pictures: the interface, and photos of the cities ----------
 const SHOTS = {};
 ["hero", "cards", "mine-japan", "mine-form", "rack", "fx", "drums", "more", "map", "record", "phone-cards", "phone-cards2", "phone-hero"].forEach(n => {
-  const im = new Image(); im.src = `/teaser/${n}.jpg`; SHOTS[n] = im;
+  const im = new Image(); im.src = `/teaser-shots/${n}.jpg`; SHOTS[n] = im;
 });
 const photos = [[], [], []];
 async function photosFor(name) {
