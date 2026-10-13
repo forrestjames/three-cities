@@ -110,7 +110,7 @@ async function photosFor(name) {
 let photosReady = Promise.resolve();
 function loadPhotos() {
   $("status").textContent = "Finding photos of " + CITY.map(c => c.name).join(", ") + "…";
-  photosReady = Promise.all(CITY.map(async (c, i) => { photos[i] = await photosFor(c.name); })).then(() => { if (audioBuf) $("status").textContent = "Ready. Preview it, then record."; });
+  photosReady = Promise.all(CITY.map(async (c, i) => { photos[i] = await photosFor(c.name); })).then(() => { $("status").textContent = audioBuf ? "Ready. Preview it, then record." : "Photos found. Now load your recording."; });
 }
 
 // ---------- drawing ----------
