@@ -52,7 +52,6 @@ canvas { width: 100%; height: auto; aspect-ratio: 9 / 16; background: #100806; b
       <div><label for="start">Start the music at (seconds)</label><input id="start" type="number" min="0" step="1" value="0"></div>
     </div>
     <p class="hint" id="startHint"></p>
-    <label class="check"><input type="checkbox" id="safe"> Keep clear of Instagram's buttons</label>
     <label class="check"><input type="checkbox" id="guide"> Show Instagram's buttons on the preview (never recorded)</label>
     <div class="btns">
       <button class="btn ghost" id="preview" type="button" disabled>▶ Preview</button>
@@ -68,10 +67,8 @@ const $ = id => document.getElementById(id);
 const W = 1080, H = 1920, COLORS = ["#d08a6a", "#6fa38c", "#a98bc4"];
 const RELEASED = false;
 // Instagram covers the top, the right edge and the bottom of a reel unless it's full screen,
-// and taller phones crop a little off each side. SAFE keeps the type and interface inside what's left.
-let SAFE = false;
-const SAFEBOX = { x: 80, y: 300, s: 0.713 };   // the poster layer, scaled into x 80-795, y 300-1570
-$("safe").onchange = e => { SAFE = e.target.checked; };
+// and taller phones crop a little off each side. Every scene keeps its type and interface inside what's left.
+const SAFE = true;   // every scene is laid out to clear Instagram's buttons
 $("guide").onchange = e => { $("ig").toggleAttribute("hidden", !e.target.checked); };
 const cv = $("cv"), g = cv.getContext("2d");
 const ease = x => x <= 0 ? 0 : x >= 1 ? 1 : 1 - Math.pow(1 - x, 3);
@@ -385,141 +382,138 @@ const fade = (p, len = 0.4) => Math.max(0, Math.min(1, ease(p / len)));
 // local time somewhere else, worked out from the first city's clock
 const UTCOFF = { Cologne: 2, Halifax: -3, "Mexico City": -6, London: 1, Boston: -4, Copenhagen: 2 };
 function utcHour() { const c = CITY[0], h = parseInt(c.time); return (c.name in UTCOFF && !isNaN(h)) ? h - UTCOFF[c.name] : new Date().getUTCHours(); }
+// Laid out for Instagram: it covers the top ~290px, a strip down the right from y 1040, and the bottom ~360px,
+// and taller phones crop a little off each side. Type and interface stay in x 80-1000 (x 80-880 below y 1040), y 330-1550.
+const LX = 80, RX = 880;
+function heroText(lines, ls) { lines.forEach(([txt, y, size, o], j) => rise(txt, LX, y, size, ls - j * 0.15, Object.assign({ max: 920 }, o || {}))); }
 const SCENES = [
   { name: "home", w: 1, bg(ls, d, t) {
       HOME.forEach((h, i) => { const k = ease((ls - i * 0.25) / 0.4); if (k > 0) photoBleed(homePhotos[i][0], i * W / 3, 0, W / 3 + 1, H, (t / 9 + i * 0.3) % 1, 0.9 * k); });
-      g.fillStyle = "rgba(10,6,5,0.35)"; g.fillRect(0, 0, W, H);
+      g.fillStyle = "rgba(10,6,5,0.4)"; g.fillRect(0, 0, W, H);
     }, draw(ls, d, t, pulse) {   // three cities I've called home
-      HOME.forEach((h, i) => { g.save(); g.translate(i * W / 3 + W / 6 + 30, H - 120); g.rotate(-Math.PI / 2); rise(h.toUpperCase(), 0, 0, 96, ls - 0.5 - i * 0.2, { spacing: 12 }); g.restore(); });
-      rise("THREE CITIES", 60, 380, 150, ls - 1.2, { max: 960 });
-      rise("I'VE CALLED", 60, 530, 150, ls - 1.45, { max: 960 });
-      rise("HOME", 60, 680, 150, ls - 1.7, { color: EMBER });
-      micro("MEMORY / WEATHER / GENERATIVE MUSIC", 60, 790, { alpha: fade(ls - 2.2) * 0.85 });
+      heroText([["THREE CITIES", 540, 140], ["I'VE CALLED", 680, 140], ["HOME", 820, 140, { color: EMBER }]], ls - 0.3);
+      micro("MEMORY / WEATHER / GENERATIVE MUSIC", LX, 900, { alpha: fade(ls - 1.2) * 0.85 });
+      HOME.forEach((h, i) => rise(h.toUpperCase(), LX, 1180 + i * 130, 100, ls - 1.4 - i * 0.2, { spacing: 12, max: 800 }));
     } },
   { name: "live", w: 1.1, draw(ls, d, t, pulse) {   // live weather, real music: the cards, one city at a time
-      const keys = ["cardC", "cardH", "cardM"], per = d / 3, i = Math.min(2, Math.floor(ls / per)), li = ls - i * per;
-      slab(keys[i], 740, 960, li + (i ? 0.3 : 0), { x: 215, w: 650 });
-      rise("LIVE", 60, 330, 230, ls, { max: 960 }); rise("WEATHER.", 60, 540, 230, ls - 0.15, { max: 960 });
-      rise("REAL MUSIC.", 60, 670, 110, ls - 0.4, { color: EMBER, max: 960 });
-      micro(`${CITY[i].name.toUpperCase()}  ${CITY[i].time}  ${CITY[i].temp}°`, W / 2, 1810, { align: "center", alpha: 0.85 });
+      const keys = ["cardC", "cardH", "cardM"], per = d / 3, i = Math.min(2, Math.floor(ls / per)), li = ls - i * per, c = CITY[i];
+      heroText([["LIVE", 580, 210], ["WEATHER.", 770, 210], ["REAL MUSIC.", 880, 100, { color: EMBER }]], ls);
+      slab(keys[i], 940, 600, li + (i ? 0.3 : 0), { x: LX, w: 406 });
+      const a = fade(li - (i ? 0 : 0.5), 0.3), x = 530;
+      label(c.name.toUpperCase(), x, 1010, 60, { alpha: a, shadow: 0, spacing: 4, max: 350 });
+      label(c.time, x, 1085, 44, { mono: true, alpha: a * 0.8, shadow: 0 });
+      label(`${c.temp}°`, x, 1250, 150, { alpha: a, color: EMBER, shadow: 0 });
+      micro("EACH CITY PLAYS", x, 1400, { alpha: a * 0.8 }); micro("ITS OWN WEATHER", x, 1440, { alpha: a * 0.8 });
     } },
   { name: "loop", w: 0.9, draw(ls, d, t, pulse) {   // the loop, drawn big
       const temp = Math.max(2, Math.abs(Math.round(+CITY[0].temp || 8)));
-      bigRing(W / 2, 1180, 400, temp, Math.max(1, Math.round(temp * 0.4)), t, pulse, fade(ls - 0.2));
-      rise(`${CITY[0].temp}°`, W / 2, 1290, 300, ls - 0.5, { align: "center" });
-      rise("THE TEMPERATURE", 60, 260, 108, ls, { max: 960 });
-      rise("IS THE LOOP.", 60, 380, 108, ls - 0.15, { color: EMBER, max: 960 });
-      micro(`${CITY[0].temp}° IN ${CITY[0].name.toUpperCase()} = ${temp} STEPS`, 60, 1810, { alpha: fade(ls - 1) * 0.85 });
+      heroText([["THE TEMPERATURE", 500, 104], ["IS THE LOOP.", 612, 104, { color: EMBER }]], ls);
+      bigRing(470, 1060, 320, temp, Math.max(1, Math.round(temp * 0.4)), t, pulse, fade(ls - 0.2));
+      rise(`${CITY[0].temp}°`, 470, 1150, 240, ls - 0.5, { align: "center" });
+      micro(`${CITY[0].temp}° IN ${CITY[0].name.toUpperCase()} = ${temp} STEPS`, LX, 1520, { alpha: fade(ls - 1) * 0.85 });
     } },
-  { name: "sky", w: 1.4, draw(ls, d, t, pulse) {   // what lands in it: the weather, one input at a time
-      rise("THE SKY", 60, 300, 230, ls, { max: 960 }); rise("DECIDES", 60, 520, 230, ls - 0.15, { max: 960 }); rise("WHAT LANDS.", 60, 650, 110, ls - 0.35, { color: EMBER, max: 960 });
+  { name: "sky", w: 1.4, draw(ls, d, t, pulse) {   // what plays: the weather, one input at a time
+      heroText([["THE SKY", 560, 180], ["DECIDES", 730, 180], ["WHAT PLAYS.", 830, 90, { color: EMBER }]], ls);
       const R = [["HUMIDITY", "78%", "HOW MANY NOTES PLAY"], ["WIND", "14 KM/H", "HOW FAR THE MELODY LEAPS"], ["CLOUD", "60%", "FOGGIER, WITH MORE REVERB"], ["RAIN", "20%", "SOME NOTES REST"], ["PRESSURE", "1016", "SLOW NOTES, OR FAST ONES"]];
       const start = 0.8, per = (d - start - 0.4) / R.length, cur = Math.floor((ls - start) / per);
       R.forEach(([w2, v, m], j) => {
         const lj = ls - start - j * per; if (lj < 0) return;
-        const y = 830 + j * 200, on = j === Math.min(cur, R.length - 1);
+        const y = 970 + j * 122, on = j === Math.min(cur, R.length - 1);
         g.save(); g.globalAlpha = on ? 1 : 0.32;
-        rise(w2, 60, y, 110, lj); rise(v, W - 60, y, 110, lj - 0.08, { align: "right", color: on ? EMBER : INK });
+        rise(w2, LX, y, 80, lj); rise(v, RX, y, 80, lj - 0.08, { align: "right", color: on ? EMBER : INK });
         g.restore();
-        micro(`→ ${m}`, 64, y + 64, { size: 30, spacing: 3, color: on ? EMBER : INK, alpha: fade(lj - 0.2, 0.3) * (on ? 1 : 0.32) });
+        micro(`→ ${m}`, LX + 4, y + 48, { size: 26, spacing: 3, color: on ? EMBER : INK, alpha: fade(lj - 0.2, 0.3) * (on ? 1 : 0.32) });
       });
     } },
   { name: "night", w: 1, bg(ls, d, t) {
       photoBleed(photos[1][1] || photos[1][0], 0, 0, W, H, (t / 12) % 1, 0.75);
       g.fillStyle = "rgba(8,6,10,0.55)"; g.fillRect(0, 0, W, H);
     }, draw(ls, d, t, pulse) {   // night: a city asleep
-      rise(CITY[1].time, W / 2, 700, 320, ls, { align: "center" });
-      rise(`${CITY[1].name.toUpperCase()} IS ASLEEP.`, W / 2, 860, 80, ls - 0.3, { align: "center", max: 960 });
-      ["SOFTER", "SLOWER", "FEWER NOTES"].forEach((w2, i) => rise(w2, W / 2, 1180 + i * 130, 110, ls - 0.9 - i * 0.3, { align: "center", color: i === 2 ? EMBER : INK }));
-      micro("EVERY CITY DRIFTS OFF AFTER DARK", W / 2, 1720, { align: "center", alpha: fade(ls - 2) * 0.8 });
+      rise(CITY[1].time, LX - 6, 640, 280, ls);
+      rise(`${CITY[1].name.toUpperCase()} IS ASLEEP.`, LX, 780, 76, ls - 0.3, { max: 920 });
+      ["SOFTER", "SLOWER", "FEWER NOTES"].forEach((w2, i) => rise(w2, LX, 1010 + i * 130, 110, ls - 0.9 - i * 0.3, { color: i === 2 ? EMBER : INK, max: 800 }));
+      micro("EVERY CITY DRIFTS OFF AFTER DARK", LX, 1450, { alpha: fade(ls - 2) * 0.8 });
     } },
   { name: "yours", w: 1, draw(ls, d, t, pulse) {   // type any city: the search, drawn fresh
-      rise("TYPE ANY", 60, 300, 200, ls, { max: 960 }); rise("CITY.", 60, 490, 200, ls - 0.15, { color: EMBER });
+      heroText([["TYPE ANY", 560, 180], ["CITY.", 740, 180, { color: EMBER }]], ls);
       const typed = "Sa".slice(0, Math.max(0, Math.min(2, Math.floor((ls - 0.6) / 0.22) + 1))), u = utcHour();
       const box = fade(ls - 0.4, 0.3); if (box <= 0) return;
-      g.save(); g.globalAlpha = box; g.strokeStyle = INK; g.lineWidth = 3; rr(60, 640, 960, 140, 18); g.stroke(); g.restore();
-      label(typed, 110, 735, 72, { color: INK, alpha: box, shadow: 0 });
-      g.save(); g.font = "72px Abel, sans-serif"; const cx = 114 + g.measureText(typed).width; g.restore();
-      if (Math.floor(t * 2.4) % 2 === 0) { g.fillStyle = EMBER; g.globalAlpha = box; g.fillRect(cx, 672, 5, 80); g.globalAlpha = 1; }
-      const L = [["São Paulo", -3, 17], ["Sapporo", 9, 14], ["San Francisco", -7, 13], ["Sarajevo", 2, 11], ["Santiago", -3, 9], ["Salvador", -3, 25]];
+      g.save(); g.globalAlpha = box; g.strokeStyle = INK; g.lineWidth = 3; rr(LX, 810, 800, 120, 18); g.stroke(); g.restore();
+      label(typed, 120, 892, 64, { color: INK, alpha: box, shadow: 0 });
+      g.save(); g.font = "64px Abel, sans-serif"; const cx = 124 + g.measureText(typed).width; g.restore();
+      if (Math.floor(t * 2.4) % 2 === 0) { g.fillStyle = EMBER; g.globalAlpha = box; g.fillRect(cx, 834, 5, 72); g.globalAlpha = 1; }
+      const L = [["São Paulo", -3, 17], ["Sapporo", 9, 14], ["San Francisco", -7, 13], ["Sarajevo", 2, 11], ["Santiago", -3, 9]];
       L.forEach(([n, off, temp], j) => {
         const a = fade(ls - 1.1 - j * 0.12, 0.25); if (a <= 0) return;
-        const y = 800 + j * 150, hr = ((u + off) % 24 + 24) % 24, day = hr >= 7 && hr < 19;
-        g.save(); g.globalAlpha = a; g.fillStyle = j === 0 ? "rgba(224,122,79,0.16)" : "rgba(243,236,230,0.05)"; g.fillRect(60, y, 960, 140);
-        g.fillStyle = "rgba(243,236,230,0.12)"; g.fillRect(60, y + 139, 960, 1); g.restore();
-        label(n, 110, y + 92, 64, { alpha: a, shadow: 0 });
-        sunMoon(day, 690, y + 70, 24, day ? EMBER : INK);
-        g.save(); g.globalAlpha = a; g.restore();
-        label(`${String(hr).padStart(2, "0")}:00`, 740, y + 84, 36, { mono: true, alpha: a * 0.8, shadow: 0 });
-        label(`${temp}°`, 980, y + 86, 46, { align: "right", alpha: a, shadow: 0 });
+        const y = 950 + j * 116, hr = ((u + off) % 24 + 24) % 24, day = hr >= 7 && hr < 19;
+        g.save(); g.globalAlpha = a; g.fillStyle = j === 0 ? "rgba(224,122,79,0.16)" : "rgba(243,236,230,0.05)"; g.fillRect(LX, y, 800, 108); g.restore();
+        label(n, 120, y + 72, 52, { alpha: a, shadow: 0 });
+        sunMoon(day, 600, y + 54, 22, day ? EMBER : INK);
+        label(`${String(hr).padStart(2, "0")}:00`, 640, y + 66, 32, { mono: true, alpha: a * 0.8, shadow: 0 });
+        label(`${temp}°`, 860, y + 68, 42, { align: "right", alpha: a, shadow: 0 });
       });
     } },
   { name: "surprise", w: 1, draw(ls, d, t, pulse) {   // or roll the dice
-      rise("OR LET IT", 60, 280, 170, ls); rise("SURPRISE", 60, 450, 170, ls - 0.12); rise("YOU.", 60, 620, 170, ls - 0.24, { color: EMBER });
+      heroText([["OR LET IT", 540, 150], ["SURPRISE", 690, 150], ["YOU.", 840, 150, { color: EMBER }]], ls);
       const POOL = ["LISBON", "OSAKA", "REYKJAVÍK", "LAGOS", "HAVANA", "TBILISI", "HANOI", "QUITO", "PERTH", "OSLO", "MARRAKESH", "SEOUL", "BOGOTÁ", "NAPLES", "AUCKLAND", "MONTRÉAL", "CAIRO", "LIMA", "KYOTO", "DUBLIN", "NAIROBI", "VALPARAÍSO", "HELSINKI", "MUMBAI", "TUNIS", "HOBART", "ANCHORAGE", "BERGEN"];
       const FINAL = ["OSAKA", "LISBON", "QUITO"], stop = d * 0.62, rolling = ls < stop;
-      const a = fade(ls - 0.4, 0.3), spin = rolling ? ls * 9 : stop * 9;
-      const bump = rolling ? Math.abs(Math.sin(ls * 7)) * 60 : 0;
-      g.save(); g.globalAlpha = a; die(W / 2, 1030 - bump, 360, rolling ? spin : 0.12, rolling ? 1 + Math.floor(seeded(Math.floor(ls * 14)) * 6) : 5, rolling ? INK : EMBER, "#100806"); g.restore();
+      const a = fade(ls - 0.4, 0.3), spin = rolling ? ls * 9 : stop * 9, bump = rolling ? Math.abs(Math.sin(ls * 7)) * 50 : 0;
+      g.save(); g.globalAlpha = a; die(480, 1090 - bump, 290, rolling ? spin : 0.12, rolling ? 1 + Math.floor(seeded(Math.floor(ls * 14)) * 6) : 5, rolling ? INK : EMBER, "#100806"); g.restore();
       FINAL.forEach((f, j) => {
-        const end = stop - 0.6 + j * 0.3, done = ls >= end, rate = 16;
-        const name = done ? f : POOL[Math.floor(ls * rate + j * 9) % POOL.length];
-        label(name, W / 2, 1450 + j * 120, 96, { align: "center", spacing: 8, color: done ? INK : "rgba(243,236,230,0.55)", alpha: a, shadow: 0 });
+        const end = stop - 0.6 + j * 0.3, done = ls >= end, name = done ? f : POOL[Math.floor(ls * 16 + j * 9) % POOL.length];
+        label(name, 480, 1350 + j * 90, 76, { align: "center", spacing: 8, color: done ? INK : "rgba(243,236,230,0.55)", alpha: a, shadow: 0, max: 780 });
       });
-      micro("THREE CITIES, AWAKE OR ASLEEP, RIGHT NOW", W / 2, 1840, { align: "center", alpha: fade(ls - stop) * 0.85 });
     } },
   { name: "studio", w: 1, bg(ls, d) { if (Math.floor(ls / (d / 4)) % 2 === 1) { g.fillStyle = INK; g.fillRect(0, 0, W, H); } }, draw(ls, d, t, pulse) {   // one word, one whole module, cut on the beat
       const V = [["CHORDS", "chords"], ["REVERB", "reverb"], ["DELAY", "delay"], ["DRUMS", "drums"]];
       const n = Math.min(V.length - 1, Math.floor(ls / (d / V.length))), ln = ls - n * d / V.length, v = V[n], light = n % 2 === 1;
-      module(v[1], 60, 760, 960, 680, ln - 0.1, { maxScale: 1.55 });
-      rise(v[0], 40, 600, 280, ln, { color: light ? "#100806" : INK, max: 1000 });
-      micro("A STUDIO, WHEN YOU WANT ONE", 60, 1640, { color: light ? "#100806" : INK, alpha: 0.8 });
+      rise(v[0], LX - 6, 640, 250, ln, { color: light ? "#100806" : INK, max: 920 });
+      module(v[1], LX, 760, 800, 600, ln - 0.1, { maxScale: 1.55 });
+      micro("A STUDIO, WHEN YOU WANT ONE", LX, 1460, { color: light ? "#100806" : INK, alpha: 0.8 });
     } },
   { name: "memory", w: 1.2, draw(ls, d, t, pulse) {   // the memory map: your answers move the mix
-      micro("THE MEMORY MAP", 60, 200, { alpha: fade(ls) * 0.8 });
-      rise("WHERE WERE", 60, 360, 160, ls - 0.1, { max: 960 }); rise("YOU", 60, 520, 160, ls - 0.25); rise("HAPPIEST?", 60, 680, 160, ls - 0.4, { color: EMBER, max: 960 });
-      const m = module("map", 0, 780, W, 860, ls - 0.5);
+      micro("THE MEMORY MAP", LX, 420, { alpha: fade(ls) * 0.8 });
+      heroText([["WHERE WERE", 560, 140], ["YOU", 700, 140], ["HAPPIEST?", 840, 140, { color: EMBER }]], ls - 0.1);
+      const m = module("map", LX, 890, 800, 480, ls - 0.5);
       if (m) {   // the light drifts from the middle toward the first city
         const px = (x2, y2) => [m.dx + (x2 - m.sx) * m.sc, m.dy + (y2 - m.sy) * m.sc];
         const k = ease((ls - 1.4) / 1.4), [ax, ay] = px(800, 634), [bx, by] = px(800, 330);
         const lx = ax + (bx - ax) * k, ly = ay + (by - ay) * k;
-        g.save(); const gr = g.createRadialGradient(lx, ly, 0, lx, ly, 90); gr.addColorStop(0, "rgba(224,122,79,0.85)"); gr.addColorStop(1, "rgba(224,122,79,0)");
-        g.globalAlpha = fade(ls - 1.2); g.fillStyle = gr; g.beginPath(); g.arc(lx, ly, 90, 0, 7); g.fill();
-        g.fillStyle = INK; g.beginPath(); g.arc(lx, ly, 16 + 6 * pulse, 0, 7); g.fill(); g.restore();
+        g.save(); const gr = g.createRadialGradient(lx, ly, 0, lx, ly, 70); gr.addColorStop(0, "rgba(224,122,79,0.85)"); gr.addColorStop(1, "rgba(224,122,79,0)");
+        g.globalAlpha = fade(ls - 1.2); g.fillStyle = gr; g.beginPath(); g.arc(lx, ly, 70, 0, 7); g.fill();
+        g.fillStyle = INK; g.beginPath(); g.arc(lx, ly, 12 + 5 * pulse, 0, 7); g.fill(); g.restore();
       }
-      rise(`${CITY[0].name.toUpperCase()}.`, 60, 1760, 110, ls - 2.6, { color: EMBER, max: 960 });
-      micro(`ANSWER WITH A CITY. THE MUSIC LEANS TOWARD IT.`, 60, 1850, { alpha: fade(ls - 3) * 0.85 });
+      rise(`${CITY[0].name.toUpperCase()}.`, LX, 1470, 90, ls - 2.6, { color: EMBER, max: 800 });
+      micro("THE MUSIC LEANS TOWARD IT.", LX, 1530, { size: 24, alpha: fade(ls - 3) * 0.85 });
     } },
   { name: "record", w: 0.85, draw(ls, d, t, pulse) {   // the record button, on its own
-      rise("RECORD", 60, 360, 250, ls, { max: 960 }); rise("IT.", 60, 600, 250, ls - 0.15, { color: EMBER });
+      heroText([["RECORD", 600, 250], ["IT.", 820, 220, { color: EMBER }]], ls);
       const a = fade(ls - 0.4, 0.3), on = ls > 1.3, secs = Math.max(0, Math.floor((ls - 1.3) * 1.6));
-      g.save(); g.globalAlpha = a; g.strokeStyle = INK; g.lineWidth = 4; rr(200, 880, 680, 190, 95); g.stroke();
-      if (on) { g.fillStyle = "rgba(243,236,230,0.06)"; rr(200, 880, 680, 190, 95); g.fill(); }
-      const blink = on ? (Math.floor(t * 2) % 2 === 0 ? 1 : 0.15) : 1;
-      g.globalAlpha = a * blink; g.fillStyle = "#e5483c"; g.beginPath(); g.arc(310, 975, 34, 0, 7); g.fill(); g.restore();
-      label(on ? `0:${String(secs).padStart(2, "0")}` : "RECORD", 390, 1000, 76, { mono: true, spacing: 6, alpha: a, shadow: 0 });
+      g.save(); g.globalAlpha = a; g.strokeStyle = INK; g.lineWidth = 4; rr(LX, 910, 620, 160, 80); g.stroke();
+      if (on) { g.fillStyle = "rgba(243,236,230,0.06)"; rr(LX, 910, 620, 160, 80); g.fill(); }
+      g.globalAlpha = a * (on ? (Math.floor(t * 2) % 2 === 0 ? 1 : 0.15) : 1); g.fillStyle = "#e5483c"; g.beginPath(); g.arc(LX + 95, 990, 32, 0, 7); g.fill(); g.restore();
+      label(on ? `0:${String(secs).padStart(2, "0")}` : "RECORD", LX + 165, 1014, 68, { mono: true, spacing: 6, alpha: a, shadow: 0 });
       [["COMPRESSED", ".M4A, SMALL, EASY TO SEND"], ["WAV", "FULL QUALITY"]].forEach(([k2, s], j) => {
-        const b = fade(ls - 1.6 - j * 0.25, 0.3), y = 1260 + j * 190;
-        g.save(); g.globalAlpha = b; g.strokeStyle = j === 0 ? EMBER : "rgba(243,236,230,0.5)"; g.lineWidth = 3; g.beginPath(); g.arc(100, y - 26, 22, 0, 7); g.stroke();
-        if (j === 0) { g.fillStyle = EMBER; g.beginPath(); g.arc(100, y - 26, 11, 0, 7); g.fill(); } g.restore();
-        label(k2, 150, y, 72, { alpha: b, shadow: 0 });
-        micro(s, 152, y + 56, { alpha: b * 0.75 });
+        const b = fade(ls - 1.6 - j * 0.25, 0.3), y = 1250 + j * 170;
+        g.save(); g.globalAlpha = b; g.strokeStyle = j === 0 ? EMBER : "rgba(243,236,230,0.5)"; g.lineWidth = 3; g.beginPath(); g.arc(LX + 20, y - 24, 22, 0, 7); g.stroke();
+        if (j === 0) { g.fillStyle = EMBER; g.beginPath(); g.arc(LX + 20, y - 24, 11, 0, 7); g.fill(); } g.restore();
+        label(k2, LX + 70, y, 68, { alpha: b, shadow: 0 });
+        micro(s, LX + 72, y + 50, { alpha: b * 0.75 });
       });
     } },
   { name: "share", w: 1.5, draw(ls, d, t, pulse) {   // a link that plays your cities
-      rise("SHARE", 60, 360, 250, ls, { max: 960 }); rise("IT.", 60, 600, 250, ls - 0.15, { color: EMBER });
-      const ia = fade(ls - 0.3, 0.3); if (ia > 0) { g.save(); g.globalAlpha = ia; shareIcon(780, 380 - 30 * (1 - ia) + 8 * pulse * 0, 220, EMBER); g.restore(); }
-      const a = fade(ls - 0.6, 0.3), names = CITY.map(c => c.name).join(", ").replace(/, ([^,]*)$/, " and $1");
-      g.save(); g.globalAlpha = a; g.fillStyle = INK; rr(60, 820 + 40 * (1 - a), 960, 560, 36); g.fill(); g.restore();
+      heroText([["SHARE", 600, 250], ["IT.", 820, 220, { color: EMBER }]], ls);
+      const ia = fade(ls - 0.3, 0.3); if (ia > 0) { g.save(); g.globalAlpha = ia; shareIcon(330, 650 - 30 * (1 - ia), 170, EMBER); g.restore(); }
+      const a = fade(ls - 0.6, 0.3), names = CITY.map(c => c.name).join(", ").replace(/, ([^,]*)$/, " and $1"), oy = 40 * (1 - a);
+      g.save(); g.globalAlpha = a; g.fillStyle = INK; rr(LX, 900 + oy, 800, 500, 36); g.fill(); g.restore();
       if (a > 0) {
-        const oy = 40 * (1 - a);
-        g.save(); g.globalAlpha = a; g.translate(110, 880 + oy); g.scale(4, 4); g.fillStyle = "#100806"; g.fill(SKYLINE); g.restore();
-        label("THREE CITIES · FORREST JAMES", 110, 1040 + oy, 34, { mono: true, spacing: 4, color: "#100806", alpha: a, shadow: 0 });
-        g.save(); g.font = '40px Abel, sans-serif'; const words2 = `Here's what ${names} sound like together right now. Add the places you've lived.`.split(" "); const lines = []; let line = "";
-        words2.forEach(w2 => { const tt = line ? line + " " + w2 : w2; if (g.measureText(tt).width > 860 && line) { lines.push(line); line = w2; } else line = tt; }); lines.push(line); g.restore();
-        lines.slice(0, 4).forEach((ln, i) => label(ln, 110, 1130 + i * 56 + oy, 40, { color: "#100806", alpha: a, shadow: 0 }));
+        g.save(); g.globalAlpha = a; g.translate(LX + 50, 960 + oy); g.scale(4, 4); g.fillStyle = "#100806"; g.fill(SKYLINE); g.restore();
+        label("THREE CITIES · FORREST JAMES", LX + 50, 1120 + oy, 30, { mono: true, spacing: 4, color: "#100806", alpha: a, shadow: 0 });
+        g.save(); g.font = '38px Abel, sans-serif'; const words2 = `Here's what ${names} sound like together right now. Add the places you've lived.`.split(" "); const lines = []; let line = "";
+        words2.forEach(w2 => { const tt = line ? line + " " + w2 : w2; if (g.measureText(tt).width > 700 && line) { lines.push(line); line = w2; } else line = tt; }); lines.push(line); g.restore();
+        lines.slice(0, 4).forEach((ln, i) => label(ln, LX + 50, 1200 + i * 52 + oy, 38, { color: "#100806", alpha: a, shadow: 0 }));
       }
-      micro("ONE LINK. IT PLAYS YOUR CITIES, WITH YOUR SOUNDS.", 60, 1480, { alpha: fade(ls - 1.2) * 0.85 });
+      micro("ONE LINK. IT PLAYS YOUR CITIES.", LX, 1480, { size: 24, alpha: fade(ls - 1.2) * 0.85 });
     } }
 ];
 function product(ls, span, t, pulse) {
@@ -527,12 +521,10 @@ function product(ls, span, t, pulse) {
   let i = 0, at0 = 0; while (i < SCENES.length - 1 && ls >= at0 + SCENES[i].w / tot * span) { at0 += SCENES[i].w / tot * span; i++; }
   const d = SCENES[i].w / tot * span, l = ls - at0;
   if (SCENES[i].bg) SCENES[i].bg(l, d, t);
-  g.save(); if (SAFE) { g.translate(SAFEBOX.x - 40 * SAFEBOX.s, SAFEBOX.y - 100 * SAFEBOX.s); g.scale(SAFEBOX.s, SAFEBOX.s); }   // the poster layer, kept clear of Instagram's buttons
   SCENES[i].draw(l, d, t, pulse);
-  // a small mark top left, the same on every scene
+  // a small mark just under Instagram's top bar, the same on every scene
   const bright = SCENES[i].name === "studio" && Math.floor(l / (d / 4)) % 2 === 1;
-  g.save(); g.globalAlpha = 0.7; g.translate(60, SAFE ? 40 : 70); g.scale(2.2, 2.2); g.fillStyle = bright ? "#100806" : INK; g.fill(SKYLINE); g.restore();
-  g.restore();
+  g.save(); g.globalAlpha = 0.7; g.translate(LX, 320); g.scale(2.2, 2.2); g.fillStyle = bright ? "#100806" : INK; g.fill(SKYLINE); g.restore();
   if (i > 0 && l < 0.08) { g.fillStyle = INK; g.globalAlpha = 0.85 * (1 - l / 0.08); g.fillRect(0, 0, W, H); g.globalAlpha = 1; }   // a white flash on each hard cut
 }
 function frame(t, T) {
@@ -572,7 +564,7 @@ function frame(t, T) {
     label("THREE CITIES", W / 2, 1020, 120, { align: "center", spacing: 12, alpha: a * out });
     label("by Forrest James", W / 2, 1100, 40, { align: "center", mono: true, alpha: a * out * 0.85 });
     label(RELEASED ? "threecities.forrestjamesmusic.com" : "COMING SOON", W / 2, 1360, RELEASED ? 40 : 60, { align: "center", mono: true, spacing: RELEASED ? 0 : 14, alpha: ease((ls - 0.5) / 0.6) * out });
-    label(`You're hearing ${CITY.map(c => c.name).join(", ").replace(/, ([^,]*)$/, " and $1")}${date ? ", " + date : ""}`, W / 2, 1520, 28, { align: "center", mono: true, alpha: ease((ls - 1) / 0.6) * out * 0.75, max: 980 });
+    label(`You're hearing ${CITY.map(c => c.name).join(", ").replace(/, ([^,]*)$/, " and $1")}${date ? ", " + date : ""}`, W / 2, 1480, 28, { align: "center", mono: true, alpha: ease((ls - 1) / 0.6) * out * 0.75, max: 720 });
   }
   if (pulse > 0.7 && t > at("open") && t < at("cities")) { g.fillStyle = `rgba(243,236,230,${0.05 * pulse})`; g.fillRect(0, 0, W, H); }   // a breath of light on the big hits
   finish();
