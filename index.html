@@ -644,6 +644,7 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
 .rack .mod-filter .kn-stack { align-items: center; }
 .rack .mod-filter .kn-stack .kn-label { margin-bottom: 3px; text-align: center; }
 .rack .mod-filter .lcd { min-width: 0; padding: 4px 5px; }
+.rack #djFilterOut { min-width: 9ch; text-align: center; }
 .rack .pedal.mod-filter .knobs { opacity: 1 !important; }   /* the Auto lamp is a mode, not an on/off for the module, so the knobs never dim */
 .rack .mod-chords .kn { flex: 0 0 auto; min-width: 104px; }
 @media (max-width: 1100px) { .rack-mod:last-child:nth-child(odd) { grid-column: 1 / -1; } }
@@ -730,7 +731,7 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
       <div class="mod-head"><span class="mod-name">Filter</span><button class="info" type="button" aria-label="How the filter works" data-tip="A DJ-style filter on the whole mix, cities and drums together. At 12 o'clock it does nothing. Turn left and a low-pass closes in, taking the top off until it's muffled. Turn right and a high-pass thins it out from the bottom up. Double-click to snap back to the middle. Auto: the filter swells slowly from warm and dark to light and airy and back, around wherever the knob sits, never to the extremes. Windier weather swells faster. LFO: a pulse in time with the beat that dips the top end and lets it open again on the beat. Rate picks how often, Depth how far."></button><button class="pedal-led dj-auto" type="button" id="djAuto" aria-pressed="false" aria-label="Auto filter off" title="Auto: a slow, musical swell between low and high"></button></div>
       <div class="knobs mod-knobs">
         <div class="kn"><input class="kn-native" id="djFilter" type="range" min="-100" max="100" step="1" value="0" data-label="Filter"><span class="kn-stack"><output id="djFilterOut" class="lcd">Off</output></span></div>
-        <div class="kn"><select class="kn-native" id="djLfoRate" data-label="Rate"><option value="0.5">1/8</option><option value="1" selected>1/4</option><option value="2">1/2</option><option value="4">1 bar</option><option value="8">2 bars</option><option value="16">4 bars</option></select><span class="kn-stack"><output id="djLfoRateOut" class="lcd">1/4</output></span></div>
+        <div class="kn"><select class="kn-native" id="djLfoRate" data-label="Rate"><option value="0.0625">1/64</option><option value="0.125">1/32</option><option value="0.1666667">1/24</option><option value="0.25">1/16</option><option value="0.5">1/8</option><option value="1" selected>1/4</option><option value="2">1/2</option><option value="4">1 bar</option><option value="8">2 bars</option><option value="16">4 bars</option></select><span class="kn-stack"><output id="djLfoRateOut" class="lcd">1/4</output></span></div>
         <div class="kn"><input class="kn-native" id="djLfoAmt" type="range" min="0" max="100" step="1" value="0" data-label="LFO"><span class="kn-stack"><output id="djLfoAmtOut" class="lcd">Off</output></span></div>
       </div>
     </div>
@@ -2169,11 +2170,21 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
       <circle cx="32" cy="32" r="19" fill="#1d1719" stroke="rgba(255,255,255,0.14)" stroke-width="1"/>
       <circle cx="32" cy="32" r="14" fill="none" stroke="rgba(255,255,255,0.05)" stroke-width="1"/>
       <line class="kp" stroke="#f3ece6" stroke-width="2.6" stroke-linecap="round"/>
+      <path class="km-arc" fill="none" stroke="var(--led)" stroke-opacity="0.7" stroke-width="2.2" stroke-linecap="round"/>
+      <circle class="km" r="3.2" fill="var(--led)" style="display:none"/>
     </svg>`;
     const label = document.createElement("div"); label.className = "kn-label"; label.textContent = el.dataset.label;
     kn.insertBefore(knob, kn.firstChild);
     if (out.parentNode.classList.contains("kn-stack")) out.parentNode.insertBefore(label, out.parentNode.firstChild); else out.parentNode.insertBefore(label, out);
-    const kv = knob.querySelector(".kv"), kp = knob.querySelector(".kp");
+    const kv = knob.querySelector(".kv"), kp = knob.querySelector(".kp"), km = knob.querySelector(".km"), kma = knob.querySelector(".km-arc");
+    // Automation: a small dot rides the outer ring where the value really is (Auto, LFO), like an automated knob in a DAW.
+    // The knob itself, its arc and its readout stay where you set them. Pass null to hide it.
+    kn._mod = v => {
+      if (v == null) { km.style.display = "none"; kma.setAttribute("d", ""); return; }
+      const f = Math.max(0, Math.min(1, (v - min) / (max - min))), a = -135 + 270 * f, b = -135 + 270 * (get() - min) / (max - min);
+      const [x, y] = polar(30.5, a); km.setAttribute("cx", x.toFixed(2)); km.setAttribute("cy", y.toFixed(2)); km.style.display = "";
+      kma.setAttribute("d", Math.abs(a - b) > 0.5 ? arc(30.5, Math.min(a, b), Math.max(a, b)) : "");
+    };
     function draw() {
       const f = (get() - min) / (max - min), a = -135 + 270 * f;
       if (min < 0 && max > 0) { const z = -135 + 270 * (0 - min) / (max - min); kv.setAttribute("d", Math.abs(a - z) > 0.5 ? arc(26, Math.min(a, z), Math.max(a, z)) : ""); }   // bipolar: grows out from 12 o'clock
@@ -3388,9 +3399,9 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
     if (!ac || !DJA.on) return;
     const now = ac.currentTime, dt = DJA.last ? Math.min(1, now - DJA.last) : 0; DJA.last = now;
     const ready = cities.filter(c => c.w), wind = ready.length ? Math.min(1, ready.reduce((a, c) => a + c.w.w, 0) / ready.length / 35) : 0.3;
-    const bars = 32 - 24 * wind, barSec = 4 * 60 / (bpmNow || 90);
+    const bars = 24 - 18 * wind, barSec = 4 * 60 / (bpmNow || 90);
     DJA.phase = (DJA.phase + dt / (bars * barSec)) % 1;
-    DJA.off = 0.42 * Math.sin(2 * Math.PI * DJA.phase);
+    DJA.off = 0.8 * Math.sin(2 * Math.PI * DJA.phase);
     applyDJ();
   }
   setInterval(djAutoTick, 60);
@@ -3398,7 +3409,7 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
   function djLfoSync(t) {
     if (!DJL.depth || ac.state !== "running") return;
     const o = ac.createOscillator(); o.setPeriodicWave(DJL.wave); o.frequency.value = (bpmNow || 90) / 60 / DJL.beats;
-    o.connect(DJL.depth); o.start(t);
+    o.connect(DJL.depth); o.start(t); DJL.t0 = t; DJL.hz = o.frequency.value;
     if (DJL.osc) DJL.osc.stop(t);
     DJL.osc = o;
   }
@@ -3407,18 +3418,34 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
     DJL.beats = Number(document.getElementById("djLfoRate").value);
     document.getElementById("djLfoAmtOut").value = amt ? Math.round(amt * 100) : "Off";
     if (!DJL.depth) return;
-    DJL.depth.gain.setTargetAtTime(amt * 3000, ac.currentTime, 0.05);   // up to about two and a half octaves
-    if (DJL.osc) DJL.osc.frequency.setTargetAtTime((bpmNow || 90) / 60 / DJL.beats, ac.currentTime, 0.05);
+    DJL.depth.gain.setTargetAtTime(amt * 6000, ac.currentTime, 0.05);   // up to five octaves
+    if (DJL.osc) { DJL.hz = (bpmNow || 90) / 60 / DJL.beats; DJL.osc.frequency.setTargetAtTime(DJL.hz, ac.currentTime, 0.05); }
   }
+  // the dot on the Filter knob: where the filter really is right now, Auto and LFO together
+  (function djDot() {
+    requestAnimationFrame(djDot);
+    const kn = document.getElementById("djFilter")?.closest(".kn"); if (!kn || !kn._mod) return;
+    const amt = Number(document.getElementById("djLfoAmt").value) / 100;
+    if (!ac || !playing || (!DJA.on && !amt)) { if (kn._shown) { kn._mod(null); kn._shown = false; } return; }
+    let v = djVal / 100 + (DJA.on ? DJA.off : 0);
+    if (DJA.on) v = Math.max(-0.85, Math.min(0.85, v));
+    if (amt && DJL.t0 != null) {   // the LFO pulls the top end down: as a knob move, about its depth in octaves over the knob's 6.8-octave travel
+      const ph = Math.max(0, ac.currentTime - DJL.t0) * DJL.hz, lfo = amt * 5 * (0.5 - 0.5 * Math.cos(2 * Math.PI * ph)) / 6.8;
+      v -= lfo;
+    }
+    kn._mod(Math.max(-1, Math.min(1, v)) * 100); kn._shown = true;
+  })();
   const fmtHz = f => f >= 1000 ? (f / 1000).toFixed(f >= 10000 ? 0 : 1) + "k" : Math.round(f) + "";
   function applyDJ() {
     const out = document.getElementById("djFilterOut"), base = djVal / 100;
-    const v = DJA.on ? Math.max(-0.55, Math.min(0.55, base + DJA.off)) : base;   // Auto never goes to the extremes
+    const v = DJA.on ? Math.max(-0.85, Math.min(0.85, base + DJA.off)) : base;   // Auto sweeps wide, but stops short of the very ends
     const lp = v < 0 ? 20000 * Math.pow(180 / 20000, -v) : 20000;     // down to about 180 Hz fully left
     const hp = v > 0 ? 20 * Math.pow(4000 / 20, v) : 20;               // up to about 4 kHz fully right
-    if (out) out.value = Math.abs(v) < 0.01 ? (DJA.on ? "Auto" : "Off") : v < 0 ? "LPF " + fmtHz(lp) : "HPF " + fmtHz(hp);
+    if (out) { const bl = 20000 * Math.pow(180 / 20000, -Math.min(0, base)), bh = 20 * Math.pow(4000 / 20, Math.max(0, base));
+      const txt = Math.abs(base) < 0.01 ? (DJA.on ? "Auto" : "Off") : base < 0 ? "LPF " + fmtHz(bl) : "HPF " + fmtHz(bh);
+      if (out.value !== txt) out.value = txt; }   // the readout is the knob's own setting; the moving dot on the ring shows Auto and the LFO
     if (!djLP) return;
-    const t = ac.currentTime, q = 0.7 + Math.abs(v) * (DJA.on ? 1.6 : 2.3);   // a little resonance as it sweeps, like a mixer (gentler on Auto)
+    const t = ac.currentTime, q = 0.7 + Math.abs(v) * 2.3;            // a little resonance as it sweeps, like a mixer
     djLP.frequency.setTargetAtTime(lp, t, 0.03); djLP.Q.setTargetAtTime(v < 0 ? q : 0.7, t, 0.03);
     djHP.frequency.setTargetAtTime(hp, t, 0.03); djHP.Q.setTargetAtTime(v > 0 ? q : 0.7, t, 0.03);
   }
