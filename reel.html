@@ -48,6 +48,10 @@ textarea { width: 100%; min-height: 170px; background: var(--panel); color: var(
 .status { color: var(--faint); font-size: 12px; }
 .recent { color: var(--faint); font-size: 12px; }
 .recent button { background: none; border: 0; color: var(--dim); text-decoration: underline; font: inherit; cursor: pointer; padding: 0; }
+.opts { display: flex; flex-wrap: wrap; gap: 10px 22px; margin: 18px 0 0; font-size: 12px; color: var(--dim); }
+.opts label { display: flex; align-items: center; gap: 8px; }
+.opts select, .opts input { background: var(--panel); color: var(--ink); border: 1px solid var(--line); padding: 6px 8px; font: 12px var(--mono); }
+.opts input { width: 70px; }
 .nothing { color: var(--dim); padding: 18px; border: 1px dashed var(--line); }
 </style>
 </head>
@@ -60,6 +64,11 @@ textarea { width: 100%; min-height: 170px; background: var(--panel); color: var(
   <div class="theme-title" id="themeTitle"></div>
   <p class="theme-why" id="themeWhy"></p>
   <div class="picks" id="picks"></div>
+  <div class="opts">
+    <label>Look <select id="look"><option value="auto">Auto (by theme)</option><option value="postcard">Postcards</option><option value="weather">Weather you can see</option><option value="split">Split screen</option><option value="classic">Classic collage</option></select></label>
+    <label>Sound <select id="sound"><option value="theme">The theme's sound</option><option value="mine">Keep my sound</option></select></label>
+    <label>Episode no. <input id="ep" type="number" min="1" max="999" inputmode="numeric"></label>
+  </div>
   <div class="go">
     <a class="btn" id="open" href="#" aria-disabled="true">Open the reel</a>
     <button class="btn ghost" id="copy" type="button">Copy caption</button>
@@ -166,6 +175,8 @@ const RECENT_KEY = "reel-recent";
 const loadRecent = () => { try { const now = Date.now(); return (JSON.parse(localStorage.getItem(RECENT_KEY)) || []).filter(x => now - x.t < 14 * 864e5); } catch (e) { return []; } };
 const saveRecent = list => { try { localStorage.setItem(RECENT_KEY, JSON.stringify(list)); } catch (e) {} };
 let recent = loadRecent();
+const EP_KEY = "reel-episode";
+const loadEp = () => { try { return Math.max(1, parseInt(localStorage.getItem(EP_KEY), 10) || 1); } catch (e) { return 1; } };
 const isRecent = r => recent.some(x => x.name === r.name);
 
 // rank by score, best first, leaving out recent cities when there are enough others
@@ -194,7 +205,7 @@ function top3(list, labels, big, stat, flav) {
 
 // ---------- the themes ----------
 const THEMES = [
-  { id: "extremes", group: "Extremes", name: "Hottest, coldest, wildest", title: "Hottest, coldest, wildest",
+  { id: "extremes", q: "Where's the hottest, coldest and wildest weather on Earth right now?", sound: "extremes", group: "Extremes", name: "Hottest, coldest, wildest", title: "Hottest, coldest, wildest",
     why: "The original: the highest and lowest temperatures on Earth right now, and the wildest wind and rain.",
     pick: R => slots([
       { label: "Hottest", list: ranked(R, r => r.t), big: r => deg(r.t), stat: r => `feels like ${deg(r.feels)} · ${desc(r)}`, flav: "sun" },
@@ -203,14 +214,14 @@ const THEMES = [
     caption: p => `Right now it's ${deg(p[0].t)} in ${p[0].name} and ${deg(p[1].t)} in ${p[1].name}, while ${p[2].name} is getting ${Math.round(p[2].g)} km/h gusts.`,
     tags: "#extremeweather #weather" },
 
-  { id: "autumn", group: "Travel", name: "Best autumn break", title: "Best autumn break right now",
+  { id: "autumn", q: "Where's the best autumn break right now?", sound: "bright", group: "Travel", name: "Best autumn break", title: "Best autumn break right now",
     why: "Places in autumn right now with crisp, sunny days around 12 to 18°, dry and calm.",
     pick: R => top3(ranked(R, r => -Math.abs(r.tmax - 16) * 0.8 + r.sunH * 0.5 - r.rainToday * 1.5 - r.w / 10 + (r.code <= 2 ? 1 : 0) + (has(r, "l") ? 0.8 : 0), r => autumnHere(r) && Math.abs(r.lat) > 28 && Math.abs(r.lat) < 62),
       ["Best autumn break", "Runner-up", "Also lovely"], r => deg(r.tmax), r => `${fix(r.sunH, 1)} h of sun · ${desc(r)}`, "autumn"),
     caption: p => `The best autumn weather on Earth today: ${p[0].name} (${deg(p[0].tmax)} and ${fix(p[0].sunH, 1)} hours of sun), ${p[1].name} and ${p[2].name}.`,
     tags: "#autumn #autumnvibes #fall #travel" },
 
-  { id: "leaves", group: "Travel", name: "Beautiful leaves", title: "Most likely to have beautiful leaves",
+  { id: "leaves", q: "Where are the leaves turning right now?", sound: "bright", group: "Travel", name: "Beautiful leaves", title: "Most likely to have beautiful leaves",
     why: "Leaves turn best after sunny days and cold nights, about 2 to 9°. These places have exactly that right now.",
     pick: R => top3(ranked(R, r => r.sunH * 0.6 - Math.abs(r.tmin - 5) * 0.7 - Math.abs(r.tmax - 15) * 0.3 + (has(r, "l") ? 2.5 : 0) - r.rainToday,
         r => autumnHere(r) && (has(r, "l") || Math.abs(r.lat) > 40) && Math.abs(r.lat) > 33 && Math.abs(r.lat) < 63 && r.tmin > -2 && r.tmin < 11),
@@ -218,14 +229,14 @@ const THEMES = [
     caption: p => `Where the leaves are probably putting on a show today: ${p[0].name}, ${p[1].name} and ${p[2].name}. Sunny days and cold nights, the recipe for red and gold.`,
     tags: "#autumnleaves #fallcolors #foliage #autumn" },
 
-  { id: "green", group: "Travel", name: "Greenest grass", title: "Greenest grass right now",
+  { id: "green", q: "Where's the greenest grass on Earth this week?", sound: "bright", group: "Travel", name: "Greenest grass", title: "Greenest grass right now",
     why: "A wet week, mild temperatures and no frost: where everything is growing fastest.",
     pick: R => top3(ranked(R, r => Math.min(r.rain7, 70) / 10 - Math.abs(r.tmax - 18) * 0.2 + (has(r, "g") ? 1.5 : 0), r => r.tmin > 3 && r.tmax < 30 && r.rain7 > 8),
       ["Greenest", "Lushest", "Freshly watered"], r => `${Math.round(r.rain7)} mm`, r => `of rain this week · ${deg(r.t)} now`, "green landscape"),
     caption: p => `The greenest grass on Earth this week, probably: ${p[0].name} (${Math.round(p[0].rain7)} mm of rain in seven days), ${p[1].name} and ${p[2].name}.`,
     tags: "#green #rain #nature" },
 
-  { id: "sunscreen", group: "Travel", name: "Sunscreen optional", title: "Sunscreen essential, or optional",
+  { id: "sunscreen", q: "Where do you need sunscreen today, and where don't you?", sound: "bright", group: "Travel", name: "Sunscreen optional", title: "Sunscreen essential, or optional",
     why: "The highest and lowest UV on Earth today, and one place right in the middle.",
     pick: R => slots([
       { label: "Sunscreen essential", list: ranked(R, r => r.uvmax), big: r => `UV ${fix(r.uvmax)}`, stat: r => `today's peak · ${desc(r)}`, flav: "sun" },
@@ -234,7 +245,7 @@ const THEMES = [
     caption: p => `Sunscreen essential in ${p[0].name} today (UV ${fix(p[0].uvmax)}). Completely optional in ${p[1].name} (UV ${fix(p[1].uvmax)}). And ${p[2].name}, somewhere in between.`,
     tags: "#sunscreen #sunshine #weather" },
 
-  { id: "beach", group: "Travel", name: "Still beach weather", title: "Still beach weather",
+  { id: "beach", q: "Where is it still beach weather?", sound: "bright", group: "Travel", name: "Still beach weather", title: "Still beach weather",
     why: "The warmest sea, the calmest water and the sunniest sand, among warm, dry places right now.",
     pick: R => { const beachy = r => has(r, "s") && r.sst != null && r.t >= 22 && r.rainToday < 2;
       return slots([
@@ -244,56 +255,56 @@ const THEMES = [
     caption: p => `Still beach weather: ${p[0].name} has the warmest sea on Earth right now at ${deg(p[0].sst)}. ${p[1].name} has the calmest water, ${p[2].name} the most sunshine.`,
     tags: "#beach #beachlife #travel #ocean" },
 
-  { id: "snow", group: "Travel", name: "First snow", title: "Fresh snow today",
+  { id: "snow", q: "Where did it snow today?", sound: "calm", group: "Travel", name: "First snow", title: "Fresh snow today",
     why: "Where it's snowing today, with a bonus for places that hadn't seen any all week: the first snow.",
     pick: R => top3(ranked(R, r => r.snowToday * 2 + r.snowNow * 4 + (r.snowWeek === 0 ? 3 : 0), r => r.snowToday > 0 || r.snowNow > 0),
       ["Fresh snow", "Snowing now", "Snow day"], r => `${fix(r.snowToday, 1)} cm`, r => r.snowWeek === 0 ? "today, the first this week" : `today · ${deg(r.t)}`, "snow"),
     caption: p => `Fresh snow today in ${p[0].name} (${fix(p[0].snowToday, 1)} cm), ${p[1].name} and ${p[2].name}.`,
     tags: "#snow #firstsnow #winter" },
 
-  { id: "run", group: "Travel", name: "Perfect running weather", title: "Perfect running weather",
+  { id: "run", q: "Where's the perfect running weather right now?", sound: "bright", group: "Travel", name: "Perfect running weather", title: "Perfect running weather",
     why: "About 8 to 12°, light wind, dry and clean air, in daylight.",
     pick: R => top3(ranked(R, r => -Math.abs(r.t - 10) * 0.7 - r.w / 8 - r.pr * 3 - (r.pm25 ?? 12) / 12 - (r.h > 85 ? 1 : 0), r => r.day && !wet(r)),
       ["Perfect run", "Great run", "Good run"], r => deg(r.t), r => `wind ${Math.round(r.w)} km/h${r.pm25 != null ? ` · PM2.5 ${fix(r.pm25)}` : ""}`, "park"),
     caption: p => `Perfect running weather right now: ${p[0].name} (${deg(p[0].t)}, wind ${Math.round(p[0].w)} km/h), ${p[1].name} and ${p[2].name}. Lace up.`,
     tags: "#running #runner #weather" },
 
-  { id: "cosy", group: "Mood", name: "Cosiest city", title: "Cosiest city right now",
+  { id: "cosy", q: "Where's the cosiest place on Earth right now?", sound: "cosy", group: "Mood", name: "Cosiest city", title: "Cosiest city right now",
     why: "Cold, drizzly, grey and dark: candle and blanket weather.",
     pick: R => top3(ranked(R, r => -Math.abs(r.t - 6) * 0.4 + (wet(r) ? 3 : 0) + r.cloud / 40 + (r.day ? 0 : 1.5) - r.g / 40, r => r.t > -3 && r.t < 13),
       ["Cosiest", "Blanket weather", "Kettle on"], r => deg(r.t), r => `${desc(r)} · ${localNow(r)} local`, "night street"),
     caption: p => `The cosiest places on Earth right now: ${p[0].name} (${deg(p[0].t)} and ${desc(p[0])}), ${p[1].name} and ${p[2].name}. Kettle on.`,
     tags: "#cosy #hygge #rainyday" },
 
-  { id: "drama", group: "Mood", name: "Most dramatic sky", title: "Most dramatic sky",
+  { id: "drama", q: "Where's the most dramatic sky right now?", sound: "drama", group: "Mood", name: "Most dramatic sky", title: "Most dramatic sky",
     why: "Thunderstorms first, then strong gusts under broken, moving cloud.",
     pick: R => top3(ranked(R, r => (r.code >= 95 ? 6 : 0) + r.g / 15 + (r.cloud > 35 && r.cloud < 95 ? 1.5 : 0) + (wet(r) ? 1 : 0)),
       ["Most dramatic sky", "Storm brewing", "Wild sky"], r => `${Math.round(r.g)} km/h`, r => `gusts · ${desc(r)}`, "storm clouds"),
     caption: p => `The most dramatic skies on Earth right now: ${p[0].name} (${desc(p[0])}, ${Math.round(p[0].g)} km/h gusts), ${p[1].name} and ${p[2].name}.`,
     tags: "#storm #sky #clouds" },
 
-  { id: "calm", group: "Mood", name: "Calmest place", title: "The calmest place on Earth",
+  { id: "calm", q: "Where's the calmest place on Earth right now?", sound: "calm", group: "Mood", name: "Calmest place", title: "The calmest place on Earth",
     why: "No wind, clear sky, settled high pressure.",
     pick: R => top3(ranked(R, r => -r.w / 2 - r.g / 6 - r.cloud / 30 + (r.p - 1013) / 6 - (wet(r) ? 4 : 0)),
       ["Calmest", "Stillest", "Quietest"], r => `${fix(r.w, 1)} km/h`, r => `wind · ${r.cloud}% cloud · ${Math.round(r.p)} hPa`, "lake"),
     caption: p => `The calmest places on Earth right now: ${p[0].name} (${fix(p[0].w, 1)} km/h of wind), ${p[1].name} and ${p[2].name}. Breathe out.`,
     tags: "#calm #peaceful #stillness" },
 
-  { id: "fog", group: "Mood", name: "Foggiest", title: "Foggiest place right now",
+  { id: "fog", q: "Where's the foggiest place on Earth right now?", sound: "fog", group: "Mood", name: "Foggiest", title: "Foggiest place right now",
     why: "The shortest visibility on Earth right now. Spooky.",
     pick: R => top3(ranked(R, r => -(r.vis ?? 1e5) + (r.code === 45 || r.code === 48 ? 5000 : 0), r => r.vis != null && r.vis < 6000),
       ["Foggiest", "Murky", "Misty"], r => r.vis < 1000 ? `${Math.round(r.vis)} m` : `${fix(r.vis / 1000, 1)} km`, r => `visibility · ${desc(r)}`, "fog"),
     caption: p => `Foggiest places on Earth right now: in ${p[0].name} you can see about ${p[0].vis < 1000 ? Math.round(p[0].vis) + " metres" : fix(p[0].vis / 1000, 1) + " km"}. ${p[1].name} and ${p[2].name} aren't far behind.`,
     tags: "#fog #mist #moody" },
 
-  { id: "clear", group: "Mood", name: "Clearest air", title: "Clearest air on Earth",
+  { id: "clear", q: "Where's the clearest air on Earth right now?", sound: "calm", group: "Mood", name: "Clearest air", title: "Clearest air on Earth",
     why: "The longest views and the cleanest air right now.",
     pick: R => top3(ranked(R, r => (r.vis ?? 0) / 10000 - (r.pm25 ?? 15) / 4 - r.cloud / 50, r => r.vis != null),
       ["Clearest air", "Crystal clear", "Fresh air"], r => r.pm25 != null ? `PM2.5 ${fix(r.pm25)}` : `${fix(r.vis / 1000)} km`, r => `you can see ${fix(r.vis / 1000)} km · ${desc(r)}`, "landscape"),
     caption: p => `The clearest air on Earth right now: ${p[0].name}, ${p[1].name} and ${p[2].name}. Deep breath.`,
     tags: "#cleanair #freshair #blueskies" },
 
-  { id: "golden", group: "Time", name: "Golden hour now", title: "Golden hour right now",
+  { id: "golden", q: "Where is the sun setting right now?", sound: "calm", group: "Time", name: "Golden hour now", title: "Golden hour right now",
     why: "Three places where the sun is setting as you watch.",
     pick: R => { const now = Date.now() / 1000;
       return top3(ranked(R, r => -Math.abs((r.sunset - now) / 60 - 10), r => (r.sunset - now) / 60 > -15 && (r.sunset - now) / 60 < 45 && r.cloud < 85),
@@ -301,7 +312,7 @@ const THEMES = [
     caption: p => `It's golden hour right now in ${p[0].name}, ${p[1].name} and ${p[2].name}. Here's what their sunsets sound like.`,
     tags: "#goldenhour #sunset" },
 
-  { id: "waking", group: "Time", name: "Just waking up", title: "Just waking up",
+  { id: "waking", q: "Where is the sun coming up right now?", sound: "bright", group: "Time", name: "Just waking up", title: "Just waking up",
     why: "Three places where the sun is coming up this minute.",
     pick: R => { const now = Date.now() / 1000;
       return top3(ranked(R, r => -Math.abs((r.sunrise - now) / 60), r => Math.abs((r.sunrise - now) / 60) < 45),
@@ -309,7 +320,7 @@ const THEMES = [
     caption: p => `Good morning ${p[0].name}, ${p[1].name} and ${p[2].name}. The sun's coming up there right now.`,
     tags: "#sunrise #goodmorning" },
 
-  { id: "daylight", group: "Time", name: "Longest and shortest day", title: "Longest day, shortest day",
+  { id: "daylight", q: "Who gets the most daylight today, and who gets the least?", sound: "calm", group: "Time", name: "Longest and shortest day", title: "Longest day, shortest day",
     why: "The most and the least daylight on Earth today, and a place with an even split.",
     pick: R => slots([
       { label: "Longest day", list: ranked(R, r => r.daylen), big: r => hm(r.daylen), stat: r => `of daylight · sunset ${clock(r, r.sunset)}`, flav: "sun" },
@@ -318,7 +329,7 @@ const THEMES = [
     caption: p => `Today ${p[0].name} gets ${hm(p[0].daylen)} of daylight. ${p[1].name} gets ${hm(p[1].daylen)}. ${p[2].name} splits it right down the middle.`,
     tags: "#daylight #seasons" },
 
-  { id: "dark", group: "Time", name: "Dark at breakfast", title: "Still dark at breakfast",
+  { id: "dark", q: "Where is it still dark at breakfast?", sound: "night", group: "Time", name: "Dark at breakfast", title: "Still dark at breakfast",
     why: "It's breakfast time there, and the sun isn't up yet.",
     pick: R => { const now = Date.now() / 1000;
       return top3(ranked(R, r => r.sunrise - now, r => localHour(r) >= 6.5 && localHour(r) <= 9.5 && !r.day && r.sunrise > now),
@@ -326,7 +337,7 @@ const THEMES = [
     caption: p => `It's ${localNow(p[0])} in ${p[0].name} and the sun won't be up until ${clock(p[0], p[0].sunrise)}. Breakfast in the dark there, and in ${p[1].name} and ${p[2].name}.`,
     tags: "#morning #darkmornings" },
 
-  { id: "sametemp", group: "Contrast", name: "Same temperature, different worlds", title: "Same temperature, different worlds",
+  { id: "sametemp", q: "Same temperature. How different can three days be?", sound: "", group: "Contrast", name: "Same temperature, different worlds", title: "Same temperature, different worlds",
     why: "Three places at the same temperature living completely different days: one sunny, one wet, one at night.",
     pick: R => {
       let best = null;
@@ -344,7 +355,7 @@ const THEMES = [
     caption: p => `It's about ${deg(p[0].t)} in ${p[0].name}, ${p[1].name} and ${p[2].name} right now. Sunny in one, ${desc(p[1])} in another, the middle of the night in the third. Same number, different worlds.`,
     tags: "#weather #perspective" },
 
-  { id: "sametz", group: "Contrast", name: "Same clock, different weather", title: "Same time, different weather",
+  { id: "sametz", q: "Same clock. How different can the weather be?", sound: "", group: "Contrast", name: "Same clock, different weather", title: "Same time, different weather",
     why: "Three places in the same time zone with the biggest spread of temperature and sky.",
     pick: R => {
       const groups = {}; R.forEach(r => (groups[r.off] = groups[r.off] || []).push(r));
@@ -361,7 +372,7 @@ const THEMES = [
     caption: p => `Same clock, ${localNow(p[0])}, three very different days: ${deg(p[0].t)} in ${p[0].name}, ${deg(p[1].t)} in ${p[1].name}, ${deg(p[2].t)} in ${p[2].name}.`,
     tags: "#timezones #weather" },
 
-  { id: "twins", group: "Contrast", name: "Weather twins", title: "Weather twins",
+  { id: "twins", q: "Which cities are weather twins today?", sound: "", group: "Contrast", name: "Weather twins", title: "Weather twins",
     why: "Two places thousands of km apart with nearly identical weather right now, and the place most unlike them.",
     pick: R => {
       const F = R.filter(r => !isRecent(r)), d = (a, b) => Math.abs(a.t - b.t) / 2 + Math.abs(a.h - b.h) / 10 + Math.abs(a.w - b.w) / 6 + Math.abs(a.cloud - b.cloud) / 25 + (a.day !== b.day) * 3 + (wet(a) !== wet(b)) * 3;
@@ -376,7 +387,7 @@ const THEMES = [
     caption: p => `${p[0].name} and ${p[1].name} are ${Math.round(km(p[0], p[1])).toLocaleString("en-GB")} km apart, with almost exactly the same weather right now. ${p[2].name} is having the opposite day.`,
     tags: "#weathertwins #weather" },
 
-  { id: "home", group: "Contrast", name: "London vs its opposite", title: "London and its opposite",
+  { id: "home", q: "What's the opposite of London's weather right now?", sound: "", group: "Contrast", name: "London vs its opposite", title: "London and its opposite",
     why: "Home, the place with the opposite weather right now, and London's weather twin somewhere far away.",
     pick: R => {
       const home = R.find(r => r.name === "London"); if (!home) return null;
@@ -388,7 +399,7 @@ const THEMES = [
     caption: p => `London right now: ${deg(p[0].t)} and ${desc(p[0])}. The opposite is ${p[1].name}, ${deg(p[1].t)} and ${desc(p[1])}. And London's weather twin? ${p[2].name}.`,
     tags: "#london #weather" },
 
-  { id: "hair", group: "Playful", name: "Hair day forecast", title: "Hair day forecast",
+  { id: "hair", q: "Where's the best hair day on Earth today?", sound: "playful", group: "Playful", name: "Hair day forecast", title: "Hair day forecast",
     why: "Humidity and wind: the best hair day on Earth, the frizziest, and the place to wear a hat.",
     pick: R => slots([
       { label: "Good hair day", list: ranked(R, r => -Math.abs(r.h - 42) / 8 - r.w / 8 - (wet(r) ? 5 : 0), r => r.day), big: r => `${Math.round(r.h)}%`, stat: r => `humidity · wind ${Math.round(r.w)} km/h`, flav: "street" },
@@ -397,14 +408,14 @@ const THEMES = [
     caption: p => `Today's hair forecast: a good hair day in ${p[0].name} (${Math.round(p[0].h)}% humidity), frizz alert in ${p[1].name} (${Math.round(p[1].h)}%), and wear a hat in ${p[2].name} (${Math.round(p[2].g)} km/h gusts).`,
     tags: "#hairday #weather #humidity" },
 
-  { id: "washing", group: "Playful", name: "Washing line weather", title: "Washing line weather",
+  { id: "washing", q: "Where will your washing dry fastest today?", sound: "playful", group: "Playful", name: "Washing line weather", title: "Washing line weather",
     why: "A steady breeze, sunshine, dry air and no rain coming: where your sheets dry fastest.",
     pick: R => top3(ranked(R, r => -Math.abs(r.w - 18) / 6 + r.sunH / 3 - r.h / 25 + r.t / 10 - (r.pp ?? 0) / 25, r => r.day && !wet(r) && r.rainToday < 0.2 && r.t > 8),
       ["Best drying", "Sheets out", "Pegs ready"], r => `${Math.round(r.w)} km/h`, r => `breeze · ${Math.round(r.h)}% humidity · ${deg(r.t)}`, "garden"),
     caption: p => `Best washing line weather on Earth right now: ${p[0].name} (${Math.round(p[0].w)} km/h breeze, ${Math.round(p[0].h)}% humidity), ${p[1].name} and ${p[2].name}. Pegs at the ready.`,
     tags: "#laundryday #washingline #weather" },
 
-  { id: "umbrella", group: "Playful", name: "Umbrella-free capitals", title: "Umbrella-free capitals",
+  { id: "umbrella", q: "Which capitals can leave the umbrella at home?", sound: "playful", group: "Playful", name: "Umbrella-free capitals", title: "Umbrella-free capitals",
     why: "Capital cities with no rain all week and none coming today.",
     pick: R => top3(ranked(R, r => -r.rain7 * 5 - (r.pp ?? 0) / 10 + r.sunH / 4, r => has(r, "c") && !wet(r) && r.rainToday < 0.1),
       ["Driest capital", "Bone dry", "No umbrella"], r => `${fix(r.rain7, 1)} mm`, r => `of rain in 7 days · ${desc(r)}`, "city"),
@@ -414,6 +425,9 @@ const THEMES = [
 // a weekly shape for Pick for me: weekday -> group
 const WEEK = { 1: "Travel", 2: "Mood", 3: "Time", 4: "Contrast", 5: "Playful", 6: "Extremes", 0: "Extremes" };
 const GROUPS = ["Extremes", "Travel", "Mood", "Time", "Contrast", "Playful"];
+// each group has its own look in the reel; the Look menu can override it
+const LOOKS = { Extremes: "split", Travel: "postcard", Mood: "weather", Time: "weather", Contrast: "split", Playful: "postcard" };
+const LOOK_NAMES = { postcard: "Postcards", weather: "Weather you can see", split: "Split screen", classic: "Classic collage" };
 
 // ---------- data ----------
 async function getJSON(u) { const r = await fetch(u); if (!r.ok) throw new Error(r.status); return r.json(); }
@@ -513,7 +527,13 @@ function render() {
     "&reel=" + encodeURIComponent(slotsNow.map(s => clean(s.label)).join(",")) +
     "&rt=" + encodeURIComponent(t.title) +
     "&rs=" + encodeURIComponent(slotsNow.map((s, i) => clean(`${s.big(chosen[i])} · ${s.stat(chosen[i])}`)).join("|")) +
-    "&rp=" + encodeURIComponent(slotsNow.map(s => s.flav).join("|"));
+    "&rp=" + encodeURIComponent(slotsNow.map(s => s.flav).join("|")) +
+    "&rq=" + encodeURIComponent(t.q) +
+    "&rl=" + encodeURIComponent($("look").value === "auto" ? LOOKS[t.group] : $("look").value) +
+    "&rb=" + encodeURIComponent(slotsNow.map((s, i) => clean(s.big(chosen[i]))).join("|")) +
+    "&ep=" + encodeURIComponent($("ep").value || "") +
+    ($("sound").value === "theme" && t.sound ? "&rsnd=" + t.sound : "");
+  $("look").options[0].textContent = "Auto (" + LOOK_NAMES[LOOKS[t.group]] + ")";
   $("open").setAttribute("aria-disabled", "false");
   $("caption").value =
 `${t.title}.
@@ -535,7 +555,11 @@ function drawRecent() {
   el.innerHTML = `Resting for two weeks: ${recent.map(x => x.name).join(", ")}. <button type="button" id="clearRecent">Clear</button>`;
   $("clearRecent").addEventListener("click", () => { recent = []; saveRecent(recent); pickAuto(); drawThemes(); choose(themeId); });
 }
+$("ep").value = loadEp();
+["look", "sound", "ep"].forEach(id => $(id).addEventListener("change", () => render()));
 $("open").addEventListener("click", () => {
+  try { localStorage.setItem(EP_KEY, String((parseInt($("ep").value, 10) || 1) + 1)); } catch (e) {}
+  setTimeout(() => { $("ep").value = loadEp(); render(); }, 150);
   const now = Date.now(); chosen.forEach(r => { if (!recent.some(x => x.name === r.name)) recent.push({ name: r.name, t: now }); }); saveRecent(recent);
   setTimeout(drawRecent, 100);
 });

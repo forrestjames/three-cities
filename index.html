@@ -4631,7 +4631,8 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
     wrap.innerHTML = `<canvas width="${W}" height="${H}" aria-label="Reel preview"></canvas>
       <div class="reel-bar"><button type="button" data-a="preview">▶ Preview</button><button type="button" data-a="record">● Record reel</button><button type="button" data-a="hide">Hide</button><button type="button" data-a="close" aria-label="Close reel mode">✕ Close</button><span class="reel-status" aria-live="polite">Getting the weather and photos…</span></div>`;
     document.body.appendChild(wrap);
-    const cv = wrap.querySelector("canvas"), g = cv.getContext("2d"), status = wrap.querySelector(".reel-status");
+    const cv = wrap.querySelector("canvas"), status = wrap.querySelector(".reel-status");
+    let g = cv.getContext("2d");
     const css = getComputedStyle(document.documentElement);
     const col = c => (css.getPropertyValue(c.color) || "#f3ece6").trim();
     const ease = x => x < 0 ? 0 : x > 1 ? 1 : 1 - Math.pow(1 - x, 3);
@@ -4665,13 +4666,13 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
       return out;
     }
     // draw an image to cover a box, with a slow drift; duotone in the city's colour
-    function cover(img, x, y, w, h, drift, tint, alpha = 1) {
+    function cover(img, x, y, w, h, drift, tint, alpha = 1, extra = "") {
       if (!img) { g.fillStyle = tint; g.globalAlpha = alpha * 0.5; g.fillRect(x, y, w, h); g.globalAlpha = 1; return; }
       const s = Math.max(w / img.naturalWidth, h / img.naturalHeight) * (1.12 + 0.08 * drift);
       const iw = img.naturalWidth * s, ih = img.naturalHeight * s;
       const ox = x + (w - iw) / 2 + (drift - 0.5) * 60, oy = y + (h - ih) / 2;
       g.save(); g.beginPath(); g.rect(x, y, w, h); g.clip();
-      g.globalAlpha = alpha; g.filter = "grayscale(1) contrast(1.25) brightness(0.95)";
+      g.globalAlpha = alpha; g.filter = (extra ? extra + " " : "") + "grayscale(1) contrast(1.25) brightness(0.95)";
       g.drawImage(img, ox, oy, iw, ih); g.filter = "none";
       g.globalCompositeOperation = "multiply"; g.fillStyle = tint; g.fillRect(x, y, w, h);
       g.globalCompositeOperation = "screen"; g.fillStyle = "rgba(40,20,16,0.35)"; g.fillRect(x, y, w, h);
@@ -4695,6 +4696,7 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
       g.save(); g.font = `${opts.weight || ""} ${size}px ${opts.mono ? '"Source Code Pro", monospace' : "Abel, sans-serif"}`.trim();
       g.textAlign = opts.align || "left"; g.fillStyle = opts.color || "#f3ece6"; g.globalAlpha = opts.alpha ?? 1;
       if (opts.spacing) g.letterSpacing = opts.spacing + "px";
+      if (opts.max) { const mw = g.measureText(text).width; if (mw > opts.max) g.font = `${opts.weight || ""} ${Math.floor(size * opts.max / mw)}px ${opts.mono ? '"Source Code Pro", monospace' : "Abel, sans-serif"}`.trim(); }   // shrink to fit
       g.shadowColor = "rgba(0,0,0,0.55)"; g.shadowBlur = opts.shadow ?? 18;
       g.fillText(text, x, y); g.restore();
     }
@@ -4705,6 +4707,130 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
       return `humidity ${Math.round(w.h || 0)}% · wind ${Math.round(w.w || 0)} km/h`;
     };
     const tempTxt = c => c.w ? fmtTemp(c.w.t, Math.abs(c.w.t) < 10 ? 1 : 0) : "";
+    // ---------- looks ----------
+    // rq: the question the reel answers (opens the reel), rl: the look, rb: each city's headline number, ep: episode number
+    const rQ = (qs.get("rq") || "").trim(), rLook = (qs.get("rl") || "classic").trim(), rBig = (qs.get("rb") || "").split("|").map(s => s.trim()), rEp = (qs.get("ep") || "").trim();
+    const statOnly = k => { const st = rStats[k] || "", b = rBig[k] || ""; return b && st.startsWith(b) ? st.slice(b.length).replace(/^\s*·\s*/, "") : st; };
+    const bigOf = (c, k) => rBig[k] || tempTxt(c);
+    const seeded = i => { const x = Math.sin(i * 127.1 + 311.7) * 43758.5453; return x - Math.floor(x); };
+    // an offscreen canvas for effects that need the photo first (heat shimmer)
+    const fxCv = document.createElement("canvas"); fxCv.width = W; fxCv.height = H; const fxG = fxCv.getContext("2d");
+    function onCtx(ctx, fn) { const keep = g; g = ctx; try { fn(); } finally { g = keep; } }
+    // which weather a city is showing: the studio's photo words first, then its live numbers
+    function weatherOf(c, k) {
+      const f = (rFlav[k] || "").toLowerCase(), w = c.w || {};
+      if (/fog|mist/.test(f)) return "fog";
+      if (/snow/.test(f) || (w.t < 1 && w.r > 0)) return "snow";
+      if (/storm/.test(f) || w.g > 45) return "storm";
+      if (/rain/.test(f) || w.r > 0.1) return "rain";
+      if ((w.h >= 97 && w.c >= 90)) return "fog";
+      if (/sun|beach|sunset|sunrise/.test(f) || (w.t > 22 && w.c < 30)) return "heat";
+      if (/lake|calm/.test(f) || w.w < 5) return "calm";
+      return "cloud";
+    }
+    // the photo, with the weather acting on it
+    function weatherPhoto(c, k, img, x, y, w, h, s) {
+      const kind = weatherOf(c, k), p = c._reelPulse || 0, tint = col(c);
+      g.save(); g.beginPath(); g.rect(x, y, w, h); g.clip();
+      if (kind === "storm") { const sh = 16 * p; g.translate((Math.random() - 0.5) * sh, (Math.random() - 0.5) * sh); }
+      if (kind === "heat") {   // heat shimmer: the picture wavers in thin horizontal slices
+        onCtx(fxG, () => { fxG.clearRect(0, 0, W, H); cover(img, x, y, w, h, (s / 8) % 1, tint, 1); });
+        for (let yy = y; yy < y + h; yy += 6) { const dx = Math.sin(yy * 0.03 + s * 5) * 5 * (0.6 + 0.4 * Math.sin(s * 0.7)); g.drawImage(fxCv, x, yy, w, 6, x + dx, yy, w, 6); }
+        const hz = g.createLinearGradient(0, y, 0, y + h); hz.addColorStop(0, "rgba(255,170,90,0.18)"); hz.addColorStop(1, "rgba(0,0,0,0)"); g.fillStyle = hz; g.fillRect(x, y, w, h);
+      } else {
+        const blur = kind === "fog" ? "blur(9px) " : kind === "rain" ? "blur(2px) " : "";
+        cover(img, x, y, w, h, kind === "calm" ? (s / 30) % 1 : (s / 8) % 1, tint, 1, blur + (kind === "fog" ? "contrast(0.75) brightness(1.15)" : ""));
+      }
+      if (kind === "fog") {   // drifting banks of mist
+        for (let i = 0; i < 4; i++) { const cx = x + ((seeded(i) * w + s * 40 * (i % 2 ? 1 : -1)) % (w + 600)) - 300, cy = y + h * (0.2 + 0.2 * i);
+          const gr = g.createRadialGradient(cx, cy, 0, cx, cy, 520); gr.addColorStop(0, "rgba(235,230,225,0.32)"); gr.addColorStop(1, "rgba(235,230,225,0)"); g.fillStyle = gr; g.fillRect(x, y, w, h); }
+      } else if (kind === "rain") {   // rain running down, faster with the wind
+        const sp = 1400 + (c.w ? c.w.w : 10) * 20, slant = Math.min(0.35, (c.w ? c.w.w : 10) / 120);
+        g.strokeStyle = "rgba(235,240,245,0.28)"; g.lineWidth = 2;
+        g.beginPath();
+        for (let i = 0; i < 160; i++) { const len = 40 + seeded(i) * 70, rx = x + seeded(i + 9) * w, ry = y + ((seeded(i + 3) * h + s * sp * (0.7 + seeded(i + 5) * 0.6)) % (h + 100)) - 100;
+          g.moveTo(rx, ry); g.lineTo(rx - len * slant, ry + len); }
+        g.stroke();
+        g.fillStyle = "rgba(235,240,245,0.22)";
+        for (let i = 0; i < 26; i++) { const dx = x + seeded(i + 40) * w, dy = y + ((seeded(i + 60) * h + s * 30 * seeded(i)) % h); g.beginPath(); g.arc(dx, dy, 3 + seeded(i + 2) * 7, 0, 7); g.fill(); }
+      } else if (kind === "snow") {
+        g.fillStyle = "rgba(255,255,255,0.75)";
+        for (let i = 0; i < 140; i++) { const r = 2 + seeded(i) * 5, fy = y + ((seeded(i + 1) * h + s * (60 + seeded(i + 2) * 90)) % h), fx = x + seeded(i + 3) * w + Math.sin(s * 1.2 + i) * 18; g.beginPath(); g.arc(fx, fy, r, 0, 7); g.fill(); }
+      } else if (kind === "storm") {
+        g.fillStyle = "rgba(10,8,12,0.35)"; g.fillRect(x, y, w, h);
+        if (p > 0.75) { g.fillStyle = `rgba(235,240,255,${0.45 * p})`; g.fillRect(x, y, w, h); }
+      } else if (kind === "calm") {
+        g.fillStyle = `rgba(255,245,235,${0.06 + 0.05 * Math.sin(s * 0.8)})`; g.fillRect(x, y, w, h);
+      } else {   // passing cloud shadows
+        for (let i = 0; i < 3; i++) { const cx = x + ((seeded(i + 7) * w + s * 30) % (w + 800)) - 400, cy = y + h * (0.25 + 0.25 * i);
+          const gr = g.createRadialGradient(cx, cy, 0, cx, cy, 600); gr.addColorStop(0, "rgba(0,0,0,0.22)"); gr.addColorStop(1, "rgba(0,0,0,0)"); g.fillStyle = gr; g.fillRect(x, y, w, h); }
+      }
+      g.restore();
+    }
+    // a postcard: photo, a stamp with the headline number, a postmark with the local time
+    function postcard(c, k, cx, cy, sc, rot, s) {
+      const cw = 860, ch = 1180, pad = 34, ph = photos.get(c) || [], tint = col(c);
+      g.save(); g.translate(cx, cy); g.rotate(rot); g.scale(sc, sc);
+      g.shadowColor = "rgba(0,0,0,0.55)"; g.shadowBlur = 40; g.shadowOffsetY = 14;
+      g.fillStyle = "#efe6d6"; g.fillRect(-cw / 2, -ch / 2, cw, ch); g.shadowColor = "transparent";
+      cover(ph[0], -cw / 2 + pad, -ch / 2 + pad, cw - pad * 2, 780, (s / 10) % 1, tint, 1);
+      // stamp, top right, with perforated edges
+      const sx = cw / 2 - pad - 190, sy = -ch / 2 + pad + 26, sw = 164, sh = 196;
+      g.fillStyle = "#efe6d6"; g.fillRect(sx - 8, sy - 8, sw + 16, sh + 16);
+      g.fillStyle = tint; g.fillRect(sx, sy, sw, sh);
+      g.fillStyle = "#efe6d6"; for (let i = 0; i <= 10; i++) { [[sx + i * sw / 10, sy - 8], [sx + i * sw / 10, sy + sh + 8]].forEach(([px, py]) => { g.beginPath(); g.arc(px, py, 5, 0, 7); g.fill(); }); }
+      for (let i = 0; i <= 12; i++) { [[sx - 8, sy + i * sh / 12], [sx + sw + 8, sy + i * sh / 12]].forEach(([px, py]) => { g.beginPath(); g.arc(px, py, 5, 0, 7); g.fill(); }); }
+      const big = bigOf(c, k);
+      g.fillStyle = "#fff8ee"; g.textAlign = "center"; g.font = `${big.length > 7 ? 38 : 56}px Abel, sans-serif`; g.fillText(big, sx + sw / 2, sy + sh / 2 + 14);
+      g.font = '14px "Source Code Pro", monospace'; g.fillText("THREE CITIES", sx + sw / 2, sy + sh - 18);
+      // postmark over the stamp's corner
+      g.save(); g.translate(sx - 30, sy + sh - 10); g.rotate(-0.25); g.strokeStyle = "rgba(40,28,24,0.6)"; g.lineWidth = 3;
+      g.beginPath(); g.arc(0, 0, 78, 0, 7); g.stroke(); g.beginPath(); g.arc(0, 0, 62, 0, 7); g.stroke();
+      g.fillStyle = "rgba(40,28,24,0.7)"; g.textAlign = "center"; g.font = '16px "Source Code Pro", monospace';
+      g.fillText(c.name.toUpperCase().slice(0, 12), 0, -8); g.fillText(localTime(c), 0, 18);
+      for (let i = 0; i < 4; i++) { g.beginPath(); for (let xx = 80; xx < 260; xx += 6) g.lineTo(xx, -24 + i * 16 + Math.sin(xx * 0.08) * 5); g.stroke(); }
+      g.restore();
+      // the written side
+      const tx = -cw / 2 + pad + 6, ty = -ch / 2 + pad + 780 + 70;
+      g.textAlign = "left"; g.fillStyle = tint; g.font = '26px "Source Code Pro", monospace'; g.letterSpacing = "6px"; g.fillText((tags[k] || "").toUpperCase(), tx, ty);
+      g.letterSpacing = "4px"; g.fillStyle = "#2a1d18"; g.font = `${c.name.length > 12 ? 76 : 100}px Abel, sans-serif`; g.fillText(c.name.toUpperCase(), tx, ty + 100);
+      g.letterSpacing = "0px"; g.font = '24px "Source Code Pro", monospace'; g.fillStyle = "rgba(42,29,24,0.75)";
+      g.fillText(`${c.place || ""}`.slice(0, 44), tx, ty + 150); g.fillText(statOnly(k).slice(0, 48), tx, ty + 190);
+      g.restore();
+    }
+    function split(widths, s, focus, ls) {   // three columns of photo, widths in fractions of the frame
+      let x = 0;
+      cities.forEach((c, i) => {
+        const w = widths[i] * W, ph = photos.get(c) || [];
+        cover(ph[(Math.floor(s / 1.6) + i) % Math.max(1, ph.length)], x, 0, w + 1, H, (s / 7 + i * 0.3) % 1, col(c), focus == null || focus === i ? 0.95 : 0.55);
+        if (focus != null && focus !== i && w > 60) {   // the narrow columns carry their city's name, sideways
+          g.save(); g.translate(x + w / 2 + 14, H / 2); g.rotate(-Math.PI / 2); label(c.name.toUpperCase(), 0, 0, 44, { align: "center", spacing: 10, alpha: 0.85 }); g.restore();
+        }
+        g.fillStyle = "#100806"; g.fillRect(x + w - 3, 0, 6, H);
+        x += w;
+      });
+    }
+    let splitFrom = [1 / 3, 1 / 3, 1 / 3];
+    // the opening: the question, word by word
+    function opener(s, cs) {
+      const a = 1 - ease((s - 2.6) / 0.4);
+      cs.forEach((c, i) => cover((photos.get(c) || [])[0], i * W / 3, 0, W / 3 + 1, H, (s / 3 + i * 0.3) % 1, col(c), 0.35 * a));
+      // the sting: the skyline mark arrives on the first beat
+      const st = ease(s / 0.5);
+      g.save(); g.globalAlpha = a * st; g.translate(W / 2 - 106 * (0.8 + 0.2 * st), 360); g.scale(6 * (0.8 + 0.2 * st), 6 * (0.8 + 0.2 * st)); g.fillStyle = "#f3ece6"; g.fill(SKYLINE); g.restore();
+      label(`THREE CITIES${rEp ? " · NO. " + rEp.padStart(3, "0") : ""}`, W / 2, 560, 30, { align: "center", mono: true, spacing: 10, alpha: a * st * 0.85 });
+      // the question, wrapped and revealed a word at a time
+      const words = rQ.split(/\s+/), size = rQ.length > 48 ? 88 : 108, lines = [];
+      g.save(); g.font = `${size}px Abel, sans-serif`; g.letterSpacing = "2px";
+      let line = ""; words.forEach(wd => { const t = line ? line + " " + wd : wd; if (g.measureText(t).width > 920 && line) { lines.push(line); line = wd; } else line = t; }); if (line) lines.push(line);
+      g.restore();
+      let n = 0; const shown = Math.floor(clamp01((s - 0.45) / 1.5) * words.length + 0.999);
+      lines.forEach((ln, li) => {
+        const ws = ln.split(" "), vis = ws.filter(() => n++ < shown).join(" ");
+        label(vis, W / 2, 860 + li * size * 1.12 - (lines.length - 1) * size * 0.5, size, { align: "center", spacing: 2, alpha: a });
+      });
+      label(new Date().toLocaleDateString("en-GB", { weekday: "long", day: "numeric", month: "long" }), W / 2, 1420, 30, { align: "center", alpha: a * 0.7, mono: true });
+    }
     // the timeline
     let t0 = 0, run = false, rec = null, chunks = [], lastCut = 0, cutSeed = 0, idleAt = 1.6;
     function scene(now) {
@@ -4713,13 +4839,49 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
       cs.forEach(c => { c._reelPulse = Math.max(0, (c._reelPulse || 0) - 0.06); });
       const ph = c => photos.get(c) || [];
       if (s < 3) {   // title
-        const a = ease(s / 0.8) * (1 - ease((s - 2.5) / 0.5));
-        cs.forEach((c, i) => cover(ph(c)[0], i * W / 3, 0, W / 3 + 1, H, (s / 3 + i * 0.3) % 1, col(c), 0.55 * a));
-        label("TODAY'S", W / 2, 760, 64, { align: "center", alpha: a, spacing: 18 });
-        label("THREE CITIES", W / 2, 900, 132, { align: "center", alpha: a, spacing: 14 });
-        label((rTitle || (tags.length ? tags.join(" · ") : "three places, live weather")).toUpperCase(), W / 2, 1010, rTitle.length > 30 ? 28 : 34, { align: "center", alpha: a * 0.85, mono: true, spacing: rTitle.length > 30 ? 4 : 6 });
-        label(new Date().toLocaleDateString("en-GB", { weekday: "long", day: "numeric", month: "long" }), W / 2, 1090, 30, { align: "center", alpha: a * 0.7, mono: true });
-      } else if (s < 18) {   // one city at a time, the earlier ones left behind as fragments
+        if (rQ) opener(s, cs);
+        else {
+          const a = ease(s / 0.8) * (1 - ease((s - 2.5) / 0.5));
+          cs.forEach((c, i) => cover(ph(c)[0], i * W / 3, 0, W / 3 + 1, H, (s / 3 + i * 0.3) % 1, col(c), 0.55 * a));
+          label("TODAY'S", W / 2, 760, 64, { align: "center", alpha: a, spacing: 18 });
+          label("THREE CITIES", W / 2, 900, 132, { align: "center", alpha: a, spacing: 14 });
+          label((rTitle || (tags.length ? tags.join(" · ") : "three places, live weather")).toUpperCase(), W / 2, 1010, rTitle.length > 30 ? 28 : 34, { align: "center", alpha: a * 0.85, mono: true, spacing: rTitle.length > 30 ? 4 : 6 });
+          label(new Date().toLocaleDateString("en-GB", { weekday: "long", day: "numeric", month: "long" }), W / 2, 1090, 30, { align: "center", alpha: a * 0.7, mono: true });
+        }
+      } else if (s < 18 && rLook === "postcard") {   // postcards dropping onto a pile
+        const k = Math.min(2, Math.floor((s - 3) / 5)), ls = (s - 3) - k * 5;
+        const desk = g.createRadialGradient(W / 2, H * 0.45, 100, W / 2, H * 0.45, H * 0.8); desk.addColorStop(0, "#2a1d18"); desk.addColorStop(1, "#0c0605"); g.fillStyle = desk; g.fillRect(0, 0, W, H);
+        const rest = [[-0.07, -18], [0.05, 22], [-0.03, 0]];
+        for (let j = 0; j < k; j++) postcard(cs[j], j, W / 2 + rest[j][1], 880, 1, rest[j][0], s);
+        const d = ease(ls / 0.7), c = cs[k];
+        postcard(c, k, W / 2 + rest[k][1], -700 + (880 + 700) * d, 1, rest[k][0] + 0.25 * (1 - d), s);
+        ring(c, 170, 1720, 90 + 12 * (c._reelPulse || 0), ease((ls - 0.6) / 0.6) * 0.95);
+        label(c.w ? `${Math.abs(Math.round(c.w.t))}° makes a ${c.pattern.length}-step loop` : "", 300, 1735, 28, { alpha: ease((ls - 1) / 0.6), mono: true, color: col(c) });
+      } else if (s < 18 && rLook === "weather") {   // the weather acting on the picture
+        const k = Math.min(2, Math.floor((s - 3) / 5)), ls = (s - 3) - k * 5, c = cs[k];
+        const imgs = ph(c), img = imgs[Math.floor(ls / 2.5) % Math.max(1, imgs.length)];
+        weatherPhoto(c, k, img, 0, 0, W, H, s);
+        if (ls < 0.5) { g.fillStyle = `rgba(16,8,6,${1 - ls / 0.5})`; g.fillRect(0, 0, W, H); }
+        const ta = ease((ls - 0.4) / 0.6);
+        label((tags[k] || "").toUpperCase(), W / 2, 1060, 38, { align: "center", alpha: ta, mono: true, spacing: 10, color: col(c) });
+        label(c.name.toUpperCase(), W / 2, 1200, 150, { align: "center", alpha: ta, spacing: 10, max: 960 });
+        label(bigOf(c, k), W / 2, 1450, 230, { align: "center", alpha: ease((ls - 0.8) / 0.6), max: 960 });
+        label(statOnly(k), W / 2, 1560, 30, { align: "center", alpha: ease((ls - 1.1) / 0.6), mono: true });
+        label(`${localTime(c)} local · ${c.place || ""}`, W / 2, 1615, 26, { align: "center", alpha: ease((ls - 1.3) / 0.6) * 0.8, mono: true });
+        ring(c, W / 2, 520, 150 + 16 * (c._reelPulse || 0), ease((ls - 0.6) / 0.6) * 0.9);
+      } else if (s < 18 && rLook === "split") {   // three columns, the one speaking opens wide
+        const k = Math.min(2, Math.floor((s - 3) / 5)), ls = (s - 3) - k * 5, c = cs[k];
+        const target = [0.14, 0.14, 0.14]; target[k] = 0.72;
+        const e = ease(ls / 0.8), widths = target.map((t, i) => splitFrom[i] + (t - splitFrom[i]) * e);
+        if (ls > 4.9) splitFrom = target;
+        split(widths, s, k, ls);
+        const x0 = widths.slice(0, k).reduce((a, b) => a + b, 0) * W, cw = widths[k] * W, mid = x0 + cw / 2, ta = ease((ls - 0.5) / 0.6);
+        label((tags[k] || "").toUpperCase(), mid, 1080, 34, { align: "center", alpha: ta, mono: true, spacing: 8, color: col(c) });
+        label(c.name.toUpperCase(), mid, 1210, 118, { align: "center", alpha: ta, spacing: 8, max: cw - 60 });
+        label(bigOf(c, k), mid, 1460, 210, { align: "center", alpha: ease((ls - 0.8) / 0.6), max: cw - 60 });
+        label(statOnly(k), mid, 1560, 26, { align: "center", alpha: ease((ls - 1.1) / 0.6), mono: true });
+        ring(c, mid, 560, 140 + 14 * (c._reelPulse || 0), ease((ls - 0.6) / 0.6) * 0.9);
+      } else if (s < 18) {   // classic: one city at a time, the earlier ones left behind as fragments
         const k = Math.min(2, Math.floor((s - 3) / 5)), ls = (s - 3) - k * 5, c = cs[k];
         for (let j = 0; j < k; j++) {   // collage memory of the cities already shown
           const pc = cs[j], y = 160 + j * 260;
@@ -4740,7 +4902,41 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
         label(rStats[k] ? rStats[k] : `${localTime(c)} local · ${statLine(c, tags[k])}`, 84, 1690, rStats[k] && rStats[k].length > 44 ? 26 : 30, { alpha: ease((ls - 1.1) / 0.6), mono: true });
         label(c.w ? `${Math.abs(Math.round(c.w.t))}° makes a ${c.pattern.length}-step loop` : "", 84, 1745, 30, { alpha: ease((ls - 1.4) / 0.6), mono: true, color: col(c) });
         ring(c, 290, 760, 190 + 20 * (c._reelPulse || 0), ease((ls - 0.6) / 0.6) * 0.95);
-      } else if (s < 23) {   // all three together: strips that slide at their own pace, like their loops
+      } else if (s < 23 && rLook === "postcard") {   // the three postcards fanned out, nodding to their beats
+        const ls = s - 18, e = ease(ls / 0.8);
+        const desk = g.createRadialGradient(W / 2, H * 0.45, 100, W / 2, H * 0.45, H * 0.8); desk.addColorStop(0, "#2a1d18"); desk.addColorStop(1, "#0c0605"); g.fillStyle = desk; g.fillRect(0, 0, W, H);
+        [[-0.16, 330, 900], [0.0, 540, 840], [0.16, 750, 900]].forEach(([r, x, y], i) => {
+          const c = cs[i], p = c._reelPulse || 0;
+          postcard(c, i, W / 2 + (x - W / 2) * e, 880 + (y - 880) * e, 0.48 + 0.02 * p, r * e, s);
+        });
+        label("PLAYING TOGETHER, LIVE", W / 2, 400, 44, { align: "center", mono: true, spacing: 8, alpha: e });
+        cs.forEach((c, i) => ring(c, 230 + i * 310, 1480, 70 + 10 * (c._reelPulse || 0), e));
+      } else if (s < 23 && rLook === "weather") {   // three bands of weather, stacked
+        const ls = s - 18, bh = H / 3;
+        cs.forEach((c, i) => {
+          const imgs = ph(c);
+          weatherPhoto(c, i, imgs[(Math.floor(ls / 1.5) + i) % Math.max(1, imgs.length)], 0, i * bh, W, bh + 1, s);
+          g.fillStyle = "#100806"; g.fillRect(0, (i + 1) * bh - 3, W, 6);
+          label(c.name.toUpperCase(), 70, i * bh + bh / 2 + 10, 84, { spacing: 6, alpha: ease(ls / 0.8), max: 520 });
+          label((tags[i] || "").toUpperCase(), 74, i * bh + bh / 2 + 62, 24, { mono: true, spacing: 6, color: col(c), alpha: ease((ls - 0.3) / 0.8) });
+          label(bigOf(c, i), W - 70, i * bh + bh / 2 + 34, 110, { align: "right", alpha: ease((ls - 0.5) / 0.8), max: 380 });
+        });
+      } else if (s < 23 && rLook === "split") {   // three equal columns; one giant number if they all share it
+        const ls = s - 18, e = ease(ls / 0.8), widths = splitFrom.map(f => f + (1 / 3 - f) * e);
+        split(widths, s, null, ls);
+        const same = rBig.length === 3 && rBig.every(b => b && b === rBig[0]);
+        if (same) label(rBig[0], W / 2, 1000, 340, { align: "center", alpha: e });
+        let x = 0;
+        cs.forEach((c, i) => {
+          const w = widths[i] * W, mid = x + w / 2;
+          ring(c, mid, same ? 1300 : 760, 110 + 12 * (c._reelPulse || 0), e);
+          label(c.name.toUpperCase(), mid, same ? 1520 : 1080, 52, { align: "center", spacing: 4, alpha: e, max: w - 30 });
+          if (!same) label(bigOf(c, i), mid, 1200, 72, { align: "center", alpha: ease((ls - 0.3) / 0.8), max: w - 30 });
+          label((tags[i] || "").toUpperCase(), mid, same ? 1570 : 1270, 22, { align: "center", mono: true, color: col(c), alpha: ease((ls - 0.5) / 0.8) });
+          x += w;
+        });
+        if (!same) label("PLAYING TOGETHER, LIVE", W / 2, 400, 44, { align: "center", mono: true, spacing: 8, alpha: e });
+      } else if (s < 23) {   // classic: all three together, strips that slide at their own pace, like their loops
         const ls = s - 18;
         cs.forEach((c, i) => {
           const x = i * W / 3, sp = (c.pattern.length || 8) / 16;
@@ -4762,7 +4958,9 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
           label("Play your cities:", W / 2, 1380, 36, { align: "center", mono: true, alpha: ease((ls - 0.4) / 0.6) });
           label("threecities.forrestjamesmusic.com", W / 2, 1440, 40, { align: "center", mono: true, alpha: ease((ls - 0.4) / 0.6) });
         } else label("COMING SOON", W / 2, 1420, 56, { align: "center", mono: true, spacing: 14, alpha: ease((ls - 0.4) / 0.6) });
+        if (rEp) label(`NO. ${rEp.padStart(3, "0")}`, W / 2, 1520, 26, { align: "center", mono: true, spacing: 8, alpha: ease((ls - 0.6) / 0.6) * 0.7 });
       }
+      if (s >= 3 && s < 3.05) splitFrom = [1 / 3, 1 / 3, 1 / 3];
       // grain and a soft vignette over everything
       g.save(); g.globalAlpha = 0.5; g.fillStyle = g.createPattern(grainCv, "repeat"); g.translate(-Math.random() * 256, -Math.random() * 256); g.fillRect(0, 0, W + 256, H + 256); g.restore();
       const vg = g.createRadialGradient(W / 2, H / 2, H * 0.3, W / 2, H / 2, H * 0.75); vg.addColorStop(0, "rgba(0,0,0,0)"); vg.addColorStop(1, "rgba(0,0,0,0.45)");
@@ -4824,15 +5022,37 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
       closed = true; run = false;
       try { if (rec && rec.state !== "inactive") { rec.onstop = null; rec.stop(); } } catch (e) {}   // closing mid-take throws the take away
       wrap.remove();
-      try { const u = new URL(location.href); ["reel", "rt", "rs", "rp"].forEach(k => u.searchParams.delete(k)); history.replaceState(null, "", u); } catch (e) {}
+      try { const u = new URL(location.href); ["reel", "rt", "rs", "rp", "rq", "rl", "rb", "ep", "rsnd"].forEach(k => u.searchParams.delete(k)); history.replaceState(null, "", u); } catch (e) {}
     }
     document.addEventListener("keydown", e => { if (e.key === "Escape" && !closed && !run) closeReel(); });
+    // Each theme can bring its own sound: the three voices, the chord bed, the drums and the two pedals.
+    // Set through the page's own controls, so everything stays in step (and the share link knows).
+    const SOUND_PRESETS = {
+      cosy:     { voices: ["felt", "flute", "bowed"], chord: "bowed", drums: false, rev: "room", del: "tape" },
+      drama:    { voices: ["junokeys", "pluck", "sub"], chord: "strings", drums: "808", rev: "cathedral", del: "dub" },
+      calm:     { voices: ["bowed", "bell", "pad"], chord: "glass", drums: false, rev: "hall", del: "analog" },
+      fog:      { voices: ["graincloud", "flute", "bowed"], chord: "air", drums: false, rev: "cathedral", del: "tape" },
+      bright:   { voices: ["marimba", "kalimba", "pluck"], chord: "warm", drums: "soft", rev: "plate", del: "pingpong" },
+      night:    { voices: ["epiano", "bell", "sub"], chord: "choir", drums: "minimal", rev: "hall", del: "analog" },
+      playful:  { voices: ["kalimba", "woodblock", "pluck"], chord: null, drums: "lofi", rev: "room", del: "slap" },
+      extremes: { voices: null, chord: null, drums: "808", rev: "plate", del: "pingpong" }
+    };
+    function applySoundPreset(name) {
+      const P = SOUND_PRESETS[name]; if (!P) return;
+      const set = (id, v) => { const e = document.getElementById(id); if (e && v != null && [...(e.options || [])].some(o => o.value === v)) { e.value = v; e.dispatchEvent(new Event("change", { bubbles: true })); e.dispatchEvent(new Event("input", { bubbles: true })); } };
+      const lamp = (id, on) => { const b = document.getElementById(id); if (b && (b.getAttribute("aria-pressed") === "true") !== on) b.click(); };
+      if (P.voices) document.querySelectorAll("select[id$='-sound']").forEach((sel, i) => { if (P.voices[i]) { sel.value = P.voices[i]; sel.dispatchEvent(new Event("change", { bubbles: true })); } });
+      lamp("chordOn", !!P.chord); if (P.chord) set("chordSound", P.chord);
+      lamp("grooveOn", !!P.drums); if (P.drums) set("grooveKit", P.drums);
+      set("fxRevType", P.rev); set("fxStyle", P.del);
+    }
     // get photos once the cities are in place
     let tries = 0;
     (async function ready() {
       const wanted = (qs.get("cities") || "").split(",").map(s => s.split("@")[0].trim().toLowerCase()).filter(Boolean);
       const settled = cities.every(c => c.w && c.pattern && c.pattern.length) && (!wanted.length || wanted.every((n, i) => cities[i] && cities[i].name.toLowerCase() === n));
       if (!settled && tries++ < 40) { setTimeout(ready, 500); return; }
+      applySoundPreset(qs.get("rsnd"));
       await Promise.all(cities.map(async (c, i) => photos.set(c, await photosFor(c, tags[i], rFlav[i]))));
       status.textContent = "Ready. Preview it, then record. About 26 seconds.";
     })();
