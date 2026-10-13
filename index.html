@@ -2381,9 +2381,12 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
     djHP = ac.createBiquadFilter(); djHP.type = "highpass"; djHP.frequency.value = 20; djHP.Q.value = 0.9;
     // below everything: a cut under 35 Hz (rumble nobody hears but every speaker has to push), and after the limiter
     // a soft clipper, so anything that still slips past rounds off gently instead of cracking
-    const rumble = ac.createBiquadFilter(); rumble.type = "highpass"; rumble.frequency.value = MOBILE_OUT ? 55 : 35; rumble.Q.value = 0.7;
+    const rumble = ac.createBiquadFilter(); rumble.type = "highpass"; rumble.frequency.value = MOBILE_OUT ? 60 : 35; rumble.Q.value = 0.7;
+    // Phones: full level, but the deep lows (what makes a tiny speaker crackle) are eased down before the compressor,
+    // so the loudness goes into the range a phone can actually play
+    const phoneLows = ac.createBiquadFilter(); phoneLows.type = "lowshelf"; phoneLows.frequency.value = 160; phoneLows.gain.value = MOBILE_OUT ? -5 : 0;
     const soft = ac.createWaveShaper(); { const n = 2048, cv = new Float32Array(n); for (let i = 0; i < n; i++) { const x = (i / (n - 1)) * 2 - 1; cv[i] = Math.abs(x) < 0.8 ? x : Math.sign(x) * (0.8 + 0.2 * Math.tanh((Math.abs(x) - 0.8) / 0.2)); } soft.curve = cv; soft.oversample = "2x"; }
-    master.connect(djLP).connect(djHP).connect(rumble).connect(comp); const trim = ac.createGain(); trim.gain.value = MOBILE_OUT ? 0.63 : 1;   // phones: 4 dB of headroom after the limiter (it adds its own makeup, so the trim goes after it)
+    master.connect(djLP).connect(djHP).connect(rumble).connect(phoneLows).connect(comp); const trim = ac.createGain(); trim.gain.value = 1;
     limiter.connect(trim).connect(soft).connect(ac.destination); outNode = soft;
     applyDJ();
     buildEffects();
