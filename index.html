@@ -319,6 +319,19 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
 .suggest.sheet .where { font-size: 13px; }
 .mood { display: grid; gap: 12px; justify-items: center; padding: 4px 0 8px; }
 .mood-label { font-size: 11px; text-transform: uppercase; letter-spacing: 0.2em; color: var(--ink-dim); }
+.quiz-res { width: min(560px, 100%); display: grid; gap: 10px; margin-top: 4px; }
+.quiz-head { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 4px 12px; font: 11px var(--mono); letter-spacing: 0.14em; color: var(--ink-dim); text-transform: uppercase; }
+.quiz-bar { display: grid; grid-template-columns: minmax(0, 150px) 1fr 44px; gap: 12px; align-items: center; font-size: 15px; }
+.quiz-bar .nm { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.quiz-bar .me { font: 11px var(--mono); color: #e07a4f; letter-spacing: 0.08em; }
+.quiz-bar .tr { height: 10px; border-radius: 5px; background: rgba(243,236,230,0.1); overflow: hidden; }
+.quiz-bar .tr i { display: block; height: 100%; border-radius: 5px; transition: width 0.8s ease; }
+.quiz-bar .pc { text-align: right; font-family: var(--mono); font-size: 13px; }
+.quiz-wait { margin: 0; text-align: center; font-size: 13px; color: var(--ink-dim); }
+.quiz-opt { display: flex; gap: 8px; align-items: flex-start; justify-content: center; font-size: 12px; color: var(--ink-dim); line-height: 1.5; text-align: left; }
+.quiz-opt input { margin-top: 3px; accent-color: #e07a4f; }
+.quiz-opt a { color: var(--ink-dim); }
+@media (max-width: 600px) { .quiz-bar { grid-template-columns: minmax(0, 110px) 1fr 40px; font-size: 14px; } }
 .mood-q { font-family: var(--display); font-size: clamp(26px, 3.8vw, 40px); line-height: 1.15; letter-spacing: 0.05em; text-align: center;
           min-height: 3.45em; max-width: 26ch; display: flex; align-items: center; justify-content: center; text-wrap: balance; transition: opacity 0.6s ease; }
 .mood-q.fading { opacity: 0; }
@@ -835,10 +848,16 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
     </div>
     <canvas class="mood-pad" id="moodPad" tabindex="0" aria-label="Memory map. Drag the dot towards the city where it happened. Arrow keys move it too."></canvas>
     <div class="mood-row">
-      <span>Drag the light towards where it happened. Each answer leaves a mark, kept only on this device.</span>
+      <span id="moodHint">Drag the light towards where it happened. Each answer leaves a mark, kept only on this device.</span>
       <button id="moodClear" type="button">Clear my marks</button>
       <button id="moodPause" type="button" aria-pressed="false">Pause questions</button>
       <button id="moodDeep" type="button" aria-pressed="false" title="Adds questions about loss, endings and mortality">Deeper questions</button>
+    </div>
+    <div class="quiz-res" id="quizRes" hidden>
+      <div class="quiz-head"><span>What everyone said</span><span id="quizCount"></span></div>
+      <div id="quizBars"></div>
+      <p class="quiz-wait" id="quizWait">Pick a city to see what everyone said.</p>
+      <label class="quiz-opt"><input type="checkbox" id="quizShare" checked> <span>Add my answers to the results. Anonymous: just a count for each city, nothing about you. <a href="/manual#quiz">How it works</a></span></label>
     </div>
   </section>
 
@@ -4235,6 +4254,76 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
     "Where does the person you were still walk around?", "Where did you feel the universe was paying attention?",
     "Where did you feel completely ordinary, and fine with it?", "Where will you be remembered?"
   ];
+  // ----- the city quiz: when the cities aren't mine, the map asks about the places themselves -----
+  // Answers can join everyone else's as plain counts per city (see quiz-worker/ in the repo). Keep the ids in step with the worker.
+  const QUIZ = [
+    ["food", "Where's the best food?"], ["move", "Where would you move tomorrow?"], ["romantic", "Which one is the most romantic?"],
+    ["night-out", "Where's the best night out?"], ["coffee", "Where's the best coffee?"], ["first-date", "Where would you go on a first date?"],
+    ["night", "Which one is prettiest at night?"], ["kid", "Where would you want to grow up?"], ["music", "Where's the best music?"],
+    ["walk", "Where would you go for a long walk?"], ["friendly", "Which one is the friendliest?"], ["lost", "Where would you like to get lost?"],
+    ["weekend", "Where would you spend a long weekend?"], ["sunset", "Where's the best sunset?"], ["underrated", "Which one is the most underrated?"],
+    ["song", "Where would you write a song?"], ["rainy", "Where would you spend a rainy day?"], ["new-year", "Where would you see in the New Year?"],
+    ["retire", "Where would you grow old?"], ["sound", "Which one sounds best right now?"]
+  ];
+  const QUIZ_TEXT = Object.fromEntries(QUIZ), QUIZ_LIVE = "";   // the quiz server's address, once it's running
+  const QUIZ_API = (() => { const o = QS.get("quizapi"); return o && /^http:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(o) ? o : QUIZ_LIVE; })();   // a local server, for testing
+  const isMyCities = () => cities.map(c => c.name).join("|") === DEFAULT_NAMES.join("|");
+  let quizMode = null, quizPick = -1, quizSent = new Set(), quizSeq = 0;
+  const quizKey = c => `${c.name}|${c.place || ""}`.toLowerCase();
+  const quizShare = document.getElementById("quizShare");
+  try { if (localStorage.getItem("tc-quiz-share") === "0") quizShare.checked = false; } catch (e) {}
+  quizShare.addEventListener("change", () => { try { localStorage.setItem("tc-quiz-share", quizShare.checked ? "1" : "0"); } catch (e) {} });
+  function syncMoodMode() {
+    const q = !isMyCities();
+    if (q === quizMode) return false;
+    quizMode = q;
+    document.querySelector(".mood .mood-label").textContent = q ? "City quiz" : "Memory map";
+    document.getElementById("moodHint").textContent = q ? "Drag the light to your answer. The music leans that way." : "Drag the light towards where it happened. Each answer leaves a mark, kept only on this device.";
+    ["moodClear", "moodDeep"].forEach(id => { document.getElementById(id).hidden = q; });
+    document.getElementById("quizRes").hidden = !(q && QUIZ_API);
+    pad.setAttribute("aria-label", q ? "City quiz. Drag the light to the city that answers the question. Arrow keys move it too." : "Memory map. Drag the dot towards the city where it happened. Arrow keys move it too.");
+    order = []; qIndex = -1;
+    return true;
+  }
+  const qText = id => QUIZ_TEXT[id] || id;
+  function quizReset() {
+    quizPick = -1; quizSeq++;
+    document.getElementById("quizBars").innerHTML = ""; document.getElementById("quizCount").textContent = "";
+    document.getElementById("quizWait").hidden = false;
+  }
+  function quizShow(counts, pick) {
+    const rates = counts.map(x => x.shown ? x.picked / x.shown : 0), sum = rates.reduce((a, b) => a + b, 0), n = counts.reduce((a, x) => a + x.picked, 0);
+    const pct = rates.map(r => sum ? Math.round(100 * r / sum) : 33);
+    const box = document.getElementById("quizBars"); box.innerHTML = "";
+    cities.forEach((c, i) => {
+      const row = document.createElement("div"); row.className = "quiz-bar";
+      const nm = document.createElement("span"); nm.className = "nm"; nm.textContent = c.name;
+      if (i === pick) { const me = document.createElement("span"); me.className = "me"; me.textContent = " · you"; nm.appendChild(me); }
+      const tr = document.createElement("span"); tr.className = "tr"; const bar = document.createElement("i"); bar.style.background = colorOf(c); bar.style.width = "0%"; tr.appendChild(bar);
+      const pc = document.createElement("span"); pc.className = "pc"; pc.textContent = pct[i] + "%";
+      row.append(nm, tr, pc); box.appendChild(row);
+      requestAnimationFrame(() => requestAnimationFrame(() => { bar.style.width = pct[i] + "%"; }));
+    });
+    document.getElementById("quizCount").textContent = n < 5 ? "You're one of the first" : `${n.toLocaleString("en-GB")} answers`;
+    document.getElementById("quizWait").hidden = true;
+  }
+  async function quizAnswer() {
+    if (!quizMode || !QUIZ_API || !dot || qIndex < 0) return;
+    const w = dot.w, best = w.indexOf(Math.max(...w));
+    if (w[best] < 0.55 || best === quizPick) return;   // only a clear choice counts
+    quizPick = best;
+    const qid = order[qIndex], keys = cities.map(quizKey), sig = qid + "@" + keys.join("~"), seq = quizSeq;
+    try {
+      let res;
+      if (quizShare.checked && !quizSent.has(sig)) {   // one count per question per visit, the first clear choice
+        quizSent.add(sig);
+        res = await fetch(QUIZ_API + "/answer", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ q: qid, c: keys, p: best }) }).then(r => r.json());
+      } else {
+        res = await fetch(`${QUIZ_API}/results?q=${encodeURIComponent(qid)}&c=${keys.map(encodeURIComponent).join("~")}`).then(r => r.json());
+      }
+      if (seq === quizSeq && res && res.cities) quizShow(res.cities, quizPick);
+    } catch (e) { if (seq === quizSeq) document.getElementById("quizWait").textContent = "The results aren't reachable just now."; }
+  }
   const FOLLOW = [1.2, 5, 14];   // seconds each city takes to respond: quick, steady, slow
   const pad = document.getElementById("moodPad"), pg = pad.getContext("2d");
   const qEl = document.getElementById("moodQ"), ringEl = document.getElementById("moodRing");
@@ -4258,14 +4347,17 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
 
   function shuffle(a) { for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; }
   function nextQuestion() {
-    if (movedThisQuestion && dot && qIndex >= 0) addMark(dot.w.slice(), order[qIndex]);
+    if (movedThisQuestion && dot && qIndex >= 0 && !quizMode) addMark(dot.w.slice(), order[qIndex]);
     movedThisQuestion = false;
-    if (!order.length || qIndex >= order.length - 1) { order = shuffle(QUESTIONS.concat(deep ? DEEP : [])); qIndex = -1; if (firstRound) { order.splice(order.indexOf(FIRST_Q), 1); order.unshift(FIRST_Q); firstRound = false; } }
+    syncMoodMode(); quizReset();
+    if (quizMode) { if (!order.length || qIndex >= order.length - 1) { order = shuffle(QUIZ.map(q => q[0])); qIndex = -1; } }
+    else if (!order.length || qIndex >= order.length - 1) { order = shuffle(QUESTIONS.concat(deep ? DEEP : [])); qIndex = -1; if (firstRound) { order.splice(order.indexOf(FIRST_Q), 1); order.unshift(FIRST_Q); firstRound = false; } }
     qIndex++;
     qStart = performance.now();
-    if (reduceMotion) { qEl.textContent = order[qIndex]; qEl.classList.toggle("long", order[qIndex].length > 42); return; }
+    const text = quizMode ? qText(order[qIndex]) : order[qIndex];
+    if (reduceMotion) { qEl.textContent = text; qEl.classList.toggle("long", text.length > 42); return; }
     qEl.classList.add("fading");
-    setTimeout(() => { qEl.textContent = order[qIndex]; qEl.classList.toggle("long", order[qIndex].length > 42); qEl.classList.remove("fading"); }, 600);
+    setTimeout(() => { qEl.textContent = text; qEl.classList.toggle("long", text.length > 42); qEl.classList.remove("fading"); }, 600);
   }
 
   // Triangle geometry in CSS pixels, with room for each city's name
@@ -4440,7 +4532,7 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
   }
   pad.addEventListener("pointerdown", e => { dragging = true; pad.setPointerCapture(e.pointerId); pointer(e); });
   pad.addEventListener("pointermove", e => { if (dragging) pointer(e); });
-  pad.addEventListener("pointerup", () => { dragging = false; });
+  pad.addEventListener("pointerup", () => { dragging = false; quizAnswer(); });
   pad.addEventListener("pointercancel", () => { dragging = false; });
   pad.addEventListener("keydown", e => {
     const step = 14, k = { ArrowLeft: [-step, 0], ArrowRight: [step, 0], ArrowUp: [0, -step], ArrowDown: [0, step] }[e.key];
@@ -4450,6 +4542,7 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
     setDot(toWeights(x + k[0], y + k[1]));
     const [nx, ny] = toXY(dot.w);
     trailTo(nx, ny);
+    clearTimeout(pad._qa); pad._qa = setTimeout(quizAnswer, 900);
   });
   document.getElementById("moodNext").addEventListener("click", nextQuestion);
   document.getElementById("moodDeep").addEventListener("click", e => {
@@ -4487,7 +4580,7 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
     const [dx, dy] = toXY(dot.w);
 
     // swapped cities bring new photos and new marks
-    if (markKey() !== marksFor) { loadMarks(); atlasDirty = true; }
+    if (markKey() !== marksFor) { loadMarks(); atlasDirty = true; if (syncMoodMode()) nextQuestion(); }
     const sig = cities.map(photoOf).join("|");
     if (sig !== photoSig) { photoSig = sig; placesDirty = true; }
     if (placesDirty) buildPlaces();
