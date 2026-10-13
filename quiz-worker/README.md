@@ -6,7 +6,8 @@ A tiny Cloudflare Worker with a D1 database. It keeps two counts per question an
 ## Set it up in the Cloudflare dashboard (about 10 minutes)
 
 1. **Make the database.** Storage & Databases → D1 → Create. Name it `three-cities-quiz`.
-2. **Make the table.** Open the database → Console. Paste everything in `schema.sql` and run it.
+2. **Make the table.** Open the database → Console. Paste the one line in `schema.sql` and run it.
+   (One row per question and city: q, city, shown, picked. No people, no times, no addresses.)
 3. **Make the Worker.** Compute (Workers) → Create → Start with Hello World. Name it `three-cities-quiz` and deploy.
 4. **Paste the code.** Edit code → replace everything with `worker.js` → Deploy.
 5. **Connect the database.** The Worker → Settings → Bindings → Add → D1 database.
