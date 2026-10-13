@@ -87,7 +87,7 @@ const SHOTS = {};
 ["hero", "cards", "mine-japan", "mine-form", "rack", "fx", "drums", "more", "map", "record", "phone-cards", "phone-cards2", "phone-hero"].forEach(n => {
   const im = new Image(); im.src = `/teaser-shots/${n}.jpg`; SHOTS[n] = im;
 });
-const photos = [[], [], []];
+const photos = [[], [], []], HOME = ["Boston", "Copenhagen", "London"], homePhotos = [[], [], []];
 async function photosFor(name) {
   const out = [];
   for (const q of [`${name} skyline`, `${name} street`, `${name} night`, `${name} landmark`]) {
@@ -110,7 +110,7 @@ async function photosFor(name) {
 let photosReady = Promise.resolve();
 function loadPhotos() {
   $("status").textContent = "Finding photos of " + CITY.map(c => c.name).join(", ") + "…";
-  photosReady = Promise.all(CITY.map(async (c, i) => { photos[i] = await photosFor(c.name); })).then(() => { $("status").textContent = audioBuf ? "Ready. Preview it, then record." : "Photos found. Now load your recording."; });
+  photosReady = Promise.all(CITY.map(async (c, i) => { photos[i] = await photosFor(c.name); }).concat(HOME.map(async (h, i) => { homePhotos[i] = await photosFor(h); }))).then(() => { $("status").textContent = audioBuf ? "Ready. Preview it, then record." : "Photos found. Now load your recording."; });
 }
 
 // ---------- drawing ----------
@@ -303,6 +303,136 @@ const CH = [
     { say: () => ["Record it."], size: 150, tile: T_("record", 240, 860, 600, 408, "rect", 0.4, "contain"), note: () => "SAVE IT AS A SMALL FILE, OR FULL QUALITY WAV" },
     { say: () => ["Share it."], size: 150, tile: (p) => shareBubble(p - 0.35), note: () => "A LINK THAT PLAYS YOUR CITIES, WITH YOUR SOUNDS" }] }
 ];
+// ---------- the product section: one ink, one accent, big type, hard cuts ----------
+const INK = "#f3ece6", EMBER = "#e07a4f";
+// a line of type that rises out of its own baseline
+function rise(text, x, y, size, p, o = {}) {
+  const k = ease(p / 0.28); if (k <= 0) return;
+  g.save(); g.beginPath(); g.rect(0, y - size * 0.95, W, size * 1.12); g.clip();
+  g.font = `${size}px Abel, sans-serif`; g.letterSpacing = (o.spacing ?? 2) + "px"; g.textAlign = o.align || "left";
+  if (o.max) { const mw = g.measureText(text).width; if (mw > o.max) { size = Math.floor(size * o.max / mw); g.font = `${size}px Abel, sans-serif`; } }
+  g.fillStyle = o.color || INK; g.fillText(text, x, y + size * 0.9 * (1 - k));
+  g.restore();
+}
+function micro(text, x, y, o = {}) { label(text, x, y, o.size || 24, { mono: true, spacing: o.spacing ?? 5, align: o.align, color: o.color || INK, alpha: o.alpha ?? 0.7, shadow: 0 }); }
+// a hard-edged slice of the real interface, full width, wiped in from the left
+function slab(key, y, h, p, o = {}) {
+  const [name, sx, sy, sw, sh] = CROP[key], im = SHOTS[name]; if (!im || !im.naturalWidth) return;
+  const k = ease(p / 0.22); if (k <= 0) return;
+  const x = o.x ?? 0, w = o.w ?? W;
+  g.save(); g.beginPath(); g.rect(x, y, w * k, h); g.clip();
+  const sc = Math.max(w / sw, h / sh), dw = sw * sc, dh = sh * sc;
+  g.drawImage(im, sx, sy, sw, sh, x + (w - dw) / 2, y + (h - dh) / 2, dw, dh);
+  if (o.wash) { g.globalCompositeOperation = "multiply"; g.fillStyle = o.wash; g.fillRect(x, y, w, h); g.globalCompositeOperation = "source-over"; }
+  g.restore();
+}
+// full-bleed duotone photo, one warm tone for everything
+function photoBleed(img, x, y, w, h, drift, a = 1) { cover(img, x, y, w, h, drift, "#c9a48a", a); }
+// a city's loop drawn large, its playhead stepping with the music
+function bigRing(cx, cy, r, steps, hits, t, pulse, a = 1) {
+  g.save(); g.globalAlpha = a;
+  g.strokeStyle = "rgba(243,236,230,0.25)"; g.lineWidth = 2; g.beginPath(); g.arc(cx, cy, r, 0, 7); g.stroke();
+  const play = Math.floor(t * 4) % steps;
+  for (let k = 0; k < steps; k++) {
+    const an = -Math.PI / 2 + k * 2 * Math.PI / steps, hit = (k * hits) % steps < hits, on = k === play;
+    g.fillStyle = on ? EMBER : hit ? INK : "rgba(243,236,230,0.3)";
+    g.beginPath(); g.arc(cx + r * Math.cos(an), cy + r * Math.sin(an), hit ? (on ? 26 + 18 * pulse : 18) : 7, 0, 7); g.fill();
+  }
+  g.restore();
+}
+const SCENES = [
+  { name: "home", draw(ls, d, t, pulse) {   // three cities I've called home
+      HOME.forEach((h, i) => { const k = ease((ls - i * 0.25) / 0.4); if (k > 0) photoBleed(homePhotos[i][0], i * W / 3, 0, W / 3 + 1, H, (t / 9 + i * 0.3) % 1, 0.9 * k); });
+      g.fillStyle = "rgba(10,6,5,0.35)"; g.fillRect(0, 0, W, H);
+      HOME.forEach((h, i) => { g.save(); g.translate(i * W / 3 + W / 6 + 30, H - 120); g.rotate(-Math.PI / 2); rise(h.toUpperCase(), 0, 0, 96, ls - 0.5 - i * 0.2, { spacing: 12 }); g.restore(); });
+      rise("THREE CITIES", 60, 380, 150, ls - 1.2, { max: 960 });
+      rise("I'VE CALLED", 60, 530, 150, ls - 1.45, { max: 960 });
+      rise("HOME", 60, 680, 150, ls - 1.7, { color: EMBER });
+      micro("MEMORY / WEATHER / GENERATIVE MUSIC", 60, 790, { alpha: ease((ls - 2.2) / 0.4) * 0.85 });
+    } },
+  { name: "live", draw(ls, d, t, pulse) {   // live weather, real music: the cards, one city at a time
+      const keys = ["cardC", "cardH", "cardM"], per = d / 3, i = Math.min(2, Math.floor(ls / per)), li = ls - i * per;
+      slab(keys[i], 640, 1280, li + (i ? 0.3 : 0), { x: 180, w: 900 });
+      g.fillStyle = "#100806"; g.fillRect(0, 640, 180, 1280);
+      rise("LIVE", 60, 260, 230, ls, { max: 960 }); rise("WEATHER.", 60, 470, 230, ls - 0.15, { max: 960 });
+      rise("REAL MUSIC.", 60, 600, 110, ls - 0.4, { color: EMBER, max: 960 });
+      micro(`${CITY[i].name.toUpperCase()}  ${CITY[i].time}  ${CITY[i].temp}°`, 60, 1880, { alpha: 0.85 });
+      g.save(); g.translate(130, 1500); g.rotate(-Math.PI / 2); micro(`0${i + 1} / 03`, 0, 0, { alpha: 0.6 }); g.restore();
+    } },
+  { name: "loop", draw(ls, d, t, pulse) {   // the loop, drawn big
+      const temp = Math.max(2, Math.abs(Math.round(+CITY[0].temp || 8)));
+      bigRing(W / 2, 1180, 400, temp, Math.max(1, Math.round(temp * 0.4)), t, pulse, ease((ls - 0.2) / 0.4));
+      rise(`${CITY[0].temp}°`, W / 2, 1290, 300, ls - 0.5, { align: "center" });
+      rise("THE TEMPERATURE", 60, 260, 108, ls, { max: 960 });
+      rise("IS THE LOOP.", 60, 380, 108, ls - 0.15, { color: EMBER, max: 960 });
+      micro(`${CITY[0].temp}° IN ${CITY[0].name.toUpperCase()} = ${temp} STEPS`, 60, 1810, { alpha: ease((ls - 1) / 0.4) * 0.85 });
+    } },
+  { name: "sky", draw(ls, d, t, pulse) {   // what lands in it
+      rise("THE SKY", 60, 300, 230, ls, { max: 960 }); rise("DECIDES", 60, 520, 230, ls - 0.15, { max: 960 }); rise("WHAT LANDS.", 60, 650, 110, ls - 0.35, { color: EMBER, max: 960 });
+      slab("chips", 860, 520, ls - 0.6, { x: 60, w: 1020 });
+      micro("HUMIDITY / WIND / CLOUD / RAIN", 60, 1500, { alpha: ease((ls - 1) / 0.4) * 0.85 });
+    } },
+  { name: "night", draw(ls, d, t, pulse) {   // night: a city asleep
+      photoBleed(photos[1][1] || photos[1][0], 0, 0, W, H, (t / 12) % 1, 0.75);
+      g.fillStyle = "rgba(8,6,10,0.55)"; g.fillRect(0, 0, W, H);
+      rise(CITY[1].time, W / 2, 700, 320, ls, { align: "center" });
+      rise(`${CITY[1].name.toUpperCase()} IS ASLEEP.`, W / 2, 860, 80, ls - 0.3, { align: "center", max: 960 });
+      ["SOFTER", "SLOWER", "FEWER NOTES"].forEach((w2, i) => rise(w2, W / 2, 1180 + i * 130, 110, ls - 0.9 - i * 0.3, { align: "center", color: i === 2 ? EMBER : INK }));
+      micro("EVERY CITY DRIFTS OFF AFTER DARK", W / 2, 1720, { align: "center", alpha: ease((ls - 2) / 0.4) * 0.8 });
+    } },
+  { name: "yours", draw(ls, d, t, pulse) {   // your cities
+      const second = ls > d * 0.55, l2 = ls - d * 0.55;
+      if (!second) {
+        rise("TYPE A", 60, 280, 200, ls, { max: 960 }); rise("COUNTRY.", 60, 470, 200, ls - 0.15, { color: EMBER, max: 960 });
+        slab("japan", 640, 1060, ls - 0.5, { x: 240, w: 840 });
+      } else {
+        rise("OR LET IT", 60, 280, 170, l2); rise("SURPRISE", 60, 450, 170, l2 - 0.12); rise("YOU.", 60, 620, 170, l2 - 0.24, { color: EMBER });
+        slab("surprise", 900, 330, l2 - 0.4, { x: 0, w: W });
+        micro("CITIES AWAKE, OR ASLEEP, RIGHT NOW", 60, 1360, { alpha: ease((l2 - 0.8) / 0.4) * 0.85 });
+      }
+    } },
+  { name: "studio", draw(ls, d, t, pulse, t0) {   // one word, one detail, cut on the beat
+      const V = [["CHORDS", "filter"], ["REVERB", "reverb"], ["DELAY", "delay"], ["DRUMS", "drums"]];
+      const n = Math.min(V.length - 1, Math.floor(ls / (d / V.length))), ln = ls - n * d / V.length, v = V[n];
+      if (n % 2 === 1) { g.fillStyle = INK; g.fillRect(0, 0, W, H); }   // every other cut flips to light
+      slab(v[1], 760, 520, ln - 0.1, { x: 0, w: W });
+      rise(v[0], 40, 600, 280, ln, { color: n % 2 === 1 ? "#100806" : INK, max: 1000 });
+      micro("A STUDIO, WHEN YOU WANT ONE", 60, 1500, { color: n % 2 === 1 ? "#100806" : INK, alpha: 0.8 });
+    } },
+  { name: "memory", draw(ls, d, t, pulse) {   // the memory map
+      slab("map", 760, 1160, ls - 0.1, { x: 0, w: W });
+      rise("WHERE WERE", 60, 300, 170, ls - 0.4, { max: 960 }); rise("YOU", 60, 470, 170, ls - 0.55); rise("HAPPIEST?", 60, 640, 170, ls - 0.7, { color: EMBER, max: 960 });
+      micro("DRAG THE LIGHT. THE MUSIC FOLLOWS.", 60, 1820, { alpha: ease((ls - 1.4) / 0.4) * 0.85 });
+    } },
+  { name: "keep", draw(ls, d, t, pulse) {   // record, then share
+      const second = ls > d * 0.45, l2 = ls - d * 0.45;
+      if (!second) {
+        rise("RECORD", 60, 360, 250, ls, { max: 960 }); rise("IT.", 60, 600, 250, ls - 0.15, { color: EMBER });
+        slab("record", 820, 600, ls - 0.4, { x: 140, w: 940 });
+      } else {
+        rise("SHARE", 60, 360, 250, l2, { max: 960 }); rise("IT.", 60, 600, 250, l2 - 0.15, { color: EMBER });
+        const a = ease((l2 - 0.4) / 0.3), names = CITY.map(c => c.name).join(", ").replace(/, ([^,]*)$/, " and $1");
+        g.save(); g.globalAlpha = a; g.fillStyle = INK; g.fillRect(60, 820, 960, 520); g.restore();
+        if (a > 0) {
+          g.save(); g.globalAlpha = a; g.translate(100, 870); g.scale(4, 4); g.fillStyle = "#100806"; g.fill(SKYLINE); g.restore();
+          label("THREE CITIES · FORREST JAMES", 100, 1030, 34, { mono: true, spacing: 4, color: "#100806", alpha: a, shadow: 0 });
+          g.save(); g.font = '36px Abel, sans-serif'; const words2 = `Here's what ${names} sound like together right now. Add the places you've lived.`.split(" "); const lines = []; let line = "";
+          words2.forEach(w2 => { const tt = line ? line + " " + w2 : w2; if (g.measureText(tt).width > 860 && line) { lines.push(line); line = w2; } else line = tt; }); lines.push(line); g.restore();
+          lines.slice(0, 4).forEach((ln, i) => label(ln, 100, 1110 + i * 50, 36, { color: "#100806", alpha: a, shadow: 0 }));
+        }
+        micro("A LINK THAT PLAYS YOUR CITIES", 60, 1440, { alpha: ease((l2 - 0.8) / 0.4) * 0.85 });
+      }
+    } }
+];
+function product(ls, span, t, pulse) {
+  const d = span / SCENES.length, i = Math.min(SCENES.length - 1, Math.floor(ls / d)), l = ls - i * d;
+  SCENES[i].draw(l, d, t, pulse);
+  // film-credit corners, the same on every scene
+  const bright = SCENES[i].name === "studio" && Math.floor(l / (d / 4)) % 2 === 1, c = bright ? "#100806" : INK;
+  micro("THREE CITIES", 60, 90, { size: 22, color: c, alpha: 0.55 });
+  micro(`${String(i + 1).padStart(2, "0")}/${String(SCENES.length).padStart(2, "0")}`, W - 60, 90, { size: 22, color: c, alpha: 0.55, align: "right" });
+  if (i > 0 && l < 0.08) { g.fillStyle = INK; g.globalAlpha = 0.85 * (1 - l / 0.08); g.fillRect(0, 0, W, H); g.globalAlpha = 1; }   // a white flash on each hard cut
+}
 function frame(t, T) {
   // the chapters, as fractions of the whole teaser
   const C = { open: 0.065, cities: 0.21, product: 0.91, rec: 0.91 };
@@ -331,18 +461,8 @@ function frame(t, T) {
     label(`${c.time} local${date ? " · " + date : ""}`, 84, 1690, 32, { mono: true, alpha: ease((ls - 0.8) / 0.5) });
     const temp = Math.max(2, Math.abs(Math.round(+c.temp || 8)));
     ring(k, 290, 700, 190 + 22 * pulse, ease((ls - 0.4) / 0.5) * 0.95, temp, Math.max(1, Math.round(temp * 0.4)), t, pulse);
-  } else if (t < at("product")) {   // the product, in designed frames: one statement, one detail, cut on the beat
-    const t0 = at("cities"), span = (at("product") - t0) / CH.length, k = Math.min(CH.length - 1, Math.floor((t - t0) / span)), ls = t - t0 - k * span, ch = CH[k], col = COLORS[ch.c ?? k % 3];
-    // a plain ground with one soft glow in the chapter's colour
-    const glow = g.createRadialGradient(W * 0.7, H * 0.62, 50, W * 0.7, H * 0.62, H * 0.6); glow.addColorStop(0, col + "33"); glow.addColorStop(1, "#10080600"); g.fillStyle = glow; g.fillRect(0, 0, W, H);
-    const sub = ch.parts.length > 1 ? Math.min(ch.parts.length - 1, Math.floor(ls / (span / ch.parts.length))) : 0, ps = ls - sub * span / ch.parts.length, part = ch.parts[sub];
-    label(`${String(k + 1).padStart(2, "0")} · ${ch.kicker}`, 80, 230, 30, { mono: true, spacing: 8, color: col, alpha: ease(ls / 0.3) });
-    g.fillStyle = col; g.globalAlpha = ease(ls / 0.4) * 0.8; g.fillRect(80, 262, 120 * ease(ls / 0.5), 3); g.globalAlpha = 1;
-    const lines = part.say(), size = part.size || 118;
-    lines.forEach((ln, i) => words(ln, 76, 420 + i * size * 1.05, size, ps - 0.05 - i * 0.35, 0.16, { alpha: 1, max: 940 }));
-    if (part.sub) label(part.sub(), 80, 420 + lines.length * size * 1.05 + 10, 40, { alpha: ease((ps - 0.6) / 0.4) * 0.8, max: 920 });
-    if (part.tile) part.tile(ps, col, span / ch.parts.length);
-    if (part.note) label(part.note(), 80, 1760, 30, { mono: true, alpha: ease((ps - 0.9) / 0.4) * 0.75, max: 920 });
+  } else if (t < at("product")) {   // the product: poster type, hard-edged slices of the interface, cut on the beat
+    product(t - at("cities"), at("product") - at("cities"), t, pulse);
   } else {   // the end card
     const t0 = at("rec"), ls = t - t0, a = ease(ls / 0.8), out = 1 - ease((t - (T - 0.6)) / 0.6);
     for (let i = 0; i < 3; i++) cover(photos[i][0], i * W / 3, 0, W / 3 + 1, H, 0.5, COLORS[i], 0.35 * a);
