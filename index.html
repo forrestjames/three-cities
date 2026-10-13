@@ -4265,7 +4265,7 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
     ["song", "Where would you write a song?"], ["rainy", "Where would you spend a rainy day?"], ["new-year", "Where would you see in the New Year?"],
     ["retire", "Where would you grow old?"], ["sound", "Which one sounds best right now?"]
   ];
-  const QUIZ_TEXT = Object.fromEntries(QUIZ), QUIZ_LIVE = "";   // the quiz server's address, once it's running
+  const QUIZ_TEXT = Object.fromEntries(QUIZ), QUIZ_LIVE = "https://three-cities-quiz.jim-4cc.workers.dev";   // the quiz server (quiz-worker/ in the repo)
   const QUIZ_API = (() => { const o = QS.get("quizapi"); return o && /^http:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(o) ? o : QUIZ_LIVE; })();   // a local server, for testing
   const isMyCities = () => cities.map(c => c.name).join("|") === DEFAULT_NAMES.join("|");
   let quizMode = null, quizPick = -1, quizSent = new Set(), quizSeq = 0;
