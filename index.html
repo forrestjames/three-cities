@@ -61,8 +61,13 @@ button, select, input { font: inherit; color: inherit; }
 h1 { margin: 0; font-family: var(--display); font-weight: 400; font-size: clamp(48px, 10vw, 112px); line-height: 1; letter-spacing: 0.14em; text-transform: uppercase; text-wrap: balance; text-shadow: 0 2px 30px rgba(0,0,0,0.35); }
 .title-cities { margin-top: -6px; font-family: var(--display); font-size: clamp(15px, 2.2vw, 22px); letter-spacing: 0.24em; text-transform: uppercase; color: var(--ink); opacity: 0.85; text-shadow: 0 1px 12px rgba(0,0,0,0.6); }
 .sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
-.mine { display: flex; flex-direction: column; align-items: center; gap: 10px; padding: 18px 20px; background: rgba(16, 8, 6, 0.42); border: 1px solid rgba(243, 236, 230, 0.25); backdrop-filter: blur(6px); }
+.mine { display: flex; flex-direction: column; align-items: center; gap: 14px; padding: 30px 34px 32px; border-radius: 22px; background: rgba(16, 8, 6, 0.42); border: 1px solid rgba(243, 236, 230, 0.25); backdrop-filter: blur(6px); }
 .mine-label { font-size: 12px; text-transform: uppercase; letter-spacing: 0.2em; color: var(--ink); }
+.mine-sub { margin: -6px 0 4px; font-size: 13px; color: var(--ink-dim); text-align: center; max-width: 560px; }
+.play-any { padding: 20px 46px; font-size: 16px; letter-spacing: 0.22em; color: var(--ink); border-color: rgba(243,236,230,0.55); }
+.play-any[aria-expanded="true"] { border-color: var(--ink); background: rgba(16,8,6,0.5); }
+.surprise .wild { border-color: rgba(224,122,79,0.7); }
+.surprise-note b { color: #e07a4f; font-weight: 400; }
 .mine-row { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; }
 .mine input { width: 150px; max-width: 100%; background: rgba(16, 8, 6, 0.6); border: 1px solid rgba(243, 236, 230, 0.3); padding: 10px 12px; }
 .mine input::placeholder { color: var(--ink-faint); font-style: italic; }
@@ -491,7 +496,11 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
   h1 { letter-spacing: 0.1em; }
   .lede .lede-lead { font-size: 21px; }
   .ghost { width: 100%; max-width: 320px; }
-  .mine { width: 100%; padding: 16px; }
+  .mine { width: 100%; padding: 24px 18px 26px; border-radius: 20px; }
+  .mine .surprise { gap: 8px 6px; }
+  .mine .surprise-label { flex-basis: 100%; text-align: center; margin: 0 0 -2px; }
+  .mine .surprise button { padding: 0 12px; }
+  .play-any { width: 100%; max-width: 360px; padding: 18px 20px; font-size: 15px; }
   .mine-row { flex-direction: column; align-items: stretch; width: 100%; }
   .mine input, .mine .ta { width: 100%; min-height: 44px; }
   .ghost.small { width: 100%; max-width: none; min-height: 44px; }
@@ -675,24 +684,25 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
       <p><span id="ledeCities"></span> become a constantly changing composition shaped by their live weather. Temperature sets the length of each rhythm, conditions scatter notes across it, and as night falls each city drifts off: quieter, slower, fewer notes.</p>
     </div>
     <div class="hero-actions">
-      <button class="ghost play-big" id="play" type="button" aria-pressed="false"><svg class="play-icon" viewBox="0 0 35.4 24" aria-hidden="true"><g class="sky"><path d="M0.5 24v-6.6h11V24zM1.6 17.4v-1.6h8.8v1.6zM3 15.8v-2.4h6v2.4zM2.9 13.4a3.1 3.1 0 0 1 6.2 0zM5.4 10.4V8.2h1.2v2.2zM5.2 8.2L6 6.6l.8 1.6z"/><path fill-rule="evenodd" d="M13.4 24V13h12.6v11h-3.6v-5.2a2.7 2.7 0 0 0-5.4 0V24zM13 13v-1.4h13.4V13zM15.8 11.6a3.9 3.9 0 0 1 7.8 0zM19.3 7.7V5.6h.8v2.1zM19.1 5.6l.6-1.8.6 1.8zM13.6 11.6v-1.8h.9v1.8zM24.9 11.6v-1.8h.9v1.8zM13.4 9.8l.65-1.4.65 1.4zM24.7 9.8l.65-1.4.65 1.4z"/><path fill-rule="evenodd" d="M27.9 24v-3.5h.6V9h-.4V7.6h1V5.4h.8L31.4 0l1.5 5.4h.8v2.2h1V9h-.4v11.5h.6V24zM31.4 10a1.7 1.7 0 1 0 0 3.4 1.7 1.7 0 0 0 0-3.4z"/></g><rect class="stop" x="11.7" y="6" width="12" height="12" rx="1"/></svg><span class="play-label">Start listening</span></button>
+      <button class="ghost play-big" id="play" type="button" aria-pressed="false"><svg class="play-icon" viewBox="0 0 35.4 24" aria-hidden="true"><g class="sky"><path d="M0.5 24v-6.6h11V24zM1.6 17.4v-1.6h8.8v1.6zM3 15.8v-2.4h6v2.4zM2.9 13.4a3.1 3.1 0 0 1 6.2 0zM5.4 10.4V8.2h1.2v2.2zM5.2 8.2L6 6.6l.8 1.6z"/><path fill-rule="evenodd" d="M13.4 24V13h12.6v11h-3.6v-5.2a2.7 2.7 0 0 0-5.4 0V24zM13 13v-1.4h13.4V13zM15.8 11.6a3.9 3.9 0 0 1 7.8 0zM19.3 7.7V5.6h.8v2.1zM19.1 5.6l.6-1.8.6 1.8zM13.6 11.6v-1.8h.9v1.8zM24.9 11.6v-1.8h.9v1.8zM13.4 9.8l.65-1.4.65 1.4zM24.7 9.8l.65-1.4.65 1.4z"/><path fill-rule="evenodd" d="M27.9 24v-3.5h.6V9h-.4V7.6h1V5.4h.8L31.4 0l1.5 5.4h.8v2.2h1V9h-.4v11.5h.6V24zM31.4 10a1.7 1.7 0 1 0 0 3.4 1.7 1.7 0 0 0 0-3.4z"/></g><rect class="stop" x="11.7" y="6" width="12" height="12" rx="1"/></svg><span class="play-label">Hear my three cities</span></button>
+      <button class="ghost play-any" id="mineToggle" type="button" aria-expanded="false" aria-controls="mine">Play any</button>
 
     </div>
     <div class="invite-row" id="inviteRow" hidden>
 <button class="share-btn share" id="share" type="button" hidden title="Share these cities, with your sounds and settings"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 15V4M8 8l4-4 4 4" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/><path d="M7 11H5.5A1.5 1.5 0 0 0 4 12.5v6A1.5 1.5 0 0 0 5.5 20h13a1.5 1.5 0 0 0 1.5-1.5v-6a1.5 1.5 0 0 0-1.5-1.5H17" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>Share</button>
       <span class="rec-wrap" id="recWrap" hidden><span class="rec-split"><button class="rec-main" id="rec" type="button" aria-pressed="false" title="Record what's playing and save it to your device"><i class="rec-dot" aria-hidden="true"></i><span class="rec-label">Record</span></button><button class="rec-caret" id="recFmt" type="button" aria-haspopup="true" aria-expanded="false" aria-controls="recMenu" aria-label="Recording format" title="Recording format"><svg viewBox="0 0 12 12" aria-hidden="true"><path d="M3 4.5l3 3 3-3" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg></button></span><span class="rec-menu" id="recMenu" role="group" aria-label="Recording format" hidden><button type="button" data-fmt="comp" aria-pressed="true"><b class="rec-comp-name">Compressed (.m4a)</b><small>Small, good for sharing</small></button><button type="button" data-fmt="wav" aria-pressed="false"><b>WAV</b><small>Full quality, about 10 MB a minute</small></button></span></span>
-      <button class="mine-toggle" id="mineToggle" type="button" aria-expanded="false" aria-controls="mine">Try your own cities <span aria-hidden="true">+</span></button>
       <a class="back-mine" id="backMine" href="./" hidden>Back to Forrest's cities</a>
     </div>
     <form class="mine" id="mine" hidden>
-      <div class="mine-label">Play the cities you've lived in</div>
+      <div class="mine-label">Pick any three cities</div>
+      <p class="mine-sub">Where you've lived, where you're going, or three that just sound good together.</p>
       <div class="mine-row">
         <label class="sr" for="mine1">First city</label><div class="ta"><input id="mine1" type="text" placeholder="e.g. Tokyo" autocomplete="off"><button class="dice" type="button" data-for="mine1" aria-label="Random city" title="Random city"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="4" width="16" height="16" rx="3.5" fill="none" stroke="currentColor" stroke-width="1.5"/><circle cx="8.6" cy="8.6" r="1.5" fill="currentColor"/><circle cx="12" cy="12" r="1.5" fill="currentColor"/><circle cx="15.4" cy="15.4" r="1.5" fill="currentColor"/></svg></button></div>
         <label class="sr" for="mine2">Second city</label><div class="ta"><input id="mine2" type="text" placeholder="e.g. Lagos" autocomplete="off"><button class="dice" type="button" data-for="mine2" aria-label="Random city" title="Random city"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="4" width="16" height="16" rx="3.5" fill="none" stroke="currentColor" stroke-width="1.5"/><circle cx="8.6" cy="8.6" r="1.5" fill="currentColor"/><circle cx="12" cy="12" r="1.5" fill="currentColor"/><circle cx="15.4" cy="15.4" r="1.5" fill="currentColor"/></svg></button></div>
         <label class="sr" for="mine3">Third city</label><div class="ta"><input id="mine3" type="text" placeholder="e.g. Montréal" autocomplete="off"><button class="dice" type="button" data-for="mine3" aria-label="Random city" title="Random city"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="4" width="16" height="16" rx="3.5" fill="none" stroke="currentColor" stroke-width="1.5"/><circle cx="8.6" cy="8.6" r="1.5" fill="currentColor"/><circle cx="12" cy="12" r="1.5" fill="currentColor"/><circle cx="15.4" cy="15.4" r="1.5" fill="currentColor"/></svg></button></div>
         <button class="ghost small" type="submit">Play these</button>
       </div>
-      <div class="surprise" role="group" aria-label="Surprise me"><span class="surprise-label">Surprise me</span><button type="button" data-sky="day" title="Three cities where the sun is up right now">☀ Awake</button><button type="button" data-sky="night" title="Three cities where it's night right now">☾ Asleep</button><button type="button" data-sky="mix" title="Some awake, some asleep">☀☾ Mix</button></div>
+      <div class="surprise" role="group" aria-label="Surprise me"><span class="surprise-label">Surprise me</span><button type="button" data-sky="day" title="Three cities where the sun is up right now">☀ All awake</button><button type="button" data-sky="night" title="Three cities where it's night right now">☾ All asleep</button><button type="button" data-sky="mix" title="Some awake, some asleep">☀☾ A mix</button><button type="button" class="wild" id="wildCard" title="Three cities picked around a theme from the live weather, like autumn leaves or wild winds">✦ Wild card</button></div>
       <div class="surprise-note" id="surpriseNote" aria-live="polite"></div>
     </form>
     <div class="rec-note" id="recNote" aria-live="polite" hidden></div>
@@ -1233,6 +1243,147 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
     btns.forEach(x => x.disabled = false);
   }));
 
+  // ---------- Wild card: three cities picked around a theme, from the live weather ----------
+  // [name, lat, lon, where, flags]. Flags: c capital, s by the sea, l famous autumn colour, g famously green
+  const WILD_PLACES = [
+  ["Kuwait City",29.37,47.98,"Kuwait","cs"],["Basra",30.51,47.81,"Iraq",""],["Ahvaz",31.32,48.67,"Iran",""],["Riyadh",24.71,46.68,"Saudi Arabia","c"],["Doha",25.29,51.53,"Qatar","cs"],
+  ["Dubai",25.2,55.27,"United Arab Emirates","s"],["Muscat",23.59,58.41,"Oman","cs"],["Jacobabad",28.28,68.44,"Pakistan",""],["Furnace Creek",36.46,-116.87,"Death Valley, USA",""],["Phoenix",33.45,-112.07,"Arizona, USA",""],
+  ["Las Vegas",36.17,-115.14,"Nevada, USA",""],["Timbuktu",16.77,-3.01,"Mali",""],["Niamey",13.51,2.11,"Niger","c"],["Khartoum",15.5,32.56,"Sudan","c"],["Alice Springs",-23.7,133.88,"Australia",""],
+  ["Marble Bar",-21.17,119.75,"Australia",""],["Mexicali",32.62,-115.45,"Mexico",""],["Aswan",24.09,32.9,"Egypt",""],["Delhi",28.61,77.21,"India","c"],["Chennai",13.08,80.27,"India","s"],
+  ["Bangkok",13.76,100.5,"Thailand","c"],["Djibouti",11.59,43.15,"Djibouti","cs"],["Mecca",21.39,39.86,"Saudi Arabia",""],["Darwin",-12.46,130.84,"Australia","s"],["Asunción",-25.26,-57.58,"Paraguay","c"],
+  ["Marrakesh",31.63,-7.99,"Morocco",""],["Luxor",25.69,32.64,"Egypt",""],["Windhoek",-22.56,17.08,"Namibia","c"],
+  ["Oymyakon",63.46,142.79,"Russia",""],["Yakutsk",62.03,129.73,"Russia",""],["Norilsk",69.35,88.2,"Russia",""],["Verkhoyansk",67.55,133.39,"Russia",""],["Dikson",73.51,80.55,"Russia","s"],
+  ["Utqiagvik",71.29,-156.79,"Alaska, USA","s"],["Fairbanks",64.84,-147.72,"Alaska, USA",""],["Yellowknife",62.45,-114.37,"Canada",""],["Iqaluit",63.75,-68.52,"Canada","s"],
+  ["Nuuk",64.18,-51.72,"Greenland","cs"],["Qaanaaq",77.47,-69.23,"Greenland","s"],["Longyearbyen",78.22,15.65,"Svalbard","s"],["Ulaanbaatar",47.89,106.91,"Mongolia","c"],
+  ["Murmansk",68.97,33.08,"Russia","s"],["Tromsø",69.65,18.96,"Norway","s"],["Harbin",45.8,126.53,"China",""],["Winnipeg",49.9,-97.14,"Canada",""],["McMurdo Station",-77.85,166.67,"Antarctica","s"],
+  ["Ushuaia",-54.8,-68.3,"Argentina","s"],["Lhasa",29.65,91.14,"Tibet, China",""],["La Paz",-16.5,-68.15,"Bolivia","c"],["Kiruna",67.86,20.23,"Sweden",""],["Rovaniemi",66.5,25.73,"Finland",""],
+  ["Wellington",-41.29,174.78,"New Zealand","cs"],["Punta Arenas",-53.16,-70.91,"Chile","s"],["Stanley",-51.7,-57.85,"Falkland Islands","cs"],["Tórshavn",62.01,-6.77,"Faroe Islands","cs"],
+  ["Cherrapunji",25.27,91.73,"India","g"],["Mawsynram",25.3,91.58,"India","g"],["Quibdó",5.69,-76.66,"Colombia","g"],["Hilo",19.72,-155.08,"Hawaii, USA","sg"],["Bergen",60.39,5.32,"Norway","sg"],
+  ["Mumbai",19.08,72.88,"India","s"],["Manila",14.6,120.98,"Philippines","cs"],["Hong Kong",22.32,114.17,"China","s"],["Naha",26.21,127.68,"Okinawa, Japan","s"],["Miami",25.76,-80.19,"Florida, USA","s"],
+  ["Havana",23.11,-82.37,"Cuba","cs"],["Cape Town",-33.92,18.42,"South Africa","s"],["St. John's",47.56,-52.71,"Canada","s"],["Galway",53.27,-9.05,"Ireland","sg"],["Stornoway",58.21,-6.39,"Scotland","s"],
+  ["Lerwick",60.15,-1.15,"Shetland, Scotland","s"],["Reykjavik",64.15,-21.94,"Iceland","cs"],["Valparaíso",-33.05,-71.62,"Chile","s"],["Kolkata",22.57,88.36,"India",""],
+  ["Dhaka",23.81,90.41,"Bangladesh","c"],["Singapore",1.35,103.82,"Singapore","cs"],["Kuala Lumpur",3.14,101.69,"Malaysia","c"],["Belém",-1.46,-48.49,"Brazil",""],["Manaus",-3.12,-60.02,"Brazil","g"],
+  ["Lagos",6.52,3.38,"Nigeria","s"],["Cairns",-16.92,145.77,"Australia","s"],["Taipei",25.03,121.57,"Taiwan","c"],
+  ["Tokyo",35.68,139.69,"Japan","c"],["Seoul",37.57,126.98,"South Korea","cl"],["Boston",42.36,-71.06,"Massachusetts, USA","sl"],["Copenhagen",55.68,12.57,"Denmark","cs"],["London",51.51,-0.13,"United Kingdom","c"],
+  ["New York",40.71,-74.01,"New York, USA","sl"],["Los Angeles",34.05,-118.24,"California, USA","s"],["Mexico City",19.43,-99.13,"Mexico","c"],["São Paulo",-23.55,-46.63,"Brazil",""],
+  ["Buenos Aires",-34.6,-58.38,"Argentina","c"],["Lima",-12.05,-77.04,"Peru","cs"],["Bogotá",4.71,-74.07,"Colombia","c"],["Paris",48.86,2.35,"France","c"],["Berlin",52.52,13.4,"Germany","c"],
+  ["Moscow",55.76,37.62,"Russia","c"],["Istanbul",41.01,28.98,"Türkiye","s"],["Cairo",30.04,31.24,"Egypt","c"],["Nairobi",-1.29,36.82,"Kenya","c"],["Johannesburg",-26.2,28.05,"South Africa",""],
+  ["Sydney",-33.87,151.21,"Australia","s"],["Auckland",-36.85,174.76,"New Zealand","sg"],["Beijing",39.9,116.41,"China","cl"],["Shanghai",31.23,121.47,"China","s"],["Jakarta",-6.21,106.85,"Indonesia","cs"],
+  ["Karachi",24.86,67.01,"Pakistan","s"],["Tehran",35.69,51.39,"Iran","c"],["Denver",39.74,-104.99,"Colorado, USA",""],["Anchorage",61.22,-149.9,"Alaska, USA","s"],["Honolulu",21.31,-157.86,"Hawaii, USA","s"],
+  ["Chicago",41.88,-87.63,"Illinois, USA","l"],["Toronto",43.65,-79.38,"Canada","l"],["Vancouver",49.28,-123.12,"Canada","sg"],["San Francisco",37.77,-122.42,"California, USA","s"],["Seattle",47.61,-122.33,"Washington, USA","sg"],
+  ["Rome",41.9,12.5,"Italy","c"],["Madrid",40.42,-3.7,"Spain","c"],["Lisbon",38.72,-9.14,"Portugal","cs"],["Athens",37.98,23.73,"Greece","cs"],["Vienna",48.21,16.37,"Austria","cl"],
+  ["Prague",50.08,14.44,"Czechia","cl"],["Budapest",47.5,19.04,"Hungary","cl"],["Warsaw",52.23,21.01,"Poland","c"],["Stockholm",59.33,18.07,"Sweden","cs"],["Oslo",59.91,10.75,"Norway","cs"],
+  ["Helsinki",60.17,24.94,"Finland","cs"],["Amsterdam",52.37,4.9,"Netherlands","cg"],["Brussels",50.85,4.35,"Belgium","c"],["Dublin",53.35,-6.26,"Ireland","csg"],["Edinburgh",55.95,-3.19,"Scotland","l"],
+  ["Bern",46.95,7.45,"Switzerland","cl"],["Kyiv",50.45,30.52,"Ukraine","cl"],["Bucharest",44.43,26.1,"Romania","c"],["Belgrade",44.79,20.45,"Serbia","c"],["Tbilisi",41.72,44.79,"Georgia","cl"],
+  ["Ankara",39.93,32.86,"Türkiye","c"],["Jerusalem",31.77,35.21,"Israel",""],["Amman",31.95,35.93,"Jordan","c"],["Baghdad",33.31,44.36,"Iraq","c"],["Kabul",34.53,69.17,"Afghanistan","c"],
+  ["Tashkent",41.3,69.24,"Uzbekistan","c"],["Astana",51.17,71.45,"Kazakhstan","c"],["Kathmandu",27.72,85.32,"Nepal","c"],["Colombo",6.93,79.86,"Sri Lanka","s"],["Hanoi",21.03,105.85,"Vietnam","c"],
+  ["Ho Chi Minh City",10.82,106.63,"Vietnam",""],["Phnom Penh",11.56,104.92,"Cambodia","c"],["Yangon",16.84,96.17,"Myanmar",""],["Osaka",34.69,135.5,"Japan","s"],["Sapporo",43.06,141.35,"Japan","l"],
+  ["Ottawa",45.42,-75.7,"Canada","cl"],["Washington",38.9,-77.04,"D.C., USA","cl"],["Atlanta",33.75,-84.39,"Georgia, USA","g"],["New Orleans",29.95,-90.07,"Louisiana, USA",""],["Austin",30.27,-97.74,"Texas, USA",""],
+  ["Montreal",45.5,-73.57,"Canada","l"],["Quebec City",46.81,-71.21,"Canada","l"],["Halifax",44.65,-63.58,"Canada","s"],["Guatemala City",14.63,-90.51,"Guatemala","c"],["Panama City",8.98,-79.52,"Panama","cs"],
+  ["San José",9.93,-84.08,"Costa Rica","cg"],["Kingston",17.97,-76.79,"Jamaica","cs"],["Santo Domingo",18.49,-69.93,"Dominican Republic","cs"],["Caracas",10.48,-66.9,"Venezuela","c"],["Quito",-0.18,-78.47,"Ecuador","c"],
+  ["Santiago",-33.45,-70.67,"Chile","c"],["Montevideo",-34.9,-56.16,"Uruguay","cs"],["Rio de Janeiro",-22.91,-43.17,"Brazil","s"],["Brasília",-15.79,-47.88,"Brazil","c"],["Salvador",-12.97,-38.5,"Brazil","s"],
+  ["Accra",5.6,-0.19,"Ghana","cs"],["Dakar",14.72,-17.47,"Senegal","cs"],["Addis Ababa",9.03,38.74,"Ethiopia","c"],["Kampala",0.35,32.58,"Uganda","cg"],["Kigali",-1.95,30.06,"Rwanda","cg"],
+  ["Dar es Salaam",-6.79,39.21,"Tanzania","s"],["Antananarivo",-18.88,47.51,"Madagascar","c"],["Lusaka",-15.39,28.32,"Zambia","c"],["Tunis",36.81,10.18,"Tunisia","cs"],["Algiers",36.75,3.06,"Algeria","cs"],
+  ["Casablanca",33.57,-7.59,"Morocco","s"],["Perth",-31.95,115.86,"Australia","s"],["Melbourne",-37.81,144.96,"Australia","s"],["Brisbane",-27.47,153.03,"Australia","s"],["Hobart",-42.88,147.33,"Tasmania, Australia","sg"],
+  ["Christchurch",-43.53,172.64,"New Zealand","l"],["Queenstown",-45.03,168.66,"New Zealand","gl"],["Suva",-18.14,178.44,"Fiji","cs"],["Nouméa",-22.27,166.44,"New Caledonia","s"],["Port Moresby",-9.44,147.18,"Papua New Guinea","cs"],
+  ["Kyoto",35.01,135.77,"Japan","l"],["Nikko",36.75,139.6,"Japan","l"],["Burlington",44.48,-73.21,"Vermont, USA","l"],["Stowe",44.47,-72.69,"Vermont, USA","l"],["Asheville",35.6,-82.55,"North Carolina, USA","l"],
+  ["Bar Harbor",44.39,-68.2,"Maine, USA","ls"],["Lenox",42.36,-73.28,"Massachusetts, USA","l"],["Banff",51.18,-115.57,"Canada","l"],["Munich",48.14,11.58,"Germany","l"],["Black Forest",48.0,8.2,"Germany","lg"],
+  ["Bled",46.37,14.11,"Slovenia","l"],["Kraków",50.06,19.94,"Poland","l"],["Ambleside",54.43,-2.96,"Lake District, England","lg"],["Killarney",52.06,-9.5,"Ireland","g"],["Snowdonia",53.07,-4.08,"Wales","g"],
+  ["Pitlochry",56.7,-3.73,"Scotland","l"],["Cotswolds",51.83,-1.83,"England","g"],["Normandy",49.18,-0.37,"France","g"],["Lake Como",46.0,9.26,"Italy","l"],["Tuscany",43.47,11.2,"Italy",""],
+  ["Bordeaux",44.84,-0.58,"France",""],["Porto",41.15,-8.61,"Portugal","s"],["Seville",37.39,-5.98,"Spain",""],["Nice",43.7,7.27,"France","s"],["Dubrovnik",42.65,18.09,"Croatia","s"],
+  ["Mykonos",37.45,25.33,"Greece","s"],["Antalya",36.9,30.7,"Türkiye","s"],["Tenerife",28.29,-16.63,"Canary Islands, Spain","s"],["Madeira",32.65,-16.91,"Portugal","sg"],["Valletta",35.9,14.51,"Malta","cs"],
+  ["Bali",-8.65,115.22,"Indonesia","s"],["Phuket",7.89,98.4,"Thailand","s"],["Malé",4.18,73.51,"Maldives","cs"],["Zanzibar",-6.16,39.19,"Tanzania","s"],["Port Louis",-20.16,57.5,"Mauritius","cs"],
+  ["Victoria",-4.62,55.45,"Seychelles","cs"],["Goa",15.5,73.83,"India","s"],["Cancún",21.16,-86.85,"Mexico","s"],["Bridgetown",13.1,-59.61,"Barbados","cs"],["Nassau",25.05,-77.36,"Bahamas","cs"],
+  ["San Juan",18.47,-66.11,"Puerto Rico","s"],["Oranjestad",12.52,-70.03,"Aruba","s"],["Florianópolis",-27.6,-48.55,"Brazil","s"],["Gold Coast",-28.02,153.4,"Australia","s"],["Papeete",-17.53,-149.57,"Tahiti","s"],
+  ["Waikiki",21.28,-157.83,"Hawaii, USA","s"],["Cabo San Lucas",22.89,-109.92,"Mexico","s"],["Sharm el-Sheikh",27.91,34.33,"Egypt","s"],["Langkawi",6.35,99.8,"Malaysia","s"],["Boracay",11.97,121.92,"Philippines","s"],
+  ["Zermatt",46.02,7.75,"Switzerland",""],["Chamonix",45.92,6.87,"France",""],["Innsbruck",47.27,11.39,"Austria","l"],["Aspen",39.19,-106.82,"Colorado, USA","l"],["Whistler",50.12,-122.95,"Canada",""],
+  ["Niseko",42.86,140.69,"Japan",""],["Bariloche",-41.13,-71.31,"Argentina","l"],["Erzurum",39.9,41.27,"Türkiye",""],["Asahikawa",43.77,142.36,"Japan",""],["Cortina",46.54,12.14,"Italy",""]
+];
+  let wildRows = null, wildAt = 0;
+  async function wildScan() {
+    if (wildRows && Date.now() - wildAt < 10 * 60 * 1000) return wildRows;
+    const out = [], P = WILD_PLACES;
+    for (let i = 0; i < P.length; i += 80) {
+      const part = P.slice(i, i + 80);
+      try {
+        const j = await getJSON(`https://api.open-meteo.com/v1/forecast?latitude=${part.map(p => p[1]).join(",")}&longitude=${part.map(p => p[2]).join(",")}` +
+          "&current=temperature_2m,is_day,precipitation,snowfall,weather_code,cloud_cover,wind_gusts_10m,visibility&daily=uv_index_max,sunshine_duration,sunrise,sunset&forecast_days=1&timezone=auto&timeformat=unixtime");
+        (Array.isArray(j) ? j : [j]).forEach((d, k) => {
+          const p = part[k]; if (!p || !d || !d.current || typeof d.current.temperature_2m !== "number") return;
+          const c = d.current, dl = d.daily || {}, now = Date.now() / 1000;
+          out.push({ name: p[0], lat: p[1], lon: p[2], where: p[3], flags: p[4], off: d.utc_offset_seconds || 0, tz: d.timezone,
+            t: c.temperature_2m, day: !!c.is_day, pr: c.precipitation || 0, snow: c.snowfall || 0, code: c.weather_code ?? 0, cloud: c.cloud_cover ?? 0,
+            g: c.wind_gusts_10m ?? 0, vis: c.visibility ?? 99999, uv: (dl.uv_index_max || [0])[0] || 0, sunH: ((dl.sunshine_duration || [0])[0] || 0) / 3600,
+            toSun: Math.min(...[(dl.sunrise || [])[0], (dl.sunset || [])[0]].filter(Boolean).map(x => Math.abs(x - now) / 60), 9999) });
+        });
+      } catch (e) {}
+    }
+    if (out.length < 30) throw new Error("no weather");
+    wildRows = out; wildAt = Date.now(); return out;
+  }
+  const localH = r => { const d = new Date(Date.now() + r.off * 1000); return d.getUTCHours() + d.getUTCMinutes() / 60; };
+  const kmApart = (a, b) => { const R = 6371, dl = (b.lat - a.lat) * Math.PI / 180, dn = (b.lon - a.lon) * Math.PI / 180, x = Math.sin(dl / 2) ** 2 + Math.cos(a.lat * Math.PI / 180) * Math.cos(b.lat * Math.PI / 180) * Math.sin(dn / 2) ** 2; return 2 * R * Math.asin(Math.sqrt(x)); };
+  const wet = r => (r.code >= 51 && r.code <= 67) || (r.code >= 80 && r.code <= 82) || r.pr > 0.1;
+  const snowy = r => r.snow > 0 || (r.code >= 71 && r.code <= 77) || r.code === 85 || r.code === 86;
+  const dg = x => Math.round(x) + "°";
+  // the best three by score, a little shuffled among the top few, and never two neighbours
+  function wildTop(rows, score, ok = () => true) {
+    const list = rows.filter(r => { try { return ok(r); } catch (e) { return false; } }).map(r => ({ r, s: score(r) + Math.random() * 0.3 })).filter(x => Number.isFinite(x.s)).sort((a, b) => b.s - a.s).map(x => x.r);
+    const out = [];
+    for (const r of list) { if (out.every(o => kmApart(o, r) > 400)) out.push(r); if (out.length === 3) break; }
+    return out.length === 3 ? out : null;
+  }
+  const names3 = p => cityList(p.map(r => r.name));
+  const autumnNow = r => { const m = new Date().getUTCMonth(); return r.lat >= 0 ? m >= 8 && m <= 10 : m >= 2 && m <= 4; };
+  const WILD = [
+    { name: "Hot and cold", pick: R => { const s = R.slice().sort((a, b) => b.t - a.t), hot = s[0], cold = s[s.length - 1], mid = (hot.t + cold.t) / 2, m = s.filter(r => kmApart(r, hot) > 400 && kmApart(r, cold) > 400).sort((a, b) => Math.abs(a.t - mid) - Math.abs(b.t - mid))[0]; return m ? [hot, m, cold] : null; },
+      say: p => `${p[0].name} is ${dg(p[0].t)}, ${p[2].name} is ${dg(p[2].t)}, and ${p[1].name} sits right in between.` },
+    { name: "Autumn leaves", pick: R => wildTop(R, r => r.sunH * 0.4 - Math.abs(r.t - 14) * 0.5 - (wet(r) ? 3 : 0), r => r.flags.includes("l") && autumnNow(r)),
+      say: p => `${names3(p)}, where the trees are turning right now.` },
+    { name: "Midnight capitals", pick: R => wildTop(R, r => -Math.min(Math.abs(localH(r) - 24), localH(r)), r => r.flags.includes("c") && (localH(r) > 22.5 || localH(r) < 1.5)),
+      say: p => `${names3(p)}, all close to midnight right now.` },
+    { name: "Sunscreen optional", pick: R => wildTop(R, r => r.uv + (r.day ? 2 : 0), r => r.uv >= 6),
+      say: p => `${names3(p)}, where the sun is strongest today. UV up to ${Math.round(p[0].uv)}.` },
+    { name: "Snow somewhere", pick: R => wildTop(R, r => (snowy(r) ? 10 : 0) - r.t * 0.3, r => snowy(r) || r.t < -2),
+      say: p => p.every(snowy) ? `${names3(p)}, where it's snowing right now.` : `${names3(p)}, the snowiest and coldest places I checked.` },
+    { name: "Rainy day", pick: R => wildTop(R, r => r.pr * 3 + (wet(r) ? 4 : 0) + r.cloud / 50, wet),
+      say: p => `${names3(p)}, where it's raining right now. Good music weather.` },
+    { name: "Wild winds", pick: R => wildTop(R, r => r.g, r => r.g > 30),
+      say: p => `${names3(p)}, the windiest places I checked. Gusts up to ${Math.round(p[0].g)} km/h.` },
+    { name: "Golden hour", pick: R => wildTop(R, r => -r.toSun, r => r.toSun < 50),
+      say: p => `${names3(p)}, where the sun is just rising or setting.` },
+    { name: "Same number, different days", pick: R => { const t0 = R[Math.floor(Math.random() * R.length)].t; return wildTop(R, r => -Math.abs(r.t - t0) * 3, r => Math.abs(r.t - t0) < 1.5); },
+      say: p => `${names3(p)}, all around ${dg(p[0].t)} right now, living very different days.` },
+    { name: "Breakfast, lunch and bedtime", pick: R => { const at = h => R.filter(r => Math.abs(localH(r) - h) < 1.2).sort(() => Math.random() - 0.5); const a = at(7.5)[0], b = at(12.5)[0], c = at(22.5)[0]; return a && b && c ? [a, b, c] : null; },
+      say: p => `${p[0].name} is having breakfast, ${p[1].name} is at lunch, and ${p[2].name} is off to bed.` },
+    { name: "In the fog", pick: R => wildTop(R, r => -r.vis / 1000 + (r.code === 45 || r.code === 48 ? 10 : 0), r => r.code === 45 || r.code === 48 || r.vis < 3000),
+      say: p => `${names3(p)}, all in the fog right now.` },
+    { name: "Beach weather", pick: R => wildTop(R, r => -Math.abs(r.t - 29) + r.sunH * 0.3 - (wet(r) ? 4 : 0), r => r.flags.includes("s") && r.day && r.t > 24 && !wet(r)),
+      say: p => `${names3(p)}, warm, dry and by the sea right now.` }
+  ];
+  let wildLast = "";
+  document.getElementById("wildCard").addEventListener("click", async () => {
+    const note = document.getElementById("surpriseNote"), btns = document.querySelectorAll(".surprise button");
+    btns.forEach(x => x.disabled = true); note.textContent = "Shuffling the deck…";
+    try {
+      const R = await wildScan();
+      const order = WILD.filter(w => w.name !== wildLast).sort(() => Math.random() - 0.5);
+      let theme = null, picks = null;
+      for (const w of order) { try { picks = w.pick(R); } catch (e) { picks = null; } if (picks && picks.length === 3) { theme = w; break; } }
+      if (!theme) throw new Error("nothing fits");
+      wildLast = theme.name;
+      picks.forEach((r, i) => {
+        const inp = document.getElementById("mine" + (i + 1)), hit = { name: r.name, latitude: r.lat, longitude: r.lon, country: r.where, country_code: /USA$/.test(r.where) ? "US" : "", admin1: /, USA$/.test(r.where) ? r.where.replace(/, USA$/, "") : undefined, timezone: r.tz };
+        inp.value = r.name; inp._picked = { hit, label: r.name };
+      });
+      const b = document.createElement("b"); b.textContent = "✦ " + theme.name + ". ";
+      note.textContent = ""; note.append(b, document.createTextNode(theme.say(picks)));
+      const go = document.querySelector("#mine button[type=submit]");
+      go.classList.remove("nudge"); void go.offsetWidth; go.classList.add("nudge");
+    } catch (e) { note.textContent = "Couldn't reach the weather just now. Try again in a moment."; }
+    btns.forEach(x => x.disabled = false);
+  });
+
   // ---------- temperature units: the music always runs on °C; this only changes what's shown ----------
   var tempUnit = "C";
   function fmtTemp(t, dp) {
@@ -1677,7 +1828,8 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
   document.querySelectorAll(".invite-btn").forEach(b => b.addEventListener("click", () => openMine(document.getElementById(b.dataset.invite))));
   function updateInvites() {
     const isDefault = cities.map(c => c.name).join("|") === DEFAULT_NAMES.join("|");
-    mineToggle.firstChild.textContent = isDefault ? "Try your own cities " : "Change cities ";
+    mineToggle.textContent = isDefault ? "Play any" : "Change cities";
+    try { syncButtons(); } catch (e) {}
     document.getElementById("backMine").hidden = isDefault;
     document.getElementById("moodCta").hidden = !isDefault;
     document.getElementById("aboutInvite").hidden = !isDefault;
@@ -3843,7 +3995,8 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
   const playBtn = document.getElementById("play");
   const fab = document.getElementById("fab");
   function syncButtons() {
-    playBtn.querySelector(".play-label").textContent = playing ? "Stop" : "Start listening";
+    const mineNow = cities.map(c => c.name).join("|") === DEFAULT_NAMES.join("|");
+    playBtn.querySelector(".play-label").textContent = playing ? "Stop" : mineNow ? "Hear my three cities" : "Start listening";
     playBtn.setAttribute("aria-pressed", String(playing));
     fab.textContent = playing ? "Stop" : "Play";
   }
