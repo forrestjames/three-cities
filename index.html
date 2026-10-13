@@ -1805,8 +1805,9 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
       const u = new URL(location.href);
       ["cities", "key", "scale", "kit", "mix"].forEach(k => u.searchParams.delete(k));   // rebuilt below, by hand, so it reads cleanly
       const enc = x => encodeURIComponent(x).replace(/%20/g, "+");
-      const extra = u.searchParams.toString();
-      u.search = "?cities=" + cities.map(c => enc(c.name)).join(",") + "&mix=" + mixCode.enc(soundDiff()) + (extra ? "&" + extra : "");
+      ["midi"].forEach(k => u.searchParams.delete(k));
+      const extra2 = u.searchParams.toString(), m = midiShareCode();
+      u.search = "?cities=" + cities.map(c => enc(c.name)).join(",") + "&mix=" + mixCode.enc(soundDiff()) + (m ? "&midi=" + m : "") + (extra2 ? "&" + extra2 : "");
       return u.toString();
     } catch (e) { return ""; }
   }
@@ -1879,16 +1880,22 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
       clearTimeout(btn._t); btn._t = setTimeout(() => { label.textContent = "Share"; }, 2000);
     };
     if (navigator.share && matchMedia("(pointer: coarse)").matches) {
-      navigator.share({ title: "Three Cities · Forrest James", text: line + "\n\n" + url }).catch(() => {});   // the link on its own line, after a blank one; closing the sheet is fine
+      navigator.share({ title: "Three Cities · Forrest James", text: line, url }).catch(() => {});   // the link travels as a link, so Copy in the sheet gives a clean address; closing the sheet is fine
       return;
     }
     const text = line + "\n\n" + url;
     const oldSchool = () => {   // for browsers without the clipboard API
-      const t = document.createElement("textarea"); t.value = text; t.style.position = "fixed"; t.style.opacity = "0";
+      const t = document.createElement("textarea"); t.value = url; t.style.position = "fixed"; t.style.opacity = "0";
       document.body.appendChild(t); t.select(); let ok = false; try { ok = document.execCommand("copy"); } catch (e) {} t.remove();
-      done(ok ? "Copied" : "Couldn't copy");
+      done(ok ? "Link copied" : "Couldn't copy");
     };
-    if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(text).then(() => done("Copied"), oldSchool);
+    // Two versions on the clipboard: mail, Slack and docs paste the sentence with the link; the address bar and plain boxes get the clean link
+    const esc = x => x.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+    const html = `<p>${esc(line)}</p><p><a href="${esc(url)}">${esc(url)}</a></p>`;
+    if (navigator.clipboard && navigator.clipboard.write && window.ClipboardItem) {
+      navigator.clipboard.write([new ClipboardItem({ "text/plain": new Blob([url], { type: "text/plain" }), "text/html": new Blob([html], { type: "text/html" }) })])
+        .then(() => done("Link copied"), () => navigator.clipboard.writeText ? navigator.clipboard.writeText(url).then(() => done("Link copied"), oldSchool) : oldSchool());
+    } else if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(url).then(() => done("Link copied"), oldSchool);
     else oldSchool();
   });
 
@@ -4099,6 +4106,27 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
   }
   document.getElementById("filterCC").addEventListener("change", e => { filterCC = Number(e.target.value); ccStart(); });
   document.getElementById("midiClock").addEventListener("change", e => { clockStop(); clockMode = e.target.value; });   // restarts on the next bar
+  // MIDI settings travel in a shared link when someone is using MIDI: channels, the drum filter CC and clock.
+  // Never the output itself, since that's a device on their computer. Reads like midi=0.1.2.3.9.19.all, x for off.
+  function midiShareCode() {
+    if (!midiOut) return "";
+    const ch = v => v < 0 ? "x" : String(v + 1);
+    return [...cities.map(c => ch(c.midiCh ?? c.index)), ch(chordCh), ch(drumCh), filterCC < 0 ? "x" : filterCC, clockMode].join(".");
+  }
+  try {
+    const m = QS.get("midi");
+    if (m) {
+      const p = m.split("."), ch = x => x === "x" ? -1 : Math.max(0, Math.min(15, (parseInt(x, 10) || 1) - 1));
+      if (p.length >= 7) {
+        cities.forEach((c, i) => { c.midiCh = ch(p[i]); });
+        chordCh = ch(p[3]); drumCh = ch(p[4]);
+        const cc = p[5] === "x" ? -1 : parseInt(p[5], 10);
+        if ([...document.getElementById("filterCC").options].some(o => Number(o.value) === cc)) { filterCC = cc; document.getElementById("filterCC").value = String(cc); }
+        if (["off", "one", "all"].includes(p[6])) { clockMode = p[6]; document.getElementById("midiClock").value = p[6]; }
+        buildMidiChans();
+      }
+    }
+  } catch (e) {}
   function sendMidi(c, note, vel, t) {
     if (!midiOut) return;
     const at = performance.now() + (t - ac.currentTime) * 1000;
@@ -4629,7 +4657,7 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
   // ---------- the mix as the visitor set it, carried in the share link ----------
   // Every sound control on the page, under a name that stays put. MIDI routing and the
   // freeze switches are left out: they belong to the listener's setup and the moment.
-  const SAVE_SKIP = new Set(["mine1", "mine2", "mine3", "midi", "filterCC", "moodPause", "hallFreeze", "delayFreeze"]);
+  const SAVE_SKIP = new Set(["mine1", "mine2", "mine3", "midi", "filterCC", "midiClock", "moodPause", "hallFreeze", "delayFreeze"]);
   function soundControls() {
     const out = [];
     drawGrooveGrid();   // makes sure the drum mute switches exist
