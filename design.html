@@ -1,0 +1,213 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>Three Cities Design</title>
+<link rel="icon" href="/favicon.svg?v=5" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Abel&family=Source+Code+Pro:wght@400;500&display=swap">
+<style>
+:root {
+  --ground: #100806; --panel: #1a1210; --line: rgba(243,236,230,0.14); --ink: #f3ece6; --ink-dim: rgba(243,236,230,0.62); --ink-faint: rgba(243,236,230,0.34);
+  --ember: #e07a4f; --sun: #f0c27a; --lamp: #ffd98a; --record: #e0604f;
+  --boston: #d08a6a; --copenhagen: #6fa38c; --london: #a98bc4;
+  --display: "Abel", "Arial Narrow", sans-serif; --mono: "Source Code Pro", ui-monospace, Menlo, monospace;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--ground); color: var(--ink); font: 15px/1.55 var(--mono); letter-spacing: 0.02em; }
+a { color: var(--ink); }
+.wrap { max-width: 1120px; margin: 0 auto; padding: 32px 16px 96px; }
+.top { display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
+.brand { display: flex; align-items: center; gap: 14px; }
+.brand svg { width: 46px; height: 32px; fill: var(--ink); }
+.brand h1 { margin: 0; font: 400 26px var(--display); letter-spacing: 0.18em; text-transform: uppercase; }
+.brand h1 span { color: var(--ink-dim); }
+.dl { display: inline-flex; align-items: center; gap: 10px; padding: 14px 24px; border: 1px solid var(--ember); border-radius: 26px; text-decoration: none; text-transform: uppercase; letter-spacing: 0.16em; font-size: 13px; background: rgba(224,122,79,0.08); }
+.dl:hover { background: rgba(224,122,79,0.18); }
+.lede { color: var(--ink-dim); max-width: 720px; margin: 18px 0 0; }
+h2 { font: 500 11px var(--mono); letter-spacing: 0.22em; text-transform: uppercase; color: var(--ink-dim); margin: 56px 0 16px; padding-top: 18px; border-top: 1px solid var(--line); }
+h3 { font: 400 18px var(--display); letter-spacing: 0.12em; text-transform: uppercase; margin: 0 0 10px; }
+.grid { display: grid; gap: 14px; grid-template-columns: repeat(auto-fill, minmax(min(100%, 220px), 1fr)); }
+.box { background: var(--panel); border: 1px solid var(--line); border-radius: 16px; padding: 18px; }
+.sw { border-radius: 16px; overflow: hidden; border: 1px solid var(--line); background: var(--panel); cursor: pointer; text-align: left; padding: 0; color: var(--ink); font: inherit; }
+.sw i { display: block; height: 88px; }
+.sw div { padding: 12px 14px; }
+.sw b { display: block; font: 400 17px var(--display); letter-spacing: 0.08em; }
+.sw code { font-size: 12px; color: var(--ink-dim); }
+.sw small { display: block; font-size: 11px; color: var(--ink-faint); margin-top: 4px; }
+.sw:hover { border-color: var(--ink-dim); }
+.copied { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: var(--ink); color: var(--ground); padding: 8px 16px; border-radius: 18px; font-size: 12px; opacity: 0; transition: opacity .2s; pointer-events: none; }
+.copied.on { opacity: 1; }
+.spec { display: grid; grid-template-columns: minmax(0, 1fr) 220px; gap: 18px; align-items: baseline; padding: 16px 0; border-bottom: 1px solid var(--line); }
+.spec .meta { font-size: 12px; color: var(--ink-dim); }
+@media (max-width: 640px) { .spec { grid-template-columns: 1fr; gap: 4px; } }
+.logos { display: grid; gap: 14px; grid-template-columns: repeat(auto-fill, minmax(min(100%, 250px), 1fr)); }
+.logo { border-radius: 16px; border: 1px solid var(--line); overflow: hidden; }
+.logo .art { height: 160px; display: grid; place-items: center; }
+.logo .art img { max-width: 80%; max-height: 110px; }
+.logo .cap { display: flex; justify-content: space-between; align-items: center; padding: 10px 14px; background: var(--panel); font-size: 12px; color: var(--ink-dim); }
+.comp { display: flex; flex-wrap: wrap; gap: 14px; align-items: center; }
+/* the components, as they are in the app */
+.ghost { background: rgba(16,8,6,0.25); border: 1px solid var(--ink); color: var(--ink); padding: 18px 40px; text-transform: uppercase; letter-spacing: 0.22em; font: 15px var(--mono); }
+.ghost.soft { border-color: rgba(243,236,230,0.55); }
+.chip { min-height: 34px; padding: 0 14px; border-radius: 17px; border: 1px solid rgba(243,236,230,0.4); background: rgba(16,8,6,0.35); color: var(--ink); font: 12px var(--mono); letter-spacing: 0.06em; }
+.chip.ember { border-color: rgba(224,122,79,0.7); }
+.pill { display: inline-flex; align-items: center; gap: 10px; border: 1px solid rgba(243,236,230,0.4); border-radius: 22px; padding: 10px 20px; font-size: 13px; letter-spacing: 0.12em; text-transform: uppercase; }
+.pill i { width: 10px; height: 10px; border-radius: 50%; background: var(--record); }
+.lcd { font: 11px/1 var(--mono); color: var(--lamp); background: #0a0808; border: 1px solid rgba(255,255,255,0.08); border-radius: 3px; padding: 5px 8px; }
+.lamp { width: 12px; height: 12px; border-radius: 50%; background: var(--lamp); box-shadow: 0 0 10px var(--lamp); }
+.pedal { width: 260px; border-radius: 16px; padding: 16px 20px 18px; background: linear-gradient(160deg, var(--p1), var(--p2)); border: 1px solid rgba(255,255,255,0.07); box-shadow: inset 0 1px 0 rgba(255,255,255,0.09), 0 14px 34px rgba(0,0,0,0.5); }
+.pedal .nm { font: 400 22px var(--display); letter-spacing: 0.3em; text-transform: uppercase; display: flex; justify-content: space-between; align-items: center; }
+.pedal .led { width: 10px; height: 10px; border-radius: 50%; background: var(--led); box-shadow: 0 0 10px var(--led); }
+.pedal .knobs { display: flex; gap: 16px; margin-top: 16px; }
+.pedal .knob { width: 46px; height: 46px; border-radius: 50%; border: 3px solid var(--led); border-right-color: rgba(255,255,255,0.12); border-bottom-color: rgba(255,255,255,0.12); }
+.hall { --p1: #3c2b42; --p2: #20172a; --led: #ff8a62; }
+.delay { --p1: #1e3b38; --p2: #11221f; --led: #74f0c4; }
+.cityrow { display: flex; gap: 14px; flex-wrap: wrap; }
+.city { flex: 1 1 200px; border-radius: 16px; padding: 16px 18px; background: var(--panel); border: 1px solid var(--line); border-top: 3px solid var(--c); }
+.city b { font: 400 20px var(--display); letter-spacing: 0.22em; color: var(--c); text-transform: uppercase; }
+.city span { float: right; font: 400 30px var(--display); }
+.city small { display: block; color: var(--ink-dim); font-size: 11px; margin-top: 4px; }
+.dots { display: flex; gap: 8px; margin-top: 14px; }
+.dots i { width: 10px; height: 10px; border-radius: 50%; background: var(--c); opacity: .9; }
+.dots i:nth-child(even) { opacity: .25; }
+.files { display: grid; gap: 10px; }
+.file { display: flex; justify-content: space-between; gap: 12px; align-items: center; padding: 12px 16px; border: 1px solid var(--line); border-radius: 12px; background: var(--panel); text-decoration: none; }
+.file span { color: var(--ink-dim); font-size: 12px; }
+.file:hover { border-color: var(--ink-dim); }
+.shots { display: grid; gap: 14px; grid-template-columns: repeat(auto-fill, minmax(min(100%, 250px), 1fr)); }
+.shots a { display: block; border-radius: 12px; overflow: hidden; border: 1px solid var(--line); background: var(--panel); text-decoration: none; }
+.shots img { width: 100%; height: 160px; object-fit: cover; object-position: top; display: block; }
+.shots span { display: block; padding: 8px 12px; font-size: 12px; color: var(--ink-dim); }
+ol.steps { padding-left: 20px; max-width: 760px; }
+ol.steps li { margin-bottom: 12px; }
+ol.steps b { font-weight: 500; }
+.voice { display: grid; gap: 14px; grid-template-columns: repeat(auto-fill, minmax(min(100%, 300px), 1fr)); }
+.voice p { margin: 0; }
+.voice .no { color: var(--ink-faint); text-decoration: line-through; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="top">
+    <div class="brand">
+      <svg viewBox="0 0 35.4 24" aria-hidden="true"><path d="M0.5 24v-6.6h11V24zM1.6 17.4v-1.6h8.8v1.6zM3 15.8v-2.4h6v2.4zM2.9 13.4a3.1 3.1 0 0 1 6.2 0zM5.4 10.4V8.2h1.2v2.2zM5.2 8.2L6 6.6l.8 1.6z"/><path fill-rule="evenodd" d="M13.4 24V13h12.6v11h-3.6v-5.2a2.7 2.7 0 0 0-5.4 0V24zM13 13v-1.4h13.4V13zM15.8 11.6a3.9 3.9 0 0 1 7.8 0zM19.3 7.7V5.6h.8v2.1zM19.1 5.6l.6-1.8.6 1.8zM13.6 11.6v-1.8h.9v1.8zM24.9 11.6v-1.8h.9v1.8zM13.4 9.8l.65-1.4.65 1.4zM24.7 9.8l.65-1.4.65 1.4z"/><path fill-rule="evenodd" d="M27.9 24v-3.5h.6V9h-.4V7.6h1V5.4h.8L31.4 0l1.5 5.4h.8v2.2h1V9h-.4v11.5h.6V24zM31.4 10a1.7 1.7 0 1 0 0 3.4 1.7 1.7 0 0 0 0-3.4z"/></svg>
+      <h1>Three Cities <span>· Design</span></h1>
+    </div>
+    <a class="dl" href="/design-assets/three-cities-design-kit.zip" download>↓ Download the design kit</a>
+  </div>
+  <p class="lede">Everything the app is made of: the mark, colours, type, the pieces, and the files to take into Figma. Click any colour to copy it.</p>
+
+  <h2>The mark</h2>
+  <p class="lede" style="margin-top:0">Three buildings, one for each city: Boston, Copenhagen and London, left to right. Drawn on a 35.4 × 24 grid, so it stays crisp from favicon to poster.</p>
+  <div class="logos" style="margin-top:16px">
+    <div class="logo"><div class="art" style="background:#100806"><img src="/design-assets/logo/skyline-ink.svg" alt="Skyline mark in ink"></div><div class="cap">Ink <a href="/design-assets/logo/skyline-ink.svg" download>SVG</a></div></div>
+    <div class="logo"><div class="art" style="background:#f3ece6"><img src="/design-assets/logo/skyline-ground.svg" alt="Skyline mark in warm black"></div><div class="cap">Ground <a href="/design-assets/logo/skyline-ground.svg" download>SVG</a></div></div>
+    <div class="logo"><div class="art" style="background:#100806"><img src="/design-assets/logo/skyline-ember.svg" alt="Skyline mark in ember"></div><div class="cap">Ember <a href="/design-assets/logo/skyline-ember.svg" download>SVG</a></div></div>
+    <div class="logo"><div class="art" style="background:#100806"><img src="/design-assets/logo/skyline-cities.svg" alt="Skyline mark in the three city colours"></div><div class="cap">City colours <a href="/design-assets/logo/skyline-cities.svg" download>SVG</a></div></div>
+    <div class="logo"><div class="art" style="background:#100806"><img src="/design-assets/logo/lockup-dark.svg" alt="Full lockup on dark"></div><div class="cap">Lockup, dark <a href="/design-assets/logo/lockup-dark.svg" download>SVG</a></div></div>
+    <div class="logo"><div class="art" style="background:#f3ece6"><img src="/design-assets/logo/lockup-light.svg" alt="Full lockup on light"></div><div class="cap">Lockup, light <a href="/design-assets/logo/lockup-light.svg" download>SVG</a></div></div>
+    <div class="logo"><div class="art" style="background:linear-gradient(160deg,#735449,#523e47)"><img src="/design-assets/icons/favicon.svg" alt="App icon" style="max-height:96px;border-radius:20px"></div><div class="cap">App icon, dusk <a href="/design-assets/icons/favicon.svg" download>SVG</a></div></div>
+  </div>
+
+  <h2>Colour</h2>
+  <div class="grid" id="colours"></div>
+
+  <h2>Type</h2>
+  <p class="lede" style="margin-top:0">Two faces. Abel for anything you'd read from across the room. Source Code Pro for everything you read up close.</p>
+  <div class="spec"><div style="font:400 72px/1 var(--display);letter-spacing:0.14em;text-transform:uppercase">Three Cities</div><div class="meta">Title · Abel 48–112 · caps · tracking 14%</div></div>
+  <div class="spec"><div style="font:400 40px/1.15 var(--display);letter-spacing:0.05em">Where were you happiest?</div><div class="meta">Question · Abel 26–40 · tracking 5%</div></div>
+  <div class="spec"><div style="font:400 28px var(--display);letter-spacing:0.22em;text-transform:uppercase;color:var(--boston)">Boston <span style="float:right;color:var(--ink)">11°C</span></div><div class="meta">City name · Abel 28 · caps · 22%, in the city colour</div></div>
+  <div class="spec"><div style="font:400 19px var(--display);letter-spacing:0.08em;color:var(--ember)">✦ Autumn leaves</div><div class="meta">Accent line · Abel 19 · ember</div></div>
+  <div class="spec"><div style="font:400 15px var(--display);letter-spacing:0.26em;text-transform:uppercase">Reverb · Delay · Filter</div><div class="meta">Module name · Abel 15 · caps · 26%</div></div>
+  <div class="spec"><div>Boston, Copenhagen and London become a constantly changing composition shaped by their live weather.</div><div class="meta">Body · Source Code Pro 15 · line 1.55</div></div>
+  <div class="spec"><div style="font-size:15px;letter-spacing:0.22em;text-transform:uppercase">Hear my three cities</div><div class="meta">Button · Source Code Pro 15–16 · caps · 22%</div></div>
+  <div class="spec"><div style="font-size:11px;letter-spacing:0.16em;text-transform:uppercase;color:var(--ink-dim)">Surprise me · What everyone said</div><div class="meta">Label · Source Code Pro 11 · caps · 16%</div></div>
+
+  <h2>Pieces</h2>
+  <div class="box"><h3>Buttons</h3><div class="comp">
+    <button class="ghost">Hear my three cities</button><button class="ghost soft">Play any</button>
+    <span class="pill"><i></i>Record</span><span class="pill">Share</span>
+  </div></div>
+  <div class="box" style="margin-top:14px"><h3>Chips</h3><div class="comp">
+    <button class="chip">☀ All awake</button><button class="chip">☾ All asleep</button><button class="chip">☀☾ A mix</button><button class="chip ember">✦ Wild card</button>
+  </div></div>
+  <div class="box" style="margin-top:14px"><h3>The studio</h3><div class="comp">
+    <div class="pedal hall"><div class="nm">Reverb <i class="led"></i></div><div class="knobs"><i class="knob"></i><i class="knob"></i><i class="knob"></i></div></div>
+    <div class="pedal delay"><div class="nm">Delay <i class="led"></i></div><div class="knobs"><i class="knob"></i><i class="knob"></i><i class="knob"></i></div></div>
+    <div style="display:grid;gap:10px"><span class="lcd">dotted 1/8</span><span class="lcd">CC 19 · TR-8S</span><span style="display:flex;gap:10px;align-items:center"><i class="lamp"></i><span style="font-size:12px;color:var(--ink-dim)">Lamp, on</span></span></div>
+  </div></div>
+  <div class="box" style="margin-top:14px"><h3>Cities</h3><div class="cityrow">
+    <div class="city" style="--c:var(--boston)"><b>Boston</b><span>11°</span><small>Massachusetts · 03:00 · night</small><div class="dots"><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div></div>
+    <div class="city" style="--c:var(--copenhagen)"><b>Copenhagen</b><span>9°</span><small>Denmark · 09:00 · day</small><div class="dots"><i></i><i></i><i></i><i></i><i></i><i></i></div></div>
+    <div class="city" style="--c:var(--london)"><b>London</b><span>12°</span><small>United Kingdom · 08:00 · day</small><div class="dots"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div></div>
+  </div></div>
+
+  <h2>Shape and space</h2>
+  <div class="grid">
+    <div class="box"><h3>Corners</h3><div style="display:grid;gap:8px;font-size:12px;color:var(--ink-dim)"><span>3 · LCD screens</span><span>16 · cards, pedals</span><span>17 · chips (fully round)</span><span>22 · panels</span><span>0 · big buttons stay square</span></div></div>
+    <div class="box"><h3>Space</h3><div style="display:grid;gap:8px;font-size:12px;color:var(--ink-dim)"><span>4 · 8 · 14 · 22 · 34</span><span>16 · phone side gutter</span><span>Rounded panels get 30–34 inside</span></div></div>
+    <div class="box"><h3>Texture</h3><div style="display:grid;gap:8px;font-size:12px;color:var(--ink-dim)"><span>Risograph grain over soft colour blobs in the hero, one per city.</span><span>Pedals: a faint brushed stripe and a gradient top to bottom.</span></div></div>
+  </div>
+
+  <h2>Voice</h2>
+  <div class="voice">
+    <div class="box"><h3>Like this</h3><p>Three places I've called home, playing in real time.</p><p style="margin-top:8px">Been there or not, go with your gut.</p></div>
+    <div class="box"><h3>Not this</h3><p class="no">Experience a revolutionary generative soundscape.</p><p class="no" style="margin-top:8px">Watch the magic land.</p></div>
+    <div class="box"><h3>Rules</h3><p style="color:var(--ink-dim)">Warm and plain. Short sentences. No em dashes. One accent colour at a time.</p></div>
+  </div>
+
+  <h2>Screens</h2>
+  <div class="shots" id="shots"></div>
+
+  <h2>Files</h2>
+  <div class="files">
+    <a class="file" href="/design-assets/three-cities-design-kit.zip" download><b>Everything, zipped</b><span>fonts, logos, icons, tokens, screens</span></a>
+    <a class="file" href="/design-assets/tokens/tokens.json" download><b>tokens.json</b><span>for the Tokens Studio Figma plugin</span></a>
+    <a class="file" href="/design-assets/tokens/tokens.css" download><b>tokens.css</b><span>the same, as CSS variables</span></a>
+    <a class="file" href="/design-assets/fonts/Abel-Regular.ttf" download><b>Abel Regular</b><span>.ttf · SIL Open Font License</span></a>
+    <a class="file" href="/design-assets/fonts/SourceCodePro-Regular.ttf" download><b>Source Code Pro Regular</b><span>.ttf · SIL Open Font License</span></a>
+    <a class="file" href="/design-assets/fonts/SourceCodePro-Medium.ttf" download><b>Source Code Pro Medium</b><span>.ttf · SIL Open Font License</span></a>
+    <a class="file" href="/design-assets/icons/og.png" download><b>Share image</b><span>og.png · what links show on social</span></a>
+  </div>
+
+  <h2>Into Figma</h2>
+  <ol class="steps">
+    <li><b>Install the fonts.</b> Download the kit and install the three .ttf files. Figma picks them up straight away (restart the desktop app if not).</li>
+    <li><b>Bring in the mark.</b> Drag the SVGs from logo/ onto the canvas. They stay as editable vectors, one path per building.</li>
+    <li><b>Get editable screens.</b> In Figma, run the <b>html.to.design</b> plugin and paste the app's address. It rebuilds the live page as frames with real text, colours and auto layout. Do the same for /manual and this page.</li>
+    <li><b>Make the styles.</b> Open the <b>Tokens Studio</b> plugin, choose Load from file, and pick tokens/tokens.json. It creates the colour and type styles in one go.</li>
+    <li><b>Keep the screens nearby.</b> The PNGs in screens/ are the app exactly as it is today, for reference while you redesign.</li>
+  </ol>
+</div>
+<div class="copied" id="copied">Copied</div>
+<script>
+const C = [
+  ["Ground", "#100806", "Warm black, the page"], ["Panel", "#1a1210", "Cards and panels"], ["Ink", "#f3ece6", "Main text"], ["Ink dim", "rgba(243,236,230,0.62)", "Secondary text"],
+  ["Ink faint", "rgba(243,236,230,0.34)", "Hints"], ["Line", "rgba(243,236,230,0.14)", "Dividers"], ["Ember", "#e07a4f", "The one accent"], ["Sun", "#f0c27a", "Focus, daylight"],
+  ["Lamp", "#ffd98a", "Lit lamps and LCDs"], ["Record", "#e0604f", "Record dot"], ["Boston", "#d08a6a", "City one, terracotta"], ["Copenhagen", "#6fa38c", "City two, green-teal"],
+  ["London", "#a98bc4", "City three, dusty lavender"], ["Hall pedal", "#3c2b42 → #20172a", "LED #ff8a62"], ["Delay pedal", "#1e3b38 → #11221f", "LED #74f0c4"], ["Icon dusk", "#735449 → #523e47", "App icon gradient"]
+];
+const box = document.getElementById("colours"), note = document.getElementById("copied");
+C.forEach(([n, v, d]) => {
+  const b = document.createElement("button"); b.className = "sw"; b.type = "button";
+  const bg = v.includes("→") ? `linear-gradient(160deg, ${v.split(" → ")[0]}, ${v.split(" → ")[1]})` : v;
+  b.innerHTML = `<i style="background:${bg}"></i><div><b></b><code></code><small></small></div>`;
+  b.querySelector("b").textContent = n; b.querySelector("code").textContent = v; b.querySelector("small").textContent = d;
+  b.onclick = () => navigator.clipboard.writeText(v.split(" → ")[0]).then(() => { note.classList.add("on"); setTimeout(() => note.classList.remove("on"), 1200); });
+  box.appendChild(b);
+});
+const S = ["01-hero", "02-pick-any", "03-cities", "04-studio-rack", "05-rhythm-section", "06-effects", "07-memory-map", "08-city-quiz"];
+const shots = document.getElementById("shots");
+["desktop", "phone"].forEach(d => S.forEach(s => {
+  const a = document.createElement("a"); a.href = `/design-assets/screens/${d}-${s}.png`; a.target = "_blank";
+  a.innerHTML = `<img loading="lazy" alt=""><span></span>`; a.querySelector("img").src = a.href; a.querySelector("span").textContent = `${d} · ${s.slice(3).replace(/-/g, " ")}`;
+  shots.appendChild(a);
+}));
+</script>
+</body>
+</html>

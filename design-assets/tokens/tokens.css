@@ -1,0 +1,38 @@
+/* Three Cities design tokens */
+:root {
+  --color-ground: #100806;
+  --color-panel: #1a1210;
+  --color-ink: #f3ece6;
+  --color-ink-dim: rgba(243,236,230,0.62);
+  --color-ink-faint: rgba(243,236,230,0.34);
+  --color-line: rgba(243,236,230,0.14);
+  --color-ember: #e07a4f;
+  --color-sun: #f0c27a;
+  --color-lamp: #ffd98a;
+  --color-record: #e0604f;
+  --color-city-boston: #d08a6a;
+  --color-city-copenhagen: #6fa38c;
+  --color-city-london: #a98bc4;
+  --color-pedal-hall-top: #3c2b42;
+  --color-pedal-hall-bottom: #20172a;
+  --color-pedal-hall-led: #ff8a62;
+  --color-pedal-delay-top: #1e3b38;
+  --color-pedal-delay-bottom: #11221f;
+  --color-pedal-delay-led: #74f0c4;
+  --color-pedal-lcd: #0a0808;
+  --color-icon-dusk-top: #735449;
+  --color-icon-dusk-bottom: #523e47;
+  --radius-lcd: 3px;
+  --radius-card: 16px;
+  --radius-chip: 17px;
+  --radius-panel: 22px;
+  --radius-round: 999px;
+  --space-xs: 4px;
+  --space-s: 8px;
+  --space-m: 14px;
+  --space-l: 22px;
+  --space-xl: 34px;
+  --space-gutter: 16px;
+  --font-display: "Abel", "Arial Narrow", sans-serif;
+  --font-mono: "Source Code Pro", ui-monospace, Menlo, monospace;
+}
