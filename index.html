@@ -745,7 +745,7 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
       </div>
     </div>
     <div class="pedal rack-mod mod-midi midi-bit" aria-label="MIDI">
-      <div class="mod-head"><span class="mod-name">MIDI</span><button class="info" type="button" aria-label="How MIDI works" data-tip="MIDI out sends each city's notes to a synth or music app on its own channel. Pick each city's channel, and the drums', in the menus here, or turn any of them off. By default the cities use channels 1, 2 and 3 and the rhythm section uses channel 10, with standard General MIDI drum notes: kick 36, snare 38, rim 37, closed hat 42, ride 51 with the jazz kit, so any drum rack maps it. Fills, ratchets and ghost notes come through too. The rhythm section's filter, Auto sweeps included, goes out as a control change on the drums' channel so your drum machine's own filter follows. CC 19 drives the Roland TR-8S Master FX knob and switches its Master FX on. It works in Chrome and Edge on a computer."></button></div>
+      <div class="mod-head"><span class="mod-name">MIDI</span><button class="info" type="button" aria-label="How MIDI works" data-tip="MIDI out sends each city's notes to a synth or music app on its own channel. Pick each city's channel, the chords' and the drums' in the menus here, or turn any of them off. By default the cities use channels 1, 2 and 3, the chords channel 4 (held until the next chord, when the Chords lamp is on) and the rhythm section channel 10, with standard General MIDI drum notes: kick 36, snare 38, rim 37, closed hat 42, ride 51 with the jazz kit, so any drum rack maps it. Fills, ratchets and ghost notes come through too. The rhythm section's filter, Auto sweeps included, goes out as a control change on the drums' channel so your drum machine's own filter follows. CC 19 drives the Roland TR-8S Master FX knob and switches its Master FX on. It works in Chrome and Edge on a computer."></button></div>
       <div class="mod-body">
         <label class="midi-port" for="midi"><span class="kn-label">Out to</span><select id="midi" class="lcd"><option value="">Off</option></select></label>
         <div class="midi-chans" id="midiChans" aria-label="MIDI channel for each part"></div>
@@ -3219,6 +3219,18 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
   let driveCurve = null;
   const GM_DRUMS = { kick: 36, snare: 38, rim: 37, hat: 42, ride: 51 };
   let drumCh = 9;   // channel 10, as MIDI counts from 1
+  let chordCh = 3, chordHeld = [];   // the chord bed on channel 4, and the notes it's holding
+  function chordMidiOff(t) {
+    if (midiOut && chordHeld.length) { const at = ac ? performance.now() + Math.max(0, t - ac.currentTime) * 1000 : performance.now(); chordHeld.forEach(([ch, m]) => midiOut.send([0x80 | ch, m, 0], at)); }
+    chordHeld = [];
+  }
+  function chordMidi(notes, t, sl) {   // the whole chord held until the next one, so a pad synth can sustain it
+    chordMidiOff(t);
+    if (!midiOut || chordCh < 0) return;
+    const at = performance.now() + Math.max(0, t - ac.currentTime) * 1000, vel = Math.max(20, Math.min(110, Math.round(35 + 70 * CHORD.level * (1 - 0.35 * sl))));
+    notes.forEach(m => midiOut.send([0x90 | chordCh, m, vel], at));
+    chordHeld = notes.map(m => [chordCh, m]);
+  }
   // The rhythm section filter can drive a drum machine's own filter: its position goes out as a
   // control change on the drums' channel. CC 19 is the Roland TR-8S Master FX CTRL knob.
   let filterCC = 19, lastCC = -1, lastCCAt = 0;
@@ -3589,7 +3601,7 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
     if (REC.on) recStop();   // the music stopping ends the take
     clearInterval(timer); timer = null; clearTimeout(moreTimer);
     if (listenFrom && Date.now() - listenFrom > 45000) setTimeout(showMore, 900);
-    playing = false;
+    playing = false; chordMidiOff(0);
     cities.forEach(c => { c.playhead = -1; });
     if (ac) ac.suspend();
     if (unlock) unlock.pause();
@@ -3784,6 +3796,7 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
     const note = d => 48 + k + scale[((d % n) + n) % n] + 12 * Math.floor(d / n);
     const notes = [note(root) - 12, note(root), note(root + 2), note(root + 4)];
     const bright = 550 + 900 * (1 - sl);
+    chordMidi(notes, t, sl);
     CHORD.voices.forEach(v => { try { v.g.gain.cancelScheduledValues(t); v.g.gain.setTargetAtTime(0, t, 1.2); v.stop(t + 5); } catch (e) {} });
     CHORD.voices = notes.map((m, i) => {
       const f = 440 * Math.pow(2, (m - 69) / 12), g = ac.createGain(), lp = ac.createBiquadFilter();
@@ -3807,7 +3820,7 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
       CHORD.on = !CHORD.on; btn.setAttribute("aria-pressed", String(CHORD.on));
       if (!ac) return;
       if (CHORD.on && playing) chordBed(ac.currentTime + 0.05);
-      else CHORD.voices.forEach(v => { v.g.gain.cancelScheduledValues(ac.currentTime); v.g.gain.setTargetAtTime(0, ac.currentTime, 0.8); v.stop(ac.currentTime + 4); });
+      else { chordMidiOff(ac.currentTime); CHORD.voices.forEach(v => { v.g.gain.cancelScheduledValues(ac.currentTime); v.g.gain.setTargetAtTime(0, ac.currentTime, 0.8); v.stop(ac.currentTime + 4); }); }
     });
     lvl.addEventListener("input", sync); sync();
     document.getElementById("chordSound").addEventListener("change", e => { CHORD.sound = e.target.value; if (CHORD.on && playing) chordBed(ac.currentTime + 0.05); }); }
@@ -3859,18 +3872,19 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
 
   ctlSummary();
 
-  // a channel picker for each city and for the drums, defaults 1, 2, 3 and 10
+  // a channel picker for each city, the chords and the drums, defaults 1, 2, 3, 4 and 10
   cities.forEach(c => { if (c.midiCh == null) c.midiCh = c.index; });
   function buildMidiChans() {
     const box = document.getElementById("midiChans");
     const opts = sel => `<option value="-1"${sel < 0 ? " selected" : ""}>Off</option>` + Array.from({ length: 16 }, (_, i) => `<option value="${i}"${i === sel ? " selected" : ""}>Ch ${i + 1}</option>`).join("");
     box.innerHTML = cities.map(c => `<label class="midi-ch" style="--dot: var(${c.color})"><span class="kn-label"><i></i>${c.name}</span><select class="lcd" data-city="${c.index}">${opts(c.midiCh)}</select></label>`).join("")
+      + `<label class="midi-ch" style="--dot: #c9b8e8"><span class="kn-label"><i></i>Chords</span><select class="lcd" data-chords="1">${opts(chordCh)}</select></label>`
       + `<label class="midi-ch" style="--dot: #ffd98a"><span class="kn-label"><i></i>Drums</span><select class="lcd" data-drums="1">${opts(drumCh)}</select></label>`;
   }
   buildMidiChans();
   document.getElementById("midiChans").addEventListener("change", e => {
     const v = Number(e.target.value);
-    if (e.target.dataset.drums) drumCh = v; else cities[Number(e.target.dataset.city)].midiCh = v;
+    if (e.target.dataset.chords) { chordMidiOff(0); chordCh = v; } else if (e.target.dataset.drums) drumCh = v; else cities[Number(e.target.dataset.city)].midiCh = v;
   });
   let midiNames = "";
   setInterval(() => { const n = cities.map(c => c.name).join("|"); if (n !== midiNames) { midiNames = n; buildMidiChans(); } }, 2000);   // follow city swaps
@@ -3896,7 +3910,7 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
       midiSel.options[0].textContent = "Off (MIDI blocked here)";
     }
   }
-  midiSel.addEventListener("change", () => { midiOut = midiAccess && midiSel.value ? midiAccess.outputs.get(midiSel.value) : null; document.querySelector(".mod-midi").classList.toggle("midi-live", !!midiOut); ccStart(); });
+  midiSel.addEventListener("change", () => { chordMidiOff(0); midiOut = midiAccess && midiSel.value ? midiAccess.outputs.get(midiSel.value) : null; document.querySelector(".mod-midi").classList.toggle("midi-live", !!midiOut); ccStart(); });
   // switching to CC 19 also turns the TR-8S Master FX on (CC 15) so the knob has something to move
   function ccStart() {
     lastCC = -1;

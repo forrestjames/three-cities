@@ -392,10 +392,11 @@ kbd { display: inline-block; min-width: 26px; text-align: center; border: 1.5px 
   <span class="sec-no">11</span>
   <h2>MIDI out</h2>
   <p class="kicker">Let the weather play your synths. Chrome and Edge, on a computer.</p>
-  <p>Pick a MIDI output in the rack and the channel menus appear. Each city plays on its own channel, and the drums play standard General MIDI notes, so any drum rack maps them.</p>
+  <p>Pick a MIDI output in the rack and the channel menus appear. Each city plays on its own channel, the chords have one of their own, and the drums play standard General MIDI notes, so any drum rack maps them.</p>
   <table>
     <tr><th>Part</th><th>Default</th></tr>
     <tr><td>City 1, 2, 3</td><td>Channels 1, 2, 3</td></tr>
+    <tr><td>Chords</td><td>Channel 4. Each chord is held until the next one, so a pad or string synth can sustain it. It plays when the Chords lamp is on.</td></tr>
     <tr><td>Rhythm section</td><td>Channel 10</td></tr>
     <tr><td>Kick</td><td>Note 36</td></tr>
     <tr><td>Snare</td><td>Note 38</td></tr>
@@ -464,7 +465,7 @@ kbd { display: inline-block; min-width: 26px; text-align: center; border: 1.5px 
     <tr><td>Pattern length</td><td>1 to 50ish steps, depending on how hot it gets</td></tr>
     <tr><td>Sounds</td><td>31, plus your own, plus 10 drum kits</td></tr>
     <tr><td>Scales</td><td>17</td></tr>
-    <tr><td>Outputs</td><td>Stereo audio, 4 MIDI channels, files</td></tr>
+    <tr><td>Outputs</td><td>Stereo audio, 5 MIDI channels, files</td></tr>
     <tr><td>Loudness</td><td>About −15 LUFS by day, much quieter at night, peaks held below −1 dB</td></tr>
     <tr><td>Power</td><td>One browser tab. The sun does the rest</td></tr>
     <tr><td>Weight</td><td>About 400 KB, lighter than a cloud</td></tr>
@@ -477,6 +478,7 @@ kbd { display: inline-block; min-width: 26px; text-align: center; border: 1.5px 
   <p class="kicker">This manual is kept up to date with the instrument. Newest first.</p>
   <dl class="log">
     <dt>13 October 2026</dt>
+    <dd>The chords have their own MIDI channel, 4 by default. Each chord is held until the next, so a pad synth can carry it.</dd>
     <dd>A warmer icon. The skyline now sits on a dusky, grainy rose, the colour of the evening sky.</dd>
     <dd>On phones, Load a sound goes straight to your files instead of offering the camera.</dd>
     <dd>The Filter has an Auto lamp for a slow, wide swell between low and high, and a beat-synced LFO with Rate (1/64 to 4 bars) and depth. A dot on the Filter knob shows the movement.</dd>
