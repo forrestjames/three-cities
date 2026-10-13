@@ -3900,12 +3900,23 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
     midiSel.options[0].textContent = "Not supported in this browser";
   }
   let midiAccess = null;
+  // every output the computer offers, no limit, and the list keeps up as interfaces are plugged in, woken or unplugged
+  function listMidi() {
+    const keep = midiSel.value;
+    while (midiSel.options.length > 1) midiSel.remove(1);
+    const outs = [...midiAccess.outputs.values()].sort((a, b) => (a.name || "").localeCompare(b.name || ""));
+    outs.forEach(o => { const opt = document.createElement("option"); opt.value = o.id; opt.textContent = o.manufacturer && !(o.name || "").includes(o.manufacturer) ? `${o.name} (${o.manufacturer})` : o.name; midiSel.appendChild(opt); });
+    midiSel.options[0].textContent = outs.length ? "Off" : "Off (no MIDI outputs found)";
+    if (keep && outs.some(o => o.id === keep)) midiSel.value = keep;
+    else if (keep) { midiSel.value = ""; midiSel.dispatchEvent(new Event("change")); }   // the one we were using went away
+  }
   async function loadMidi() {
-    if (midiAccess) return;
+    if (midiAccess) { listMidi(); return; }
     try {
       midiAccess = await navigator.requestMIDIAccess();
-      midiAccess.outputs.forEach(o => { const opt = document.createElement("option"); opt.value = o.id; opt.textContent = o.name; midiSel.appendChild(opt); });
-      if (!midiAccess.outputs.size) midiSel.options[0].textContent = "Off (no MIDI outputs found)";
+      midiAccess.onstatechange = listMidi;
+      listMidi();
+      midiSel.addEventListener("focus", listMidi); midiSel.addEventListener("pointerdown", listMidi);
     } catch (e) {
       midiSel.options[0].textContent = "Off (MIDI blocked here)";
     }
