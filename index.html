@@ -212,7 +212,7 @@ main { max-width: 1240px; margin: 0 auto; padding: 0 16px 80px; display: flex; f
 .tgroup { display: flex; flex-direction: column; gap: 10px; min-width: 0; }
 .tlabel { font-family: var(--display); font-size: 18px; letter-spacing: 0.16em; text-transform: uppercase; color: var(--ink); }
 .tgroup .field { justify-content: space-between; }
-.rack { display: grid; grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr) minmax(0, 1.2fr) minmax(0, 0.55fr) minmax(0, 1.25fr); margin-top: 8px; border-radius: 8px; position: relative; --led: #ffd98a;
+.rack { display: grid; grid-template-columns: minmax(0, 0.85fr) minmax(0, 1.05fr) minmax(0, 1.1fr) minmax(0, 1.05fr) minmax(0, 1.1fr); margin-top: 8px; border-radius: 8px; position: relative; --led: #ffd98a;
         background: repeating-linear-gradient(90deg, rgba(255,255,255,0.018) 0 1px, transparent 1px 3px), linear-gradient(180deg, #1c1715, #110d0c);
         border: 1px solid rgba(255,255,255,0.08); box-shadow: inset 0 1px 0 rgba(255,255,255,0.06), 0 10px 26px rgba(0,0,0,0.45); }
 .rack::before, .rack::after { content: ""; position: absolute; top: 7px; width: 6px; height: 6px; border-radius: 50%;
@@ -636,8 +636,15 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
 .reel.min { inset: auto 12px 12px auto; padding: 0; background: none; grid-template-rows: auto; }
 .reel.min canvas { display: none; }
 
-.mod-chords .pedal-led { margin-left: auto; }
+.mod-chords .pedal-led, .mod-filter .dj-auto { margin-left: auto; }
 .rack .mod-chords .mod-knobs { column-gap: 18px; }
+/* Filter has three knobs: stack each one's label and readout under it so they fit side by side */
+.rack .mod-filter .mod-knobs { gap: 8px 22px; justify-content: flex-start; flex-wrap: wrap; }
+.rack .mod-filter .kn { flex-direction: column; gap: 4px; min-width: 0; }
+.rack .mod-filter .kn-stack { align-items: center; }
+.rack .mod-filter .kn-stack .kn-label { margin-bottom: 3px; text-align: center; }
+.rack .mod-filter .lcd { min-width: 0; padding: 4px 5px; }
+.rack .pedal.mod-filter .knobs { opacity: 1 !important; }   /* the Auto lamp is a mode, not an on/off for the module, so the knobs never dim */
 .rack .mod-chords .kn { flex: 0 0 auto; min-width: 104px; }
 @media (max-width: 1100px) { .rack-mod:last-child:nth-child(odd) { grid-column: 1 / -1; } }
 
@@ -720,9 +727,11 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
       </div>
     </div>
     <div class="pedal rack-mod mod-filter" aria-label="Filter">
-      <div class="mod-head"><span class="mod-name">Filter</span><button class="info" type="button" aria-label="How the filter works" data-tip="A DJ-style filter on the whole mix, cities and drums together. At 12 o'clock it does nothing. Turn left and a low-pass closes in, taking the top off until it's muffled. Turn right and a high-pass thins it out from the bottom up. Double-click to snap back to the middle."></button></div>
+      <div class="mod-head"><span class="mod-name">Filter</span><button class="info" type="button" aria-label="How the filter works" data-tip="A DJ-style filter on the whole mix, cities and drums together. At 12 o'clock it does nothing. Turn left and a low-pass closes in, taking the top off until it's muffled. Turn right and a high-pass thins it out from the bottom up. Double-click to snap back to the middle. Auto: the filter swells slowly from warm and dark to light and airy and back, around wherever the knob sits, never to the extremes. Windier weather swells faster. LFO: a pulse in time with the beat that dips the top end and lets it open again on the beat. Rate picks how often, Depth how far."></button><button class="pedal-led dj-auto" type="button" id="djAuto" aria-pressed="false" aria-label="Auto filter off" title="Auto: a slow, musical swell between low and high"></button></div>
       <div class="knobs mod-knobs">
-        <div class="kn"><input class="kn-native" id="djFilter" type="range" min="-100" max="100" step="1" value="0" data-label="LPF · HPF"><span class="kn-stack"><output id="djFilterOut" class="lcd">Off</output></span></div>
+        <div class="kn"><input class="kn-native" id="djFilter" type="range" min="-100" max="100" step="1" value="0" data-label="Filter"><span class="kn-stack"><output id="djFilterOut" class="lcd">Off</output></span></div>
+        <div class="kn"><select class="kn-native" id="djLfoRate" data-label="Rate"><option value="0.5">1/8</option><option value="1" selected>1/4</option><option value="2">1/2</option><option value="4">1 bar</option><option value="8">2 bars</option><option value="16">4 bars</option></select><span class="kn-stack"><output id="djLfoRateOut" class="lcd">1/4</output></span></div>
+        <div class="kn"><input class="kn-native" id="djLfoAmt" type="range" min="0" max="100" step="1" value="0" data-label="LFO"><span class="kn-stack"><output id="djLfoAmtOut" class="lcd">Off</output></span></div>
       </div>
     </div>
     <div class="pedal rack-mod mod-midi midi-bit" aria-label="MIDI">
@@ -2379,6 +2388,10 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
     master = ac.createGain(); master.gain.value = document.getElementById("volume").value / 100 * 0.9;
     djLP = ac.createBiquadFilter(); djLP.type = "lowpass"; djLP.frequency.value = 20000; djLP.Q.value = 0.9;
     djHP = ac.createBiquadFilter(); djHP.type = "highpass"; djHP.frequency.value = 20; djHP.Q.value = 0.9;
+    // Filter LFO: a cosine in time with the beat, 0 on the beat and lowest halfway through, moving both filters' tuning (in cents)
+    DJL.depth = ac.createGain(); DJL.depth.gain.value = 0; DJL.dc = ac.createConstantSource(); DJL.dc.offset.value = -0.5; DJL.dc.connect(DJL.depth); DJL.dc.start();
+    DJL.wave = ac.createPeriodicWave(new Float32Array([0, 0.5]), new Float32Array([0, 0]), { disableNormalization: true });
+    DJL.depth.connect(djLP.detune); DJL.depth.connect(djHP.detune);
     // below everything: a cut under 35 Hz (rumble nobody hears but every speaker has to push), and after the limiter
     // a soft clipper, so anything that still slips past rounds off gently instead of cracking
     const rumble = ac.createBiquadFilter(); rumble.type = "highpass"; rumble.frequency.value = MOBILE_OUT ? 60 : 35; rumble.Q.value = 0.7;
@@ -2388,7 +2401,7 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
     const soft = ac.createWaveShaper(); { const n = 2048, cv = new Float32Array(n); for (let i = 0; i < n; i++) { const x = (i / (n - 1)) * 2 - 1; cv[i] = Math.abs(x) < 0.8 ? x : Math.sign(x) * (0.8 + 0.2 * Math.tanh((Math.abs(x) - 0.8) / 0.2)); } soft.curve = cv; soft.oversample = "2x"; }
     master.connect(djLP).connect(djHP).connect(rumble).connect(phoneLows).connect(comp); const trim = ac.createGain(); trim.gain.value = 1;
     limiter.connect(trim).connect(soft).connect(ac.destination); outNode = soft;
-    applyDJ();
+    applyDJ(); applyLfo();
     buildEffects();
     setupGroove();
     cities.forEach(c => {
@@ -3367,14 +3380,45 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
   let tick = 0, nextTime = 0, tickDur = 0.1, timer = null;
   // DJ filter: one knob, centre is off, left closes a low-pass, right opens a high-pass
   let djLP = null, djHP = null, djVal = 0;
+  // Auto: a slow swell around the knob, from warm and dark to light and airy. It never goes past about halfway
+  // either side, and windier weather swells faster (one round every 32 bars when calm, every 8 in a gale).
+  const DJA = { on: false, phase: 0, last: 0, off: 0 };
+  const DJL = { depth: null, dc: null, wave: null, osc: null, beats: 1 };
+  function djAutoTick() {
+    if (!ac || !DJA.on) return;
+    const now = ac.currentTime, dt = DJA.last ? Math.min(1, now - DJA.last) : 0; DJA.last = now;
+    const ready = cities.filter(c => c.w), wind = ready.length ? Math.min(1, ready.reduce((a, c) => a + c.w.w, 0) / ready.length / 35) : 0.3;
+    const bars = 32 - 24 * wind, barSec = 4 * 60 / (bpmNow || 90);
+    DJA.phase = (DJA.phase + dt / (bars * barSec)) % 1;
+    DJA.off = 0.42 * Math.sin(2 * Math.PI * DJA.phase);
+    applyDJ();
+  }
+  setInterval(djAutoTick, 60);
+  // the LFO restarts on the beat now and then so it stays locked to the tempo as it drifts at night
+  function djLfoSync(t) {
+    if (!DJL.depth || ac.state !== "running") return;
+    const o = ac.createOscillator(); o.setPeriodicWave(DJL.wave); o.frequency.value = (bpmNow || 90) / 60 / DJL.beats;
+    o.connect(DJL.depth); o.start(t);
+    if (DJL.osc) DJL.osc.stop(t);
+    DJL.osc = o;
+  }
+  function applyLfo() {
+    const amt = Number(document.getElementById("djLfoAmt").value) / 100;
+    DJL.beats = Number(document.getElementById("djLfoRate").value);
+    document.getElementById("djLfoAmtOut").value = amt ? Math.round(amt * 100) : "Off";
+    if (!DJL.depth) return;
+    DJL.depth.gain.setTargetAtTime(amt * 3000, ac.currentTime, 0.05);   // up to about two and a half octaves
+    if (DJL.osc) DJL.osc.frequency.setTargetAtTime((bpmNow || 90) / 60 / DJL.beats, ac.currentTime, 0.05);
+  }
   const fmtHz = f => f >= 1000 ? (f / 1000).toFixed(f >= 10000 ? 0 : 1) + "k" : Math.round(f) + "";
   function applyDJ() {
-    const out = document.getElementById("djFilterOut"), v = djVal / 100;
+    const out = document.getElementById("djFilterOut"), base = djVal / 100;
+    const v = DJA.on ? Math.max(-0.55, Math.min(0.55, base + DJA.off)) : base;   // Auto never goes to the extremes
     const lp = v < 0 ? 20000 * Math.pow(180 / 20000, -v) : 20000;     // down to about 180 Hz fully left
     const hp = v > 0 ? 20 * Math.pow(4000 / 20, v) : 20;               // up to about 4 kHz fully right
-    if (out) out.value = v < 0 ? "LPF " + fmtHz(lp) : v > 0 ? "HPF " + fmtHz(hp) : "Off";
+    if (out) out.value = Math.abs(v) < 0.01 ? (DJA.on ? "Auto" : "Off") : v < 0 ? "LPF " + fmtHz(lp) : "HPF " + fmtHz(hp);
     if (!djLP) return;
-    const t = ac.currentTime, q = 0.7 + Math.abs(v) * 2.3;            // a little resonance as it sweeps, like a mixer
+    const t = ac.currentTime, q = 0.7 + Math.abs(v) * (DJA.on ? 1.6 : 2.3);   // a little resonance as it sweeps, like a mixer (gentler on Auto)
     djLP.frequency.setTargetAtTime(lp, t, 0.03); djLP.Q.setTargetAtTime(v < 0 ? q : 0.7, t, 0.03);
     djHP.frequency.setTargetAtTime(hp, t, 0.03); djHP.Q.setTargetAtTime(v > 0 ? q : 0.7, t, 0.03);
   }
@@ -3448,7 +3492,8 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
       if (tick % 8 === 0) beatTimes.push(nextTime);
       if (tick % (32 * 4) === 0 && HARM.prog) HARM.root = HARM.prog[(tick / (32 * 4)) % HARM.prog.length];   // a new chord every 4 bars
       if (tick % (32 * 4) === 0) chordBed(nextTime);                                                            // and the bed moves with it
-      if (tick % (32 * 2) === 0 && tick) sampleShift(tick / 32);                                                // samples move on, on even bars
+      if (tick % (32 * 2) === 0 && tick) sampleShift(tick / 32);
+      if (tick % Math.max(32, DJL.beats * 8) === 0) djLfoSync(nextTime);                                      // the filter LFO starts each cycle on the beat                                                // samples move on, on even bars
       nextTime += tickDur;
       tick++;
       // long form, counted in 4/4 bars of 32 ticks: every 64 bars each city's melody moves on
@@ -3753,6 +3798,13 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
     if (!el) return;   // the rack shows everything, so there's no summary line any more
     el.textContent = `${document.getElementById("tempoOut").value || tempo.value} bpm · ${KEYS[keyRoot]} ${SCALES.find(x => x[1] === scale)[0]} · volume ${document.getElementById("volume").value}`;
   }
+  { const b = document.getElementById("djAuto");
+    b.addEventListener("click", () => {
+      DJA.on = !DJA.on; DJA.last = 0; if (!DJA.on) DJA.off = 0;
+      b.setAttribute("aria-pressed", String(DJA.on)); b.setAttribute("aria-label", "Auto filter " + (DJA.on ? "on" : "off")); applyDJ();
+    }); }
+  document.getElementById("djLfoAmt").addEventListener("input", applyLfo);
+  document.getElementById("djLfoRate").addEventListener("change", () => { applyLfo(); if (ac && playing) djLfoSync(ac.currentTime + 0.02); });
   document.getElementById("djFilter").addEventListener("input", e => {
     let v = Number(e.target.value);
     if (Math.abs(v) < 4) v = 0;   // a soft detent at 12 o'clock
@@ -4401,7 +4453,7 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
   const MIX_GLOBAL = { key: "k", scale: "sc", tempo: "t", volume: "V", djFilter: "f", grooveOn: "g", grooveKit: "gk", grooveVol: "gv", grooveTone: "gt", grooveAuto: "ga", grooveChance: "gc",
     "gm-kick": "mk", "gm-snare": "ms", "gm-hat": "mh", "gm-rim": "mr",
     "gh-kick": "hk", "gh-snare": "hs", "gh-hat": "hh", "gh-rim": "hr", "gd-kick": "dk", "gd-snare": "ds", "gd-hat": "dh", "gd-rim": "dr", hallOn: "h", fxRevLevel: "hl", fxRevDecay: "hd", fxRevPre: "hp", fxRevTone: "ht",
-    fxRevType: "hy", delayOn: "e", fxStyle: "es", fxTime: "et", fxDelay: "el", fxEchoes: "ee", fxDelTone: "eo", fxWobble: "ew", moodDeep: "q", unit: "u", chordOn: "cb", chordLevel: "cv", chordSound: "cs" };
+    fxRevType: "hy", delayOn: "e", fxStyle: "es", fxTime: "et", fxDelay: "el", fxEchoes: "ee", fxDelTone: "eo", fxWobble: "ew", moodDeep: "q", unit: "u", chordOn: "cb", chordLevel: "cv", chordSound: "cs", djAuto: "fa", djLfoRate: "fr", djLfoAmt: "fl" };
   const shortKey = k => {
     if (MIX_GLOBAL[k]) return MIX_GLOBAL[k];
     let m = k.match(/^(boston|copenhagen|london)-(\w+)$/); if (m && MIX_PART[m[2]]) return MIX_CITY[m[1]] + MIX_PART[m[2]];
