@@ -1299,28 +1299,29 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
   ["Zermatt",46.02,7.75,"Switzerland",""],["Chamonix",45.92,6.87,"France",""],["Innsbruck",47.27,11.39,"Austria","l"],["Aspen",39.19,-106.82,"Colorado, USA","l"],["Whistler",50.12,-122.95,"Canada",""],
   ["Niseko",42.86,140.69,"Japan",""],["Bariloche",-41.13,-71.31,"Argentina","l"],["Erzurum",39.9,41.27,"Türkiye",""],["Asahikawa",43.77,142.36,"Japan",""],["Cortina",46.54,12.14,"Italy",""]
 ];
-  let wildRows = null, wildAt = 0;
-  async function wildScan() {
-    if (wildRows && Date.now() - wildAt < 10 * 60 * 1000) return wildRows;
-    const out = [], P = WILD_PLACES;
-    for (let i = 0; i < P.length; i += 80) {
-      const part = P.slice(i, i + 80);
+  // Weather for a handful of places at a time (one request, up to 50), remembered for ten minutes,
+  // so a Wild card costs one small call instead of hundreds.
+  const wildCache = new Map();
+  let wildErr = "";
+  async function wildScan(places) {
+    const now = Date.now(), need = places.filter(p => { const x = wildCache.get(p[0]); return !x || now - x.at > 10 * 60 * 1000; }).slice(0, 50);
+    if (need.length) {
       try {
-        const j = await getJSON(`https://api.open-meteo.com/v1/forecast?latitude=${part.map(p => p[1]).join(",")}&longitude=${part.map(p => p[2]).join(",")}` +
+        const j = await getJSON(`https://api.open-meteo.com/v1/forecast?latitude=${need.map(p => p[1]).join(",")}&longitude=${need.map(p => p[2]).join(",")}` +
           "&current=temperature_2m,is_day,precipitation,snowfall,weather_code,cloud_cover,wind_gusts_10m,visibility&daily=uv_index_max,sunshine_duration,sunrise,sunset&forecast_days=1&timezone=auto&timeformat=unixtime");
         (Array.isArray(j) ? j : [j]).forEach((d, k) => {
-          const p = part[k]; if (!p || !d || !d.current || typeof d.current.temperature_2m !== "number") return;
-          const c = d.current, dl = d.daily || {}, now = Date.now() / 1000;
-          out.push({ name: p[0], lat: p[1], lon: p[2], where: p[3], flags: p[4], off: d.utc_offset_seconds || 0, tz: d.timezone,
+          const p = need[k]; if (!p || !d || !d.current || typeof d.current.temperature_2m !== "number") return;
+          const c = d.current, dl = d.daily || {}, t0 = Date.now() / 1000;
+          wildCache.set(p[0], { at: Date.now(), r: { name: p[0], lat: p[1], lon: p[2], where: p[3], flags: p[4], off: d.utc_offset_seconds || 0, tz: d.timezone,
             t: c.temperature_2m, day: !!c.is_day, pr: c.precipitation || 0, snow: c.snowfall || 0, code: c.weather_code ?? 0, cloud: c.cloud_cover ?? 0,
             g: c.wind_gusts_10m ?? 0, vis: c.visibility ?? 99999, uv: (dl.uv_index_max || [0])[0] || 0, sunH: ((dl.sunshine_duration || [0])[0] || 0) / 3600,
-            toSun: Math.min(...[(dl.sunrise || [])[0], (dl.sunset || [])[0]].filter(Boolean).map(x => Math.abs(x - now) / 60), 9999) });
+            toSun: Math.min(9999, ...[(dl.sunrise || [])[0], (dl.sunset || [])[0]].filter(Boolean).map(x => Math.abs(x - t0) / 60)) } });
         });
-      } catch (e) {}
+      } catch (e) { wildErr = e.message || String(e); console.warn("Wild card weather:", e); }
     }
-    if (out.length < 30) throw new Error("no weather");
-    wildRows = out; wildAt = Date.now(); return out;
+    return [...wildCache.values()].filter(x => Date.now() - x.at < 10 * 60 * 1000).map(x => x.r);
   }
+  const wildSample = (want, n = 50) => WILD_PLACES.filter(p => !want || p[4].includes(want)).sort(() => Math.random() - 0.5).slice(0, n);
   const localH = r => { const d = new Date(Date.now() + r.off * 1000); return d.getUTCHours() + d.getUTCMinutes() / 60; };
   const kmApart = (a, b) => { const R = 6371, dl = (b.lat - a.lat) * Math.PI / 180, dn = (b.lon - a.lon) * Math.PI / 180, x = Math.sin(dl / 2) ** 2 + Math.cos(a.lat * Math.PI / 180) * Math.cos(b.lat * Math.PI / 180) * Math.sin(dn / 2) ** 2; return 2 * R * Math.asin(Math.sqrt(x)); };
   const wet = r => (r.code >= 51 && r.code <= 67) || (r.code >= 80 && r.code <= 82) || r.pr > 0.1;
@@ -1338,9 +1339,9 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
   const WILD = [
     { name: "Hot and cold", pick: R => { const s = R.slice().sort((a, b) => b.t - a.t), hot = s[0], cold = s[s.length - 1], mid = (hot.t + cold.t) / 2, m = s.filter(r => kmApart(r, hot) > 400 && kmApart(r, cold) > 400).sort((a, b) => Math.abs(a.t - mid) - Math.abs(b.t - mid))[0]; return m ? [hot, m, cold] : null; },
       say: p => `${p[0].name} is ${dg(p[0].t)}, ${p[2].name} is ${dg(p[2].t)}, and ${p[1].name} sits right in between.` },
-    { name: "Autumn leaves", pick: R => wildTop(R, r => r.sunH * 0.4 - Math.abs(r.t - 14) * 0.5 - (wet(r) ? 3 : 0), r => r.flags.includes("l") && autumnNow(r)),
+    { name: "Autumn leaves", want: "l", pick: R => wildTop(R, r => r.sunH * 0.4 - Math.abs(r.t - 14) * 0.5 - (wet(r) ? 3 : 0), r => r.flags.includes("l") && autumnNow(r)),
       say: p => `${names3(p)}, where the trees are turning right now.` },
-    { name: "Midnight capitals", pick: R => wildTop(R, r => -Math.min(Math.abs(localH(r) - 24), localH(r)), r => r.flags.includes("c") && (localH(r) > 22.5 || localH(r) < 1.5)),
+    { name: "Midnight capitals", want: "c", pick: R => wildTop(R, r => -Math.min(Math.abs(localH(r) - 24), localH(r)), r => r.flags.includes("c") && (localH(r) > 22.5 || localH(r) < 1.5)),
       say: p => `${names3(p)}, all close to midnight right now.` },
     { name: "Sunscreen optional", pick: R => wildTop(R, r => r.uv + (r.day ? 2 : 0), r => r.uv >= 6),
       say: p => `${names3(p)}, where the sun is strongest today. UV up to ${Math.round(p[0].uv)}.` },
@@ -1358,7 +1359,7 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
       say: p => `${p[0].name} is having breakfast, ${p[1].name} is at lunch, and ${p[2].name} is off to bed.` },
     { name: "In the fog", pick: R => wildTop(R, r => -r.vis / 1000 + (r.code === 45 || r.code === 48 ? 10 : 0), r => r.code === 45 || r.code === 48 || r.vis < 3000),
       say: p => `${names3(p)}, all in the fog right now.` },
-    { name: "Beach weather", pick: R => wildTop(R, r => -Math.abs(r.t - 29) + r.sunH * 0.3 - (wet(r) ? 4 : 0), r => r.flags.includes("s") && r.day && r.t > 24 && !wet(r)),
+    { name: "Beach weather", want: "s", pick: R => wildTop(R, r => -Math.abs(r.t - 29) + r.sunH * 0.3 - (wet(r) ? 4 : 0), r => r.flags.includes("s") && r.day && r.t > 24 && !wet(r)),
       say: p => `${names3(p)}, warm, dry and by the sea right now.` }
   ];
   let wildLast = "";
@@ -1366,11 +1367,19 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
     const note = document.getElementById("surpriseNote"), btns = document.querySelectorAll(".surprise button");
     btns.forEach(x => x.disabled = true); note.textContent = "Shuffling the deck…";
     try {
-      const R = await wildScan();
+      wildErr = "";
       const order = WILD.filter(w => w.name !== wildLast).sort(() => Math.random() - 0.5);
-      let theme = null, picks = null;
-      for (const w of order) { try { picks = w.pick(R); } catch (e) { picks = null; } if (picks && picks.length === 3) { theme = w; break; } }
-      if (!theme) throw new Error("nothing fits");
+      let theme = null, picks = null, tries = 0;
+      for (const w of order) {
+        if (tries >= 4) break;
+        const fresh = w.want ? wildSample(w.want, 40) : wildSample(null, 50);
+        if (fresh.some(p => !wildCache.has(p[0]))) tries++;
+        const R = await wildScan(fresh);
+        if (R.length < 6) continue;
+        try { picks = w.pick(R); } catch (e) { picks = null; }
+        if (picks && picks.length === 3) { theme = w; break; }
+      }
+      if (!theme) throw new Error(wildErr || "nothing fits");
       wildLast = theme.name;
       picks.forEach((r, i) => {
         const inp = document.getElementById("mine" + (i + 1)), hit = { name: r.name, latitude: r.lat, longitude: r.lon, country: r.where, country_code: /USA$/.test(r.where) ? "US" : "", admin1: /, USA$/.test(r.where) ? r.where.replace(/, USA$/, "") : undefined, timezone: r.tz };
@@ -1380,7 +1389,7 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
       note.textContent = ""; note.append(b, document.createTextNode(theme.say(picks)));
       const go = document.querySelector("#mine button[type=submit]");
       go.classList.remove("nudge"); void go.offsetWidth; go.classList.add("nudge");
-    } catch (e) { note.textContent = "Couldn't reach the weather just now. Try again in a moment."; }
+    } catch (e) { note.textContent = e.message === "nothing fits" ? "Nothing fit this time. Try the Wild card again." : `Couldn't reach the weather just now (${e.message}). Try again in a moment.`; }
     btns.forEach(x => x.disabled = false);
   });
 
