@@ -27,7 +27,12 @@ input, select { width: 100%; background: var(--panel); color: var(--ink); border
 .btn[disabled] { opacity: 0.4; cursor: default; }
 .status { color: var(--dim); font-size: 12px; margin-top: 14px; min-height: 2.4em; }
 .stage { position: relative; display: flex; justify-content: center; }
-canvas { width: min(100%, 420px); height: auto; aspect-ratio: 9 / 16; background: #100806; box-shadow: 0 14px 40px rgba(0,0,0,0.6); }
+.frame { position: relative; line-height: 0; width: min(100%, 420px); }
+#ig { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
+#ig[hidden] { display: none; }
+label.check { display: flex; gap: 8px; align-items: center; font-weight: 400; margin-top: 10px; }
+label.check input { width: auto; }
+canvas { width: 100%; height: auto; aspect-ratio: 9 / 16; background: #100806; box-shadow: 0 14px 40px rgba(0,0,0,0.6); }
 .hint { color: var(--faint); font-size: 12px; }
 .out button { margin: 8px 8px 0 0; }
 </style>
@@ -47,6 +52,8 @@ canvas { width: min(100%, 420px); height: auto; aspect-ratio: 9 / 16; background
       <div><label for="start">Start the music at (seconds)</label><input id="start" type="number" min="0" step="1" value="0"></div>
     </div>
     <p class="hint" id="startHint"></p>
+    <label class="check"><input type="checkbox" id="safe"> Keep clear of Instagram's buttons</label>
+    <label class="check"><input type="checkbox" id="guide"> Show Instagram's buttons on the preview (never recorded)</label>
     <div class="btns">
       <button class="btn ghost" id="preview" type="button" disabled>▶ Preview</button>
       <button class="btn rec" id="record" type="button" disabled>● Record teaser</button>
@@ -54,12 +61,18 @@ canvas { width: min(100%, 420px); height: auto; aspect-ratio: 9 / 16; background
     <p class="status" id="status" aria-live="polite">Load your recording to begin.</p>
     <div class="out" id="out"></div>
   </div>
-  <div class="stage"><canvas id="cv" width="1080" height="1920" aria-label="Teaser preview"></canvas></div>
+  <div class="stage"><div class="frame"><canvas id="cv" width="1080" height="1920" aria-label="Teaser preview"></canvas><svg id="ig" viewBox="0 0 1080 1920" aria-hidden="true" hidden><g fill="rgba(255,255,255,.92)" font-family="-apple-system,system-ui,sans-serif"><rect width="1080" height="290" fill="rgba(255,60,60,.16)"/><text x="110" y="250" font-size="64" font-weight="700">Reels</text><text x="400" y="250" font-size="64" font-weight="700" opacity=".6">Friends</text><rect x="900" y="1040" width="180" height="520" fill="rgba(255,60,60,.16)"/><g transform="translate(990 0)"><circle cy="1130" r="34" fill="none" stroke="#fff" stroke-width="7"/><circle cy="1290" r="34" fill="none" stroke="#fff" stroke-width="7"/><circle cy="1450" r="34" fill="none" stroke="#fff" stroke-width="7"/><circle cy="1610" r="34" fill="none" stroke="#fff" stroke-width="7"/></g><rect y="1560" width="1080" height="360" fill="rgba(255,60,60,.16)"/><circle cx="125" cy="1700" r="62" fill="#888"/><text x="215" y="1722" font-size="50" font-weight="600">forrest_james</text><text x="55" y="1850" font-size="46">I’ve started something new ...</text><rect width="45" height="1920" fill="rgba(255,60,60,.22)"/><rect x="1035" width="45" height="1920" fill="rgba(255,60,60,.22)"/></g></svg></div></div>
 </div>
 <script>
 const $ = id => document.getElementById(id);
 const W = 1080, H = 1920, COLORS = ["#d08a6a", "#6fa38c", "#a98bc4"];
 const RELEASED = false;
+// Instagram covers the top, the right edge and the bottom of a reel unless it's full screen,
+// and taller phones crop a little off each side. SAFE keeps the type and interface inside what's left.
+let SAFE = false;
+const SAFEBOX = { x: 80, y: 300, s: 0.713 };   // the poster layer, scaled into x 80-795, y 300-1570
+$("safe").onchange = e => { SAFE = e.target.checked; };
+$("guide").onchange = e => { $("ig").toggleAttribute("hidden", !e.target.checked); };
 const cv = $("cv"), g = cv.getContext("2d");
 const ease = x => x <= 0 ? 0 : x >= 1 ? 1 : 1 - Math.pow(1 - x, 3);
 const inout = x => x <= 0 ? 0 : x >= 1 ? 1 : x < 0.5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2;
@@ -373,9 +386,10 @@ const fade = (p, len = 0.4) => Math.max(0, Math.min(1, ease(p / len)));
 const UTCOFF = { Cologne: 2, Halifax: -3, "Mexico City": -6, London: 1, Boston: -4, Copenhagen: 2 };
 function utcHour() { const c = CITY[0], h = parseInt(c.time); return (c.name in UTCOFF && !isNaN(h)) ? h - UTCOFF[c.name] : new Date().getUTCHours(); }
 const SCENES = [
-  { name: "home", w: 1, draw(ls, d, t, pulse) {   // three cities I've called home
+  { name: "home", w: 1, bg(ls, d, t) {
       HOME.forEach((h, i) => { const k = ease((ls - i * 0.25) / 0.4); if (k > 0) photoBleed(homePhotos[i][0], i * W / 3, 0, W / 3 + 1, H, (t / 9 + i * 0.3) % 1, 0.9 * k); });
       g.fillStyle = "rgba(10,6,5,0.35)"; g.fillRect(0, 0, W, H);
+    }, draw(ls, d, t, pulse) {   // three cities I've called home
       HOME.forEach((h, i) => { g.save(); g.translate(i * W / 3 + W / 6 + 30, H - 120); g.rotate(-Math.PI / 2); rise(h.toUpperCase(), 0, 0, 96, ls - 0.5 - i * 0.2, { spacing: 12 }); g.restore(); });
       rise("THREE CITIES", 60, 380, 150, ls - 1.2, { max: 960 });
       rise("I'VE CALLED", 60, 530, 150, ls - 1.45, { max: 960 });
@@ -410,9 +424,10 @@ const SCENES = [
         micro(`→ ${m}`, 64, y + 64, { size: 30, spacing: 3, color: on ? EMBER : INK, alpha: fade(lj - 0.2, 0.3) * (on ? 1 : 0.32) });
       });
     } },
-  { name: "night", w: 1, draw(ls, d, t, pulse) {   // night: a city asleep
+  { name: "night", w: 1, bg(ls, d, t) {
       photoBleed(photos[1][1] || photos[1][0], 0, 0, W, H, (t / 12) % 1, 0.75);
       g.fillStyle = "rgba(8,6,10,0.55)"; g.fillRect(0, 0, W, H);
+    }, draw(ls, d, t, pulse) {   // night: a city asleep
       rise(CITY[1].time, W / 2, 700, 320, ls, { align: "center" });
       rise(`${CITY[1].name.toUpperCase()} IS ASLEEP.`, W / 2, 860, 80, ls - 0.3, { align: "center", max: 960 });
       ["SOFTER", "SLOWER", "FEWER NOTES"].forEach((w2, i) => rise(w2, W / 2, 1180 + i * 130, 110, ls - 0.9 - i * 0.3, { align: "center", color: i === 2 ? EMBER : INK }));
@@ -453,10 +468,9 @@ const SCENES = [
       });
       micro("THREE CITIES, AWAKE OR ASLEEP, RIGHT NOW", W / 2, 1840, { align: "center", alpha: fade(ls - stop) * 0.85 });
     } },
-  { name: "studio", w: 1, draw(ls, d, t, pulse) {   // one word, one whole module, cut on the beat
+  { name: "studio", w: 1, bg(ls, d) { if (Math.floor(ls / (d / 4)) % 2 === 1) { g.fillStyle = INK; g.fillRect(0, 0, W, H); } }, draw(ls, d, t, pulse) {   // one word, one whole module, cut on the beat
       const V = [["CHORDS", "chords"], ["REVERB", "reverb"], ["DELAY", "delay"], ["DRUMS", "drums"]];
       const n = Math.min(V.length - 1, Math.floor(ls / (d / V.length))), ln = ls - n * d / V.length, v = V[n], light = n % 2 === 1;
-      if (light) { g.fillStyle = INK; g.fillRect(0, 0, W, H); }   // every other cut flips to light
       module(v[1], 60, 760, 960, 680, ln - 0.1, { maxScale: 1.55 });
       rise(v[0], 40, 600, 280, ln, { color: light ? "#100806" : INK, max: 1000 });
       micro("A STUDIO, WHEN YOU WANT ONE", 60, 1640, { color: light ? "#100806" : INK, alpha: 0.8 });
@@ -512,10 +526,13 @@ function product(ls, span, t, pulse) {
   const tot = SCENES.reduce((s, x) => s + x.w, 0);
   let i = 0, at0 = 0; while (i < SCENES.length - 1 && ls >= at0 + SCENES[i].w / tot * span) { at0 += SCENES[i].w / tot * span; i++; }
   const d = SCENES[i].w / tot * span, l = ls - at0;
+  if (SCENES[i].bg) SCENES[i].bg(l, d, t);
+  g.save(); if (SAFE) { g.translate(SAFEBOX.x - 40 * SAFEBOX.s, SAFEBOX.y - 100 * SAFEBOX.s); g.scale(SAFEBOX.s, SAFEBOX.s); }   // the poster layer, kept clear of Instagram's buttons
   SCENES[i].draw(l, d, t, pulse);
   // a small mark top left, the same on every scene
   const bright = SCENES[i].name === "studio" && Math.floor(l / (d / 4)) % 2 === 1;
-  g.save(); g.globalAlpha = 0.7; g.translate(60, 70); g.scale(2.2, 2.2); g.fillStyle = bright ? "#100806" : INK; g.fill(SKYLINE); g.restore();
+  g.save(); g.globalAlpha = 0.7; g.translate(60, SAFE ? 40 : 70); g.scale(2.2, 2.2); g.fillStyle = bright ? "#100806" : INK; g.fill(SKYLINE); g.restore();
+  g.restore();
   if (i > 0 && l < 0.08) { g.fillStyle = INK; g.globalAlpha = 0.85 * (1 - l / 0.08); g.fillRect(0, 0, W, H); g.globalAlpha = 1; }   // a white flash on each hard cut
 }
 function frame(t, T) {
@@ -539,13 +556,13 @@ function frame(t, T) {
     cover(imgs[cut % Math.max(1, imgs.length)], 0, 0, W, H, (ls / 4) % 1, COLORS[k], 0.95);
     g.restore();
     if (pulse > 0.6) { const y = 300 + seeded(Math.floor(t * 8)) * 1200; cover(imgs[(cut + 1) % Math.max(1, imgs.length)], 0, y, W, 120, seeded(t), COLORS[k], 0.9); }
-    const ta = ease((ls - 0.3) / 0.5);
-    label("PLAYING LIVE", 80, 1180, 40, { mono: true, spacing: 10, color: COLORS[k], alpha: ta });
-    label(c.name.toUpperCase(), 80, 1330, 140, { spacing: 10, alpha: ta, max: 920 });
-    label(`${c.temp}°`, W - 80, 1600, 210, { align: "right", alpha: ease((ls - 0.6) / 0.5) });
-    label(`${c.time} local${date ? " · " + date : ""}`, 84, 1690, 32, { mono: true, alpha: ease((ls - 0.8) / 0.5) });
+    const ta = ease((ls - 0.3) / 0.5), L = SAFE ? { y1: 1010, y2: 1150, ty: 1400, tx: 860, tz: 180, y3: 1480, ry: 640, rr: 170, mx: 780 } : { y1: 1180, y2: 1330, ty: 1600, tx: W - 80, tz: 210, y3: 1690, ry: 700, rr: 190, mx: 920 };
+    label("PLAYING LIVE", 80, L.y1, 40, { mono: true, spacing: 10, color: COLORS[k], alpha: ta });
+    label(c.name.toUpperCase(), 80, L.y2, 140, { spacing: 10, alpha: ta, max: L.mx });
+    label(`${c.temp}°`, L.tx, L.ty, L.tz, { align: "right", alpha: ease((ls - 0.6) / 0.5) });
+    label(`${c.time} local${date ? " · " + date : ""}`, 84, L.y3, 32, { mono: true, alpha: ease((ls - 0.8) / 0.5) });
     const temp = Math.max(2, Math.abs(Math.round(+c.temp || 8)));
-    ring(k, 290, 700, 190 + 22 * pulse, ease((ls - 0.4) / 0.5) * 0.95, temp, Math.max(1, Math.round(temp * 0.4)), t, pulse);
+    ring(k, 290, L.ry, L.rr + 22 * pulse, ease((ls - 0.4) / 0.5) * 0.95, temp, Math.max(1, Math.round(temp * 0.4)), t, pulse);
   } else if (t < at("product")) {   // the product: poster type, hard-edged slices of the interface, cut on the beat
     product(t - at("cities"), at("product") - at("cities"), t, pulse);
   } else {   // the end card
