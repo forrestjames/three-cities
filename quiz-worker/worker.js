@@ -75,6 +75,13 @@ export default {
       return json(req, { q, text: QUIZ.find(x => x[0] === q)[1], top: rows.results || [] });
     }
 
+    // everything, for the admin page: /stats?key=… (the key is the ADMIN_KEY secret, when one is set)
+    if (url.pathname === "/stats" && req.method === "GET") {
+      if (env.ADMIN_KEY && url.searchParams.get("key") !== env.ADMIN_KEY) return json(req, { error: "wrong key" }, 401);
+      const rows = await env.DB.prepare(`SELECT q, city, shown, picked FROM tally ORDER BY q, picked DESC LIMIT 20000`).all();
+      return json(req, { questions: QUIZ, rows: rows.results || [], locked: !!env.ADMIN_KEY });
+    }
+
     if (url.pathname === "/") return json(req, { ok: true, service: "three-cities-quiz", questions: QUIZ.length });
     return json(req, { error: "not found" }, 404);
   }

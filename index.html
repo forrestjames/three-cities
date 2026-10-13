@@ -319,6 +319,11 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
 .suggest.sheet .where { font-size: 13px; }
 .mood { display: grid; gap: 12px; justify-items: center; padding: 4px 0 8px; }
 .mood-label { font-size: 11px; text-transform: uppercase; letter-spacing: 0.2em; color: var(--ink-dim); }
+.lived-check { display: flex; gap: 8px; align-items: center; font-size: 13px; color: var(--ink-dim); cursor: pointer; }
+.lived-check input { accent-color: #e07a4f; width: 16px; height: 16px; }
+.lived-row { display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 8px; font-size: 12px; color: var(--ink-dim); letter-spacing: 0.04em; }
+.lived-row button { min-height: 34px; padding: 0 14px; border-radius: 17px; border: 1px solid rgba(243,236,230,0.3); background: none; color: var(--ink-dim); font: 12px var(--mono); letter-spacing: 0.06em; cursor: pointer; }
+.lived-row button[aria-pressed="true"] { border-color: #e07a4f; color: var(--ink); }
 .quiz-res { width: min(560px, 100%); display: grid; gap: 10px; margin-top: 4px; }
 .quiz-head { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 4px 12px; font: 11px var(--mono); letter-spacing: 0.14em; color: var(--ink-dim); text-transform: uppercase; }
 .quiz-bar { display: grid; grid-template-columns: minmax(0, 150px) 1fr 44px; gap: 12px; align-items: center; font-size: 15px; }
@@ -715,6 +720,7 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
         <label class="sr" for="mine3">Third city</label><div class="ta"><input id="mine3" type="text" placeholder="e.g. Montréal" autocomplete="off"><button class="dice" type="button" data-for="mine3" aria-label="Random city" title="Random city"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="4" width="16" height="16" rx="3.5" fill="none" stroke="currentColor" stroke-width="1.5"/><circle cx="8.6" cy="8.6" r="1.5" fill="currentColor"/><circle cx="12" cy="12" r="1.5" fill="currentColor"/><circle cx="15.4" cy="15.4" r="1.5" fill="currentColor"/></svg></button></div>
         <button class="ghost small" type="submit">Play these</button>
       </div>
+      <label class="lived-check"><input type="checkbox" id="mineLived"> I've lived in these cities</label>
       <div class="surprise" role="group" aria-label="Surprise me"><span class="surprise-label">Surprise me</span><button type="button" data-sky="day" title="Three cities where the sun is up right now">☀ All awake</button><button type="button" data-sky="night" title="Three cities where it's night right now">☾ All asleep</button><button type="button" data-sky="mix" title="Some awake, some asleep">☀☾ A mix</button><button type="button" class="wild" id="wildCard" title="Three cities picked around a theme from the live weather, like autumn leaves or wild winds">✦ Wild card</button></div>
       <div class="surprise-note" id="surpriseNote" aria-live="polite"></div>
     </form>
@@ -835,6 +841,7 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
 
   <section class="mood" aria-label="Memory map">
     <div class="mood-label">Memory map</div>
+    <div class="lived-row" id="livedRow" role="group" aria-label="These cities are" hidden><span>These cities are</span><button type="button" data-lived="1" aria-pressed="false">Places I've lived</button><button type="button" data-lived="0" aria-pressed="true">Just exploring</button></div>
     <p class="mood-cta" id="moodCta" hidden>This map holds the places I've lived. Try it with yours. <button class="invite-btn" type="button" data-invite="moodCta">Use my cities</button></p>
     <div class="mood-qrow">
       <div class="mood-q" id="moodQ" aria-live="polite">Where were you happiest?</div>
@@ -1859,6 +1866,7 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
     const isDefault = cities.map(c => c.name).join("|") === DEFAULT_NAMES.join("|");
     mineToggle.textContent = isDefault ? "Play any" : "Change cities";
     try { syncButtons(); } catch (e) {}
+    try { if (syncMoodMode()) nextQuestion(); } catch (e) {}   // the map follows: memory map or city quiz
     document.getElementById("backMine").hidden = isDefault;
     document.getElementById("moodCta").hidden = !isDefault;
     document.getElementById("aboutInvite").hidden = !isDefault;
@@ -1891,6 +1899,7 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
       return inp._picked && inp._picked.label === v ? inp._picked.hit : v;
     });
     if (!qs.some(Boolean)) return;
+    livedPending = document.getElementById("mineLived").checked; livedPendingAt = Date.now();
     if (!playing) playBtn.click();   // start the sound inside the click, before the lookups
     qs.forEach((q, i) => { if (q) setCity(cities[i], q); });
     closeMine();
@@ -4268,13 +4277,29 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
   const QUIZ_TEXT = Object.fromEntries(QUIZ), QUIZ_LIVE = "https://three-cities-quiz.jim-4cc.workers.dev";   // the quiz server (quiz-worker/ in the repo)
   const QUIZ_API = (() => { const o = QS.get("quizapi"); return o && /^http:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(o) ? o : QUIZ_LIVE; })();   // a local server, for testing
   const isMyCities = () => cities.map(c => c.name).join("|") === DEFAULT_NAMES.join("|");
+  // Someone else's own cities get the memory map, like mine; cities they're just exploring get the quiz.
+  // Remembered on this device for each set of cities. Nothing about it is sent anywhere.
+  const livedKey = () => "tc-lived:" + cities.map(c => c.name).join("|");
+  let livedPending = null, livedPendingAt = 0;
+  function livedNow() {
+    if (livedPending !== null && Date.now() - livedPendingAt < 20000) { try { localStorage.setItem(livedKey(), livedPending ? "1" : "0"); } catch (e) {} }
+    try { return localStorage.getItem(livedKey()) === "1"; } catch (e) { return false; }
+  }
+  function setLived(v) {
+    try { localStorage.setItem(livedKey(), v ? "1" : "0"); } catch (e) {}
+    livedPending = null;
+    if (syncMoodMode()) nextQuestion();
+  }
+  document.querySelectorAll("#livedRow button").forEach(b => b.addEventListener("click", () => setLived(b.dataset.lived === "1")));
   let quizMode = null, quizPick = -1, quizSent = new Set(), quizSeq = 0;
   const quizKey = c => `${c.name}|${c.place || ""}`.toLowerCase();
   const quizShare = document.getElementById("quizShare");
   try { if (localStorage.getItem("tc-quiz-share") === "0") quizShare.checked = false; } catch (e) {}
   quizShare.addEventListener("change", () => { try { localStorage.setItem("tc-quiz-share", quizShare.checked ? "1" : "0"); } catch (e) {} });
   function syncMoodMode() {
-    const q = !isMyCities();
+    const mine = isMyCities(), lived = !mine && livedNow(), q = !mine && !lived;
+    const row = document.getElementById("livedRow"); row.hidden = mine;
+    row.querySelectorAll("button").forEach(b => b.setAttribute("aria-pressed", String((b.dataset.lived === "1") === lived)));
     if (q === quizMode) return false;
     quizMode = q;
     document.querySelector(".mood .mood-label").textContent = q ? "City quiz" : "Memory map";

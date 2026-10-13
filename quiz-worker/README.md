@@ -29,6 +29,7 @@ A tiny Cloudflare Worker with a D1 database. It keeps two counts per question an
 - `POST /answer` `{ "q": "food", "c": ["lisbon|portugal", "osaka|japan", "quito|ecuador"], "p": 0 }`
 - `GET /results?q=food&c=lisbon|portugal~osaka|japan~quito|ecuador`
 - `GET /top?q=food&min=20` the leaderboard for a question, handy for posts
+- `GET /stats?key=…` everything, for /admin. Set a secret called `ADMIN_KEY` (Worker → Settings → Variables and Secrets → Add, type Secret) to lock it.
 
 The question ids live in both `worker.js` and `index.html` (QUIZ). Add new ones to both.
 Optional: a Cloudflare rate limiting rule on `/answer` (for example 30 requests a minute per visitor) keeps spam down.
