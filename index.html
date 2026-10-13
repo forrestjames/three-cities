@@ -635,6 +635,8 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
   background: rgba(5,3,2,0.62); -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px); transition: opacity 0.3s; }
 .reel-bar button { min-height: 44px; padding: 0 14px; border: 1px solid rgba(243,236,230,0.5); background: rgba(16,8,6,0.6); color: var(--ink); font: 12px var(--mono); letter-spacing: 0.1em; text-transform: uppercase; cursor: pointer; }
 .reel-bar button[data-a="record"] { border-color: #e0604f; }
+.reel-status .reel-save { margin: 8px 4px 0; border-color: var(--ink); background: var(--ink); color: #100806; }
+.reel-status .reel-save.ghost { background: none; color: var(--ink); border-color: rgba(243,236,230,0.5); }
 .reel-status { flex: 1 0 100%; text-align: center; font-size: 12px; color: var(--ink-dim); }
 .reel.running .reel-bar { opacity: 0.35; }
 .reel.running .reel-bar:hover, .reel.running .reel-bar:focus-within, .reel.running .reel-bar:active { opacity: 1; }
@@ -4786,11 +4788,24 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
         rec.ondataavailable = e => { if (e.data.size) chunks.push(e.data); };
         rec.onstop = () => {
           const t = rec.mimeType || "video/webm", blob = new Blob(chunks, { type: t }), ext = /mp4/.test(t) ? "mp4" : "webm";
-          const a = document.createElement("a"); a.href = URL.createObjectURL(blob);
-          a.download = `Three Cities reel - ${cities.map(c => c.name).join(", ")} - ${new Date().toISOString().slice(0, 10)}.${ext}`.replace(/[\\/:*?"<>|]/g, "");
-          document.body.appendChild(a); a.click(); a.remove();
-          status.textContent = `Saved the reel (${(blob.size / 1e6).toFixed(1)} MB, .${ext}).${ext === "webm" ? " Instagram wants MP4: Safari records MP4 directly." : ""}`;
+          const name = `Three Cities reel - ${cities.map(c => c.name).join(", ")} - ${new Date().toISOString().slice(0, 10)}.${ext}`.replace(/[\\/:*?"<>|]/g, "");
+          const size = `${(blob.size / 1e6).toFixed(1)} MB, .${ext}`;
           rec = null;
+          // On a phone, the share sheet is the way into the photo library ("Save Video"). It has to come from a tap,
+          // so the reel offers a button rather than saving by itself. Computers just download the file.
+          let file = null; try { file = new File([blob], name, { type: t }); } catch (e) {}
+          if (file && navigator.canShare && navigator.canShare({ files: [file] }) && matchMedia("(pointer: coarse)").matches) {
+            status.textContent = `Your reel is ready (${size}). `;
+            const sb = document.createElement("button"); sb.type = "button"; sb.textContent = "Save to Photos"; sb.className = "reel-save";
+            sb.addEventListener("click", () => navigator.share({ files: [file], title: "Three Cities reel" }).then(() => { status.textContent = "Done. In the share sheet, Save Video puts it in your photo library."; }).catch(() => {}));
+            const dl = document.createElement("button"); dl.type = "button"; dl.textContent = "Download instead"; dl.className = "reel-save ghost";
+            dl.addEventListener("click", () => { const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = name; document.body.appendChild(a); a.click(); a.remove(); });
+            status.append(sb, dl);
+            return;
+          }
+          const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = name;
+          document.body.appendChild(a); a.click(); a.remove();
+          status.textContent = `Saved the reel (${size}).${ext === "webm" ? " Instagram wants MP4: Safari records MP4 directly." : ""}`;
         };
         rec.start(500);
         status.textContent = "Recording the reel… keep this tab in front.";
