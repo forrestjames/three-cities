@@ -780,7 +780,7 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
         <div class="knobs">
           <div class="kn"><select class="kn-native" id="fxTime" data-label="Time"><option value="0.25">1/16</option><option value="0.5">1/8</option><option value="0.75" selected>dotted 1/8</option><option value="1">1/4</option><option value="1.5">dotted 1/4</option></select><output id="fxTimeOut">dotted 1/8</output></div>
           <div class="kn"><input class="kn-native" id="fxDelay" type="range" min="0" max="100" value="50" data-label="Level"><output id="fxDelayOut">50</output></div>
-          <div class="kn"><input class="kn-native" id="fxEchoes" type="range" min="0" max="90" value="38" data-label="Echoes"><output id="fxEchoesOut">38</output></div>
+          <div class="kn"><input class="kn-native" id="fxEchoes" type="range" min="0" max="75" value="24" data-label="Echoes"><output id="fxEchoesOut">24</output></div>
           <div class="kn"><input class="kn-native" id="fxDelTone" type="range" min="0" max="100" value="45" data-label="Tone"><output id="fxDelToneOut">45</output></div>
           <div class="kn"><input class="kn-native" id="fxWobble" type="range" min="0" max="100" value="20" data-label="Wobble"><output id="fxWobbleOut">20</output></div>
           <div class="kn kn-switch"><button class="toggle-sw" type="button" id="delayFreeze" aria-pressed="false" aria-label="Freeze delay"></button><div class="kn-label">Freeze</div><output id="delayFreezeOut">Off</output></div>
@@ -1703,10 +1703,10 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
       clearTimeout(btn._t); btn._t = setTimeout(() => { label.textContent = "Share"; }, 2000);
     };
     if (navigator.share && matchMedia("(pointer: coarse)").matches) {
-      navigator.share({ title: "Three Cities · Forrest James", text: line, url }).catch(() => {});   // closing the sheet is fine
+      navigator.share({ title: "Three Cities · Forrest James", text: line + "\n\n" + url }).catch(() => {});   // the link on its own line, after a blank one; closing the sheet is fine
       return;
     }
-    const text = line + "\n" + url;
+    const text = line + "\n\n" + url;
     const oldSchool = () => {   // for browsers without the clipboard API
       const t = document.createElement("textarea"); t.value = text; t.style.position = "fixed"; t.style.opacity = "0";
       document.body.appendChild(t); t.select(); let ok = false; try { ok = document.execCommand("copy"); } catch (e) {} t.remove();
@@ -1903,6 +1903,8 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
   }
 
   // ---------- sound ----------
+  // Phones get about 3.5 dB less lift and more headroom: their little speakers (and some phone browsers) crackle when pushed
+  const MOBILE_OUT = (() => { try { return matchMedia("(pointer: coarse)").matches || /Android|iPhone|iPad/i.test(navigator.userAgent); } catch (e) { return false; } })();
   const MIX_MAKEUP = 1.25;   // a little lift after the glue compressor (which adds its own makeup too)
   let ac = null, master, reverb, delay, playing = false, outNode = null;   // outNode: the very end of the chain, where Record listens
   const fx = {};
@@ -2119,7 +2121,7 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
     const style = document.getElementById("fxStyle").value;
     Object.entries(fx.style).forEach(([k, g]) => g.gain.setTargetAtTime(k === style ? 1 : 0, t, 0.03));
     const night = grooveSleep();   // the three cities' average sleep, 0 awake to 1 deep night
-    fx.fbs.forEach(g => g.gain.setTargetAtTime(fx.delayFrozen ? 0.995 : Math.min(0.88, val("fxEchoes") / 100 * (1 + 0.35 * night)) * g.scale, t, 0.05));
+    fx.fbs.forEach(g => g.gain.setTargetAtTime(fx.delayFrozen ? 0.995 : Math.min(0.78, val("fxEchoes") / 100 * (1 + 0.25 * night)) * g.scale, t, 0.05));
     fx.delGate.gain.setTargetAtTime(fx.delayFrozen ? 0 : 1, t, 0.08);
     fx.revGate.gain.setTargetAtTime(fx.hallFrozen ? 0 : 1, t, 0.25);
     const tv = val("fxDelTone") / 100;
@@ -2365,7 +2367,7 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
     const makeup = ac.createGain(); makeup.gain.value = MIX_MAKEUP;
     const limiter = ac.createDynamicsCompressor();
     limiter.threshold.value = -4.5; limiter.knee.value = 0; limiter.ratio.value = 20; limiter.attack.value = 0.002; limiter.release.value = 0.12;
-    comp.connect(makeup).connect(limiter); outNode = limiter;
+    comp.connect(makeup).connect(limiter);
     // As the cities fall asleep the compressor lets go, so the night-time hush stays a real hush.
     // Awake: ratio 2.5 from -26 dB. Deep night: hardly any compression (ratio 1 from -6 dB), and less makeup.
     const easeBus = () => {
@@ -2377,7 +2379,12 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
     master = ac.createGain(); master.gain.value = document.getElementById("volume").value / 100 * 0.9;
     djLP = ac.createBiquadFilter(); djLP.type = "lowpass"; djLP.frequency.value = 20000; djLP.Q.value = 0.9;
     djHP = ac.createBiquadFilter(); djHP.type = "highpass"; djHP.frequency.value = 20; djHP.Q.value = 0.9;
-    master.connect(djLP).connect(djHP).connect(comp); limiter.connect(ac.destination);
+    // below everything: a cut under 35 Hz (rumble nobody hears but every speaker has to push), and after the limiter
+    // a soft clipper, so anything that still slips past rounds off gently instead of cracking
+    const rumble = ac.createBiquadFilter(); rumble.type = "highpass"; rumble.frequency.value = MOBILE_OUT ? 55 : 35; rumble.Q.value = 0.7;
+    const soft = ac.createWaveShaper(); { const n = 2048, cv = new Float32Array(n); for (let i = 0; i < n; i++) { const x = (i / (n - 1)) * 2 - 1; cv[i] = Math.abs(x) < 0.8 ? x : Math.sign(x) * (0.8 + 0.2 * Math.tanh((Math.abs(x) - 0.8) / 0.2)); } soft.curve = cv; soft.oversample = "2x"; }
+    master.connect(djLP).connect(djHP).connect(rumble).connect(comp); const trim = ac.createGain(); trim.gain.value = MOBILE_OUT ? 0.63 : 1;   // phones: 4 dB of headroom after the limiter (it adds its own makeup, so the trim goes after it)
+    limiter.connect(trim).connect(soft).connect(ac.destination); outNode = soft;
     applyDJ();
     buildEffects();
     setupGroove();
@@ -4412,16 +4419,17 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
       // the six reverb and delay switches on the cards travel as one six-digit code
       const sw = ["c0.sendRev", "c0.sendDel", "c1.sendRev", "c1.sendDel", "c2.sendRev", "c2.sendDel"], rest = Object.assign({}, o);
       let x = "";
-      if (sw.every(k => k in rest)) { x = "x~" + sw.map(k => rest[k] ? 1 : 0).join(""); sw.forEach(k => delete rest[k]); }
-      return Object.entries(rest).map(([k, v]) => shortKey(k) + "~" + encodeURIComponent(String(v))).concat(x ? [x] : []).join("_");
+      if (sw.every(k => k in rest)) { x = "x:" + sw.map(k => rest[k] ? 1 : 0).join(""); sw.forEach(k => delete rest[k]); }
+      // key:value;key:value. (Older links used ~ and _, which Messages and some chat apps turn into formatting.)
+      return Object.entries(rest).map(([k, v]) => shortKey(k) + ":" + encodeURIComponent(String(v))).concat(x ? [x] : []).join(";");
     },
     dec: t => { const o = {};
-      const xm = t.match(/(?:^|_)x~([01]{6})(?:_|$)/);
-      if (xm) ["c0.sendRev", "c0.sendDel", "c1.sendRev", "c1.sendDel", "c2.sendRev", "c2.sendDel"].forEach((k, i) => { o[k] = Number(xm[1][i]); }); t.split("_").forEach(pair => { const i = pair.indexOf("~"); if (i > 0) { const v = decodeURIComponent(pair.slice(i + 1)); o[longKey(pair.slice(0, i))] = /^-?\d+(\.\d+)?$/.test(v) ? Number(v) : v; } }); return o; }
+      const xm = t.match(/(?:^|[_;])x[~:]([01]{6})(?:[_;]|$)/);
+      if (xm) ["c0.sendRev", "c0.sendDel", "c1.sendRev", "c1.sendDel", "c2.sendRev", "c2.sendDel"].forEach((k, i) => { o[k] = Number(xm[1][i]); }); t.split(/[_;]/).forEach(pair => { const i = pair.search(/[~:]/); if (i > 0) { const v = decodeURIComponent(pair.slice(i + 1)); o[longKey(pair.slice(0, i))] = /^-?\d+(\.\d+)?$/.test(v) ? Number(v) : v; } }); return o; }
   };
   try {
     const t = QS.get("mix");
-    if (t) applySoundState(t.includes("~") ? mixCode.dec(t) : b64u.dec(t));   // older links used the long base64 form
+    if (t) applySoundState(/[~:]/.test(t) ? mixCode.dec(t) : b64u.dec(t));   // older links used the long base64 form
   } catch (e) {}
 
   // ---------- contact: the address is only put together when someone asks for it ----------
