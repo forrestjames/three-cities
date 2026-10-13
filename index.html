@@ -1446,13 +1446,13 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
     const n = document.getElementById("shuffleNote"); n.textContent = (kit ? "All rhythm: " : "") + pick.map(v => SOUND_NAME[v]).join(" · ");
     clearTimeout(n._t); n._t = setTimeout(() => { n.textContent = ""; }, 6000);
   });
-  // a very light touch on each card: chance stays high, and now and then a city moves up or down an octave
+  // a very light touch on each card: chance stays high, and now and then a city drops an octave
   function nudgeCards(voices) {
     const low = v => ["sub", "acid", "kick", "drum"].includes(v);
     cities.forEach((c, i) => {
       const id = c.key.toLowerCase(), ch = document.getElementById(id + "-chance"), v = voices ? voices[i] : c.voice;
       if (ch) { ch.value = String(85 + Math.floor(Math.random() * 16)); ch.dispatchEvent(new Event("input")); }
-      const r = Math.random(), o = r < 0.12 && !low(v) ? -1 : r > 0.84 ? 1 : 0;
+      const o = !low(v) && Math.random() < 0.28 ? -1 : 0;   // shifts only ever go down, never for the bass and kick sounds
       const b = c.ref.oct && c.ref.oct.querySelector(`[data-oct="${o}"]`); if (b) b.click();
     });
   }
