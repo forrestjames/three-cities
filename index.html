@@ -627,14 +627,21 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
 @media (pointer: coarse) { .samp-shape button, .samp-load { min-height: 40px; } }
 
 /* reel mode */
-.reel { position: fixed; inset: 0; z-index: 200; background: #050302; display: grid; grid-template-rows: 1fr auto; justify-items: center; align-items: center; padding: 12px 12px 0; }
-.reel canvas { height: calc(100vh - 84px); width: auto; aspect-ratio: 9 / 16; max-width: 100%; background: #100806; box-shadow: 0 10px 40px rgba(0,0,0,0.6); }
-.reel-bar { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; justify-content: center; padding: 12px; }
-.reel-bar button { min-height: 40px; padding: 0 16px; border: 1px solid rgba(243,236,230,0.5); background: rgba(16,8,6,0.6); color: var(--ink); font: 12px var(--mono); letter-spacing: 0.1em; text-transform: uppercase; cursor: pointer; }
+.reel { position: fixed; inset: 0; z-index: 200; background: #050302; display: grid; place-items: center; padding: 8px; }
+.reel canvas { height: calc(100vh - 16px); height: calc(100dvh - 16px); width: auto; aspect-ratio: 9 / 16; max-width: 100%; background: #100806; box-shadow: 0 10px 40px rgba(0,0,0,0.6); }
+/* the controls float over the bottom of the picture: they're page buttons, not part of the canvas, so the recording never sees them */
+.reel-bar { position: absolute; left: 50%; bottom: calc(14px + env(safe-area-inset-bottom)); transform: translateX(-50%); width: min(560px, calc(100% - 24px));
+  display: flex; flex-wrap: wrap; gap: 8px; align-items: center; justify-content: center; padding: 10px; border-radius: 12px;
+  background: rgba(5,3,2,0.62); -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px); transition: opacity 0.3s; }
+.reel-bar button { min-height: 44px; padding: 0 14px; border: 1px solid rgba(243,236,230,0.5); background: rgba(16,8,6,0.6); color: var(--ink); font: 12px var(--mono); letter-spacing: 0.1em; text-transform: uppercase; cursor: pointer; }
 .reel-bar button[data-a="record"] { border-color: #e0604f; }
-.reel-status { font-size: 12px; color: var(--ink-dim); max-width: 46ch; }
-.reel.min { inset: auto 12px 12px auto; padding: 0; background: none; grid-template-rows: auto; }
+.reel-status { flex: 1 0 100%; text-align: center; font-size: 12px; color: var(--ink-dim); }
+.reel.running .reel-bar { opacity: 0.35; }
+.reel.running .reel-bar:hover, .reel.running .reel-bar:focus-within, .reel.running .reel-bar:active { opacity: 1; }
+.reel.min { inset: auto 12px 12px auto; padding: 0; background: none; display: block; }
 .reel.min canvas { display: none; }
+.reel.min .reel-bar { position: static; transform: none; width: auto; }
+@media (max-width: 480px) { .reel-bar { gap: 6px; padding: 8px; } .reel-bar button { padding: 0 9px; letter-spacing: 0.04em; font-size: 11px; } }
 
 .mod-chords .pedal-led, .mod-filter .dj-auto { margin-left: auto; }
 .rack .mod-chords .mod-knobs { column-gap: 18px; }
@@ -4765,7 +4772,7 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
     function loop(now) {
       if (closed) return;
       const s = scene(run ? now : t0 + idleAt * 1000);   // idle: hold on the title, or the end card once it has played
-      if (run && s >= DUR) { run = false; idleAt = DUR - 0.5; if (rec) rec.stop(); else status.textContent = "Done. Preview again, or record it."; }
+      if (run && s >= DUR) { run = false; wrap.classList.remove("running"); idleAt = DUR - 0.5; if (rec) rec.stop(); else status.textContent = "Done. Preview again, or record it."; }
       requestAnimationFrame(loop);
     }
     async function begin(record) {
@@ -4788,7 +4795,7 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
         rec.start(500);
         status.textContent = "Recording the reel… keep this tab in front.";
       } else status.textContent = "Previewing…";
-      t0 = performance.now(); run = true;
+      t0 = performance.now(); run = true; wrap.classList.add("running");
     }
     wrap.querySelector(".reel-bar").addEventListener("click", e => {
       const a = e.target.closest("button")?.dataset.a; if (!a) return;
