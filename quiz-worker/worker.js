@@ -3,26 +3,13 @@
 // No IP addresses, no device ids, no timestamps per answer, nothing that points back to a person.
 // The quiz questions. The app shows the text; this only accepts these ids. Keep in step with QUIZ in index.html.
 const QUIZ = [
-  ["food", "Where's the best food?"],
-  ["move", "Where would you move tomorrow?"],
-  ["romantic", "Which one is the most romantic?"],
-  ["night-out", "Where's the best night out?"],
-  ["coffee", "Where's the best coffee?"],
-  ["first-date", "Where would you go on a first date?"],
-  ["night", "Which one is prettiest at night?"],
-  ["kid", "Where would you want to grow up?"],
-  ["music", "Where's the best music?"],
-  ["walk", "Where would you go for a long walk?"],
-  ["friendly", "Which one is the friendliest?"],
-  ["lost", "Where would you like to get lost?"],
-  ["weekend", "Where would you spend a long weekend?"],
-  ["sunset", "Where's the best sunset?"],
-  ["underrated", "Which one is the most underrated?"],
-  ["song", "Where would you write a song?"],
-  ["rainy", "Where would you spend a rainy day?"],
-  ["new-year", "Where would you see in the New Year?"],
-  ["retire", "Where would you grow old?"],
-  ["sound", "Which one sounds best right now?"]
+  ["visit-first", "Which one would you visit first?"], ["food", "Where do you think the food is best?"], ["wake-up", "Where would you like to wake up tomorrow?"],
+  ["move", "Which one could you live in?"], ["romantic", "Which one sounds the most romantic?"], ["night-out", "Where would you go out tonight?"],
+  ["postcard", "Which one would you send a postcard from?"], ["sound", "Which one sounds best right now?"], ["music", "Where do you imagine the best music?"],
+  ["walk", "Where would you go for a long walk?"], ["lost", "Where would you like to get lost?"], ["weekend", "Where would you spend a long weekend?"],
+  ["sunset", "Where would you watch the sunset?"], ["rainy", "Where would you spend a rainy day?"], ["new-year", "Where would you see in the New Year?"],
+  ["song", "Where would you write a song?"], ["like-you", "Which one feels most like you?"], ["curious", "Which one are you most curious about?"],
+  ["slow", "Where would you go to slow down?"], ["friendly", "Where do you think people are friendliest?"]
 ];
 
 const IDS = new Set(QUIZ.map(q => q[0]));

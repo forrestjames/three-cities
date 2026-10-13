@@ -63,7 +63,9 @@ h1 { margin: 0; font-family: var(--display); font-weight: 400; font-size: clamp(
 .sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
 .mine { display: flex; flex-direction: column; align-items: center; gap: 14px; padding: 30px 34px 32px; border-radius: 22px; background: rgba(16, 8, 6, 0.42); border: 1px solid rgba(243, 236, 230, 0.25); backdrop-filter: blur(6px); }
 .mine-label { font-size: 12px; text-transform: uppercase; letter-spacing: 0.2em; color: var(--ink); }
-.mine-sub { margin: -6px 0 4px; font-size: 13px; color: var(--ink-dim); text-align: center; max-width: 560px; }
+.mine-sub { margin: -6px 0 4px; font-size: 13px; color: var(--ink-dim); text-align: center; max-width: 560px; line-height: 1.6; }
+.mine-sub.wild-on { color: var(--ink); }
+.wild-theme { display: block; font-family: var(--display); font-size: 19px; letter-spacing: 0.08em; color: #e07a4f; margin-bottom: 2px; }
 .play-any { padding: 20px 46px; font-size: 16px; letter-spacing: 0.22em; color: var(--ink); border-color: rgba(243,236,230,0.55); }
 .play-any[aria-expanded="true"] { border-color: var(--ink); background: rgba(16,8,6,0.5); }
 .surprise .wild { border-color: rgba(224,122,79,0.7); }
@@ -320,7 +322,7 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
 .mood { display: grid; gap: 12px; justify-items: center; padding: 4px 0 8px; }
 .mood-label { font-size: 11px; text-transform: uppercase; letter-spacing: 0.2em; color: var(--ink-dim); }
 .lived-check { display: flex; gap: 8px; align-items: center; font-size: 13px; color: var(--ink-dim); cursor: pointer; }
-.lived-check input { accent-color: #e07a4f; width: 16px; height: 16px; }
+.mine .lived-check input, .lived-check input { accent-color: #e07a4f; width: 16px; height: 16px; min-height: 0; flex: 0 0 16px; margin: 0; }
 .lived-row { display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 8px; font-size: 12px; color: var(--ink-dim); letter-spacing: 0.04em; }
 .lived-row button { min-height: 34px; padding: 0 14px; border-radius: 17px; border: 1px solid rgba(243,236,230,0.3); background: none; color: var(--ink-dim); font: 12px var(--mono); letter-spacing: 0.06em; cursor: pointer; }
 .lived-row button[aria-pressed="true"] { border-color: #e07a4f; color: var(--ink); }
@@ -713,7 +715,7 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
     </div>
     <form class="mine" id="mine" hidden>
       <div class="mine-label">Pick any three cities</div>
-      <p class="mine-sub">Where you've lived, where you're going, or three that just sound good together.</p>
+      <p class="mine-sub" id="mineSub">Where you've lived, where you're going, or three that just sound good together.</p>
       <div class="mine-row">
         <label class="sr" for="mine1">First city</label><div class="ta"><input id="mine1" type="text" placeholder="e.g. Tokyo" autocomplete="off"><button class="dice" type="button" data-for="mine1" aria-label="Random city" title="Random city"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="4" width="16" height="16" rx="3.5" fill="none" stroke="currentColor" stroke-width="1.5"/><circle cx="8.6" cy="8.6" r="1.5" fill="currentColor"/><circle cx="12" cy="12" r="1.5" fill="currentColor"/><circle cx="15.4" cy="15.4" r="1.5" fill="currentColor"/></svg></button></div>
         <label class="sr" for="mine2">Second city</label><div class="ta"><input id="mine2" type="text" placeholder="e.g. Lagos" autocomplete="off"><button class="dice" type="button" data-for="mine2" aria-label="Random city" title="Random city"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="4" width="16" height="16" rx="3.5" fill="none" stroke="currentColor" stroke-width="1.5"/><circle cx="8.6" cy="8.6" r="1.5" fill="currentColor"/><circle cx="12" cy="12" r="1.5" fill="currentColor"/><circle cx="15.4" cy="15.4" r="1.5" fill="currentColor"/></svg></button></div>
@@ -1258,6 +1260,7 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
   document.querySelectorAll(".surprise button[data-sky]").forEach(b => b.addEventListener("click", async () => {
     const note = document.getElementById("surpriseNote"), btns = document.querySelectorAll(".surprise button");
     btns.forEach(x => x.disabled = true); note.textContent = b.dataset.sky === "night" ? "Finding sleepy cities…" : "Looking around the world…";
+    { const sub = document.getElementById("mineSub"); if (sub.classList.contains("wild-on")) { sub.classList.remove("wild-on"); sub.textContent = sub.dataset.plain; } }
     try {
       const picks = await surpriseCities(b.dataset.sky);
       if (picks.length < 3) throw new Error("not enough");
@@ -1389,6 +1392,7 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
       say: p => `${names3(p)}, warm, dry and by the sea right now.` }
   ];
   let wildLast = "";
+  { const sub = document.getElementById("mineSub"); sub.dataset.plain = sub.textContent; }
   document.getElementById("wildCard").addEventListener("click", async () => {
     const note = document.getElementById("surpriseNote"), btns = document.querySelectorAll(".surprise button");
     btns.forEach(x => x.disabled = true); note.textContent = "Shuffling the deck…";
@@ -1411,8 +1415,9 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
         const inp = document.getElementById("mine" + (i + 1)), hit = { name: r.name, latitude: r.lat, longitude: r.lon, country: r.where, country_code: /USA$/.test(r.where) ? "US" : "", admin1: /, USA$/.test(r.where) ? r.where.replace(/, USA$/, "") : undefined, timezone: r.tz };
         inp.value = r.name; inp._picked = { hit, label: r.name };
       });
-      const b = document.createElement("b"); b.textContent = "✦ " + theme.name + ". ";
-      note.textContent = ""; note.append(b, document.createTextNode(theme.say(picks)));
+      const sub = document.getElementById("mineSub"), b = document.createElement("span"); b.className = "wild-theme"; b.textContent = "✦ " + theme.name;
+      sub.textContent = ""; sub.classList.add("wild-on"); sub.append(b, document.createTextNode(theme.say(picks)));
+      note.textContent = "";
       const go = document.querySelector("#mine button[type=submit]");
       go.classList.remove("nudge"); void go.offsetWidth; go.classList.add("nudge");
     } catch (e) { note.textContent = e.message === "nothing fits" ? "Nothing fit this time. Try the Wild card again." : `Couldn't reach the weather just now (${e.message}). Try again in a moment.`; }
@@ -4266,13 +4271,13 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
   // ----- the city quiz: when the cities aren't mine, the map asks about the places themselves -----
   // Answers can join everyone else's as plain counts per city (see quiz-worker/ in the repo). Keep the ids in step with the worker.
   const QUIZ = [
-    ["food", "Where's the best food?"], ["move", "Where would you move tomorrow?"], ["romantic", "Which one is the most romantic?"],
-    ["night-out", "Where's the best night out?"], ["coffee", "Where's the best coffee?"], ["first-date", "Where would you go on a first date?"],
-    ["night", "Which one is prettiest at night?"], ["kid", "Where would you want to grow up?"], ["music", "Where's the best music?"],
-    ["walk", "Where would you go for a long walk?"], ["friendly", "Which one is the friendliest?"], ["lost", "Where would you like to get lost?"],
-    ["weekend", "Where would you spend a long weekend?"], ["sunset", "Where's the best sunset?"], ["underrated", "Which one is the most underrated?"],
-    ["song", "Where would you write a song?"], ["rainy", "Where would you spend a rainy day?"], ["new-year", "Where would you see in the New Year?"],
-    ["retire", "Where would you grow old?"], ["sound", "Which one sounds best right now?"]
+    ["visit-first", "Which one would you visit first?"], ["food", "Where do you think the food is best?"], ["wake-up", "Where would you like to wake up tomorrow?"],
+    ["move", "Which one could you live in?"], ["romantic", "Which one sounds the most romantic?"], ["night-out", "Where would you go out tonight?"],
+    ["postcard", "Which one would you send a postcard from?"], ["sound", "Which one sounds best right now?"], ["music", "Where do you imagine the best music?"],
+    ["walk", "Where would you go for a long walk?"], ["lost", "Where would you like to get lost?"], ["weekend", "Where would you spend a long weekend?"],
+    ["sunset", "Where would you watch the sunset?"], ["rainy", "Where would you spend a rainy day?"], ["new-year", "Where would you see in the New Year?"],
+    ["song", "Where would you write a song?"], ["like-you", "Which one feels most like you?"], ["curious", "Which one are you most curious about?"],
+    ["slow", "Where would you go to slow down?"], ["friendly", "Where do you think people are friendliest?"]
   ];
   const QUIZ_TEXT = Object.fromEntries(QUIZ), QUIZ_LIVE = "https://three-cities-quiz.jim-4cc.workers.dev";   // the quiz server (quiz-worker/ in the repo)
   const QUIZ_API = (() => { const o = QS.get("quizapi"); return o && /^http:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(o) ? o : QUIZ_LIVE; })();   // a local server, for testing
@@ -4303,7 +4308,7 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
     if (q === quizMode) return false;
     quizMode = q;
     document.querySelector(".mood .mood-label").textContent = q ? "City quiz" : "Memory map";
-    document.getElementById("moodHint").textContent = q ? "Drag the light to your answer. The music leans that way." : "Drag the light towards where it happened. Each answer leaves a mark, kept only on this device.";
+    document.getElementById("moodHint").textContent = q ? "Been there or not, go with your gut. Drag the light to your answer and the music leans that way." : "Drag the light towards where it happened. Each answer leaves a mark, kept only on this device.";
     ["moodClear", "moodDeep"].forEach(id => { document.getElementById(id).hidden = q; });
     document.getElementById("quizRes").hidden = !(q && QUIZ_API);
     pad.setAttribute("aria-label", q ? "City quiz. Drag the light to the city that answers the question. Arrow keys move it too." : "Memory map. Drag the dot towards the city where it happened. Arrow keys move it too.");
