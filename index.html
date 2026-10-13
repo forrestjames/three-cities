@@ -4617,6 +4617,7 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
     // from the Reel Studio's themes: a title for the opening card, a stat line per city, and words to find fitting photos
     const rTitle = (qs.get("rt") || "").trim(), rStats = (qs.get("rs") || "").split("|").map(s => s.trim()), rFlav = (qs.get("rp") || "").split("|").map(s => s.trim());
     const W = 1080, H = 1920, DUR = 26;
+    const REEL_RELEASED = false;   // until the official release the end card says Coming soon instead of the address
     const wrap = document.createElement("div"); wrap.className = "reel";
     wrap.innerHTML = `<canvas width="${W}" height="${H}" aria-label="Reel preview"></canvas>
       <div class="reel-bar"><button type="button" data-a="preview">▶ Preview</button><button type="button" data-a="record">● Record reel</button><button type="button" data-a="hide">Hide</button><button type="button" data-a="close" aria-label="Close reel mode">✕ Close</button><span class="reel-status" aria-live="polite">Getting the weather and photos…</span></div>`;
@@ -4748,8 +4749,10 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
         g.save(); g.globalAlpha = a; g.translate(W / 2 - 212, 640); g.scale(12, 12); g.fillStyle = "#f3ece6"; g.fill(SKYLINE); g.restore();
         label("THREE CITIES", W / 2, 1060, 120, { align: "center", spacing: 12, alpha: a });
         label("by Forrest James", W / 2, 1140, 40, { align: "center", mono: true, alpha: a * 0.85 });
-        label("Play your cities:", W / 2, 1380, 36, { align: "center", mono: true, alpha: ease((ls - 0.4) / 0.6) });
-        label("threecities.forrestjamesmusic.com", W / 2, 1440, 40, { align: "center", mono: true, alpha: ease((ls - 0.4) / 0.6) });
+        if (REEL_RELEASED) {
+          label("Play your cities:", W / 2, 1380, 36, { align: "center", mono: true, alpha: ease((ls - 0.4) / 0.6) });
+          label("threecities.forrestjamesmusic.com", W / 2, 1440, 40, { align: "center", mono: true, alpha: ease((ls - 0.4) / 0.6) });
+        } else label("COMING SOON", W / 2, 1420, 56, { align: "center", mono: true, spacing: 14, alpha: ease((ls - 0.4) / 0.6) });
       }
       // grain and a soft vignette over everything
       g.save(); g.globalAlpha = 0.5; g.fillStyle = g.createPattern(grainCv, "repeat"); g.translate(-Math.random() * 256, -Math.random() * 256); g.fillRect(0, 0, W + 256, H + 256); g.restore();
