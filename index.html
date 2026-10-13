@@ -1237,7 +1237,10 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
   // ---------- city cards ----------
   const wrap = document.getElementById("cities");
   // Simple cards by default; the sliders icon on any card opens the rest of the controls on every city at once
-  const SAMP_ACCEPT = matchMedia("(pointer: coarse)").matches ? "" : 'accept="audio/*,.mp3,.wav,.m4a,.aac,.aif,.aiff,.ogg,.flac,.caf"';
+  // Audio only, spelled out both ways (types and extensions): with no filter, phones offer the camera and photo library,
+  // and with "audio/*" alone iPhones grey out files they can't match
+  const SAMP_COARSE = matchMedia("(pointer: coarse)").matches;
+  const SAMP_ACCEPT = 'accept="audio/*,audio/mpeg,audio/mp4,audio/x-m4a,audio/wav,audio/x-wav,audio/aiff,audio/x-aiff,audio/aac,audio/flac,audio/ogg,.mp3,.m4a,.wav,.aif,.aiff,.aac,.caf,.flac,.ogg"';
   function setMore(open) {
     wrap.classList.toggle("open", open);
     wrap.querySelectorAll(".more-btn").forEach(b => {
@@ -1313,7 +1316,7 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
             <button type="button" data-shape="pitch" aria-pressed="true" title="Tuned to the melody, with your sound's own pitch as middle C. Off plays it as recorded">Pitch</button>
           </div>
           <div class="samp-key" data-r="sampKey" hidden></div>
-          <div class="samp-hint">${SAMP_ACCEPT ? "Drop a sound anywhere on this card, or load one." : "Tap Load a sound to pick one from your phone: MP3, WAV, M4A and most others."} It stays on your device.</div>
+          <div class="samp-hint">${SAMP_COARSE ? "Tap Load a sound to pick one from your files. iCloud, Dropbox and Google Drive show up there too. MP3, WAV, M4A and most others." : "Drop a sound anywhere on this card, or load one."} It stays on your device.</div>
         </div>
         <div class="fxsends">
           <button type="button" class="fxsend" aria-pressed="true" data-r="sendRev">Reverb</button>
