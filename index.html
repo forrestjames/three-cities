@@ -751,8 +751,10 @@ body.mood-immersive .fab { display: none !important; }
 .rack .mod-filter .flt-grid .kn-label { letter-spacing: 0.1em; white-space: nowrap; }
 .rack .mod-filter .flt-grid .knob { width: 40px; height: 40px; flex: 0 0 40px; }
 /* what's engaged is obvious: off, the whole module dims; Auto off, its four knobs dim */
-.mod-filter.flt-off .flt-main, .mod-filter.flt-off .flt-auto { opacity: 0.42; }
-.mod-filter:not(.flt-moving) .flt-grid { opacity: 0.42; }
+/* off, the big knob stays bright and ready to grab; the lamp says it's off. Auto off, only its four knobs rest dimmer */
+.mod-filter:not(.flt-moving) .flt-grid { opacity: 0.55; }
+.mod-filter .flt-auto-note { color: var(--ink-dim); }
+.mod-filter .auto-btn[aria-pressed="false"] { color: var(--ink); border-color: rgba(243,236,230,0.4); }
 .rack .chord-knobs .kn { flex: 0 0 auto; min-width: 104px; }
 @media (max-width: 1100px) { .rack > :last-child:nth-child(odd) { grid-column: 1 / -1; } }
 
