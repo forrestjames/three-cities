@@ -5420,6 +5420,76 @@ body.mood-immersive .fab { display: none !important; }
       });
     }
     let splitFrom = [1 / 3, 1 / 3, 1 / 3];
+    // the little map from the page, drawn big: dotted land lit where it's day, the three cities glowing
+    const mapCache = {};
+    function mapLand(w, h) {
+      const k = w + "x" + h + "|" + cities.map(c => c.lat + "," + c.lon).join("|");
+      if (mapCache[k]) return mapCache[k];
+      const cv2 = document.createElement("canvas"); cv2.width = w; cv2.height = h;
+      const m = cv2.getContext("2d"), v = wmapView(w, h), now = Date.now();
+      const X = lon => (lon - v.lon0) * v.sx, Y = lat => (v.lat1 - lat) * v.sy, r = Math.max(1.2, Math.min(4, WMAP_ST * v.sx * 0.24));
+      const fade = (x, y) => Math.min(1, x / (w * 0.07), (w - x) / (w * 0.07), y / (h * 0.14), (h - y) / (h * 0.14));
+      for (let yi = 0; yi < WMAP_H; yi++) {
+        const lat = WMAP_TOP - yi * WMAP_ST, y = Y(lat); if (y < -4 || y > h + 4) continue;
+        for (let xi = 0; xi < WMAP_W; xi++) {
+          const i = yi * WMAP_W + xi; if (!(wmapBits[i >> 3] >> (i & 7) & 1)) continue;
+          const lon = -180 + WMAP_ST / 2 + xi * WMAP_ST;
+          for (const off of [-360, 0, 360]) {
+            const x = X(lon + off); if (x < -4 || x > w + 4) continue;
+            const f = fade(x, y); if (f <= 0) continue;
+            const day = clamp01((sunAltAt(lat, lon, now) + 6) / 8);
+            m.fillStyle = `rgba(243,236,230,${((0.26 + 0.4 * day) * f).toFixed(3)})`;
+            m.beginPath(); m.arc(x, y, r, 0, 6.2832); m.fill();
+          }
+        }
+      }
+      return (mapCache[k] = { cv: cv2, pts: cities.map(c => ({ c, x: X(v.un(c.lon)), y: Y(c.lat) })) });
+    }
+    // o.alpha: the whole map; o.city(i): 0..1, each city arriving; o.arcs: 0..1, the flight paths drawing; o.labels: name and country
+    function reelMap(x0, y0, w, h, o) {
+      const L = mapLand(w, h), A = o.alpha ?? 1;
+      if (A <= 0) return;
+      g.save(); g.globalAlpha = A; g.drawImage(L.cv, x0, y0); g.restore();
+      const P = L.pts.map(p => ({ ...p, x: x0 + p.x, y: y0 + p.y }));
+      const arcs = clamp01(o.arcs ?? 1);
+      if (arcs > 0) {
+        g.save(); g.globalAlpha = A * 0.5; g.strokeStyle = "#f3ece6"; g.lineWidth = 2.5; g.setLineDash([5, 10]); g.lineCap = "round";
+        P.forEach((a, i) => {
+          const b = P[(i + 1) % P.length], d = Math.hypot(b.x - a.x, b.y - a.y); if (d < 8) return;
+          const cx = (a.x + b.x) / 2, cy = (a.y + b.y) / 2 - d * 0.18, steps = 40, n = Math.round(steps * arcs);
+          g.beginPath(); g.moveTo(a.x, a.y);
+          for (let k = 1; k <= n; k++) { const t = k / steps, u = 1 - t; g.lineTo(u * u * a.x + 2 * u * t * cx + t * t * b.x, u * u * a.y + 2 * u * t * cy + t * t * b.y); }
+          g.stroke();
+        });
+        g.restore();
+      }
+      const boxes = [];
+      P.forEach((p, i) => {
+        const k = clamp01(o.city ? o.city(i) : 1); if (k <= 0) return;
+        const pulse = p.c._reelPulse || 0, rr = (9 + pulse * 6) * (0.6 + 0.4 * ease(k)), glowR = 44 + pulse * 26;
+        const glow = g.createRadialGradient(p.x, p.y, 0, p.x, p.y, glowR);
+        glow.addColorStop(0, col(p.c)); glow.addColorStop(1, "rgba(0,0,0,0)");
+        g.save(); g.globalAlpha = A * k * (0.45 + 0.35 * pulse); g.fillStyle = glow; g.beginPath(); g.arc(p.x, p.y, glowR, 0, 6.2832); g.fill();
+        g.globalAlpha = A * k; g.fillStyle = col(p.c); g.beginPath(); g.arc(p.x, p.y, rr, 0, 6.2832); g.fill();
+        if (k < 1) { g.globalAlpha = A * (1 - k); g.strokeStyle = col(p.c); g.lineWidth = 3; g.beginPath(); g.arc(p.x, p.y, 12 + 60 * ease(k), 0, 6.2832); g.stroke(); }   // a ring as it lands on the map
+        g.restore();
+        if (!o.labels) return;
+        // name and country beside the dot, on whichever side has room
+        g.save(); g.font = '500 30px "Source Code Pro", monospace'; g.letterSpacing = "4px"; const nw = g.measureText(p.c.name.toUpperCase()).width;
+        g.font = "32px Abel, sans-serif"; g.letterSpacing = "1px"; const pw = g.measureText(p.c.place || "").width; g.restore();
+        const tw = Math.max(nw, pw), th = 72;
+        const R = [22, -20, "left"], Lf = [-22 - tw, -20, "right"];
+        const others = P.filter(q => q !== p), awayLeft = others.length && p.x < others.reduce((t, q) => t + q.x, 0) / others.length;   // lean away from the other two
+        const opts = [awayLeft ? Lf : R, awayLeft ? R : Lf, [-tw / 2, 26, "center"], [-tw / 2, -26 - th, "center"], [22, 18, "left"], [-22 - tw, 18, "right"], [22, -th - 14, "left"], [-22 - tw, -th - 14, "right"]];
+        let best = opts[0];
+        for (const op of opts) { const bx = { x: p.x + op[0], y: p.y + op[1], w: tw, h: th };
+          if (bx.x >= 24 && bx.x + tw <= W - 24 && !boxes.some(q => bx.x < q.x + q.w && q.x < bx.x + bx.w && bx.y < q.y + q.h && q.y < bx.y + bx.h) && !P.some(q => q !== p && q.x > bx.x - 10 && q.x < bx.x + tw + 10 && q.y > bx.y - 10 && q.y < bx.y + th + 10)) { best = op; break; } }
+        const bx = { x: p.x + best[0], y: p.y + best[1], w: tw, h: th }; boxes.push(bx);
+        const tx = best[2] === "left" ? bx.x : best[2] === "right" ? bx.x + tw : bx.x + tw / 2, la = A * ease(clamp01((k - 0.3) / 0.7));
+        label(p.c.name.toUpperCase(), tx, bx.y + 26, 30, { align: best[2], mono: true, weight: 500, spacing: 4, color: col(p.c), alpha: la, shadow: 14 });
+        if (p.c.place) label(p.c.place, tx, bx.y + 64, 32, { align: best[2], spacing: 1, alpha: la * 0.85, shadow: 14 });
+      });
+    }
     // the opening: the question, word by word
     function opener(s, cs) {
       const a = 1 - ease((s - 2.6) / 0.4);
@@ -5438,7 +5508,9 @@ body.mood-immersive .fab { display: none !important; }
         const ws = ln.split(" "), vis = ws.filter(() => n++ < shown).join(" ");
         label(vis, W / 2, 860 + li * size * 1.12 - (lines.length - 1) * size * 0.5, size, { align: "center", spacing: 2, alpha: a });
       });
-      label(new Date().toLocaleDateString("en-GB", { weekday: "long", day: "numeric", month: "long" }), W / 2, 1420, 30, { align: "center", alpha: a * 0.7, mono: true });
+      label(new Date().toLocaleDateString("en-GB", { weekday: "long", day: "numeric", month: "long" }), W / 2, 612, 26, { align: "center", alpha: a * st * 0.65, mono: true });
+      // where they are: the map fades in, each city lands on it in turn, then the flight paths draw between them
+      reelMap(40, 1120, W - 80, 420, { alpha: a * ease((s - 0.5) / 0.5), city: i => (s - 0.9 - i * 0.4) / 0.45, arcs: (s - 2.0) / 0.6, labels: true });
     }
     // the timeline
     let t0 = 0, run = false, rec = null, chunks = [], lastCut = 0, cutSeed = 0, idleAt = rQ ? 2.3 : 1.6;   // idle shows the whole question
@@ -5456,6 +5528,7 @@ body.mood-immersive .fab { display: none !important; }
           label("THREE CITIES", W / 2, 900, 132, { align: "center", alpha: a, spacing: 14 });
           label((rTitle || (tags.length ? tags.join(" · ") : "three places, live weather")).toUpperCase(), W / 2, 1010, rTitle.length > 30 ? 28 : 34, { align: "center", alpha: a * 0.85, mono: true, spacing: rTitle.length > 30 ? 4 : 6 });
           label(new Date().toLocaleDateString("en-GB", { weekday: "long", day: "numeric", month: "long" }), W / 2, 1090, 30, { align: "center", alpha: a * 0.7, mono: true });
+          reelMap(40, 1160, W - 80, 420, { alpha: a * ease((s - 0.4) / 0.5), city: i => (s - 0.8 - i * 0.4) / 0.45, arcs: (s - 1.9) / 0.6, labels: true });
         }
       } else if (s < 18 && rLook === "postcard") {   // postcards dropping onto a pile
         const k = Math.min(2, Math.floor((s - 3) / 5)), ls = (s - 3) - k * 5;
@@ -5560,6 +5633,7 @@ body.mood-immersive .fab { display: none !important; }
       } else {   // end card
         const ls = s - 23, a = ease(ls / 0.6);
         cs.forEach((c, i) => cover(ph(c)[0], i * W / 3, 0, W / 3 + 1, H, 0.5, col(c), 0.35 * a));
+        reelMap(40, 480, W - 80, 420, { alpha: 0.6 * a, labels: false });   // the map, faint behind the mark, its cities pulsing with their notes
         g.save(); g.globalAlpha = a; g.translate(W / 2 - 212, 640); g.scale(12, 12); g.fillStyle = "#f3ece6"; g.fill(SKYLINE); g.restore();
         label("THREE CITIES", W / 2, 1060, 120, { align: "center", spacing: 12, alpha: a });
         label("by Forrest James", W / 2, 1140, 40, { align: "center", mono: true, alpha: a * 0.85 });
