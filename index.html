@@ -5447,25 +5447,47 @@ body.mood-immersive .fab { display: none !important; }
     // photos: a few per city, leaning on its weather ("snow" for the cold one, "storm" for the wild one)
     const photos = new Map();
     const FLAVOUR = { hottest: "sun", coldest: "snow", wildest: "storm", windiest: "wind", wettest: "rain" };
+    // Photos that fit the theme: search the city with the theme's words first, score every result, and keep the best.
+    // Maps, flags, logos and interiors are skipped; the theme's words in a photo's title count for a lot.
+    const THEME_WORDS = { heat: ["sunny", "summer", "beach", "sunset", "sun"], snow: ["snow", "winter", "frost", "ice"], storm: ["storm", "waves", "dark clouds", "wind"],
+      rain: ["rain", "wet", "umbrella", "puddle"], fog: ["fog", "mist", "haze"], calm: ["lake", "harbour", "river", "morning"], cloud: ["skyline", "clouds", "sky"] };
+    const BAD = /\b(map|flag|coat of arms|logo|diagram|plan|seal|poster|interior|museum|statue|portrait|document|stamp|coin|sign|chart|banner|emblem|bus|train|car|aerial view of the airport)\b/i;
     async function photosFor(c, tag, flav) {
-      const words = [`${c.name} skyline`, `${c.name} street`, `${c.name} ${flav || FLAVOUR[(tag || "").toLowerCase()] || "weather"}`];
-      const out = [];
-      for (const q of words) {
+      const k = cities.indexOf(c), kind = weatherOf(c, k), words = THEME_WORDS[kind] || THEME_WORDS.cloud;
+      const first = (flav || FLAVOUR[(tag || "").toLowerCase()] || words[0]).toLowerCase();
+      const queries = [`${c.name} ${first}`, `${c.name} ${words.find(w => w !== first) || words[1]}`, `${c.name} skyline`, `${c.name} street`];
+      const themeRx = new RegExp("\\b(" + [first, ...words].map(w => w.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")).join("|") + ")", "i");
+      const out = [], used = new Set();
+      for (const q of queries) {
+        if (out.length >= 3) break;
         try {
-          const u = "https://commons.wikimedia.org/w/api.php?action=query&format=json&origin=*&generator=search&gsrnamespace=6&gsrlimit=8" +
+          const u = "https://commons.wikimedia.org/w/api.php?action=query&format=json&origin=*&generator=search&gsrnamespace=6&gsrlimit=12" +
             "&gsrsearch=" + encodeURIComponent(q + " filetype:bitmap") + "&prop=imageinfo&iiprop=url|size|mime&iiurlwidth=1080";
           const j = await getJSON(u);
-          const pages = Object.values((j.query && j.query.pages) || {}).sort((x, y) => x.index - y.index);
-          for (const pg of pages) {
-            const i = pg.imageinfo && pg.imageinfo[0];
-            if (!i || i.mime !== "image/jpeg" || out.some(o => o.src === i.thumburl)) continue;
+          const pages = Object.values((j.query && j.query.pages) || {});
+          const scored = pages.map(pg => {
+            const i = pg.imageinfo && pg.imageinfo[0], t = (pg.title || "").replace(/^File:/, "");
+            if (!i || i.mime !== "image/jpeg" || used.has(i.thumburl) || BAD.test(t) || (i.width && i.width < 900)) return null;
+            const ar = i.width && i.height ? i.width / i.height : 1.5;
+            const score = (themeRx.test(t) ? 5 : 0) + (t.toLowerCase().includes(c.name.toLowerCase()) ? 2 : 0) - (ar > 2.2 ? 3 : 0) - pg.index * 0.15;
+            return { i, score };
+          }).filter(Boolean).sort((x, y) => y.score - x.score);
+          for (const { i } of scored.slice(0, 2)) {
             const img = new Image(); img.crossOrigin = "anonymous"; img.src = i.thumburl;
             await new Promise(r => { img.onload = r; img.onerror = r; setTimeout(r, 6000); });
-            if (img.naturalWidth) { out.push(img); break; }
+            if (img.naturalWidth) { out.push(img); used.add(i.thumburl); break; }
           }
         } catch (e) {}
       }
       return out;
+    }
+    // the photo's colour follows the theme: warm for heat, icy for snow, slate for storms, blended with the city's own colour
+    const THEME_TINT = { heat: [232, 149, 90], snow: [169, 200, 232], storm: [93, 107, 133], rain: [90, 134, 151], fog: [184, 176, 166], calm: [127, 167, 181] };
+    function tintOf(c) {
+      const t = THEME_TINT[weatherOf(c, cities.indexOf(c))], h = col(c);
+      if (!t || !/^#[0-9a-f]{6}$/i.test(h)) return h;
+      const cc = [1, 3, 5].map(i => parseInt(h.slice(i, i + 2), 16)), m = cc.map((v, i) => Math.round(v * 0.4 + t[i] * 0.6));
+      return `rgb(${m.join(",")})`;
     }
     // draw an image to cover a box, with a slow drift; duotone in the city's colour
     function cover(img, x, y, w, h, drift, tint, alpha = 1, extra = "") {
@@ -5474,7 +5496,7 @@ body.mood-immersive .fab { display: none !important; }
       const iw = img.naturalWidth * s, ih = img.naturalHeight * s;
       const ox = x + (w - iw) / 2 + (drift - 0.5) * 60, oy = y + (h - ih) / 2;
       g.save(); g.beginPath(); g.rect(x, y, w, h); g.clip();
-      g.globalAlpha = alpha; g.filter = (extra ? extra + " " : "") + "grayscale(1) contrast(1.25) brightness(0.95)";
+      g.globalAlpha = alpha; g.filter = (extra ? extra + " " : "") + "grayscale(0.55) contrast(1.2) brightness(1)";
       g.drawImage(img, ox, oy, iw, ih); g.filter = "none";
       g.globalCompositeOperation = "multiply"; g.fillStyle = tint; g.fillRect(x, y, w, h);
       g.globalCompositeOperation = "screen"; g.fillStyle = "rgba(40,20,16,0.35)"; g.fillRect(x, y, w, h);
@@ -5532,7 +5554,7 @@ body.mood-immersive .fab { display: none !important; }
     }
     // the photo, with the weather acting on it
     function weatherPhoto(c, k, img, x, y, w, h, s) {
-      const kind = weatherOf(c, k), p = c._reelPulse || 0, tint = col(c);
+      const kind = weatherOf(c, k), p = c._reelPulse || 0, tint = tintOf(c);
       g.save(); g.beginPath(); g.rect(x, y, w, h); g.clip();
       if (kind === "storm") { const sh = 16 * p; g.translate((Math.random() - 0.5) * sh, (Math.random() - 0.5) * sh); }
       if (kind === "heat") {   // heat shimmer: the picture wavers in thin horizontal slices
@@ -5575,7 +5597,7 @@ body.mood-immersive .fab { display: none !important; }
       g.save(); g.translate(cx, cy); g.rotate(rot); g.scale(sc, sc);
       g.shadowColor = "rgba(0,0,0,0.55)"; g.shadowBlur = 40; g.shadowOffsetY = 14;
       g.fillStyle = "#efe6d6"; g.fillRect(-cw / 2, -ch / 2, cw, ch); g.shadowColor = "transparent";
-      cover(ph[0], -cw / 2 + pad, -ch / 2 + pad, cw - pad * 2, 780, (s / 10) % 1, tint, 1);
+      cover(ph[0], -cw / 2 + pad, -ch / 2 + pad, cw - pad * 2, 780, (s / 10) % 1, tintOf(c), 1);
       // stamp, top right, with perforated edges
       const sx = cw / 2 - pad - 190, sy = -ch / 2 + pad + 26, sw = 164, sh = 196;
       g.fillStyle = "#efe6d6"; g.fillRect(sx - 8, sy - 8, sw + 16, sh + 16);
@@ -5604,7 +5626,7 @@ body.mood-immersive .fab { display: none !important; }
       let x = 0;
       cities.forEach((c, i) => {
         const w = widths[i] * W, ph = photos.get(c) || [];
-        cover(ph[(Math.floor(s / 1.6) + i) % Math.max(1, ph.length)], x, 0, w + 1, H, (s / 7 + i * 0.3) % 1, col(c), focus == null || focus === i ? 0.95 : 0.55);
+        cover(ph[(Math.floor(s / 1.6) + i) % Math.max(1, ph.length)], x, 0, w + 1, H, (s / 7 + i * 0.3) % 1, tintOf(c), focus == null || focus === i ? 0.95 : 0.55);
         if (focus != null && focus !== i && w > 60) {   // the narrow columns carry their city's name, sideways
           g.save(); g.translate(x + w / 2 + 14, 700); g.rotate(-Math.PI / 2); label(c.name.toUpperCase(), 0, 0, 44, { align: "center", spacing: 10, alpha: 0.85 }); g.restore();
         }
@@ -5686,7 +5708,7 @@ body.mood-immersive .fab { display: none !important; }
     // the opening: the question, word by word
     function opener(s, cs) {
       const a = 1 - ease((s - 2.6) / 0.4);
-      cs.forEach((c, i) => cover((photos.get(c) || [])[0], i * W / 3, 0, W / 3 + 1, H, (s / 3 + i * 0.3) % 1, col(c), 0.35 * a));
+      cs.forEach((c, i) => cover((photos.get(c) || [])[0], i * W / 3, 0, W / 3 + 1, H, (s / 3 + i * 0.3) % 1, tintOf(c), 0.35 * a));
       // the sting: the skyline mark arrives on the first beat
       const st = ease(s / 0.5);
       g.save(); g.globalAlpha = a * st; g.translate(W / 2 - 106 * (0.8 + 0.2 * st), 360); g.scale(6 * (0.8 + 0.2 * st), 6 * (0.8 + 0.2 * st)); g.fillStyle = "#f3ece6"; g.fill(SKYLINE); g.restore();
@@ -5716,7 +5738,7 @@ body.mood-immersive .fab { display: none !important; }
         if (rQ) opener(s, cs);
         else {
           const a = ease(s / 0.8) * (1 - ease((s - 2.5) / 0.5));
-          cs.forEach((c, i) => cover(ph(c)[0], i * W / 3, 0, W / 3 + 1, H, (s / 3 + i * 0.3) % 1, col(c), 0.55 * a));
+          cs.forEach((c, i) => cover(ph(c)[0], i * W / 3, 0, W / 3 + 1, H, (s / 3 + i * 0.3) % 1, tintOf(c), 0.55 * a));
           label("TODAY'S", W / 2, 760, 64, { align: "center", alpha: a, spacing: 18 });
           label("THREE CITIES", W / 2, 900, 132, { align: "center", alpha: a, spacing: 14 });
           label((rTitle || (tags.length ? tags.join(" · ") : "three places, live weather")).toUpperCase(), W / 2, 1010, rTitle.length > 30 ? 28 : 34, { align: "center", alpha: a * 0.85, mono: true, spacing: rTitle.length > 30 ? 4 : 6 });
@@ -5761,15 +5783,15 @@ body.mood-immersive .fab { display: none !important; }
         const k = Math.min(2, Math.floor((s - 3) / 5)), ls = (s - 3) - k * 5, c = cs[k];
         for (let j = 0; j < k; j++) {   // collage memory of the cities already shown
           const pc = cs[j], y = 160 + j * 260;
-          cover(ph(pc)[1] || ph(pc)[0], j % 2 ? 620 : 60, y, 400, 220, (s / 9 + j) % 1, col(pc), 0.5);
+          cover(ph(pc)[1] || ph(pc)[0], j % 2 ? 620 : 60, y, 400, 220, (s / 9 + j) % 1, tintOf(pc), 0.5);
         }
         const wipe = ease(ls / 0.7);
         g.save(); g.beginPath(); g.moveTo(0, 0); g.lineTo((W + 400) * wipe, 0); g.lineTo((W + 400) * wipe - 400, H); g.lineTo(0, H); g.clip();
-        cover(ph(c)[Math.floor(ls / 1.7) % Math.max(1, ph(c).length)], 0, 0, W, H, ls / 5, col(c), 0.95);
+        cover(ph(c)[Math.floor(ls / 1.7) % Math.max(1, ph(c).length)], 0, 0, W, H, ls / 5, tintOf(c), 0.95);
         g.restore();
         // beat cuts: on a hit, a strip of another photo slices across
         if (c._reelPulse > 0.6 && now - lastCut > 240) { lastCut = now; cutSeed = Math.random(); }
-        if (now - lastCut < 200) { const y = 300 + cutSeed * 1200; cover(ph(c)[(Math.floor(cutSeed * 9)) % Math.max(1, ph(c).length)], 0, y, W, 90 + cutSeed * 140, cutSeed, col(c), 0.9); }
+        if (now - lastCut < 200) { const y = 300 + cutSeed * 1200; cover(ph(c)[(Math.floor(cutSeed * 9)) % Math.max(1, ph(c).length)], 0, y, W, 90 + cutSeed * 140, cutSeed, tintOf(c), 0.9); }
         const ta = ease((ls - 0.4) / 0.6);
         label(((tags[k] || "") + (rTitle ? "" : " right now")).toUpperCase(), SAFE.l, 1000, 40, { alpha: ta, mono: true, spacing: 8, color: col(c), max: SAFE.r - SAFE.l });
         label(c.name.toUpperCase(), SAFE.l, 1140, c.name.length > 11 ? 104 : 140, { alpha: ta, spacing: 10, max: SAFE.rLow - SAFE.l });
@@ -5817,7 +5839,7 @@ body.mood-immersive .fab { display: none !important; }
         const ls = s - 18;
         cs.forEach((c, i) => {
           const x = i * W / 3, sp = (c.pattern.length || 8) / 16;
-          cover(ph(c)[(Math.floor(ls * sp) + i) % Math.max(1, ph(c).length)], x, 0, W / 3 + 1, H, (ls * sp * 0.2) % 1, col(c), 0.9);
+          cover(ph(c)[(Math.floor(ls * sp) + i) % Math.max(1, ph(c).length)], x, 0, W / 3 + 1, H, (ls * sp * 0.2) % 1, tintOf(c), 0.9);
           if (c._reelPulse > 0.5) { g.fillStyle = col(c); g.globalAlpha = 0.18 * c._reelPulse; g.fillRect(x, 0, W / 3, H); g.globalAlpha = 1; }
           const mx = Math.max(SAFE.l + 110, Math.min(SAFE.r - 110, x + W / 6));
           ring(c, mx, 640, 110 + 14 * (c._reelPulse || 0), ease(ls / 0.8));
@@ -5828,7 +5850,7 @@ body.mood-immersive .fab { display: none !important; }
         label("PLAYING TOGETHER, LIVE", W / 2, 420, 46, { align: "center", mono: true, spacing: 8, alpha: ease(ls / 1) });
       } else {   // end card
         const ls = s - 23, a = ease(ls / 0.6);
-        cs.forEach((c, i) => cover(ph(c)[0], i * W / 3, 0, W / 3 + 1, H, 0.5, col(c), 0.35 * a));
+        cs.forEach((c, i) => cover(ph(c)[0], i * W / 3, 0, W / 3 + 1, H, 0.5, tintOf(c), 0.35 * a));
         reelMap(SAFE.l, 400, SAFE.r - SAFE.l, 400, { alpha: 0.6 * a, labels: false });   // the map, faint behind the mark, its cities pulsing with their notes
         g.save(); g.globalAlpha = a; g.translate(W / 2 - 194, 560); g.scale(11, 11); g.fillStyle = "#f3ece6"; g.fill(SKYLINE); g.restore();
         label("THREE CITIES", W / 2, 960, 112, { align: "center", spacing: 12, alpha: a, max: SAFE.r - SAFE.l });
