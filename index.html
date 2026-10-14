@@ -694,16 +694,23 @@ body.mood-immersive .fab { display: none !important; }
 
 .mod-chords .pedal-led, .mod-filter .dj-auto { margin-left: auto; }
 .rack .mod-chords .mod-knobs { column-gap: 18px; }
-/* Filter has three knobs: stack each one's label and readout under it so they fit side by side */
-.rack .mod-filter .mod-knobs { gap: 8px 22px; justify-content: flex-start; flex-wrap: wrap; }
+/* Filter: one big knob in the middle, and under a line the Auto section, its four knobs on a 2 x 2 grid */
 .rack .mod-filter .kn { flex-direction: column; gap: 4px; min-width: 0; }
-.rack .mod-filter .kn-stack { align-items: center; }
+.rack .mod-filter .kn-stack { align-items: center; width: 100%; }
 .rack .mod-filter .kn-stack .kn-label { margin-bottom: 3px; text-align: center; }
-.rack .mod-filter .lcd { min-width: 0; padding: 4px 5px; }
-/* fixed widths, sized to each readout's longest value, so turning a knob never nudges the module */
-.rack .mod-filter .lcd { white-space: nowrap; overflow: hidden; text-align: center; flex: none; }
-.rack #djFilterOut { width: 92px; } .rack #djLfoWaveOut { width: 100px; } .rack #djLfoOffsetOut { width: 92px; } .rack #djLfoRateOut { width: 72px; } .rack #djLfoAmtOut { width: 46px; }
-.rack .pedal.mod-filter .knobs { opacity: 1 !important; }   /* the Auto lamp is a mode, not an on/off for the module, so the knobs never dim */
+.rack .mod-filter .lcd { white-space: nowrap; overflow: hidden; text-align: center; flex: none; padding: 4px 4px; }
+.mod-filter .flt-main { display: flex; justify-content: center; padding: 2px 0 4px; transition: opacity 0.2s; }
+.rack .mod-filter .flt-main .knob { width: 66px; height: 66px; flex: 0 0 66px; }
+.rack #djFilterOut { width: 104px; }
+.mod-filter .flt-auto { border-top: 1px solid rgba(255,255,255,0.08); padding-top: 10px; display: grid; gap: 10px; transition: opacity 0.2s; }
+.mod-filter .flt-auto-head { display: flex; align-items: center; gap: 10px; min-height: 24px; }
+.mod-filter .flt-auto-note { font-size: 11px; color: var(--ink-faint); line-height: 1.3; }
+.mod-filter .flt-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px 12px; transition: opacity 0.2s; }
+.rack .mod-filter .flt-grid .lcd { width: 100%; max-width: 104px; box-sizing: border-box; font-size: 12px; }
+.rack .mod-filter .flt-grid .knob { width: 40px; height: 40px; flex: 0 0 40px; }
+/* what's engaged is obvious: off, the whole module dims; Auto off, its four knobs dim */
+.mod-filter.flt-off .flt-main, .mod-filter.flt-off .flt-auto { opacity: 0.42; }
+.mod-filter:not(.flt-moving) .flt-grid { opacity: 0.42; }
 .rack .mod-chords .kn { flex: 0 0 auto; min-width: 104px; }
 @media (max-width: 1100px) { .rack-mod:last-child:nth-child(odd) { grid-column: 1 / -1; } }
 
@@ -789,13 +796,18 @@ body.mood-immersive .fab { display: none !important; }
       </div>
     </div>
     <div class="pedal rack-mod mod-filter" aria-label="Filter">
-      <div class="mod-head"><span class="mod-name">Filter</span><button class="info" type="button" aria-label="How the filter works" data-tip="A DJ-style filter on the whole mix, cities and drums together. At 12 o'clock it does nothing. Turn left and a low-pass closes in, taking the top off until it's muffled. Turn right and a high-pass thins it out from the bottom up. Double-click to snap back to the middle. It moves like an auto filter. The knob sets the centre. Amount sets how far it swings, and Offset where the swing sits: left and it only goes below the knob, right and only above it. The faint band on the ring shows the range, and a dot rides it as it plays. It moves in time with the beat: LFO rate picks how often, Wave its shape. The lamp switches the movement on and off."></button><button class="pedal-led dj-auto" type="button" id="djAuto" aria-pressed="false" aria-label="Auto filter off" title="Movement on or off: the filter sweeps its band at the LFO rate"></button></div>
-      <div class="knobs mod-knobs">
+      <div class="mod-head"><span class="mod-name">Filter</span><button class="info" type="button" aria-label="How the filter works" data-tip="A DJ-style filter on the whole mix, cities and drums together. The lamp switches it on and off. Turn the big knob left and a low-pass closes in, taking the top off until it&#39;s muffled. Turn it right and a high-pass thins it out from the bottom up. 12 o&#39;clock does nothing. Double-click to snap back to the middle. Auto moves it in time with the beat, like an auto filter: the big knob is the centre, Amount how far it swings, Offset where the swing sits (left: only below the knob, right: only above). LFO rate picks how often, Wave its shape. The band on the big knob&#39;s ring shows the range."></button><button class="pedal-led dj-auto" type="button" id="djAuto" aria-pressed="false" aria-label="Auto filter off" title="Filter on or off"></button></div>
+      <div class="flt-main">
         <div class="kn"><input class="kn-native" id="djFilter" type="range" min="-100" max="100" step="1" value="0" data-label="Filter"><span class="kn-stack"><output id="djFilterOut" class="lcd">Off</output></span></div>
-        <div class="kn"><select class="kn-native" id="djLfoRate" data-label="LFO rate"><option value="0.0625">1/64</option><option value="0.125">1/32</option><option value="0.1666667">1/24</option><option value="0.25">1/16</option><option value="0.5">1/8</option><option value="1" selected>1/4</option><option value="2">1/2</option><option value="4">1 bar</option><option value="8">2 bars</option><option value="16">4 bars</option></select><span class="kn-stack"><output id="djLfoRateOut" class="lcd">1/4</output></span></div>
-        <div class="kn"><input class="kn-native" id="djLfoAmt" type="range" min="0" max="100" step="1" value="0" data-label="Amount"><span class="kn-stack"><output id="djLfoAmtOut" class="lcd">Off</output></span></div>
-        <div class="kn"><select class="kn-native" id="djLfoWave" data-label="Wave"><option value="sine" selected>Sine</option><option value="tri">Triangle</option><option value="square">Square</option><option value="rampup">Ramp up</option><option value="rampdown">Ramp down</option><option value="random">Random</option></select><span class="kn-stack"><output id="djLfoWaveOut" class="lcd">Sine</output></span></div>
-        <div class="kn"><input class="kn-native" id="djLfoOffset" type="range" min="-100" max="100" step="1" value="0" data-label="Offset"><span class="kn-stack"><output id="djLfoOffsetOut" class="lcd">Mid</output></span></div>
+      </div>
+      <div class="flt-auto">
+        <div class="flt-auto-head"><button class="auto-btn" id="djMove" type="button" aria-pressed="false" title="Move the filter in time with the beat">Auto</button><span class="flt-auto-note">In time with the beat</span></div>
+        <div class="flt-grid">
+          <div class="kn"><select class="kn-native" id="djLfoRate" data-label="LFO rate"><option value="0.0625">1/64</option><option value="0.125">1/32</option><option value="0.1666667">1/24</option><option value="0.25">1/16</option><option value="0.5">1/8</option><option value="1" selected>1/4</option><option value="2">1/2</option><option value="4">1 bar</option><option value="8">2 bars</option><option value="16">4 bars</option></select><span class="kn-stack"><output id="djLfoRateOut" class="lcd">1/4</output></span></div>
+          <div class="kn"><input class="kn-native" id="djLfoAmt" type="range" min="0" max="100" step="1" value="0" data-label="Amount"><span class="kn-stack"><output id="djLfoAmtOut" class="lcd">Off</output></span></div>
+          <div class="kn"><select class="kn-native" id="djLfoWave" data-label="Wave"><option value="sine" selected>Sine</option><option value="tri">Triangle</option><option value="square">Square</option><option value="rampup">Ramp up</option><option value="rampdown">Ramp down</option><option value="random">Random</option></select><span class="kn-stack"><output id="djLfoWaveOut" class="lcd">Sine</output></span></div>
+          <div class="kn"><input class="kn-native" id="djLfoOffset" type="range" min="-100" max="100" step="1" value="0" data-label="Offset"><span class="kn-stack"><output id="djLfoOffsetOut" class="lcd">Mid</output></span></div>
+        </div>
       </div>
     </div>
     <div class="pedal rack-mod mod-midi midi-bit" aria-label="MIDI">
@@ -1488,10 +1500,13 @@ body.mood-immersive .fab { display: none !important; }
     set("fxStyle", opt("fxStyle")); set("fxTime", opt("fxTime")); set("fxDelay", rnd(25, 65)); set("fxEchoes", rnd(1, echoesMax)); set("fxDelTone", rnd(25, 75)); set("fxWobble", rnd(0, 60));
     // filter: a gentle setting, sometimes swelling on Auto, with an LFO of any shape
     set("djFilter", Math.random() < 0.4 ? 0 : rnd(-40, 40));
-    set("djLfoRate", opt("djLfoRate")); set("djLfoWave", opt("djLfoWave")); set("djLfoAmt", Math.random() < 0.25 ? 0 : rnd(15, 60)); set("djLfoOffset", rnd(-60, 60));
+    set("djLfoRate", opt("djLfoRate")); set("djLfoWave", opt("djLfoWave")); set("djLfoAmt", rnd(15, 60)); set("djLfoOffset", rnd(-60, 60));
+    { const moveIt = Math.random() < 0.75, mv = document.getElementById("djMove");   // most of the time the filter moves, Auto on
+      if ((mv.getAttribute("aria-pressed") === "true") !== moveIt) mv.click();
+      if (!moveIt && Number(document.getElementById("djFilter").value) === 0 && DJF.on) document.getElementById("djAuto").click(); }
     nudgeCards();
     const n = document.getElementById("shuffleNote"), nm = id => { const e = document.getElementById(id); return e.options[e.selectedIndex].text; };
-    n.textContent = `${nm("fxRevType")} · ${nm("fxStyle")} ${nm("fxTime")} · filter ${Number(document.getElementById("djLfoAmt").value) > 0 ? nm("djLfoWave").toLowerCase() + " " + nm("djLfoRate") : "still"}`;
+    n.textContent = `${nm("fxRevType")} · ${nm("fxStyle")} ${nm("fxTime")} · filter ${DJF.move ? nm("djLfoWave").toLowerCase() + " " + nm("djLfoRate") : DJF.on ? "still" : "off"}`;
     clearTimeout(n._t); n._t = setTimeout(() => { n.textContent = ""; }, 6000);
   });
 
@@ -3749,6 +3764,7 @@ body.mood-immersive .fab { display: none !important; }
   // Auto: a slow swell around the knob, from warm and dark to light and airy. It never goes past about halfway
   // either side, and windier weather swells faster (one round every 32 bars when calm, every 8 in a gale).
   const DJA = { on: false, phase: 0, last: 0, off: 0 };
+  const DJF = { on: false, move: false };   // the lamp: the filter in or out; Auto: the movement on or off
   const DJL = { depth: null, dc: null, wave: null, osc: null, beats: 1, shape: "sine", off: 0, shift: null, rnd: null };
   // each LFO shape as a pull from 0 (open) to 1 (the full dip) over one cycle, starting open on the beat
   const LFO_SHAPES = {
@@ -3764,7 +3780,7 @@ body.mood-immersive .fab { display: none !important; }
   // Offset where the swing sits around the knob (left: only below it, middle: either side, right: only above it).
   function filterWindow() {
     const amt = Number(document.getElementById("djLfoAmt").value) / 100, off = Number(document.getElementById("djLfoOffset").value) / 100, v0 = djVal / 100;
-    const d = amt * 0.5, c = v0 + off * d;
+    const d = DJF.on && DJF.move ? amt * 0.5 : 0, c = DJF.on ? v0 + off * d : 0;
     return { v0, d, c, lo: Math.max(-1, c - d), hi: Math.min(1, c + d), moving: d > 0 };
   }
   // build the shape as a wave the audio engine can play: the pull, flipped and centred, so with the -0.5 offset it runs from 0 down to -1
@@ -3803,7 +3819,7 @@ body.mood-immersive .fab { display: none !important; }
     document.getElementById("djLfoAmtOut").value = amt ? Math.round(amt * 100) : "Off";
     document.getElementById("djLfoOffsetOut").value = Math.abs(off) < 0.05 ? "Mid" : off < 0 ? "Low " + Math.round(-off * 100) : "High " + Math.round(off * 100);
     DJL.off = off; showWindow();
-    DJA.on = amt > 0; { const lamp = document.getElementById("djAuto"); if (lamp) { lamp.setAttribute("aria-pressed", String(DJA.on)); lamp.setAttribute("aria-label", "Filter movement " + (DJA.on ? "on" : "off")); } }
+    syncFilterUI();
     if (!DJL.depth) return;
     if (shape !== DJL.shape) { DJL.shape = shape; DJL.wave = lfoWave(); if (playing) djLfoSync(ac.currentTime + 0.02); }
     DJL.dc.offset.setTargetAtTime(DJL.mean || 0, ac.currentTime, 0.02);
@@ -3815,7 +3831,7 @@ body.mood-immersive .fab { display: none !important; }
     requestAnimationFrame(djDot);
     const kn = document.getElementById("djFilter")?.closest(".kn"); if (!kn || !kn._mod) return;
     const amt = Number(document.getElementById("djLfoAmt").value) / 100;
-    if (!ac || !playing || !amt) { if (kn._shown) { kn._mod(null); kn._shown = false; } return; }
+    if (!ac || !playing || !amt || !DJF.on || !DJF.move) { if (kn._shown) { kn._mod(null); kn._shown = false; } return; }
     const fw = filterWindow();
     let b = 1;
     if (DJL.t0 != null) b = 1 - 2 * lfoPull(Math.max(0, ac.currentTime - DJL.t0) * DJL.hz);
@@ -4222,13 +4238,24 @@ body.mood-immersive .fab { display: none !important; }
     if (!el) return;   // the rack shows everything, so there's no summary line any more
     el.textContent = `${document.getElementById("tempoOut").value || tempo.value} bpm · ${KEYS[keyRoot]} ${SCALES.find(x => x[1] === scale)[0]} · volume ${document.getElementById("volume").value}`;
   }
-  { const b = document.getElementById("djAuto");
-    // the lamp is the movement's on switch: lit whenever Amount is up. Off parks Amount at 0 (and remembers it), on brings it back.
-    b.addEventListener("click", () => {
-      const am = document.getElementById("djLfoAmt"), on = Number(am.value) > 0;
-      if (on) { DJA.keep = Number(am.value); am.value = 0; } else am.value = DJA.keep || 40;
-      am.dispatchEvent(new Event("input")); am.closest(".kn")?._redraw?.();
-    }); }
+  // the lamp: the filter in or out of the mix. Auto: the movement. Each shows plainly when it's engaged.
+  function syncFilterUI() {
+    const mod = document.querySelector(".mod-filter"), lamp = document.getElementById("djAuto"), mv = document.getElementById("djMove");
+    if (mod) { mod.classList.toggle("flt-off", !DJF.on); mod.classList.toggle("flt-moving", DJF.move); }
+    if (lamp) { lamp.setAttribute("aria-pressed", String(DJF.on)); lamp.setAttribute("aria-label", "Filter " + (DJF.on ? "on" : "off")); }
+    if (mv) mv.setAttribute("aria-pressed", String(DJF.move));
+    DJA.on = DJF.on && DJF.move;
+  }
+  function setFilterOn(on) { DJF.on = on; syncFilterUI(); applyDJ(); }
+  document.getElementById("djAuto").addEventListener("click", () => setFilterOn(!DJF.on));
+  document.getElementById("djMove").addEventListener("click", () => {
+    DJF.move = !DJF.move;
+    const am = document.getElementById("djLfoAmt");
+    if (DJF.move && Number(am.value) === 0) { am.value = 40; am.dispatchEvent(new Event("input")); am.closest(".kn")?._redraw?.(); }   // Auto needs a range to move in
+    if (DJF.move && !DJF.on) DJF.on = true;   // switching Auto on switches the filter on
+    syncFilterUI(); applyDJ();
+    if (DJF.move && ac && playing) djLfoSync(ac.currentTime + 0.02);
+  });
   document.getElementById("djLfoAmt").addEventListener("input", applyLfo);
   requestAnimationFrame(() => applyLfo());   // the window shows on the knob from the start, before anything plays
   document.getElementById("djLfoOffset").addEventListener("input", applyLfo);
@@ -4237,7 +4264,8 @@ body.mood-immersive .fab { display: none !important; }
   document.getElementById("djFilter").addEventListener("input", e => {
     let v = Number(e.target.value);
     if (Math.abs(v) < 4) v = 0;   // a soft detent at 12 o'clock
-    djVal = v; applyDJ();
+    djVal = v; if (v !== 0 && !DJF.on) { DJF.on = true; syncFilterUI(); }   // reaching for the knob switches it on
+    applyDJ();
   });
   const tempo = document.getElementById("tempo");
   tempo.addEventListener("input", () => { bpmNow = 0; setTempo(); });
@@ -5121,7 +5149,7 @@ body.mood-immersive .fab { display: none !important; }
   const MIX_GLOBAL = { key: "k", scale: "sc", tempo: "t", volume: "V", djFilter: "f", grooveOn: "g", grooveKit: "gk", grooveVol: "gv", grooveTone: "gt", grooveAuto: "ga", grooveChance: "gc",
     "gm-kick": "mk", "gm-snare": "ms", "gm-hat": "mh", "gm-rim": "mr",
     "gh-kick": "hk", "gh-snare": "hs", "gh-hat": "hh", "gh-rim": "hr", "gd-kick": "dk", "gd-snare": "ds", "gd-hat": "dh", "gd-rim": "dr", hallOn: "h", fxRevLevel: "hl", fxRevDecay: "hd", fxRevPre: "hp", fxRevTone: "ht",
-    fxRevType: "hy", delayOn: "e", fxStyle: "es", fxTime: "et", fxDelay: "el", fxEchoes: "ee", fxDelTone: "eo", fxWobble: "ew", moodDeep: "q", unit: "u", chordOn: "cb", chordLevel: "cv", chordSound: "cs", djAuto: "fa", djLfoRate: "fr", djLfoAmt: "fl" };
+    fxRevType: "hy", delayOn: "e", fxStyle: "es", fxTime: "et", fxDelay: "el", fxEchoes: "ee", fxDelTone: "eo", fxWobble: "ew", moodDeep: "q", unit: "u", chordOn: "cb", chordLevel: "cv", chordSound: "cs", djAuto: "fa", djMove: "fm", djLfoRate: "fr", djLfoAmt: "fl" };
   const shortKey = k => {
     if (MIX_GLOBAL[k]) return MIX_GLOBAL[k];
     let m = k.match(/^(boston|copenhagen|london)-(\w+)$/); if (m && MIX_PART[m[2]]) return MIX_CITY[m[1]] + MIX_PART[m[2]];
