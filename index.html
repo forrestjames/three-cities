@@ -221,14 +221,36 @@ main { max-width: 1240px; margin: 0 auto; padding: 0 16px 80px; display: flex; f
 .tgroup { display: flex; flex-direction: column; gap: 10px; min-width: 0; }
 .tlabel { font-family: var(--display); font-size: 18px; letter-spacing: 0.16em; text-transform: uppercase; color: var(--ink); }
 .tgroup .field { justify-content: space-between; }
-.rack { display: grid; grid-template-columns: minmax(0, 0.85fr) minmax(0, 1.05fr) minmax(0, 1.1fr) minmax(0, 1.05fr) minmax(0, 1.1fr); margin-top: 8px; border-radius: 8px; position: relative; --led: #ffd98a;
+.rack { display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1fr); margin-top: 8px; border-radius: 8px; position: relative; --led: #ffd98a;
         background: repeating-linear-gradient(90deg, rgba(255,255,255,0.018) 0 1px, transparent 1px 3px), linear-gradient(180deg, #1c1715, #110d0c);
         border: 1px solid rgba(255,255,255,0.08); box-shadow: inset 0 1px 0 rgba(255,255,255,0.06), 0 10px 26px rgba(0,0,0,0.45); }
 .rack::before, .rack::after { content: ""; position: absolute; top: 7px; width: 6px; height: 6px; border-radius: 50%;
         background: radial-gradient(circle at 35% 35%, #d9d2cb, #6d6560 60%, #3a3431); box-shadow: 0 1px 1px rgba(0,0,0,0.6); }
 .rack::before { left: 7px; } .rack::after { right: 7px; }
 .rack-mod { padding: 12px 18px 14px; background: none; border: 0; box-shadow: none; border-radius: 0; display: flex; flex-direction: column; align-items: stretch; gap: 8px; min-width: 0; }
-.rack-mod + .rack-mod { border-left: 1px solid rgba(255,255,255,0.07); }
+.rack > * + * { border-left: 1px solid rgba(255,255,255,0.07); }
+.rack-col { display: flex; flex-direction: column; min-width: 0; }
+.rack-col > .rack-mod { flex: 0 0 auto; }
+.rack-col > .rack-mod + .rack-mod { border-top: 1px solid rgba(255,255,255,0.07); flex: 1 1 auto; }
+/* the scale on a keyboard: the key, the scale's notes, the chord underneath right now, and each note flashing as a city plays it */
+.scale-kb { position: relative; height: 54px; width: 100%; max-width: 300px; margin-top: 4px; }
+.scale-kb .wk, .scale-kb .bk { position: absolute; top: 0; box-sizing: border-box; border-radius: 0 0 4px 4px; transition: background 0.12s, box-shadow 0.12s; display: flex; align-items: flex-end; justify-content: center; }
+.scale-kb .wk { height: 100%; background: rgba(243,236,230,0.07); border: 1px solid rgba(255,255,255,0.06); }
+.scale-kb .bk { height: 58%; background: #0a0808; border: 1px solid rgba(255,255,255,0.1); z-index: 1; }
+.scale-kb .in { background: color-mix(in srgb, var(--led) 30%, #1a1412); border-color: color-mix(in srgb, var(--led) 45%, transparent); }
+.scale-kb .bk.in { background: color-mix(in srgb, var(--led) 38%, #0a0808); }
+.scale-kb .root { background: color-mix(in srgb, var(--led) 70%, #1a1412); box-shadow: 0 0 10px color-mix(in srgb, var(--led) 45%, transparent); }
+.scale-kb .ch::after { content: ""; position: absolute; left: 50%; bottom: 13px; width: 5px; height: 5px; margin-left: -2.5px; border-radius: 50%; background: #f3ece6; opacity: 0.85; }
+.scale-kb .bk.ch::after { bottom: 17px; }
+.scale-kb b { font: 9px/1 var(--mono); color: rgba(16,8,6,0.75); padding-bottom: 3px; font-weight: 500; }
+.scale-kb .bk b { color: rgba(243,236,230,0.7); font-size: 8px; }
+.scale-kb .hit { background: var(--hit) !important; box-shadow: 0 0 12px var(--hit); transition: none; }
+.scale-legend { display: flex; gap: 12px; font: 9px var(--mono); letter-spacing: 0.08em; color: var(--ink-faint); text-transform: uppercase; }
+.scale-legend span { display: inline-flex; align-items: center; gap: 5px; }
+.scale-legend i { width: 9px; height: 9px; border-radius: 2px; }
+.scale-legend .lg-root { background: color-mix(in srgb, var(--led) 70%, #1a1412); }
+.scale-legend .lg-scale { background: color-mix(in srgb, var(--led) 30%, #1a1412); }
+.scale-legend .lg-chord { width: 5px; height: 5px; border-radius: 50%; background: #f3ece6; margin: 0 2px; }
 .rack-mod::before, .rack-mod::after { display: none; }
 .mod-head { display: flex; align-items: center; gap: 8px; margin: 0; flex: 0 0 auto; }
 .mod-name { font-family: var(--display); font-size: 15px; letter-spacing: 0.26em; text-transform: uppercase; color: var(--ink); }
@@ -263,13 +285,13 @@ main { max-width: 1240px; margin: 0 auto; padding: 0 16px 80px; display: flex; f
 .lcd-select { cursor: pointer; text-align: left; padding: 4px 6px; font: 11px/1.2 var(--mono); }
 .lcd-select option { background: #1a1210; color: var(--ink); }
 .rack .kn-stack .kn-label { margin-bottom: 4px; }
-@media (max-width: 1100px) { .rack { grid-template-columns: minmax(0, 1fr) minmax(0, 1.35fr); } .rack-mod:nth-child(odd) { border-left: 0; } .rack-mod:nth-child(n+3) { border-top: 1px solid rgba(255,255,255,0.07); } }
+@media (max-width: 1100px) { .rack { grid-template-columns: minmax(0, 1fr) minmax(0, 1.35fr); } .rack > :nth-child(odd) { border-left: 0; } .rack > :nth-child(n+3) { border-top: 1px solid rgba(255,255,255,0.07); } }
 .share-btn { display: inline-flex; align-items: center; gap: 8px; padding: 0 16px; min-height: 40px; border-radius: 20px; border: 1px solid rgba(243,236,230,0.45); background: rgba(16,8,6,0.35);
              color: var(--ink); cursor: pointer; font: 12px var(--mono); letter-spacing: 0.08em; transition: background 0.2s, color 0.2s; }
 .share-btn svg { width: 16px; height: 16px; }
 .share-btn:hover { background: var(--ink); color: var(--ground); }
 .mine .share-note { font-size: 11px; color: var(--ink-dim); letter-spacing: 0.04em; min-height: 1em; }
-@media (max-width: 1000px) { .rack { grid-template-columns: minmax(0, 1fr); } .rack-mod + .rack-mod { border-left: 0; border-top: 1px solid rgba(255,255,255,0.07); } }
+@media (max-width: 1000px) { .rack { grid-template-columns: minmax(0, 1fr); } .rack > * + * { border-left: 0; border-top: 1px solid rgba(255,255,255,0.07); } }
 @media (max-width: 520px) { .mod-knobs { justify-content: space-between; } .lcd-wide { max-width: 170px; } }
 .ctlwrap > summary { list-style: none; display: flex; flex-wrap: wrap; align-items: center; gap: 14px; min-height: 52px; cursor: pointer; padding: 6px 0; }
 .ctlwrap > summary::-webkit-details-marker { display: none; }
@@ -712,7 +734,7 @@ body.mood-immersive .fab { display: none !important; }
 .mod-filter.flt-off .flt-main, .mod-filter.flt-off .flt-auto { opacity: 0.42; }
 .mod-filter:not(.flt-moving) .flt-grid { opacity: 0.42; }
 .rack .mod-chords .kn { flex: 0 0 auto; min-width: 104px; }
-@media (max-width: 1100px) { .rack-mod:last-child:nth-child(odd) { grid-column: 1 / -1; } }
+@media (max-width: 1100px) { .rack > :last-child:nth-child(odd) { grid-column: 1 / -1; } }
 
 </style>
 </head>
@@ -770,6 +792,7 @@ body.mood-immersive .fab { display: none !important; }
   <nav class="dots" id="dots" aria-label="Choose a city"></nav>
 
   <section class="rack" aria-label="Controls">
+    <div class="rack-col">
     <div class="pedal rack-mod mod-play" aria-label="Play">
       <div class="mod-head"><span class="mod-name">Play</span><span class="beat-lamp" id="beatLamp" aria-hidden="true"></span><button class="info" type="button" aria-label="How Play works" data-tip="Tempo is the speed with every city awake. As the cities fall asleep it slows, down to about three quarters of this in the dead of night, then picks up again as they wake. The display shows the tempo you're hearing, and the lamp blinks on the beat. Volume is the level for everything, drums included. Drag a knob up or down, scroll it, or use the arrow keys. Double-click resets it."></button></div>
       <div class="knobs mod-knobs">
@@ -783,7 +806,10 @@ body.mood-immersive .fab { display: none !important; }
         <label class="kn-stack" for="key"><span class="kn-label">Key</span><select id="key" class="lcd lcd-select"></select></label>
         <label class="kn-stack" for="scale"><span class="kn-label">Scale</span><select id="scale" class="lcd lcd-select lcd-wide"></select></label>
       </div>
+      <div class="scale-kb" id="scaleKb" role="img" aria-label="The notes of the scale on a keyboard"></div>
+      <div class="scale-legend"><span><i class="lg-root"></i>Key</span><span><i class="lg-scale"></i>Scale</span><span><i class="lg-chord"></i>Chord now</span></div>
 
+    </div>
     </div>
     <div class="pedal rack-mod mod-chords" aria-label="Chords">
       <div class="mod-head"><span class="mod-name">Chords</span><button class="info" type="button" aria-label="How Chords works" data-tip="A slow bed of chords underneath the cities, from the same progression their melodies lean on: a new chord every four bars, each one swelling in and fading as the next arrives. Switch it on with the lamp, set how loud it sits with the knob, and pick a pad sound. As the cities fall asleep it gets darker and quieter too."></button><button class="pedal-led" type="button" id="chordOn" aria-pressed="false" aria-label="Chords on" title="Chord bed on or off"></button></div>
@@ -3910,7 +3936,7 @@ body.mood-immersive .fab { display: none !important; }
       const scoop = near * (50 + Math.random() * 60);                             // slide up into the note, in cents
       const drift = far * 14 * (Math.random() * 2 - 1);                           // far away, slightly out of tune
       feelVoice(c, note, Math.min(1.2, vel), tt, L, scoop, 0.05 + near * 0.12, near * 16, drift);
-      sendMidi(c, note, Math.min(1, vel), tt);
+      sendMidi(c, note, Math.min(1, vel), tt); kbHit(note, c, tt);
       if (Math.random() < flourishOf(c)) flourish(c, deg, note, Math.min(1, vel), tt, L);   // unsettled weather ornaments the line
       // ornaments: up close, an occasional grace note or octave sparkle
       if (near > 0.3 && Math.random() < near * 0.2) {
@@ -4233,6 +4259,37 @@ body.mood-immersive .fab { display: none !important; }
 
   keySel.addEventListener("change", () => { keyRoot = Number(keySel.value); ctlSummary(); });
   scaleSel.addEventListener("change", () => { scale = SCALES[Number(scaleSel.value)][1]; ctlSummary(); });
+  // ---- the scale keyboard
+  const kbEl = document.getElementById("scaleKb"), NOTE = ["C", "C♯", "D", "D♯", "E", "F", "F♯", "G", "G♯", "A", "A♯", "B"], kbKeys = [];
+  if (kbEl) {
+    const whites = [0, 2, 4, 5, 7, 9, 11], blacks = { 1: 0, 3: 1, 6: 3, 8: 4, 10: 5 }, ww = 100 / 7;
+    for (let pc = 0; pc < 12; pc++) {
+      const k = document.createElement("span"), wi = whites.indexOf(pc);
+      if (wi >= 0) { k.className = "wk"; k.style.left = `calc(${wi * ww}% + 1px)`; k.style.width = `calc(${ww}% - 2px)`; }
+      else { k.className = "bk"; const w = ww * 0.62; k.style.left = `${(blacks[pc] + 1) * ww - w / 2}%`; k.style.width = `${w}%`; }
+      k.innerHTML = "<b></b>"; kbEl.appendChild(k); kbKeys[pc] = k;
+    }
+  }
+  let kbSig = "";
+  function drawScaleKb() {
+    if (!kbEl) return;
+    const n = scale.length, chord = HARM && HARM.prog ? chordTones(n).map(d => (keyRoot + scale[d]) % 12) : [];
+    const sig = keyRoot + "|" + scale.join(",") + "|" + chord.join(","); if (sig === kbSig) return; kbSig = sig;
+    const inScale = scale.map(s => (keyRoot + s) % 12);
+    kbKeys.forEach((k, pc) => {
+      const on = inScale.includes(pc);
+      k.classList.toggle("in", on); k.classList.toggle("root", pc === keyRoot % 12); k.classList.toggle("ch", chord.includes(pc));
+      k.firstChild.textContent = on ? NOTE[pc] : "";
+    });
+    kbEl.setAttribute("aria-label", `${NOTE[keyRoot % 12]} ${SCALES.find(x => x[1] === scale)?.[0] || ""}: ${inScale.map(pc => NOTE[pc]).join(", ")}`);
+  }
+  setInterval(drawScaleKb, 250); drawScaleKb();
+  // a note lights its key in the city's colour as it sounds
+  function kbHit(note, c, t) {
+    if (!kbEl || reduceMotion) return;
+    const k = kbKeys[((note % 12) + 12) % 12]; if (!k) return;
+    setTimeout(() => { k.style.setProperty("--hit", colorOf(c)); k.classList.add("hit"); clearTimeout(k._t); k._t = setTimeout(() => k.classList.remove("hit"), 140); }, Math.max(0, (t - ac.currentTime) * 1000));
+  }
   function ctlSummary() {
     const el = document.getElementById("ctlSummary");
     if (!el) return;   // the rack shows everything, so there's no summary line any more
