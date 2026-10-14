@@ -1787,7 +1787,7 @@ body.mood-immersive .fab { display: none !important; }
       updateIdentity();
       return true;
     } catch (err) {
-      c.ref.swapnote.textContent = "Swapping cities needs the live weather service, which this copy of the page can't reach.";
+      c.ref.swapnote.textContent = ON_SITE ? "The weather service isn't answering just now. Try again in a minute." : "Swapping cities needs the live weather service, which this copy of the page can't reach.";
       return false;
     }
   }
@@ -2040,8 +2040,14 @@ body.mood-immersive .fab { display: none !important; }
     if (!qs.some(Boolean)) return;
     livedPending = document.getElementById("mineLived").checked; livedPendingAt = Date.now();
     if (!playing) playBtn.click();   // start the sound inside the click, before the lookups
-    qs.forEach((q, i) => { if (q) setCity(cities[i], q); });
-    closeMine();
+    const note = document.getElementById("surpriseNote"); note.textContent = "Looking them up…";
+    Promise.all(qs.map((q, i) => q ? setCity(cities[i], q).then(ok => ok ? null : (typeof q === "string" ? q : q.name)) : null)).then(missed => {
+      missed = missed.filter(Boolean);
+      if (!missed.length) { note.textContent = ""; closeMine(); return; }
+      // stay open so they can fix it, and say which one, right here where they typed
+      note.textContent = `Couldn't find ${missed.map(m => `"${m}"`).join(" or ")}. Try the city's English name, or pick one from the list as you type.`;
+      const bad = inputs.find(inp => missed.includes(inp.value.trim())); if (bad) bad.focus();
+    });
   });
 
   // Share: one tap copies the link, and the button says so
@@ -2219,8 +2225,10 @@ body.mood-immersive .fab { display: none !important; }
   }
 
   // ---------- weather ----------
-  async function getJSON(url) {
-    const r = await fetch(url);
+  async function getJSON(url, ms = 8000) {
+    // a slow service gives up after a few seconds, so the page falls back instead of waiting forever
+    const ctl = typeof AbortController === "function" ? new AbortController() : null, to = ctl && setTimeout(() => ctl.abort(), ms);
+    const r = await fetch(url, ctl ? { signal: ctl.signal } : undefined).finally(() => clearTimeout(to));
     if (!r.ok) throw new Error("HTTP " + r.status);
     return r.json();
   }
@@ -2242,6 +2250,7 @@ body.mood-immersive .fab { display: none !important; }
     rebuild(c);
   }
   let lastUpdate = null;
+  const ON_SITE = /(^|\.)forrestjamesmusic\.com$|^(localhost|127\.0\.0\.1)$/.test(location.hostname);
   async function refreshAll() {
     try {
       await Promise.all(cities.map(fetchCity));
@@ -2258,7 +2267,8 @@ body.mood-immersive .fab { display: none !important; }
       const t = lastUpdate ? lastUpdate.toTimeString().slice(0, 5) : "";
       el.innerHTML = `<b>Live weather</b>${t ? " · updated " + t : ""} · refreshes every 10 minutes`;
     } else {
-      el.innerHTML = `<b>Weather snapshot from 7 Oct, 15:45 London time.</b> Host this page on its own site for live weather.`;
+      el.innerHTML = ON_SITE ? `<b>The weather service isn't answering just now,</b> so this is a saved snapshot. It'll keep trying.`
+                             : `<b>Weather snapshot from 7 Oct, 15:45 London time.</b> Host this page on its own site for live weather.`;
     }
   }
 
@@ -4008,6 +4018,7 @@ body.mood-immersive .fab { display: none !important; }
   document.addEventListener("keydown", e => { if (e.key === "Escape") closeTips(); });
   document.addEventListener("pointerdown", e => { if (!e.target.closest || !e.target.closest(".info")) closeTips(); });
   async function start() {
+    if (!cities.some(c => c.w)) cities.forEach(c => { if (!c.w && SNAPSHOT[c.key] && c.name === c.key) { c.w = Object.assign({}, SNAPSHOT[c.key]); rebuild(c); } });   // no weather yet: start on the saved snapshot, the live weather takes over when it lands
     try { if (navigator.audioSession) navigator.audioSession.type = "playback"; } catch (e) {}
     unlockIOS();
     if (isIOS && !iosHinted) { iosHinted = true; setTimeout(() => { if (!playing) return; const st = document.getElementById("status"); st.textContent = "No sound? Check the silent switch on the side of your phone, and the volume."; st.classList.add("hint"); setTimeout(() => st.classList.remove("hint"), 12000); }, 5000); }
@@ -5885,6 +5896,7 @@ body.mood-immersive .fab { display: none !important; }
     });
   });
   setInterval(() => { if (live) refreshAll(); }, 10 * 60 * 1000);
+  setInterval(() => { if (!live && ON_SITE) refreshAll(); }, 60 * 1000);   // no weather yet: try again every minute
   requestAnimationFrame(frame);
 })();
 </script>
