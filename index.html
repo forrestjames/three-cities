@@ -59,6 +59,8 @@ button, select, input { font: inherit; color: inherit; }
 .hero-inner { position: relative; display: flex; flex-direction: column; align-items: center; gap: 22px; max-width: 900px; }
 .wordmark { font-family: var(--mono); font-size: 12px; letter-spacing: 0.28em; text-transform: uppercase; color: var(--ink-dim); }
 h1 { margin: 0; font-family: var(--display); font-weight: 400; font-size: clamp(48px, 10vw, 112px); line-height: 1; letter-spacing: 0.14em; text-transform: uppercase; text-wrap: balance; text-shadow: 0 2px 30px rgba(0,0,0,0.35); }
+.hero .where-map { position: relative; inset: auto; display: block; width: min(640px, 100%); height: 170px; margin: 4px 0 -10px; pointer-events: none; }
+@media (max-width: 760px) { .hero .where-map { height: 140px; margin: 0 0 -8px; } }
 .title-cities { margin-top: -6px; font-family: var(--display); font-size: clamp(15px, 2.2vw, 22px); letter-spacing: 0.24em; text-transform: uppercase; color: var(--ink); opacity: 0.85; text-shadow: 0 1px 12px rgba(0,0,0,0.6); }
 .sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
 .mine { display: flex; flex-direction: column; align-items: center; gap: 14px; padding: 30px 34px 32px; border-radius: 22px; background: rgba(16, 8, 6, 0.42); border: 1px solid rgba(243, 236, 230, 0.25); backdrop-filter: blur(6px); }
@@ -746,6 +748,7 @@ body.mood-immersive .fab { display: none !important; }
     <div class="rec-note" id="recNote" aria-live="polite" hidden></div>
     <div class="country-note" id="countryNote" aria-live="polite" hidden></div>
     <span class="share-note" id="shareNote" aria-live="polite"></span>
+    <canvas class="where-map" id="whereMap" role="img" aria-label="A map of Boston, Copenhagen and London, lit where it is day"></canvas>
     <div class="status" id="status">Checking the weather…</div>
   </div>
 </header>
@@ -1896,6 +1899,7 @@ body.mood-immersive .fab { display: none !important; }
     h1.textContent = "Three Cities";   // the piece keeps its name; the cities playing sit underneath
     const sub = document.getElementById("titleCities");
     sub.textContent = names.join("\u00a0· "); sub.hidden = false;   // a line can break after a dot, never before one   // always shown, the default three included
+    const wm = document.getElementById("whereMap"); if (wm) wm.setAttribute("aria-label", "A map of " + cityList(names) + ", lit where it is day");
     document.getElementById("ledeCities").textContent = cityList(names);
     document.getElementById("ledeMine").hidden = !isDefault;
     document.getElementById("ledeYours").hidden = isDefault;
@@ -4879,17 +4883,140 @@ body.mood-immersive .fab { display: none !important; }
     pg.globalAlpha = 1;
   }
 
+  // ---------- the little map: where the three cities sit, with live day and night ----------
+  // A dot for every 1.5° of land (from Natural Earth, public domain), lit where the sun is up.
+  const WMAP_LAND = "AAAAAAAAAPD/f7///wsAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAP////////8BACAAwPMJAOABAAAAAAAAAAAAAAAAvP///f///x8AgP8DAIYACPA/AAAAAAAAAAAAAAB8/v+//////wcAAP8AAAAAAAB8AAAAAAAAAAAAAIC///8P/////w8AAAwAAAA/AMD/DwBYAAAAAAAAAMD94/8HAP7//w8AAAAAAOADAPz/DwD4DQAAAAAAAOAfe/cfAPz//wMAAAAAAHgA1P///z/gAAAAAwAAAPD/9/P/Afj//wMAAAAAADzg/////3/9HwCAAfj/AR/+n/f/B9j//wMAANAPALjx/////////weHAf7/////z/7rD/D//wAAAPz/Y/n/////////////H/7///////+zP/D/BwAAAP//7///////////////f//////////Af/D/AX8AAP//////////////////PP7////////3H+AfAH8AwP//////////////////YPz//////48TH+AfAAgA8P//////////////////AP7//////wP0C4APAAAI+M////////////////8fAP7//////wHwMwAOAAAA+N////////////////gCAPAD8P///wP4fwAAAAAw8J////////////9/MB4AAOAHwP///z/8fwAAAAB44Nf///////////8/AB8AAHwAgP/////9/wEAAAB84MP///////////8PgE8AgAQAgP7////7/wcAAAD+8P////////////+/gA8AAAAAgP3////7/wcAAAD+/f//////////////AAMAAAAAAPz//////wcAAADy////////////////gAEAAAAAAPj/////Hw4AAACA////////////////AAAAAAAAAOD/////fx8AAADw////////////////AAAAAAAAAOD//////xwAAADA///////////////fAAAAAAAAAOD/////fwAAAACA///v/v7////////PBAAAAAAAAOD/////EwAAAAD+//8H/Pz////////nAwAAAAAAAOD/////AQAAAAD84/fn+Pn////////gAAAAAAAAAOD/////AAAAAAD8Yf7///n//////39gAAAAAAAAAOD///9/AAAAIAD8Zuz8//n//////zpgAAAAAAAAAMD///8/AAAAAAD8cMf8//P//////3s4AAAAAAAAAMD///8/AAAAAACY/4B8/////////3E/AAAAAAAAAID///8fAAAAAAD4/wDj/////////zEfAAAAAAAAAAD+//8PAAAAAAD+/+OA/////////8EDAAAAAAAAAAD8//8DAAAAAAD+/+///////////8MAAAAAAAAAAAD8//8DAAAAAAD+/////////////wMAAAAAAAAAAAD6/wEHAAAAAMD///////3//////wEAAAAAAAAAAAD4/wAGAAAAAMD///////v//////wEAAAAAAAAAAADg/wAGAAAAAMD///////f//////wMAAAAAAAAAAABgfwA4AAAAAOD//////v/w////fwcAAAAAAAAAAABAfoAfAAAAAPD//////f/A////PwEAAAAAAAAAAAAA/jh5AAAAAPD//////f/A/+P/BwAAAAAAAAABAAAA/jjwAwAAAOD/////+X8A/8N/AwAAAAAAAAAAAAAA+D/QDwAAAOD/////+z8A/8F/AwMAAAAAAAAAAAAA4H8AgAAAgOD/////9x8Af4D/AQMAAAAAAAAAAAAAAP4BAAAAAPD//////wcAPgD+AQEAAAAAAAAAAAAAAPgBAAAAAPD//////wEAPgD+AQMAAAAAAAAAAAAAAMCBAwAAAPD/////HxoAPCD2gQ8AAAAAAAAAAAAAAMDhfwAAAMD//////wMAPAD2gQ4AAAAAAAAAAAAAAID//wAAAID//////wMAeABGQB4AAAAAAAAAAAAAAAD+/wEAAID//////wMAYAAMIB4AAAAAAAAAAAAAAADw/x8AAAD//////wEAYIAc4BwAAAAAAAAAAAAAAADw/z8AAABM+P///wEAAIAb+RAAAAAAAAAAAAAAAAD4/z8AAAAA4P///wAAAAB/fAAAAAAAAAAAAAAAAAD8/38AAAAAwP//fwAAAAA+/w8AAAAAAAAAAAAAAAj8//8AAAAAwP//HwAAAAAcfycBAAAAAAAAAAAAAAj8//8HAAAAwP//DwAAAAB6vocbBgAAAAAAAAAAAAD8//8/AAAAwP//BwAAAAB4vvP/EAAAAAAAAAAAAAD8////AAAAgP//BwAAAABwgAP/MwAAAAAAAAAAAAD8////AQAAAP//AwAAAADggwPwvwAAAAAAAAAAAAD8////AQAAAP//BwAAAACAH4DwBwQAAAAAAAAAAAD4////AQAAAP//BwAAAAAA2A/gDg4AAAAAAAAAAADw////AAAAAP7/BwAAAAAAAAXAHAAAAAAAAAAAAADw//9/AAAAAP7/FwEAAAAAAMDPAAAAAAAAAAAAAADg//8/AAAAAP//BwMAAAAAANDPAAAAAAAAAAAAAADg//8/AAAAAP//jwMAAAAAAPjHAYAAAAAAAAAAAADA//8/AAAQgP//5wEAAAAAAP7fAwCAAAAAAAAAAAAA//8/AAAAgP//4QEAAAAAAP7/AwBAAAAAAAAAAAAA/v8/AAAAAP//4AEAAAAAgP//BwBBAAAAAAAAAAAA/v8fAAAAAP//4AEAAAAA4P//D4AAAAAAAAAAAAAA/v8fAAAAAP7/4AAAAAAA8P//H8AAAAAAAAAAAAAA/v8DAAAAAP7/4AAAAAAA+P//PwAAAAAAAAAAAAAA/v8AAAAAAPx/4AAAAAAA+P//PwAAAAAAAAAAAAAA//8AAAAAAPw/AAAAAAAA8P//fwAAAAAAAAAAAAAA//8AAAAAAPw/AAAAAAAA8P//fwAAAAAAAAAAAAAA/38AAAAAAPgfAAAAAAAA8P//fwAAAAAAAAAAAAAA/38AAAAAAPgfAAAAAAAA4P//PwAAAAAAAAAAAAAA/x8AAAAAAPAHAAAAAAAA4A/+PwAAAAAAAAAAAAAA/x8AAAAAAPABAAAAAAAA8AT8HwAAAAAAAAAAAACA/wcAAAAAAAAAAAAAAAAAAADgHwAYAAAAAAAAAACA/wcAAAAAAAAAAAAAAAAAAADgDwBwAAAAAAAAAACA/wEAAAAAAAAAAAAAAAAAAACAAwBwAAAAAAAAAADAfwAAAAAAAAAAAAAAAAAAAAAABwA8AAAAAAAAAADAPwAAAAAAAAAAAAAAAAAAAAAABwAcAAAAAAAAAADAHwAAAAAAAAAAAAAAAAAAAAAABgAPAAAAAAAAAADAHwAAAAAAAAAAAAAAAAAAAAAAAIAHAAAAAAAAAADADwAAAAAAAAAAAAAAAAAAAAAAAIADAAAAAAAAAADgHwAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAADgBwAAAAAAAAAAAABAAAAAAAAAAAAAAAAAAAAAAADggwEAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAADAhwEAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAADADwCAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAADQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA", WMAP_W = 240, WMAP_H = 95, WMAP_ST = 1.5, WMAP_TOP = 82.5;
+  const wmapBits = (() => { try { return Uint8Array.from(atob(WMAP_LAND), ch => ch.charCodeAt(0)); } catch (e) { return new Uint8Array(0); } })();
+  const wmapEl = document.getElementById("whereMap");
+  let wmapBase = null, wmapPts = [], wmapRipples = [], wmapKey = "", wmapDirty = true;
+  function sunAltAt(lat, lon, when) {
+    const r = Math.PI / 180, n = when / 864e5 - 10957.5;
+    const g = (357.529 + 0.98560028 * n) * r, q = 280.459 + 0.98564736 * n;
+    const L = (q + 1.915 * Math.sin(g) + 0.02 * Math.sin(2 * g)) * r, e = (23.439 - 0.00000036 * n) * r;
+    const dec = Math.asin(Math.sin(e) * Math.sin(L)), ra = Math.atan2(Math.cos(e) * Math.sin(L), Math.cos(L)) / r;
+    const gmst = (280.46061837 + 360.98564736629 * n) % 360, ha = (gmst + lon - ra) * r;
+    return Math.asin(Math.sin(lat * r) * Math.sin(dec) + Math.cos(lat * r) * Math.cos(dec) * Math.cos(ha)) / r;
+  }
+  function wmapView(w, h) {
+    // cut the world open at the widest gap between the cities, so the three sit together, then frame them
+    const lons = cities.map(c => ((c.lon + 540) % 360) - 180).sort((a, b) => a - b);
+    let gap = -1, at = 0;
+    lons.forEach((l, i) => { const nx = i === lons.length - 1 ? lons[0] + 360 : lons[i + 1], d = nx - l; if (d > gap) { gap = d; at = i; } });
+    const start = lons[(at + 1) % lons.length], un = l => { let x = ((l + 540) % 360) - 180; while (x < start - 1e-9) x += 360; return x; };
+    const xs = cities.map(c => un(c.lon)), ys = cities.map(c => c.lat);
+    let lo0 = Math.min(...xs), lo1 = Math.max(...xs), la0 = Math.min(...ys), la1 = Math.max(...ys);
+    const midLat = Math.max(-60, Math.min(60, (la0 + la1) / 2)), k = Math.cos(midLat * Math.PI / 180);
+    let cx = (lo0 + lo1) / 2, cy = (la0 + la1) / 2;
+    let spanX = Math.max(lo1 - lo0 + 34, 64), spanY = la1 - la0 + 22;     // in degrees, with room around the dots
+    if (spanX * k / spanY < w / h) spanX = spanY * (w / h) / k; else spanY = spanX * k / (w / h);
+    if (spanX > 360) spanX = 360;   // a whole world that won't fit squeezes sideways a little, rather than losing a city
+    cy = spanY >= 138 ? 11 : Math.max(-58 + spanY / 2, Math.min(80 - spanY / 2, cy));
+    return { lon0: cx - spanX / 2, lat1: cy + spanY / 2, sx: w / spanX, sy: h / spanY, un };
+  }
+  function wmapDraw() {
+    if (!wmapEl || !wmapBits.length) return;
+    const dpr = Math.min(2, window.devicePixelRatio || 1), w = wmapEl.clientWidth, h = wmapEl.clientHeight;
+    if (!w || !h) return;
+    if (wmapEl.width !== Math.round(w * dpr)) { wmapEl.width = Math.round(w * dpr); wmapEl.height = Math.round(h * dpr); }
+    if (!wmapBase) wmapBase = document.createElement("canvas");
+    wmapBase.width = wmapEl.width; wmapBase.height = wmapEl.height;
+    const g = wmapBase.getContext("2d"); g.setTransform(dpr, 0, 0, dpr, 0, 0); g.clearRect(0, 0, w, h);
+    const v = wmapView(w, h), now = Date.now(), cell = WMAP_ST * v.sx, r = Math.max(0.7, Math.min(2.2, cell * 0.22));
+    const X = lon => (lon - v.lon0) * v.sx, Y = lat => (v.lat1 - lat) * v.sy;
+    // the edges fade out, so the map has no hard frame
+    const fade = (x, y) => Math.min(1, x / (w * 0.07), (w - x) / (w * 0.07), y / (h * 0.16), (h - y) / (h * 0.16));
+    for (let yi = 0; yi < WMAP_H; yi++) {
+      const lat = WMAP_TOP - yi * WMAP_ST, y = Y(lat); if (y < -2 || y > h + 2) continue;
+      for (let xi = 0; xi < WMAP_W; xi++) {
+        const i = yi * WMAP_W + xi; if (!(wmapBits[i >> 3] >> (i & 7) & 1)) continue;
+        const lon = -180 + WMAP_ST / 2 + xi * WMAP_ST;
+        for (const off of [-360, 0, 360]) {
+          const x = X(lon + off); if (x < -2 || x > w + 2) continue;
+          const f = fade(x, y); if (f <= 0) continue;
+          const day = Math.max(0, Math.min(1, (sunAltAt(lat, lon, now) + 6) / 8));   // twilight blends over civil dusk
+          g.fillStyle = `rgba(243,236,230,${((0.2 + 0.34 * day) * f).toFixed(3)})`;
+          g.beginPath(); g.arc(x, y, r, 0, 6.2832); g.fill();
+        }
+      }
+    }
+    wmapPts = cities.map(c => ({ c, x: X(v.un(c.lon)), y: Y(c.lat), col: colorOf(c) }));
+    // faint arcs between them, bowed towards the pole like a flight path
+    g.lineWidth = 1; g.setLineDash([2, 4]); g.strokeStyle = "rgba(243,236,230,0.28)";
+    wmapPts.forEach((a, i) => {
+      const b = wmapPts[(i + 1) % wmapPts.length], d = Math.hypot(b.x - a.x, b.y - a.y);
+      if (d < 6) return;
+      g.beginPath(); g.moveTo(a.x, a.y); g.quadraticCurveTo((a.x + b.x) / 2, (a.y + b.y) / 2 - d * 0.18, b.x, b.y); g.stroke();
+    });
+    g.setLineDash([]);
+    // name and country, nudged apart so they never sit on each other or run off the edge
+    const css2 = getComputedStyle(document.body), mono = css2.getPropertyValue("--mono") || "monospace", disp = css2.getPropertyValue("--display") || "sans-serif";
+    const nameFont = `500 10px ${mono}`, placeFont = `11px ${disp}`, ls = v => { if (g.letterSpacing !== undefined) g.letterSpacing = v; };
+    g.textBaseline = "middle";
+    const boxes = wmapPts.map(p => ({ x: p.x - 6, y: p.y - 6, w: 12, h: 12 }));
+    const hitBox = (a, b) => a.x < b.x + b.w && b.x < a.x + a.w && a.y < b.y + b.h && b.y < a.y + a.h;
+    wmapPts.forEach(p => {
+      const t = p.c.name.toUpperCase(), pl = p.c.place || "";
+      g.font = nameFont; ls("1.2px"); const nw = g.measureText(t).width;
+      g.font = placeFont; ls("0.5px"); const pw = pl ? g.measureText(pl).width : 0;
+      const tw = Math.max(nw, pw), th = pl ? 26 : 12;
+      // [left edge offset, top offset, alignment]: right of the dot first, then left, above, below
+      const opts = [[10, -6, "left"], [-10 - tw, -6, "right"], [-tw / 2, -12 - th, "center"], [-tw / 2, 12, "center"], [10, -th + 6, "left"], [-10 - tw, -th + 6, "right"], [10, -th - 6, "left"], [-10 - tw, -th - 6, "right"]];
+      let best = opts[0];
+      for (const o of opts) { const bx = { x: p.x + o[0], y: p.y + o[1], w: tw, h: th }; if (bx.x >= 2 && bx.x + tw <= w - 2 && bx.y >= 0 && bx.y + th <= h && !boxes.some(q => hitBox(q, bx))) { best = o; break; } }
+      const bx = { x: p.x + best[0], y: p.y + best[1], w: tw, h: th }; boxes.push(bx);
+      const tx = best[2] === "left" ? bx.x : best[2] === "right" ? bx.x + tw : bx.x + tw / 2;
+      g.textAlign = best[2]; g.shadowColor = "rgba(15,8,6,0.9)"; g.shadowBlur = 5;
+      g.font = nameFont; ls("1.2px"); g.fillStyle = p.col; g.fillText(t, tx, bx.y + 6);
+      if (pl) { g.font = placeFont; ls("0.5px"); g.fillStyle = "rgba(243,236,230,0.72)"; g.fillText(pl, tx, bx.y + 19); }
+      g.shadowBlur = 0; g.textAlign = "left"; ls("0px");
+    });
+    wmapKey = cities.map(c => c.lat + "," + c.lon).join("|");
+    wmapDirty = false; wmapPaint(performance.now());
+  }
+  function wmapPaint(ms) {
+    if (!wmapBase) return;
+    const g = wmapEl.getContext("2d"), dpr = wmapEl.width / Math.max(1, wmapEl.clientWidth);
+    g.setTransform(1, 0, 0, 1, 0, 0); g.clearRect(0, 0, wmapEl.width, wmapEl.height); g.drawImage(wmapBase, 0, 0);
+    g.setTransform(dpr, 0, 0, dpr, 0, 0);
+    wmapRipples = wmapRipples.filter(rp => ms - rp.t0 < 1400);
+    wmapRipples.forEach(rp => {
+      const p = wmapPts.find(q => q.c === rp.c); if (!p) return;
+      const k = (ms - rp.t0) / 1400;
+      g.strokeStyle = p.col; g.globalAlpha = 0.55 * (1 - k) * rp.v; g.lineWidth = 1;
+      g.beginPath(); g.arc(p.x, p.y, 4 + k * 16, 0, 6.2832); g.stroke();
+    });
+    g.globalAlpha = 1;
+    wmapPts.forEach(p => {
+      const pulse = p.c.pulse || 0, rr = 3.2 + pulse * 1.2;
+      const glow = g.createRadialGradient(p.x, p.y, 0, p.x, p.y, 12 + pulse * 4);
+      glow.addColorStop(0, p.col); glow.addColorStop(1, "rgba(0,0,0,0)");
+      g.globalAlpha = 0.35 + 0.3 * pulse; g.fillStyle = glow; g.beginPath(); g.arc(p.x, p.y, 12 + pulse * 4, 0, 6.2832); g.fill();
+      g.globalAlpha = 1; g.fillStyle = p.col; g.beginPath(); g.arc(p.x, p.y, rr, 0, 6.2832); g.fill();
+    });
+  }
+  function wmapPing(c) { if (!reduceMotion && wmapPts.length && wmapRipples.length < 18) wmapRipples.push({ c, t0: performance.now(), v: 0.6 + 0.4 * Math.random() }); }
+  let wmapLastDraw = 0;
+  function wmapFrame(ms) {
+    if (!wmapEl) return;
+    const key = cities.map(c => c.lat + "," + c.lon).join("|");
+    if (wmapDirty || key !== wmapKey || ms - wmapLastDraw > 60000) { wmapLastDraw = ms; wmapDraw(); return; }   // day and night creep along each minute
+    if (wmapRipples.length || cities.some(c => c.pulse > 0.01)) wmapPaint(ms);
+  }
+  window.addEventListener("resize", () => { wmapDirty = true; });
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => { wmapDirty = true; });
+
   // ---------- frame loop ----------
   let lastGrain = 0, lastMinute = -1;
   function frame(ms) {
     if (ms - lastGrain > (reduceMotion ? 60000 : 140)) { drawGrain(ms); lastGrain = ms; }
+    wmapFrame(ms);
     if (ac && playing) {
       const now = ac.currentTime;
       while (visualQueue.length && visualQueue[0].t <= now) {
         const v = visualQueue.shift();
         v.c.playhead = v.pos;
         if (v.played) {
-          v.c.flashes.push({ t: v.t, pos: v.pos }); v.c.pulse = 1; if (REEL) REEL.hit(v.c);
+          v.c.flashes.push({ t: v.t, pos: v.pos }); v.c.pulse = 1; wmapPing(v.c); if (REEL) REEL.hit(v.c);
           const led = v.c.ref.led, card = v.c.el;   // the card's lamp and edge flash on every hit
           led.classList.add("on"); card.classList.add("hit");
           clearTimeout(led._t); led._t = setTimeout(() => { led.classList.remove("on"); card.classList.remove("hit"); }, 110);
