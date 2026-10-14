@@ -789,7 +789,7 @@ body.mood-immersive .fab { display: none !important; }
       </div>
     </div>
     <div class="pedal rack-mod mod-filter" aria-label="Filter">
-      <div class="mod-head"><span class="mod-name">Filter</span><button class="info" type="button" aria-label="How the filter works" data-tip="A DJ-style filter on the whole mix, cities and drums together. At 12 o'clock it does nothing. Turn left and a low-pass closes in, taking the top off until it's muffled. Turn right and a high-pass thins it out from the bottom up. Double-click to snap back to the middle. It moves like an auto filter. The knob sets the centre. Amount sets how far it swings, and Offset where the swing sits: left and it only goes below the knob, right and only above it. The faint band on the ring shows the range, and a dot rides it as it plays. LFO: the movement in time with the beat. LFO rate picks how often, Wave its shape. Auto: the lamp swaps the beat for a slow swell through the same range. Windier weather swells faster."></button><button class="pedal-led dj-auto" type="button" id="djAuto" aria-pressed="false" aria-label="Auto filter off" title="Auto: a slow, musical swell between low and high"></button></div>
+      <div class="mod-head"><span class="mod-name">Filter</span><button class="info" type="button" aria-label="How the filter works" data-tip="A DJ-style filter on the whole mix, cities and drums together. At 12 o'clock it does nothing. Turn left and a low-pass closes in, taking the top off until it's muffled. Turn right and a high-pass thins it out from the bottom up. Double-click to snap back to the middle. It moves like an auto filter. The knob sets the centre. Amount sets how far it swings, and Offset where the swing sits: left and it only goes below the knob, right and only above it. The faint band on the ring shows the range, and a dot rides it as it plays. It moves in time with the beat: LFO rate picks how often, Wave its shape. The lamp switches the movement on and off."></button><button class="pedal-led dj-auto" type="button" id="djAuto" aria-pressed="false" aria-label="Auto filter off" title="Movement on or off: the filter sweeps its band at the LFO rate"></button></div>
       <div class="knobs mod-knobs">
         <div class="kn"><input class="kn-native" id="djFilter" type="range" min="-100" max="100" step="1" value="0" data-label="Filter"><span class="kn-stack"><output id="djFilterOut" class="lcd">Off</output></span></div>
         <div class="kn"><select class="kn-native" id="djLfoRate" data-label="LFO rate"><option value="0.0625">1/64</option><option value="0.125">1/32</option><option value="0.1666667">1/24</option><option value="0.25">1/16</option><option value="0.5">1/8</option><option value="1" selected>1/4</option><option value="2">1/2</option><option value="4">1 bar</option><option value="8">2 bars</option><option value="16">4 bars</option></select><span class="kn-stack"><output id="djLfoRateOut" class="lcd">1/4</output></span></div>
@@ -1488,11 +1488,10 @@ body.mood-immersive .fab { display: none !important; }
     set("fxStyle", opt("fxStyle")); set("fxTime", opt("fxTime")); set("fxDelay", rnd(25, 65)); set("fxEchoes", rnd(1, echoesMax)); set("fxDelTone", rnd(25, 75)); set("fxWobble", rnd(0, 60));
     // filter: a gentle setting, sometimes swelling on Auto, with an LFO of any shape
     set("djFilter", Math.random() < 0.4 ? 0 : rnd(-40, 40));
-    const auto = document.getElementById("djAuto"), wantAuto = Math.random() < 0.4; if ((auto.getAttribute("aria-pressed") === "true") !== wantAuto) auto.click();
     set("djLfoRate", opt("djLfoRate")); set("djLfoWave", opt("djLfoWave")); set("djLfoAmt", Math.random() < 0.25 ? 0 : rnd(15, 60)); set("djLfoOffset", rnd(-60, 60));
     nudgeCards();
     const n = document.getElementById("shuffleNote"), nm = id => { const e = document.getElementById(id); return e.options[e.selectedIndex].text; };
-    n.textContent = `${nm("fxRevType")} · ${nm("fxStyle")} ${nm("fxTime")} · filter ${nm("djLfoWave").toLowerCase()}${wantAuto ? " on Auto" : ""}`;
+    n.textContent = `${nm("fxRevType")} · ${nm("fxStyle")} ${nm("fxTime")} · filter ${Number(document.getElementById("djLfoAmt").value) > 0 ? nm("djLfoWave").toLowerCase() + " " + nm("djLfoRate") : "still"}`;
     clearTimeout(n._t); n._t = setTimeout(() => { n.textContent = ""; }, 6000);
   });
 
@@ -3778,6 +3777,7 @@ body.mood-immersive .fab { display: none !important; }
     return ac.createPeriodicWave(re, im, { disableNormalization: true });
   }
   function djAutoTick() {
+    return;   // the slow weather swell is retired: the lamp now switches the LFO, which follows Rate and Wave
     if (!ac || !DJA.on) return;
     const now = ac.currentTime, dt = DJA.last ? Math.min(1, now - DJA.last) : 0; DJA.last = now;
     const ready = cities.filter(c => c.w), wind = ready.length ? Math.min(1, ready.reduce((a, c) => a + c.w.w, 0) / ready.length / 35) : 0.3;
@@ -3803,6 +3803,7 @@ body.mood-immersive .fab { display: none !important; }
     document.getElementById("djLfoAmtOut").value = amt ? Math.round(amt * 100) : "Off";
     document.getElementById("djLfoOffsetOut").value = Math.abs(off) < 0.05 ? "Mid" : off < 0 ? "Low " + Math.round(-off * 100) : "High " + Math.round(off * 100);
     DJL.off = off; showWindow();
+    DJA.on = amt > 0; { const lamp = document.getElementById("djAuto"); if (lamp) { lamp.setAttribute("aria-pressed", String(DJA.on)); lamp.setAttribute("aria-label", "Filter movement " + (DJA.on ? "on" : "off")); } }
     if (!DJL.depth) return;
     if (shape !== DJL.shape) { DJL.shape = shape; DJL.wave = lfoWave(); if (playing) djLfoSync(ac.currentTime + 0.02); }
     DJL.dc.offset.setTargetAtTime(DJL.mean || 0, ac.currentTime, 0.02);
@@ -3816,8 +3817,8 @@ body.mood-immersive .fab { display: none !important; }
     const amt = Number(document.getElementById("djLfoAmt").value) / 100;
     if (!ac || !playing || !amt) { if (kn._shown) { kn._mod(null); kn._shown = false; } return; }
     const fw = filterWindow();
-    let b = DJA.on ? DJA.off : 1;
-    if (!DJA.on && DJL.t0 != null) b = 1 - 2 * lfoPull(Math.max(0, ac.currentTime - DJL.t0) * DJL.hz);
+    let b = 1;
+    if (DJL.t0 != null) b = 1 - 2 * lfoPull(Math.max(0, ac.currentTime - DJL.t0) * DJL.hz);
     const v = fw.c + fw.d * b;
     kn._mod(Math.max(-1, Math.min(1, v)) * 100); kn._shown = true;
   })();
@@ -3832,8 +3833,7 @@ body.mood-immersive .fab { display: none !important; }
     const t = ac.currentTime, fw = filterWindow();
     DJL.base.offset.setTargetAtTime(fw.c, t, 0.03);
     DJL.mod.gain.setTargetAtTime(fw.d, t, 0.05);
-    DJL.depth.gain.setTargetAtTime(DJA.on ? 0 : 2, t, 0.05);           // Auto's slow swell takes over from the LFO
-    if (!DJA.on) DJL.auto.offset.setTargetAtTime(0, t, 0.05);
+    DJL.depth.gain.setTargetAtTime(2, t, 0.05);
     // a little resonance on whichever side the window leans, like a mixer
     djLP.Q.setTargetAtTime(fw.c < 0 ? 0.7 + 2.3 * Math.min(1, -fw.c) : 0.7, t, 0.03);
     djHP.Q.setTargetAtTime(fw.c > 0 ? 0.7 + 2.3 * Math.min(1, fw.c) : 0.7, t, 0.03);
@@ -4223,11 +4223,11 @@ body.mood-immersive .fab { display: none !important; }
     el.textContent = `${document.getElementById("tempoOut").value || tempo.value} bpm · ${KEYS[keyRoot]} ${SCALES.find(x => x[1] === scale)[0]} · volume ${document.getElementById("volume").value}`;
   }
   { const b = document.getElementById("djAuto");
+    // the lamp is the movement's on switch: lit whenever Amount is up. Off parks Amount at 0 (and remembers it), on brings it back.
     b.addEventListener("click", () => {
-      DJA.on = !DJA.on; DJA.last = 0; if (!DJA.on) DJA.off = 0;
-      const am = document.getElementById("djLfoAmt");
-      if (DJA.on && Number(am.value) === 0) { am.value = 40; am.dispatchEvent(new Event("input")); am.closest(".kn")?._redraw?.(); }   // Auto needs a range to move in
-      b.setAttribute("aria-pressed", String(DJA.on)); b.setAttribute("aria-label", "Auto filter " + (DJA.on ? "on" : "off")); applyDJ();
+      const am = document.getElementById("djLfoAmt"), on = Number(am.value) > 0;
+      if (on) { DJA.keep = Number(am.value); am.value = 0; } else am.value = DJA.keep || 40;
+      am.dispatchEvent(new Event("input")); am.closest(".kn")?._redraw?.();
     }); }
   document.getElementById("djLfoAmt").addEventListener("input", applyLfo);
   requestAnimationFrame(() => applyLfo());   // the window shows on the knob from the start, before anything plays
