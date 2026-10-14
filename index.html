@@ -338,14 +338,6 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
 .lived-row button { min-height: 34px; padding: 0 14px; border-radius: 17px; border: 1px solid rgba(243,236,230,0.3); background: none; color: var(--ink-dim); font: 12px var(--mono); letter-spacing: 0.06em; cursor: pointer; }
 .lived-row button[aria-pressed="true"] { border-color: #e07a4f; color: var(--ink); }
 .quiz-res { width: min(560px, 100%); display: grid; gap: 10px; margin-top: 4px; }
-.quiz-head { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 4px 12px; font: 11px var(--mono); letter-spacing: 0.14em; color: var(--ink-dim); text-transform: uppercase; }
-.quiz-bar { display: grid; grid-template-columns: minmax(0, 150px) 1fr 44px; gap: 12px; align-items: center; font-size: 15px; }
-.quiz-bar .nm { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.quiz-bar .me { font: 11px var(--mono); color: #e07a4f; letter-spacing: 0.08em; }
-.quiz-bar .tr { height: 10px; border-radius: 5px; background: rgba(243,236,230,0.1); overflow: hidden; }
-.quiz-bar .tr i { display: block; height: 100%; border-radius: 5px; transition: width 0.8s ease; }
-.quiz-bar .pc { text-align: right; font-family: var(--mono); font-size: 13px; }
-.quiz-wait { margin: 0; text-align: center; font-size: 13px; color: var(--ink-dim); }
 .quiz-opt { display: flex; gap: 8px; align-items: flex-start; justify-content: center; font-size: 12px; color: var(--ink-dim); line-height: 1.5; text-align: left; }
 .quiz-opt input { margin-top: 3px; accent-color: #e07a4f; }
 .quiz-opt a { color: var(--ink-dim); }
@@ -892,10 +884,7 @@ body.mood-immersive .fab { display: none !important; }
       <button id="moodDeep" type="button" aria-pressed="false" title="Adds questions about loss, endings and mortality">Deeper questions</button>
     </div>
     <div class="quiz-res" id="quizRes" hidden>
-      <div class="quiz-head"><span>What everyone said</span><span id="quizCount"></span></div>
-      <div id="quizBars"></div>
-      <p class="quiz-wait" id="quizWait">Pick a city to see what everyone said.</p>
-      <label class="quiz-opt"><input type="checkbox" id="quizShare" checked> <span>Add my answers to the results. Anonymous: just a count for each city, nothing about you. <a href="/manual#quiz">How it works</a></span></label>
+      <label class="quiz-opt"><input type="checkbox" id="quizShare" checked> <span>Add my answers to an anonymous count for each city. Nobody sees what you picked, and nothing about you is kept. <a href="/manual#quiz">How it works</a></span></label>
     </div>
   </section>
 
@@ -4462,43 +4451,17 @@ body.mood-immersive .fab { display: none !important; }
     return true;
   }
   const qText = id => QUIZ_TEXT[id] || id;
-  function quizReset() {
-    quizPick = -1; quizSeq++;
-    document.getElementById("quizBars").innerHTML = ""; document.getElementById("quizCount").textContent = "";
-    document.getElementById("quizWait").hidden = false;
-  }
-  function quizShow(counts, pick) {
-    const rates = counts.map(x => x.shown ? x.picked / x.shown : 0), sum = rates.reduce((a, b) => a + b, 0), n = counts.reduce((a, x) => a + x.picked, 0);
-    const pct = rates.map(r => sum ? Math.round(100 * r / sum) : 33);
-    const box = document.getElementById("quizBars"); box.innerHTML = "";
-    cities.forEach((c, i) => {
-      const row = document.createElement("div"); row.className = "quiz-bar";
-      const nm = document.createElement("span"); nm.className = "nm"; nm.textContent = c.name;
-      if (i === pick) { const me = document.createElement("span"); me.className = "me"; me.textContent = " · you"; nm.appendChild(me); }
-      const tr = document.createElement("span"); tr.className = "tr"; const bar = document.createElement("i"); bar.style.background = colorOf(c); bar.style.width = "0%"; tr.appendChild(bar);
-      const pc = document.createElement("span"); pc.className = "pc"; pc.textContent = pct[i] + "%";
-      row.append(nm, tr, pc); box.appendChild(row);
-      requestAnimationFrame(() => requestAnimationFrame(() => { bar.style.width = pct[i] + "%"; }));
-    });
-    document.getElementById("quizCount").textContent = n < 5 ? "You're one of the first" : `${n.toLocaleString("en-GB")} answers`;
-    document.getElementById("quizWait").hidden = true;
-  }
+  function quizReset() { quizPick = -1; }
+  // Answers are counted quietly. Nobody is shown how others answered, so the map stays your own.
   async function quizAnswer() {
     if (!quizMode || !QUIZ_API || !dot || qIndex < 0) return;
     const w = dot.w, best = w.indexOf(Math.max(...w));
     if (w[best] < 0.55 || best === quizPick) return;   // only a clear choice counts
     quizPick = best;
-    const qid = order[qIndex], keys = cities.map(quizKey), sig = qid + "@" + keys.join("~"), seq = quizSeq;
-    try {
-      let res;
-      if (quizShare.checked && !quizSent.has(sig)) {   // one count per question per visit, the first clear choice
-        quizSent.add(sig);
-        res = await fetch(QUIZ_API + "/answer", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ q: qid, c: keys, p: best }) }).then(r => r.json());
-      } else {
-        res = await fetch(`${QUIZ_API}/results?q=${encodeURIComponent(qid)}&c=${keys.map(encodeURIComponent).join("~")}`).then(r => r.json());
-      }
-      if (seq === quizSeq && res && res.cities) quizShow(res.cities, quizPick);
-    } catch (e) { if (seq === quizSeq) document.getElementById("quizWait").textContent = "The results aren't reachable just now."; }
+    const qid = order[qIndex], keys = cities.map(quizKey), sig = qid + "@" + keys.join("~");
+    if (!quizShare.checked || quizSent.has(sig)) return;   // one count per question per visit, the first clear choice
+    quizSent.add(sig);
+    try { await fetch(QUIZ_API + "/answer", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ q: qid, c: keys, p: best }) }); } catch (e) {}
   }
   const FOLLOW = [1.2, 5, 14];   // seconds each city takes to respond: quick, steady, slow
   const pad = document.getElementById("moodPad"), pg = pad.getContext("2d");
