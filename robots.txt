@@ -1,0 +1,8 @@
+User-agent: *
+Allow: /
+Disallow: /admin
+Disallow: /reel
+Disallow: /design
+Disallow: /teaser
+
+Sitemap: https://threecities.forrestjamesmusic.com/sitemap.xml
