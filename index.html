@@ -369,6 +369,7 @@ select { background: var(--panel); border: 1px solid var(--line); padding: 6px 8
 .mood.immersive .mood-exit:hover { border-color: var(--ink-dim); }
 body.mood-immersive { overflow: hidden; }
 body.mood-immersive .fab { display: none !important; }
+@media (pointer: coarse), (max-width: 760px) { #moodFull { display: none !important; } }   /* full screen is for computers */
 @media (max-width: 760px) { .mood-pad { aspect-ratio: 1.05; } .mood { padding-top: 40px; } }
 .mood-row { display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 10px 14px; font-size: 12px; color: var(--ink-dim); letter-spacing: 0.04em; }
 .mood-row button { background: none; border: 1px solid var(--line); padding: 8px 14px; min-height: 40px; cursor: pointer; text-transform: uppercase; letter-spacing: 0.14em; font-size: 11px; color: var(--ink); }
