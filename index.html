@@ -988,6 +988,7 @@ body.mood-immersive .fab { display: none !important; }
   // The menu, sorted into families
   const SOUND_NAME = Object.fromEntries(SOUNDS);
   const SOUND_GROUPS = [
+    ["Your own", ["sample"]],   // first, so loading your own sound is easy to find
     ["Keys", ["felt", "piano", "epiano", "junokeys", "organ"]],
     ["Mallets and bells", ["mallet", "marimba", "kalimba", "bell"]],
     ["Plucked", ["pluck", "string", "harp"]],
@@ -995,8 +996,7 @@ body.mood-immersive .fab { display: none !important; }
     ["Pads and strings", ["bowed", "pad", "choir", "junopad", "junostrings"]],
     ["Grain textures", ["graincloud", "grainshimmer", "graindust"]],
     ["Bass", ["sub", "acid"]],
-    ["Percussion", ["kick", "snare", "hat", "rimshot", "conga", "cowbell", "handdrum", "woodblock", "tongue", "clave", "drum", "shaker"]],
-    ["Your own", ["sample"]]
+    ["Percussion", ["kick", "snare", "hat", "rimshot", "conga", "cowbell", "handdrum", "woodblock", "tongue", "clave", "drum", "shaker"]]
   ].map(([g, vs]) => [g, vs.filter(v => SOUND_NAME[v])]);
   const KEYS = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"];
   const SCALES = [
