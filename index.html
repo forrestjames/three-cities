@@ -722,6 +722,10 @@ body.mood-immersive .fab { display: none !important; }
 
 /* reel mode */
 .reel { position: fixed; inset: 0; z-index: 200; background: #050302; display: grid; place-items: center; padding: 8px; }
+.reel-frame { position: relative; line-height: 0; }
+.reel-ig { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
+.reel-ig[hidden] { display: none; }
+.reel.min .reel-frame { display: none; }
 .reel canvas { height: calc(100vh - 16px); height: calc(100dvh - 16px); width: auto; aspect-ratio: 9 / 16; max-width: 100%; background: #100806; box-shadow: 0 10px 40px rgba(0,0,0,0.6); }
 /* the controls float over the bottom of the picture: they're page buttons, not part of the canvas, so the recording never sees them */
 .reel-bar { position: absolute; left: 50%; bottom: calc(14px + env(safe-area-inset-bottom)); transform: translateX(-50%); width: min(560px, calc(100% - 24px));
@@ -5421,10 +5425,13 @@ body.mood-immersive .fab { display: none !important; }
     // from the Reel Studio's themes: a title for the opening card, a stat line per city, and words to find fitting photos
     const rTitle = (qs.get("rt") || "").trim(), rStats = (qs.get("rs") || "").split("|").map(s => s.trim()), rFlav = (qs.get("rp") || "").split("|").map(s => s.trim());
     const W = 1080, H = 1920, DUR = 26;
+    // Instagram covers the top ~290px, a strip down the right from y 1040, and the bottom ~360px, and taller phones crop the sides.
+    // Every word and number stays in x 80-1000 (80-880 below y 1040) and y 330-1550. Photos may run underneath.
+    const SAFE = { l: 80, r: 1000, rLow: 880, top: 330, bot: 1550, low: 1040 };
     const REEL_RELEASED = false;   // until the official release the end card says Coming soon instead of the address
     const wrap = document.createElement("div"); wrap.className = "reel";
-    wrap.innerHTML = `<canvas width="${W}" height="${H}" aria-label="Reel preview"></canvas>
-      <div class="reel-bar"><button type="button" data-a="preview">▶ Preview</button><button type="button" data-a="record">● Record reel</button><button type="button" data-a="hide">Hide</button><button type="button" data-a="close" aria-label="Close reel mode">✕ Close</button><span class="reel-status" aria-live="polite">Getting the weather and photos…</span></div>`;
+    wrap.innerHTML = `<div class="reel-frame"><canvas width="${W}" height="${H}" aria-label="Reel preview"></canvas><svg class="reel-ig" viewBox="0 0 1080 1920" aria-hidden="true" hidden><g fill="rgba(255,255,255,.92)" font-family="-apple-system,system-ui,sans-serif"><rect width="1080" height="290" fill="rgba(255,60,60,.16)"/><text x="110" y="250" font-size="64" font-weight="700">Reels</text><text x="400" y="250" font-size="64" font-weight="700" opacity=".6">Friends</text><rect x="900" y="1040" width="180" height="520" fill="rgba(255,60,60,.16)"/><g transform="translate(990 0)"><circle cy="1130" r="34" fill="none" stroke="#fff" stroke-width="7"/><circle cy="1290" r="34" fill="none" stroke="#fff" stroke-width="7"/><circle cy="1450" r="34" fill="none" stroke="#fff" stroke-width="7"/><circle cy="1610" r="34" fill="none" stroke="#fff" stroke-width="7"/></g><rect y="1560" width="1080" height="360" fill="rgba(255,60,60,.16)"/><circle cx="125" cy="1700" r="62" fill="#888"/><text x="215" y="1722" font-size="50" font-weight="600">forrest_james</text><text x="55" y="1850" font-size="46">Three Cities · today’s cities</text><rect width="45" height="1920" fill="rgba(255,60,60,.22)"/><rect x="1035" width="45" height="1920" fill="rgba(255,60,60,.22)"/></g></svg></div>
+      <div class="reel-bar"><button type="button" data-a="preview">▶ Preview</button><button type="button" data-a="record">● Record reel</button><button type="button" data-a="guide" aria-pressed="false" title="Show where Instagram's buttons sit. Never recorded.">Instagram guide</button><button type="button" data-a="hide">Hide</button><button type="button" data-a="close" aria-label="Close reel mode">✕ Close</button><span class="reel-status" aria-live="polite">Getting the weather and photos…</span></div>`;
     document.body.appendChild(wrap);
     const cv = wrap.querySelector("canvas"), status = wrap.querySelector(".reel-status");
     let g = cv.getContext("2d");
@@ -5599,7 +5606,7 @@ body.mood-immersive .fab { display: none !important; }
         const w = widths[i] * W, ph = photos.get(c) || [];
         cover(ph[(Math.floor(s / 1.6) + i) % Math.max(1, ph.length)], x, 0, w + 1, H, (s / 7 + i * 0.3) % 1, col(c), focus == null || focus === i ? 0.95 : 0.55);
         if (focus != null && focus !== i && w > 60) {   // the narrow columns carry their city's name, sideways
-          g.save(); g.translate(x + w / 2 + 14, H / 2); g.rotate(-Math.PI / 2); label(c.name.toUpperCase(), 0, 0, 44, { align: "center", spacing: 10, alpha: 0.85 }); g.restore();
+          g.save(); g.translate(x + w / 2 + 14, 700); g.rotate(-Math.PI / 2); label(c.name.toUpperCase(), 0, 0, 44, { align: "center", spacing: 10, alpha: 0.85 }); g.restore();
         }
         g.fillStyle = "#100806"; g.fillRect(x + w - 3, 0, 6, H);
         x += w;
@@ -5669,7 +5676,7 @@ body.mood-immersive .fab { display: none !important; }
         const opts = [awayLeft ? Lf : R, awayLeft ? R : Lf, [-tw / 2, 26, "center"], [-tw / 2, -26 - th, "center"], [22, 18, "left"], [-22 - tw, 18, "right"], [22, -th - 14, "left"], [-22 - tw, -th - 14, "right"]];
         let best = opts[0];
         for (const op of opts) { const bx = { x: p.x + op[0], y: p.y + op[1], w: tw, h: th };
-          if (bx.x >= 24 && bx.x + tw <= W - 24 && !boxes.some(q => bx.x < q.x + q.w && q.x < bx.x + bx.w && bx.y < q.y + q.h && q.y < bx.y + bx.h) && !P.some(q => q !== p && q.x > bx.x - 10 && q.x < bx.x + tw + 10 && q.y > bx.y - 10 && q.y < bx.y + th + 10)) { best = op; break; } }
+          if (bx.x >= SAFE.l && bx.x + tw <= (bx.y + th > SAFE.low ? SAFE.rLow : SAFE.r) && !boxes.some(q => bx.x < q.x + q.w && q.x < bx.x + bx.w && bx.y < q.y + q.h && q.y < bx.y + bx.h) && !P.some(q => q !== p && q.x > bx.x - 10 && q.x < bx.x + tw + 10 && q.y > bx.y - 10 && q.y < bx.y + th + 10)) { best = op; break; } }
         const bx = { x: p.x + best[0], y: p.y + best[1], w: tw, h: th }; boxes.push(bx);
         const tx = best[2] === "left" ? bx.x : best[2] === "right" ? bx.x + tw : bx.x + tw / 2, la = A * ease(clamp01((k - 0.3) / 0.7));
         label(p.c.name.toUpperCase(), tx, bx.y + 26, 30, { align: best[2], mono: true, weight: 500, spacing: 4, color: col(p.c), alpha: la, shadow: 14 });
@@ -5696,7 +5703,7 @@ body.mood-immersive .fab { display: none !important; }
       });
       label(new Date().toLocaleDateString("en-GB", { weekday: "long", day: "numeric", month: "long" }), W / 2, 612, 26, { align: "center", alpha: a * st * 0.65, mono: true });
       // where they are: the map fades in, each city lands on it in turn, then the flight paths draw between them
-      reelMap(40, 1120, W - 80, 420, { alpha: a * ease((s - 0.5) / 0.5), city: i => (s - 0.9 - i * 0.4) / 0.45, arcs: (s - 2.0) / 0.6, labels: true });
+      reelMap(SAFE.l, 1100, SAFE.rLow - SAFE.l, 400, { alpha: a * ease((s - 0.5) / 0.5), city: i => (s - 0.9 - i * 0.4) / 0.45, arcs: (s - 2.0) / 0.6, labels: true });
     }
     // the timeline
     let t0 = 0, run = false, rec = null, chunks = [], lastCut = 0, cutSeed = 0, idleAt = rQ ? 2.3 : 1.6;   // idle shows the whole question
@@ -5714,41 +5721,42 @@ body.mood-immersive .fab { display: none !important; }
           label("THREE CITIES", W / 2, 900, 132, { align: "center", alpha: a, spacing: 14 });
           label((rTitle || (tags.length ? tags.join(" · ") : "three places, live weather")).toUpperCase(), W / 2, 1010, rTitle.length > 30 ? 28 : 34, { align: "center", alpha: a * 0.85, mono: true, spacing: rTitle.length > 30 ? 4 : 6 });
           label(new Date().toLocaleDateString("en-GB", { weekday: "long", day: "numeric", month: "long" }), W / 2, 1090, 30, { align: "center", alpha: a * 0.7, mono: true });
-          reelMap(40, 1160, W - 80, 420, { alpha: a * ease((s - 0.4) / 0.5), city: i => (s - 0.8 - i * 0.4) / 0.45, arcs: (s - 1.9) / 0.6, labels: true });
+          reelMap(SAFE.l, 1130, SAFE.rLow - SAFE.l, 400, { alpha: a * ease((s - 0.4) / 0.5), city: i => (s - 0.8 - i * 0.4) / 0.45, arcs: (s - 1.9) / 0.6, labels: true });
         }
       } else if (s < 18 && rLook === "postcard") {   // postcards dropping onto a pile
         const k = Math.min(2, Math.floor((s - 3) / 5)), ls = (s - 3) - k * 5;
         const desk = g.createRadialGradient(W / 2, H * 0.45, 100, W / 2, H * 0.45, H * 0.8); desk.addColorStop(0, "#2a1d18"); desk.addColorStop(1, "#0c0605"); g.fillStyle = desk; g.fillRect(0, 0, W, H);
         const rest = [[-0.07, -18], [0.05, 22], [-0.03, 0]];
-        for (let j = 0; j < k; j++) postcard(cs[j], j, W / 2 + rest[j][1], 880, 1, rest[j][0], s);
+        for (let j = 0; j < k; j++) postcard(cs[j], j, 480 + rest[j][1], 860, 0.86, rest[j][0], s);
         const d = ease(ls / 0.7), c = cs[k];
-        postcard(c, k, W / 2 + rest[k][1], -700 + (880 + 700) * d, 1, rest[k][0] + 0.25 * (1 - d), s);
-        ring(c, 170, 1720, 90 + 12 * (c._reelPulse || 0), ease((ls - 0.6) / 0.6) * 0.95);
-        label(c.w ? `${Math.abs(Math.round(c.w.t))}° makes ${/^(8|11|18)$/.test(String(c.pattern.length)) || String(c.pattern.length).startsWith("8") ? "an" : "a"} ${c.pattern.length}-step loop` : "", 300, 1735, 28, { alpha: ease((ls - 1) / 0.6), mono: true, color: col(c) });
+        postcard(c, k, 480 + rest[k][1], -700 + (860 + 700) * d, 0.86, rest[k][0] + 0.25 * (1 - d), s);
+        ring(c, 160, 1470, 62 + 10 * (c._reelPulse || 0), ease((ls - 0.6) / 0.6) * 0.95);
+        label(c.w ? `${Math.abs(Math.round(c.w.t))}° makes ${/^(8|11|18)$/.test(String(c.pattern.length)) || String(c.pattern.length).startsWith("8") ? "an" : "a"} ${c.pattern.length}-step loop` : "", 250, 1482, 28, { alpha: ease((ls - 1) / 0.6), mono: true, color: col(c), max: SAFE.rLow - 250 });
       } else if (s < 18 && rLook === "weather") {   // the weather acting on the picture
         const k = Math.min(2, Math.floor((s - 3) / 5)), ls = (s - 3) - k * 5, c = cs[k];
         const imgs = ph(c), img = imgs[Math.floor(ls / 2.5) % Math.max(1, imgs.length)];
         weatherPhoto(c, k, img, 0, 0, W, H, s);
         if (ls < 0.5) { g.fillStyle = `rgba(16,8,6,${1 - ls / 0.5})`; g.fillRect(0, 0, W, H); }
         const ta = ease((ls - 0.4) / 0.6);
-        label((tags[k] || "").toUpperCase(), W / 2, 1060, 38, { align: "center", alpha: ta, mono: true, spacing: 10, color: col(c) });
-        label(c.name.toUpperCase(), W / 2, 1200, 150, { align: "center", alpha: ta, spacing: 10, max: 960 });
-        label(bigOf(c, k), W / 2, 1450, 230, { align: "center", alpha: ease((ls - 0.8) / 0.6), max: 960 });
-        label(statOnly(k), W / 2, 1560, 30, { align: "center", alpha: ease((ls - 1.1) / 0.6), mono: true });
-        label(`${localTime(c)} local · ${c.place || ""}`, W / 2, 1615, 26, { align: "center", alpha: ease((ls - 1.3) / 0.6) * 0.8, mono: true });
-        ring(c, W / 2, 520, 150 + 16 * (c._reelPulse || 0), ease((ls - 0.6) / 0.6) * 0.9);
+        label((tags[k] || "").toUpperCase(), SAFE.l, 900, 38, { alpha: ta, mono: true, spacing: 10, color: col(c), max: SAFE.r - SAFE.l });
+        label(c.name.toUpperCase(), SAFE.l, 1025, 140, { alpha: ta, spacing: 10, max: SAFE.r - SAFE.l });
+        label(bigOf(c, k), SAFE.l, 1260, 210, { alpha: ease((ls - 0.8) / 0.6), max: SAFE.rLow - SAFE.l });
+        label(statOnly(k), SAFE.l + 4, 1360, 30, { alpha: ease((ls - 1.1) / 0.6), mono: true, max: SAFE.rLow - SAFE.l });
+        label(`${localTime(c)} local · ${c.place || ""}`, SAFE.l + 4, 1420, 26, { alpha: ease((ls - 1.3) / 0.6) * 0.8, mono: true, max: SAFE.rLow - SAFE.l });
+        ring(c, W / 2, 570, 150 + 16 * (c._reelPulse || 0), ease((ls - 0.6) / 0.6) * 0.9);
       } else if (s < 18 && rLook === "split") {   // three columns, the one speaking opens wide
         const k = Math.min(2, Math.floor((s - 3) / 5)), ls = (s - 3) - k * 5, c = cs[k];
         const target = [0.14, 0.14, 0.14]; target[k] = 0.72;
         const e = ease(ls / 0.8), widths = target.map((t, i) => splitFrom[i] + (t - splitFrom[i]) * e);
         if (ls > 4.9) splitFrom = target;
         split(widths, s, k, ls);
-        const x0 = widths.slice(0, k).reduce((a, b) => a + b, 0) * W, cw = widths[k] * W, mid = x0 + cw / 2, ta = ease((ls - 0.5) / 0.6);
-        label((tags[k] || "").toUpperCase(), mid, 1080, 34, { align: "center", alpha: ta, mono: true, spacing: 8, color: col(c) });
-        label(c.name.toUpperCase(), mid, 1210, 118, { align: "center", alpha: ta, spacing: 8, max: cw - 60 });
-        label(bigOf(c, k), mid, 1460, 210, { align: "center", alpha: ease((ls - 0.8) / 0.6), max: cw - 60 });
-        label(statOnly(k), mid, 1560, 26, { align: "center", alpha: ease((ls - 1.1) / 0.6), mono: true });
-        ring(c, mid, 560, 140 + 14 * (c._reelPulse || 0), ease((ls - 0.6) / 0.6) * 0.9);
+        const x0 = widths.slice(0, k).reduce((a, b) => a + b, 0) * W, cw = widths[k] * W, mid0 = x0 + cw / 2, ta = ease((ls - 0.5) / 0.6);
+        const fit = (y, lim) => { const r = y > SAFE.low ? SAFE.rLow : SAFE.r, m = Math.max(SAFE.l + 120, Math.min(r - 120, mid0)); return [m, Math.min(cw - 60, lim || 2 * Math.min(m - SAFE.l, r - m))]; };
+        let [m, mw] = fit(820); label((tags[k] || "").toUpperCase(), m, 820, 34, { align: "center", alpha: ta, mono: true, spacing: 8, color: col(c), max: mw });
+        [m, mw] = fit(950); label(c.name.toUpperCase(), m, 950, 118, { align: "center", alpha: ta, spacing: 8, max: mw });
+        [m, mw] = fit(1200); label(bigOf(c, k), m, 1200, 210, { align: "center", alpha: ease((ls - 0.8) / 0.6), max: mw });
+        [m, mw] = fit(1300); label(statOnly(k), m, 1300, 26, { align: "center", alpha: ease((ls - 1.1) / 0.6), mono: true, max: mw });
+        ring(c, Math.max(SAFE.l + 150, Math.min(SAFE.r - 150, mid0)), 560, 140 + 14 * (c._reelPulse || 0), ease((ls - 0.6) / 0.6) * 0.9);
       } else if (s < 18) {   // classic: one city at a time, the earlier ones left behind as fragments
         const k = Math.min(2, Math.floor((s - 3) / 5)), ls = (s - 3) - k * 5, c = cs[k];
         for (let j = 0; j < k; j++) {   // collage memory of the cities already shown
@@ -5763,44 +5771,45 @@ body.mood-immersive .fab { display: none !important; }
         if (c._reelPulse > 0.6 && now - lastCut > 240) { lastCut = now; cutSeed = Math.random(); }
         if (now - lastCut < 200) { const y = 300 + cutSeed * 1200; cover(ph(c)[(Math.floor(cutSeed * 9)) % Math.max(1, ph(c).length)], 0, y, W, 90 + cutSeed * 140, cutSeed, col(c), 0.9); }
         const ta = ease((ls - 0.4) / 0.6);
-        label(((tags[k] || "") + (rTitle ? "" : " right now")).toUpperCase(), 80, 1180, 40, { alpha: ta, mono: true, spacing: 8, color: col(c) });
-        label(c.name.toUpperCase(), 80, 1330, c.name.length > 11 ? 104 : 140, { alpha: ta, spacing: 10 });
-        label(c.place || "", 84, 1395, 34, { alpha: ta * 0.85, mono: true });
-        label(tempTxt(c), W - 80, 1600, 210, { alpha: ease((ls - 0.8) / 0.6), align: "right" });
-        label(rStats[k] ? rStats[k] : `${localTime(c)} local · ${statLine(c, tags[k])}`, 84, 1690, rStats[k] && rStats[k].length > 44 ? 26 : 30, { alpha: ease((ls - 1.1) / 0.6), mono: true });
-        label(c.w ? `${Math.abs(Math.round(c.w.t))}° makes ${/^(8|11|18)$/.test(String(c.pattern.length)) || String(c.pattern.length).startsWith("8") ? "an" : "a"} ${c.pattern.length}-step loop` : "", 84, 1745, 30, { alpha: ease((ls - 1.4) / 0.6), mono: true, color: col(c) });
-        ring(c, 290, 760, 190 + 20 * (c._reelPulse || 0), ease((ls - 0.6) / 0.6) * 0.95);
+        label(((tags[k] || "") + (rTitle ? "" : " right now")).toUpperCase(), SAFE.l, 1000, 40, { alpha: ta, mono: true, spacing: 8, color: col(c), max: SAFE.r - SAFE.l });
+        label(c.name.toUpperCase(), SAFE.l, 1140, c.name.length > 11 ? 104 : 140, { alpha: ta, spacing: 10, max: SAFE.rLow - SAFE.l });
+        label(c.place || "", SAFE.l + 4, 1205, 34, { alpha: ta * 0.85, mono: true, max: SAFE.rLow - SAFE.l });
+        label(tempTxt(c), SAFE.l, 1400, 190, { alpha: ease((ls - 0.8) / 0.6), max: SAFE.rLow - SAFE.l });
+        label(rStats[k] ? rStats[k] : `${localTime(c)} local · ${statLine(c, tags[k])}`, SAFE.l + 4, 1470, rStats[k] && rStats[k].length > 44 ? 26 : 30, { alpha: ease((ls - 1.1) / 0.6), mono: true, max: SAFE.rLow - SAFE.l });
+        label(c.w ? `${Math.abs(Math.round(c.w.t))}° makes ${/^(8|11|18)$/.test(String(c.pattern.length)) || String(c.pattern.length).startsWith("8") ? "an" : "a"} ${c.pattern.length}-step loop` : "", SAFE.l + 4, 1525, 30, { alpha: ease((ls - 1.4) / 0.6), mono: true, color: col(c), max: SAFE.rLow - SAFE.l });
+        ring(c, 290, 640, 170 + 20 * (c._reelPulse || 0), ease((ls - 0.6) / 0.6) * 0.95);
       } else if (s < 23 && rLook === "postcard") {   // the three postcards fanned out, nodding to their beats
         const ls = s - 18, e = ease(ls / 0.8);
         const desk = g.createRadialGradient(W / 2, H * 0.45, 100, W / 2, H * 0.45, H * 0.8); desk.addColorStop(0, "#2a1d18"); desk.addColorStop(1, "#0c0605"); g.fillStyle = desk; g.fillRect(0, 0, W, H);
-        [[-0.16, 330, 900], [0.0, 540, 840], [0.16, 750, 900]].forEach(([r, x, y], i) => {
+        [[-0.16, 300, 880], [0.0, 500, 820], [0.16, 700, 880]].forEach(([r, x, y], i) => {
           const c = cs[i], p = c._reelPulse || 0;
-          postcard(c, i, W / 2 + (x - W / 2) * e, 880 + (y - 880) * e, 0.48 + 0.02 * p, r * e, s);
+          postcard(c, i, 480 + (x - 480) * e, 860 + (y - 860) * e, 0.46 + 0.02 * p, r * e, s);
         });
         label("PLAYING TOGETHER, LIVE", W / 2, 400, 44, { align: "center", mono: true, spacing: 8, alpha: e });
-        cs.forEach((c, i) => ring(c, 230 + i * 310, 1480, 70 + 10 * (c._reelPulse || 0), e));
+        cs.forEach((c, i) => ring(c, 200 + i * 280, 1430, 64 + 10 * (c._reelPulse || 0), e));
       } else if (s < 23 && rLook === "weather") {   // three bands of weather, stacked
         const ls = s - 18, bh = H / 3;
         cs.forEach((c, i) => {
           const imgs = ph(c);
           weatherPhoto(c, i, imgs[(Math.floor(ls / 1.5) + i) % Math.max(1, imgs.length)], 0, i * bh, W, bh + 1, s);
           g.fillStyle = "#100806"; g.fillRect(0, (i + 1) * bh - 3, W, 6);
-          label(c.name.toUpperCase(), 70, i * bh + bh / 2 + 10, 84, { spacing: 6, alpha: ease(ls / 0.8), max: 520 });
-          label((tags[i] || "").toUpperCase(), 74, i * bh + bh / 2 + 62, 24, { mono: true, spacing: 6, color: col(c), alpha: ease((ls - 0.3) / 0.8) });
-          label(bigOf(c, i), W - 70, i * bh + bh / 2 + 34, 110, { align: "right", alpha: ease((ls - 0.5) / 0.8), max: 380 });
+          const ty = [470, 950, 1400][i], rr = ty + 40 > SAFE.low ? SAFE.rLow : SAFE.r;
+          label(c.name.toUpperCase(), SAFE.l, ty, 84, { spacing: 6, alpha: ease(ls / 0.8), max: rr - SAFE.l - 320 });
+          label((tags[i] || "").toUpperCase(), SAFE.l + 4, ty + 52, 24, { mono: true, spacing: 6, color: col(c), alpha: ease((ls - 0.3) / 0.8), max: rr - SAFE.l - 320 });
+          label(bigOf(c, i), rr, ty + 24, 110, { align: "right", alpha: ease((ls - 0.5) / 0.8), max: 300 });
         });
       } else if (s < 23 && rLook === "split") {   // three equal columns; one giant number if they all share it
         const ls = s - 18, e = ease(ls / 0.8), widths = splitFrom.map(f => f + (1 / 3 - f) * e);
         split(widths, s, null, ls);
         const same = rBig.length === 3 && rBig.every(b => b && b === rBig[0]);
-        if (same) label(rBig[0], W / 2, 1000, 340, { align: "center", alpha: e });
+        if (same) label(rBig[0], W / 2, 700, 300, { align: "center", alpha: e, max: SAFE.r - SAFE.l });
         let x = 0;
         cs.forEach((c, i) => {
-          const w = widths[i] * W, mid = x + w / 2;
-          ring(c, mid, same ? 1300 : 760, 110 + 12 * (c._reelPulse || 0), e);
-          label(c.name.toUpperCase(), mid, same ? 1520 : 1080, 52, { align: "center", spacing: 4, alpha: e, max: w - 30 });
-          if (!same) label(bigOf(c, i), mid, 1200, 72, { align: "center", alpha: ease((ls - 0.3) / 0.8), max: w - 30 });
-          label((tags[i] || "").toUpperCase(), mid, same ? 1570 : 1270, 22, { align: "center", mono: true, color: col(c), alpha: ease((ls - 0.5) / 0.8) });
+          const w = widths[i] * W, mid = Math.max(SAFE.l + 110, Math.min(SAFE.r - 110, x + w / 2));
+          label(c.name.toUpperCase(), mid, same ? 820 : 860, 52, { align: "center", spacing: 4, alpha: e, max: Math.min(w - 30, 220) });
+          if (!same) label(bigOf(c, i), mid, 960, 72, { align: "center", alpha: ease((ls - 0.3) / 0.8), max: Math.min(w - 30, 220) });
+          label((tags[i] || "").toUpperCase(), mid, same ? 868 : 1010, 22, { align: "center", mono: true, color: col(c), alpha: ease((ls - 0.5) / 0.8), max: Math.min(w - 30, 220) });
+          ring(c, mid, same ? 990 : 640, (same ? 90 : 110) + 12 * (c._reelPulse || 0), e);
           x += w;
         });
         if (!same) label("PLAYING TOGETHER, LIVE", W / 2, 400, 44, { align: "center", mono: true, spacing: 8, alpha: e });
@@ -5810,24 +5819,25 @@ body.mood-immersive .fab { display: none !important; }
           const x = i * W / 3, sp = (c.pattern.length || 8) / 16;
           cover(ph(c)[(Math.floor(ls * sp) + i) % Math.max(1, ph(c).length)], x, 0, W / 3 + 1, H, (ls * sp * 0.2) % 1, col(c), 0.9);
           if (c._reelPulse > 0.5) { g.fillStyle = col(c); g.globalAlpha = 0.18 * c._reelPulse; g.fillRect(x, 0, W / 3, H); g.globalAlpha = 1; }
-          ring(c, x + W / 6, 820, 120 + 14 * (c._reelPulse || 0), ease(ls / 0.8));
-          label(c.name.toUpperCase(), x + W / 6, 1120, c.name.length > 9 ? 44 : 56, { align: "center", spacing: 4, alpha: ease(ls / 0.8) });
-          label(tempTxt(c), x + W / 6, 1220, 76, { align: "center", alpha: ease((ls - 0.3) / 0.8) });
-          label((tags[i] || "").toUpperCase(), x + W / 6, 1290, 26, { align: "center", mono: true, color: col(c), alpha: ease((ls - 0.5) / 0.8) });
+          const mx = Math.max(SAFE.l + 110, Math.min(SAFE.r - 110, x + W / 6));
+          ring(c, mx, 640, 110 + 14 * (c._reelPulse || 0), ease(ls / 0.8));
+          label(c.name.toUpperCase(), mx, 850, c.name.length > 9 ? 44 : 56, { align: "center", spacing: 4, alpha: ease(ls / 0.8), max: 230 });
+          label(tempTxt(c), mx, 945, 76, { align: "center", alpha: ease((ls - 0.3) / 0.8), max: 230 });
+          label((tags[i] || "").toUpperCase(), mx, 1010, 26, { align: "center", mono: true, color: col(c), alpha: ease((ls - 0.5) / 0.8), max: 230 });
         });
         label("PLAYING TOGETHER, LIVE", W / 2, 420, 46, { align: "center", mono: true, spacing: 8, alpha: ease(ls / 1) });
       } else {   // end card
         const ls = s - 23, a = ease(ls / 0.6);
         cs.forEach((c, i) => cover(ph(c)[0], i * W / 3, 0, W / 3 + 1, H, 0.5, col(c), 0.35 * a));
-        reelMap(40, 480, W - 80, 420, { alpha: 0.6 * a, labels: false });   // the map, faint behind the mark, its cities pulsing with their notes
-        g.save(); g.globalAlpha = a; g.translate(W / 2 - 212, 640); g.scale(12, 12); g.fillStyle = "#f3ece6"; g.fill(SKYLINE); g.restore();
-        label("THREE CITIES", W / 2, 1060, 120, { align: "center", spacing: 12, alpha: a });
-        label("by Forrest James", W / 2, 1140, 40, { align: "center", mono: true, alpha: a * 0.85 });
+        reelMap(SAFE.l, 400, SAFE.r - SAFE.l, 400, { alpha: 0.6 * a, labels: false });   // the map, faint behind the mark, its cities pulsing with their notes
+        g.save(); g.globalAlpha = a; g.translate(W / 2 - 194, 560); g.scale(11, 11); g.fillStyle = "#f3ece6"; g.fill(SKYLINE); g.restore();
+        label("THREE CITIES", W / 2, 960, 112, { align: "center", spacing: 12, alpha: a, max: SAFE.r - SAFE.l });
+        label("by Forrest James", W / 2, 1035, 40, { align: "center", mono: true, alpha: a * 0.85 });
         if (REEL_RELEASED) {
-          label("Play your cities:", W / 2, 1380, 36, { align: "center", mono: true, alpha: ease((ls - 0.4) / 0.6) });
-          label("threecities.forrestjamesmusic.com", W / 2, 1440, 40, { align: "center", mono: true, alpha: ease((ls - 0.4) / 0.6) });
-        } else label("COMING SOON", W / 2, 1420, 56, { align: "center", mono: true, spacing: 14, alpha: ease((ls - 0.4) / 0.6) });
-        if (rEp) label(`NO. ${rEp.padStart(3, "0")}`, W / 2, 1520, 26, { align: "center", mono: true, spacing: 8, alpha: ease((ls - 0.6) / 0.6) * 0.7 });
+          label("Play your cities:", 480, 1300, 36, { align: "center", mono: true, alpha: ease((ls - 0.4) / 0.6) });
+          label("threecities.forrestjamesmusic.com", 480, 1360, 40, { align: "center", mono: true, alpha: ease((ls - 0.4) / 0.6), max: SAFE.rLow - SAFE.l });
+        } else label("COMING SOON", 480, 1320, 56, { align: "center", mono: true, spacing: 14, alpha: ease((ls - 0.4) / 0.6), max: SAFE.rLow - SAFE.l });
+        if (rEp) label(`NO. ${rEp.padStart(3, "0")}`, 480, 1440, 26, { align: "center", mono: true, spacing: 8, alpha: ease((ls - 0.6) / 0.6) * 0.7 });
       }
       if (s >= 3 && s < 3.05) splitFrom = [1 / 3, 1 / 3, 1 / 3];
       // grain and a soft vignette over everything
@@ -5882,6 +5892,7 @@ body.mood-immersive .fab { display: none !important; }
     wrap.querySelector(".reel-bar").addEventListener("click", e => {
       const a = e.target.closest("button")?.dataset.a; if (!a) return;
       if (a === "close") { closeReel(); return; }
+      if (a === "guide") { const on = wrap.querySelector(".reel-ig").toggleAttribute("hidden") === false; e.target.setAttribute("aria-pressed", String(on)); return; }
       if (a === "hide") { wrap.classList.toggle("min"); e.target.textContent = wrap.classList.contains("min") ? "Show reel" : "Hide"; return; }
       if (run) return;
       begin(a === "record").catch(err => { status.textContent = "Couldn't start: " + err.message; });
