@@ -5120,7 +5120,7 @@ body.mood-immersive .fab { display: none !important; }
           const x = X(lon + off); if (x < -2 || x > w + 2) continue;
           const f = fade(x, y); if (f <= 0) continue;
           const day = Math.max(0, Math.min(1, (sunAltAt(lat, lon, now) + 6) / 8));   // twilight blends over civil dusk
-          g.fillStyle = `rgba(243,236,230,${((0.24 + 0.4 * day) * f).toFixed(3)})`;
+          g.fillStyle = `rgba(243,236,230,${((0.17 + 0.29 * day) * f).toFixed(3)})`;
           g.beginPath(); g.arc(x, y, r, 0, 6.2832); g.fill();
         }
       }
@@ -5151,7 +5151,7 @@ body.mood-immersive .fab { display: none !important; }
       for (const o of opts) { const bx = { x: p.x + o[0], y: p.y + o[1], w: tw, h: th }; if (bx.x >= 2 && bx.x + tw <= w - 2 && bx.y >= 0 && bx.y + th <= h && !boxes.some(q => hitBox(q, bx))) { best = o; break; } }
       const bx = { x: p.x + best[0], y: p.y + best[1], w: tw, h: th }; boxes.push(bx);
       const tx = best[2] === "left" ? bx.x : best[2] === "right" ? bx.x + tw : bx.x + tw / 2;
-      g.textAlign = best[2]; g.shadowColor = "rgba(15,8,6,0.9)"; g.shadowBlur = 5;
+      g.textAlign = best[2]; g.shadowColor = "rgba(15,8,6,0.95)"; g.shadowBlur = 8;
       g.font = nameFont; ls("1.2px"); g.fillStyle = p.col; g.fillText(t, tx, bx.y + 6);
       if (pl) { g.font = placeFont; ls("0.5px"); g.fillStyle = "rgba(243,236,230,0.72)"; g.fillText(pl, tx, bx.y + 19); }
       g.shadowBlur = 0; g.textAlign = "left"; ls("0px");
