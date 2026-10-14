@@ -221,7 +221,7 @@ main { max-width: 1240px; margin: 0 auto; padding: 0 16px 80px; display: flex; f
 .tgroup { display: flex; flex-direction: column; gap: 10px; min-width: 0; }
 .tlabel { font-family: var(--display); font-size: 18px; letter-spacing: 0.16em; text-transform: uppercase; color: var(--ink); }
 .tgroup .field { justify-content: space-between; }
-.rack { display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1fr); margin-top: 8px; border-radius: 8px; position: relative; --led: #ffd98a;
+.rack { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.2fr) minmax(0, 1fr); margin-top: 8px; border-radius: 8px; position: relative; --led: #ffd98a;
         background: repeating-linear-gradient(90deg, rgba(255,255,255,0.018) 0 1px, transparent 1px 3px), linear-gradient(180deg, #1c1715, #110d0c);
         border: 1px solid rgba(255,255,255,0.08); box-shadow: inset 0 1px 0 rgba(255,255,255,0.06), 0 10px 26px rgba(0,0,0,0.45); }
 .rack::before, .rack::after { content: ""; position: absolute; top: 7px; width: 6px; height: 6px; border-radius: 50%;
@@ -714,8 +714,14 @@ body.mood-immersive .fab { display: none !important; }
 .reel.min .reel-bar { position: static; transform: none; width: auto; }
 @media (max-width: 480px) { .reel-bar { gap: 6px; padding: 8px; } .reel-bar button { padding: 0 9px; letter-spacing: 0.04em; font-size: 11px; } }
 
-.mod-chords .pedal-led, .mod-filter .dj-auto { margin-left: auto; }
-.rack .mod-chords .mod-knobs { column-gap: 18px; }
+.chord-sec .pedal-led, .mod-filter .dj-auto { margin-left: auto; }
+.rack .chord-knobs { column-gap: 18px; transition: opacity 0.2s; }
+/* Chords lives inside Harmony, under a line, with its own lamp; only its own knobs dim when it's off */
+.chord-sec { border-top: 1px solid rgba(255,255,255,0.08); padding-top: 10px; margin-top: 4px; display: grid; gap: 8px; }
+.sub-head { display: flex; align-items: center; gap: 8px; }
+.sub-name { font-family: var(--display); font-size: 13px; letter-spacing: 0.24em; text-transform: uppercase; color: var(--ink); }
+.rack .pedal.mod-harm .knobs { opacity: 1; }
+.chord-sec:has(#chordOn[aria-pressed="false"]) .chord-knobs { opacity: 0.45; }
 /* Filter: one big knob in the middle, and under a line the Auto section, its four knobs on a 2 x 2 grid */
 .rack .mod-filter .kn { flex-direction: column; gap: 4px; min-width: 0; }
 .rack .mod-filter .kn-stack { align-items: center; width: 100%; }
@@ -727,13 +733,14 @@ body.mood-immersive .fab { display: none !important; }
 .mod-filter .flt-auto { border-top: 1px solid rgba(255,255,255,0.08); padding-top: 10px; display: grid; gap: 10px; transition: opacity 0.2s; }
 .mod-filter .flt-auto-head { display: flex; align-items: center; gap: 10px; min-height: 24px; }
 .mod-filter .flt-auto-note { font-size: 11px; color: var(--ink-faint); line-height: 1.3; }
+.mod-filter .flt-auto { width: 100%; max-width: 380px; justify-self: center; align-self: center; margin: 0 auto; }
 .mod-filter .flt-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px 12px; transition: opacity 0.2s; }
 .rack .mod-filter .flt-grid .lcd { width: 100%; max-width: 104px; box-sizing: border-box; font-size: 12px; }
 .rack .mod-filter .flt-grid .knob { width: 40px; height: 40px; flex: 0 0 40px; }
 /* what's engaged is obvious: off, the whole module dims; Auto off, its four knobs dim */
 .mod-filter.flt-off .flt-main, .mod-filter.flt-off .flt-auto { opacity: 0.42; }
 .mod-filter:not(.flt-moving) .flt-grid { opacity: 0.42; }
-.rack .mod-chords .kn { flex: 0 0 auto; min-width: 104px; }
+.rack .chord-knobs .kn { flex: 0 0 auto; min-width: 104px; }
 @media (max-width: 1100px) { .rack > :last-child:nth-child(odd) { grid-column: 1 / -1; } }
 
 </style>
@@ -800,6 +807,18 @@ body.mood-immersive .fab { display: none !important; }
         <div class="kn"><input class="kn-native" id="volume" type="range" min="0" max="100" value="75" data-label="Volume"><span class="kn-stack"><output id="volumeOut" class="lcd">75</output></span></div>
       </div>
     </div>
+    <div class="pedal rack-mod mod-midi midi-bit" aria-label="MIDI">
+      <div class="mod-head"><span class="mod-name">MIDI</span><button class="info" type="button" aria-label="How MIDI works" data-tip="MIDI out sends each city's notes to a synth or music app on its own channel. Pick each city's channel, the chords' and the drums' in the menus here, or turn any of them off. By default the cities use channels 1, 2 and 3, the chords channel 4 (held until the next chord, when the Chords lamp is on) and the rhythm section channel 10, with standard General MIDI drum notes: kick 36, snare 38, rim 37, closed hat 42, ride 51 with the jazz kit, so any drum rack maps it. Fills, ratchets and ghost notes come through too. Clock out sends MIDI clock, 24 pulses a beat, with Start and Stop, to this output or to every output, so drum machines, sequencers and synced delays keep time with the cities, slowing with them as they fall asleep. Turn it on mid-song and it starts them on the next bar. The rhythm section's filter, Auto sweeps included, goes out as a control change on the drums' channel so your drum machine's own filter follows. CC 19 drives the Roland TR-8S Master FX knob and switches its Master FX on. It works in Chrome and Edge on a computer."></button></div>
+      <div class="mod-body">
+        <label class="midi-port" for="midi"><span class="kn-label">Out to</span><select id="midi" class="lcd"><option value="">Off</option></select></label>
+        <div class="midi-chans" id="midiChans" aria-label="MIDI channel for each part"></div>
+        <label class="midi-ch midi-fcc" for="filterCC" title="Send the rhythm section filter, Auto sweeps included, as a control change on the drums' channel"><span class="kn-label">Drum filter as CC</span>
+          <select id="filterCC" class="lcd"><option value="-1">Off</option><option value="19" selected>CC 19 · TR-8S Master FX</option><option value="74">CC 74 · Cutoff</option><option value="1">CC 1 · Mod wheel</option></select></label>
+        <label class="midi-ch midi-fcc" for="midiClock" title="Send MIDI clock with Start and Stop, so drum machines, sequencers and delays follow the tempo"><span class="kn-label">Clock out</span>
+          <select id="midiClock" class="lcd"><option value="off" selected>Off</option><option value="one">To this output</option><option value="all">To every output</option></select></label>
+      </div>
+    </div>
+    </div>
     <div class="pedal rack-mod mod-harm" aria-label="Harmony">
       <div class="mod-head"><span class="mod-name">Harmony</span><button class="info" type="button" aria-label="How Harmony works" data-tip="All three cities share one key and scale, picked at random each time the page loads. Underneath, a slow chord progression moves every 4 bars and shifts every 64, and each city's melody leans onto the current chord. Change either menu and the cities follow from their next note."></button></div>
       <div class="knobs mod-knobs">
@@ -808,17 +827,15 @@ body.mood-immersive .fab { display: none !important; }
       </div>
       <div class="scale-kb" id="scaleKb" role="img" aria-label="The notes of the scale on a keyboard"></div>
       <div class="scale-legend"><span><i class="lg-root"></i>Key</span><span><i class="lg-scale"></i>Scale</span><span><i class="lg-chord"></i>Chord now</span></div>
-
-    </div>
-    </div>
-    <div class="pedal rack-mod mod-chords" aria-label="Chords">
-      <div class="mod-head"><span class="mod-name">Chords</span><button class="info" type="button" aria-label="How Chords works" data-tip="A slow bed of chords underneath the cities, from the same progression their melodies lean on: a new chord every four bars, each one swelling in and fading as the next arrives. Switch it on with the lamp, set how loud it sits with the knob, and pick a pad sound. As the cities fall asleep it gets darker and quieter too."></button><button class="pedal-led" type="button" id="chordOn" aria-pressed="false" aria-label="Chords on" title="Chord bed on or off"></button></div>
-      <div class="knobs mod-knobs">
+      <div class="chord-sec">
+        <div class="sub-head"><span class="sub-name">Chords</span><button class="info" type="button" aria-label="How Chords works" data-tip="A slow bed of chords underneath the cities, from the same progression their melodies lean on: a new chord every four bars, each one swelling in and fading as the next arrives. Switch it on with the lamp, set how loud it sits with the knob, and pick a pad sound. As the cities fall asleep it gets darker and quieter too."></button><button class="pedal-led" type="button" id="chordOn" aria-pressed="false" aria-label="Chords on" title="Chord bed on or off"></button></div>
+        <div class="chord-knobs mod-knobs">
         <div class="kn"><input class="kn-native" id="chordLevel" type="range" min="0" max="100" step="1" value="40" data-label="Level"><span class="kn-stack"><output id="chordLevelOut" class="lcd">40</output></span></div>
         <label class="kn-stack" for="chordSound"><span class="kn-label">Sound</span><select id="chordSound" class="lcd lcd-select">
           <option value="warm">Warm pad</option><option value="glass">Glass</option><option value="air">Air</option><option value="tape">Tape strings</option>
           <option value="strings">Strings</option><option value="choir">Choir</option><option value="organ">Soft organ</option><option value="bowed" selected>Bowed</option><option value="shimmer">Shimmer</option>
         </select></label>
+        </div>
       </div>
     </div>
     <div class="pedal rack-mod mod-filter" aria-label="Filter">
@@ -834,17 +851,6 @@ body.mood-immersive .fab { display: none !important; }
           <div class="kn"><select class="kn-native" id="djLfoWave" data-label="Wave"><option value="sine" selected>Sine</option><option value="tri">Triangle</option><option value="square">Square</option><option value="rampup">Ramp up</option><option value="rampdown">Ramp down</option><option value="random">Random</option></select><span class="kn-stack"><output id="djLfoWaveOut" class="lcd">Sine</output></span></div>
           <div class="kn"><input class="kn-native" id="djLfoOffset" type="range" min="-100" max="100" step="1" value="0" data-label="Offset"><span class="kn-stack"><output id="djLfoOffsetOut" class="lcd">Mid</output></span></div>
         </div>
-      </div>
-    </div>
-    <div class="pedal rack-mod mod-midi midi-bit" aria-label="MIDI">
-      <div class="mod-head"><span class="mod-name">MIDI</span><button class="info" type="button" aria-label="How MIDI works" data-tip="MIDI out sends each city's notes to a synth or music app on its own channel. Pick each city's channel, the chords' and the drums' in the menus here, or turn any of them off. By default the cities use channels 1, 2 and 3, the chords channel 4 (held until the next chord, when the Chords lamp is on) and the rhythm section channel 10, with standard General MIDI drum notes: kick 36, snare 38, rim 37, closed hat 42, ride 51 with the jazz kit, so any drum rack maps it. Fills, ratchets and ghost notes come through too. Clock out sends MIDI clock, 24 pulses a beat, with Start and Stop, to this output or to every output, so drum machines, sequencers and synced delays keep time with the cities, slowing with them as they fall asleep. Turn it on mid-song and it starts them on the next bar. The rhythm section's filter, Auto sweeps included, goes out as a control change on the drums' channel so your drum machine's own filter follows. CC 19 drives the Roland TR-8S Master FX knob and switches its Master FX on. It works in Chrome and Edge on a computer."></button></div>
-      <div class="mod-body">
-        <label class="midi-port" for="midi"><span class="kn-label">Out to</span><select id="midi" class="lcd"><option value="">Off</option></select></label>
-        <div class="midi-chans" id="midiChans" aria-label="MIDI channel for each part"></div>
-        <label class="midi-ch midi-fcc" for="filterCC" title="Send the rhythm section filter, Auto sweeps included, as a control change on the drums' channel"><span class="kn-label">Drum filter as CC</span>
-          <select id="filterCC" class="lcd"><option value="-1">Off</option><option value="19" selected>CC 19 · TR-8S Master FX</option><option value="74">CC 74 · Cutoff</option><option value="1">CC 1 · Mod wheel</option></select></label>
-        <label class="midi-ch midi-fcc" for="midiClock" title="Send MIDI clock with Start and Stop, so drum machines, sequencers and delays follow the tempo"><span class="kn-label">Clock out</span>
-          <select id="midiClock" class="lcd"><option value="off" selected>Off</option><option value="one">To this output</option><option value="all">To every output</option></select></label>
       </div>
     </div>
   </section>
