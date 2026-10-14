@@ -1,0 +1,72 @@
+name: Daily reel
+
+# Every morning at 8:00 London time: make today's reel with the live site and publish it for /today.
+# GitHub's schedule runs in UTC, so this fires at 07:00 and 08:00 UTC and only carries on when it's 8am in London.
+on:
+  schedule:
+    - cron: "0 7 * * *"
+    - cron: "0 8 * * *"
+  workflow_dispatch:
+  push:
+    paths: ["daily-reel/run-now"]   # touch this file to make one straight away
+
+permissions:
+  contents: write
+
+concurrency:
+  group: daily-reel
+  cancel-in-progress: false
+
+jobs:
+  reel:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Is it 8am in London?
+        id: when
+        run: |
+          if [ "${{ github.event_name }}" != "schedule" ] || [ "$(TZ=Europe/London date +%H)" = "08" ]; then echo "go=yes" >> "$GITHUB_OUTPUT"; else echo "Not 8am in London, skipping."; fi
+
+      - uses: actions/checkout@v4
+        if: steps.when.outputs.go == 'yes'
+
+      - uses: actions/setup-node@v4
+        if: steps.when.outputs.go == 'yes'
+        with:
+          node-version: 20
+
+      - name: Install the browser
+        if: steps.when.outputs.go == 'yes'
+        working-directory: daily-reel
+        run: |
+          npm init -y >/dev/null
+          npm install playwright@1.48.2
+          npx playwright install --with-deps chromium
+          sudo apt-get install -y ffmpeg >/dev/null
+
+      - name: Make the reel
+        if: steps.when.outputs.go == 'yes'
+        working-directory: daily-reel
+        env:
+          OUT: ${{ github.workspace }}/out
+        run: node make-reel.mjs
+
+      - name: Convert to the MP4 Instagram wants, with a poster frame
+        if: steps.when.outputs.go == 'yes'
+        working-directory: out
+        run: |
+          ffmpeg -y -loglevel error -i raw.* -c:v libx264 -preset medium -crf 19 -pix_fmt yuv420p -r 30 -vf "scale=1080:1920" -c:a aac -b:a 192k -ar 48000 -movflags +faststart reel.mp4
+          ffmpeg -y -loglevel error -ss 12 -i reel.mp4 -frames:v 1 -q:v 3 -vf "scale=540:960" poster.jpg
+          rm -f raw.*
+          ls -la
+
+      - name: Publish to the daily branch (only today's reel is kept)
+        if: steps.when.outputs.go == 'yes'
+        working-directory: out
+        run: |
+          git init -q -b daily
+          git config user.name "Three Cities daily reel"
+          git config user.email "actions@users.noreply.github.com"
+          git add -A
+          git commit -qm "Reel for $(TZ=Europe/London date +%F)"
+          git push -qf "https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git" daily

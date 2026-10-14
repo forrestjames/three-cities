@@ -4,5 +4,7 @@ Disallow: /admin
 Disallow: /reel
 Disallow: /design
 Disallow: /teaser
+Disallow: /today
+Disallow: /daily-reel/
 
 Sitemap: https://threecities.forrestjamesmusic.com/sitemap.xml
