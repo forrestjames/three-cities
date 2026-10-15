@@ -154,7 +154,7 @@ main { max-width: 1240px; margin: 0 auto; padding: 0 16px 80px; display: flex; f
 .groove-info { font-size: 12px; color: var(--ink-faint); letter-spacing: 0.04em; flex: 1 1 320px; }
 .groove-body { display: grid; grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr); gap: 18px 28px; align-items: center; }
 .groove-off .groove-body { opacity: 0.4; }
-.groove-grid { display: grid; grid-template-columns: 116px repeat(16, minmax(0, 1fr)); gap: 3px; font-size: 10px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--ink-faint); align-items: center; }
+.groove-grid { display: grid; grid-template-columns: 150px repeat(16, minmax(0, 1fr)); gap: 3px; font-size: 10px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--ink-faint); align-items: center; }
 .groove-grid i { display: block; height: 12px; border-radius: 2px; background: rgba(243,236,230,0.06); }
 .groove-grid i.on { background: rgba(243,236,230,0.42); }
 .groove-grid i.now { outline: 1px solid rgba(255,217,138,0.8); }
@@ -167,6 +167,13 @@ main { max-width: 1240px; margin: 0 auto; padding: 0 16px 80px; display: flex; f
 .gv-send { width: 18px; height: 18px; flex: none; border-radius: 50%; border: 1px solid var(--line); background: none; color: var(--ink-faint);
   font: inherit; font-size: 8px; letter-spacing: 0; line-height: 1; padding: 0; cursor: pointer; transition: background 0.2s, color 0.2s, border-color 0.2s; }
 .gv-send:hover { border-color: var(--ink-dim); color: var(--ink-dim); }
+.gv-lvl { -webkit-appearance: none; appearance: none; width: 22px; min-width: 22px; max-width: 22px; height: 14px; flex: 0 0 22px; margin: 0; padding: 0; background: none; cursor: pointer; opacity: 0.75; }
+.gv-lvl:hover, .gv-lvl:focus-visible { opacity: 1; }
+.gv-lvl::-webkit-slider-runnable-track { height: 2px; background: rgba(243,236,230,0.3); border-radius: 1px; }
+.gv-lvl::-webkit-slider-thumb { -webkit-appearance: none; width: 8px; height: 8px; margin-top: -3px; border-radius: 50%; background: #ffd98a; border: 0; }
+.gv-lvl::-moz-range-track { height: 2px; background: rgba(243,236,230,0.3); border-radius: 1px; }
+.gv-lvl::-moz-range-thumb { width: 8px; height: 8px; border-radius: 50%; background: #ffd98a; border: 0; }
+.gv-cell .gv-name { min-width: 40px; }
 .gv-send[aria-pressed="true"] { background: #ffd98a; border-color: #ffd98a; color: var(--ground); }
 @media (pointer: coarse) { .gv-send { width: 24px; height: 24px; font-size: 9px; } }
 .gv-name[aria-pressed="true"] { opacity: 0.6; text-decoration: line-through; text-decoration-thickness: 1px; }
@@ -182,7 +189,7 @@ main { max-width: 1240px; margin: 0 auto; padding: 0 16px 80px; display: flex; f
 .auto-btn { background: none; border: 1px solid var(--line); padding: 2px 8px; min-height: 22px; cursor: pointer; font-size: 10px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--ink-faint); border-radius: 11px; }
 .auto-btn[aria-pressed="true"] { color: var(--ground); background: #ffd98a; border-color: #ffd98a; }
 .groove-auto-note { font-size: 11px; color: var(--ink-faint); letter-spacing: 0.04em; grid-column: 1 / -1; min-height: 1.4em; }
-@media (max-width: 760px) { .groove-body { grid-template-columns: minmax(0, 1fr); } .groove-grid { grid-template-columns: 104px repeat(16, minmax(0, 1fr)); gap: 2px; } }
+@media (max-width: 760px) { .groove-body { grid-template-columns: minmax(0, 1fr); } .groove-grid { grid-template-columns: 140px repeat(16, minmax(0, 1fr)); gap: 2px; } .gv-cell { gap: 3px; } .gv-lvl { width: 16px; min-width: 16px; max-width: 16px; flex-basis: 16px; } }
 .gv { display: flex; align-items: center; justify-content: space-between; gap: 4px; background: none; border: 0; padding: 0 4px 0 0; cursor: pointer; font: inherit; letter-spacing: inherit; text-transform: inherit; color: inherit; min-height: 22px; }
 .gv-rev { font-size: 9px; padding: 1px 5px; border: 1px solid var(--line); border-radius: 8px; color: var(--ink-faint); }
 .gv[aria-pressed="true"] .gv-rev { background: #ffd98a; border-color: #ffd98a; color: var(--ground); }
@@ -3500,7 +3507,7 @@ body.mood-immersive .fab { display: none !important; }
   // cities hit together, the hats wherever any city hits, the rim where exactly one city plays alone,
   // and the snare is a Euclidean backbeat whose count rises with the gustiest city's wind.
   var GROOVE = { on: true, kit: "minimal", chance: 100, mute: { kick: false, snare: false, hat: false, rim: false },
-    send: { kick: { h: false, d: false }, snare: { h: false, d: false }, hat: { h: false, d: false }, rim: { h: false, d: false } }, vol: 0.4, tone: 0.55, rows: { kick: [], snare: [], hat: [], rim: [] }, step: -1, queue: [], bus: null, filter: null, rev: 0.6, del: 0.35 };
+    send: { kick: { h: false, d: false }, snare: { h: false, d: false }, hat: { h: false, d: false }, rim: { h: false, d: false } }, vol: 0.4, tone: 0.55, rows: { kick: [], snare: [], hat: [], rim: [] }, step: -1, queue: [], bus: null, filter: null, rev: 0.6, del: 0.35, rowSend: null, lvl: { kick: { h: 1, d: 1 }, snare: { h: 1, d: 1 }, hat: { h: 1, d: 1 }, rim: { h: 1, d: 1 } } };
   function buildGroove() {
     if (!GROOVE) return;
     const ready = cities.filter(c => c.pattern && c.pattern.length);
@@ -3540,6 +3547,11 @@ body.mood-immersive .fab { display: none !important; }
             b.setAttribute("aria-pressed", "false"); b.setAttribute("aria-label", `Send ${r} to the ${name}`); b.title = `Send ${r} to the ${name}`;
             b.addEventListener("click", () => { GROOVE.send[r][k] = !GROOVE.send[r][k]; b.setAttribute("aria-pressed", String(GROOVE.send[r][k])); });
             cell.appendChild(b);
+            // a level for this drum's send, beside its switch: the switch turns it on, this sets how much goes
+            const lv = document.createElement("input"); lv.type = "range"; lv.min = "0"; lv.max = "100"; lv.step = "1"; lv.className = "gv-lvl";
+            lv.value = String(Math.round(GROOVE.lvl[r][k] * 100)); lv.title = lv.ariaLabel = `${r} to the ${name}: level`;
+            lv.addEventListener("input", () => { GROOVE.lvl[r][k] = lv.value / 100; if (GROOVE.rowSend && GROOVE.rowSend[r]) GROOVE.rowSend[r][k].gain.setTargetAtTime(GROOVE.lvl[r][k], ac.currentTime, 0.05); });
+            cell.appendChild(lv);
           });
           g.appendChild(cell); }
         for (let j = 0; j < 16; j++) { const i = document.createElement("i"); i.dataset.r = r; i.dataset.j = j; g.appendChild(i); }
@@ -3558,6 +3570,8 @@ body.mood-immersive .fab { display: none !important; }
     GROOVE.bus.connect(GROOVE.filter).connect(master);   // dry unless a drum's own H or D switch is on
     GROOVE.hallSend = ac.createGain(); GROOVE.hallSend.gain.value = GROOVE.rev; GROOVE.hallSend.connect(reverb);
     GROOVE.delaySend = ac.createGain(); GROOVE.delaySend.gain.value = GROOVE.del; GROOVE.delaySend.connect(delay);
+    GROOVE.rowSend = {};   // each drum's own send level, into the section's sends
+    ["kick", "snare", "hat", "rim"].forEach(r => { const h = ac.createGain(), d = ac.createGain(); h.gain.value = GROOVE.lvl[r].h; d.gain.value = GROOVE.lvl[r].d; h.connect(GROOVE.hallSend); d.connect(GROOVE.delaySend); GROOVE.rowSend[r] = { h, d }; });
     applyGroove();
   }
   function grooveSleep() {
@@ -3717,9 +3731,9 @@ body.mood-immersive .fab { display: none !important; }
       if (!driveCurve) { driveCurve = new Float32Array(1024); for (let i = 0; i < 1024; i++) { const x = i / 511.5 - 1; driveCurve[i] = Math.tanh(x * 2.5) / Math.tanh(2.5); } }
       const ws = ac.createWaveShaper(); ws.curve = driveCurve; out.connect(ws).connect(GROOVE.bus);
     } else out.connect(GROOVE.bus);
-    { const sd = GROOVE.send[kind];   // this drum's own sends, if switched on
-      if (sd && sd.h && GROOVE.hallSend) out.connect(GROOVE.hallSend);
-      if (sd && sd.d && GROOVE.delaySend) out.connect(GROOVE.delaySend); }
+    { const sd = GROOVE.send[kind];   // this drum's own sends, if switched on, at its own level
+      if (sd && sd.h && GROOVE.rowSend) out.connect(GROOVE.rowSend[kind].h);
+      if (sd && sd.d && GROOVE.rowSend) out.connect(GROOVE.rowSend[kind].d); }
     const env = (node, peak, dec, att = 0.002) => {
       const g = ac.createGain(); g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(peak, t + att);
       g.gain.setValueAtTime(peak, t + att); g.gain.exponentialRampToValueAtTime(0.0005, t + att + dec);
