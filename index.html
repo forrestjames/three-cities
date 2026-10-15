@@ -758,6 +758,7 @@ body.mood-immersive .fab { display: none !important; }
 .sub-name { font-family: var(--display); font-size: 13px; letter-spacing: 0.24em; text-transform: uppercase; color: var(--ink); }
 .rack .pedal.mod-harm .knobs { opacity: 1; }
 .chord-sec:has(#chordOn[aria-pressed="false"]) .chord-knobs { opacity: 0.45; }
+.chord-knobs.chord-filter { flex-wrap: wrap; row-gap: 10px; }
 /* Filter: one big knob in the middle, and under a line the Auto section, its four knobs on a 2 x 2 grid */
 .rack .mod-filter .kn { flex-direction: column; gap: 4px; min-width: 0; }
 .rack .mod-filter .kn-stack { align-items: center; width: 100%; }
@@ -889,6 +890,11 @@ body.mood-immersive .fab { display: none !important; }
           <option value="4" selected>Every 4 bars</option><option value="8">Every 8 bars</option><option value="16">Every 16 bars</option><option value="32">Every 32 bars</option><option value="drone">Drone</option>
         </select></label>
         </div>
+        <div class="chord-knobs mod-knobs chord-filter">
+        <div class="kn"><input class="kn-native" id="chordTone" type="range" min="0" max="100" step="1" value="100" data-label="Filter"><span class="kn-stack"><output id="chordToneOut" class="lcd">16k</output></span></div>
+        <div class="kn-stack"><span class="kn-label">Auto</span><button class="auto-btn" id="chordAuto" type="button" aria-pressed="false" title="Sweep towards the moment the cities line up">Auto</button></div>
+        </div>
+        <span class="groove-auto-note" id="chordAutoNote"></span>
       </div>
     </div>
     <div class="pedal rack-mod mod-filter" aria-label="Filter">
@@ -4025,6 +4031,7 @@ body.mood-immersive .fab { display: none !important; }
       if (tick % 8 === 0) beatTimes.push(nextTime);
       if (tick % (32 * 4) === 0 && HARM.prog) HARM.root = HARM.prog[(tick / (32 * 4)) % HARM.prog.length];   // a new chord every 4 bars
       if (tick % (32 * (CHORD.drone ? 1024 : CHORD.bars)) === 0) chordBed(nextTime, chordRootAt(tick));       // and the bed moves with it
+      if (CHORD.on && CHORD.auto && CHORD.filt && tick % 2 === 0) chordAutoSweep(tick, nextTime);             // and its filter sweeps, if Auto is on
       if (tick % (32 * 2) === 0 && tick) sampleShift(tick / 32);
       if (tick % Math.max(32, DJL.beats * 8) === 0) djLfoSync(nextTime);                                      // the filter LFO starts each cycle on the beat                                                // samples move on, on even bars
       nextTime += tickDur;
@@ -4203,7 +4210,7 @@ body.mood-immersive .fab { display: none !important; }
   // Off by default. Each chord swells in over a couple of seconds, holds for its four bars and fades as the next arrives.
   // Root, third and fifth of the current chord in the shared scale, with the root again an octave below.
   // As the cities fall asleep the bed gets darker and quieter, like the rest of the piece.
-  const CHORD = { on: false, level: 0.4, bus: null, voices: [], sound: "bowed", bars: 4, drone: false };
+  const CHORD = { on: false, level: 0.4, bus: null, voices: [], sound: "bowed", bars: 4, drone: false, tone: 1, auto: false, filt: null, note: "" };
   // The chord bed's sounds. Each one builds a single held note into "out" and returns its sources so they can be stopped.
   // bright scales the bed's filter (which darkens as the cities sleep), gain evens out the levels, attack and release are in seconds.
   const padOsc = (type, f, out, t, end, gain = 1, det = 0) => {
@@ -4263,13 +4270,32 @@ body.mood-immersive .fab { display: none !important; }
                        padLfo(0.4 + Math.random() * 0.4, 0.35, fl.gain, t, end)]; } }
   };
 
+  // the bed's filter, as the rhythm section has: a lowpass from 250 Hz up to 16 kHz, open by default
+  const chordFilterHz = tone => 250 * Math.pow(16000 / 250, tone);
   function chordBus() {
     if (!CHORD.bus) {
+      CHORD.filt = ac.createBiquadFilter(); CHORD.filt.type = "lowpass"; CHORD.filt.Q.value = 0.5;
       CHORD.bus = ac.createGain(); CHORD.bus.gain.value = 1;
+      CHORD.filt.connect(CHORD.bus);
       CHORD.bus.connect(master);
       const rs = ac.createGain(); rs.gain.value = 0.55; CHORD.bus.connect(rs).connect(reverb);
+      chordApplyFilter();
     }
-    return CHORD.bus;
+    return CHORD.filt;
+  }
+  function chordApplyFilter() {
+    if (!CHORD.filt || CHORD.auto) return;
+    CHORD.filt.frequency.setTargetAtTime(chordFilterHz(CHORD.tone) * (1 - grooveSleep() * 0.4), ac.currentTime, 0.08);
+  }
+  // Auto: the same sweep as the rhythm section, towards the moment the cities line up
+  function chordAutoSweep(tickNow, t) {
+    const cyc = alignCycle(), ph = (tickNow % cyc.ticks) / cyc.ticks;
+    const top = chordFilterHz(CHORD.tone), low = 260;
+    const k = ph < 0.03 ? 1 - ph / 0.03 : Math.pow((ph - 0.03) / 0.97, 2.2);
+    const f = low * Math.pow(top / low, Math.max(0, Math.min(1, k)));
+    CHORD.filt.frequency.setTargetAtTime(f * (1 - grooveSleep() * 0.4), t, ph < 0.03 ? 0.04 : 0.12);
+    const bars = Math.round((cyc.ticks - (tickNow % cyc.ticks)) / 32);
+    CHORD.note = `Auto: the chord filter opens as ${cyc.all ? "all three cities" : "two of the cities"} head for the one together, ${bars} ${bars === 1 ? "bar" : "bars"} away`;
   }
   // the bed's chord at a tick: the shared progression, one chord per CHORD.bars bars; a drone sits on the home chord
   function chordRootAt(tk) {
@@ -4312,7 +4338,16 @@ body.mood-immersive .fab { display: none !important; }
     });
     lvl.addEventListener("input", sync); sync();
     document.getElementById("chordSound").addEventListener("change", e => { CHORD.sound = e.target.value; if (CHORD.on && playing) chordBed(ac.currentTime + 0.05); });
-    document.getElementById("chordMove").addEventListener("change", e => { const v = e.target.value; CHORD.drone = v === "drone"; if (!CHORD.drone) CHORD.bars = Number(v); if (CHORD.on && playing) chordBed(ac.currentTime + 0.05); }); }
+    document.getElementById("chordMove").addEventListener("change", e => { const v = e.target.value; CHORD.drone = v === "drone"; if (!CHORD.drone) CHORD.bars = Number(v); if (CHORD.on && playing) chordBed(ac.currentTime + 0.05); });
+    const tone = document.getElementById("chordTone"), toneOut = document.getElementById("chordToneOut"), auto = document.getElementById("chordAuto"), note = document.getElementById("chordAutoNote");
+    const readout = hz => hz >= 1000 ? (hz / 1000).toFixed(hz >= 10000 ? 0 : 1) + "k" : Math.round(hz) + " Hz";
+    tone.addEventListener("input", () => { CHORD.tone = tone.value / 100; toneOut.value = readout(chordFilterHz(CHORD.tone)); chordApplyFilter(); });
+    toneOut.value = readout(chordFilterHz(CHORD.tone));
+    auto.addEventListener("click", () => {
+      CHORD.auto = !CHORD.auto; auto.setAttribute("aria-pressed", String(CHORD.auto));
+      if (!CHORD.auto) { note.textContent = ""; chordApplyFilter(); } else note.textContent = "Auto: the filter sweeps towards the moment the cities line up. The Filter knob sets how far it opens.";
+    });
+    setInterval(() => { if (CHORD.auto && playing && CHORD.note) note.textContent = CHORD.note; }, 500); }
   const playBtn = document.getElementById("play");
   // ---- welcome for a shared link: whose cities, where they are, one big tap to start
   setTimeout(function welcome() {   // after the rest of the page is set up, before the first paint
@@ -5300,7 +5335,7 @@ body.mood-immersive .fab { display: none !important; }
   const MIX_GLOBAL = { key: "k", scale: "sc", tempo: "t", volume: "V", djFilter: "f", grooveOn: "g", grooveKit: "gk", grooveVol: "gv", grooveTone: "gt", grooveAuto: "ga", grooveChance: "gc",
     "gm-kick": "mk", "gm-snare": "ms", "gm-hat": "mh", "gm-rim": "mr",
     "gh-kick": "hk", "gh-snare": "hs", "gh-hat": "hh", "gh-rim": "hr", "gd-kick": "dk", "gd-snare": "ds", "gd-hat": "dh", "gd-rim": "dr", hallOn: "h", fxRevLevel: "hl", fxRevDecay: "hd", fxRevPre: "hp", fxRevTone: "ht",
-    fxRevType: "hy", delayOn: "e", fxStyle: "es", fxTime: "et", fxDelay: "el", fxEchoes: "ee", fxDelTone: "eo", fxWobble: "ew", moodDeep: "q", unit: "u", chordOn: "cb", chordLevel: "cv", chordSound: "cs", chordMove: "cm", djAuto: "fa", djMove: "fm", djLfoRate: "fr", djLfoAmt: "fl" };
+    fxRevType: "hy", delayOn: "e", fxStyle: "es", fxTime: "et", fxDelay: "el", fxEchoes: "ee", fxDelTone: "eo", fxWobble: "ew", moodDeep: "q", unit: "u", chordOn: "cb", chordLevel: "cv", chordSound: "cs", chordMove: "cm", chordTone: "ct", chordAuto: "ca", djAuto: "fa", djMove: "fm", djLfoRate: "fr", djLfoAmt: "fl" };
   const shortKey = k => {
     if (MIX_GLOBAL[k]) return MIX_GLOBAL[k];
     let m = k.match(/^(boston|copenhagen|london)-(\w+)$/); if (m && MIX_PART[m[2]]) return MIX_CITY[m[1]] + MIX_PART[m[2]];
