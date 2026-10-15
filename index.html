@@ -182,6 +182,7 @@ main { max-width: 1240px; margin: 0 auto; padding: 0 16px 80px; display: flex; f
 .groove-controls { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; align-items: start; }
 .groove-controls > label, .groove-controls > .kn { min-width: 0; max-width: 100%; }
 .groove-filter { display: flex; flex-direction: column; align-items: flex-start; gap: 6px; min-width: 0; }
+.groove-dials { grid-column: 1 / -1; display: flex; flex-wrap: wrap; align-items: flex-start; gap: 18px 22px; }
 .groove-filter .auto-btn { margin-left: 2px; }
 .groove-controls input[type="range"] { max-width: 100%; }
 .groove-controls .groove-auto-note { grid-column: 1 / -1; }
@@ -944,14 +945,16 @@ body.mood-immersive .fab { display: none !important; }
       <div class="groove-grid" id="grooveGrid"></div>
       <div class="groove-controls">
         <label>Kit <select id="grooveKit"><option value="minimal" selected>Minimal</option><option value="soft">Soft</option><option value="lofi">Lo-fi</option><option value="808">808</option><option value="jazz">Jazz</option><option value="cr78">CR-78</option><option value="orchestra">Orchestra</option><option value="cm32">CM-64/32L</option><option value="room">Room</option><option value="brush">Brush</option><option value="felt">Felt</option><option value="mallet">Mallets</option><option value="rain">Rain</option><option value="techno">Minimal techno</option></select></label>
-        <div class="kn"><input class="kn-native" id="grooveVol" type="range" min="0" max="100" value="40" data-label="Volume" aria-label="Rhythm section volume"><span class="kn-stack"><output id="grooveVolOut" class="lcd">40</output></span></div>
-        <div class="kn" title="How likely each drum hit is to play. Lower it and the beat thins out at random"><input class="kn-native" id="grooveChance" type="range" min="0" max="100" value="100" data-label="Chance" aria-label="Rhythm section chance"><span class="kn-stack"><output id="grooveChanceOut" class="lcd">100</output></span></div>
-        <div class="groove-filter">
+        <label>Volume <input id="grooveVol" type="range" min="0" max="100" value="40"></label>
+        <label title="How likely each drum hit is to play. Lower it and the beat thins out at random">Chance <input id="grooveChance" type="range" min="0" max="100" value="100" aria-label="Rhythm section chance"></label>
+        <div class="groove-dials">
+          <div class="groove-filter">
           <div class="kn"><input class="kn-native" id="grooveTone" type="range" min="0" max="100" value="55" data-label="Filter" aria-label="Rhythm section filter"><span class="kn-stack"><output id="grooveToneOut" class="lcd">2.4k</output></span></div>
           <button class="auto-btn" id="grooveAuto" type="button" aria-pressed="false" title="Sweep towards the moment the cities line up">Auto</button>
-        </div>
+          </div>
         <div class="kn"><input class="kn-native" id="grooveRev" type="range" min="0" max="100" value="60" data-label="Reverb" aria-label="Rhythm section reverb send" title="How much of the drums go to the hall. Each drum's R switch sends it"><span class="kn-stack"><output id="grooveRevOut" class="lcd">60</output></span></div>
         <div class="kn"><input class="kn-native" id="grooveDel" type="range" min="0" max="100" value="35" data-label="Delay" aria-label="Rhythm section delay send" title="How much of the drums go to the echo. Each drum's D switch sends it"><span class="kn-stack"><output id="grooveDelOut" class="lcd">35</output></span></div>
+        </div>
         <span class="groove-auto-note" id="grooveAutoNote"></span>
       </div>
     </div>
@@ -3931,14 +3934,14 @@ body.mood-immersive .fab { display: none !important; }
     });
     { const k = QS.get("kit"), sel = document.getElementById("grooveKit"); if (k && [...sel.options].some(o => o.value === k)) { sel.value = k; GROOVE.kit = k; } }
     document.getElementById("grooveKit").addEventListener("change", e => { GROOVE.kit = e.target.value; drawGrooveGrid(); });
-    document.getElementById("grooveVol").addEventListener("input", e => { GROOVE.vol = e.target.value / 100; document.getElementById("grooveVolOut").value = e.target.value; applyGroove(); });
+    document.getElementById("grooveVol").addEventListener("input", e => { GROOVE.vol = e.target.value / 100; applyGroove(); });
     const grooveHz = t => 250 * Math.pow(16000 / 250, t), grooveHzText = hz => hz >= 1000 ? (hz / 1000).toFixed(hz >= 10000 ? 0 : 1) + "k" : Math.round(hz) + " Hz";
     document.getElementById("grooveTone").addEventListener("input", e => { GROOVE.tone = e.target.value / 100; document.getElementById("grooveToneOut").value = grooveHzText(grooveHz(GROOVE.tone)); applyGroove(); });
     document.getElementById("grooveToneOut").value = grooveHzText(grooveHz(GROOVE.tone));
     [["grooveRev", "rev", "hallSend"], ["grooveDel", "del", "delaySend"]].forEach(([id, key, node]) => document.getElementById(id).addEventListener("input", e => {
       GROOVE[key] = e.target.value / 100; document.getElementById(id + "Out").value = e.target.value; if (GROOVE[node]) GROOVE[node].gain.setTargetAtTime(GROOVE[key], ac.currentTime, 0.1); }));
     ["grooveRev", "grooveDel"].forEach(id => { document.getElementById(id + "Out").value = document.getElementById(id).value; });
-    document.getElementById("grooveChance").addEventListener("input", e => { GROOVE.chance = Number(e.target.value); document.getElementById("grooveChanceOut").value = e.target.value; });
+    document.getElementById("grooveChance").addEventListener("input", e => { GROOVE.chance = Number(e.target.value); });
     const auto = document.getElementById("grooveAuto"), note = document.getElementById("grooveAutoNote");
     auto.addEventListener("click", () => {
       GROOVE.auto = !GROOVE.auto; auto.setAttribute("aria-pressed", String(GROOVE.auto));
