@@ -898,6 +898,8 @@ body.mood-immersive .fab { display: none !important; }
         </div>
         <div class="chord-knobs mod-knobs chord-filter">
         <div class="kn"><input class="kn-native" id="chordTone" type="range" min="0" max="100" step="1" value="100" data-label="Filter"><span class="kn-stack"><output id="chordToneOut" class="lcd">16k</output></span></div>
+        <div class="kn"><input class="kn-native" id="chordRev" type="range" min="0" max="100" step="1" value="55" data-label="Reverb"><span class="kn-stack"><output id="chordRevOut" class="lcd">55</output></span></div>
+        <div class="kn"><input class="kn-native" id="chordDel" type="range" min="0" max="100" step="1" value="0" data-label="Delay"><span class="kn-stack"><output id="chordDelOut" class="lcd">0</output></span></div>
         <div class="kn-stack"><span class="kn-label">Auto</span><button class="auto-btn" id="chordAuto" type="button" aria-pressed="false" title="Sweep towards the moment the cities line up">Auto</button></div>
         </div>
         <span class="groove-auto-note" id="chordAutoNote"></span>
@@ -4216,7 +4218,7 @@ body.mood-immersive .fab { display: none !important; }
   // Off by default. Each chord swells in over a couple of seconds, holds for its four bars and fades as the next arrives.
   // Root, third and fifth of the current chord in the shared scale, with the root again an octave below.
   // As the cities fall asleep the bed gets darker and quieter, like the rest of the piece.
-  const CHORD = { on: false, level: 0.4, bus: null, voices: [], sound: "bowed", bars: 4, drone: false, tone: 1, auto: false, filt: null, note: "", shift: 0 };
+  const CHORD = { on: false, level: 0.4, bus: null, voices: [], sound: "bowed", bars: 4, drone: false, tone: 1, auto: false, filt: null, note: "", shift: 0, rev: 0.55, del: 0 };
   // The chord bed's sounds. Each one builds a single held note into "out" and returns its sources so they can be stopped.
   // bright scales the bed's filter (which darkens as the cities sleep), gain evens out the levels, attack and release are in seconds.
   const padOsc = (type, f, out, t, end, gain = 1, det = 0) => {
@@ -4284,7 +4286,8 @@ body.mood-immersive .fab { display: none !important; }
       CHORD.bus = ac.createGain(); CHORD.bus.gain.value = 1;
       CHORD.filt.connect(CHORD.bus);
       CHORD.bus.connect(master);
-      const rs = ac.createGain(); rs.gain.value = 0.55; CHORD.bus.connect(rs).connect(reverb);
+      CHORD.revSend = ac.createGain(); CHORD.revSend.gain.value = CHORD.rev; CHORD.bus.connect(CHORD.revSend).connect(reverb);   // Reverb send
+      CHORD.delSend = ac.createGain(); CHORD.delSend.gain.value = CHORD.del; CHORD.bus.connect(CHORD.delSend).connect(delay);      // Delay send, as the cities have
       chordApplyFilter();
     }
     return CHORD.filt;
@@ -4354,6 +4357,10 @@ body.mood-immersive .fab { display: none !important; }
       if (!CHORD.auto) { note.textContent = ""; chordApplyFilter(); } else note.textContent = "Auto: the filter sweeps towards the moment the cities line up. The Filter knob sets how far it opens.";
     });
     setInterval(() => { if (CHORD.auto && playing && CHORD.note) note.textContent = CHORD.note; }, 500);
+    [["chordRev", "chordRevOut", "rev", "revSend"], ["chordDel", "chordDelOut", "del", "delSend"]].forEach(([id, outId, key, node]) => {
+      const el = document.getElementById(id), out = document.getElementById(outId);
+      el.addEventListener("input", () => { CHORD[key] = el.value / 100; out.value = el.value; if (CHORD[node]) CHORD[node].gain.setTargetAtTime(CHORD[key], ac.currentTime, 0.1); });
+    });
     const octOut = document.getElementById("chordOctOut"), octLabel = () => { octOut.value = CHORD.shift ? (CHORD.shift > 0 ? "+" : "−") + Math.abs(CHORD.shift) : "0"; };
     const octMove = d => { CHORD.shift = Math.max(-2, Math.min(2, CHORD.shift + d)); octLabel(); if (CHORD.on && playing) chordBed(ac.currentTime + 0.05); };
     document.getElementById("chordOctUp").addEventListener("click", () => octMove(1));
@@ -5346,7 +5353,7 @@ body.mood-immersive .fab { display: none !important; }
   const MIX_GLOBAL = { key: "k", scale: "sc", tempo: "t", volume: "V", djFilter: "f", grooveOn: "g", grooveKit: "gk", grooveVol: "gv", grooveTone: "gt", grooveAuto: "ga", grooveChance: "gc",
     "gm-kick": "mk", "gm-snare": "ms", "gm-hat": "mh", "gm-rim": "mr",
     "gh-kick": "hk", "gh-snare": "hs", "gh-hat": "hh", "gh-rim": "hr", "gd-kick": "dk", "gd-snare": "ds", "gd-hat": "dh", "gd-rim": "dr", hallOn: "h", fxRevLevel: "hl", fxRevDecay: "hd", fxRevPre: "hp", fxRevTone: "ht",
-    fxRevType: "hy", delayOn: "e", fxStyle: "es", fxTime: "et", fxDelay: "el", fxEchoes: "ee", fxDelTone: "eo", fxWobble: "ew", moodDeep: "q", unit: "u", chordOn: "cb", chordLevel: "cv", chordSound: "cs", chordMove: "cm", chordTone: "ct", chordAuto: "ca", djAuto: "fa", djMove: "fm", djLfoRate: "fr", djLfoAmt: "fl" };
+    fxRevType: "hy", delayOn: "e", fxStyle: "es", fxTime: "et", fxDelay: "el", fxEchoes: "ee", fxDelTone: "eo", fxWobble: "ew", moodDeep: "q", unit: "u", chordOn: "cb", chordLevel: "cv", chordSound: "cs", chordMove: "cm", chordTone: "ct", chordAuto: "ca", chordRev: "cr", chordDel: "cd", djAuto: "fa", djMove: "fm", djLfoRate: "fr", djLfoAmt: "fl" };
   const shortKey = k => {
     if (MIX_GLOBAL[k]) return MIX_GLOBAL[k];
     let m = k.match(/^(boston|copenhagen|london)-(\w+)$/); if (m && MIX_PART[m[2]]) return MIX_CITY[m[1]] + MIX_PART[m[2]];
