@@ -758,10 +758,11 @@ body.mood-immersive .fab { display: none !important; }
 .sub-name { font-family: var(--display); font-size: 13px; letter-spacing: 0.24em; text-transform: uppercase; color: var(--ink); }
 .rack .pedal.mod-harm .knobs { opacity: 1; }
 .chord-sec:has(#chordOn[aria-pressed="false"]) .chord-knobs { opacity: 0.45; }
+.chord-knobs { flex-wrap: wrap; row-gap: 10px; }
 .chord-knobs.chord-filter { flex-wrap: wrap; row-gap: 10px; }
 .oct-btns { display: inline-flex; align-items: center; gap: 6px; }
-.oct-btns .auto-btn { min-width: 34px; padding: 4px 0; }
-.oct-btns .lcd { min-width: 64px; text-align: center; }
+.oct-btns .auto-btn { min-width: 24px; min-height: 26px; padding: 0 4px; font-size: 13px; line-height: 1; }
+.oct-btns .lcd { min-width: 46px; padding: 4px 2px; text-align: center; font-size: 11px; }
 /* Filter: one big knob in the middle, and under a line the Auto section, its four knobs on a 2 x 2 grid */
 .rack .mod-filter .kn { flex-direction: column; gap: 4px; min-width: 0; }
 .rack .mod-filter .kn-stack { align-items: center; width: 100%; }
@@ -889,14 +890,14 @@ body.mood-immersive .fab { display: none !important; }
           <option value="warm">Warm pad</option><option value="glass">Glass</option><option value="air">Air</option><option value="tape">Tape strings</option>
           <option value="strings">Strings</option><option value="choir">Choir</option><option value="organ">Soft organ</option><option value="bowed" selected>Bowed</option><option value="shimmer">Shimmer</option>
         </select></label>
-        <label class="kn-stack" for="chordMove"><span class="kn-label">Change</span><select id="chordMove" class="lcd lcd-select">
-          <option value="4" selected>Every 4 bars</option><option value="8">Every 8 bars</option><option value="16">Every 16 bars</option><option value="32">Every 32 bars</option><option value="drone">Drone</option>
-        </select></label>
+        <div class="kn-stack"><span class="kn-label">Octave</span><span class="oct-btns"><button class="auto-btn" id="chordOctDown" type="button" aria-label="Chords down an octave" title="Chords down an octave">−</button><output id="chordOctOut" class="lcd" aria-live="polite">0</output><button class="auto-btn" id="chordOctUp" type="button" aria-label="Chords up an octave" title="Chords up an octave">+</button></span></div>
         </div>
         <div class="chord-knobs mod-knobs chord-filter">
         <div class="kn"><input class="kn-native" id="chordTone" type="range" min="0" max="100" step="1" value="100" data-label="Filter"><span class="kn-stack"><output id="chordToneOut" class="lcd">16k</output></span></div>
         <div class="kn-stack"><span class="kn-label">Auto</span><button class="auto-btn" id="chordAuto" type="button" aria-pressed="false" title="Sweep towards the moment the cities line up">Auto</button></div>
-        <div class="kn-stack"><span class="kn-label">Octave</span><span class="oct-btns"><button class="auto-btn" id="chordOctDown" type="button" aria-label="Chords down an octave" title="Chords down an octave">−</button><output id="chordOctOut" class="lcd" aria-live="polite">0</output><button class="auto-btn" id="chordOctUp" type="button" aria-label="Chords up an octave" title="Chords up an octave">+</button></span></div>
+        <label class="kn-stack" for="chordMove"><span class="kn-label">Change</span><select id="chordMove" class="lcd lcd-select">
+          <option value="4" selected>4 bars</option><option value="8">8 bars</option><option value="16">16 bars</option><option value="32">32 bars</option><option value="drone">Drone</option>
+        </select></label>
         </div>
         <span class="groove-auto-note" id="chordAutoNote"></span>
       </div>
