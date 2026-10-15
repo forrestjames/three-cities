@@ -168,29 +168,41 @@ main { max-width: 1240px; margin: 0 auto; padding: 0 16px 80px; display: flex; f
 .gv-send { width: 18px; height: 18px; flex: none; border-radius: 50%; border: 1px solid var(--line); background: none; color: var(--ink-faint);
   font: inherit; font-size: 8px; letter-spacing: 0; line-height: 1; padding: 0; cursor: pointer; transition: background 0.2s, color 0.2s, border-color 0.2s; }
 .gv-send:hover { border-color: var(--ink-dim); color: var(--ink-dim); }
-.gv-lvl { -webkit-appearance: none; appearance: none; width: 34px; min-width: 34px; max-width: 34px; height: 14px; flex: 0 0 34px; margin: 0; padding: 0; background: none; cursor: pointer; opacity: 0.75; }
+.gv-lvl { -webkit-appearance: none; appearance: none; width: 48px; min-width: 48px; max-width: 48px; height: 16px; flex: 0 0 48px; margin: 0; padding: 0; background: none; cursor: pointer; opacity: 0.8; }
 .gv-lvl:hover, .gv-lvl:focus-visible { opacity: 1; }
-.gv-lvl::-webkit-slider-runnable-track { height: 2px; background: rgba(243,236,230,0.3); border-radius: 1px; }
-.gv-lvl::-webkit-slider-thumb { -webkit-appearance: none; width: 8px; height: 8px; margin-top: -3px; border-radius: 50%; background: #ffd98a; border: 0; }
-.gv-lvl::-moz-range-track { height: 2px; background: rgba(243,236,230,0.3); border-radius: 1px; }
-.gv-lvl::-moz-range-thumb { width: 8px; height: 8px; border-radius: 50%; background: #ffd98a; border: 0; }
+.gv-lvl::-webkit-slider-runnable-track { height: 3px; background: rgba(243,236,230,0.3); border-radius: 2px; }
+.gv-lvl::-webkit-slider-thumb { -webkit-appearance: none; width: 10px; height: 10px; margin-top: -3.5px; border-radius: 50%; background: #ffd98a; border: 0; }
+.gv-lvl::-moz-range-track { height: 3px; background: rgba(243,236,230,0.3); border-radius: 2px; }
+.gv-lvl::-moz-range-thumb { width: 10px; height: 10px; border-radius: 50%; background: #ffd98a; border: 0; }
 .gv-cell .gv-name { min-width: 40px; }
 .gv-send[aria-pressed="true"] { background: #ffd98a; border-color: #ffd98a; color: var(--ground); }
 @media (pointer: coarse) { .gv-send { width: 24px; height: 24px; font-size: 9px; } }
 .gv-name[aria-pressed="true"] { opacity: 0.6; text-decoration: line-through; text-decoration-thickness: 1px; }
 .groove-grid.mute-kick i[data-r="kick"], .groove-grid.mute-snare i[data-r="snare"], .groove-grid.mute-hat i[data-r="hat"], .groove-grid.mute-rim i[data-r="rim"] { opacity: 0.25; }
 .groove-controls { display: grid; grid-template-columns: minmax(0, 1fr); gap: 14px; align-items: start; }
-.groove-top { display: flex; flex-wrap: wrap; align-items: flex-start; gap: 14px 0; }
-.groove-top > label { width: 170px; flex: 0 0 auto; }
-.groove-vc { display: flex; align-items: flex-start; gap: 22px; margin-left: 22px; padding-left: 22px; border-left: 1px solid rgba(255,255,255,0.07); }
+.groove-controls { grid-template-columns: minmax(0, 262px) auto; column-gap: 22px; row-gap: 16px; justify-content: start; }
+.groove-top { grid-column: 1; grid-row: 1; min-width: 0; }
+.groove-top > label { width: 100%; }
+.groove-vc { grid-column: 2; grid-row: 1 / span 2; display: flex; flex-direction: column; gap: 6px; min-width: 0; padding-left: 18px; padding-right: 12px; border-left: 1px solid rgba(255,255,255,0.07); }
+.groove-vc-title { font-size: 11px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--ink-dim); line-height: 1.2; }
+.groove-vc-knobs { display: flex; align-items: flex-start; gap: 14px; }
 .groove-vc .kn { flex: 0 0 auto; }
 .groove-controls > label, .groove-controls > .kn { min-width: 0; max-width: 100%; }
 .groove-filter { display: flex; flex-direction: column; align-items: flex-start; gap: 6px; min-width: 0; }
-.groove-dials { grid-column: 1 / -1; display: flex; flex-wrap: wrap; align-items: flex-start; gap: 18px 22px; }
+.groove-dials { grid-column: 1; grid-row: 2; display: flex; flex-wrap: wrap; align-items: flex-start; gap: 18px 16px; min-width: 0; }
 .groove-filter .auto-btn { margin-left: 2px; }
 .groove-controls input[type="range"] { max-width: 100%; }
-.groove-controls .groove-auto-note { grid-column: 1 / -1; }
-@media (max-width: 1100px) { .groove-controls { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+.groove-controls .groove-auto-note { grid-column: 1 / -1; grid-row: 3; }
+@media (max-width: 1180px) {
+  .groove-controls { grid-template-columns: minmax(0, 1fr); }
+  .groove-top, .groove-vc, .groove-dials { grid-column: 1; grid-row: auto; }
+  .groove-vc { padding-left: 0; border-left: 0; padding-top: 14px; border-top: 1px solid rgba(255,255,255,0.07); }
+}
+@media (max-width: 760px) {
+  .groove-controls { grid-template-columns: minmax(0, 1fr); }
+  .groove-top, .groove-vc, .groove-dials { grid-column: 1; grid-row: auto; }
+  .groove-vc { padding-left: 0; border-left: 0; padding-top: 14px; border-top: 1px solid rgba(255,255,255,0.07); }
+}
 .groove-controls label { display: flex; flex-direction: column; gap: 6px; font-size: 11px; text-transform: uppercase; letter-spacing: 0.14em; color: var(--ink-dim); }
 .groove-controls select { min-height: 36px; background: rgba(16,8,6,0.6); }
 .groove-controls input[type="range"] { width: 100%; min-width: 0; accent-color: #ffd98a; }
@@ -199,7 +211,7 @@ main { max-width: 1240px; margin: 0 auto; padding: 0 16px 80px; display: flex; f
 .auto-btn { background: none; border: 1px solid var(--line); padding: 2px 8px; min-height: 22px; cursor: pointer; font-size: 10px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--ink-faint); border-radius: 11px; }
 .auto-btn[aria-pressed="true"] { color: var(--ground); background: #ffd98a; border-color: #ffd98a; }
 .groove-auto-note { font-size: 11px; color: var(--ink-faint); letter-spacing: 0.04em; grid-column: 1 / -1; min-height: 1.4em; }
-@media (max-width: 760px) { .groove-body { grid-template-columns: minmax(0, 1fr); } .groove-grid { grid-template-columns: 140px repeat(16, minmax(0, 1fr)); gap: 2px; } .gv-cell { gap: 3px; } .gv-lvl { width: 24px; min-width: 24px; max-width: 24px; flex-basis: 24px; } }
+@media (max-width: 760px) { .groove-body { grid-template-columns: minmax(0, 1fr); } .groove-grid { grid-template-columns: 140px repeat(16, minmax(0, 1fr)); gap: 2px; } .gv-cell { gap: 3px; } .gv-lvl { width: 36px; min-width: 36px; max-width: 36px; flex-basis: 36px; } }
 .gv { display: flex; align-items: center; justify-content: space-between; gap: 4px; background: none; border: 0; padding: 0 4px 0 0; cursor: pointer; font: inherit; letter-spacing: inherit; text-transform: inherit; color: inherit; min-height: 22px; }
 .gv-rev { font-size: 9px; padding: 1px 5px; border: 1px solid var(--line); border-radius: 8px; color: var(--ink-faint); }
 .gv[aria-pressed="true"] .gv-rev { background: #ffd98a; border-color: #ffd98a; color: var(--ground); }
@@ -950,7 +962,10 @@ body.mood-immersive .fab { display: none !important; }
       <div class="groove-controls">
         <div class="groove-top">
           <label>Kit <select id="grooveKit"><option value="minimal" selected>Minimal</option><option value="soft">Soft</option><option value="lofi">Lo-fi</option><option value="808">808</option><option value="jazz">Jazz</option><option value="cr78">CR-78</option><option value="orchestra">Orchestra</option><option value="cm32">CM-64/32L</option><option value="room">Room</option><option value="brush">Brush</option><option value="felt">Felt</option><option value="mallet">Mallets</option><option value="rain">Rain</option><option value="techno">Minimal techno</option></select></label>
-          <div class="groove-vc">
+        </div>
+        <div class="groove-vc">
+          <span class="groove-vc-title">Volume &amp; chance</span>
+          <div class="groove-vc-knobs">
           <div class="kn"><input class="kn-native" id="grooveVol" type="range" min="0" max="100" value="40" data-label="Volume" aria-label="Rhythm section volume"><span class="kn-stack"><output id="grooveVolOut" class="lcd">40</output></span></div>
           <div class="kn" title="How likely each drum hit is to play. Lower it and the beat thins out at random"><input class="kn-native" id="grooveChance" type="range" min="0" max="100" value="100" data-label="Chance" aria-label="Rhythm section chance"><span class="kn-stack"><output id="grooveChanceOut" class="lcd">100</output></span></div>
           </div>
