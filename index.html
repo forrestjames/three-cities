@@ -878,12 +878,15 @@ body.mood-immersive .fab { display: none !important; }
       <div class="scale-kb" id="scaleKb" role="img" aria-label="The notes of the scale on a keyboard"></div>
       <div class="scale-legend"><span><i class="lg-root"></i>Key</span><span><i class="lg-scale"></i>Scale</span><span><i class="lg-chord"></i>Chord now</span></div>
       <div class="chord-sec">
-        <div class="sub-head"><span class="sub-name">Chords</span><button class="info" type="button" aria-label="How Chords works" data-tip="A slow bed of chords underneath the cities, from the same progression their melodies lean on: a new chord every four bars, each one swelling in and fading as the next arrives. Switch it on with the lamp, set how loud it sits with the knob, and pick a pad sound. As the cities fall asleep it gets darker and quieter too."></button><button class="pedal-led" type="button" id="chordOn" aria-pressed="false" aria-label="Chords on" title="Chord bed on or off"></button></div>
+        <div class="sub-head"><span class="sub-name">Chords</span><button class="info" type="button" aria-label="How Chords works" data-tip="A slow bed of chords underneath the cities, from the same progression their melodies lean on: a new chord every four, eight, sixteen or thirty-two bars, each one swelling in and fading as the next arrives. Drone holds the home chord the whole time. Switch it on with the lamp, set how loud it sits with the knob, and pick a pad sound. As the cities fall asleep it gets darker and quieter too."></button><button class="pedal-led" type="button" id="chordOn" aria-pressed="false" aria-label="Chords on" title="Chord bed on or off"></button></div>
         <div class="chord-knobs mod-knobs">
         <div class="kn"><input class="kn-native" id="chordLevel" type="range" min="0" max="100" step="1" value="40" data-label="Level"><span class="kn-stack"><output id="chordLevelOut" class="lcd">40</output></span></div>
         <label class="kn-stack" for="chordSound"><span class="kn-label">Sound</span><select id="chordSound" class="lcd lcd-select">
           <option value="warm">Warm pad</option><option value="glass">Glass</option><option value="air">Air</option><option value="tape">Tape strings</option>
           <option value="strings">Strings</option><option value="choir">Choir</option><option value="organ">Soft organ</option><option value="bowed" selected>Bowed</option><option value="shimmer">Shimmer</option>
+        </select></label>
+        <label class="kn-stack" for="chordMove"><span class="kn-label">Change</span><select id="chordMove" class="lcd lcd-select">
+          <option value="4" selected>Every 4 bars</option><option value="8">Every 8 bars</option><option value="16">Every 16 bars</option><option value="32">Every 32 bars</option><option value="drone">Drone</option>
         </select></label>
         </div>
       </div>
@@ -4021,7 +4024,7 @@ body.mood-immersive .fab { display: none !important; }
       clockTick(tick, nextTime);
       if (tick % 8 === 0) beatTimes.push(nextTime);
       if (tick % (32 * 4) === 0 && HARM.prog) HARM.root = HARM.prog[(tick / (32 * 4)) % HARM.prog.length];   // a new chord every 4 bars
-      if (tick % (32 * 4) === 0) chordBed(nextTime);                                                            // and the bed moves with it
+      if (tick % (32 * (CHORD.drone ? 1024 : CHORD.bars)) === 0) chordBed(nextTime, chordRootAt(tick));       // and the bed moves with it
       if (tick % (32 * 2) === 0 && tick) sampleShift(tick / 32);
       if (tick % Math.max(32, DJL.beats * 8) === 0) djLfoSync(nextTime);                                      // the filter LFO starts each cycle on the beat                                                // samples move on, on even bars
       nextTime += tickDur;
@@ -4200,7 +4203,7 @@ body.mood-immersive .fab { display: none !important; }
   // Off by default. Each chord swells in over a couple of seconds, holds for its four bars and fades as the next arrives.
   // Root, third and fifth of the current chord in the shared scale, with the root again an octave below.
   // As the cities fall asleep the bed gets darker and quieter, like the rest of the piece.
-  const CHORD = { on: false, level: 0.4, bus: null, voices: [], sound: "bowed" };
+  const CHORD = { on: false, level: 0.4, bus: null, voices: [], sound: "bowed", bars: 4, drone: false };
   // The chord bed's sounds. Each one builds a single held note into "out" and returns its sources so they can be stopped.
   // bright scales the bed's filter (which darkens as the cities sleep), gain evens out the levels, attack and release are in seconds.
   const padOsc = (type, f, out, t, end, gain = 1, det = 0) => {
@@ -4268,9 +4271,14 @@ body.mood-immersive .fab { display: none !important; }
     }
     return CHORD.bus;
   }
-  function chordBed(t) {
+  // the bed's chord at a tick: the shared progression, one chord per CHORD.bars bars; a drone sits on the home chord
+  function chordRootAt(tk) {
+    if (CHORD.drone || !HARM.prog) return 0;
+    return HARM.prog[Math.floor(tk / (32 * CHORD.bars)) % HARM.prog.length];
+  }
+  function chordBed(t, root = CHORD.drone ? 0 : (HARM.root || 0)) {
     if (!CHORD.on || !ac || CHORD.level <= 0) return;
-    const n = scale.length, root = HARM.root || 0, len = 32 * 4 * tickDur;
+    const n = scale.length, len = 32 * (CHORD.drone ? 1024 : CHORD.bars) * tickDur;   // a drone is held for 1024 bars, then re-armed
     const ready = cities.filter(c => c.w), sl = ready.length ? ready.reduce((a, c) => a + sleepOf(c).depth, 0) / ready.length : 0;
     const k = keyRoot > 6 ? keyRoot - 12 : keyRoot;
     const note = d => 48 + k + scale[((d % n) + n) % n] + 12 * Math.floor(d / n);
@@ -4303,7 +4311,8 @@ body.mood-immersive .fab { display: none !important; }
       else { chordMidiOff(ac.currentTime); CHORD.voices.forEach(v => { v.g.gain.cancelScheduledValues(ac.currentTime); v.g.gain.setTargetAtTime(0, ac.currentTime, 0.8); v.stop(ac.currentTime + 4); }); }
     });
     lvl.addEventListener("input", sync); sync();
-    document.getElementById("chordSound").addEventListener("change", e => { CHORD.sound = e.target.value; if (CHORD.on && playing) chordBed(ac.currentTime + 0.05); }); }
+    document.getElementById("chordSound").addEventListener("change", e => { CHORD.sound = e.target.value; if (CHORD.on && playing) chordBed(ac.currentTime + 0.05); });
+    document.getElementById("chordMove").addEventListener("change", e => { const v = e.target.value; CHORD.drone = v === "drone"; if (!CHORD.drone) CHORD.bars = Number(v); if (CHORD.on && playing) chordBed(ac.currentTime + 0.05); }); }
   const playBtn = document.getElementById("play");
   // ---- welcome for a shared link: whose cities, where they are, one big tap to start
   setTimeout(function welcome() {   // after the rest of the page is set up, before the first paint
@@ -5291,7 +5300,7 @@ body.mood-immersive .fab { display: none !important; }
   const MIX_GLOBAL = { key: "k", scale: "sc", tempo: "t", volume: "V", djFilter: "f", grooveOn: "g", grooveKit: "gk", grooveVol: "gv", grooveTone: "gt", grooveAuto: "ga", grooveChance: "gc",
     "gm-kick": "mk", "gm-snare": "ms", "gm-hat": "mh", "gm-rim": "mr",
     "gh-kick": "hk", "gh-snare": "hs", "gh-hat": "hh", "gh-rim": "hr", "gd-kick": "dk", "gd-snare": "ds", "gd-hat": "dh", "gd-rim": "dr", hallOn: "h", fxRevLevel: "hl", fxRevDecay: "hd", fxRevPre: "hp", fxRevTone: "ht",
-    fxRevType: "hy", delayOn: "e", fxStyle: "es", fxTime: "et", fxDelay: "el", fxEchoes: "ee", fxDelTone: "eo", fxWobble: "ew", moodDeep: "q", unit: "u", chordOn: "cb", chordLevel: "cv", chordSound: "cs", djAuto: "fa", djMove: "fm", djLfoRate: "fr", djLfoAmt: "fl" };
+    fxRevType: "hy", delayOn: "e", fxStyle: "es", fxTime: "et", fxDelay: "el", fxEchoes: "ee", fxDelTone: "eo", fxWobble: "ew", moodDeep: "q", unit: "u", chordOn: "cb", chordLevel: "cv", chordSound: "cs", chordMove: "cm", djAuto: "fa", djMove: "fm", djLfoRate: "fr", djLfoAmt: "fl" };
   const shortKey = k => {
     if (MIX_GLOBAL[k]) return MIX_GLOBAL[k];
     let m = k.match(/^(boston|copenhagen|london)-(\w+)$/); if (m && MIX_PART[m[2]]) return MIX_CITY[m[1]] + MIX_PART[m[2]];
