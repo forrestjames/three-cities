@@ -180,28 +180,25 @@ main { max-width: 1240px; margin: 0 auto; padding: 0 16px 80px; display: flex; f
 .gv-name[aria-pressed="true"] { opacity: 0.6; text-decoration: line-through; text-decoration-thickness: 1px; }
 .groove-grid.mute-kick i[data-r="kick"], .groove-grid.mute-snare i[data-r="snare"], .groove-grid.mute-hat i[data-r="hat"], .groove-grid.mute-rim i[data-r="rim"] { opacity: 0.25; }
 .groove-controls { display: grid; grid-template-columns: minmax(0, 1fr); gap: 14px; align-items: start; }
-.groove-controls { grid-template-columns: minmax(0, 262px) auto; column-gap: 22px; row-gap: 16px; justify-content: start; }
-.groove-top { grid-column: 1; grid-row: 1; min-width: 0; }
+.groove-controls { grid-template-columns: minmax(0, 1fr); column-gap: 22px; row-gap: 16px; justify-content: start; }
+.groove-top { grid-column: 1 / -1; min-width: 0; }
 .groove-top > label { width: 100%; }
-.groove-vc { grid-column: 2; grid-row: 1 / span 2; display: flex; flex-direction: column; gap: 6px; min-width: 0; padding-left: 18px; padding-right: 12px; border-left: 1px solid rgba(255,255,255,0.07); }
+.groove-row { grid-column: 1 / -1; display: flex; align-items: flex-start; min-width: 0; }
+.groove-vc, .groove-fx { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+.groove-vc { padding-right: 22px; }
+.groove-fx { padding-left: 22px; border-left: 1px solid rgba(255,255,255,0.07); }
 .groove-vc-title { font-size: 11px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--ink-dim); line-height: 1.2; }
-.groove-vc-knobs { display: flex; align-items: flex-start; gap: 14px; }
+.groove-vc-knobs, .groove-dials { display: flex; align-items: flex-start; gap: 14px; min-width: 0; }
 .groove-vc .kn { flex: 0 0 auto; }
 .groove-controls > label, .groove-controls > .kn { min-width: 0; max-width: 100%; }
 .groove-filter { display: flex; flex-direction: column; align-items: flex-start; gap: 6px; min-width: 0; }
-.groove-dials { grid-column: 1; grid-row: 2; display: flex; flex-wrap: wrap; align-items: flex-start; gap: 18px 16px; min-width: 0; }
 .groove-filter .auto-btn { margin-left: 2px; }
 .groove-controls input[type="range"] { max-width: 100%; }
-.groove-controls .groove-auto-note { grid-column: 1 / -1; grid-row: 3; }
-@media (max-width: 1180px) {
-  .groove-controls { grid-template-columns: minmax(0, 1fr); }
-  .groove-top, .groove-vc, .groove-dials { grid-column: 1; grid-row: auto; }
-  .groove-vc { padding-left: 0; border-left: 0; padding-top: 14px; border-top: 1px solid rgba(255,255,255,0.07); }
-}
+.groove-controls .groove-auto-note { grid-column: 1 / -1; }
 @media (max-width: 760px) {
-  .groove-controls { grid-template-columns: minmax(0, 1fr); }
-  .groove-top, .groove-vc, .groove-dials { grid-column: 1; grid-row: auto; }
-  .groove-vc { padding-left: 0; border-left: 0; padding-top: 14px; border-top: 1px solid rgba(255,255,255,0.07); }
+  .groove-row { flex-direction: column; gap: 16px; }
+  .groove-fx { padding-left: 0; border-left: 0; padding-top: 14px; border-top: 1px solid rgba(255,255,255,0.07); }
+  .groove-vc { padding-right: 0; }
 }
 .groove-controls label { display: flex; flex-direction: column; gap: 6px; font-size: 11px; text-transform: uppercase; letter-spacing: 0.14em; color: var(--ink-dim); }
 .groove-controls select { min-height: 36px; background: rgba(16,8,6,0.6); }
@@ -963,6 +960,7 @@ body.mood-immersive .fab { display: none !important; }
         <div class="groove-top">
           <label>Kit <select id="grooveKit"><option value="minimal" selected>Minimal</option><option value="soft">Soft</option><option value="lofi">Lo-fi</option><option value="808">808</option><option value="jazz">Jazz</option><option value="cr78">CR-78</option><option value="orchestra">Orchestra</option><option value="cm32">CM-64/32L</option><option value="room">Room</option><option value="brush">Brush</option><option value="felt">Felt</option><option value="mallet">Mallets</option><option value="rain">Rain</option><option value="techno">Minimal techno</option></select></label>
         </div>
+        <div class="groove-row">
         <div class="groove-vc">
           <span class="groove-vc-title">Volume &amp; chance</span>
           <div class="groove-vc-knobs">
@@ -970,6 +968,8 @@ body.mood-immersive .fab { display: none !important; }
           <div class="kn" title="How likely each drum hit is to play. Lower it and the beat thins out at random"><input class="kn-native" id="grooveChance" type="range" min="0" max="100" value="100" data-label="Chance" aria-label="Rhythm section chance"><span class="kn-stack"><output id="grooveChanceOut" class="lcd">100</output></span></div>
           </div>
         </div>
+        <div class="groove-fx">
+          <span class="groove-vc-title">Effects</span>
         <div class="groove-dials">
           <div class="groove-filter">
           <div class="kn"><input class="kn-native" id="grooveTone" type="range" min="0" max="100" value="55" data-label="Filter" aria-label="Rhythm section filter"><span class="kn-stack"><output id="grooveToneOut" class="lcd">2.4k</output></span></div>
@@ -977,6 +977,8 @@ body.mood-immersive .fab { display: none !important; }
           </div>
         <div class="kn"><input class="kn-native" id="grooveRev" type="range" min="0" max="100" value="60" data-label="Reverb" aria-label="Rhythm section reverb send" title="How much of the drums go to the hall. Each drum's R switch sends it"><span class="kn-stack"><output id="grooveRevOut" class="lcd">60</output></span></div>
         <div class="kn"><input class="kn-native" id="grooveDel" type="range" min="0" max="100" value="35" data-label="Delay" aria-label="Rhythm section delay send" title="How much of the drums go to the echo. Each drum's D switch sends it"><span class="kn-stack"><output id="grooveDelOut" class="lcd">35</output></span></div>
+        </div>
+        </div>
         </div>
         <span class="groove-auto-note" id="grooveAutoNote"></span>
       </div>
