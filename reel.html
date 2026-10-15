@@ -473,10 +473,14 @@ async function scan() {
   $("status").textContent = `Checked ${rows.length} places at ${new Date().toTimeString().slice(0, 5)}.`;
   pickAuto(); drawThemes(); choose(autoId);
 }
-// Pick for me: today's group, rotating through its themes week by week, skipping any with nothing to show
+// Pick for me: today's group, shuffled at random once per day (same result all day), skipping any with nothing to show
 function pickAuto() {
-  const wk = Math.floor(Date.now() / (7 * 864e5)), grp = WEEK[new Date().getDay()], inGroup = THEMES.filter(t => t.group === grp);
-  const order = inGroup.map((_, k) => inGroup[(wk + k) % inGroup.length]).concat(THEMES);
+  const d = new Date(), key = d.getFullYear() * 10000 + (d.getMonth() + 1) * 100 + d.getDate();
+  let s = key >>> 0; const rnd = () => { s = (s + 0x6D2B79F5) >>> 0; let t = s; t = Math.imul(t ^ (t >>> 15), t | 1); t ^= t + Math.imul(t ^ (t >>> 7), t | 61); return ((t ^ (t >>> 14)) >>> 0) / 4294967296; };
+  const grp = WEEK[d.getDay()], inGroup = THEMES.filter(t => t.group === grp);
+  const shuffled = inGroup.slice();
+  for (let i = shuffled.length - 1; i > 0; i--) { const j = Math.floor(rnd() * (i + 1)); [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]]; }
+  const order = shuffled.concat(THEMES);
   autoId = (order.find(t => safePick(t)) || THEMES[0]).id;
 }
 function safePick(t) { try { const s = t.pick(rows); return s && s.length === 3 ? s : null; } catch (e) { console.warn(t.id, e); return null; } }
