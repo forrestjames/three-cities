@@ -171,12 +171,13 @@ main { max-width: 1240px; margin: 0 auto; padding: 0 16px 80px; display: flex; f
 @media (pointer: coarse) { .gv-send { width: 24px; height: 24px; font-size: 9px; } }
 .gv-name[aria-pressed="true"] { opacity: 0.6; text-decoration: line-through; text-decoration-thickness: 1px; }
 .groove-grid.mute-kick i[data-r="kick"], .groove-grid.mute-snare i[data-r="snare"], .groove-grid.mute-hat i[data-r="hat"], .groove-grid.mute-rim i[data-r="rim"] { opacity: 0.25; }
-.groove-controls { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 14px; }
+.groove-controls { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; }
 .groove-controls .groove-auto-note { grid-column: 1 / -1; }
 @media (max-width: 1100px) { .groove-controls { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 .groove-controls label { display: flex; flex-direction: column; gap: 6px; font-size: 11px; text-transform: uppercase; letter-spacing: 0.14em; color: var(--ink-dim); }
 .groove-controls select { min-height: 36px; background: rgba(16,8,6,0.6); }
-.groove-controls input[type="range"] { width: 100%; accent-color: #ffd98a; }
+.groove-controls input[type="range"] { width: 100%; min-width: 0; accent-color: #ffd98a; }
+.groove-controls label { min-width: 0; }
 .groove-controls .row { display: flex; justify-content: space-between; align-items: center; }
 .auto-btn { background: none; border: 1px solid var(--line); padding: 2px 8px; min-height: 22px; cursor: pointer; font-size: 10px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--ink-faint); border-radius: 11px; }
 .auto-btn[aria-pressed="true"] { color: var(--ground); background: #ffd98a; border-color: #ffd98a; }
@@ -932,6 +933,8 @@ body.mood-immersive .fab { display: none !important; }
       <div class="groove-controls">
         <label>Kit <select id="grooveKit"><option value="minimal" selected>Minimal</option><option value="soft">Soft</option><option value="lofi">Lo-fi</option><option value="808">808</option><option value="jazz">Jazz</option><option value="cr78">CR-78</option><option value="felt">Felt</option><option value="mallet">Mallets</option><option value="rain">Rain</option><option value="techno">Minimal techno</option></select></label>
         <label>Volume <input id="grooveVol" type="range" min="0" max="100" value="40"></label>
+        <label title="How much of the drums go to the hall. Each drum's R switch sends it">Reverb <input id="grooveRev" type="range" min="0" max="100" value="60" aria-label="Rhythm section reverb send"></label>
+        <label title="How much of the drums go to the echo. Each drum's D switch sends it">Delay <input id="grooveDel" type="range" min="0" max="100" value="35" aria-label="Rhythm section delay send"></label>
         <label><span class="row">Filter <button class="auto-btn" id="grooveAuto" type="button" aria-pressed="false" title="Sweep towards the moment the cities line up">Auto</button></span><input id="grooveTone" type="range" min="0" max="100" value="55"></label>
         <label title="How likely each drum hit is to play. Lower it and the beat thins out at random">Chance <input id="grooveChance" type="range" min="0" max="100" value="100" aria-label="Rhythm section chance"></label>
         <span class="groove-auto-note" id="grooveAutoNote"></span>
@@ -3497,7 +3500,7 @@ body.mood-immersive .fab { display: none !important; }
   // cities hit together, the hats wherever any city hits, the rim where exactly one city plays alone,
   // and the snare is a Euclidean backbeat whose count rises with the gustiest city's wind.
   var GROOVE = { on: true, kit: "minimal", chance: 100, mute: { kick: false, snare: false, hat: false, rim: false },
-    send: { kick: { h: false, d: false }, snare: { h: false, d: false }, hat: { h: false, d: false }, rim: { h: false, d: false } }, vol: 0.4, tone: 0.55, rows: { kick: [], snare: [], hat: [], rim: [] }, step: -1, queue: [], bus: null, filter: null };
+    send: { kick: { h: false, d: false }, snare: { h: false, d: false }, hat: { h: false, d: false }, rim: { h: false, d: false } }, vol: 0.4, tone: 0.55, rows: { kick: [], snare: [], hat: [], rim: [] }, step: -1, queue: [], bus: null, filter: null, rev: 0.6, del: 0.35 };
   function buildGroove() {
     if (!GROOVE) return;
     const ready = cities.filter(c => c.pattern && c.pattern.length);
@@ -3553,8 +3556,8 @@ body.mood-immersive .fab { display: none !important; }
     GROOVE.bus = ac.createGain();
     GROOVE.filter = ac.createBiquadFilter(); GROOVE.filter.type = "lowpass"; GROOVE.filter.Q.value = 0.5;
     GROOVE.bus.connect(GROOVE.filter).connect(master);   // dry unless a drum's own H or D switch is on
-    GROOVE.hallSend = ac.createGain(); GROOVE.hallSend.gain.value = 0.6; GROOVE.hallSend.connect(reverb);
-    GROOVE.delaySend = ac.createGain(); GROOVE.delaySend.gain.value = 0.35; GROOVE.delaySend.connect(delay);
+    GROOVE.hallSend = ac.createGain(); GROOVE.hallSend.gain.value = GROOVE.rev; GROOVE.hallSend.connect(reverb);
+    GROOVE.delaySend = ac.createGain(); GROOVE.delaySend.gain.value = GROOVE.del; GROOVE.delaySend.connect(delay);
     applyGroove();
   }
   function grooveSleep() {
@@ -3857,6 +3860,8 @@ body.mood-immersive .fab { display: none !important; }
     document.getElementById("grooveKit").addEventListener("change", e => { GROOVE.kit = e.target.value; drawGrooveGrid(); });
     document.getElementById("grooveVol").addEventListener("input", e => { GROOVE.vol = e.target.value / 100; applyGroove(); });
     document.getElementById("grooveTone").addEventListener("input", e => { GROOVE.tone = e.target.value / 100; applyGroove(); });
+    [["grooveRev", "rev", "hallSend"], ["grooveDel", "del", "delaySend"]].forEach(([id, key, node]) => document.getElementById(id).addEventListener("input", e => {
+      GROOVE[key] = e.target.value / 100; if (GROOVE[node]) GROOVE[node].gain.setTargetAtTime(GROOVE[key], ac.currentTime, 0.1); }));
     document.getElementById("grooveChance").addEventListener("input", e => { GROOVE.chance = Number(e.target.value); });
     const auto = document.getElementById("grooveAuto"), note = document.getElementById("grooveAutoNote");
     auto.addEventListener("click", () => {
@@ -5350,7 +5355,7 @@ body.mood-immersive .fab { display: none !important; }
   // Short, readable mix codes for links: "1s~felt_k~3_t~84" instead of a long base64 blob.
   // Cities are 1, 2 and 3; everything else has a one or two letter name. Unknown names pass through as they are.
   const MIX_CITY = { boston: "1", copenhagen: "2", london: "3" }, MIX_PART = { sound: "s", vol: "v", src: "w", rate: "r", dens: "d", chance: "p", mute: "m", sendRev: "R", sendDel: "D", oct: "o" };
-  const MIX_GLOBAL = { key: "k", scale: "sc", tempo: "t", volume: "V", djFilter: "f", grooveOn: "g", grooveKit: "gk", grooveVol: "gv", grooveTone: "gt", grooveAuto: "ga", grooveChance: "gc",
+  const MIX_GLOBAL = { key: "k", scale: "sc", tempo: "t", volume: "V", djFilter: "f", grooveOn: "g", grooveKit: "gk", grooveVol: "gv", grooveTone: "gt", grooveAuto: "ga", grooveChance: "gc", grooveRev: "gr", grooveDel: "gd",
     "gm-kick": "mk", "gm-snare": "ms", "gm-hat": "mh", "gm-rim": "mr",
     "gh-kick": "hk", "gh-snare": "hs", "gh-hat": "hh", "gh-rim": "hr", "gd-kick": "dk", "gd-snare": "ds", "gd-hat": "dh", "gd-rim": "dr", hallOn: "h", fxRevLevel: "hl", fxRevDecay: "hd", fxRevPre: "hp", fxRevTone: "ht",
     fxRevType: "hy", delayOn: "e", fxStyle: "es", fxTime: "et", fxDelay: "el", fxEchoes: "ee", fxDelTone: "eo", fxWobble: "ew", moodDeep: "q", unit: "u", chordOn: "cb", chordLevel: "cv", chordSound: "cs", chordMove: "cm", chordTone: "ct", chordAuto: "ca", chordRev: "cr", chordDel: "cd", djAuto: "fa", djMove: "fm", djLfoRate: "fr", djLfoAmt: "fl" };
