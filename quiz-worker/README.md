@@ -1,13 +1,16 @@
-# Three Cities quiz server
+# Three Cities quiz and visit counts server
 
-A tiny Cloudflare Worker with a D1 database. It keeps two counts per question and city
-(how often the city was offered, how often it was picked). Nothing else: no IPs, no ids, no times.
+A tiny Cloudflare Worker with a D1 database. It keeps two kinds of anonymous counts:
+- The quiz: two counts per question and city (how often the city was offered, how often it was picked).
+- Visits: one counter per day, kind and value (visits, country, source, device, how long visits last, cities, sounds, kits, shares and so on), shown on /admin under Visitors.
+
+Nothing else: no IPs, no ids, no cookies, no times per event.
 
 ## Set it up in the Cloudflare dashboard (about 10 minutes)
 
 1. **Make the database.** Storage & Databases → D1 → Create. Name it `three-cities-quiz`.
-2. **Make the table.** Open the database → Console. Paste the one line in `schema.sql` and run it.
-   (One row per question and city: q, city, shown, picked. No people, no times, no addresses.)
+2. **Make the tables.** Open the database → Console. Paste the lines in `schema.sql` and run them.
+   (`tally`: one row per question and city. `events`: one row per day, kind and value. No people, no times, no addresses.)
 3. **Make the Worker.** Compute (Workers) → Create → Start with Hello World. Name it `three-cities-quiz` and deploy.
 4. **Paste the code.** Edit code → replace everything with `worker.js` → Deploy.
 5. **Connect the database.** The Worker → Settings → Bindings → Add → D1 database.
@@ -24,11 +27,19 @@ A tiny Cloudflare Worker with a D1 database. It keeps two counts per question an
     wrangler d1 execute three-cities-quiz --remote --file schema.sql
     wrangler deploy
 
+## Adding the visit counts to a Worker you already set up
+
+1. Database → Console: run the `CREATE TABLE IF NOT EXISTS events …` line from `schema.sql`.
+2. The Worker → Edit code → replace everything with the new `worker.js` → Deploy.
+3. Open /admin. The Visitors section fills in as people visit. Your own visits: press "Don't count my own visits on this device" on /admin.
+
 ## Endpoints
 
 - `POST /answer` `{ "q": "food", "c": ["lisbon|portugal", "osaka|japan", "quito|ecuador"], "p": 0 }`
 - `GET /results?q=food&c=lisbon|portugal~osaka|japan~quito|ecuador`
 - `GET /top?q=food&min=20` the leaderboard for a question, handy for posts
+- `POST /e` a batch of anonymous visit events from the app, `{ "e": [["visit", "reddit.com"], ["city", "london"], ["stay", "30s"]] }`. Bots and other sites are ignored, and free text kinds are capped per day.
+- `GET /analytics?key=…&days=120` the daily counters, for /admin. Locked by the same key as /stats.
 - `GET /stats?key=…` everything, for /admin. Set a secret called `ADMIN_KEY` (Worker → Settings → Variables and Secrets → Add, type Secret) to lock it.
 
 The question ids live in both `worker.js` and `index.html` (QUIZ). Add new ones to both.

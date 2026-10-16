@@ -1,6 +1,7 @@
-// Three Cities quiz: anonymous counts only.
-// For each question and city it keeps two numbers: how often the city was offered, and how often it was picked.
-// No IP addresses, no device ids, no timestamps per answer, nothing that points back to a person.
+// Three Cities quiz and visit counts: anonymous counts only.
+// Quiz: for each question and city it keeps two numbers, how often the city was offered and how often it was picked.
+// Visits: one counter per day, kind and value (for example 2026-10-16 / city / london). Nothing is kept per person.
+// No IP addresses, no device ids, no cookies, no timestamps per event, nothing that points back to a person.
 // The quiz questions. The app shows the text; this only accepts these ids. Keep in step with QUIZ in index.html.
 const QUIZ = [
   ["visit-first", "Which one would you visit first?"], ["food", "Where do you think the food is best?"], ["wake-up", "Where would you like to wake up tomorrow?"],
@@ -27,6 +28,58 @@ async function tally(env, q, cities) {
   const rows = await env.DB.prepare(`SELECT city, shown, picked FROM tally WHERE q = ? AND city IN (?, ?, ?)`).bind(q, ...cities).all();
   const by = Object.fromEntries((rows.results || []).map(r => [r.city, { shown: r.shown, picked: r.picked }]));
   return cities.map(c => by[c] || { shown: 0, picked: 0 });
+}
+
+// ---------- visit counts: /e (collect) and /analytics (read, admin only) ----------
+// Every row is a daily counter: day, kind, key, n. The country comes from Cloudflare and is not stored with anything else.
+const STAY = new Set(["10s", "30s", "1m", "3m", "10m", "30m"]);
+const HEARD = new Set(["30s", "1m", "3m", "10m", "30m"]);
+const ACTS = new Set(["share-sheet", "share-copy", "record", "quiz-answer", "midi-out", "own-sound", "opened-shared-link", "chords-on", "mix-saved"]);
+// kinds the page may send. Free text ones (city names, sources) are capped per day so nobody can flood the table.
+const KINDS = { visit: null, listen: new Set(["start"]), stay: STAY, heard: HEARD, act: ACTS, city: "free", citypick: "free", sound: "free", soundpick: "free", kit: "free", chords: "free", scale: "free", tempo: "free" };
+const FREE_CAP = 400;
+const BOT = /bot|crawl|spider|headless|lighthouse|preview|facebookexternalhit|slurp|python|curl|wget|node-fetch|axios/i;
+const today = () => new Date().toLocaleDateString("en-CA", { timeZone: "Europe/London" });   // the day, in London
+const clean2 = s => String(s == null ? "" : s).normalize("NFC").toLowerCase().replace(/[\u0000-\u001f<>"`]/g, "").replace(/\s+/g, " ").trim().slice(0, 60);
+const deviceOf = ua => /ipad|tablet|playbook|silk|(android(?!.*mobile))/i.test(ua) ? "tablet" : /mobi|iphone|ipod|android/i.test(ua) ? "phone" : "computer";
+const originOk = req => { const o = req.headers.get("Origin") || ""; return ORIGINS.includes(o) || /^http:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(o); };
+
+async function collect(req, env) {
+  const text = await req.text();
+  if (text.length > 4000) return json(req, { error: "too big" }, 413);
+  let b; try { b = JSON.parse(text); } catch (e) { return json(req, { error: "bad json" }, 400); }
+  if (!originOk(req) || BOT.test(req.headers.get("User-Agent") || "")) return json(req, { ok: true, counted: 0 });   // a quiet yes: bots and other sites are simply not counted
+  const list = Array.isArray(b.e) ? b.e.slice(0, 40) : [];
+  const day = today(), add = new Map(), free = new Map();
+  const bump = (kind, key) => { if (!key) return; const k = kind + "\u0001" + key; add.set(k, (add.get(k) || 0) + 1); };
+  for (const ev of list) {
+    if (!Array.isArray(ev)) continue;
+    const kind = String(ev[0] || ""), key = clean2(ev[1]);
+    if (!(kind in KINDS)) continue;
+    if (kind === "visit") {   // one visit becomes a few counters: the visit, where from, which country, what kind of device
+      bump("visit", "all"); bump("src", key || "direct");
+      const c = (req.cf && req.cf.country) || "unknown"; bump("country", c === "XX" ? "unknown" : c);
+      bump("device", deviceOf(req.headers.get("User-Agent") || ""));
+      continue;
+    }
+    const allowed = KINDS[kind];
+    if (allowed === "free") { if (!key) continue; free.set(kind, true); bump(kind, key); }
+    else if (allowed && allowed.has(key)) bump(kind, key);
+  }
+  if (!add.size) return json(req, { ok: true, counted: 0 });
+  // free-text kinds (and src): refuse new values once a day already has plenty
+  const full = new Set();
+  for (const kind of [...free.keys(), "src"]) {
+    if (kind === "src" && !add.has("src")) continue;
+    const r = await env.DB.prepare(`SELECT COUNT(*) AS n FROM events WHERE day = ? AND kind = ?`).bind(day, kind).first();
+    if (r && r.n >= FREE_CAP) full.add(kind);
+  }
+  const up = env.DB.prepare(`INSERT INTO events (day, kind, key, n) VALUES (?, ?, ?, ?) ON CONFLICT (day, kind, key) DO UPDATE SET n = n + excluded.n`);
+  const stmts = [];
+  for (const [k, n] of add) { const [kind, key] = k.split("\u0001"); stmts.push({ kind, key, n }); }
+  const keep = stmts.filter(x => !full.has(x.kind));
+  if (keep.length) await env.DB.batch(keep.map(x => up.bind(day, x.kind, x.key, x.n)));
+  return json(req, { ok: true, counted: keep.length });
 }
 
 export default {
@@ -67,6 +120,18 @@ export default {
       if (env.ADMIN_KEY && url.searchParams.get("key") !== env.ADMIN_KEY) return json(req, { error: "wrong key" }, 401);
       const rows = await env.DB.prepare(`SELECT q, city, shown, picked FROM tally ORDER BY q, picked DESC LIMIT 20000`).all();
       return json(req, { questions: QUIZ, rows: rows.results || [], locked: !!env.ADMIN_KEY });
+    }
+
+    // one batch of anonymous visit events from the page: { e: [["visit", "reddit.com"], ["city", "london"], ["stay", "30s"]] }
+    if (url.pathname === "/e" && req.method === "POST") return collect(req, env);
+
+    // visit counts for the admin page: /analytics?key=…&days=120
+    if (url.pathname === "/analytics" && req.method === "GET") {
+      if (env.ADMIN_KEY && url.searchParams.get("key") !== env.ADMIN_KEY) return json(req, { error: "wrong key" }, 401);
+      const days = Math.max(1, Math.min(400, Number(url.searchParams.get("days")) || 120));
+      const from = new Date(Date.now() - days * 86400000).toLocaleDateString("en-CA", { timeZone: "Europe/London" });
+      const rows = await env.DB.prepare(`SELECT day, kind, key, n FROM events WHERE day >= ? ORDER BY day LIMIT 60000`).bind(from).all();
+      return json(req, { today: today(), from, rows: (rows.results || []).map(r => [r.day, r.kind, r.key, r.n]), locked: !!env.ADMIN_KEY });
     }
 
     if (url.pathname === "/") return json(req, { ok: true, service: "three-cities-quiz", questions: QUIZ.length });

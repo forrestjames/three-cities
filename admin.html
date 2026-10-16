@@ -61,6 +61,25 @@ button:hover { border-color: var(--ink); }
 .sc .acts .go { border-color: var(--ember); }
 .sc .done { font: 11px var(--mono); color: var(--ember); min-height: 1.3em; }
 .sgh { font: 500 12px var(--mono); letter-spacing: 0.14em; text-transform: uppercase; color: var(--ink); margin: 22px 0 0; }
+.vtiles { display: grid; grid-template-columns: repeat(auto-fill, minmax(136px, 1fr)); gap: 12px; margin-top: 14px; }
+.seg { display: inline-flex; border: 1px solid var(--faint); border-radius: 18px; overflow: hidden; }
+.seg button { border: 0; border-radius: 0; background: transparent; padding: 7px 14px; font-size: 12px; }
+.seg button[aria-pressed="true"] { background: var(--ember); color: #100806; }
+.chart { margin-top: 14px; padding: 14px 14px 8px; border-radius: 16px; background: var(--panel); border: 1px solid var(--faint); }
+.chart svg { width: 100%; height: auto; display: block; }
+.chart .lg { display: flex; gap: 16px; font: 11px var(--mono); color: var(--dim); margin-bottom: 6px; }
+.chart .lg i { display: inline-block; width: 10px; height: 10px; border-radius: 2px; margin-right: 6px; vertical-align: -1px; }
+.vg { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 14px; margin-top: 14px; }
+.vc { padding: 16px 18px; border-radius: 16px; background: var(--panel); border: 1px solid var(--faint); }
+.vc h3 { margin: 0 0 2px; font-weight: 400; font-size: 18px; letter-spacing: 0.04em; }
+.vc .sub { font: 11px var(--mono); color: var(--dim); margin-bottom: 10px; }
+.vr { display: grid; grid-template-columns: minmax(0, 1fr) 64px 92px; gap: 8px; align-items: center; padding: 3px 0; font-size: 15px; }
+.vr .c { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.vr .tr { height: 8px; border-radius: 4px; background: var(--faint); overflow: hidden; }
+.vr .tr i { display: block; height: 100%; background: var(--ember); border-radius: 4px; }
+.vr .p { font: 12px var(--mono); text-align: right; }
+.vr .p small { color: var(--dim); }
+.vnote { font: 12px var(--mono); color: var(--dim); margin-top: 10px; max-width: 760px; line-height: 1.6; }
 @media (max-width: 600px) { .qs { grid-template-columns: 1fr; } .row { grid-template-columns: 20px minmax(0, 1fr) 60px 56px; } }
 </style>
 </head>
@@ -85,6 +104,22 @@ button:hover { border-color: var(--ink); }
     <a class="page" href="https://claude.ai/code/artifact/3688992c-ef40-4375-acb2-f70b887b7474" target="_blank" rel="noopener"><b>Press and community plan</b><span>the Max, forum and press outreach doc</span></a>
   </div>
 
+  <h2>Visitors</h2>
+  <p class="hint">Anonymous daily counts from the app: no cookies, no addresses, nobody followed from visit to visit. A visit is one time someone opens the page. Days are London days.</p>
+  <div class="bar-row">
+    <input id="key" type="password" placeholder="Admin key, if you set one" autocomplete="off" size="26">
+    <button class="main" id="load" type="button">Load</button>
+    <span class="seg" id="gran" role="group" aria-label="Show by"><button type="button" data-g="day" aria-pressed="true">Days</button><button type="button" data-g="week" aria-pressed="false">Weeks</button><button type="button" data-g="month" aria-pressed="false">Months</button></span>
+    <label class="hint" for="vrange">Lists and tiles cover</label>
+    <select id="vrange"><option value="7">the last 7 days</option><option value="30" selected>the last 30 days</option><option value="90">the last 90 days</option><option value="400">everything</option></select>
+  </div>
+  <div class="note" id="vnote"></div>
+  <div class="vtiles" id="vtiles"></div>
+  <div class="chart" id="vchart"></div>
+  <div class="vg" id="vlists"></div>
+  <div class="vnote" id="vfoot"></div>
+  <div class="bar-row" style="margin-top:14px"><button type="button" id="notrack"></button></div>
+
   <h2>Social images</h2>
   <p class="hint">Solid backgrounds, ready to post. Save puts the file in your downloads. Copy puts the picture on your clipboard to paste into a post. On a phone, Save to Photos opens the share sheet.</p>
   <div class="bar-row"><a class="page" style="padding:9px 16px;border-radius:18px;display:inline-block" href="/social-images/three-cities-social-images.zip" download>Download all 12 (zip)</a></div>
@@ -93,8 +128,6 @@ button:hover { border-color: var(--ink); }
   <h2>City quiz</h2>
   <p class="hint">Every answer people have added, as counts. A city's score is how often it wins when it comes up, so a city offered 40 times and picked 30 times scores 75%.</p>
   <div class="bar-row">
-    <input id="key" type="password" placeholder="Admin key, if you set one" autocomplete="off" size="26">
-    <button class="main" id="load" type="button">Load results</button>
     <label class="hint" for="min">Only cities that came up at least</label>
     <select id="min"><option>1</option><option>3</option><option selected>5</option><option>10</option><option>20</option><option>50</option></select>
     <input id="find" type="search" placeholder="Find a city" size="16">
@@ -160,9 +193,9 @@ function draw() {
     box.appendChild(card);
   });
 }
-$("load").onclick = load;
+$("load").onclick = () => { load(); loadVisits(); };
 $("min").onchange = draw; $("find").oninput = draw;
-$("key").onkeydown = e => { if (e.key === "Enter") load(); };
+$("key").onkeydown = e => { if (e.key === "Enter") { load(); loadVisits(); } };
 $("csv").onclick = () => {
   if (!data) return;
   const lines = ["question,question_text,city,shown,picked,score"].concat(data.rows.map(r => [r.q, `"${(data.questions.find(q => q[0] === r.q) || [, ""])[1].replace(/"/g, '""')}"`, `"${r.city.replace(/"/g, '""')}"`, r.shown, r.picked, (r.picked / Math.max(1, r.shown)).toFixed(3)].join(",")));
@@ -170,6 +203,91 @@ $("csv").onclick = () => {
   a.download = `three-cities-quiz-${new Date().toISOString().slice(0, 10)}.csv`; a.click();
 };
 load();
+
+// ---------- visitors ----------
+let V = null, gran = "day";
+const EN = new Intl.DisplayNames(["en"], { type: "region" });
+const cap = t => String(t).replace(/(^|[\s(-])(\p{L})/gu, (m, a, b) => a + b.toUpperCase());
+const countryName = c => { try { return c === "unknown" ? "Unknown" : EN.of(c.toUpperCase()); } catch (e) { return c; } };
+const ACTNAME = { "share-copy": "Copied a share link", "share-sheet": "Used the share sheet", record: "Started a recording", "quiz-answer": "Answered a quiz question", "midi-out": "Turned on MIDI out", "own-sound": "Chose their own sound", "opened-shared-link": "Arrived by a shared link", "chords-on": "Turned chords on" };
+async function loadVisits() {
+  const key = $("key").value.trim();
+  $("vnote").textContent = "Loading…";
+  try {
+    const r = await fetch(`${API}/analytics?days=400${key ? "&key=" + encodeURIComponent(key) : ""}`);
+    const j = await r.json();
+    if (!r.ok) throw new Error(j.error || r.status);
+    V = j; drawVisits();
+    $("vnote").textContent = j.rows.length ? `Loaded ${new Date().toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" })}.` : "No visits counted yet. They start counting once the new version of the Worker is live.";
+  } catch (e) { $("vnote").textContent = "Couldn't load: " + e.message + (/404|not found/i.test(e.message) ? " (The Worker needs the new code and the events table first. See quiz-worker/README.md.)" : ""); }
+}
+const dayKey = d => d.toLocaleDateString("en-CA", { timeZone: "Europe/London" });
+const addDays = (iso, n) => { const d = new Date(iso + "T12:00:00Z"); d.setUTCDate(d.getUTCDate() + n); return d.toISOString().slice(0, 10); };
+const weekStart = iso => { const d = new Date(iso + "T12:00:00Z"), w = (d.getUTCDay() + 6) % 7; return addDays(iso, -w); };
+function sumBy(rows, kind, key) { let n = 0; rows.forEach(r => { if (r[1] === kind && (key == null || r[2] === key)) n += r[3]; }); return n; }
+function tally(rows, kind) { const m = new Map(); rows.forEach(r => { if (r[1] === kind) m.set(r[2], (m.get(r[2]) || 0) + r[3]); }); return [...m].sort((a, b) => b[1] - a[1]); }
+function drawVisits() {
+  if (!V) return;
+  const today = V.today, span = Number($("vrange").value), from = addDays(today, -(span - 1));
+  const inRange = V.rows.filter(r => r[0] >= from), visits = sumBy(inRange, "visit", "all");
+  const listens = sumBy(inRange, "listen", "start"), pc = (n, d) => d ? Math.round(100 * n / d) + "%" : "–";
+  // tiles
+  const last7 = V.rows.filter(r => r[0] >= addDays(today, -6)), todayRows = V.rows.filter(r => r[0] === today);
+  const shares = sumBy(inRange, "act", "share-copy") + sumBy(inRange, "act", "share-sheet");
+  const tiles = [["Visits today", sumBy(todayRows, "visit", "all")], ["Visits, last 7 days", sumBy(last7, "visit", "all")], ["Visits in range", visits],
+    ["Pressed play", pc(listens, visits)], ["Stayed a minute", pc(sumBy(inRange, "stay", "1m"), visits)], ["Listened 3 minutes", pc(sumBy(inRange, "heard", "3m"), visits)], ["Shared", shares]];
+  $("vtiles").innerHTML = ""; tiles.forEach(([l, v]) => { const d = document.createElement("div"); d.className = "stat"; d.innerHTML = "<b></b><span></span>"; d.querySelector("b").textContent = typeof v === "number" ? v.toLocaleString("en-GB") : v; d.querySelector("span").textContent = l; $("vtiles").appendChild(d); });
+  // chart: visits and plays per day, week or month
+  const periods = [];
+  if (gran === "day") for (let i = 29; i >= 0; i--) periods.push(addDays(today, -i));
+  else if (gran === "week") for (let i = 15; i >= 0; i--) periods.push(addDays(weekStart(today), -7 * i));
+  else { const y = +today.slice(0, 4), m = +today.slice(5, 7); for (let i = 11; i >= 0; i--) { const t = new Date(Date.UTC(y, m - 1 - i, 1)); periods.push(t.toISOString().slice(0, 7)); } }
+  const bucket = d => gran === "day" ? d : gran === "week" ? weekStart(d) : d.slice(0, 7);
+  const vis = new Map(periods.map(p => [p, 0])), plays = new Map(periods.map(p => [p, 0]));
+  V.rows.forEach(r => { const b = bucket(r[0]); if (!vis.has(b)) return; if (r[1] === "visit" && r[2] === "all") vis.set(b, vis.get(b) + r[3]); if (r[1] === "listen") plays.set(b, plays.get(b) + r[3]); });
+  const W = 900, H = 230, L = 36, B = 30, T = 10, max = Math.max(5, ...vis.values()), top = Math.ceil(max / 5) * 5 || 5, bw = (W - L) / periods.length;
+  const label = p => gran === "month" ? new Date(p + "-15T12:00:00Z").toLocaleDateString("en-GB", { month: "short" }) : new Date(p + "T12:00:00Z").toLocaleDateString("en-GB", { day: "numeric", month: "short" });
+  let svg = `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Visits and plays by ${gran}">`;
+  for (let i = 0; i <= 4; i++) { const y = T + (H - B - T) * (1 - i / 4); svg += `<line x1="${L}" x2="${W}" y1="${y}" y2="${y}" stroke="rgba(243,236,230,0.08)"/><text x="${L - 6}" y="${y + 4}" text-anchor="end" fill="rgba(243,236,230,0.5)" font-size="11" font-family="monospace">${Math.round(top * i / 4)}</text>`; }
+  const every = Math.ceil(periods.length / 9), last = periods.length - 1;
+  periods.forEach((p, i) => {
+    const v = vis.get(p), pl = plays.get(p), h = (H - B - T) * v / top, h2 = (H - B - T) * pl / top, x = L + i * bw, w = bw * 0.68;
+    svg += `<g><title>${label(p)}${gran === "week" ? " (week starting)" : ""}: ${v} visits, ${pl} pressed play</title><rect x="${x + bw * 0.16}" y="${H - B - h}" width="${w}" height="${Math.max(h, v ? 1 : 0)}" rx="2" fill="#e07a4f"/><rect x="${x + bw * 0.16}" y="${H - B - h2}" width="${w}" height="${Math.max(h2, pl ? 1 : 0)}" rx="2" fill="#f3ece6" fill-opacity="0.85"/></g>`;
+    if ((last - i) % every === 0) svg += `<text x="${i === last ? x + bw : x + bw / 2}" y="${H - 10}" text-anchor="${i === last ? "end" : "middle"}" fill="rgba(243,236,230,0.55)" font-size="11" font-family="monospace">${label(p)}</text>`;
+  });
+  $("vchart").innerHTML = `<div class="lg"><span><i style="background:#e07a4f"></i>Visits</span><span><i style="background:#f3ece6"></i>Pressed play</span></div>` + svg + "</svg>";
+  // lists
+  const box = $("vlists"); box.innerHTML = "";
+  const card = (title, sub, items, fmt, total) => {
+    const c = document.createElement("div"); c.className = "vc"; const h = document.createElement("h3"); h.textContent = title; const s2 = document.createElement("div"); s2.className = "sub"; s2.textContent = sub; c.append(h, s2);
+    if (!items.length) { const e = document.createElement("div"); e.className = "empty"; e.textContent = "Nothing yet."; c.appendChild(e); }
+    const topN = items.slice(0, 10), mx = Math.max(1, ...topN.map(x => x[1]));
+    topN.forEach(([k, n]) => { const r = document.createElement("div"); r.className = "vr"; r.innerHTML = `<span class="c"></span><span class="tr"><i style="width:${Math.round(100 * n / mx)}%"></i></span><span class="p">${n.toLocaleString("en-GB")} <small>${total ? pc(n, total) : ""}</small></span>`; const t = fmt(k); r.querySelector(".c").textContent = t; r.querySelector(".c").title = t; c.appendChild(r); });
+    box.appendChild(c);
+  };
+  const ladder = (kind, labels, total) => labels.map(([k, l]) => [l, sumBy(inRange, kind, k)]);
+  card("How long they stay", "Share of visits still open at each point", ladder("stay", [["10s", "10 seconds"], ["30s", "30 seconds"], ["1m", "1 minute"], ["3m", "3 minutes"], ["10m", "10 minutes"], ["30m", "30 minutes"]]), x => x, visits);
+  card("How long the music plays", "Share of visits that heard this much", ladder("heard", [["30s", "30 seconds"], ["1m", "1 minute"], ["3m", "3 minutes"], ["10m", "10 minutes"], ["30m", "30 minutes"]]), x => x, visits);
+  card("Where they come from", "A site that sent them, a ?ref= tag you added, or direct", tally(inRange, "src"), k => k === "direct" ? "Direct or unknown" : k.startsWith("ref:") ? "Link tagged " + k.slice(4) : k, visits);
+  card("Countries", "From Cloudflare. No address is kept", tally(inRange, "country"), countryName, visits);
+  card("Devices", "Phone, tablet or computer", tally(inRange, "device"), cap, visits);
+  card("What they do", "Share of visits that did this", Object.keys(ACTNAME).map(k => [k, sumBy(inRange, "act", k)]).filter(x => x[1]).sort((a, b) => b[1] - a[1]), k => ACTNAME[k] || k, visits);
+  card("Cities they hear", "The three cities playing when they pressed play", tally(inRange, "city"), cap, listens);
+  card("Cities they search for", "Added by hand or by the dice, after the page opened", tally(inRange, "citypick"), cap, null);
+  card("Sounds they hear", "Per city, when they pressed play", tally(inRange, "sound"), cap, null);
+  card("Sounds they choose", "Picked from the menu by a person", tally(inRange, "soundpick"), cap, null);
+  card("Drum kits", "When they pressed play", tally(inRange, "kit"), cap, listens);
+  card("Chords", "Off, or the chord sound in use", tally(inRange, "chords"), cap, listens);
+  card("Scales", "The scale playing when they pressed play", tally(inRange, "scale"), cap, listens);
+  card("Tempo", "Beats per minute, rounded to the nearest ten", tally(inRange, "tempo").sort((a, b) => Number(a[0]) - Number(b[0])), k => k + " bpm", listens);
+  $("vfoot").textContent = "Counting skips people with Do Not Track on, bots, and any device where you switch it off below. Tag a link you post with ?ref=reddit (or any word) to see which post sent people. Return visitors can't be counted, since nothing is stored on their device.";
+}
+document.querySelectorAll("#gran button").forEach(b => b.onclick = () => { gran = b.dataset.g; document.querySelectorAll("#gran button").forEach(x => x.setAttribute("aria-pressed", String(x === b))); drawVisits(); });
+$("vrange").onchange = drawVisits;
+function notrackLabel() { let on = false; try { on = localStorage.getItem("tc-notrack") === "1"; } catch (e) {} $("notrack").textContent = on ? "My visits on this device: not counted (tap to count them)" : "Don't count my own visits on this device"; }
+$("notrack").onclick = () => { try { if (localStorage.getItem("tc-notrack") === "1") localStorage.removeItem("tc-notrack"); else localStorage.setItem("tc-notrack", "1"); } catch (e) {} notrackLabel(); };
+notrackLabel();
+loadVisits();
 
 // ---------- social images ----------
 const SOCIAL = [

@@ -1185,6 +1185,44 @@ body.mood-immersive .fab { display: none !important; }
     "kumoi", "major hexatonic", "minor hexatonic", "ryukyu (Okinawan)"].map(n => SCALES.findIndex(x => x[0] === n));
   // a fresh key and scale every time the page loads
   const QS = (() => { try { return new URLSearchParams(location.search); } catch (e) { return new URLSearchParams(); } })();
+
+  // ---------- anonymous visit counts ----------
+  // Counts, never people. No cookies, nothing saved on the device, no IP address kept. The server adds up daily totals
+  // (visits, where from, what was chosen) and /admin shows them. Skipped when Do Not Track or Global Privacy Control is on,
+  // in reel mode, on a local copy, and on any device where /admin has switched it off for the owner.
+  const TRACK = (() => {
+    let q = [], timer = null, off = false, heard = 0;
+    try { if (navigator.doNotTrack === "1" || navigator.globalPrivacyControl === true) off = true; } catch (e) {}
+    try { if (localStorage.getItem("tc-notrack") === "1") off = true; } catch (e) {}
+    if (QS.has("reel") || (/^(localhost|127\.0\.0\.1)$/.test(location.hostname) && !QS.get("quizapi"))) off = true;
+    const base = () => { try { return QUIZ_API; } catch (e) { return ""; } };
+    const seen = new Set();
+    function flush() {
+      timer = null; const a = base();
+      if (off || !a) { q = []; return; }
+      if (!q.length) return;
+      const body = JSON.stringify({ e: q.splice(0, 40) });
+      try { fetch(a + "/e", { method: "POST", headers: { "Content-Type": "text/plain" }, body, keepalive: true }).catch(() => {}); } catch (e) {}
+      if (q.length) timer = setTimeout(flush, 500);
+    }
+    function add(kind, key) {
+      if (off) return;
+      q.push([kind, String(key == null ? "" : key).slice(0, 60)]);
+      if (!timer) timer = setTimeout(flush, 1500);
+    }
+    function once(kind, key) { const k = kind + "|" + key; if (seen.has(k)) return false; seen.add(k); add(kind, key); return true; }
+    // how long they stay: one count each time a visit passes 10 seconds, 30 seconds, a minute and so on
+    [[10, "10s"], [30, "30s"], [60, "1m"], [180, "3m"], [600, "10m"], [1800, "30m"]].forEach(([s, l]) => setTimeout(() => once("stay", l), s * 1000));
+    // and how long the music plays for
+    setInterval(() => {
+      try { if (!playing) return; } catch (e) { return; }
+      heard += 5;
+      [[30, "30s"], [60, "1m"], [180, "3m"], [600, "10m"], [1800, "30m"]].forEach(([s, l]) => { if (heard >= s) once("heard", l); });
+    }, 5000);
+    return { add, once, get off() { return off; } };
+  })();
+  const track = (kind, key) => TRACK.add(kind, key);
+  let TRACK_READY = false; setTimeout(() => { TRACK_READY = true; }, 4000);   // city picks only count once the page has settled, so a shared link's cities are not picks
   let keyRoot = Math.floor(Math.random() * KEYS.length);
   if (QS.has("key") && KEYS.indexOf(QS.get("key")) >= 0) keyRoot = KEYS.indexOf(QS.get("key"));
   // any scale can come up; the shared chords below keep the three cities agreeing with each other
@@ -1795,6 +1833,7 @@ body.mood-immersive .fab { display: none !important; }
     }));
     el.querySelector(`#${id}-sound`).addEventListener("change", e => {
       c.voice = e.target.value; if (ac && NEEDS[c.voice]) loadSamples(NEEDS[c.voice]); applySound(c);
+      if (e.isTrusted) { track("soundpick", c.voice); if (c.voice === "sample") track("act", "own-sound"); }   // a person chose it
       c.ref.samp.hidden = c.voice !== "sample";
       if (c.voice === "sample" && e.isTrusted) showSampPanel(c, !c.samp);   // a person chose it (not a shared link): open the panel and bring it into view
     });
@@ -1894,6 +1933,7 @@ body.mood-immersive .fab { display: none !important; }
       setPhoto(c, null);
       findPhoto(hit.name).then(ph => { if (ph && c.name === hit.name) setPhoto(c, ph); }).catch(() => {});
       updateIdentity();
+      if (TRACK_READY) track("citypick", c.name);
       return true;
     } catch (err) {
       c.ref.swapnote.textContent = ON_SITE ? "The weather service isn't answering just now. Try again in a minute." : "Swapping cities needs the live weather service, which this copy of the page can't reach.";
@@ -2088,7 +2128,7 @@ body.mood-immersive .fab { display: none !important; }
       const u = new URL(location.href);
       ["cities", "key", "scale", "kit", "mix"].forEach(k => u.searchParams.delete(k));   // rebuilt below, by hand, so it reads cleanly
       const enc = x => encodeURIComponent(x).replace(/%20/g, "+");
-      ["midi"].forEach(k => u.searchParams.delete(k));
+      ["midi", "ref"].forEach(k => u.searchParams.delete(k));   // a campaign tag (?ref=) shouldn't travel in a shared link
       const extra2 = u.searchParams.toString(), m = midiShareCode();
       u.search = "?cities=" + cities.map(c => enc(c.name)).join(",") + "&mix=" + mixCode.enc(soundDiff()) + (m ? "&midi=" + m : "") + (extra2 ? "&" + extra2 : "");
       return u.toString();
@@ -2170,6 +2210,7 @@ body.mood-immersive .fab { display: none !important; }
       label.textContent = msg;
       clearTimeout(btn._t); btn._t = setTimeout(() => { label.textContent = "Share"; }, 2000);
     };
+    track("act", navigator.share && matchMedia("(pointer: coarse)").matches ? "share-sheet" : "share-copy");
     if (navigator.share && matchMedia("(pointer: coarse)").matches) {
       navigator.share({ title: "Three Cities · Forrest James", text: line, url }).catch(() => {});   // the link travels as a link, so Copy in the sheet gives a clean address; closing the sheet is fine
       return;
@@ -4215,6 +4256,11 @@ body.mood-immersive .fab { display: none !important; }
     HARM.prog = null; HARM.root = 0;
     timer = setInterval(scheduler, 25);
     playing = true;
+    if (TRACK.once("listen", "start")) {   // once per visit: who they are listening to, and with what
+      cities.forEach(c => { track("city", c.name); track("sound", c.voice); });
+      track("kit", GROOVE.kit); track("chords", CHORD.on ? CHORD.sound : "off");
+      track("scale", (SCALES.find(x => x[1] === scale) || [""])[0]); track("tempo", Math.round((bpmNow || +tempo.value || 90) / 10) * 10);
+    }
     if (REC.supported()) { document.getElementById("recWrap").hidden = false; document.getElementById("inviteRow").hidden = false; }
     listenFrom = Date.now(); clearTimeout(moreTimer); moreTimer = setTimeout(() => { if (playing) showMore(); }, 4 * 60 * 1000);   // a few minutes in
   }
@@ -4350,7 +4396,7 @@ body.mood-immersive .fab { display: none !important; }
       mr.stop();
     }
   }
-  recBtn.addEventListener("click", () => { if (REC.on) recStop(); else recStart().catch(err => { REC.on = false; recNote.hidden = false; recNote.textContent = "Recording didn't start in this browser. Try Chrome, Safari or Firefox."; console.warn(err); }); });
+  recBtn.addEventListener("click", () => { if (REC.on) recStop(); else { track("act", "record"); recStart().catch(err => { REC.on = false; recNote.hidden = false; recNote.textContent = "Recording didn't start in this browser. Try Chrome, Safari or Firefox."; console.warn(err); }); } });
 
   // ---------- chord bed: slow chords from the shared progression, underneath everything ----------
   // Off by default. Each chord swells in over a couple of seconds, holds for its four bars and fades as the next arrives.
@@ -4480,7 +4526,7 @@ body.mood-immersive .fab { display: none !important; }
   { const btn = document.getElementById("chordOn"), lvl = document.getElementById("chordLevel");
     const sync = () => { CHORD.level = Number(lvl.value) / 100; document.getElementById("chordLevelOut").value = lvl.value; CHORD.voices.forEach(v => v.lvl && v.lvl.gain.setTargetAtTime(1, ac.currentTime, 0.1)); };
     btn.addEventListener("click", () => {
-      CHORD.on = !CHORD.on; btn.setAttribute("aria-pressed", String(CHORD.on));
+      CHORD.on = !CHORD.on; btn.setAttribute("aria-pressed", String(CHORD.on)); if (CHORD.on) track("act", "chords-on");
       if (!ac) return;
       if (CHORD.on && playing) chordBed(ac.currentTime + 0.05);
       else { chordMidiOff(ac.currentTime); CHORD.voices.forEach(v => { v.g.gain.cancelScheduledValues(ac.currentTime); v.g.gain.setTargetAtTime(0, ac.currentTime, 0.8); v.stop(ac.currentTime + 4); }); }
@@ -4670,7 +4716,7 @@ body.mood-immersive .fab { display: none !important; }
       midiSel.options[0].textContent = "Off (MIDI blocked here)";
     }
   }
-  midiSel.addEventListener("change", () => { chordMidiOff(0); clockStop(); midiOut = midiAccess && midiSel.value ? midiAccess.outputs.get(midiSel.value) : null; document.querySelector(".mod-midi").classList.toggle("midi-live", !!midiOut); ccStart(); });
+  midiSel.addEventListener("change", e => { if (midiSel.value && e.isTrusted) track("act", "midi-out"); chordMidiOff(0); clockStop(); midiOut = midiAccess && midiSel.value ? midiAccess.outputs.get(midiSel.value) : null; document.querySelector(".mod-midi").classList.toggle("midi-live", !!midiOut); ccStart(); });
   // switching to CC 19 also turns the TR-8S Master FX on (CC 15) so the knob has something to move
   function ccStart() {
     lastCC = -1;
@@ -4863,7 +4909,7 @@ body.mood-immersive .fab { display: none !important; }
     const qid = order[qIndex], keys = cities.map(quizKey), sig = qid + "@" + keys.join("~");
     if (!quizShare.checked || quizSent.has(sig)) return;   // one count per question per visit, the first clear choice
     quizSent.add(sig);
-    try { await fetch(QUIZ_API + "/answer", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ q: qid, c: keys, p: best }) }); } catch (e) {}
+    try { await fetch(QUIZ_API + "/answer", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ q: qid, c: keys, p: best }) }); track("act", "quiz-answer"); } catch (e) {}
   }
   const FOLLOW = [1.2, 5, 14];   // seconds each city takes to respond: quick, steady, slow
   const pad = document.getElementById("moodPad"), pg = pad.getContext("2d");
@@ -6188,6 +6234,14 @@ body.mood-immersive .fab { display: none !important; }
   setInterval(() => { if (live) refreshAll(); }, 10 * 60 * 1000);
   setInterval(() => { if (!live && ON_SITE) refreshAll(); }, 60 * 1000);   // no weather yet: try again every minute
   requestAnimationFrame(frame);
+  // the visit: where it came from (a ?ref= tag on a link you post, else the site that sent them) and whether a shared link brought them
+  (() => {
+    let src = (QS.get("ref") || "").toLowerCase().replace(/[^a-z0-9._-]/g, "").slice(0, 30);
+    if (src) src = "ref:" + src;
+    else { try { const h = new URL(document.referrer).hostname.replace(/^www\./, ""); if (h && h !== location.hostname.replace(/^www\./, "")) src = h; } catch (e) {} }
+    track("visit", src);
+    if (QS.has("cities") || QS.has("mix")) track("act", "opened-shared-link");
+  })();
 })();
 </script>
 
