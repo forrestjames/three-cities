@@ -1222,6 +1222,19 @@ body.mood-immersive .fab { display: none !important; }
     return { add, once, get off() { return off; } };
   })();
   const track = (kind, key) => TRACK.add(kind, key);
+  // which of my links get clicked: the site's name only, never the address of the page they were on
+  const linkClick = e => {
+    try {
+      const a = e.target && e.target.closest && e.target.closest("a[href]"); if (!a) return;
+      const u = new URL(a.getAttribute("href"), location.href);
+      if (u.protocol === "mailto:") return track("link", "email");
+      if (!/^https?:$/.test(u.protocol)) return;
+      const h = u.hostname.replace(/^www\./, "");
+      if (h === location.hostname.replace(/^www\./, "")) { if (/^\/manual/.test(u.pathname)) track("link", "manual"); return; }
+      track("link", h);
+    } catch (err) {}
+  };
+  document.addEventListener("click", linkClick); document.addEventListener("auxclick", linkClick);
   let TRACK_READY = false; setTimeout(() => { TRACK_READY = true; }, 4000);   // city picks only count once the page has settled, so a shared link's cities are not picks
   let keyRoot = Math.floor(Math.random() * KEYS.length);
   if (QS.has("key") && KEYS.indexOf(QS.get("key")) >= 0) keyRoot = KEYS.indexOf(QS.get("key"));
@@ -4363,6 +4376,7 @@ body.mood-immersive .fab { display: none !important; }
     recNote.textContent = `Recording${REC.wav ? " as WAV" : ""}. It saves to this device when you stop.${coarse ? " Keep this tab open and the screen on while recording." : ""}`;
   }
   function recSave(blob, ext, extra) {
+    track("act", "record-saved");   // a recording finished and was handed over
     if (REC.url) URL.revokeObjectURL(REC.url);
     REC.url = URL.createObjectURL(blob);
     const name = recFileName(ext), secs = (Date.now() - REC.t0) / 1000;

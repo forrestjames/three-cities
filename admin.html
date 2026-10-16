@@ -209,7 +209,7 @@ let V = null, gran = "day";
 const EN = new Intl.DisplayNames(["en"], { type: "region" });
 const cap = t => String(t).replace(/(^|[\s(-])(\p{L})/gu, (m, a, b) => a + b.toUpperCase());
 const countryName = c => { try { return c === "unknown" ? "Unknown" : EN.of(c.toUpperCase()); } catch (e) { return c; } };
-const ACTNAME = { "share-copy": "Copied a share link", "share-sheet": "Used the share sheet", record: "Started a recording", "quiz-answer": "Answered a quiz question", "midi-out": "Turned on MIDI out", "own-sound": "Chose their own sound", "opened-shared-link": "Arrived by a shared link", "chords-on": "Turned chords on" };
+const ACTNAME = { "share-copy": "Copied a share link", "share-sheet": "Used the share sheet", record: "Started a recording", "record-saved": "Saved a recording", "quiz-answer": "Answered a quiz question", "midi-out": "Turned on MIDI out", "own-sound": "Chose their own sound", "opened-shared-link": "Arrived by a shared link", "chords-on": "Turned chords on" };
 async function loadVisits() {
   const key = $("key").value.trim();
   $("vnote").textContent = "Loading…";
@@ -235,7 +235,7 @@ function drawVisits() {
   const last7 = V.rows.filter(r => r[0] >= addDays(today, -6)), todayRows = V.rows.filter(r => r[0] === today);
   const shares = sumBy(inRange, "act", "share-copy") + sumBy(inRange, "act", "share-sheet");
   const tiles = [["Visits today", sumBy(todayRows, "visit", "all")], ["Visits, last 7 days", sumBy(last7, "visit", "all")], ["Visits in range", visits],
-    ["Pressed play", pc(listens, visits)], ["Stayed a minute", pc(sumBy(inRange, "stay", "1m"), visits)], ["Listened 3 minutes", pc(sumBy(inRange, "heard", "3m"), visits)], ["Shared", shares]];
+    ["Pressed play", pc(listens, visits)], ["Stayed a minute", pc(sumBy(inRange, "stay", "1m"), visits)], ["Listened 3 minutes", pc(sumBy(inRange, "heard", "3m"), visits)], ["Shared", shares], ["Recordings saved", sumBy(inRange, "act", "record-saved")], ["Link clicks", sumBy(inRange, "link")]];
   $("vtiles").innerHTML = ""; tiles.forEach(([l, v]) => { const d = document.createElement("div"); d.className = "stat"; d.innerHTML = "<b></b><span></span>"; d.querySelector("b").textContent = typeof v === "number" ? v.toLocaleString("en-GB") : v; d.querySelector("span").textContent = l; $("vtiles").appendChild(d); });
   // chart: visits and plays per day, week or month
   const periods = [];
@@ -272,6 +272,7 @@ function drawVisits() {
   card("Countries", "From Cloudflare. No address is kept", tally(inRange, "country"), countryName, visits);
   card("Devices", "Phone, tablet or computer", tally(inRange, "device"), cap, visits);
   card("What they do", "Share of visits that did this", Object.keys(ACTNAME).map(k => [k, sumBy(inRange, "act", k)]).filter(x => x[1]).sort((a, b) => b[1] - a[1]), k => ACTNAME[k] || k, visits);
+  card("Links they click", "Where people go from the app", tally(inRange, "link"), k => k === "manual" ? "The manual" : k === "email" ? "Email" : k, visits);
   card("Cities they hear", "The three cities playing when they pressed play", tally(inRange, "city"), cap, listens);
   card("Cities they search for", "Added by hand or by the dice, after the page opened", tally(inRange, "citypick"), cap, null);
   card("Sounds they hear", "Per city, when they pressed play", tally(inRange, "sound"), cap, null);

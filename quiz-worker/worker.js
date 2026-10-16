@@ -34,9 +34,9 @@ async function tally(env, q, cities) {
 // Every row is a daily counter: day, kind, key, n. The country comes from Cloudflare and is not stored with anything else.
 const STAY = new Set(["10s", "30s", "1m", "3m", "10m", "30m"]);
 const HEARD = new Set(["30s", "1m", "3m", "10m", "30m"]);
-const ACTS = new Set(["share-sheet", "share-copy", "record", "quiz-answer", "midi-out", "own-sound", "opened-shared-link", "chords-on", "mix-saved"]);
+const ACTS = new Set(["share-sheet", "share-copy", "record", "record-saved", "quiz-answer", "midi-out", "own-sound", "opened-shared-link", "chords-on", "mix-saved"]);
 // kinds the page may send. Free text ones (city names, sources) are capped per day so nobody can flood the table.
-const KINDS = { visit: null, listen: new Set(["start"]), stay: STAY, heard: HEARD, act: ACTS, city: "free", citypick: "free", sound: "free", soundpick: "free", kit: "free", chords: "free", scale: "free", tempo: "free" };
+const KINDS = { visit: null, listen: new Set(["start"]), stay: STAY, heard: HEARD, act: ACTS, city: "free", link: "free", citypick: "free", sound: "free", soundpick: "free", kit: "free", chords: "free", scale: "free", tempo: "free" };
 const FREE_CAP = 400;
 const BOT = /bot|crawl|spider|headless|lighthouse|preview|facebookexternalhit|slurp|python|curl|wget|node-fetch|axios/i;
 const today = () => new Date().toLocaleDateString("en-CA", { timeZone: "Europe/London" });   // the day, in London
