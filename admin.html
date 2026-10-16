@@ -48,6 +48,19 @@ button:hover { border-color: var(--ink); }
 .q .acts button { font-size: 11px; padding: 6px 12px; }
 .note { font: 12px var(--mono); color: var(--dim); margin-top: 10px; min-height: 1.4em; }
 .hint { color: var(--dim); font-size: 14px; max-width: 720px; }
+.sg { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 14px; margin-top: 12px; }
+.sc { border: 1px solid var(--faint); border-radius: 16px; background: var(--panel); overflow: hidden; display: flex; flex-direction: column; }
+.sc .th { display: flex; align-items: center; justify-content: center; height: 190px; background: #000; }
+.sc .th img { max-width: 100%; max-height: 100%; display: block; }
+.sc .in { padding: 12px 14px 14px; display: flex; flex-direction: column; gap: 8px; }
+.sc b { font-weight: 400; font-size: 17px; letter-spacing: 0.04em; }
+.sc .sz { font: 11px var(--mono); color: var(--dim); }
+.sc .acts { display: flex; flex-wrap: wrap; gap: 6px; }
+.sc .acts a, .sc .acts button { font: 11px var(--mono); padding: 6px 12px; border-radius: 16px; border: 1px solid var(--faint); background: var(--panel); color: var(--ink); text-decoration: none; cursor: pointer; }
+.sc .acts a:hover, .sc .acts button:hover { border-color: var(--ink); }
+.sc .acts .go { border-color: var(--ember); }
+.sc .done { font: 11px var(--mono); color: var(--ember); min-height: 1.3em; }
+.sgh { font: 500 12px var(--mono); letter-spacing: 0.14em; text-transform: uppercase; color: var(--ink); margin: 22px 0 0; }
 @media (max-width: 600px) { .qs { grid-template-columns: 1fr; } .row { grid-template-columns: 20px minmax(0, 1fr) 60px 56px; } }
 </style>
 </head>
@@ -71,6 +84,11 @@ button:hover { border-color: var(--ink); }
     <a class="page" href="https://github.com/forrestjames/three-cities" target="_blank" rel="noopener"><b>GitHub</b><span>the code</span></a>
     <a class="page" href="https://claude.ai/code/artifact/3688992c-ef40-4375-acb2-f70b887b7474" target="_blank" rel="noopener"><b>Press and community plan</b><span>the Max, forum and press outreach doc</span></a>
   </div>
+
+  <h2>Social images</h2>
+  <p class="hint">Solid backgrounds, ready to post. Save puts the file in your downloads. Copy puts the picture on your clipboard to paste into a post. On a phone, Save to Photos opens the share sheet.</p>
+  <div class="bar-row"><a class="page" style="padding:9px 16px;border-radius:18px;display:inline-block" href="/social-images/three-cities-social-images.zip" download>Download all 12 (zip)</a></div>
+  <div id="social"></div>
 
   <h2>City quiz</h2>
   <p class="hint">Every answer people have added, as counts. A city's score is how often it wins when it comes up, so a city offered 40 times and picked 30 times scores 75%.</p>
@@ -152,6 +170,45 @@ $("csv").onclick = () => {
   a.download = `three-cities-quiz-${new Date().toISOString().slice(0, 10)}.csv`; a.click();
 };
 load();
+
+// ---------- social images ----------
+const SOCIAL = [
+  ["Poster look", [["poster-main", "Square post", "1080 × 1080"], ["poster-portrait", "Portrait post", "1080 × 1350"], ["poster-story", "Story or reel cover", "1080 × 1920"], ["poster-banner", "Banner", "1500 × 500"], ["poster-linkcard", "Link card", "1200 × 630"], ["poster-avatar", "Profile picture", "1080 × 1080"]]],
+  ["Map look", [["map-post", "Wide post", "1000 × 460"], ["map-portrait", "Wide post, taller", "1000 × 560"], ["map-story", "Story map", "1080 × 760"], ["map-banner", "Banner", "1500 × 500"], ["map-card", "Link card", "1200 × 630"], ["map-avatar", "Profile picture", "1080 × 1080"]]],
+];
+(function () {
+  const root = document.getElementById("social");
+  SOCIAL.forEach(([title, items]) => {
+    const h = document.createElement("div"); h.className = "sgh"; h.textContent = title; root.appendChild(h);
+    const g = document.createElement("div"); g.className = "sg"; root.appendChild(g);
+    items.forEach(([id, name, size]) => {
+      const url = `/social-images/${id}.png`, file = `Three Cities ${title.split(" ")[0].toLowerCase()} ${name.toLowerCase()}.png`;
+      const c = document.createElement("div"); c.className = "sc";
+      c.innerHTML = `<div class="th"><img loading="lazy" src="${url}" alt="${name}, ${title}"></div><div class="in"><b>${name}</b><span class="sz">${size}</span><div class="acts"></div><div class="done" aria-live="polite"></div></div>`;
+      const acts = c.querySelector(".acts"), done = c.querySelector(".done");
+      const say = t => { done.textContent = t; setTimeout(() => { done.textContent = ""; }, 2500); };
+      const save = document.createElement("a"); save.className = "go"; save.textContent = "Save"; save.href = url; save.download = file; acts.appendChild(save);
+      if (navigator.clipboard && window.ClipboardItem) {
+        const cp = document.createElement("button"); cp.type = "button"; cp.textContent = "Copy";
+        cp.addEventListener("click", async () => {
+          try { await navigator.clipboard.write([new ClipboardItem({ "image/png": fetch(url).then(r => r.blob()) })]); say("Copied"); }
+          catch (e) { say("Could not copy here. Use Save."); }
+        });
+        acts.appendChild(cp);
+      }
+      if (navigator.canShare && matchMedia("(pointer: coarse)").matches) {
+        const sh = document.createElement("button"); sh.type = "button"; sh.textContent = "Save to Photos";
+        sh.addEventListener("click", async () => {
+          try { const blob = await (await fetch(url)).blob(), f = new File([blob], file, { type: "image/png" });
+            if (navigator.canShare({ files: [f] })) await navigator.share({ files: [f], title: name }); else say("Use Save instead."); }
+          catch (e) { if (e && e.name !== "AbortError") say("Could not open the share sheet."); }
+        });
+        acts.appendChild(sh);
+      }
+      g.appendChild(c);
+    });
+  });
+})();
 </script>
 </body>
 </html>

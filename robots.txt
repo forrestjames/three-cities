@@ -6,5 +6,6 @@ Disallow: /design
 Disallow: /teaser
 Disallow: /today
 Disallow: /daily-reel/
+Disallow: /social-images/
 
 Sitemap: https://threecities.forrestjamesmusic.com/sitemap.xml
