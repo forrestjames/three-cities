@@ -408,11 +408,12 @@ kbd { display: inline-block; min-width: 26px; text-align: center; border: 1.5px 
     <tr><td>Rim</td><td>Note 37</td></tr>
     <tr><td>Closed hat</td><td>Note 42 (ride 51 with the Jazz kit)</td></tr>
     <tr><td>Drum filter</td><td>A control change on the drums' channel. CC 19 drives the Roland TR-8S Master FX knob.</td></tr>
+    <tr><td>Chord filter</td><td>A control change on the chords' channel, Auto sweeps included. CC 74 (the standard cutoff) by default. You can pick CC 71, CC 1 or CC 21 instead, or turn it off.</td></tr>
     <tr><td>Clock out</td><td>Off by default. Sends MIDI clock with Start and Stop, to this output or to every output.</td></tr>
   </table>
   <p>Fills, ratchets and ghost notes all come through, so a TR-8S or Digitakt on channel 10 gets the whole performance.</p>
   <p>Turn on <b>Clock out</b> and everything in your studio keeps time with the cities. Drum machines, sequencers, arpeggiators and synced delays all follow the tempo, and slow down with it as the cities fall asleep. Pick <b>To every output</b> to send it to all your MIDI interfaces at once. Press Start listening and they start together on the first bar. Stop, and they stop. Turn it on mid-song and they join on the next bar. Set each unit to follow external MIDI clock.</p>
-  <p>If MIDI is on when you press Share, the link carries your MIDI setup too: every channel, the drum filter CC and Clock out. It never carries the output itself, since that's a device on your computer. Whoever opens it picks their own output and everything else is already set.</p>
+  <p>If MIDI is on when you press Share, the link carries your MIDI setup too: every channel, the drum and chord filter CCs and Clock out. It never carries the output itself, since that's a device on your computer. Whoever opens it picks their own output and everything else is already set.</p>
 </section>
 
 <section class="sec" id="map">
@@ -490,6 +491,8 @@ kbd { display: inline-block; min-width: 26px; text-align: center; border: 1.5px 
   <h2>What's new</h2>
   <p class="kicker">This manual is kept up to date with the instrument. Newest first.</p>
   <dl class="log">
+    <dt>16 October 2026</dt>
+    <dd>The chords' filter can now drive your synth too. In the MIDI section, Chord filter as CC sends it on the chords' channel as CC 74 by default, with a few other numbers to pick from. Recordings, reels and teasers now carry the key, scale and tempo in their file names, like "C minor 90 bpm".</dd>
     <dt>15 October 2026</dt>
     <dd>Chords have a Change menu: a new chord every 4, 8, 16 or 32 bars, or Drone, which holds the home chord without moving. Your choice is kept in shared links.</dd>
     <dd>Chords have their own Filter and Auto, like the Rhythm section. It starts open, so nothing changes until you turn it down.</dd>
@@ -511,7 +514,7 @@ kbd { display: inline-block; min-width: 26px; text-align: center; border: 1.5px 
     <dd>Your own cities get the memory map too. Tick I've lived in these cities when you pick them, or switch above the map between Places I've lived and Just exploring.</dd>
     <dd>The city quiz. Play any cities that aren't mine and the memory map asks about the places instead, then shows what everyone said. Answers are anonymous counts, and you can untick the box to keep yours to yourself.</dd>
     <dd>Fixed the Wild card. It now checks the weather in a few dozen places at a time instead of hundreds, which is faster and keeps inside the weather service's limits.</dd>
-    <dd>Share links carry your MIDI channels, drum filter CC and clock when MIDI is on. Share on a computer copies a clean link for the address bar, with the line about your cities coming along when you paste into mail or chat.</dd>
+    <dd>Share links carry your MIDI channels, filter CCs and clock when MIDI is on. Share on a computer copies a clean link for the address bar, with the line about your cities coming along when you paste into mail or chat.</dd>
     <dd>Two ways in at the top: Hear my three cities, or Play any. The picker says what it is now, any three cities, and Surprise me has a ✦ Wild card that picks a theme from the live weather and tells you what you got.</dd>
     <dd>Clock out in the MIDI section. Your drum machines, sequencers and delays can follow the tempo, to one output or to all of them.</dd>
     <dd>The MIDI menu now lists every output and keeps up when you plug in or switch on an interface, so there is no need to reload the page.</dd>

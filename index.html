@@ -900,12 +900,14 @@ body.mood-immersive .fab { display: none !important; }
       </div>
     </div>
     <div class="pedal rack-mod mod-midi midi-bit" aria-label="MIDI">
-      <div class="mod-head"><span class="mod-name">MIDI</span><button class="info" type="button" aria-label="How MIDI works" data-tip="MIDI out sends each city's notes to a synth or music app on its own channel. Pick each city's channel, the chords' and the drums' in the menus here, or turn any of them off. By default the cities use channels 1, 2 and 3, the chords channel 4 (held until the next chord, when the Chords lamp is on) and the rhythm section channel 10, with standard General MIDI drum notes: kick 36, snare 38, rim 37, closed hat 42, ride 51 with the jazz kit, so any drum rack maps it. Fills, ratchets and ghost notes come through too. Clock out sends MIDI clock, 24 pulses a beat, with Start and Stop, to this output or to every output, so drum machines, sequencers and synced delays keep time with the cities, slowing with them as they fall asleep. Turn it on mid-song and it starts them on the next bar. The rhythm section's filter, Auto sweeps included, goes out as a control change on the drums' channel so your drum machine's own filter follows. CC 19 drives the Roland TR-8S Master FX knob and switches its Master FX on. It works in Chrome and Edge on a computer."></button></div>
+      <div class="mod-head"><span class="mod-name">MIDI</span><button class="info" type="button" aria-label="How MIDI works" data-tip="MIDI out sends each city's notes to a synth or music app on its own channel. Pick each city's channel, the chords' and the drums' in the menus here, or turn any of them off. By default the cities use channels 1, 2 and 3, the chords channel 4 (held until the next chord, when the Chords lamp is on) and the rhythm section channel 10, with standard General MIDI drum notes: kick 36, snare 38, rim 37, closed hat 42, ride 51 with the jazz kit, so any drum rack maps it. Fills, ratchets and ghost notes come through too. Clock out sends MIDI clock, 24 pulses a beat, with Start and Stop, to this output or to every output, so drum machines, sequencers and synced delays keep time with the cities, slowing with them as they fall asleep. Turn it on mid-song and it starts them on the next bar. The rhythm section's filter, Auto sweeps included, goes out as a control change on the drums' channel so your drum machine's own filter follows. The chords' filter does the same on the chords' channel, as CC 74 (the standard cutoff) unless you pick another number. CC 19 drives the Roland TR-8S Master FX knob and switches its Master FX on. It works in Chrome and Edge on a computer."></button></div>
       <div class="mod-body">
         <label class="midi-port" for="midi"><span class="kn-label">Out to</span><select id="midi" class="lcd"><option value="">Off</option></select></label>
         <div class="midi-chans" id="midiChans" aria-label="MIDI channel for each part"></div>
         <label class="midi-ch midi-fcc" for="filterCC" title="Send the rhythm section filter, Auto sweeps included, as a control change on the drums' channel"><span class="kn-label">Drum filter as CC</span>
           <select id="filterCC" class="lcd"><option value="-1">Off</option><option value="19" selected>CC 19 · TR-8S Master FX</option><option value="74">CC 74 · Cutoff</option><option value="1">CC 1 · Mod wheel</option></select></label>
+        <label class="midi-ch midi-fcc" for="chordCC" title="Send the chords' filter, Auto sweeps included, as a control change on the chords' channel"><span class="kn-label">Chord filter as CC</span>
+          <select id="chordCC" class="lcd"><option value="-1">Off</option><option value="74" selected>CC 74 · Cutoff</option><option value="71">CC 71 · Resonance</option><option value="1">CC 1 · Mod wheel</option><option value="21">CC 21 · Free</option></select></label>
         <label class="midi-ch midi-fcc" for="midiClock" title="Send MIDI clock with Start and Stop, so drum machines, sequencers and delays follow the tempo"><span class="kn-label">Clock out</span>
           <select id="midiClock" class="lcd"><option value="off" selected>Off</option><option value="one">To this output</option><option value="all">To every output</option></select></label>
       </div>
@@ -3810,6 +3812,19 @@ body.mood-immersive .fab { display: none !important; }
     const at = t != null && ac ? performance.now() + Math.max(0, t - ac.currentTime) * 1000 : undefined;
     midiOut.send([0xB0 | drumCh, filterCC, v], at);
   }
+  // The chords' filter goes out the same way, on the chords' channel. CC 74 is the standard filter cutoff,
+  // so a synth playing the chords opens and closes with the app's filter. 0 is shut, 127 is wide open.
+  let chordCC = 74, lastChordCC = -1, lastChordCCAt = 0;
+  function sendChordCC(norm, t) {
+    if (chordCC < 0 || chordCh < 0 || !midiOut) return;
+    const v = Math.max(0, Math.min(127, Math.round(norm * 127)));
+    const now = performance.now();
+    if (v === lastChordCC) return;
+    if (now - lastChordCCAt < 25) { clearTimeout(sendChordCC.late); sendChordCC.late = setTimeout(() => sendChordCC(norm), 30); return; }   // keep the last value of a fast drag
+    lastChordCC = v; lastChordCCAt = now;
+    const at = t != null && ac ? performance.now() + Math.max(0, t - ac.currentTime) * 1000 : undefined;
+    midiOut.send([0xB0 | chordCh, chordCC, v], at);
+  }
   function sendDrumMidi(kind, t, vel) {
     if (drumCh < 0 || !midiOut) return;
     const note = kind === "hat" && GROOVE.kit === "jazz" ? GM_DRUMS.ride : GM_DRUMS[kind];
@@ -4250,11 +4265,16 @@ body.mood-immersive .fab { display: none !important; }
   const mmss = s => `${String(Math.floor(s / 60)).padStart(2, "0")}:${String(Math.floor(s % 60)).padStart(2, "0")}`;
   const mb = n => n < 1e6 ? `${Math.max(1, Math.round(n / 1e3))} KB` : `${(n / 1e6).toFixed(1)} MB`;
   // the file says where and when: each city's local time and temperature as the take began, then the date
+  // e.g. "C minor 90 bpm" (a sharp is written "sharp" in the name would be wordy, so it stays as #, which file names allow)
+  function musicTag() {
+    const sc = SCALES.find(x => x[1] === scale);
+    return `${KEYS[keyRoot]} ${sc ? sc[0].toLowerCase() : ""} ${bpmNow || tempo.value} bpm`.replace(/\s+/g, " ").trim();
+  }
   function recFileName(ext) {
     const d = new Date(REC.t0 || Date.now()), pad = n => String(n).padStart(2, "0");
     const date = `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
     const parts = (REC.snap || []).join(" - ");
-    return `Three Cities - ${parts} - ${date}.${ext}`.replace(/[\\/:*?"<>|]/g, "");
+    return `Three Cities - ${parts} - ${REC.tag || musicTag()} - ${date}.${ext}`.replace(/[\\/:*?"<>|]/g, "");
   }
   function recTap() {
     if (!REC.tap) { REC.tap = ac.createMediaStreamDestination(); outNode.connect(REC.tap); }   // after the master filter and compressor: exactly what you hear
@@ -4283,7 +4303,7 @@ body.mood-immersive .fab { display: none !important; }
       REC.mr.ondataavailable = e => { if (e.data && e.data.size) REC.chunks.push(e.data); };
       REC.mr.start(1000);
     }
-    REC.on = true; REC.t0 = Date.now();
+    REC.on = true; REC.t0 = Date.now(); REC.tag = musicTag();   // the key, scale and tempo as the recording starts
     REC.snap = cities.map(c => `${c.name} ${localTime(c).replace(":", ".")}${c.w ? " " + fmtTemp(c.w.t, 0).replace("°", "") : ""}`);   // e.g. London 06.28 13C (Chrome rejects a degree sign in file names)
     recBtn.setAttribute("aria-pressed", "true"); recFmt.disabled = true; recMenuOpen(false);
     const tick = () => {
@@ -4411,6 +4431,7 @@ body.mood-immersive .fab { display: none !important; }
     return CHORD.filt;
   }
   function chordApplyFilter() {
+    if (!CHORD.auto) sendChordCC(CHORD.tone);
     if (!CHORD.filt || CHORD.auto) return;
     CHORD.filt.frequency.setTargetAtTime(chordFilterHz(CHORD.tone) * (1 - grooveSleep() * 0.4), ac.currentTime, 0.08);
   }
@@ -4421,6 +4442,7 @@ body.mood-immersive .fab { display: none !important; }
     const k = ph < 0.03 ? 1 - ph / 0.03 : Math.pow((ph - 0.03) / 0.97, 2.2);
     const f = low * Math.pow(top / low, Math.max(0, Math.min(1, k)));
     CHORD.filt.frequency.setTargetAtTime(f * (1 - grooveSleep() * 0.4), t, ph < 0.03 ? 0.04 : 0.12);
+    sendChordCC(Math.log(f / 250) / Math.log(16000 / 250), t);   // same position as the knob's 0 to 1
     const bars = Math.round((cyc.ticks - (tickNow % cyc.ticks)) / 32);
     CHORD.note = `Auto: the chord filter opens as ${cyc.all ? "all three cities" : "two of the cities"} head for the one together, ${bars} ${bars === 1 ? "bar" : "bars"} away`;
   }
@@ -4654,15 +4676,17 @@ body.mood-immersive .fab { display: none !important; }
     lastCC = -1;
     if (midiOut && filterCC === 19 && drumCh >= 0) midiOut.send([0xB0 | drumCh, 15, 127]);
     if (!GROOVE.auto) sendFilterCC(GROOVE.tone);
+    lastChordCC = -1; if (!CHORD.auto) sendChordCC(CHORD.tone);
   }
   document.getElementById("filterCC").addEventListener("change", e => { filterCC = Number(e.target.value); ccStart(); });
+  document.getElementById("chordCC").addEventListener("change", e => { chordCC = Number(e.target.value); ccStart(); });
   document.getElementById("midiClock").addEventListener("change", e => { clockStop(); clockMode = e.target.value; });   // restarts on the next bar
   // MIDI settings travel in a shared link when someone is using MIDI: channels, the drum filter CC and clock.
   // Never the output itself, since that's a device on their computer. Reads like midi=0.1.2.3.9.19.all, x for off.
   function midiShareCode() {
     if (!midiOut) return "";
     const ch = v => v < 0 ? "x" : String(v + 1);
-    return [...cities.map(c => ch(c.midiCh ?? c.index)), ch(chordCh), ch(drumCh), filterCC < 0 ? "x" : filterCC, clockMode].join(".");
+    return [...cities.map(c => ch(c.midiCh ?? c.index)), ch(chordCh), ch(drumCh), filterCC < 0 ? "x" : filterCC, clockMode, chordCC < 0 ? "x" : chordCC].join(".");
   }
   try {
     const m = QS.get("midi");
@@ -4674,6 +4698,10 @@ body.mood-immersive .fab { display: none !important; }
         const cc = p[5] === "x" ? -1 : parseInt(p[5], 10);
         if ([...document.getElementById("filterCC").options].some(o => Number(o.value) === cc)) { filterCC = cc; document.getElementById("filterCC").value = String(cc); }
         if (["off", "one", "all"].includes(p[6])) { clockMode = p[6]; document.getElementById("midiClock").value = p[6]; }
+        if (p[7] != null) {
+          const cc2 = p[7] === "x" ? -1 : parseInt(p[7], 10);
+          if ([...document.getElementById("chordCC").options].some(o => Number(o.value) === cc2)) { chordCC = cc2; document.getElementById("chordCC").value = String(cc2); }
+        }
         buildMidiChans();
       }
     }
@@ -5413,7 +5441,7 @@ body.mood-immersive .fab { display: none !important; }
   // ---------- the mix as the visitor set it, carried in the share link ----------
   // Every sound control on the page, under a name that stays put. MIDI routing and the
   // freeze switches are left out: they belong to the listener's setup and the moment.
-  const SAVE_SKIP = new Set(["mine1", "mine2", "mine3", "midi", "filterCC", "midiClock", "moodPause", "hallFreeze", "delayFreeze"]);
+  const SAVE_SKIP = new Set(["mine1", "mine2", "mine3", "midi", "filterCC", "chordCC", "midiClock", "moodPause", "hallFreeze", "delayFreeze"]);
   function soundControls() {
     const out = [];
     drawGrooveGrid();   // makes sure the drum mute switches exist
@@ -6067,7 +6095,7 @@ body.mood-immersive .fab { display: none !important; }
         rec.ondataavailable = e => { if (e.data.size) chunks.push(e.data); };
         rec.onstop = () => {
           const t = rec.mimeType || "video/webm", blob = new Blob(chunks, { type: t }), ext = /mp4/.test(t) ? "mp4" : "webm";
-          const name = `Three Cities reel - ${cities.map(c => c.name).join(", ")} - ${new Date().toISOString().slice(0, 10)}.${ext}`.replace(/[\\/:*?"<>|]/g, "");
+          const name = `Three Cities reel - ${cities.map(c => c.name).join(", ")} - ${musicTag()} - ${new Date().toISOString().slice(0, 10)}.${ext}`.replace(/[\\/:*?"<>|]/g, "");
           const size = `${(blob.size / 1e6).toFixed(1)} MB, .${ext}`;
           rec = null;
           // On a phone, the share sheet is the way into the photo library ("Save Video"). It has to come from a tap,
