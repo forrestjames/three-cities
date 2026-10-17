@@ -44,6 +44,7 @@ Three Cities is an interactive generative music project that turns live weather 
 ## Internal pages (noindex, no manual coverage)
 - admin.html (/admin) is the internal hub: links to every page plus the city quiz results.
 - design.html (/design) is the design system page, with the kit in design-assets/ (fonts, logos, icons, tokens, screens, and a zip). Rebuild the zip when assets change.
+- graphics.html (/graphics) is the library of every launch and social graphic and its earlier versions, with PNG, MP4 and Figma SVG links. Rebuild it with launch-graphics/build_graphics_page.py after adding or re-rendering graphics. Linked from admin.
 - reel.html and today.html (the reel tools) are covered in REEL.md.
 
 ## Quiz server
