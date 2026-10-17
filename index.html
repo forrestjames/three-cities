@@ -870,6 +870,21 @@ body.perform .city .vol-wrap input { height: 32px; }
 .pb-to button { flex: 1; min-height: 30px; font: inherit; font-size: 11px; border-radius: 6px; border: 1px solid var(--c, #fff); background: transparent; color: #fff; cursor: pointer; }
 .pb-to button:hover { background: var(--c, #fff); color: #1a100d; }
 .city.pb-over { outline: 3px solid #fff; outline-offset: -3px; }
+
+.perf-lead { box-sizing: border-box; width: calc(100% - 32px); max-width: 1400px; margin: 12px auto 0; padding: 12px 16px; border: 1px solid rgba(255,255,255,.14); border-radius: 12px; background: rgba(0,0,0,.28); }
+.pl-row { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 16px; }
+.perf-lead button, .perf-lead select { font: inherit; font-size: 12px; letter-spacing: .08em; text-transform: uppercase; padding: 8px 12px; min-height: 38px; border-radius: 8px; border: 1px solid rgba(255,255,255,.35); background: rgba(0,0,0,.35); color: #fff; cursor: pointer; }
+.perf-lead button[aria-pressed="true"] { background: #fff; color: #1a100d; }
+.perf-lead label { display: flex; align-items: center; gap: 8px; font-size: 11px; letter-spacing: .12em; text-transform: uppercase; color: var(--ink-dim); }
+.perf-lead input[type=range] { width: 110px; }
+.pl-oct { display: flex; align-items: center; gap: 6px; font-size: 11px; letter-spacing: .12em; text-transform: uppercase; color: var(--ink-dim); }
+.pl-oct button { min-width: 38px; padding: 8px 0; }
+.pl-note { margin-top: 8px; font-size: 12px; color: var(--ink-dim); }
+.pl-keys { display: grid; gap: 4px; margin-top: 10px; }
+.pl-keys div { display: flex; gap: 4px; }
+.pl-keys span { flex: 1; max-width: 54px; text-align: center; padding: 6px 0; border-radius: 6px; border: 1px solid rgba(255,255,255,.2); font-size: 11px; color: var(--ink-dim); text-transform: uppercase; }
+.pl-keys span.dn { background: #fff; color: #1a100d; }
+.pl-keys span.rt { border-color: #fff; color: #fff; }
 </style>
 </head>
 <body>
@@ -5771,7 +5786,7 @@ body.perform .city .vol-wrap input { height: 32px; }
       if (typing || tag === "INPUT" || tag === "SELECT") return;
       if (k === " " && !(tag === "BUTTON" || tag === "A" || tag === "SUMMARY" || tag === "CANVAS")) { e.preventDefault(); playBtn.click(); return; }
       if (["1", "2", "3"].includes(k)) { const c = cities[Number(k) - 1]; if (c && c.ref && c.ref.mute) c.ref.mute.click(); return; }
-      if (DRUM_KEYS[k]) { const b = document.getElementById("gm-" + DRUM_KEYS[k]); if (b) b.click(); }
+      if (DRUM_KEYS[k] && !window.__leadKeys) { const b = document.getElementById("gm-" + DRUM_KEYS[k]); if (b) b.click(); }
     });
   }
 
@@ -5931,6 +5946,132 @@ body.perform .city .vol-wrap input { height: 32px; }
         try { await loadUserSample(c, await f.get()); } catch (er) { pbNote.textContent = "Couldn't open that file."; }
       }, true);
     });
+
+    // ----- lead line: solo on top of the three cities, always in the key and scale -----
+    const LEAD_SOUNDS = [["synth", "Lead synth (held)"], ["felt", "Felt piano"], ["piano", "Grand piano"], ["epiano", "Electric piano"], ["junokeys", "Juno keys"], ["organ", "Organ"], ["marimba", "Marimba"], ["kalimba", "Kalimba"], ["bell", "Bell"], ["flute", "Warm flute"], ["soft", "Soft lead"], ["breath", "Breath"], ["pluck", "Pluck"], ["harp", "Harp"]]
+      .filter(([v]) => v === "synth" || SOUND_NAME[v]);
+    const LEAD = { on: false, sound: "synth", oct: 0, level: 0.75, tone: 1, rev: 0.4, del: 0.15, bus: null, held: new Map(), pedal: false, late: [], fake: { voice: "felt", steps: 0, base: 60, pos: 0, w: null } };
+    const lead = document.createElement("section");
+    lead.className = "perf-lead"; lead.setAttribute("aria-label", "Lead line");
+    lead.innerHTML = `<div class="pl-row"><span class="perf-title">Lead</span>
+      <button type="button" id="plOn" aria-pressed="false" title="Turn the lead on. The computer keyboard then plays notes.">Lead off</button>
+      <select id="plSound" aria-label="Lead sound">${LEAD_SOUNDS.map(([v, n]) => `<option value="${v}">${n}</option>`).join("")}</select>
+      <span class="pl-oct">Octave <button type="button" id="plDn" aria-label="Octave down">&minus;</button><b id="plOct">0</b><button type="button" id="plUp" aria-label="Octave up">+</button></span>
+      <label>Level <input type="range" id="plLevel" min="0" max="100" value="75"></label>
+      <label>Filter <input type="range" id="plTone" min="0" max="100" value="100"></label>
+      <label>Reverb <input type="range" id="plRev" min="0" max="100" value="40"></label>
+      <label>Delay <input type="range" id="plDel" min="0" max="100" value="15"></label></div>
+      <div class="pl-keys" id="plKeys" aria-hidden="true"></div>
+      <div class="pl-note" id="plNote">Turn it on, then play the keys below, or a MIDI keyboard. Every note lands in the current key and scale.</div>`;
+    bin.parentNode.insertBefore(lead, bin);
+    const L$ = id => lead.querySelector("#" + id), plNote = L$("plNote");
+    const ROWS = ["zxcvbnm,.", "asdfghjkl;", "qwertyuiop"];   // each row starts a scale octave higher
+    const keyMap = {};
+    const keysBox = L$("plKeys"), keyEls = {};
+    ROWS.slice().reverse().forEach(r => {
+      const row = document.createElement("div");
+      [...r].forEach(ch => { const sp = document.createElement("span"); sp.textContent = ch; row.appendChild(sp); keyEls[ch] = sp; });
+      keysBox.appendChild(row);
+    });
+    ROWS.forEach((r, ri) => [...r].forEach((ch, i) => { keyMap[ch] = { ri, i }; }));
+    function leadBus() {
+      if (!ac) setupAudio();
+      if (LEAD.bus) return LEAD.bus;
+      const filt = ac.createBiquadFilter(); filt.type = "lowpass"; filt.Q.value = 0.6;
+      const out = ac.createGain(), rv = ac.createGain(), dl = ac.createGain();
+      filt.connect(out); out.connect(master); out.connect(rv).connect(reverb); out.connect(dl).connect(delay);
+      LEAD.bus = { filt, out, rv, dl };
+      buses.set(LEAD.fake, { input: filt, filter: filt, out, vol: out });   // so every city sound can play through it unchanged
+      leadSet(); return LEAD.bus;
+    }
+    function leadSet() {
+      const b = LEAD.bus; if (!b || !ac) return; const t = ac.currentTime;
+      b.out.gain.setTargetAtTime(Math.pow(LEAD.level, 2) * 0.5, t, 0.03);
+      b.filt.frequency.setTargetAtTime(chordFilterHz(LEAD.tone) * 1.2, t, 0.03);
+      b.rv.gain.setTargetAtTime(LEAD.rev, t, 0.05); b.dl.gain.setTargetAtTime(LEAD.del, t, 0.05);
+    }
+    // any note lands on the nearest note of the scale (down first on a tie)
+    function snap(m) {
+      const k = ((keyRoot % 12) + 12) % 12, pcs = scale.map(x => (k + x) % 12);
+      for (let d = 0; d < 7; d++) { if (pcs.includes(((m - d) % 12 + 12) % 12)) return m - d; if (pcs.includes(((m + d) % 12 + 12) % 12)) return m + d; }
+      return m;
+    }
+    const keyDegreeNote = (ri, i) => {
+      const n = scale.length, deg = ri * n + i, o = Math.floor(deg / n), j = deg % n;
+      return 60 + (keyRoot > 6 ? keyRoot - 12 : keyRoot) + scale[j] + 12 * o + 12 * LEAD.oct;
+    };
+    function heldNote(id, midi, vel) {
+      const t = ac.currentTime + 0.005, f = mtof(midi);
+      const o1 = ac.createOscillator(), o2 = ac.createOscillator(), lp = ac.createBiquadFilter(), g = ac.createGain();
+      o1.type = "sawtooth"; o2.type = "triangle"; o1.frequency.value = f; o2.frequency.value = f; o1.detune.value = 6; o2.detune.value = -5;
+      lp.type = "lowpass"; lp.Q.value = 1.2; lp.frequency.setValueAtTime(900 + vel * 5200, t); lp.frequency.setTargetAtTime(500 + vel * 2200, t, 0.35);
+      const peak = 0.2 * (0.35 + 0.65 * vel);
+      g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(peak, t + 0.012); g.gain.setTargetAtTime(peak * 0.7, t + 0.012, 0.12);
+      o1.connect(lp); o2.connect(lp); lp.connect(g).connect(LEAD.bus.filt);
+      o1.start(t); o2.start(t);
+      return { release(at) { const tt = Math.max(at, ac.currentTime); g.gain.cancelScheduledValues(tt); g.gain.setTargetAtTime(0, tt, 0.14); o1.stop(tt + 1); o2.stop(tt + 1); } };
+    }
+    async function leadOn(id, m, vel) {
+      if (!LEAD.on) return;
+      leadBus(); if (ac.state === "suspended") { try { await ac.resume(); } catch (e) {} }
+      const midi = snap(m);
+      if (LEAD.held.has(id)) leadOff(id, true);
+      if (LEAD.sound === "synth") LEAD.held.set(id, heldNote(id, midi, vel));
+      else { LEAD.fake.voice = LEAD.sound; LEAD.held.set(id, { release() {} }); voice(LEAD.fake, midi, 0.35 + 0.65 * vel, ac.currentTime + 0.005, 1.3); }
+      const el = keyEls[id]; if (el) el.classList.add("dn");
+      plNote.textContent = `${KEYS[((midi % 12) + 12) % 12]}${Math.floor(midi / 12) - 1}`;
+    }
+    function leadOff(id, now) {
+      const h = LEAD.held.get(id); if (!h) return;
+      const el = keyEls[id]; if (el) el.classList.remove("dn");
+      if (LEAD.pedal && !now) { LEAD.late.push(h); LEAD.held.delete(id); return; }
+      LEAD.held.delete(id); h.release(ac.currentTime);
+    }
+    function leadAllOff() { [...LEAD.held.keys()].forEach(k => leadOff(k, true)); LEAD.late.splice(0).forEach(h => h.release(ac.currentTime)); }
+    const onBtn = L$("plOn");
+    async function setLead(on) {
+      LEAD.on = on; onBtn.setAttribute("aria-pressed", String(on)); onBtn.textContent = on ? "Lead on" : "Lead off";
+      window.__leadKeys = on;   // the drum-mute letters step aside while the letters play notes
+      Object.values(keyEls).forEach((el, i) => el.classList.toggle("rt", on));
+      if (!on) { leadAllOff(); return; }
+      plNote.textContent = "Play the keys, or a MIDI keyboard. Every note lands in the current key and scale.";
+      if (navigator.requestMIDIAccess) { try { await loadMidi(); attachMidi(); } catch (e) {} }
+    }
+    onBtn.addEventListener("click", () => setLead(!LEAD.on));
+    const sndSel = L$("plSound"); sndSel.addEventListener("change", () => { LEAD.sound = sndSel.value; sndSel.blur(); });
+    const setOct = d => { LEAD.oct = Math.max(-2, Math.min(2, LEAD.oct + d)); L$("plOct").textContent = (LEAD.oct > 0 ? "+" : "") + LEAD.oct; };
+    L$("plDn").addEventListener("click", () => setOct(-1)); L$("plUp").addEventListener("click", () => setOct(1));
+    [["plLevel", "level"], ["plTone", "tone"], ["plRev", "rev"], ["plDel", "del"]].forEach(([id, k]) => L$(id).addEventListener("input", e => { LEAD[k] = Number(e.target.value) / 100; leadSet(); }));
+    // computer keyboard
+    document.addEventListener("keydown", e => {
+      if (!LEAD.on || e.ctrlKey || e.metaKey || e.altKey || e.repeat) return;
+      const t = e.target, tag = t && t.tagName;
+      if (tag === "TEXTAREA" || tag === "SELECT" || (tag === "INPUT" && /^(text|search|email|url)$/.test(t.type))) return;
+      const ch = (e.key || "").toLowerCase(), km = keyMap[ch];
+      if (e.key === "[" || e.key === "]") { setOct(e.key === "]" ? 1 : -1); e.preventDefault(); return; }
+      if (!km) return;
+      e.preventDefault(); e.stopPropagation();
+      const el = keyEls[ch]; leadOn(ch, keyDegreeNote(km.ri, km.i), e.shiftKey ? 1 : 0.75);
+    }, true);
+    document.addEventListener("keyup", e => { const ch = (e.key || "").toLowerCase(); if (keyMap[ch] && LEAD.held.has(ch)) leadOff(ch); });
+    window.addEventListener("blur", () => { if (LEAD.on) leadAllOff(); });
+    // MIDI keyboard: every input the computer offers
+    function midiMsg(e) {
+      const [st, a, b] = e.data, cmd = st & 0xf0;
+      const id = "m" + e.target.id + "_" + a;
+      if (cmd === 0x90 && b > 0) leadOn(id, a, b / 127);
+      else if (cmd === 0x80 || (cmd === 0x90 && b === 0)) leadOff(id);
+      else if (cmd === 0xb0 && a === 64) { LEAD.pedal = b >= 64; if (!LEAD.pedal) LEAD.late.splice(0).forEach(h => h.release(ac.currentTime)); }
+      else if (cmd === 0xb0 && a === 1) { LEAD.tone = 0.25 + 0.75 * b / 127; L$("plTone").value = Math.round(LEAD.tone * 100); leadSet(); }   // mod wheel opens the filter
+    }
+    let midiHooked = false;
+    function attachMidi() {
+      if (!midiAccess) return;
+      const names = [];
+      midiAccess.inputs.forEach(inp => { inp.onmidimessage = midiMsg; names.push(inp.name); });
+      if (!midiHooked) { midiHooked = true; const prev = midiAccess.onstatechange; midiAccess.onstatechange = ev => { if (prev) prev(ev); attachMidi(); }; }
+      plNote.textContent = names.length ? `MIDI keyboard: ${names.join(", ")}. The mod wheel opens the filter and the sustain pedal holds notes.` : "No MIDI keyboard found. The computer keyboard works: [ and ] change octave.";
+    }
     document.getElementById("pfAllOut").addEventListener("click", () => cities.forEach(c => fadeTo(c, 0)));
     document.getElementById("pfAllIn").addEventListener("click", () => cities.forEach(c => fadeTo(c, 1)));
     document.addEventListener("keydown", e => {
