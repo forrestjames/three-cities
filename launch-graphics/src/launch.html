@@ -16,7 +16,7 @@ body { width: max-content; }
 .disp { text-transform: uppercase; letter-spacing: .06em; line-height: .98; font-weight: 400; }
 .dim { color: var(--dim); }
 .mono, .disp { text-shadow: 0 2px 10px rgba(36,18,12,.75), 0 0 2px rgba(36,18,12,.6); }
-.live { position:absolute; display:inline-flex; align-items:center; gap:16px; padding:12px 34px 12px 26px; border-radius:999px; background:linear-gradient(90deg,#ffd27a,#ff8a4f); color:#2a120b; font-family:"Source Code Pro",monospace; font-weight:500; letter-spacing:.24em; text-transform:uppercase; white-space:nowrap; text-shadow:none; box-shadow:0 0 0 6px rgba(255,170,100,.25), 0 0 46px rgba(255,150,80,.75); }
+.live { position:absolute; display:inline-flex; align-items:center; gap:16px; padding:12px 34px 12px 26px; border-radius:999px; background:linear-gradient(90deg,#ffd27a,#ff8a4f); color:#2a120b; font-family:"Source Code Pro",monospace; font-weight:500; letter-spacing:.24em; text-transform:uppercase; white-space:nowrap; text-shadow:none; box-shadow:0 0 0 7px rgba(255,190,120,.45), 0 0 0 18px rgba(255,170,100,.22), 0 0 0 32px rgba(255,150,80,.10), 0 0 70px rgba(255,150,80,.9); }
 .live i { width:18px; height:18px; border-radius:50%; background:#2a120b; box-shadow:0 0 0 5px rgba(42,18,11,.25); }
 .pill { position: absolute; left: 50%; transform: translateX(-50%); border: 2px solid rgba(243,236,230,.75); padding: 18px 34px; font-family: "Source Code Pro", monospace; letter-spacing: .12em; text-transform: lowercase; white-space: nowrap; background: rgba(16,8,6,.35); }
 .grain { position: absolute; inset: 0; opacity: .13; mix-blend-mode: overlay; pointer-events: none;
@@ -183,7 +183,8 @@ D['06-sunset-square'] = () => {
   art += `<rect y="1000" width="${W}" height="80" fill="#25140f"/>`;
   return frame(W, H, art, `
      
-     <div class="t disp" style="top:128px;font-size:96px;letter-spacing:.06em">At sunset,<br>each city<br>falls silent</div>
+     <div class="t disp" style="top:128px;font-size:104px;letter-spacing:.06em">Listen before<br>they dream</div>
+     <div class="t" style="top:356px;font-size:36px;line-height:1.3;color:#fff4e6;padding:0 130px;text-shadow:0 2px 12px rgba(36,18,12,.8)">Boston, Copenhagen and London play live from their weather. Tune in before they fall asleep.</div>
      <div class="t mono" style="top:1022px;font-size:21px;letter-spacing:.16em;color:var(--ink)">${URL_TXT}</div>`);
 };
 
@@ -282,10 +283,10 @@ function build(name) {
   return f;
 }
 const HDR = { // [left, top, logoH, badgeSize, right]
-  '01-live-square': [60, 30, 50, 27], '02-world-map-square': [60, 30, 50, 27], '03-home-skylines-square': [60, 26, 50, 27],
-  '04-how-it-works-square': [84, 30, 50, 27], '05-skyline-grid-square': [50, 14, 46, 25], '06-sunset-square': [60, 30, 50, 27], '07-type-square': [60, 30, 50, 27],
-  '08-live-story': [100, 296, 64, 29], '09-horizons-story': [100, 296, 64, 29], '10-steps-story': [100, 296, 64, 29], '11-world-story': [100, 296, 64, 29],
-  '12-banner': [60, 22, 46, 25], '13-link-card': [60, 28, 50, 27], '14-portrait': [60, 36, 54, 29]
+  '01-live-square': [60, 30, 75, 32], '02-world-map-square': [60, 30, 75, 32], '03-home-skylines-square': [60, 26, 75, 32],
+  '04-how-it-works-square': [84, 30, 75, 32], '05-skyline-grid-square': [50, 14, 69, 30], '06-sunset-square': [60, 30, 75, 32], '07-type-square': [60, 30, 75, 32],
+  '08-live-story': [100, 296, 64, 27], '09-horizons-story': [100, 296, 64, 27], '10-steps-story': [100, 296, 64, 27], '11-world-story': [100, 296, 64, 27],
+  '12-banner': [60, 22, 69, 30], '13-link-card': [60, 24, 56, 32], '14-portrait': [60, 36, 81, 35]
 };
 window.NAMES = Object.keys(D);
 const q = new URLSearchParams(location.search).get('d'); if (q) build(q);
