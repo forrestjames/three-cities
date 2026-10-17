@@ -288,12 +288,13 @@ document.querySelectorAll("#gran button").forEach(b => b.onclick = () => { gran 
 $("vrange").onchange = drawVisits;
 function notrackLabel() { let on = false; try { on = localStorage.getItem("tc-notrack") === "1"; } catch (e) {} $("notrack").textContent = on ? "My visits on this device: not counted (tap to count them)" : "Don't count my own visits on this device"; }
 $("notrack").onclick = () => { try { if (localStorage.getItem("tc-notrack") === "1") localStorage.removeItem("tc-notrack"); else localStorage.setItem("tc-notrack", "1"); } catch (e) {} notrackLabel();
+};
 $("myip").onclick = async () => {
   const n = $("myipnote"); n.textContent = "Asking…";
   try { const r = await fetch(API + "/myip").then(r => r.json());
     if (!r.ip) { n.textContent = "The counter doesn't know this yet. Paste the newest worker.js into Cloudflare and deploy it, then try again. Meanwhile, searching \"what is my IP\" on this network gives the same address."; return; }
     n.textContent = r.counted_out ? `Your address is ${r.ip}. It is already on your list, so visits from here are not counted.` : `Your address is ${r.ip}. To leave this network out, add it to OWNER_IPS in the Worker (Settings, Variables and Secrets), then it applies straight away. A comma separated list works, so add each place you use.`;
-  } catch (e) { n.textContent = "Couldn't reach the counter. If you haven't pasted the newest worker.js into Cloudflare yet, that is why. Searching \"what is my IP\" on this network gives the same address."; } }; };
+  } catch (e) { n.textContent = "Couldn't reach the counter. If you haven't pasted the newest worker.js into Cloudflare yet, that is why. Searching \"what is my IP\" on this network gives the same address."; } };
 notrackLabel();
 loadVisits();
 
