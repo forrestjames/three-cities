@@ -27,7 +27,7 @@ body { width: max-content; }
 <script src="land.js"></script><script src="skylines.js"></script>
 <script>
 const COL = { ground:'#2e1c17', ink:'#f3ece6', dim:'#e2d6cc', ember:'#e07a4f', sun:'#f0c27a', bos:'#d08a6a', cph:'#6fa38c', lon:'#a98bc4', bosL:'#f5b496', cphL:'#9be0c0', lonL:'#d2b6f0' };
-const URL_TXT = 'threecities.forrestjamesmusic.com';
+const URL_TXT = '<i style="display:inline-block;width:.62em;height:.62em;border-radius:50%;background:#ff8a4f;margin-right:.8em;vertical-align:.04em"></i>Now live &nbsp;·&nbsp; threecities.forrestjamesmusic.com';
 const HOME = [
   { n:'Boston', c:COL.bos, lat:42.36, lon:-71.06, sub:'Massachusetts' },
   { n:'Copenhagen', c:COL.cph, lat:55.68, lon:12.57, sub:'Denmark' },
@@ -134,7 +134,7 @@ D['03-home-skylines-square'] = () => {
   });
   return frame(W, H, art + `<rect y="960" width="${W}" height="120" fill="#25140f"/>`,
     `
-     <div class="t disp" style="top:112px;font-size:84px;letter-spacing:.08em">Three cities</div>
+     <div class="t disp" style="top:132px;font-size:84px;letter-spacing:.08em">Three cities</div>
      <div class="t mono" style="top:560px;left:0;width:360px;color:var(--bosL,#fff);font-size:30px;font-weight:500">Boston</div>
      <div class="t mono" style="top:560px;left:360px;width:360px;color:var(--cphL,#fff);font-size:30px;font-weight:500">Copenhagen</div>
      <div class="t mono" style="top:560px;left:720px;width:360px;color:var(--lonL,#fff);font-size:30px;font-weight:500">London</div>
@@ -160,7 +160,7 @@ D['04-how-it-works-square'] = () => {
 D['05-skyline-grid-square'] = () => {
   const W = 1080, H = 1080; const names = [['newyork', 'New York', 'USA', 12, 5], ['paris', 'Paris', 'France', 14, 6], ['tokyo', 'Tokyo', 'Japan', 17, 7], ['sydney', 'Sydney', 'Australia', 22, 8], ['istanbul', 'Istanbul', 'Turkey', 16, 5], ['rio', 'Rio', 'Brazil', 27, 9], ['capetown', 'Cape Town', 'South Africa', 19, 6], ['mexicocity', 'Mexico City', 'Mexico', 21, 7], ['mumbai', 'Mumbai', 'India', 30, 10]];
   const acc = [[COL.bos, COL.bosL], [COL.cph, COL.cphL], [COL.lon, COL.lonL]];
-  const T = 250, gap = 6, x0 = 159, y0 = 250; let art = defs; let html = '';
+  const T = 244, gap = 6, x0 = 171, y0 = 272; let art = defs; let html = '';
   names.forEach(([nm, label, ctry, st, ht], i) => {
     const cx = x0 + (i % 3) * (T + gap), cy = y0 + Math.floor(i / 3) * (T + gap); const [c, cl] = acc[i % 3];
     art += `${sky('g' + i, T, T, [[0, '#4d302c'], [1, '#26140f']])}<svg x="${cx}" y="${cy}" width="${T}" height="${T}" viewBox="0 0 300 300"><rect width="300" height="300" fill="url(#g${i})"/><rect width="300" height="300" fill="${c}" opacity=".10"/><g opacity=".16">${SK[nm](c, c).replace(/^/, '<g transform="translate(6 150) scale(.96)">') + '</g>'}</g>${ring(150, 168, 66, st, ht, c, { rot: i * 11, play: (i * 2) % st, dotR: 8 })}<text x="150" y="180" text-anchor="middle" font-family="Abel" font-size="46" fill="#f3ece6">${st}</text><text x="150" y="203" text-anchor="middle" font-family="Source Code Pro" font-size="13" letter-spacing="3" fill="#e2d6cc">STEPS</text></svg>`;
@@ -168,8 +168,8 @@ D['05-skyline-grid-square'] = () => {
   });
   return frame(W, H, art, html + `
      
-     <div class="t disp" style="top:92px;font-size:88px;letter-spacing:.07em">Your cities next</div>
-     <div class="t" style="top:192px;font-size:30px;color:var(--dim)">Any city on Earth. Tokyo to Cape Town, Rio to Mumbai.</div>
+     <div class="t disp" style="top:122px;font-size:88px;letter-spacing:.07em">Your cities next</div>
+     <div class="t" style="top:220px;font-size:30px;color:var(--dim)">Any city on Earth. Tokyo to Cape Town, Rio to Mumbai.</div>
      <div class="t mono dim" style="top:1036px;font-size:20px;letter-spacing:.16em">${URL_TXT}</div>`);
 };
 
@@ -279,14 +279,14 @@ D['14-portrait'] = () => {
 
 function build(name) {
   const f = D[name](); const st = document.getElementById('stage'); st.style.width = f.W + 'px'; st.style.height = f.H + 'px';
-  const lg = HDR[name]; st.innerHTML = `<svg class="art" xmlns="http://www.w3.org/2000/svg" width="${f.W}" height="${f.H}" viewBox="0 0 ${f.W} ${f.H}">${f.art}</svg><svg class="art" xmlns="http://www.w3.org/2000/svg" width="${f.W}" height="${f.H}" viewBox="0 0 ${f.W} ${f.H}" style="z-index:3">${lg ? logoMark(lg[0], lg[1], lg[2], 'l') : ''}</svg>${lg ? liveBadge(lg[1] + Math.round((lg[2] - lg[3] * 2.1) / 2), lg[3], f.W - lg[0] - 0).replace('left:' + (f.W - lg[0]) + 'px', 'right:' + lg[0] + 'px') : ''}${f.html}<div class="grain"></div>`;
+  const lg = HDR[name]; st.innerHTML = `<svg class="art" xmlns="http://www.w3.org/2000/svg" width="${f.W}" height="${f.H}" viewBox="0 0 ${f.W} ${f.H}">${f.art}</svg><svg class="art" xmlns="http://www.w3.org/2000/svg" width="${f.W}" height="${f.H}" viewBox="0 0 ${f.W} ${f.H}" style="z-index:3">${lg ? logoMark(lg[0], lg[1], lg[2], lg[3]) : ''}</svg>${f.html}<div class="grain"></div>`;
   return f;
 }
-const HDR = { // [left, top, logoH, badgeSize, right]
-  '01-live-square': [60, 30, 75, 32], '02-world-map-square': [60, 30, 75, 32], '03-home-skylines-square': [60, 26, 75, 32],
-  '04-how-it-works-square': [84, 30, 75, 32], '05-skyline-grid-square': [50, 14, 69, 30], '06-sunset-square': [60, 30, 75, 32], '07-type-square': [60, 30, 75, 32],
-  '08-live-story': [100, 296, 64, 27], '09-horizons-story': [100, 296, 64, 27], '10-steps-story': [100, 296, 64, 27], '11-world-story': [100, 296, 64, 27],
-  '12-banner': [60, 22, 69, 30], '13-link-card': [60, 24, 56, 32], '14-portrait': [60, 36, 81, 35]
+const HDR = { // [x, top, logoH, align]  (centered logos sit on the middle; left-aligned layouts get a left logo)
+  '01-live-square': [540, 26, 62, 'c'], '02-world-map-square': [540, 26, 62, 'c'], '03-home-skylines-square': [540, 22, 58, 'c'],
+  '04-how-it-works-square': [84, 40, 58, 'l'], '05-skyline-grid-square': [540, 16, 50, 'c'], '06-sunset-square': [540, 26, 62, 'c'], '07-type-square': [84, 44, 58, 'l'],
+  '08-live-story': [540, 292, 56, 'c'], '09-horizons-story': [540, 292, 56, 'c'], '10-steps-story': [540, 292, 56, 'c'], '11-world-story': [540, 292, 56, 'c'],
+  '12-banner': [60, 24, 50, 'l'], '13-link-card': [60, 32, 56, 'l'], '14-portrait': [540, 36, 66, 'c']
 };
 window.NAMES = Object.keys(D);
 const q = new URLSearchParams(location.search).get('d'); if (q) build(q);
