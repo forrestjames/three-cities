@@ -118,7 +118,8 @@ button:hover { border-color: var(--ink); }
   <div class="chart" id="vchart"></div>
   <div class="vg" id="vlists"></div>
   <div class="vnote" id="vfoot"></div>
-  <div class="bar-row" style="margin-top:14px"><button type="button" id="notrack"></button></div>
+  <div class="bar-row" style="margin-top:14px"><button type="button" id="notrack"></button> <button type="button" id="myip">Show my address</button></div>
+  <div class="note" id="myipnote"></div>
 
   <h2>Social images</h2>
   <p class="hint">Solid backgrounds, ready to post. Save puts the file in your downloads. Copy puts the picture on your clipboard to paste into a post. On a phone, Save to Photos opens the share sheet.</p>
@@ -286,7 +287,12 @@ function drawVisits() {
 document.querySelectorAll("#gran button").forEach(b => b.onclick = () => { gran = b.dataset.g; document.querySelectorAll("#gran button").forEach(x => x.setAttribute("aria-pressed", String(x === b))); drawVisits(); });
 $("vrange").onchange = drawVisits;
 function notrackLabel() { let on = false; try { on = localStorage.getItem("tc-notrack") === "1"; } catch (e) {} $("notrack").textContent = on ? "My visits on this device: not counted (tap to count them)" : "Don't count my own visits on this device"; }
-$("notrack").onclick = () => { try { if (localStorage.getItem("tc-notrack") === "1") localStorage.removeItem("tc-notrack"); else localStorage.setItem("tc-notrack", "1"); } catch (e) {} notrackLabel(); };
+$("notrack").onclick = () => { try { if (localStorage.getItem("tc-notrack") === "1") localStorage.removeItem("tc-notrack"); else localStorage.setItem("tc-notrack", "1"); } catch (e) {} notrackLabel();
+$("myip").onclick = async () => {
+  const n = $("myipnote"); n.textContent = "Asking…";
+  try { const r = await fetch(API + "/myip").then(r => r.json());
+    n.textContent = r.counted_out ? `Your address is ${r.ip}. It is already on your list, so visits from here are not counted.` : `Your address is ${r.ip}. To leave this network out, add it to OWNER_IPS in the Worker (Settings, Variables and Secrets), then it applies straight away. A comma separated list works, so add each place you use.`;
+  } catch (e) { n.textContent = "Couldn't reach the counter."; } }; };
 notrackLabel();
 loadVisits();
 

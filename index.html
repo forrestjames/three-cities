@@ -1193,6 +1193,8 @@ body.mood-immersive .fab { display: none !important; }
   const TRACK = (() => {
     let q = [], timer = null, off = false, heard = 0;
     try { if (navigator.doNotTrack === "1" || navigator.globalPrivacyControl === true) off = true; } catch (e) {}
+    // open the site once with ?notrack=1 on each of your own devices to leave them out, ?notrack=0 to count them again
+    try { if (QS.get("notrack") === "1") localStorage.setItem("tc-notrack", "1"); else if (QS.get("notrack") === "0") localStorage.removeItem("tc-notrack"); } catch (e) {}
     try { if (localStorage.getItem("tc-notrack") === "1") off = true; } catch (e) {}
     if (QS.has("reel") || (/^(localhost|127\.0\.0\.1)$/.test(location.hostname) && !QS.get("quizapi"))) off = true;
     const base = () => { try { return QUIZ_API; } catch (e) { return ""; } };

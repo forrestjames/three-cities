@@ -33,6 +33,10 @@ Nothing else: no IPs, no ids, no cookies, no times per event.
 2. The Worker → Edit code → replace everything with the new `worker.js` → Deploy.
 3. Open /admin. The Visitors section fills in as people visit. Your own visits: press "Don't count my own visits on this device" on /admin.
 
+## Leaving out your own visits
+- Per device: open the site once with `?notrack=1` on the end (or use the button on /admin). `?notrack=0` turns counting back on.
+- Per network: on /admin press Show my address, then add it to a Worker variable called `OWNER_IPS` (comma separated for several). The address is only compared, never stored.
+
 ## Endpoints
 
 - `POST /answer` `{ "q": "food", "c": ["lisbon|portugal", "osaka|japan", "quito|ecuador"], "p": 0 }`
@@ -40,6 +44,7 @@ Nothing else: no IPs, no ids, no cookies, no times per event.
 - `GET /top?q=food&min=20` the leaderboard for a question, handy for posts
 - `POST /e` a batch of anonymous visit events from the app, `{ "e": [["visit", "reddit.com"], ["city", "london"], ["stay", "30s"]] }`. Bots and other sites are ignored, and free text kinds are capped per day.
 - `GET /analytics?key=…&days=120` the daily counters, for /admin. Locked by the same key as /stats.
+- `GET /myip` shows the caller's own address (for filling in `OWNER_IPS`).
 - `GET /stats?key=…` everything, for /admin. Set a secret called `ADMIN_KEY` (Worker → Settings → Variables and Secrets → Add, type Secret) to lock it.
 
 The question ids live in both `worker.js` and `index.html` (QUIZ). Add new ones to both.

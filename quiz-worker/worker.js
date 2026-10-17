@@ -44,11 +44,20 @@ const clean2 = s => String(s == null ? "" : s).normalize("NFC").toLowerCase().re
 const deviceOf = ua => /ipad|tablet|playbook|silk|(android(?!.*mobile))/i.test(ua) ? "tablet" : /mobi|iphone|ipod|android/i.test(ua) ? "phone" : "computer";
 const originOk = req => { const o = req.headers.get("Origin") || ""; return ORIGINS.includes(o) || /^http:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(o); };
 
+// Owner's own network, left out of the counts. Set OWNER_IPS in the Worker (Settings, Variables) to a comma separated list of addresses.
+// The address is only compared, never stored. For IPv6 the first half of the address (the /64 your router hands out) is compared, so a changing device suffix still matches.
+function ipKey(ip) {
+  ip = String(ip || "").trim().toLowerCase(); if (!ip.includes(":")) return ip;
+  const [h, t] = ip.split("::"), head = h ? h.split(":") : [], tail = t ? t.split(":") : [], fill = ip.includes("::") ? Math.max(0, 8 - head.length - tail.length) : 0;
+  return [...head, ...Array(fill).fill("0"), ...tail].slice(0, 4).map(x => x.padStart(4, "0")).join(":");
+}
+const isOwner = (req, env) => { const mine = String(env.OWNER_IPS || "").split(/[\s,]+/).filter(Boolean).map(ipKey); return !!mine.length && mine.includes(ipKey(req.headers.get("CF-Connecting-IP"))); };
+
 async function collect(req, env) {
   const text = await req.text();
   if (text.length > 4000) return json(req, { error: "too big" }, 413);
   let b; try { b = JSON.parse(text); } catch (e) { return json(req, { error: "bad json" }, 400); }
-  if (!originOk(req) || BOT.test(req.headers.get("User-Agent") || "")) return json(req, { ok: true, counted: 0 });   // a quiet yes: bots and other sites are simply not counted
+  if (!originOk(req) || BOT.test(req.headers.get("User-Agent") || "") || isOwner(req, env)) return json(req, { ok: true, counted: 0 });   // a quiet yes: bots and other sites are simply not counted
   const list = Array.isArray(b.e) ? b.e.slice(0, 40) : [];
   const day = today(), add = new Map(), free = new Map();
   const bump = (kind, key) => { if (!key) return; const k = kind + "\u0001" + key; add.set(k, (add.get(k) || 0) + 1); };
@@ -133,6 +142,9 @@ export default {
       const rows = await env.DB.prepare(`SELECT day, kind, key, n FROM events WHERE day >= ? ORDER BY day LIMIT 60000`).bind(from).all();
       return json(req, { today: today(), from, rows: (rows.results || []).map(r => [r.day, r.kind, r.key, r.n]), locked: !!env.ADMIN_KEY });
     }
+
+    // shows a visitor their own address, so the owner can copy it into OWNER_IPS. Nothing is stored.
+    if (url.pathname === "/myip" && req.method === "GET") { const ip = req.headers.get("CF-Connecting-IP") || ""; return json(req, { ip, matches: ipKey(ip), counted_out: isOwner(req, env) }); }
 
     if (url.pathname === "/") return json(req, { ok: true, service: "three-cities-quiz", questions: QUIZ.length });
     return json(req, { error: "not found" }, 404);
