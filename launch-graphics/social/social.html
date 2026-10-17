@@ -62,7 +62,7 @@ function ringSvg(cx, cy, r, steps, hits, color, { rot = 0, play = -1, dotR = 8 }
   const all = [];
   for (let i = 0; i < steps; i++) { const a = (-90 + rot + 360 * i / steps) * Math.PI / 180; all.push([cx + r * Math.cos(a), cy + r * Math.sin(a)]); }
   all.forEach((p, i) => { s += pat[i] ? `<circle cx="${p[0]}" cy="${p[1]}" r="${dotR}" fill="${color}"/>` : `<circle cx="${p[0]}" cy="${p[1]}" r="${dotR * .36}" fill="${color}" fill-opacity=".6"/>`; });
-  if (play >= 0) { const p = all[play]; s += `<line x1="${cx}" y1="${cy}" x2="${p[0]}" y2="${p[1]}" stroke="#f3ece6" stroke-opacity=".7" stroke-width="2"/><circle cx="${p[0]}" cy="${p[1]}" r="${dotR * 1.7}" fill="none" stroke="#f3ece6" stroke-width="2"/>`; }
+  if (play >= 0) { const p = all[play]; s += `<g class="ph" data-cx="${cx}" data-cy="${cy}" data-n="${steps}" data-sp="${3}"><line x1="${cx}" y1="${cy}" x2="${p[0]}" y2="${p[1]}" stroke="#f3ece6" stroke-opacity=".7" stroke-width="2"/><circle cx="${p[0]}" cy="${p[1]}" r="${dotR * 1.7}" fill="none" stroke="#f3ece6" stroke-width="2"/></g>`; }
   return s;
 }
 const svgBox = (W, H, inner) => `<svg class="a" style="left:0;top:0" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}">${inner}</svg>`;
@@ -105,7 +105,7 @@ D['05-polymeter-post'] = () => { const W = 1080, H = 1080; const lanes = [['Bost
   lanes.forEach(([nm, n, k, c, y]) => { const pat = euclid(n, k);
     txt += `<div class="a mono" style="left:${x0 - 12}px;top:${y - 62}px;font-size:21px;letter-spacing:.2em;text-transform:uppercase;color:${c === COL.lon ? '#d2b6f0' : c === COL.cph ? '#9be0c0' : '#ffc0a0'}">${nm} · ${n} steps</div>`;
     for (let i = 0; i < 36; i++) { const x = x0 + i * dx, p = i % n; if (p === 0) art += `<line x1="${x}" y1="${y - 30}" x2="${x}" y2="${y + 30}" stroke="${c}" stroke-opacity=".6" stroke-width="2"/>`; art += pat[p] ? `<circle cx="${x + 12}" cy="${y}" r="9" fill="${c}"/>` : `<circle cx="${x + 12}" cy="${y}" r="3.2" fill="${c}" fill-opacity=".6"/>`; } });
-  const l = 11 * 9 * 12 / gcd(11, gcd(9, 12)) ; // lcm check below
+  art += `<g class="scan" data-x0="${x0}" data-w="900" data-n="36"><rect x="${0}" y="410" width="25" height="380" fill="rgba(255,236,220,.16)"/><line x1="0" y1="410" x2="0" y2="790" stroke="#f3ece6" stroke-opacity=".8" stroke-width="2"/></g>`;
   const lcm = (a, b) => a * b / gcd(a, b); const all = lcm(lcm(11, 9), 12);
   return wrap(W, H, 'sage', cHead(W) + title('Polymeter', 130, 92) + sub('Each city runs its own loop length, so they drift apart and meet again.', 240, 32, { pad: 100 }) + svgBox(W, H, art) + txt +
    sub(`These three line up every ${all} steps.<br>The panel under the cards counts it down.`, 840, 34, { pad: 100 }) + `<div class="t mono" style="top:960px;font-size:18px;letter-spacing:.2em;color:var(--dim)">36 STEPS SHOWN</div>` + foot(W, H)); };
@@ -161,6 +161,7 @@ D['16-awake-asleep-post'] = () => { const W = 1080, H = 1350; const f1 = fig('ca
 // 17 sample --------------------------------------------------------------------
 D['17-sample-post'] = () => { const W = 1080, H = 1350; let art = ''; const n = 21, pat = euclid(n, 8); const sw = 840 / n, x0 = 120, cy = 560; let seed = 7; const rnd = () => (seed = (seed * 9301 + 49297) % 233280) / 233280;
   for (let i = 0; i < n; i++) for (let b = 0; b < 7; b++) { const x = x0 + i * sw + 5 + b * ((sw - 10) / 7); const env = .35 + .65 * Math.abs(Math.sin((i * 7 + b) * .5 + rnd())) * (.5 + .5 * rnd()); const h = 220 * env; art += `<rect x="${x}" y="${cy - h / 2}" width="${(sw - 10) / 7 - 2}" height="${h}" fill="${pat[i] ? '#ff9a6a' : 'rgba(243,236,230,.4)'}"/>`; }
+  art += `<g class="scan" data-x0="${x0}" data-w="840" data-n="21"><rect x="0" y="${cy - 150}" width="${sw}" height="300" fill="rgba(255,236,220,.16)"/><line x1="0" y1="${cy - 150}" x2="0" y2="${cy + 150}" stroke="#f3ece6" stroke-opacity=".8" stroke-width="2"/></g>`;
   for (let i = 0; i <= n; i++) art += `<line x1="${x0 + i * sw}" y1="${cy - 150}" x2="${x0 + i * sw}" y2="${cy + 150}" stroke="rgba(243,236,230,.28)" stroke-width="1.5"/>`;
   return wrap(W, H, 'warm', cHead(W) + title('Bring your<br>own sound', 130, 92) + sub('Drop any audio file on a city card. The weather cuts it up.', 335, 32) + svgBox(W, H, art) +
    `<div class="t mono" style="top:735px;font-size:21px;letter-spacing:.14em;color:var(--dim)">21°C CUTS YOUR SOUND INTO 21 PLACES</div>` +
@@ -181,4 +182,4 @@ D['20-hero-banner'] = () => { const W = 1500, H = 500; const f = fig('hero', 760
 window.NAMES = Object.keys(D);
 function build(name) { const f = D[name](); const st = document.getElementById('stage'); st.style.width = f.W + 'px'; st.style.height = f.H + 'px'; st.innerHTML = f.html + '<div class="grain"></div>'; return f; }
 const q = new URLSearchParams(location.search).get('d'); if (q) build(q);
-</script></body></html>
+</script><script src="../anim.js"></script></body></html>
