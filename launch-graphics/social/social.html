@@ -1,0 +1,184 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><title>Three Cities social graphics</title>
+<style>
+@font-face { font-family: "Abel"; src: url("../../design-assets/fonts/Abel-Regular.ttf"); }
+@font-face { font-family: "Source Code Pro"; font-weight: 400; src: url("../../design-assets/fonts/SourceCodePro-Regular.ttf"); }
+@font-face { font-family: "Source Code Pro"; font-weight: 500; src: url("../../design-assets/fonts/SourceCodePro-Medium.ttf"); }
+:root { --ink:#f3ece6; --dim:#e2d6cc; --ember:#e07a4f; --emberL:#ffb08a; --sun:#f0c27a; --bos:#d08a6a; --cph:#6fa38c; --lon:#a98bc4; --bosL:#f5b496; --cphL:#9be0c0; --lonL:#d2b6f0; }
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { background:#2e1c17; }
+body { width: max-content; }
+#stage { position: relative; overflow: hidden; color: var(--ink); font-family: "Abel", "Arial Narrow", sans-serif; }
+.a { position:absolute; }
+.t { position:absolute; left:0; right:0; text-align:center; }
+.mono { font-family:"Source Code Pro", monospace; }
+.disp { text-transform:uppercase; letter-spacing:.06em; line-height:1; font-weight:400; text-shadow:0 2px 10px rgba(36,18,12,.7); }
+.fig { position:absolute; border:1px solid rgba(243,236,230,.28); box-shadow:0 14px 50px rgba(20,8,4,.55); overflow:hidden; background:#150a08; }
+.fig img { display:block; width:100%; height:auto; }
+.mk { position:absolute; width:38px; height:38px; margin:-19px 0 0 -19px; border-radius:50%; background:#ff8a4f; color:#2a120b; font-family:"Source Code Pro",monospace; font-weight:500; font-size:21px; display:flex; align-items:center; justify-content:center; box-shadow:0 0 0 3px rgba(255,236,220,.9), 0 4px 14px rgba(20,8,4,.6); z-index:5; }
+.note { display:flex; gap:18px; align-items:flex-start; }
+.note .n { flex:none; width:38px; height:38px; margin-top:2px; border-radius:50%; background:#ff8a4f; color:#2a120b; font-family:"Source Code Pro",monospace; font-weight:500; font-size:21px; display:flex; align-items:center; justify-content:center; }
+.note .h { font-family:"Source Code Pro",monospace; font-weight:500; letter-spacing:.14em; text-transform:uppercase; color:var(--emberL); }
+.note .b { color:var(--ink); line-height:1.18; text-shadow:0 1px 8px rgba(30,14,8,.6); }
+.dot { display:inline-block; width:.62em; height:.62em; border-radius:50%; background:#ff8a4f; margin-right:.8em; vertical-align:.04em; }
+.grain { position: absolute; inset: 0; opacity: .13; mix-blend-mode: overlay; pointer-events: none;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='300' height='300'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 1  0 0 0 0 1  0 0 0 0 1  0 0 0 .9 0'/></filter><rect width='300' height='300' filter='url(%23n)'/></svg>"); }
+</style></head>
+<body><div id="stage"></div>
+<script>
+const MARK = `<path d="M0.5 24v-6.6h11V24zM1.6 17.4v-1.6h8.8v1.6zM3 15.8v-2.4h6v2.4zM2.9 13.4a3.1 3.1 0 0 1 6.2 0zM5.4 10.4V8.2h1.2v2.2zM5.2 8.2L6 6.6l.8 1.6z"/><path fill-rule="evenodd" d="M13.4 24V13h12.6v11h-3.6v-5.2a2.7 2.7 0 0 0-5.4 0V24zM13 13v-1.4h13.4V13zM15.8 11.6a3.9 3.9 0 0 1 7.8 0zM19.3 7.7V5.6h.8v2.1zM19.1 5.6l.6-1.8.6 1.8zM13.6 11.6v-1.8h.9v1.8zM24.9 11.6v-1.8h.9v1.8zM13.4 9.8l.65-1.4.65 1.4zM24.7 9.8l.65-1.4.65 1.4z"/><path fill-rule="evenodd" d="M27.9 24v-3.5h.6V9h-.4V7.6h1V5.4h.8L31.4 0l1.5 5.4h.8v2.2h1V9h-.4v11.5h.6V24zM31.4 10a1.7 1.7 0 1 0 0 3.4 1.7 1.7 0 0 0 0-3.4z"/>`;
+const URL_TXT = 'threecities.forrestjamesmusic.com';
+const COL = { bos:'#d08a6a', cph:'#6fa38c', lon:'#a98bc4', ember:'#e07a4f', sun:'#f0c27a', ink:'#f3ece6' };
+const A = (n) => 'assets/' + n + '.png';
+const IMG = { 'card-boston':[780,1158], 'card-copenhagen':[783,1158], 'card-london':[779,1158], 'rack-harmony':[493,290], 'rack-chords':[514,290], 'rack-filter':[490,290], 'rack-midi':[519,290], 'rhythm-grid':[1350,231], 'rhythm-all':[2416,356], 'reverb':[990,410], 'delay':[1406,410], 'effects-all':[2416,638], 'memory-map':[2416,2086], 'pick-any':[1352,642], 'phone-hero':[1170,2532], 'hero':[2880,1540] };
+const euclid = (n, k) => { const a = Array(n).fill(0); for (let i = 0; i < k; i++) a[Math.ceil(i * n / k)] = 1; return a; };
+const gcd = (a, b) => b ? gcd(b, a % b) : a;
+
+function bg(W, H, hues) {
+  const g = hues.map(([x, y, r, c, o]) => `<circle cx="${x}" cy="${y}" r="${r}" fill="${c}" opacity="${o}" filter="url(#b40)"/>`).join('');
+  return `<svg class="a" style="left:0;top:0" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}"><defs><filter id="b40" x="-100%" y="-100%" width="300%" height="300%"><feGaussianBlur stdDeviation="40"/></filter><linearGradient id="bgg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#4f322d"/><stop offset="1" stop-color="#2a1914"/></linearGradient><radialGradient id="bgr" cx="50%" cy="110%" r="75%"><stop offset="0" stop-color="#7a4331" stop-opacity=".9"/><stop offset="1" stop-color="#7a4331" stop-opacity="0"/></radialGradient></defs><rect width="${W}" height="${H}" fill="url(#bgg)"/><rect width="${W}" height="${H}" fill="url(#bgr)"/>${g}</svg>`;
+}
+const logo = (x, y, h, align) => { const sc = h / 24, w = 34 * sc; const tx = align === 'c' ? x - w / 2 : x; return `<svg class="a" style="left:0;top:0;overflow:visible" width="1" height="1"><g transform="translate(${tx} ${y}) scale(${sc})" fill="#f3ece6" style="filter:drop-shadow(0 2px 8px rgba(36,18,12,.6))">${MARK}</g></svg>`; };
+const title = (txt, top, size, o = {}) => o.left !== undefined
+  ? `<div class="a disp" style="left:${o.left}px;top:${top}px;font-size:${size}px;width:${o.w || 900}px;line-height:${o.lh || 1.02}">${txt}</div>`
+  : `<div class="t disp" style="top:${top}px;font-size:${size}px;line-height:${o.lh || 1.02}">${txt}</div>`;
+const sub = (txt, top, size = 32, o = {}) => o.left !== undefined
+  ? `<div class="a" style="left:${o.left}px;top:${top}px;width:${o.w || 800}px;font-size:${size}px;line-height:1.2;color:var(--dim);text-shadow:0 1px 8px rgba(30,14,8,.6)">${txt}</div>`
+  : `<div class="t" style="top:${top}px;font-size:${size}px;line-height:1.2;color:var(--dim);padding:0 ${o.pad || 90}px;text-shadow:0 1px 8px rgba(30,14,8,.6)">${txt}</div>`;
+const foot = (W, H, o = {}) => o.left !== undefined
+  ? `<div class="a mono" style="left:${o.left}px;top:${H - (o.b || 56)}px;font-size:${o.size || 21}px;letter-spacing:.14em;text-transform:uppercase;color:var(--dim);white-space:nowrap"><i class="dot"></i>Now live &nbsp;·&nbsp; ${URL_TXT}</div>`
+  : `<div class="t mono" style="top:${H - (o.b || 58)}px;font-size:${o.size || 21}px;letter-spacing:.14em;text-transform:uppercase;color:var(--dim)"><i class="dot"></i>Now live &nbsp;·&nbsp; ${URL_TXT}</div>`;
+function fig(name, x, y, w, marks = []) {
+  const [iw, ih] = IMG[name]; const s = w / iw; const h = Math.round(ih * s);
+  const m = marks.map(([n, px, py]) => `<div class="mk" style="left:${x + px * s}px;top:${y + py * s}px">${n}</div>`).join('');
+  return { h, s, bottom: y + h, html: `<div class="fig" style="left:${x}px;top:${y}px;width:${w}px;height:${h}px"><img src="${A(name)}"></div>${m}` };
+}
+function notes(items, x, y, w, o = {}) {
+  const hs = o.hs || 19, bs = o.bs || 30, gap = o.gap || 34;
+  return `<div class="a" style="left:${x}px;top:${y}px;width:${w}px;display:flex;flex-direction:column;gap:${gap}px">` + items.map(([n, h, b]) => `<div class="note">${n === null ? '<div class="n" style="background:none;box-shadow:inset 0 0 0 2px rgba(255,176,138,.7)"></div>' : `<div class="n">${n}</div>`}<div><div class="h" style="font-size:${hs}px;margin-bottom:6px">${h}</div><div class="b" style="font-size:${bs}px">${b}</div></div></div>`).join('') + `</div>`;
+}
+function ringSvg(cx, cy, r, steps, hits, color, { rot = 0, play = -1, dotR = 8 } = {}) {
+  const pat = euclid(steps, hits); let s = `<circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="${color}" stroke-opacity=".45" stroke-width="2"/>`;
+  const all = [];
+  for (let i = 0; i < steps; i++) { const a = (-90 + rot + 360 * i / steps) * Math.PI / 180; all.push([cx + r * Math.cos(a), cy + r * Math.sin(a)]); }
+  all.forEach((p, i) => { s += pat[i] ? `<circle cx="${p[0]}" cy="${p[1]}" r="${dotR}" fill="${color}"/>` : `<circle cx="${p[0]}" cy="${p[1]}" r="${dotR * .36}" fill="${color}" fill-opacity=".6"/>`; });
+  if (play >= 0) { const p = all[play]; s += `<line x1="${cx}" y1="${cy}" x2="${p[0]}" y2="${p[1]}" stroke="#f3ece6" stroke-opacity=".7" stroke-width="2"/><circle cx="${p[0]}" cy="${p[1]}" r="${dotR * 1.7}" fill="none" stroke="#f3ece6" stroke-width="2"/>`; }
+  return s;
+}
+const svgBox = (W, H, inner) => `<svg class="a" style="left:0;top:0" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}">${inner}</svg>`;
+const std = (W, H, hues, head) => bg(W, H, hues) + head;
+const HUES = {
+  warm: (W, H) => [[W * .1, H * .15, 380, '#e07a4f', .32], [W * .95, H * .5, 330, '#6fa38c', .2]],
+  plum: (W, H) => [[W * .9, H * .12, 380, '#a98bc4', .3], [W * .05, H * .8, 380, '#e07a4f', .28]],
+  sage: (W, H) => [[W * .85, H * .1, 380, '#6fa38c', .32], [W * .1, H * .9, 360, '#d08a6a', .3]],
+  gold: (W, H) => [[W * .5, H * .0, 420, '#f0c27a', .26], [W * .9, H * .9, 360, '#a98bc4', .26]],
+};
+const D = {};
+const cHead = (W, hdr = 40, h = 56) => logo(W / 2, hdr, h, 'c');
+const lHead = (x, hdr = 40, h = 56) => logo(x, hdr, h, 'l');
+const sP = (W, H) => `<div class="a" style="left:0;top:0;width:${W}px;height:${H}px;overflow:hidden">`;
+const wrap = (W, H, hue, body) => ({ W, H, html: bg(W, H, HUES[hue](W, H)) + body });
+
+// 01 temperature -------------------------------------------------------------
+D['01-temperature-post'] = () => { const W = 1080, H = 1350; const f = fig('card-boston', 50, 405, 560, [[1, 705, 185], [2, 232, 330], [3, 640, 818]]);
+  return wrap(W, H, 'warm', cHead(W) + title('Temperature<br>sets the loop', 130, 88) + sub('Boston at 3am. 11°C makes a loop 11 steps long.', 330, 32) + f.html +
+   notes([[1, 'Temperature', '11°C is a loop 11 steps long. Colder is shorter. Below zero it drops the minus sign and goes down an octave.'], [2, 'The ring', 'Each dot is a step. The bright ones play. Four hits, spread as evenly as they can go.'], [3, 'Humidity', '72% sets how many notes play. Swap it for wind, cloud or rain in More.']], 650, 420, 380, { bs: 28, gap: 36 }) + foot(W, H)); };
+// 02 humidity ----------------------------------------------------------------
+D['02-humidity-post'] = () => { const W = 1080, H = 1350; const f = fig('card-copenhagen', 470, 405, 560, [[1, 640, 818], [2, 715, 880], [3, 640, 590]]);
+  return wrap(W, H, 'sage', cHead(W) + title('Humidity picks<br>the notes', 130, 88) + sub('Copenhagen, damp morning. 85% humidity, 4 notes.', 330, 32) + f.html +
+   notes([[1, 'Hits', '85% humidity means 4 notes play, spread across 9 steps. Pick humidity, wind, cloud or rain. Rain is the sparse one.'], [2, 'Flourishes', 'Settled air plays quick notes. Unsettled skies add little ornaments, up to one note in five in a storm.'], [3, 'The sun', 'Its height opens the filter. At 81% it is a bright, open city.']], 60, 420, 380, { bs: 28, gap: 36 }) + foot(W, H)); };
+// 03 euclid ------------------------------------------------------------------
+D['03-euclid-post'] = () => { const W = 1080, H = 1080; const rows = [[8, 3, COL.ember, 'Tresillo', '3 in 8'], [11, 4, COL.bos, 'Boston', '4 in 11'], [9, 4, COL.cph, 'Copenhagen', '4 in 9'], [12, 5, COL.lon, 'London', '5 in 12']];
+  let art = '', txt = '';
+  rows.forEach(([n, k, c, nm, lab], i) => { const cx = 135 + i * 270, cy = 520; art += ringSvg(cx, cy, 96, n, k, c, { dotR: 11, play: i * 2 % n });
+    txt += `<div class="a mono" style="left:${cx - 130}px;top:${cy + 140}px;width:260px;text-align:center;font-size:30px;color:${c === COL.lon ? '#d2b6f0' : c === COL.cph ? '#9be0c0' : '#ffc0a0'};font-weight:500;letter-spacing:.06em">${lab}</div><div class="a mono" style="left:${cx - 130}px;top:${cy + 182}px;width:260px;text-align:center;font-size:19px;letter-spacing:.2em;color:var(--dim);text-transform:uppercase">${nm}</div><div class="a mono" style="left:${cx - 130}px;top:${cy + 218}px;width:260px;text-align:center;font-size:22px;letter-spacing:.12em;color:var(--ink)">${euclid(n, k).map(v => v ? 'x' : '.').join('')}</div>`; });
+  return wrap(W, H, 'plum', cHead(W) + title('Euclidean rhythms', 130, 92) + sub('Notes spread as evenly as they can go. The weather picks both numbers.', 240, 32, { pad: 110 }) + svgBox(W, H, art) + txt +
+   sub('Temperature picks the steps. Humidity picks the notes.<br>Three in eight is the Cuban tresillo.', 840, 32, { pad: 100 }) + foot(W, H)); };
+// 04 read a card (story) ------------------------------------------------------
+D['04-read-a-card-story'] = () => { const W = 1080, H = 1920; const s = .82; const f = fig('card-boston', 60, 560, 600, [[1, 390, 79], [2, 650, 180], [3, 405, 178], [4, 232, 330], [5, 635, 360], [6, 540, 913], [7, 150, 1030], [8, 377, 1030], [9, 524, 1030], [10, 655, 1030]]);
+  const L = ['City and place', 'Temperature is the steps', 'Local time, day or night', 'Rhythm ring and playhead', 'The sun, or the moon', 'What the weather is doing', 'Sound', 'Volume', 'Mute', 'More: the deep controls'];
+  const list = L.map((t, i) => `<div class="note" style="margin-bottom:21px;align-items:center"><div class="n">${i + 1}</div><div class="b" style="font-size:28px;line-height:1.1">${t}</div></div>`).join('');
+  return wrap(W, H, 'warm', logo(W / 2, 292, 56, 'c') + title('Read a city card', 376, 96) + f.html + `<div class="a" style="left:715px;top:575px;width:310px">${list}</div>` + foot(W, H, { b: 410 })); };
+// 05 polymeter ------------------------------------------------------------------
+D['05-polymeter-post'] = () => { const W = 1080, H = 1080; const lanes = [['Boston', 11, 4, COL.bos, 470], ['Copenhagen', 9, 4, COL.cph, 600], ['London', 12, 5, COL.lon, 730]]; let art = '', txt = '';
+  const x0 = 110, dx = 25;
+  lanes.forEach(([nm, n, k, c, y]) => { const pat = euclid(n, k);
+    txt += `<div class="a mono" style="left:${x0 - 12}px;top:${y - 62}px;font-size:21px;letter-spacing:.2em;text-transform:uppercase;color:${c === COL.lon ? '#d2b6f0' : c === COL.cph ? '#9be0c0' : '#ffc0a0'}">${nm} · ${n} steps</div>`;
+    for (let i = 0; i < 36; i++) { const x = x0 + i * dx, p = i % n; if (p === 0) art += `<line x1="${x}" y1="${y - 30}" x2="${x}" y2="${y + 30}" stroke="${c}" stroke-opacity=".6" stroke-width="2"/>`; art += pat[p] ? `<circle cx="${x + 12}" cy="${y}" r="9" fill="${c}"/>` : `<circle cx="${x + 12}" cy="${y}" r="3.2" fill="${c}" fill-opacity=".6"/>`; } });
+  const l = 11 * 9 * 12 / gcd(11, gcd(9, 12)) ; // lcm check below
+  const lcm = (a, b) => a * b / gcd(a, b); const all = lcm(lcm(11, 9), 12);
+  return wrap(W, H, 'sage', cHead(W) + title('Polymeter', 130, 92) + sub('Each city runs its own loop length, so they drift apart and meet again.', 240, 32, { pad: 100 }) + svgBox(W, H, art) + txt +
+   sub(`These three line up every ${all} steps.<br>The panel under the cards counts it down.`, 840, 34, { pad: 100 }) + `<div class="t mono" style="top:960px;font-size:18px;letter-spacing:.2em;color:var(--dim)">36 STEPS SHOWN</div>` + foot(W, H)); };
+// 06 harmony -------------------------------------------------------------------
+D['06-harmony-post'] = () => { const W = 1080, H = 1350; const f = fig('rack-harmony', 140, 420, 800, [[1, 78, 232], [2, 319, 232]]);
+  return wrap(W, H, 'gold', cHead(W) + title('Pick a key.<br>17 scales.', 130, 92) + sub('One key and scale, shared by all three cities.', 335, 32) + f.html +
+   notes([[1, 'Key', 'Every city plays in the same key, so they always sound like one band.'], [2, 'Scale', 'Seventeen of them, from minor pentatonic to Japanese yo and Okinawan ryukyu.'], [null, 'Change it any time', 'The cities follow from their next note.']], 90, 920, 900, { bs: 29, gap: 26 }) + foot(W, H)); };
+// 07 chords --------------------------------------------------------------------
+D['07-chords-post'] = () => { const W = 1080, H = 1350; const f = fig('rack-chords', 180, 415, 720, [[1, 176, 222], [2, 388, 222]]);
+  return wrap(W, H, 'plum', cHead(W) + title('Chords<br>underneath', 130, 92) + sub('A slow chord bed. Press the lamp to switch it on.', 335, 32) + f.html +
+   notes([[1, 'Level', 'How loud the chord bed sits.'], [2, 'Sound', 'Bowed, warm pad, glass, air, tape strings, strings, choir, soft organ or shimmer.'], [null, 'Change', 'Every 4, 8, 16 or 32 bars. Or Drone, which holds the home chord.'], [null, 'At night', 'As the cities fall asleep the bed gets darker and quieter.']], 90, 860, 900, { bs: 28, gap: 22, hs: 18 }) + foot(W, H)); };
+// 08 filter --------------------------------------------------------------------
+D['08-filter-post'] = () => { const W = 1080, H = 1350; const f = fig('rack-filter', 150, 425, 780, [[1, 97, 290], [2, 242, 290], [3, 357, 290]]);
+  return wrap(W, H, 'warm', cHead(W) + title('A filter that<br>moves in time', 130, 92) + sub('Like the Auto Filter in Ableton Live.', 335, 32) + f.html +
+   notes([[1, 'Filter', 'Left is low-pass. Right is high-pass. Twelve o\'clock is open.'], [2, 'Rate', 'From 1/64, a fast flutter, up to 4 bars.'], [3, 'LFO', 'Sine, triangle, square, ramp up, ramp down or random. Amount sets how far it swings.']], 90, 940, 900, { bs: 28, gap: 24 }) + foot(W, H)); };
+// 09 midi ----------------------------------------------------------------------
+D['09-midi-post'] = () => { const W = 1080, H = 1350; const f = fig('rack-midi', 190, 420, 700, [[1, 145, 222]]);
+  const rows = [['City 1, 2, 3', 'channels 1, 2, 3'], ['Chords', 'channel 4'], ['Rhythm section', 'channel 10'], ['Clock out', 'optional, to any output']]; const drums = [['Kick', 36], ['Snare', 38], ['Rim', 37], ['Closed hat', 42]];
+  const r1 = rows.map(([a, b]) => `<div style="margin-bottom:18px"><div class="h mono" style="font-size:18px;letter-spacing:.14em;text-transform:uppercase;color:var(--emberL)">${a}</div><div style="font-size:32px">${b}</div></div>`).join('');
+  const r2 = drums.map(([a, b]) => `<div style="margin-bottom:18px;display:flex;justify-content:space-between;border-bottom:1px solid rgba(243,236,230,.25);padding-bottom:8px"><span class="mono" style="font-size:20px;letter-spacing:.14em;text-transform:uppercase;color:var(--emberL)">${a}</span><span class="mono" style="font-size:32px">${b}</span></div>`).join('');
+  return wrap(W, H, 'sage', cHead(W) + title('Let the weather<br>play your synths', 130, 84) + sub('Pick an output and the channel menus appear. Chrome and Edge, on a computer.', 305, 30, { pad: 120 }) + f.html +
+   `<div class="a" style="left:90px;top:880px;width:420px">${r1}</div><div class="a" style="left:590px;top:880px;width:400px"><div class="mono" style="font-size:18px;letter-spacing:.2em;color:var(--dim);margin-bottom:14px">DRUM NOTES</div>${r2}</div>` +
+   `<div class="t" style="top:1230px;font-size:28px;color:var(--dim)">Fills, ratchets and ghost notes all come through.</div>` + foot(W, H)); };
+// 10 rhythm banner -------------------------------------------------------------
+D['10-drummer-banner'] = () => { const W = 1500, H = 500; const f = fig('rhythm-all', 60, 232, 1380);
+  return wrap(W, H, 'warm', lHead(60, 26, 50) + title('One drummer, three cities', 92, 62, { left: 60, w: 1300 }) + sub('The kick plays where the cities agree. Hats play wherever any city does. The rim plays where one plays alone.', 168, 28, { left: 60, w: 1380 }) + f.html + foot(W, H, { left: 60, b: 42, size: 18 })); };
+// 11 rhythm grid ---------------------------------------------------------------
+D['11-drums-post'] = () => { const W = 1080, H = 1350; const f = fig('rhythm-grid', 60, 440, 960, [[1, 1338, 47], [2, 1338, 96], [3, 1338, 147], [4, 1338, 196]]);
+  return wrap(W, H, 'plum', cHead(W) + title('How the drums<br>are built', 130, 88) + sub('One drummer, listening to all three cities at once.', 322, 32) + f.html +
+   notes([[1, 'Kick', 'Plays where the cities agree.'], [2, 'Snare', 'Its own backbeat. Busier as the wind picks up.'], [3, 'Hat', 'Plays wherever any city does.'], [4, 'Rim', 'A soft ghost kick, where one city plays alone.']], 90, 790, 900, { bs: 31, gap: 24 }) +
+   `<div class="a" style="left:90px;top:1160px;width:900px;font-size:29px;line-height:1.2;color:var(--dim)">R and D send a drum to the reverb or the delay. Fills, ratchets and ghost notes follow the weather.</div>` + foot(W, H)); };
+// 12 reverb --------------------------------------------------------------------
+const list2 = (items) => { const half = Math.ceil(items.length / 2); const col = (arr) => arr.map(([a, b]) => `<div style="margin-bottom:22px"><div class="mono" style="font-size:20px;letter-spacing:.14em;text-transform:uppercase;color:var(--emberL);margin-bottom:4px">${a}</div><div style="font-size:30px;line-height:1.15">${b}</div></div>`).join(''); return [col(items.slice(0, half)), col(items.slice(half))]; };
+D['12-reverb-post'] = () => { const W = 1080, H = 1350; const f = fig('reverb', 60, 380, 960, [[1, 620, 82], [2, 930, 221]]); const [c1, c2] = list2([['Hall', 'Big and soft. 4.5 seconds.'], ['Room', 'Small and close, like next door.'], ['Plate', 'Bright and smooth. Studio sheen.'], ['Spring', 'Drippy and boingy, from old guitar amps.'], ['Cathedral', 'Huge and dark. Over twice the hall.'], ['Shimmer', 'The tail goes up an octave and blooms.'], ['Reverse', 'Each echo swells up, then stops dead.'], ['Freeze', 'Holds the sound and lets it ring forever.']]);
+  return wrap(W, H, 'plum', cHead(W) + title('Seven kinds<br>of space', 128, 88) + sub('The little screen on the pedal picks the room.', 318, 30) + f.html +
+   `<div class="a" style="left:90px;top:810px;width:440px">${c1}</div><div class="a" style="left:560px;top:810px;width:440px">${c2}</div>` + foot(W, H)); };
+D['13-delay-post'] = () => { const W = 1080, H = 1350; const f = fig('delay', 60, 380, 960, [[1, 1035, 82], [2, 1340, 221]]); const [c1, c2] = list2([['Digital', 'Clean repeats down the middle.'], ['Ping-pong', 'Left, right, left. The default.'], ['Three taps', 'A little rhythm that repeats as a whole.'], ['Tape echo', 'Each repeat darker and wobblier.'], ['Analog', 'Warm and murky. Repeats melt away.'], ['Dub', 'Narrow and long, drifting speaker to speaker.'], ['Slapback', 'One quick repeat, like a 1950s vocal.'], ['Freeze', 'Catches the echoes and keeps them going round.']]);
+  return wrap(W, H, 'sage', cHead(W) + title('Seven kinds<br>of echo', 128, 88) + sub('Timed to the tempo, from 1/16 to dotted 1/4.', 318, 30) + f.html +
+   `<div class="a" style="left:90px;top:740px;width:440px">${c1}</div><div class="a" style="left:560px;top:740px;width:440px">${c2}</div>` + foot(W, H)); };
+// 14 effects banner ------------------------------------------------------------
+D['14-pedals-banner'] = () => { const W = 1500, H = 500; const f = fig('effects-all', 60, 168, 1000);
+  return wrap(W, H, 'plum', lHead(60, 24, 46) + title('Two pedals', 90, 56, { left: 60, w: 700 }) + f.html + `<div class="a" style="left:1110px;top:190px;width:350px;font-size:30px;line-height:1.2"><div class="mono" style="font-size:18px;letter-spacing:.16em;color:var(--emberL);margin-bottom:10px">FREEZE</div>Each pedal can hold its sound and let it ring forever.</div>` + foot(W, H, { left: 60, b: 42, size: 18 })); };
+// 15 memory map story -----------------------------------------------------------
+D['15-memory-map-story'] = () => { const W = 1080, H = 1920; const f = fig('memory-map', 130, 580, 820, [[1, 1300, 1389]]);
+  return wrap(W, H, 'plum', logo(W / 2, 292, 56, 'c') + title('Drag the light<br>to where it happened', 376, 78) + f.html +
+   `<div class="t" style="top:1345px;font-size:30px;line-height:1.22;color:var(--ink);padding:0 110px">Each answer leaves a mark. The places you pick come forward in the music.</div>` + foot(W, H, { b: 410 })); };
+// 16 awake vs asleep ----------------------------------------------------------
+D['16-awake-asleep-post'] = () => { const W = 1080, H = 1350; const f1 = fig('card-boston', 84, 400, 431, [[1, 635, 475]]); const f2 = fig('card-london', 565, 400, 431, [[2, 635, 465]]);
+  return wrap(W, H, 'gold', cHead(W) + title('Awake or asleep', 130, 92) + sub('Same loop, different night.', 245, 32) + f1.html + f2.html +
+   `<div class="a" style="left:84px;top:1075px;width:431px;font-size:28px;line-height:1.2"><div class="h mono" style="font-size:18px;letter-spacing:.14em;color:var(--emberL);margin-bottom:6px">1 · ASLEEP</div>After sunset a city drifts off. Softer, slower, fewer notes.</div>` +
+   `<div class="a" style="left:565px;top:1075px;width:431px;font-size:28px;line-height:1.2"><div class="h mono" style="font-size:18px;letter-spacing:.14em;color:var(--emberL);margin-bottom:6px">2 · AWAKE</div>The sun's height opens the filter. Bright and open.</div>` +
+   `<div class="t" style="top:1235px;font-size:28px;color:var(--dim);padding:0 100px">At the dead of night the tempo slows to about three quarters.</div>` + foot(W, H)); };
+// 17 sample --------------------------------------------------------------------
+D['17-sample-post'] = () => { const W = 1080, H = 1350; let art = ''; const n = 21, pat = euclid(n, 8); const sw = 840 / n, x0 = 120, cy = 560; let seed = 7; const rnd = () => (seed = (seed * 9301 + 49297) % 233280) / 233280;
+  for (let i = 0; i < n; i++) for (let b = 0; b < 7; b++) { const x = x0 + i * sw + 5 + b * ((sw - 10) / 7); const env = .35 + .65 * Math.abs(Math.sin((i * 7 + b) * .5 + rnd())) * (.5 + .5 * rnd()); const h = 220 * env; art += `<rect x="${x}" y="${cy - h / 2}" width="${(sw - 10) / 7 - 2}" height="${h}" fill="${pat[i] ? '#ff9a6a' : 'rgba(243,236,230,.4)'}"/>`; }
+  for (let i = 0; i <= n; i++) art += `<line x1="${x0 + i * sw}" y1="${cy - 150}" x2="${x0 + i * sw}" y2="${cy + 150}" stroke="rgba(243,236,230,.28)" stroke-width="1.5"/>`;
+  return wrap(W, H, 'warm', cHead(W) + title('Bring your<br>own sound', 130, 92) + sub('Drop any audio file on a city card. The weather cuts it up.', 335, 32) + svgBox(W, H, art) +
+   `<div class="t mono" style="top:735px;font-size:21px;letter-spacing:.14em;color:var(--dim)">21°C CUTS YOUR SOUND INTO 21 PLACES</div>` +
+   notes([[1, 'Start', 'Each step plays from further into your sound, like a tape head scanning along it.'], [2, 'Pitch', 'On, it follows the melody. Off, it plays at the pitch you recorded.'], [3, 'Velocity', 'Loudest on the first step, dipping halfway round, rising again.']], 90, 830, 900, { bs: 30, gap: 28 }) +
+   `<div class="t" style="top:1210px;font-size:26px;color:var(--dim)">Your sound stays on your device. It is never uploaded.</div>` + foot(W, H)); };
+// 18 pick any ------------------------------------------------------------------
+D['18-pick-any-post'] = () => { const W = 1080, H = 1350; const f = fig('pick-any', 60, 410, 960, [[1, 330, 372], [2, 418, 560], [3, 1136, 560]]);
+  return wrap(W, H, 'sage', cHead(W) + title('Any three<br>cities', 130, 92) + sub('Type places, roll the dice, or let it surprise you.', 335, 32) + f.html +
+   notes([[1, 'Dice', 'Rolls a random city in, from about 350 around the world. Type a country and you get its best-known cities.'], [2, 'Surprise me', 'All awake, all asleep, or a mix. Always spread across the world.'], [3, 'Wild card', 'A theme and three cities that fit it right now, from the live weather. Autumn leaves, golden hour and more.']], 90, 920, 900, { bs: 29, gap: 26 }) + foot(W, H)); };
+// 19 phone story ---------------------------------------------------------------
+D['19-record-share-story'] = () => { const W = 1080, H = 1920; const f = fig('phone-hero', 60, 600, 400, [[1, 686, 2000], [2, 343, 2000]]);
+  return wrap(W, H, 'plum', logo(W / 2, 292, 56, 'c') + title('Record it.<br>Send it.', 376, 96) + f.html +
+   notes([[1, 'Record', 'Captures exactly what you hear, effects and filter included. Saves as .m4a or WAV, straight to your device.'], [2, 'Share', 'A link with your cities, sounds, key, scale, kit and effects. Whoever opens it hears your setup with their own sky.']], 540, 650, 480, { bs: 29, gap: 40 }) +
+   `<div class="a" style="left:540px;top:1180px;width:480px;font-size:28px;line-height:1.2;color:var(--dim)">Nothing is uploaded anywhere. Recording works on a phone too, with the screen on.</div>` + foot(W, H, { b: 410 })); };
+// 20 hero banner ---------------------------------------------------------------
+D['20-hero-banner'] = () => { const W = 1500, H = 500; const f = fig('hero', 760, 30, 700);
+  return wrap(W, H, 'warm', lHead(60, 40, 56) + title('A weather-played<br>instrument', 128, 62, { left: 60, w: 700 }) + sub('Three places playing live from their weather. Free, in your browser.', 290, 30, { left: 60, w: 640 }) + f.html + foot(W, H, { left: 60, b: 66, size: 18 })); };
+window.NAMES = Object.keys(D);
+function build(name) { const f = D[name](); const st = document.getElementById('stage'); st.style.width = f.W + 'px'; st.style.height = f.H + 'px'; st.innerHTML = f.html + '<div class="grain"></div>'; return f; }
+const q = new URLSearchParams(location.search).get('d'); if (q) build(q);
+</script></body></html>
