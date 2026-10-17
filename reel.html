@@ -46,6 +46,7 @@ textarea { width: 100%; min-height: 170px; background: var(--panel); color: var(
 .notes b { color: var(--ink); font-weight: 600; }
 .notes li { margin-bottom: 8px; }
 .status { color: var(--faint); font-size: 12px; }
+.linkbtn { background: none; border: 0; padding: 0; color: inherit; font: inherit; text-decoration: underline; cursor: pointer; }
 .recent { color: var(--faint); font-size: 12px; }
 .recent button { background: none; border: 0; color: var(--dim); text-decoration: underline; font: inherit; cursor: pointer; padding: 0; }
 .opts { display: flex; flex-wrap: wrap; gap: 10px 22px; margin: 18px 0 0; font-size: 12px; color: var(--dim); }
@@ -568,28 +569,49 @@ const LOOKS = { Extremes: "split", Travel: "postcard", Mood: "weather", Time: "w
 const LOOK_NAMES = { postcard: "Postcards", weather: "Weather you can see", split: "Split screen", classic: "Classic collage" };
 
 // ---------- data ----------
-async function getJSON(u) { const r = await fetch(u); if (!r.ok) throw new Error(r.status); return r.json(); }
-async function batched(base, params, list, size = 80) {
-  const out = [];
-  for (let i = 0; i < list.length; i += size) {
-    const part = list.slice(i, i + size), lat = part.map(p => p[1]).join(","), lon = part.map(p => p[2]).join(",");
-    try { const j = await getJSON(`${base}?latitude=${lat}&longitude=${lon}&${params}`); const arr = Array.isArray(j) ? j : [j]; part.forEach((_, k) => out.push(arr[k] || null)); }
-    catch (e) { part.forEach(() => out.push(null)); }
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+// one request with a time limit, and a couple of patient retries when the weather service is busy (429) or slow
+async function getJSON(u, tries = 3) {
+  for (let i = 0; i < tries; i++) {
+    const ctl = new AbortController(), timer = setTimeout(() => ctl.abort(), 20000);
+    try { const r = await fetch(u, { signal: ctl.signal }); if (!r.ok) throw new Error(r.status); return await r.json(); }
+    catch (e) { if (i === tries - 1) throw e; await sleep(2000 * (i + 1)); }
+    finally { clearTimeout(timer); }
   }
-  return out;
 }
+// all the batches go at once, so the wait is one request long, not four
+async function batched(base, params, list, size = 80) {
+  const parts = []; for (let i = 0; i < list.length; i += size) parts.push(list.slice(i, i + size));
+  const got = await Promise.all(parts.map(async part => {
+    const lat = part.map(p => p[1]).join(","), lon = part.map(p => p[2]).join(",");
+    try { const j = await getJSON(`${base}?latitude=${lat}&longitude=${lon}&${params}`); const arr = Array.isArray(j) ? j : [j]; return part.map((_, k) => arr[k] || null); }
+    catch (e) { return part.map(() => null); }
+  }));
+  return got.flat();
+}
+// the last good scan is kept for 15 minutes, so reloading the page is instant
+const CACHE_KEY = "reel-scan";
+const loadCache = () => { try { const c = JSON.parse(localStorage.getItem(CACHE_KEY)); return c && Date.now() - c.t < 15 * 60e3 && c.rows && c.rows.length > 100 ? c : null; } catch (e) { return null; } };
+const saveCache = r => { try { localStorage.setItem(CACHE_KEY, JSON.stringify({ t: Date.now(), rows: r })); } catch (e) {} };
 let rows = [], themeId = null, autoId = null, chosen = [], slotsNow = null;
-async function scan() {
-  const F = await batched("https://api.open-meteo.com/v1/forecast",
-    "current=temperature_2m,apparent_temperature,relative_humidity_2m,is_day,precipitation,snowfall,weather_code,cloud_cover,pressure_msl,wind_speed_10m,wind_gusts_10m,visibility,uv_index" +
-    "&daily=temperature_2m_max,temperature_2m_min,sunrise,sunset,daylight_duration,sunshine_duration,uv_index_max,precipitation_sum,snowfall_sum,precipitation_probability_max" +
-    "&past_days=7&forecast_days=1&timezone=auto&timeformat=unixtime", PLACES);
-  if (!F.some(Boolean)) throw new Error("no weather");
-  $("status").textContent = "Checking the seas and the air…";
+async function scan(fresh) {
+  const cached = fresh ? null : loadCache();
+  if (cached) {
+    rows = cached.rows; const t = new Date(cached.t).toTimeString().slice(0, 5);
+    $("status").innerHTML = `Using the weather from ${t}. <button type="button" id="again" class="linkbtn">Check again</button>`;
+    $("again").addEventListener("click", () => { $("status").textContent = "Checking the planet…"; scan(true).catch(fail); });
+    pickAuto(); drawThemes(); choose(autoId); return;
+  }
+  $("status").textContent = "Checking the planet…";
   const sea = PLACES.filter(p => p[4].includes("s"));
-  const [M, A] = await Promise.all([
+  const [F, M, A] = await Promise.all([
+    batched("https://api.open-meteo.com/v1/forecast",
+      "current=temperature_2m,apparent_temperature,relative_humidity_2m,is_day,precipitation,snowfall,weather_code,cloud_cover,pressure_msl,wind_speed_10m,wind_gusts_10m,visibility,uv_index" +
+      "&daily=temperature_2m_max,temperature_2m_min,sunrise,sunset,daylight_duration,sunshine_duration,uv_index_max,precipitation_sum,snowfall_sum,precipitation_probability_max" +
+      "&past_days=7&forecast_days=1&timezone=auto&timeformat=unixtime", PLACES),
     batched("https://marine-api.open-meteo.com/v1/marine", "current=wave_height,sea_surface_temperature", sea),
     batched("https://air-quality-api.open-meteo.com/v1/air-quality", "current=pm2_5", PLACES)]);
+  if (!F.some(Boolean)) throw new Error("no weather");
   rows = [];
   PLACES.forEach((p, i) => {
     const d = F[i]; if (!d || !d.current || typeof d.current.temperature_2m !== "number") return;
@@ -607,7 +629,10 @@ async function scan() {
       pm25: a && a.current ? a.current.pm2_5 ?? null : null
     });
   });
-  $("status").textContent = `Checked ${rows.length} places at ${new Date().toTimeString().slice(0, 5)}.`;
+  const hhmm = new Date().toTimeString().slice(0, 5);
+  if (rows.length < PLACES.length * 0.7) $("status").innerHTML = `Only ${rows.length} of ${PLACES.length} places answered at ${hhmm}. The weather service is busy. <button type="button" id="again" class="linkbtn">Check again</button>`;
+  else { $("status").innerHTML = `Checked ${rows.length} places at ${hhmm}. <button type="button" id="again" class="linkbtn">Check again</button>`; saveCache(rows); }
+  $("again").addEventListener("click", () => { $("status").textContent = "Checking the planet…"; scan(true).catch(fail); });
   pickAuto(); drawThemes(); choose(autoId);
 }
 // Pick for me: today's group, shuffled at random once per day (same result all day), skipping any with nothing to show
@@ -706,7 +731,8 @@ $("open").addEventListener("click", () => {
   setTimeout(drawRecent, 100);
 });
 $("copy").addEventListener("click", async () => { try { await navigator.clipboard.writeText($("caption").value); $("copy").textContent = "Copied"; } catch (e) { $("caption").select(); } setTimeout(() => $("copy").textContent = "Copy caption", 1600); });
-scan().catch(e => { console.error(e); $("status").textContent = "Couldn't reach the weather service. Try again in a minute."; });
+function fail(e) { console.error(e); $("status").innerHTML = `Couldn't reach the weather service. <button type="button" id="again" class="linkbtn">Try again</button>`; $("again").addEventListener("click", () => { $("status").textContent = "Checking the planet…"; scan(true).catch(fail); }); }
+scan().catch(fail);
 </script>
 </body>
 </html>
