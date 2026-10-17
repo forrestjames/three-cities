@@ -881,6 +881,9 @@ body.perform .city .vol-wrap input { height: 32px; }
 .perf-lead input[type=range] { width: 110px; }
 .pl-oct { display: flex; align-items: center; gap: 6px; font-size: 11px; letter-spacing: .12em; text-transform: uppercase; color: var(--ink-dim); }
 .pl-oct button { min-width: 38px; padding: 8px 0; }
+.pl-cam { display: flex; gap: 14px; align-items: flex-start; margin-top: 10px; }
+.pl-cam canvas { width: 320px; max-width: 45%; aspect-ratio: 4 / 3; border-radius: 8px; border: 1px solid rgba(255,255,255,.3); background: #000; }
+.pl-cam p { margin: 0; font-size: 12px; line-height: 1.5; color: var(--ink-dim); max-width: 46ch; }
 .pl-note { margin-top: 8px; font-size: 12px; color: var(--ink-dim); }
 .pl-keys { display: grid; gap: 4px; margin-top: 10px; }
 .pl-keys div { display: flex; gap: 4px; }
@@ -5980,7 +5983,9 @@ body.perform .city .vol-wrap input { height: 32px; }
       <label>Level <input type="range" id="plLevel" min="0" max="100" value="75"></label>
       <label>Filter <input type="range" id="plTone" min="0" max="100" value="100"></label>
       <label>Reverb <input type="range" id="plRev" min="0" max="100" value="40"></label>
-      <label>Delay <input type="range" id="plDel" min="0" max="100" value="15"></label></div>
+      <label>Delay <input type="range" id="plDel" min="0" max="100" value="15"></label>
+      <button type="button" id="plHand" aria-pressed="false" title="Play the lead with your hand, using the camera">Hand: off</button></div>
+      <div class="pl-cam" id="plCam" hidden><canvas id="plCanvas" width="320" height="240" aria-label="Camera view with the hand and the note zones"></canvas><p id="plCamNote"></p></div>
       <div class="pl-keys" id="plKeys" aria-hidden="true"></div>
       <div class="pl-note" id="plNote">Turn it on, then play the keys below, or a MIDI keyboard. Every note lands in the current key and scale.</div>`;
     bin.parentNode.insertBefore(lead, bin);
@@ -6053,7 +6058,7 @@ body.perform .city .vol-wrap input { height: 32px; }
       LEAD.on = on; onBtn.setAttribute("aria-pressed", String(on)); onBtn.textContent = on ? "Lead on" : "Lead off";
       window.__leadKeys = on;   // the drum-mute letters step aside while the letters play notes
       Object.values(keyEls).forEach((el, i) => el.classList.toggle("rt", on));
-      if (!on) { leadAllOff(); return; }
+      if (!on) { leadAllOff(); if (typeof handStop === "function" && HAND.on) handStop(); return; }
       plNote.textContent = "Play the keys, or a MIDI keyboard. Every note lands in the current key and scale.";
       if (navigator.requestMIDIAccess) { try { await loadMidi(); attachMidi(); } catch (e) {} }
     }
@@ -6092,6 +6097,75 @@ body.perform .city .vol-wrap input { height: 32px; }
       if (!midiHooked) { midiHooked = true; const prev = midiAccess.onstatechange; midiAccess.onstatechange = ev => { if (prev) prev(ev); attachMidi(); }; }
       plNote.textContent = names.length ? `MIDI keyboard: ${names.join(", ")}. The mod wheel opens the filter and the sustain pedal holds notes.` : "No MIDI keyboard found. The computer keyboard works: [ and ] change octave.";
     }
+
+    // ----- hand control: the camera sees your hand and plays the lead -----
+    // Pinch thumb and finger to sound a note. Left and right picks the note (in the key and scale), up and down opens the filter.
+    // The tracking comes from Google's MediaPipe Hands, fetched from jsDelivr the first time you press the button. The video never leaves the page.
+    const MP_BASE = "https://cdn.jsdelivr.net/npm/@mediapipe/hands@0.4.1675469240/";
+    const handBtn = L$("plHand"), camBox = L$("plCam"), camCv = L$("plCanvas"), camNote = L$("plCamNote"), camCtx = camCv.getContext("2d");
+    const HAND = { on: false, stream: null, video: null, hands: null, raf: 0, busy: false, zone: -1, pinch: false, id: "hand" };
+    const loadScript = src => new Promise((res, rej) => { const e = document.createElement("script"); e.src = src; e.crossOrigin = "anonymous"; e.onload = res; e.onerror = () => rej(new Error("script")); document.head.appendChild(e); });
+    const zonesN = () => scale.length * 2 + 1;   // two octaves and the top note
+    function handFrame(r) {
+      const W = camCv.width, H = camCv.height, lm = r.multiHandLandmarks && r.multiHandLandmarks[0];
+      camCtx.save(); camCtx.clearRect(0, 0, W, H); camCtx.translate(W, 0); camCtx.scale(-1, 1);
+      if (r.image) camCtx.drawImage(r.image, 0, 0, W, H);
+      camCtx.restore();
+      const n = zonesN();
+      camCtx.strokeStyle = "rgba(255,255,255,.25)"; camCtx.lineWidth = 1;
+      for (let i = 1; i < n; i++) { camCtx.beginPath(); camCtx.moveTo(W * i / n, 0); camCtx.lineTo(W * i / n, H); camCtx.stroke(); }
+      if (!lm) { if (HAND.pinch) { HAND.pinch = false; leadOff(HAND.id); } HAND.zone = -1; camNote.textContent = "Show your hand to the camera. Pinch thumb and finger to play."; return; }
+      const d = (a, b) => Math.hypot(lm[a].x - lm[b].x, lm[a].y - lm[b].y), palm = d(0, 9) || 0.1;
+      const ratio = d(4, 8) / palm, wasPinch = HAND.pinch;
+      HAND.pinch = wasPinch ? ratio < 0.5 : ratio < 0.32;   // a little slack so the note doesn't flutter
+      const x = 1 - lm[8].x, y = lm[8].y;
+      // the zone only changes once you're well past the edge, so a note holds still near a boundary
+      let z = Math.max(0, Math.min(n - 1, Math.floor(x * n)));
+      if (HAND.zone >= 0 && z !== HAND.zone) { const edge = z > HAND.zone ? (HAND.zone + 1) / n : HAND.zone / n; if (Math.abs(x - edge) < 0.18 / n) z = HAND.zone; }
+      LEAD.tone = Math.max(0.12, Math.min(1, 1.15 - 1.1 * y)); L$("plTone").value = Math.round(LEAD.tone * 100); leadSet();
+      if (HAND.pinch && (!wasPinch || z !== HAND.zone)) { if (LEAD.held.has(HAND.id)) leadOff(HAND.id, true); leadOn(HAND.id, keyDegreeNote(0, z), 0.8); }
+      if (!HAND.pinch && wasPinch) leadOff(HAND.id);
+      HAND.zone = z;
+      camCtx.fillStyle = HAND.pinch ? "#fff" : "rgba(255,255,255,.5)";
+      lm.forEach(p => { camCtx.beginPath(); camCtx.arc((1 - p.x) * W, p.y * H, 3, 0, 6.3); camCtx.fill(); });
+      camCtx.fillStyle = "rgba(255,255,255,.2)"; camCtx.fillRect(W * z / n, 0, W / n, H);
+      camNote.textContent = HAND.pinch ? `Playing ${plNote.textContent}. Move left or right to change note, up or down for the filter.` : "Pinch thumb and finger to play.";
+    }
+    async function handStart() {
+      handBtn.textContent = "Hand: starting…"; camBox.hidden = false; camNote.textContent = "Starting the camera. The first time, the hand tracking (about 13 MB) loads from jsDelivr.";
+      try {
+        if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) throw new Error("nocam");
+        HAND.stream = await navigator.mediaDevices.getUserMedia({ video: { width: 640, height: 480, facingMode: "user" }, audio: false });
+        const v = HAND.video = document.createElement("video"); v.muted = true; v.playsInline = true; v.srcObject = HAND.stream; await v.play();
+        if (!window.Hands) await loadScript(MP_BASE + "hands.js");
+        HAND.hands = new window.Hands({ locateFile: f => MP_BASE + f });
+        HAND.hands.setOptions({ maxNumHands: 1, modelComplexity: 0, minDetectionConfidence: 0.6, minTrackingConfidence: 0.5, selfieMode: false });
+        HAND.hands.onResults(handFrame);
+        if (!LEAD.on) await setLead(true);
+        HAND.on = true; handBtn.setAttribute("aria-pressed", "true"); handBtn.textContent = "Hand: on";
+        camNote.textContent = "Show your hand to the camera. Pinch thumb and finger to play.";
+        const loop = async () => {
+          if (!HAND.on) return;
+          if (!HAND.busy && HAND.video.readyState >= 2) { HAND.busy = true; try { await HAND.hands.send({ image: HAND.video }); } catch (e) {} HAND.busy = false; }
+          HAND.raf = requestAnimationFrame(loop);
+        };
+        loop();
+      } catch (e) {
+        handStop();
+        camBox.hidden = false;
+        camNote.textContent = e && e.message === "script" ? "Couldn't load the hand tracking. Check your connection and try again." : e && e.name === "NotAllowedError" ? "The browser blocked the camera. Allow it for this site and try again." : "Couldn't start the camera.";
+      }
+    }
+    function handStop() {
+      HAND.on = false; cancelAnimationFrame(HAND.raf);
+      if (HAND.pinch) { HAND.pinch = false; leadOff(HAND.id, true); }
+      if (HAND.stream) HAND.stream.getTracks().forEach(t => t.stop());
+      HAND.stream = null; HAND.zone = -1;
+      try { HAND.hands && HAND.hands.close(); } catch (e) {}
+      HAND.hands = null;
+      handBtn.setAttribute("aria-pressed", "false"); handBtn.textContent = "Hand: off"; camBox.hidden = true;
+    }
+    handBtn.addEventListener("click", () => { if (HAND.on || HAND.stream) handStop(); else handStart(); });
     document.getElementById("pfAllOut").addEventListener("click", () => cities.forEach(c => fadeTo(c, 0)));
     document.getElementById("pfAllIn").addEventListener("click", () => cities.forEach(c => fadeTo(c, 1)));
     document.addEventListener("keydown", e => {
