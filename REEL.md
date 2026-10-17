@@ -8,7 +8,7 @@ Internal notes for the social reel tools. No manual coverage needed.
 - Instagram safe zone: keep text and key art clear of the top ~290px, the right strip from y 1040, and the bottom ~360px. Content stays in x 80–1000 (80–880 below y 1040) and y 330–1550.
 
 ## Daily reel pipeline
-- .github/workflows/daily-reel.yml runs at 8am London. It has two UTC crons (07:00 and 08:00) and only carries on when it is 8am in London.
+- .github/workflows/daily-reel.yml runs at 8am London. It has UTC crons at 07:00 to 11:00 because GitHub often starts scheduled runs hours late. A run carries on when it is 8am in London or later and today's meta.json (on the `daily` branch) is not already dated today.
 - It opens /reel with Playwright, records the reel, converts it to MP4 with ffmpeg, then force-pushes reel.mp4, poster.jpg, caption.txt, meta.json and state.json to the orphan `daily` branch. Only today's reel is kept.
 - daily-reel/make-reel.mjs does the recording. It keeps its memory (episode number, cities resting for 14 days) in state.json on the `daily` branch.
 - Episode numbers: state.json holds `ep`. The START_EP env var only seeds it when there is no state yet. To change the number, edit state.json on the `daily` branch.
