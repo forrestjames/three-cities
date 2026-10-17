@@ -30,7 +30,7 @@ const MARK = `<path d="M0.5 24v-6.6h11V24zM1.6 17.4v-1.6h8.8v1.6zM3 15.8v-2.4h6v
 const URL_TXT = 'threecities.forrestjamesmusic.com';
 const COL = { bos:'#d08a6a', cph:'#6fa38c', lon:'#a98bc4', ember:'#e07a4f', sun:'#f0c27a', ink:'#f3ece6' };
 const A = (n) => 'assets/' + n + '.png';
-const IMG = { 'card-boston':[780,1158], 'card-copenhagen':[783,1158], 'card-london':[779,1158], 'rack-harmony':[493,290], 'rack-chords':[514,290], 'rack-filter':[490,290], 'rack-midi':[519,290], 'rhythm-grid':[1350,231], 'rhythm-all':[2416,356], 'reverb':[990,410], 'delay':[1406,410], 'effects-all':[2416,638], 'memory-map':[2416,2086], 'pick-any':[1352,642], 'phone-hero':[1170,2532], 'hero':[2880,1540] };
+const IMG = { 'card-boston':[780,1158], 'card-copenhagen':[783,1158], 'card-london':[779,1158], 'rack-harmony':[493,290], 'rack-chords':[514,290], 'rack-filter':[490,290], 'rack-midi':[519,290], 'midi-ufx-default':[940,702], 'midi-ufx-rerouted':[940,702], 'rhythm-grid':[1350,231], 'rhythm-all':[2416,356], 'reverb':[990,410], 'delay':[1406,410], 'effects-all':[2416,638], 'memory-map':[2416,2086], 'pick-any':[1352,642], 'phone-hero':[1170,2532], 'hero':[2880,1540] };
 const euclid = (n, k) => { const a = Array(n).fill(0); for (let i = 0; i < k; i++) a[Math.ceil(i * n / k)] = 1; return a; };
 const gcd = (a, b) => b ? gcd(b, a % b) : a;
 
@@ -122,13 +122,12 @@ D['08-filter-post'] = () => { const W = 1080, H = 1350; const f = fig('rack-filt
   return wrap(W, H, 'warm', cHead(W) + title('A filter that<br>moves in time', 130, 92) + sub('Like the Auto Filter in Ableton Live.', 335, 32) + f.html +
    notes([[1, 'Filter', 'Left is low-pass. Right is high-pass. Twelve o\'clock is open.'], [2, 'Rate', 'From 1/64, a fast flutter, up to 4 bars.'], [3, 'LFO', 'Sine, triangle, square, ramp up, ramp down or random. Amount sets how far it swings.']], 90, 940, 900, { bs: 28, gap: 24 }) + foot(W, H)); };
 // 09 midi ----------------------------------------------------------------------
-D['09-midi-post'] = () => { const W = 1080, H = 1350; const f = fig('rack-midi', 190, 420, 700, [[1, 145, 222]]);
-  const rows = [['City 1, 2, 3', 'channels 1, 2, 3'], ['Chords', 'channel 4'], ['Rhythm section', 'channel 10'], ['Clock out', 'optional, to any output']]; const drums = [['Kick', 36], ['Snare', 38], ['Rim', 37], ['Closed hat', 42]];
-  const r1 = rows.map(([a, b]) => `<div style="margin-bottom:18px"><div class="h mono" style="font-size:18px;letter-spacing:.14em;text-transform:uppercase;color:var(--emberL)">${a}</div><div style="font-size:32px">${b}</div></div>`).join('');
-  const r2 = drums.map(([a, b]) => `<div style="margin-bottom:18px;display:flex;justify-content:space-between;border-bottom:1px solid rgba(243,236,230,.25);padding-bottom:8px"><span class="mono" style="font-size:20px;letter-spacing:.14em;text-transform:uppercase;color:var(--emberL)">${a}</span><span class="mono" style="font-size:32px">${b}</span></div>`).join('');
-  return wrap(W, H, 'sage', cHead(W) + title('Let the weather<br>play your synths', 130, 84) + sub('Pick an output and the channel menus appear. Chrome and Edge, on a computer.', 305, 30, { pad: 120 }) + f.html +
-   `<div class="a" style="left:90px;top:880px;width:420px">${r1}</div><div class="a" style="left:590px;top:880px;width:400px"><div class="mono" style="font-size:18px;letter-spacing:.2em;color:var(--dim);margin-bottom:14px">DRUM NOTES</div>${r2}</div>` +
-   `<div class="t" style="top:1230px;font-size:28px;color:var(--dim)">Fills, ratchets and ghost notes all come through.</div>` + foot(W, H)); };
+D['09-midi-post'] = () => { const W = 1080, H = 1350;
+  const f1 = fig('midi-ufx-default', 50, 440, 480, [[1, 330, 150], [2, 760, 350]]); const f2 = fig('midi-ufx-rerouted', 550, 440, 480, [[3, 760, 350]]);
+  const lab = (t, x) => `<div class="a mono" style="left:${x}px;top:398px;font-size:20px;letter-spacing:.2em;color:var(--dim)">${t}</div>`;
+  return wrap(W, H, 'sage', cHead(W) + title('Pick an output.<br>Pick the channels.', 130, 84) + sub('Here the weather goes out through a Fireface UCX.', 322, 32) + lab('DEFAULT CHANNELS', 50) + lab('RE-ROUTED', 550) + f1.html + f2.html +
+   notes([[1, 'Output', 'Pick your interface from the list. Chrome and Edge, on a computer.'], [2, 'Channels', 'Each city, the chords and the drums get their own menu. Defaults are 1, 2, 3, 4 and 10.'], [3, 'Re-route', 'Boston to 5, Copenhagen to 6, London to 7, chords to 1. Each part reaches its own instrument.']], 60, 880, 960, { bs: 29, gap: 22 }) +
+   `<div class="t mono" style="top:1248px;font-size:19px;letter-spacing:.14em;color:var(--dim)">DRUM NOTES · KICK 36 · SNARE 38 · RIM 37 · HAT 42</div>` + foot(W, H)); };
 // 10 rhythm banner -------------------------------------------------------------
 D['10-drummer-banner'] = () => { const W = 1500, H = 500; const f = fig('rhythm-all', 60, 232, 1380);
   return wrap(W, H, 'warm', lHead(60, 26, 50) + title('One drummer, three cities', 92, 62, { left: 60, w: 1300 }) + sub('The kick plays where the cities agree. Hats play wherever any city does. The rim plays where one plays alone.', 168, 28, { left: 60, w: 1380 }) + f.html + foot(W, H, { left: 60, b: 42, size: 18 })); };
