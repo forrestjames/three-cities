@@ -824,6 +824,35 @@ body.mood-immersive .fab { display: none !important; }
 .rack .chord-knobs .kn { flex: 0 0 auto; min-width: 104px; }
 @media (max-width: 1100px) { .rack > :last-child:nth-child(odd) { grid-column: 1 / -1; } }
 
+
+/* ---------- perform mode (?perform): the playing surface only ---------- */
+body.perform .hero .title-cities, body.perform .hero h1, body.perform .hero .lede, body.perform .hero .brand-link, body.perform .hero .where-map, body.perform .hero #mine, body.perform .hero #mineToggle, body.perform .hero .country-note, body.perform .hero .share-note, body.perform .hero #share, body.perform .hero #backMine, body.perform .hero #grain,
+body.perform .mood, body.perform .project, body.perform .about, body.perform .more-card, body.perform .units-row .shuffle-note, body.perform .dots, body.perform footer, body.perform .welcome { display: none !important; }
+body.perform .hero { padding: 10px 16px 4px; min-height: 0; }
+body.perform .hero-inner { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 12px; padding: 0; max-width: 1400px; margin: 0 auto; }
+body.perform .hero .play-big { min-width: 200px; padding: 12px 22px; }
+body.perform .hero .status { flex-basis: 100%; text-align: center; }
+body.perform .hero-actions, body.perform .invite-row { margin: 0; }
+body.perform .status { margin: 0; font-size: 12px; }
+body.perform .perf-bar { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; padding: 8px 16px; max-width: 1400px; margin: 0 auto; }
+body.perform .perf-bar[hidden] { display: none; }
+.perf-title { font-size: 11px; letter-spacing: .22em; text-transform: uppercase; color: var(--ink-dim); }
+.pf-bars { font-size: 12px; color: var(--ink-dim); display: flex; gap: 6px; align-items: center; }
+.pf-bars select { font: inherit; background: transparent; color: var(--ink); border: 1px solid var(--line, #5a4038); border-radius: 6px; padding: 3px 6px; }
+.perf-keys { margin-left: auto; font-size: 11px; color: var(--ink-dim); letter-spacing: .04em; }
+.perf-strip { position: relative; z-index: 3; display: grid; grid-template-columns: auto auto 1fr; gap: 8px; align-items: center; padding: 8px 10px; background: rgba(0,0,0,.45); }
+.perf-strip button { white-space: nowrap; font: inherit; font-size: 12px; letter-spacing: .08em; text-transform: uppercase; padding: 8px 12px; min-height: 40px; border-radius: 8px; border: 1px solid rgba(255,255,255,.35); background: rgba(0,0,0,.35); color: #fff; cursor: pointer; }
+.perf-strip button[aria-pressed="true"] { background: var(--accent, #e8a33d); color: #1a100d; border-color: transparent; }
+.perf-strip label { display: flex; align-items: center; gap: 8px; font-size: 11px; letter-spacing: .12em; text-transform: uppercase; color: #fff; }
+.perf-strip input[type=range] { flex: 1; min-width: 80px; }
+body.perform .hero .status, body.perform .units-row, body.perform .city .glance, body.perform .city .sunbox, body.perform .city .city-place { display: none !important; }
+body.perform .hero-actions, body.perform .invite-row { flex: 0 0 auto; width: auto; display: flex; align-items: center; }
+body.perform .hero-inner > * { margin-top: 0; margin-bottom: 0; }
+body.perform .city .viz { max-height: 190px; }
+body.perform .city .viz .ring { max-height: 180px; width: auto; }
+body.perform .city .quick { min-height: 52px; }
+body.perform .city .quick .mute { min-width: 44px; min-height: 44px; }
+body.perform .city .vol-wrap input { height: 32px; }
 </style>
 </head>
 <body>
@@ -882,6 +911,13 @@ body.mood-immersive .fab { display: none !important; }
   </div>
 </div>
 
+<div class="perf-bar" id="perfBar" hidden>
+  <span class="perf-title">Perform</span>
+  <button type="button" class="ghost small" id="pfAllOut">Fade all out</button>
+  <button type="button" class="ghost small" id="pfAllIn">Fade all in</button>
+  <label class="pf-bars">Fade over <select id="pfBars"><option value="1">1 bar</option><option value="2">2 bars</option><option value="4" selected>4 bars</option><option value="8">8 bars</option><option value="16">16 bars</option></select></label>
+  <span class="perf-keys">1 2 3 mute · 4 5 6 solo · Shift+1 2 3 fade · 0 fade all · Space play</span>
+</div>
 <main>
 
 
@@ -3011,11 +3047,16 @@ body.mood-immersive .fab { display: none !important; }
       const swell = ac.createGain();
       input.connect(filter).connect(breath).connect(mood);
       mood.connect(moodGain);
-      moodGain.connect(pan).connect(out).connect(swellTone).connect(swell).connect(vol).connect(master);
+      // perform stage: a fade level and a DJ-style filter, before the sends so reverb and delay follow the fade (transparent until used)
+      const pHP = ac.createBiquadFilter(); pHP.type = "highpass"; pHP.frequency.value = 20; pHP.Q.value = 0.7;
+      const pLP = ac.createBiquadFilter(); pLP.type = "lowpass"; pLP.frequency.value = 20000; pLP.Q.value = 0.7;
+      const pG = ac.createGain();
+      moodGain.connect(pan).connect(pHP).connect(pLP).connect(pG).connect(out).connect(swellTone).connect(swell).connect(vol).connect(master);
       vol.connect(rev).connect(reverb);
       vol.connect(del).connect(delay);
-      buses.set(c, { input, filter, out, swell, swellTone, vol, rev, del, mood, moodGain, breath, breathLfo, breathDepth, gust, pan, panDrift, chorusIn });
+      buses.set(c, { input, filter, out, swell, swellTone, vol, rev, del, mood, moodGain, breath, breathLfo, breathDepth, gust, pan, panDrift, chorusIn, pHP, pLP, pG });
       applyMood(c, true);
+      if (typeof PERF !== "undefined" && PERF) PERF.apply(c);
       applySound(c);
     });
     setTempo();
@@ -4203,7 +4244,7 @@ body.mood-immersive .fab { display: none !important; }
     const pos = c.pos;
     const s = sunNow(c);
     const sl = sleepOf(c).depth;
-    const played = !c.muted && c.pattern[pos] && Math.random() * 100 < c.chance && Math.random() > sl * 0.75   // asleep, most notes rest
+    const played = !c.muted && !(typeof PERF !== "undefined" && PERF && PERF.off(c)) && c.pattern[pos] && Math.random() * 100 < c.chance && Math.random() > sl * 0.75   // asleep, most notes rest
       && Math.random() > rainGap(c);                                                                             // rain on the way, a patchier line
     if (played) {
       const deg = nextDegree(c, pos);
@@ -5703,6 +5744,76 @@ body.mood-immersive .fab { display: none !important; }
       if (DRUM_KEYS[k]) { const b = document.getElementById("gm-" + DRUM_KEYS[k]); if (b) b.click(); }
     });
   }
+
+  // ---------- perform mode: open with ?perform (or /perform) ----------
+  // The same instrument with the explaining taken away: faders, mutes, solos, fades and a filter per city, nothing else in the way.
+  const PERF = (() => {
+    if (!QS.has("perform")) return null;
+    document.body.classList.add("perform");
+    document.title = "Three Cities · Perform";
+    document.getElementById("perfBar").hidden = false;
+    const barsSel = document.getElementById("pfBars");
+    const anySolo = () => cities.some(c => c.solo);
+    const off = c => anySolo() && !c.solo;
+    function apply(c) {
+      const b = buses.get(c); if (!b || !b.pG || !ac) return;
+      const t = ac.currentTime, base = (c.pf || 0) / 100;
+      b.pG.gain.setTargetAtTime((c.fade == null ? 1 : c.fade) * (off(c) ? 0 : 1), t, 0.04);
+      b.pLP.frequency.setTargetAtTime(20000 * Math.pow(180 / 20000, -Math.min(0, base)), t, 0.03);
+      b.pHP.frequency.setTargetAtTime(20 * Math.pow(4000 / 20, Math.max(0, base)), t, 0.03);
+    }
+    const applyAll = () => cities.forEach(apply);
+    const barSecs = () => Number(barsSel.value) * 4 * 60 / (bpmNow || 92);
+    function fadeTo(c, target) {
+      const from = c.fade == null ? 1 : c.fade, t0 = performance.now(), dur = barSecs() * 1000;
+      c._fadeId = (c._fadeId || 0) + 1; const id = c._fadeId;
+      c._fadeTarget = target;
+      const step = now => {
+        if (id !== c._fadeId) return;
+        const k = Math.min(1, (now - t0) / dur);
+        c.fade = from + (target - from) * k; apply(c); paint(c);
+        if (k < 1) requestAnimationFrame(step);
+      };
+      requestAnimationFrame(step);
+    }
+    const fadeToggle = c => fadeTo(c, (c._fadeTarget == null ? 1 : c._fadeTarget) > 0.5 ? 0 : 1);
+    function paint(c) {
+      const r = c.perf; if (!r) return;
+      r.solo.setAttribute("aria-pressed", String(!!c.solo));
+      r.fade.setAttribute("aria-pressed", String((c._fadeTarget == null ? 1 : c._fadeTarget) < 0.5));
+      r.fade.textContent = (c._fadeTarget == null ? 1 : c._fadeTarget) < 0.5 ? "Fade in" : "Fade out";
+      c.el.style.opacity = c.fade != null && c.fade < 1 ? String(0.45 + 0.55 * c.fade) : "";
+    }
+    cities.forEach((c, i) => {
+      const id = c.key.toLowerCase();
+      const d = document.createElement("div");
+      d.className = "perf-strip";
+      d.innerHTML = `<button type="button" data-p="solo" aria-pressed="false" title="Solo ${c.name} (${i + 4})">Solo</button>
+        <button type="button" data-p="fade" aria-pressed="false" title="Fade ${c.name} out or in (Shift+${i + 1})">Fade out</button>
+        <label>Filter <input type="range" min="-100" max="100" value="0" aria-label="${c.name} filter: left is low pass, right is high pass"></label>`;
+      c.el.appendChild(d);
+      c.perf = { solo: d.querySelector('[data-p="solo"]'), fade: d.querySelector('[data-p="fade"]'), flt: d.querySelector("input") };
+      c.perf.solo.addEventListener("click", () => { c.solo = !c.solo; cities.forEach(paint); applyAll(); });
+      c.perf.fade.addEventListener("click", () => fadeToggle(c));
+      c.perf.flt.addEventListener("input", () => { c.pf = Number(c.perf.flt.value); apply(c); });
+      c.perf.flt.addEventListener("dblclick", () => { c.perf.flt.value = 0; c.pf = 0; apply(c); });
+    });
+    document.getElementById("pfAllOut").addEventListener("click", () => cities.forEach(c => fadeTo(c, 0)));
+    document.getElementById("pfAllIn").addEventListener("click", () => cities.forEach(c => fadeTo(c, 1)));
+    document.addEventListener("keydown", e => {
+      if (e.ctrlKey || e.metaKey || e.altKey || e.repeat) return;
+      const t = e.target, tag = t && t.tagName;
+      if (tag === "SELECT" || tag === "TEXTAREA" || (tag === "INPUT" && /^(text|search|email|url)$/.test(t.type))) return;
+      const m = /^Digit([0-9])$/.exec(e.code || "");
+      if (!m) return;
+      const n = Number(m[1]);
+      if (e.shiftKey && n >= 1 && n <= 3) { fadeToggle(cities[n - 1]); e.preventDefault(); return; }
+      if (e.shiftKey) return;
+      if (n >= 4 && n <= 6 && cities[n - 4]) { cities[n - 4].perf.solo.click(); e.preventDefault(); return; }
+      if (n === 0) { const down = cities.some(c => (c._fadeTarget == null ? 1 : c._fadeTarget) > 0.5); cities.forEach(c => fadeTo(c, down ? 0 : 1)); e.preventDefault(); }
+    });
+    return { apply, off, fadeTo, applyAll };
+  })();
 
   // ---------- reel: a 9:16 collage of today's three cities, recorded with the music ----------
   // Open with ?reel=Hottest,Coldest,Wildest (labels for the three cities). The studio page (/reel) picks the cities.
