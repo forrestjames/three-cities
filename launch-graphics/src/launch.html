@@ -5,11 +5,11 @@
 @font-face { font-family: "Abel"; src: url("../../design-assets/fonts/Abel-Regular.ttf"); }
 @font-face { font-family: "Source Code Pro"; font-weight: 400; src: url("../../design-assets/fonts/SourceCodePro-Regular.ttf"); }
 @font-face { font-family: "Source Code Pro"; font-weight: 500; src: url("../../design-assets/fonts/SourceCodePro-Medium.ttf"); }
-:root { --ground:#100806; --panel:#1a1210; --ink:#f3ece6; --dim:#9e938c; --ember:#e07a4f; --sun:#f0c27a; --bos:#d08a6a; --cph:#6fa38c; --lon:#a98bc4; }
+:root { --ground:#2e1c17; --panel:#3a241e; --ink:#f3ece6; --dim:#e2d6cc; --ember:#e07a4f; --sun:#f0c27a; --bos:#d08a6a; --cph:#6fa38c; --lon:#a98bc4; }
 * { box-sizing: border-box; margin: 0; padding: 0; }
 html, body { background: var(--ground); }
 body { width: max-content; }
-#stage { position: relative; overflow: hidden; background: var(--ground); color: var(--ink); font-family: "Abel", "Arial Narrow", sans-serif; }
+#stage { position: relative; overflow: hidden; background: radial-gradient(120% 70% at 50% 100%, #6a3a2c 0%, rgba(106,58,44,0) 70%), linear-gradient(180deg, #4a2f2c 0%, #2e1c17 100%); color: var(--ink); font-family: "Abel", "Arial Narrow", sans-serif; }
 #stage > svg.art { position: absolute; inset: 0; }
 .t { position: absolute; left: 0; right: 0; text-align: center; }
 .mono { font-family: "Source Code Pro", ui-monospace, monospace; text-transform: uppercase; letter-spacing: .22em; }
@@ -23,7 +23,7 @@ body { width: max-content; }
 <script src="d3-array.min.js"></script><script src="d3-geo.min.js"></script>
 <script src="land.js"></script><script src="skylines.js"></script>
 <script>
-const COL = { ground:'#100806', ink:'#f3ece6', dim:'#9e938c', ember:'#e07a4f', sun:'#f0c27a', bos:'#d08a6a', cph:'#6fa38c', lon:'#a98bc4' };
+const COL = { ground:'#2e1c17', ink:'#f3ece6', dim:'#e2d6cc', ember:'#e07a4f', sun:'#f0c27a', bos:'#d08a6a', cph:'#6fa38c', lon:'#a98bc4' };
 const URL_TXT = 'threecities.forrestjamesmusic.com';
 const HOME = [
   { n:'Boston', c:COL.bos, lat:42.36, lon:-71.06, sub:'Massachusetts' },
@@ -40,7 +40,7 @@ const defs = `<defs>
   <filter id="blur6" x="-200%" y="-200%" width="500%" height="500%"><feGaussianBlur stdDeviation="6"/></filter>
   <filter id="blur14" x="-300%" y="-300%" width="700%" height="700%"><feGaussianBlur stdDeviation="14"/></filter>
   <filter id="blur40" x="-100%" y="-100%" width="300%" height="300%"><feGaussianBlur stdDeviation="40"/></filter>
-  <radialGradient id="sphere" cx="38%" cy="32%" r="75%"><stop offset="0" stop-color="#2b1c18"/><stop offset=".7" stop-color="#170d0b"/><stop offset="1" stop-color="#0c0504"/></radialGradient>
+  <radialGradient id="sphere" cx="38%" cy="32%" r="75%"><stop offset="0" stop-color="#4a3029"/><stop offset=".7" stop-color="#2e1c17"/><stop offset="1" stop-color="#22130f"/></radialGradient>
 </defs>`;
 const glowDot = (x, y, c, r = 7, g = 1) => `<circle cx="${x}" cy="${y}" r="${r * 3.4 * g}" fill="${c}" opacity=".55" filter="url(#blur14)"/><circle cx="${x}" cy="${y}" r="${r * 2.2}" fill="none" stroke="${c}" stroke-opacity=".35" stroke-width="1.5"/><circle cx="${x}" cy="${y}" r="${r * 3.6}" fill="none" stroke="${c}" stroke-opacity=".16" stroke-width="1.5"/><circle cx="${x}" cy="${y}" r="${r}" fill="${c}"/>`;
 
@@ -85,7 +85,7 @@ function ring(cx, cy, r, steps, hits, color, { rot = 0, play = -1, dotR = 7 } = 
   return s;
 }
 const mark = (src, w, extra = '') => `<img src="../../design-assets/logo/${src}" style="width:${w}px;display:block;${extra}">`;
-const bgGlow = (W, H, list) => list.map(([x, y, r, c, o]) => `<circle cx="${x}" cy="${y}" r="${r}" fill="${c}" opacity="${o}" filter="url(#blur40)"/>`).join('');
+const bgGlow = (W, H, list) => list.map(([x, y, r, c, o]) => `<circle cx="${x}" cy="${y}" r="${r}" fill="${c}" opacity="${Math.min(.6, o * 1.3)}" filter="url(#blur40)"/>`).join('');
 const sky = (id, W, H, stops) => `<linearGradient id="${id}" x1="0" y1="0" x2="0" y2="1">${stops.map(([o, c]) => `<stop offset="${o}" stop-color="${c}"/>`).join('')}</linearGradient>`;
 
 const D = {};
@@ -94,7 +94,7 @@ const frame = (W, H, art, html) => ({ W, H, art, html });
 // 01 live square -----------------------------------------------------------
 D['01-live-square'] = () => {
   const W = 1080, H = 1080; const g = globe({ cx: 540, cy: 880, R: 540, rot: [28, -40], dot: 2.6, labelSize: 24 });
-  const lab = HOME.map(c => `<text x="${c._p[0] + (c.n === 'Boston' ? -20 : 22)}" y="${c._p[1] + 6}" text-anchor="${c.n === 'Boston' ? 'end' : 'start'}" fill="${c.c}" font-family="Source Code Pro" font-size="22" letter-spacing="4" stroke="#100806" stroke-width="6" paint-order="stroke">${c.n.toUpperCase()}</text>`).join('');
+  const lab = HOME.map(c => `<text x="${c._p[0] + (c.n === 'Boston' ? -20 : 22)}" y="${c._p[1] + 6}" text-anchor="${c.n === 'Boston' ? 'end' : 'start'}" fill="${c.c}" font-family="Source Code Pro" font-size="22" letter-spacing="4" stroke="#2e1c17" stroke-width="6" paint-order="stroke">${c.n.toUpperCase()}</text>`).join('');
   return frame(W, H, `${defs}${bgGlow(W, H, [[200, 200, 380, COL.ember, .32], [900, 120, 320, COL.cph, .22]])}${g.svg}${lab}`,
     `<div class="t mono dim" style="top:70px;font-size:22px">Forrest James</div>
      <div class="t disp" style="top:118px;font-size:112px;letter-spacing:.09em">It's live</div>
@@ -125,7 +125,7 @@ D['03-home-skylines-square'] = () => {
     art += sk(nm, x0 + 4, 960, cw - 8, COL.ink, c);
     if (i) art += `<line x1="${x0}" y1="300" x2="${x0}" y2="1000" stroke="rgba(243,236,230,.16)"/>`;
   });
-  return frame(W, H, art + `<rect y="960" width="${W}" height="120" fill="#0d0605"/>`,
+  return frame(W, H, art + `<rect y="960" width="${W}" height="120" fill="#25140f"/>`,
     `<div class="t mono dim" style="top:66px;font-size:21px">Forrest James presents</div>
      <div class="t disp" style="top:112px;font-size:84px;letter-spacing:.08em">Three cities</div>
      <div class="t mono" style="top:560px;left:0;width:360px;color:var(--bos);font-size:22px">Boston</div>
@@ -173,7 +173,7 @@ D['06-sunset-square'] = () => {
   art += `<path d="M120,820 A420,420 0 0 1 960,820" fill="none" stroke="rgba(255,240,200,.5)" stroke-width="2" stroke-dasharray="3 10"/>`;
   [[210, 650], [320, 560], [540, 520], [760, 560], [870, 650]].forEach(([x, y], i) => art += `<circle cx="${x}" cy="${y}" r="${i === 2 ? 9 : 6}" fill="#fff0c8" opacity="${i === 2 ? 1 : .7}"/>`);
   art += sk('london', -40, 1030, 520, '#1a0d0c', '#1a0d0c') + sk('boston', 300, 1030, 440, '#120807', '#120807') + sk('copenhagen', 640, 1030, 480, '#1a0d0c', '#1a0d0c');
-  art += `<rect y="1000" width="${W}" height="80" fill="#0d0605"/>`;
+  art += `<rect y="1000" width="${W}" height="80" fill="#25140f"/>`;
   return frame(W, H, art, `
      <div class="t mono" style="top:76px;font-size:21px;color:rgba(243,236,230,.7)">Three Cities</div>
      <div class="t disp" style="top:128px;font-size:96px;letter-spacing:.06em">At sunset,<br>each city<br>falls silent</div>
@@ -183,17 +183,17 @@ D['06-sunset-square'] = () => {
 // 07 type square --------------------------------------------------------------------------
 D['07-type-square'] = () => {
   const W = 1080, H = 1080; let art = defs + `<rect width="${W}" height="${H}" fill="${COL.ember}"/>` + bgGlow(W, H, [[900, 160, 360, COL.sun, .6], [120, 980, 420, '#6a2a2a', .6]]);
-  art += `<g fill="#100806">${sk('boston', 20, 1080, 340, '#100806')}${sk('copenhagen', 370, 1080, 340, '#100806')}${sk('london', 720, 1080, 340, '#100806')}</g>`;
+  art += `<g fill="#2e1c17">${sk('boston', 20, 1080, 340, '#2e1c17')}${sk('copenhagen', 370, 1080, 340, '#2e1c17')}${sk('london', 720, 1080, 340, '#2e1c17')}</g>`;
   return frame(W, H, art, `
-     <div class="mono" style="position:absolute;left:84px;top:84px;font-size:22px;color:#100806">Now live</div>
-     <div class="disp" style="position:absolute;left:84px;top:150px;font-size:124px;line-height:1;color:#100806;letter-spacing:.03em;width:920px">Three places<br>I've called home,<br>playing in<br>real time.</div>
-     <div class="mono" style="position:absolute;left:84px;top:800px;font-size:21px;color:#100806">${URL_TXT}</div>`);
+     <div class="mono" style="position:absolute;left:84px;top:84px;font-size:22px;color:#2e1c17">Now live</div>
+     <div class="disp" style="position:absolute;left:84px;top:150px;font-size:124px;line-height:1;color:#2e1c17;letter-spacing:.03em;width:920px">Three places<br>I've called home,<br>playing in<br>real time.</div>
+     <div class="mono" style="position:absolute;left:84px;top:800px;font-size:21px;color:#2e1c17">${URL_TXT}</div>`);
 };
 
 // 08 live story ----------------------------------------------------------------------------
 D['08-live-story'] = () => {
   const W = 1080, H = 1920; const g = globe({ cx: 540, cy: 1110, R: 450, rot: [28, -40], dot: 2.4 });
-  const lab = HOME.map(c => `<text x="${c._p[0] + (c.n === 'Boston' ? -22 : 24)}" y="${c._p[1] + 7}" text-anchor="${c.n === 'Boston' ? 'end' : 'start'}" fill="${c.c}" font-family="Source Code Pro" font-size="23" letter-spacing="4" stroke="#100806" stroke-width="6" paint-order="stroke">${c.n.toUpperCase()}</text>`).join('');
+  const lab = HOME.map(c => `<text x="${c._p[0] + (c.n === 'Boston' ? -22 : 24)}" y="${c._p[1] + 7}" text-anchor="${c.n === 'Boston' ? 'end' : 'start'}" fill="${c.c}" font-family="Source Code Pro" font-size="23" letter-spacing="4" stroke="#2e1c17" stroke-width="6" paint-order="stroke">${c.n.toUpperCase()}</text>`).join('');
   return frame(W, H, `${defs}${bgGlow(W, H, [[160, 420, 420, COL.ember, .3], [940, 1500, 420, COL.lon, .3], [900, 300, 300, COL.cph, .18]])}${g.svg}${lab}`, `
      <div class="t mono dim" style="top:340px;font-size:22px">Forrest James</div>
      <div class="t disp" style="top:392px;font-size:158px;letter-spacing:.06em">Now live</div>
@@ -214,7 +214,7 @@ D['09-horizons-story'] = () => {
 
 // 10 three steps story --------------------------------------------------------------------------
 D['10-steps-story'] = () => {
-  const W = 1080, H = 1920; let art = defs + `${sky('p', W, H, [[0, '#3a2430'], [1, '#120a0b']])}<rect width="${W}" height="${H}" fill="url(#p)"/>` + bgGlow(W, H, [[900, 340, 360, COL.ember, .3], [120, 1500, 380, COL.cph, .25]]);
+  const W = 1080, H = 1920; let art = defs + `${sky('p', W, H, [[0, '#7a4a44'], [1, '#2e1a15']])}<rect width="${W}" height="${H}" fill="url(#p)"/>` + bgGlow(W, H, [[900, 340, 360, COL.ember, .3], [120, 1500, 380, COL.cph, .25]]);
   const steps = [['1', 'Pick your cities', 'The three places you’ve lived, or any three on Earth.', COL.bos, 14, 5], ['2', 'Press start', 'Their live weather turns into rhythm.', COL.cph, 11, 4], ['3', 'Share your link', 'Send friends the version you made.', COL.lon, 16, 7]];
   let html = `<div class="t mono dim" style="top:340px;font-size:22px">Three Cities</div><div class="t disp" style="top:392px;font-size:104px;letter-spacing:.05em">Make yours</div>`;
   steps.forEach(([n, t, d, c, st, ht], i) => { const y = 600 + i * 300; art += ring(190, y + 90, 64, st, ht, c, { dotR: 6, play: i * 2 }); html += `<div class="mono" style="position:absolute;left:320px;top:${y + 16}px;font-size:20px;color:${c}">Step ${n}</div><div style="position:absolute;left:320px;top:${y + 52}px;font-size:50px;letter-spacing:.02em">${t}</div><div style="position:absolute;left:320px;top:${y + 122}px;width:620px;font-size:29px;line-height:1.3;color:var(--dim)">${d}</div>`; });
@@ -224,7 +224,7 @@ D['10-steps-story'] = () => {
 
 // 11 world story ---------------------------------------------------------------------------------
 D['11-world-story'] = () => {
-  const W = 1080, H = 1920; let art = defs + `${sky('w', W, H, [[0, '#1b1018'], [1, '#100806']])}<rect width="${W}" height="${H}" fill="url(#w)"/>`;
+  const W = 1080, H = 1920; let art = defs + `${sky('w', W, H, [[0, '#1b1018'], [1, '#2e1c17']])}<rect width="${W}" height="${H}" fill="url(#w)"/>`;
   const rows = [['tokyo', 'Tokyo', '#d96a5a', '#4a1f2a'], ['paris', 'Paris', '#8d6f9e', '#2f1f38'], ['capetown', 'Cape Town', '#cdd7d0', '#53727a'], ['sydney', 'Sydney', '#f0c27a', '#a8573f'], ['rio', 'Rio', '#e8b47f', '#6b3b49']];
   const rh = 218, y0 = 600; let html = `<div class="t mono dim" style="top:330px;font-size:22px">Three Cities · now live</div><div class="t disp" style="top:372px;font-size:104px;letter-spacing:.05em;line-height:1">Whose three<br>cities?</div>`;
   rows.forEach(([nm, label, a, b], i) => { const y = y0 + i * (rh + 6); art += `${sky('r' + i, W, rh, [[0, a], [1, b]])}<svg x="80" y="${y}" width="920" height="${rh}" viewBox="0 0 920 ${rh}"><rect width="920" height="${rh}" fill="url(#r${i})"/><circle cx="${[760, 120, 780, 140, 800][i]}" cy="64" r="26" fill="#fff" opacity=".28"/>${sk(nm, [290, 300, 250, 320, 300][i], rh, 340, '#120807')}</svg>`; html += `<div class="mono" style="position:absolute;left:108px;top:${y + 22}px;font-size:19px;color:#120807">${label}</div>`; });
@@ -259,10 +259,10 @@ D['13-link-card'] = () => {
 D['14-portrait'] = () => {
   const W = 1080, H = 1350; const m = flat({ x: 10, y: 410, w: 1060, h: 560, dot: 2.3 });
   const home = HOME.map(c => { const p = m.proj([c.lon, c.lat]); return glowDot(p[0], p[1], c.c, 8); }).join('');
-  const lab = HOME.map(c => { const p = m.proj([c.lon, c.lat]); return `<text x="${p[0] + (c.n === 'Boston' ? -22 : 20)}" y="${p[1] + (c.n === 'London' ? 34 : 6)}" text-anchor="${c.n === 'Boston' ? 'end' : 'start'}" fill="${c.c}" font-family="Source Code Pro" font-size="21" letter-spacing="4" stroke="#100806" stroke-width="6" paint-order="stroke">${c.n.toUpperCase()}</text>`; }).join('');
+  const lab = HOME.map(c => { const p = m.proj([c.lon, c.lat]); return `<text x="${p[0] + (c.n === 'Boston' ? -22 : 20)}" y="${p[1] + (c.n === 'London' ? 34 : 6)}" text-anchor="${c.n === 'Boston' ? 'end' : 'start'}" fill="${c.c}" font-family="Source Code Pro" font-size="21" letter-spacing="4" stroke="#2e1c17" stroke-width="6" paint-order="stroke">${c.n.toUpperCase()}</text>`; }).join('');
   const p = HOME.map(c => m.proj([c.lon, c.lat]));
   const arcs = `<path d="M${p[0][0]},${p[0][1]} Q${(p[0][0] + p[2][0]) / 2},${p[0][1] - 110} ${p[1][0]},${p[1][1]}" fill="none" stroke="rgba(243,236,230,.55)" stroke-dasharray="6 7" stroke-width="1.8"/>`;
-  return frame(W, H, `${defs}${sky('q', W, H, [[0, '#5a3a2e'], [.5, '#3a2a34'], [1, '#150b0c']])}<rect width="${W}" height="${H}" fill="url(#q)"/>${bgGlow(W, H, [[860, 260, 340, COL.cph, .3], [180, 1160, 380, COL.lon, .3]])}${m.svg}${arcs}${home}${lab}${sk('boston', 20, 1350, 340, 'rgba(16,8,6,.92)')}${sk('copenhagen', 370, 1350, 340, 'rgba(16,8,6,.92)')}${sk('london', 720, 1350, 340, 'rgba(16,8,6,.92)')}`,
+  return frame(W, H, `${defs}${sky('q', W, H, [[0, '#a06a4c'], [.5, '#6a4650'], [1, '#2e1a15']])}<rect width="${W}" height="${H}" fill="url(#q)"/>${bgGlow(W, H, [[860, 260, 340, COL.cph, .3], [180, 1160, 380, COL.lon, .3]])}${m.svg}${arcs}${home}${lab}${sk('boston', 20, 1350, 340, 'rgba(16,8,6,.92)')}${sk('copenhagen', 370, 1350, 340, 'rgba(16,8,6,.92)')}${sk('london', 720, 1350, 340, 'rgba(16,8,6,.92)')}`,
     `<div class="t mono dim" style="top:84px;font-size:22px">Forrest James</div>
      <div class="t disp" style="top:134px;font-size:150px;letter-spacing:.06em;line-height:.96">Three<br>Cities</div>
      <div class="t" style="top:446px;font-size:0px">.</div>
