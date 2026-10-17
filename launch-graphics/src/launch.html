@@ -158,13 +158,13 @@ D['04-how-it-works-square'] = () => {
 
 // 05 skyline grid square -----------------------------------------------------------
 D['05-skyline-grid-square'] = () => {
-  const W = 1080, H = 1080; const names = [['newyork', 'New York'], ['paris', 'Paris'], ['tokyo', 'Tokyo'], ['sydney', 'Sydney'], ['istanbul', 'Istanbul'], ['rio', 'Rio'], ['capetown', 'Cape Town'], ['mexicocity', 'Mexico City'], ['mumbai', 'Mumbai']];
-  const bgs = [['#e6a47a', '#7d4a3e'], ['#8d6f9e', '#2f1f38'], ['#d96a5a', '#4a1f2a'], ['#f0c27a', '#a8573f'], ['#5c8f86', '#17302f'], ['#e8b47f', '#6b3b49'], ['#cdd7d0', '#53727a'], ['#c79a6f', '#3e2a2e'], ['#7a7fb5', '#241d3b']];
+  const W = 1080, H = 1080; const names = [['newyork', 'New York', 'USA', 12, 5], ['paris', 'Paris', 'France', 14, 6], ['tokyo', 'Tokyo', 'Japan', 17, 7], ['sydney', 'Sydney', 'Australia', 22, 8], ['istanbul', 'Istanbul', 'Turkey', 16, 5], ['rio', 'Rio', 'Brazil', 27, 9], ['capetown', 'Cape Town', 'South Africa', 19, 6], ['mexicocity', 'Mexico City', 'Mexico', 21, 7], ['mumbai', 'Mumbai', 'India', 30, 10]];
+  const acc = [[COL.bos, COL.bosL], [COL.cph, COL.cphL], [COL.lon, COL.lonL]];
   const T = 250, gap = 6, x0 = 159, y0 = 250; let art = defs; let html = '';
-  names.forEach(([nm, label], i) => {
-    const cx = x0 + (i % 3) * (T + gap), cy = y0 + Math.floor(i / 3) * (T + gap); const [a, b] = bgs[i];
-    art += `${sky('g' + i, T, T, [[0, a], [1, b]])}<svg x="${cx}" y="${cy}" width="${T}" height="${T}" viewBox="0 0 300 300"><rect width="300" height="300" fill="url(#g${i})"/>${sk(nm, 6, 300, 288, '#120807', '#120807')}</svg>`;
-    html += `<div class="mono" style="position:absolute;left:${cx + 14}px;top:${cy + 10}px;font-size:25px;font-weight:500;color:#fff6ec;letter-spacing:.12em;text-shadow:0 2px 12px rgba(20,8,4,.9),0 0 3px rgba(20,8,4,.9)">${label}</div>`;
+  names.forEach(([nm, label, ctry, st, ht], i) => {
+    const cx = x0 + (i % 3) * (T + gap), cy = y0 + Math.floor(i / 3) * (T + gap); const [c, cl] = acc[i % 3];
+    art += `${sky('g' + i, T, T, [[0, '#4d302c'], [1, '#26140f']])}<svg x="${cx}" y="${cy}" width="${T}" height="${T}" viewBox="0 0 300 300"><rect width="300" height="300" fill="url(#g${i})"/><rect width="300" height="300" fill="${c}" opacity=".10"/><g opacity=".16">${SK[nm](c, c).replace(/^/, '<g transform="translate(6 150) scale(.96)">') + '</g>'}</g>${ring(150, 168, 66, st, ht, c, { rot: i * 11, play: (i * 2) % st, dotR: 8 })}<text x="150" y="180" text-anchor="middle" font-family="Abel" font-size="46" fill="#f3ece6">${st}</text><text x="150" y="203" text-anchor="middle" font-family="Source Code Pro" font-size="13" letter-spacing="3" fill="#e2d6cc">STEPS</text></svg>`;
+    html += `<div style="position:absolute;left:${cx + 14}px;top:${cy + 10}px;font-family:Abel;font-size:32px;letter-spacing:.1em;text-transform:uppercase;color:${cl};text-shadow:0 2px 10px rgba(20,8,4,.9)">${label}</div><div class="mono" style="position:absolute;left:${cx + 15}px;top:${cy + 50}px;font-size:13px;letter-spacing:.14em;color:#e2d6cc">${ctry}</div>`;
   });
   return frame(W, H, art, html + `
      
