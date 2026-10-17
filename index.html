@@ -844,6 +844,8 @@ body.perform .perf-bar[hidden] { display: none; }
 .perf-strip button { white-space: nowrap; font: inherit; font-size: 12px; letter-spacing: .08em; text-transform: uppercase; padding: 8px 12px; min-height: 40px; border-radius: 8px; border: 1px solid rgba(255,255,255,.35); background: rgba(0,0,0,.35); color: #fff; cursor: pointer; }
 .perf-strip button[aria-pressed="true"] { background: var(--accent, #e8a33d); color: #1a100d; border-color: transparent; }
 .perf-strip label { display: flex; align-items: center; gap: 8px; font-size: 11px; letter-spacing: .12em; text-transform: uppercase; color: #fff; }
+.perf-strip .pf-row2 { grid-column: 1 / -1; justify-content: space-between; }
+.perf-strip .pf-row2 input { max-width: 70%; }
 .perf-strip input[type=range] { flex: 1; min-width: 80px; }
 body.perform .hero .status, body.perform .units-row, body.perform .city .glance, body.perform .city .sunbox, body.perform .city .city-place { display: none !important; }
 body.perform .hero-actions, body.perform .invite-row { flex: 0 0 auto; width: auto; display: flex; align-items: center; }
@@ -3241,7 +3243,20 @@ body.perform .city .vol-wrap input { height: 32px; }
   }
   const SAMPLE_USER_G = 0.32;
   const PERC_G = { handdrum: 0.36, woodblock: 0.3, tongue: 0.2, clave: 0.6, kick: 0.6, snare: 0.34, hat: 0.5, rimshot: 0.34, conga: 0.34, cowbell: 0.13 };
+  // Perform mode can soften every note's attack and stretch or clip its length, per city. Untouched (the default), this is a straight pass-through.
+  let voiceShaping = false;
   function voice(c, midi, vel, t, L = 1) {
+    const sh = c.shape, b = buses.get(c);
+    if (voiceShaping || !sh || !b || (sh.atk <= 0.004 && sh.len === 1)) return voiceCore(c, midi, vel, t, L);
+    voiceShaping = true;
+    const realIn = b.input, realCh = b.chorusIn;
+    const gi = ac.createGain(), gc = ac.createGain();
+    for (const g of [gi, gc]) { g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(1, t + Math.max(0.002, sh.atk)); }
+    gi.connect(realIn); if (realCh) gc.connect(realCh);
+    b.input = gi; if (realCh) b.chorusIn = gc;
+    try { voiceCore(c, midi, vel, t, L * sh.len); } finally { b.input = realIn; if (realCh) b.chorusIn = realCh; voiceShaping = false; }
+  }
+  function voiceCore(c, midi, vel, t, L = 1) {
     // Your sample, not loaded yet (or the link came from someone else's computer): felt piano keeps the seat warm
     if (c.voice === "sample" && !(c.samp && c.samp.buf)) {
       c.voice = "felt";
@@ -5790,11 +5805,19 @@ body.perform .city .vol-wrap input { height: 32px; }
       d.className = "perf-strip";
       d.innerHTML = `<button type="button" data-p="solo" aria-pressed="false" title="Solo ${c.name} (${i + 4})">Solo</button>
         <button type="button" data-p="fade" aria-pressed="false" title="Fade ${c.name} out or in (Shift+${i + 1})">Fade out</button>
-        <label>Filter <input type="range" min="-100" max="100" value="0" aria-label="${c.name} filter: left is low pass, right is high pass"></label>`;
+        <label>Filter <input type="range" min="-100" max="100" value="0" aria-label="${c.name} filter: left is low pass, right is high pass"></label>
+        <label class="pf-row2">Attack <input type="range" min="0" max="100" value="0" data-p="atk" aria-label="${c.name} attack: left is sharp, right is a slow swell"></label>
+        <label class="pf-row2">Length <input type="range" min="0" max="100" value="50" data-p="len" aria-label="${c.name} note length: left is short, middle is as it was, right is long"></label>`;
       c.el.appendChild(d);
       c.perf = { solo: d.querySelector('[data-p="solo"]'), fade: d.querySelector('[data-p="fade"]'), flt: d.querySelector("input") };
       c.perf.solo.addEventListener("click", () => { c.solo = !c.solo; cities.forEach(paint); applyAll(); });
       c.perf.fade.addEventListener("click", () => fadeToggle(c));
+      c.shape = { atk: 0, len: 1 };
+      const shp = () => { c.shape.atk = 1.2 * Math.pow(Number(d.querySelector('[data-p="atk"]').value) / 100, 2); c.shape.len = 0.25 * Math.pow(16, Number(d.querySelector('[data-p="len"]').value) / 100); if (Math.abs(c.shape.len - 1) < 0.04) c.shape.len = 1; };
+      d.querySelector('[data-p="atk"]').addEventListener("input", shp);
+      d.querySelector('[data-p="len"]').addEventListener("input", shp);
+      d.querySelector('[data-p="len"]').addEventListener("dblclick", e => { e.target.value = 50; shp(); });
+      d.querySelector('[data-p="atk"]').addEventListener("dblclick", e => { e.target.value = 0; shp(); });
       c.perf.flt.addEventListener("input", () => { c.pf = Number(c.perf.flt.value); apply(c); });
       c.perf.flt.addEventListener("dblclick", () => { c.perf.flt.value = 0; c.pf = 0; apply(c); });
     });
