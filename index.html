@@ -922,6 +922,40 @@ body.perform .city .vol-wrap input { height: 32px; }
   body.perform .hero-inner { gap: 8px; }
 }
 @media (pointer: coarse) { .pl-keys { display: none; } }
+
+/* perform on a phone: the three cities become three mixer channels side by side */
+@media (max-width: 700px) {
+  body.perform .hero { padding: 8px 10px 2px; }
+  body.perform .hero .play-big { min-width: 0; flex: 1 1 150px; padding: 12px 14px; }
+  body.perform .perf-bar { padding: 6px 10px; gap: 8px; }
+  body.perform .perf-bar .perf-title, body.perform .perf-keys { display: none; }
+  body.perform .perf-bar .ghost.small { flex: 1 1 120px; }
+  body.perform main { padding-left: 6px; padding-right: 6px; }
+  body.perform .cities { display: grid !important; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; padding: 0; overflow: visible; scroll-snap-type: none; }
+  body.perform .cities > .city { min-width: 0; width: auto; flex: none; min-height: 0; }
+  body.perform .city .photo, body.perform .city .veil, body.perform .city .viz, body.perform .city .samp, body.perform .city .more-btn, body.perform .city .city-meta, body.perform .city .vol-swell { display: none !important; }
+  body.perform .city .city-head { display: block; padding: 8px 6px 0; height: 62px; overflow: hidden; }
+  body.perform .city .city-name { font-size: 10.5px; letter-spacing: .02em; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  body.perform .city .temp { font-size: 15px; margin-top: 2px; }
+  body.perform .city .quick { display: flex; flex-direction: column; align-items: stretch; gap: 8px; padding: 6px; min-height: 0; }
+  body.perform .city .quick select { width: 100%; min-width: 0; font-size: 11px; padding: 6px 2px; -webkit-appearance: none; appearance: none; text-align: center; text-align-last: center; text-overflow: ellipsis; }
+  body.perform .city .vol-wrap { display: flex; justify-content: center; }
+  body.perform .city .vol-wrap input { writing-mode: vertical-lr; direction: rtl; -webkit-appearance: slider-vertical; appearance: slider-vertical; width: 44px; height: 170px; margin: 0; }
+  body.perform .city .quick .mute { width: 100%; min-height: 44px; }
+  .perf-strip { display: flex; flex-direction: column; align-items: stretch; padding: 6px; gap: 8px; }
+  .perf-strip button { width: 100%; padding: 8px 4px; font-size: 11px; letter-spacing: .04em; }
+  .perf-strip label, .perf-strip label:not(.pf-row2), .perf-strip .pf-row2 { display: block; grid-template-columns: none; font-size: 10px; letter-spacing: .08em; }
+  .perf-strip label input[type=range], .perf-strip .pf-row2 input { display: block; width: 100%; max-width: 100%; min-width: 0; flex: none; margin: 4px 0 0; }
+  .perf-strip { grid-template-columns: none; }
+  .perf-strip input[type=range], .perf-strip .pf-row2 input { flex: none; min-width: 0; width: 100%; max-width: 100%; height: 28px; }
+  .perf-strip .pf-row2 { justify-content: flex-start; }
+  .perf-lead, .perf-bin { width: calc(100% - 20px); padding: 10px; }
+  .perf-lead .pl-keys, .perf-bin { display: none; }
+  .pl-row { gap: 8px; }
+  .perf-lead select { flex: 1 1 100%; }
+  .pl-cam { flex-direction: column; }
+  .pl-cam canvas { max-width: 100%; width: 100%; }
+}
 </style>
 </head>
 <body>
