@@ -855,6 +855,21 @@ body.perform .city .viz .ring { max-height: 180px; width: auto; }
 body.perform .city .quick { min-height: 52px; }
 body.perform .city .quick .mute { min-width: 44px; min-height: 44px; }
 body.perform .city .vol-wrap input { height: 32px; }
+
+.perf-bin { box-sizing: border-box; width: calc(100% - 32px); max-width: 1400px; margin: 14px auto 0; padding: 12px 16px; border: 1px solid rgba(255,255,255,.14); border-radius: 12px; background: rgba(0,0,0,.28); }
+.pb-head { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin-bottom: 10px; }
+.pb-head .perf-title { margin-right: 4px; }
+.pb-head button, .pb-head input { font: inherit; font-size: 12px; letter-spacing: .08em; text-transform: uppercase; padding: 8px 12px; min-height: 38px; border-radius: 8px; border: 1px solid rgba(255,255,255,.35); background: rgba(0,0,0,.35); color: #fff; }
+.pb-head input[type=search] { text-transform: none; letter-spacing: 0; min-width: 160px; }
+.pb-note { font-size: 12px; color: var(--ink-dim); }
+.pb-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 8px; max-height: 232px; overflow-y: auto; padding: 2px; }
+.pb-tile { display: flex; flex-direction: column; gap: 6px; padding: 8px 10px; border-radius: 8px; border: 1px solid rgba(255,255,255,.18); background: rgba(255,255,255,.05); cursor: grab; color: #fff; font-size: 12px; min-width: 0; }
+.pb-tile.on { border-color: #fff; background: rgba(255,255,255,.14); }
+.pb-name { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; text-align: left; background: none; border: 0; color: inherit; font: inherit; padding: 0; cursor: pointer; }
+.pb-to { display: flex; gap: 4px; }
+.pb-to button { flex: 1; min-height: 30px; font: inherit; font-size: 11px; border-radius: 6px; border: 1px solid var(--c, #fff); background: transparent; color: #fff; cursor: pointer; }
+.pb-to button:hover { background: var(--c, #fff); color: #1a100d; }
+.city.pb-over { outline: 3px solid #fff; outline-offset: -3px; }
 </style>
 </head>
 <body>
@@ -5820,6 +5835,101 @@ body.perform .city .vol-wrap input { height: 32px; }
       d.querySelector('[data-p="atk"]').addEventListener("dblclick", e => { e.target.value = 0; shp(); });
       c.perf.flt.addEventListener("input", () => { c.pf = Number(c.perf.flt.value); apply(c); });
       c.perf.flt.addEventListener("dblclick", () => { c.perf.flt.value = 0; c.pf = 0; apply(c); });
+    });
+
+    // ----- sample bin: point at a folder, audition, drag onto a city -----
+    const bin = document.createElement("section");
+    bin.className = "perf-bin"; bin.setAttribute("aria-label", "Sample bin");
+    bin.innerHTML = `<div class="pb-head"><span class="perf-title">Samples</span>
+      <button type="button" id="pbPick">Choose folder</button><button type="button" id="pbReopen" hidden>Reopen last folder</button>
+      <input type="search" id="pbFind" placeholder="Filter by name" aria-label="Filter samples" hidden>
+      <span class="pb-note" id="pbNote">Pick a folder of sounds. Click a name to hear it, drag it onto a city, or use the 1 2 3 buttons.</span></div>
+      <div class="pb-grid" id="pbGrid"></div>`;
+    wrap.parentNode.insertBefore(bin, wrap.nextSibling);
+    const pbGrid = bin.querySelector("#pbGrid"), pbNote = bin.querySelector("#pbNote"), pbFind = bin.querySelector("#pbFind"), pbReopen = bin.querySelector("#pbReopen");
+    const AUDIO_RE = /\.(wav|aiff?|mp3|m4a|ogg|flac|caf|aac)$/i;
+    let files = [], dragFile = null, cue = null;
+    const idb = () => new Promise((res, rej) => { const r = indexedDB.open("tc-perform", 1); r.onupgradeneeded = () => r.result.createObjectStore("kv"); r.onsuccess = () => res(r.result); r.onerror = () => rej(r.error); });
+    const kvGet = k => idb().then(d => new Promise(res => { const q = d.transaction("kv").objectStore("kv").get(k); q.onsuccess = () => res(q.result); q.onerror = () => res(null); })).catch(() => null);
+    const kvSet = (k, v) => idb().then(d => new Promise(res => { const t = d.transaction("kv", "readwrite"); t.objectStore("kv").put(v, k); t.oncomplete = () => res(); t.onerror = () => res(); })).catch(() => {});
+    async function walk(dir, path, out) {
+      for await (const [name, h] of dir.entries()) {
+        if (out.length >= 600) return;
+        if (h.kind === "directory") { if (!name.startsWith(".")) await walk(h, path + name + "/", out); }
+        else if (AUDIO_RE.test(name) && !name.startsWith(".")) out.push({ name: path + name, get: () => h.getFile() });
+      }
+    }
+    function show() {
+      const q = pbFind.value.trim().toLowerCase();
+      pbGrid.textContent = "";
+      files.filter(f => !q || f.name.toLowerCase().includes(q)).forEach(f => {
+        const t = document.createElement("div"); t.className = "pb-tile"; t.draggable = true;
+        const short = f.name.replace(/\.[^.]+$/, "");
+        t.innerHTML = `<button type="button" class="pb-name" title="${short.replace(/"/g, "&quot;")}: click to hear"></button><div class="pb-to"></div>`;
+        t.querySelector(".pb-name").textContent = short.split("/").pop();
+        cities.forEach((c, i) => { const b = document.createElement("button"); b.type = "button"; b.textContent = String(i + 1); b.title = `Load into ${c.name}`; b.style.setProperty("--c", `var(${c.color})`);
+          b.addEventListener("click", async () => { try { await loadUserSample(c, await f.get()); } catch (e) { pbNote.textContent = "Couldn't open that file."; } });
+          t.querySelector(".pb-to").appendChild(b); });
+        t.querySelector(".pb-name").addEventListener("click", () => audition(f, t));
+        t.addEventListener("dragstart", e => { dragFile = f; e.dataTransfer.effectAllowed = "copy"; try { e.dataTransfer.setData("text/plain", f.name); } catch (er) {} });
+        t.addEventListener("dragend", () => { dragFile = null; cities.forEach(c => c.el.classList.remove("pb-over")); });
+        pbGrid.appendChild(t);
+      });
+    }
+    async function audition(f, tile) {
+      try {
+        if (!ac) setupAudio();
+        if (ac.state === "suspended") await ac.resume();
+        if (cue) { try { cue.stop(); } catch (e) {} cue = null; }
+        pbGrid.querySelectorAll(".pb-tile.on").forEach(x => x.classList.remove("on"));
+        tile.classList.add("on");
+        const file = await f.get();
+        const buf = await new Promise((res, rej) => file.arrayBuffer().then(a => ac.decodeAudioData(a, res, rej)).catch(rej));
+        const src = ac.createBufferSource(), g = ac.createGain(); src.buffer = buf; g.gain.value = 0.7;
+        src.connect(g).connect(ac.destination);   // straight to the speakers: a cue you hear but the recording doesn't
+        src.onended = () => tile.classList.remove("on");
+        src.start(); cue = src;
+      } catch (e) { tile.classList.remove("on"); pbNote.textContent = "Couldn't play that file."; }
+    }
+    function loaded(n, name) {
+      pbNote.textContent = n ? `${n} sound${n === 1 ? "" : "s"} in ${name}${n >= 600 ? " (first 600)" : ""}.` : `No sounds found in ${name}.`;
+      pbFind.hidden = !n; show();
+    }
+    async function scan(dir) {
+      pbNote.textContent = "Reading the folder…";
+      const out = []; await walk(dir, "", out);
+      out.sort((a, b) => a.name.localeCompare(b.name, undefined, { numeric: true }));
+      files = out; loaded(out.length, dir.name);
+    }
+    pbFind.addEventListener("input", show);
+    bin.querySelector("#pbPick").addEventListener("click", async () => {
+      if (window.showDirectoryPicker) {
+        try { const dir = await showDirectoryPicker({ id: "tc-samples", mode: "read" }); kvSet("dir", dir); pbReopen.hidden = true; await scan(dir); }
+        catch (e) { if (e.name !== "AbortError") pbNote.textContent = "Couldn't open that folder."; }
+      } else {
+        const inp = document.createElement("input"); inp.type = "file"; inp.multiple = true; inp.setAttribute("webkitdirectory", "");
+        inp.addEventListener("change", () => {
+          const list = [...inp.files].filter(f => AUDIO_RE.test(f.name) && !f.name.startsWith(".")).slice(0, 600);
+          files = list.map(f => ({ name: f.webkitRelativePath || f.name, get: async () => f }));
+          files.sort((a, b) => a.name.localeCompare(b.name, undefined, { numeric: true }));
+          loaded(files.length, (list[0] && list[0].webkitRelativePath || "").split("/")[0] || "that folder");
+        });
+        inp.click();
+      }
+    });
+    kvGet("dir").then(dir => { if (dir && dir.kind === "directory") { pbReopen.hidden = false; pbReopen.textContent = "Reopen " + dir.name;
+      pbReopen.addEventListener("click", async () => {
+        try { if ((await dir.requestPermission({ mode: "read" })) === "granted") { pbReopen.hidden = true; await scan(dir); } else pbNote.textContent = "The browser needs your OK to read that folder."; }
+        catch (e) { pbNote.textContent = "Couldn't reopen that folder. Choose it again."; } }); } });
+    // dropping a bin sound onto a city card loads it as that city's own sound
+    cities.forEach(c => {
+      c.el.addEventListener("dragover", e => { if (!dragFile) return; e.preventDefault(); e.stopImmediatePropagation(); e.dataTransfer.dropEffect = "copy"; c.el.classList.add("pb-over"); }, true);
+      c.el.addEventListener("dragleave", e => { if (dragFile && !c.el.contains(e.relatedTarget)) c.el.classList.remove("pb-over"); }, true);
+      c.el.addEventListener("drop", async e => {
+        if (!dragFile) return; e.preventDefault(); e.stopImmediatePropagation(); c.el.classList.remove("pb-over");
+        const f = dragFile; dragFile = null;
+        try { await loadUserSample(c, await f.get()); } catch (er) { pbNote.textContent = "Couldn't open that file."; }
+      }, true);
     });
     document.getElementById("pfAllOut").addEventListener("click", () => cities.forEach(c => fadeTo(c, 0)));
     document.getElementById("pfAllIn").addEventListener("click", () => cities.forEach(c => fadeTo(c, 1)));
