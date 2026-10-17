@@ -5,7 +5,7 @@ import sys, pathlib, subprocess
 from multiprocessing import Pool
 from playwright.sync_api import sync_playwright
 here = pathlib.Path(__file__).resolve().parent
-PAGES = {'launch': here / 'src' / 'launch.html', 'social': here / 'social' / 'social.html'}
+PAGES = {'launch': here / 'src' / 'launch.html', 'social': here / 'social' / 'social.html', 'square': here / 'social' / 'square.html'}
 FPS, SECS = 24, 6
 
 def work(job):

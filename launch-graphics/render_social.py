@@ -1,9 +1,11 @@
-"""Render every launch graphic to PNG.  Run:  python3 launch-graphics/render.py [name ...]"""
+"""Render the social graphics to PNG.  Run:  python3 launch-graphics/render_social.py [square] [name ...]"""
 import sys, pathlib
 from playwright.sync_api import sync_playwright
 here = pathlib.Path(__file__).resolve().parent
-out = here / 'social' / 'png'; out.mkdir(exist_ok=True)
-page_url = (here / 'social' / 'social.html').as_uri()
+SQ = len(sys.argv) > 1 and sys.argv[1] == 'square'
+if SQ: sys.argv.pop(1)
+out = here / 'social' / ('square' if SQ else 'png'); out.mkdir(exist_ok=True)
+page_url = (here / 'social' / ('square.html' if SQ else 'social.html')).as_uri()
 with sync_playwright() as p:
     b = p.chromium.launch()
     pg = b.new_page(viewport={'width': 1600, 'height': 2000})

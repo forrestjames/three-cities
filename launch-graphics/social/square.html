@@ -1,0 +1,177 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><title>Three Cities social squares</title>
+<style>
+@font-face { font-family: "Abel"; src: url("../../design-assets/fonts/Abel-Regular.ttf"); }
+@font-face { font-family: "Source Code Pro"; font-weight: 400; src: url("../../design-assets/fonts/SourceCodePro-Regular.ttf"); }
+@font-face { font-family: "Source Code Pro"; font-weight: 500; src: url("../../design-assets/fonts/SourceCodePro-Medium.ttf"); }
+:root { --ink:#f3ece6; --dim:#e2d6cc; --ember:#e07a4f; --emberL:#ffb08a; --sun:#f0c27a; --bos:#d08a6a; --cph:#6fa38c; --lon:#a98bc4; --bosL:#f5b496; --cphL:#9be0c0; --lonL:#d2b6f0; }
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { background:#2e1c17; }
+body { width: max-content; }
+#stage { position: relative; overflow: hidden; color: var(--ink); font-family: "Abel", "Arial Narrow", sans-serif; }
+.a { position:absolute; }
+.t { position:absolute; left:0; right:0; text-align:center; }
+.mono { font-family:"Source Code Pro", monospace; }
+.disp { text-transform:uppercase; letter-spacing:.06em; line-height:1; font-weight:400; text-shadow:0 2px 10px rgba(36,18,12,.7); }
+.fig { position:absolute; border:1px solid rgba(243,236,230,.28); box-shadow:0 14px 50px rgba(20,8,4,.55); overflow:hidden; background:#150a08; }
+.fig img { display:block; width:100%; height:auto; }
+.mk { position:absolute; width:48px; height:48px; margin:-24px 0 0 -24px; border-radius:50%; background:#ff8a4f; color:#2a120b; font-family:"Source Code Pro",monospace; font-weight:500; font-size:27px; display:flex; align-items:center; justify-content:center; box-shadow:0 0 0 3px rgba(255,236,220,.9), 0 4px 14px rgba(20,8,4,.6); z-index:5; }
+.note { display:flex; gap:18px; align-items:flex-start; }
+.note .n { flex:none; width:48px; height:48px; margin-top:2px; border-radius:50%; background:#ff8a4f; color:#2a120b; font-family:"Source Code Pro",monospace; font-weight:500; font-size:27px; display:flex; align-items:center; justify-content:center; }
+.note .h { font-family:"Source Code Pro",monospace; font-weight:500; letter-spacing:.14em; text-transform:uppercase; color:var(--emberL); }
+.note .b { color:var(--ink); line-height:1.18; text-shadow:0 1px 8px rgba(30,14,8,.6); }
+.dot { display:inline-block; width:.62em; height:.62em; border-radius:50%; background:#ff8a4f; margin-right:.8em; vertical-align:.04em; }
+.grain { position: absolute; inset: 0; opacity: .13; mix-blend-mode: overlay; pointer-events: none;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='300' height='300'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 1  0 0 0 0 1  0 0 0 0 1  0 0 0 .9 0'/></filter><rect width='300' height='300' filter='url(%23n)'/></svg>"); }
+</style></head>
+<body><div id="stage"></div>
+<script src="assets/sq/sizes.js"></script>
+<script>
+const MARK = `<path d="M0.5 24v-6.6h11V24zM1.6 17.4v-1.6h8.8v1.6zM3 15.8v-2.4h6v2.4zM2.9 13.4a3.1 3.1 0 0 1 6.2 0zM5.4 10.4V8.2h1.2v2.2zM5.2 8.2L6 6.6l.8 1.6z"/><path fill-rule="evenodd" d="M13.4 24V13h12.6v11h-3.6v-5.2a2.7 2.7 0 0 0-5.4 0V24zM13 13v-1.4h13.4V13zM15.8 11.6a3.9 3.9 0 0 1 7.8 0zM19.3 7.7V5.6h.8v2.1zM19.1 5.6l.6-1.8.6 1.8zM13.6 11.6v-1.8h.9v1.8zM24.9 11.6v-1.8h.9v1.8zM13.4 9.8l.65-1.4.65 1.4zM24.7 9.8l.65-1.4.65 1.4z"/><path fill-rule="evenodd" d="M27.9 24v-3.5h.6V9h-.4V7.6h1V5.4h.8L31.4 0l1.5 5.4h.8v2.2h1V9h-.4v11.5h.6V24zM31.4 10a1.7 1.7 0 1 0 0 3.4 1.7 1.7 0 0 0 0-3.4z"/>`;
+const URL_TXT = 'threecities.forrestjamesmusic.com';
+const COL = { bos:'#d08a6a', cph:'#6fa38c', lon:'#a98bc4', ember:'#e07a4f', sun:'#f0c27a', ink:'#f3ece6' };
+const A = (n) => 'assets/' + n + '.png';
+const IMG = { 'card-boston':[780,1158], 'card-copenhagen':[783,1158], 'card-london':[779,1158], 'rack-harmony':[493,290], 'rack-chords':[514,290], 'rack-filter':[490,290], 'rack-midi':[519,290], 'midi-ufx-default':[940,702], 'midi-ufx-rerouted':[940,702], 'rhythm-grid':[1350,231], 'rhythm-all':[2416,356], 'reverb':[990,410], 'delay':[1406,410], 'effects-all':[2416,638], 'memory-map':[2416,2086], 'pick-any':[1352,642], 'phone-hero':[1170,2532], 'hero':[2880,1540] };
+const euclid = (n, k) => { const a = Array(n).fill(0); for (let i = 0; i < k; i++) a[Math.ceil(i * n / k)] = 1; return a; };
+const gcd = (a, b) => b ? gcd(b, a % b) : a;
+
+function bg(W, H, hues) {
+  const g = hues.map(([x, y, r, c, o]) => `<circle cx="${x}" cy="${y}" r="${r}" fill="${c}" opacity="${o}" filter="url(#b40)"/>`).join('');
+  return `<svg class="a" style="left:0;top:0" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}"><defs><filter id="b40" x="-100%" y="-100%" width="300%" height="300%"><feGaussianBlur stdDeviation="40"/></filter><linearGradient id="bgg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#4f322d"/><stop offset="1" stop-color="#2a1914"/></linearGradient><radialGradient id="bgr" cx="50%" cy="110%" r="75%"><stop offset="0" stop-color="#7a4331" stop-opacity=".9"/><stop offset="1" stop-color="#7a4331" stop-opacity="0"/></radialGradient></defs><rect width="${W}" height="${H}" fill="url(#bgg)"/><rect width="${W}" height="${H}" fill="url(#bgr)"/>${g}</svg>`;
+}
+const logo = (x, y, h, align) => { const sc = h / 24, w = 34 * sc; const tx = align === 'c' ? x - w / 2 : x; return `<svg class="a" style="left:0;top:0;overflow:visible" width="1" height="1"><g transform="translate(${tx} ${y}) scale(${sc})" fill="#f3ece6" style="filter:drop-shadow(0 2px 8px rgba(36,18,12,.6))">${MARK}</g></svg>`; };
+const title = (txt, top, size, o = {}) => o.left !== undefined
+  ? `<div class="a disp" style="left:${o.left}px;top:${top}px;font-size:${size}px;width:${o.w || 900}px;line-height:${o.lh || 1.02}">${txt}</div>`
+  : `<div class="t disp" style="top:${top}px;font-size:${size}px;line-height:${o.lh || 1.02}">${txt}</div>`;
+const sub = (txt, top, size = 32, o = {}) => o.left !== undefined
+  ? `<div class="a" style="left:${o.left}px;top:${top}px;width:${o.w || 800}px;font-size:${size}px;line-height:1.2;color:var(--dim);text-shadow:0 1px 8px rgba(30,14,8,.6)">${txt}</div>`
+  : `<div class="t" style="top:${top}px;font-size:${size}px;line-height:1.2;color:var(--dim);padding:0 ${o.pad || 90}px;text-shadow:0 1px 8px rgba(30,14,8,.6)">${txt}</div>`;
+const foot = (W, H, o = {}) => o.left !== undefined
+  ? `<div class="a mono" style="left:${o.left}px;top:${H - (o.b || 56)}px;font-size:${o.size || 21}px;letter-spacing:.14em;text-transform:uppercase;color:var(--dim);white-space:nowrap"><i class="dot"></i>Now live &nbsp;·&nbsp; ${URL_TXT}</div>`
+  : `<div class="t mono" style="top:${H - (o.b || 58)}px;font-size:${o.size || 21}px;letter-spacing:.14em;text-transform:uppercase;color:var(--dim)"><i class="dot"></i>Now live &nbsp;·&nbsp; ${URL_TXT}</div>`;
+function fig(name, x, y, w, marks = []) {
+  const [iw, ih] = IMG[name]; const s = w / iw; const h = Math.round(ih * s);
+  const m = marks.map(([n, px, py]) => `<div class="mk" style="left:${x + px * s}px;top:${y + py * s}px">${n}</div>`).join('');
+  return { h, s, bottom: y + h, html: `<div class="fig" style="left:${x}px;top:${y}px;width:${w}px;height:${h}px"><img src="${A(name)}"></div>${m}` };
+}
+function notes(items, x, y, w, o = {}) {
+  const hs = o.hs || 19, bs = o.bs || 30, gap = o.gap || 34;
+  return `<div class="a" style="left:${x}px;top:${y}px;width:${w}px;display:flex;flex-direction:column;gap:${gap}px">` + items.map(([n, h, b]) => `<div class="note">${n === null ? '<div class="n" style="background:none;box-shadow:inset 0 0 0 2px rgba(255,176,138,.7)"></div>' : `<div class="n">${n}</div>`}<div><div class="h" style="font-size:${hs}px;margin-bottom:6px">${h}</div><div class="b" style="font-size:${bs}px">${b}</div></div></div>`).join('') + `</div>`;
+}
+function ringSvg(cx, cy, r, steps, hits, color, { rot = 0, play = -1, dotR = 8 } = {}) {
+  const pat = euclid(steps, hits); let s = `<circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="${color}" stroke-opacity=".45" stroke-width="2"/>`;
+  const all = [];
+  for (let i = 0; i < steps; i++) { const a = (-90 + rot + 360 * i / steps) * Math.PI / 180; all.push([cx + r * Math.cos(a), cy + r * Math.sin(a)]); }
+  all.forEach((p, i) => { s += pat[i] ? `<circle cx="${p[0]}" cy="${p[1]}" r="${dotR}" fill="${color}"/>` : `<circle cx="${p[0]}" cy="${p[1]}" r="${dotR * .36}" fill="${color}" fill-opacity=".6"/>`; });
+  if (play >= 0) { const p = all[play]; s += `<g class="ph" data-cx="${cx}" data-cy="${cy}" data-n="${steps}" data-sp="${3}"><line x1="${cx}" y1="${cy}" x2="${p[0]}" y2="${p[1]}" stroke="#f3ece6" stroke-opacity=".7" stroke-width="2"/><circle cx="${p[0]}" cy="${p[1]}" r="${dotR * 1.7}" fill="none" stroke="#f3ece6" stroke-width="2"/></g>`; }
+  return s;
+}
+const svgBox = (W, H, inner) => `<svg class="a" style="left:0;top:0" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}">${inner}</svg>`;
+const std = (W, H, hues, head) => bg(W, H, hues) + head;
+const HUES = {
+  warm: (W, H) => [[W * .1, H * .15, 380, '#e07a4f', .32], [W * .95, H * .5, 330, '#6fa38c', .2]],
+  plum: (W, H) => [[W * .9, H * .12, 380, '#a98bc4', .3], [W * .05, H * .8, 380, '#e07a4f', .28]],
+  sage: (W, H) => [[W * .85, H * .1, 380, '#6fa38c', .32], [W * .1, H * .9, 360, '#d08a6a', .3]],
+  gold: (W, H) => [[W * .5, H * .0, 420, '#f0c27a', .26], [W * .9, H * .9, 360, '#a98bc4', .26]],
+};
+const wrap = (W, H, hue, body) => ({ W, H, html: bg(W, H, HUES[hue](W, H)) + body });
+const W = 1080, H = 1080;
+const IMGS = (n) => 'assets/sq/' + n + '.png';
+const IMGB = (n) => /^[pd]-/.test(n) ? IMGS(n) : A(n);
+function figS(name, x, y, w, marks = []) {
+  const [iw, ih] = SZ[name]; const h = Math.round(ih * w / iw);
+  const m = marks.map(([n, fx, fy]) => `<div class="mk" style="left:${x + fx * w}px;top:${y + fy * h}px">${n}</div>`).join('');
+  return { h, bottom: y + h, html: `<div class="fig" style="left:${x}px;top:${y}px;width:${w}px;height:${h}px"><img src="${IMGB(name)}"></div>${m}` };
+}
+const footS = () => `<div class="t mono" style="top:${H - 52}px;font-size:23px;letter-spacing:.1em;text-transform:uppercase;color:var(--dim)"><i class="dot"></i>Now live &nbsp;·&nbsp; ${URL_TXT}</div>`;
+const head = (t, size = 78, top = 100) => logo(W / 2, 36, 44, 'c') + title(t, top, size);
+const sq = (hue, body) => wrap(W, H, hue, body);
+const nt = (items, x, y, w, o = {}) => notes(items, x, y, w, Object.assign({ hs: 21, bs: 30, gap: 30 }, o));
+const cols = (items, y, x0 = 60, total = 960, size = 29) => { const gap = 30, cw = (total - gap * (items.length - 1)) / items.length; return items.map(([h, b], i) => `<div class="a" style="left:${x0 + i * (cw + gap)}px;top:${y}px;width:${cw}px"><div class="mono" style="font-size:21px;letter-spacing:.14em;text-transform:uppercase;color:var(--emberL);margin-bottom:8px">${h}</div><div style="font-size:${size}px;line-height:1.16;text-shadow:0 1px 8px rgba(30,14,8,.6)">${b}</div></div>`).join(''); };
+const line = (txt, y, size = 31, color = 'var(--ink)') => `<div class="t" style="top:${y}px;font-size:${size}px;line-height:1.2;color:${color};padding:0 90px;text-shadow:0 1px 8px rgba(30,14,8,.6)">${txt}</div>`;
+const D = {};
+
+D['01-temperature'] = () => { const f = figS('p-card0-top', 50, 300, 600, [[1, .93, .2], [2, .62, .22], [3, .92, .47]]);
+  return sq('warm', head('Temperature<br>sets the loop') + f.html + nt([[1, 'Temperature', '12.7°C rounds to a loop 13 steps long. Colder is shorter.'], [2, 'The ring', 'Each dot is a step. The bright ones play.'], [3, 'The sun', 'Its height opens the filter.']], 695, 310, 340) + footS()); };
+
+D['02-humidity'] = () => { const f = figS('p-card1-chips', 70, 295, 940);
+  return sq('sage', head('Humidity picks<br>the notes') + f.html + line('82% humidity plays 7 notes in a 16 step loop.', 828, 34) + line('Swap humidity for wind, cloud or rain in More.', 885, 30, 'var(--dim)') + footS()); };
+
+D['03-euclid'] = () => { const rows = [[8, 3, COL.ember, 'Tresillo', '3 in 8'], [11, 4, COL.bos, 'Boston', '4 in 11'], [9, 4, COL.cph, 'Copenhagen', '4 in 9'], [12, 5, COL.lon, 'London', '5 in 12']];
+  let art = '', txt = '';
+  rows.forEach(([n, k, c, nm, lab], i) => { const cx = 135 + i * 270, cy = 520; art += ringSvg(cx, cy, 100, n, k, c, { dotR: 13, play: i * 2 % n });
+    const lc = c === COL.lon ? '#d2b6f0' : c === COL.cph ? '#9be0c0' : '#ffc0a0';
+    txt += `<div class="a mono" style="left:${cx - 130}px;top:${cy + 140}px;width:260px;text-align:center;font-size:34px;color:${lc};font-weight:500">${lab}</div><div class="a mono" style="left:${cx - 130}px;top:${cy + 188}px;width:260px;text-align:center;font-size:24px;letter-spacing:.14em;color:var(--dim);text-transform:uppercase">${nm}</div><div class="a mono" style="left:${cx - 130}px;top:${cy + 228}px;width:260px;text-align:center;font-size:25px;letter-spacing:.08em;color:var(--ink)">${euclid(n, k).map(v => v ? 'x' : '.').join('')}</div>`; });
+  return sq('plum', head('Euclidean<br>rhythms', 78, 100) + svgBox(W, H, art) + txt + line('The weather picks both numbers.<br>Three in eight is the Cuban tresillo.', 880, 32) + footS()); };
+
+const lst = (L) => L.map((t, i) => `<div class="note" style="margin-bottom:26px;align-items:center"><div class="n">${i + 1}</div><div class="b" style="font-size:30px;line-height:1.1">${t}</div></div>`).join('');
+D['04-read-a-card'] = () => { const f = figS('p-card0-top', 50, 300, 600, [[1, .49, .06], [2, .95, .25], [3, .54, .25], [4, .2, .82], [5, .95, .42]]);
+  return sq('warm', head('Read a<br>city card') + f.html + `<div class="a" style="left:690px;top:315px;width:345px">${lst(['City and place', 'Temperature, which sets the steps', 'Local time, day or night', 'The rhythm ring and playhead', 'The sun, or the moon'])}</div>` + footS()); };
+D['04b-read-a-card'] = () => { const f = figS('p-card2-lower', 50, 300, 600, [[1, .9, .06], [2, .95, .42], [3, .38, .76], [4, .67, .76], [5, .88, .76]]);
+  return sq('warm', head('Under the<br>ring') + f.html + `<div class="a" style="left:690px;top:315px;width:345px">${lst(['What the weather is doing', 'Sound, for this city', 'Volume', 'Mute', 'More, the deep controls'])}</div>` + footS()); };
+
+D['05-polymeter'] = () => { const lanes = [['Boston', 11, 4, COL.bos, 470], ['Copenhagen', 9, 4, COL.cph, 610], ['London', 12, 5, COL.lon, 750]]; let art = '', txt = '';
+  const x0 = 110, dx = 25;
+  lanes.forEach(([nm, n, k, c, y]) => { const pat = euclid(n, k); const lc = c === COL.lon ? '#d2b6f0' : c === COL.cph ? '#9be0c0' : '#ffc0a0';
+    txt += `<div class="a mono" style="left:${x0 - 12}px;top:${y - 70}px;font-size:26px;letter-spacing:.14em;text-transform:uppercase;color:${lc}">${nm} · ${n} steps</div>`;
+    for (let i = 0; i < 36; i++) { const x = x0 + i * dx, p = i % n; if (p === 0) art += `<line x1="${x}" y1="${y - 30}" x2="${x}" y2="${y + 30}" stroke="${c}" stroke-opacity=".6" stroke-width="2"/>`; art += pat[p] ? `<circle cx="${x + 12}" cy="${y}" r="10" fill="${c}"/>` : `<circle cx="${x + 12}" cy="${y}" r="3.4" fill="${c}" fill-opacity=".6"/>`; } });
+  art += `<g class="scan" data-x0="${x0}" data-w="900" data-n="36" transform="translate(${x0} 0)"><rect x="0" y="400" width="25" height="410" fill="rgba(255,236,220,.16)"/><line x1="0" y1="400" x2="0" y2="810" stroke="#f3ece6" stroke-opacity=".8" stroke-width="2"/></g>`;
+  const lcm = (a, b) => a * b / gcd(a, b); const all = lcm(lcm(11, 9), 12);
+  return sq('sage', head('Polymeter') + svgBox(W, H, art) + txt + line(`Each city loops at its own length.<br>They meet again every ${all} steps.`, 880, 33) + footS()); };
+
+D['06-harmony'] = () => { const f = figS('p-harm-top', 60, 270, 960, [[1, .24, .43], [2, .94, .43], [3, .97, .83]]);
+  return sq('gold', head('Pick a key.<br>17 scales.') + f.html + cols([['1 · Key', 'One key for all three cities.'], ['2 · Scale', 'From minor pentatonic to Japanese yo.'], ['3 · Keyboard', 'Lit keys show the scale.']], 835) + footS()); };
+
+D['07-chords'] = () => { const f = figS('p-harm-chords', 50, 300, 600, [[1, .42, .2], [2, .465, .5], [3, .95, .5]]);
+  return sq('plum', head('Chords<br>underneath') + f.html + nt([[1, 'Level', 'How loud the slow chord bed sits.'], [2, 'Sound', 'Bowed, warm pad, glass, choir and more.'], [null, 'Change', 'Every 4, 8, 16 or 32 bars, or hold a drone.']], 695, 315, 340, { bs: 29 }) + footS()); };
+
+D['08-filter'] = () => { const f = figS('p-filter', 50, 300, 600, [[1, .66, .3]]);
+  return sq('warm', head('A filter that<br>moves in time') + f.html + nt([[1, 'Filter', 'Left is low-pass, right is high-pass. Twelve o\'clock is open.'], [null, 'Rate', 'From a fast flutter up to 4 bars.'], [null, 'Wave', 'Sine, triangle, square, ramps or random.']], 695, 310, 340, { bs: 28 }) + footS()); };
+
+D['09-midi-output'] = () => { const f = figS('d-midi-default', 110, 255, 860, [[1, .4, .2], [2, .85, .5]]);
+  return sq('sage', head('Pick an output', 78, 100) + f.html + line('Here the weather goes out through a Fireface UCX.<br>Chrome and Edge, on a computer.', 905, 31) + footS()); };
+D['09b-midi-channels'] = () => { const f = figS('d-midi-rerouted', 110, 255, 860, [[1, .4, .2], [2, .85, .5]]);
+  return sq('sage', head('Pick the channels', 78, 100) + f.html + line('Each city, the chords and the drums get their own channel.<br>Here Boston goes to 5, Copenhagen to 6, London to 7.', 905, 30) + footS()); };
+
+D['10-drummer'] = () => { const f = figS('p-groove-grid', 60, 300, 960);
+  const rows = [['Kick', 'plays where the cities agree.'], ['Snare', 'its own backbeat.'], ['Hat', 'plays wherever any city does.'], ['Rim', 'a soft ghost kick, where one city plays alone.']];
+  const L = rows.map(([a, b]) => `<div style="margin-bottom:16px;font-size:32px;line-height:1.15"><span class="mono" style="font-size:25px;letter-spacing:.14em;text-transform:uppercase;color:var(--emberL);margin-right:14px">${a}</span>${b}</div>`).join('');
+  return sq('warm', head('One drummer,<br>three cities') + f.html + `<div class="a" style="left:80px;top:${f.bottom + 40}px;width:920px">${L}</div>` + footS()); };
+
+D['11-drum-kit'] = () => { const f = figS('p-groove-controls', 50, 290, 560, [[1, .3, .03], [2, .5, .2], [3, .4, .56]]);
+  return sq('plum', head('Choose the<br>drum kit') + f.html + nt([[1, 'Kit', 'Minimal, Lo-fi, 808, Jazz with brushes, Orchestra and more.'], [2, 'Chance', 'The chance each hit actually plays.'], [3, 'Effects', 'Send the drums to the filter, reverb and delay.']], 660, 305, 380, { bs: 28 }) + footS()); };
+
+const typeList = (items) => items.map(([a, b]) => `<div style="margin-bottom:17px"><div class="mono" style="font-size:22px;letter-spacing:.12em;text-transform:uppercase;color:var(--emberL);margin-bottom:2px">${a}</div><div style="font-size:28px;line-height:1.12">${b}</div></div>`).join('');
+D['12-reverb'] = () => { const f = figS('p-pedal-hall', 50, 300, 520, [[1, .48, .1]]);
+  return sq('plum', head('Seven kinds<br>of space') + f.html + `<div class="a" style="left:610px;top:290px;width:430px">${typeList([['Hall', 'Big and soft'], ['Room', 'Small and close'], ['Plate', 'Bright studio sheen'], ['Spring', 'Drippy, like old amps'], ['Cathedral', 'Huge and dark'], ['Shimmer', 'The tail goes up an octave'], ['Reverse', 'Echoes swell up, then stop']])}</div>` + footS()); };
+D['13-delay'] = () => { const f = figS('p-pedal-delay', 50, 300, 520, [[1, .48, .1]]);
+  return sq('sage', head('Seven kinds<br>of echo') + f.html + `<div class="a" style="left:610px;top:290px;width:430px">${typeList([['Digital', 'Clean repeats'], ['Ping-pong', 'Left, right, left'], ['Three taps', 'A little rhythm'], ['Tape echo', 'Darker and wobblier'], ['Analog', 'Warm and murky'], ['Dub', 'Long, drifting speaker to speaker'], ['Slapback', 'One quick repeat']])}</div>` + footS()); };
+D['14-pedals'] = () => { const a = figS('p-pedal-hall', 50, 300, 470), b = figS('p-pedal-delay', 560, 300, 470);
+  return sq('plum', head('Two pedals') + a.html + b.html + line('Each one can freeze its sound and let it ring forever.', 760, 34) + line('Timed to the tempo, from 1/16 to dotted 1/4.', 830, 30, 'var(--dim)') + footS()); };
+
+D['15-memory-map'] = () => { const [iw, ih] = SZ['memory-map']; const w = 760, h = Math.round(ih * w / iw);
+  const f = `<div class="fig" style="left:${(W - w) / 2}px;top:300px;width:${w}px;height:${h}px"><img src="${A('memory-map')}"></div>`;
+  return sq('plum', head('Drag the light to<br>where it happened', 70, 98) + f + footS()); };
+
+D['16-awake-asleep'] = () => { const a = figS('p-card1-top', 50, 300, 470, [[1, .16, .9]]), b = figS('p-card0-top', 560, 300, 470, [[2, .8, .9]]);
+  return sq('gold', head('Awake or asleep', 78, 100) + a.html + b.html + cols([['1 · Asleep', 'After sunset a city drifts off. Softer, slower, fewer notes.']], 770, 50, 470) + cols([['2 · Awake', 'The sun\'s height opens the filter. Bright and open.']], 770, 560, 470) + footS()); };
+
+D['17-sample'] = () => { let art = ''; const n = 21, pat = euclid(n, 8); const sw = 840 / n, x0 = 120, cy = 520; let seed = 7; const rnd = () => (seed = (seed * 9301 + 49297) % 233280) / 233280;
+  for (let i = 0; i < n; i++) for (let b = 0; b < 7; b++) { const x = x0 + i * sw + 5 + b * ((sw - 10) / 7); const env = .35 + .65 * Math.abs(Math.sin((i * 7 + b) * .5 + rnd())) * (.5 + .5 * rnd()); const h = 230 * env; art += `<rect x="${x}" y="${cy - h / 2}" width="${(sw - 10) / 7 - 2}" height="${h}" fill="${pat[i] ? '#ff9a6a' : 'rgba(243,236,230,.4)'}"/>`; }
+  art += `<g class="scan" data-x0="${x0}" data-w="840" data-n="21" transform="translate(${x0} 0)"><rect x="0" y="${cy - 160}" width="${sw}" height="320" fill="rgba(255,236,220,.16)"/><line x1="0" y1="${cy - 160}" x2="0" y2="${cy + 160}" stroke="#f3ece6" stroke-opacity=".8" stroke-width="2"/></g>`;
+  for (let i = 0; i <= n; i++) art += `<line x1="${x0 + i * sw}" y1="${cy - 160}" x2="${x0 + i * sw}" y2="${cy + 160}" stroke="rgba(243,236,230,.28)" stroke-width="1.5"/>`;
+  return sq('warm', head('Bring your<br>own sound') + svgBox(W, H, art) + `<div class="t mono" style="top:710px;font-size:24px;letter-spacing:.1em;color:var(--dim)">21°C CUTS YOUR SOUND INTO 21 PLACES</div>` + line('Drop any audio file on a city card.<br>Each step plays from further into it.', 790, 33) + line('Your sound stays on your device.', 905, 28, 'var(--dim)') + footS()); };
+
+D['18-pick-any'] = () => { const f = figS('pick-any', 60, 290, 960, [[1, .245, .6], [2, .31, .88], [3, .84, .88]]);
+  return sq('sage', head('Any three<br>cities') + f.html + cols([['1 · Dice', 'Rolls a random city in, from about 350.'], ['2 · Surprise me', 'All awake, all asleep, or a mix.'], ['3 · Wild card', 'A theme, like golden hour.']], 790) + footS()); };
+
+D['19-record-share'] = () => { const f = figS('phone-hero', 70, 290, 330, [[1, .61, .87], [2, .3, .87]]);
+  return sq('plum', head('Record it.<br>Send it.') + f.html + nt([[1, 'Record', 'Captures exactly what you hear, effects included. Saves to your device.'], [2, 'Share', 'A link with your cities, sounds, key, scale and effects. They hear your setup with their own sky.']], 470, 320, 560, { bs: 31, gap: 40 }) + footS()); };
+
+D['20-hero'] = () => { const f = figS('hero', 60, 335, 960);
+  return sq('warm', head('A weather-played<br>instrument') + f.html + line('Three places playing live from their weather.<br>Free, in your browser.', 895, 34) + footS()); };
+
+window.NAMES = Object.keys(D);
+function build(name) { const f = D[name](); const st = document.getElementById('stage'); st.style.width = f.W + 'px'; st.style.height = f.H + 'px'; st.innerHTML = f.html + '<div class="grain"></div>'; return f; }
+const q = new URLSearchParams(location.search).get('d'); if (q) build(q);
+</script><script src="../anim.js"></script></body></html>
