@@ -887,6 +887,38 @@ body.perform .city .vol-wrap input { height: 32px; }
 .pl-keys span { flex: 1; max-width: 54px; text-align: center; padding: 6px 0; border-radius: 6px; border: 1px solid rgba(255,255,255,.2); font-size: 11px; color: var(--ink-dim); text-transform: uppercase; }
 .pl-keys span.dn { background: #fff; color: #1a100d; }
 .pl-keys span.rt { border-color: #fff; color: #fff; }
+
+/* perform on phones and tablets: the three cities stack as compact channel strips so all three are in reach */
+@media (max-width: 960px) {
+  body.perform .cities { display: grid; grid-template-columns: minmax(0, 1fr); gap: 10px; overflow: visible; scroll-snap-type: none; margin-inline: 0; padding-inline: 0; padding-bottom: 0; }
+  body.perform .city { flex: none; padding: 14px; min-height: 0; }
+  body.perform .city .viz, body.perform .city .city-meta, body.perform .city .more { display: none !important; }
+  body.perform .city .city-head .city-name { font-size: 24px; }
+  body.perform .city .temp { font-size: 30px; }
+  body.perform .city .quick { margin-top: 8px; }
+  body.perform .perf-bar { padding: 8px 0; gap: 8px; }
+  body.perform .perf-bar .perf-title, body.perform .perf-keys { display: none; }
+  body.perform .perf-bar .ghost { flex: 1 1 0; min-width: 0; padding: 12px 8px; white-space: nowrap; }
+  body.perform .pf-bars { flex: 1 0 100%; }
+  .perf-strip { grid-template-columns: 1fr 1fr; padding: 10px; }
+  .perf-strip label { grid-column: 1 / -1; min-width: 0; }
+  .perf-strip label input[type=range] { flex: 1; width: auto; max-width: none; min-width: 0; }
+  .perf-strip .pf-row2 input { max-width: none; }
+  .perf-strip .pf-row2 { justify-content: flex-start; }
+  .perf-strip .pf-row2 { display: grid; grid-template-columns: 70px 1fr; }
+  .perf-strip label:not(.pf-row2) { display: grid; grid-template-columns: 70px 1fr; }
+  .perf-lead, .perf-bin { width: 100%; padding: 12px; }
+  .pl-row { gap: 8px 10px; }
+  .perf-lead label { flex: 1 0 100%; display: grid; grid-template-columns: 70px 1fr; }
+  .perf-lead input[type=range] { width: auto; }
+  .perf-lead #plSound { flex: 1 1 100%; }
+  .perf-lead #plHand { flex: 1 1 100%; }
+  .pl-cam { flex-direction: column; }
+  .pl-cam canvas { max-width: 100%; width: 100%; }
+  .pb-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); max-height: 360px; }
+  body.perform .hero-inner { gap: 8px; }
+}
+@media (pointer: coarse) { .pl-keys { display: none; } }
 </style>
 </head>
 <body>
