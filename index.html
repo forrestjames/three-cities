@@ -901,6 +901,14 @@ body.perform .city .vol-wrap input { height: 32px; }
 .pb-name { white-space: normal; overflow-wrap: anywhere; text-align: left; line-height: 1.25; background: none; border: 0; color: inherit; font: inherit; padding: 0; cursor: pointer; }
 .pb-dir { font-size: 10px; color: var(--ink-dim); overflow-wrap: anywhere; }
 .pb-tile.used { border-color: rgba(255,255,255,.5); }
+.pb-grid.cols { display: flex; gap: 10px; align-items: flex-start; overflow-x: auto; overflow-y: hidden; max-height: none; }
+.pb-col { flex: 1 0 200px; min-width: 200px; max-width: 320px; display: flex; flex-direction: column; gap: 6px; }
+.pb-colhead { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; padding: 6px 10px; border-radius: 8px; background: color-mix(in srgb, var(--c, #fff) 22%, transparent); border-bottom: 2px solid var(--c, rgba(255,255,255,.4)); font-size: 11px; letter-spacing: .1em; text-transform: uppercase; }
+.pb-colhead span { color: var(--ink-dim); font-size: 10px; letter-spacing: .06em; white-space: nowrap; }
+.pb-colbody { display: flex; flex-direction: column; gap: 6px; max-height: 260px; overflow-y: auto; padding: 2px; }
+.pb-to button.home { flex: 2.2; text-transform: uppercase; letter-spacing: .06em; font-size: 10px; }
+.perf-bin.shut .pb-grid, .perf-bin.shut #pbFind { display: none !important; }
+.perf-bin.shut .pb-head { margin-bottom: 0; }
 .pb-to { display: flex; gap: 4px; margin-top: auto; }
 .pb-to button { flex: 1; min-height: 30px; font: inherit; font-size: 11px; border-radius: 6px; border: 1px solid var(--c, #fff); background: transparent; color: #fff; cursor: pointer; }
 .pb-to button:hover, .pb-to button.is { background: var(--c, #fff); color: #1a100d; font-weight: 700; }
@@ -5989,7 +5997,7 @@ body.perform .city .vol-wrap input { height: 32px; }
     const bin = document.createElement("section");
     bin.className = "perf-bin"; bin.setAttribute("aria-label", "Sample bin");
     bin.innerHTML = `<div class="pb-head"><span class="perf-title">Samples</span>
-      <button type="button" id="pbPick">Choose folder</button><button type="button" id="pbReopen" hidden>Reopen last folder</button>
+      <button type="button" id="pbPick">Choose folder</button><button type="button" id="pbToggle" aria-expanded="true">Hide</button><button type="button" id="pbReopen" hidden>Reopen last folder</button>
       <input type="search" id="pbFind" placeholder="Filter by name" aria-label="Filter samples" hidden>
       <span class="pb-note" id="pbNote">Pick a folder of sounds. Click a name to hear it, drag it onto a city, or use the 1 2 3 buttons.</span></div>
       <div class="pb-grid" id="pbGrid"></div>`;
@@ -6010,28 +6018,47 @@ body.perform .city .vol-wrap input { height: 32px; }
     function show() {
       const q = pbFind.value.trim().toLowerCase();
       pbGrid.textContent = "";
-      files.filter(f => !q || f.name.toLowerCase().includes(q)).forEach(f => {
+      const shown = files.filter(f => !q || f.name.toLowerCase().includes(q));
+      // folders become columns: the first three line up with the three cities, in order
+      const groups = new Map();
+      shown.forEach(f => { const k = f.name.includes("/") ? f.name.split("/")[0] : ""; if (!groups.has(k)) groups.set(k, []); groups.get(k).push(f); });
+      const cols = [...groups.keys()].some(k => k);
+      pbGrid.classList.toggle("cols", cols);
+      function tile(f, into, home) {
         const t = document.createElement("div"); t.className = "pb-tile"; t.draggable = true;
-        const base = f.name.split("/").pop(), folder = f.name.split("/").slice(0, -1).join("/");
+        const parts = f.name.split("/"), base = parts.pop(), folder = (cols ? parts.slice(1) : parts).join("/");
         t.innerHTML = `<button type="button" class="pb-name" title="Click to hear"></button><div class="pb-dir"></div><div class="pb-to"></div>`;
         t.querySelector(".pb-name").textContent = base;
         t.querySelector(".pb-dir").textContent = folder; if (!folder) t.querySelector(".pb-dir").remove();
         t.dataset.path = f.name;
-        cities.forEach((c, i) => { const b = document.createElement("button"); b.type = "button"; b.textContent = String(i + 1); b.title = `Load into ${c.name}`; b.style.setProperty("--c", `var(${c.color})`);
-          b.addEventListener("click", () => give(c, f));
-          t.querySelector(".pb-to").appendChild(b); });
+        cities.forEach((c, i) => { const b = document.createElement("button"); b.type = "button"; b.dataset.i = String(i); b.textContent = i === home ? c.name : String(i + 1); b.title = `Load into ${c.name}`; b.style.setProperty("--c", `var(${c.color})`);
+          if (i === home) { b.classList.add("home"); t.querySelector(".pb-to").prepend(b); } else t.querySelector(".pb-to").appendChild(b);
+          b.addEventListener("click", () => give(c, f)); });
         t.querySelector(".pb-name").addEventListener("click", () => audition(f, t));
         t.addEventListener("dragstart", e => { dragFile = f; e.dataTransfer.effectAllowed = "copy"; try { e.dataTransfer.setData("text/plain", f.name); } catch (er) {} });
         t.addEventListener("dragend", () => { dragFile = null; cities.forEach(c => c.el.classList.remove("pb-over")); });
-        pbGrid.appendChild(t);
+        into.appendChild(t);
+      }
+      if (!cols) shown.forEach(f => tile(f, pbGrid, -1));
+      else [...groups.entries()].forEach(([k, list], gi) => {
+        const col = document.createElement("div"); col.className = "pb-col";
+        const home = k && gi - (groups.has("") ? 1 : 0) < cities.length ? gi - (groups.has("") ? 1 : 0) : -1;
+        const hd = document.createElement("div"); hd.className = "pb-colhead";
+        if (home >= 0) hd.style.setProperty("--c", `var(${cities[home].color})`);
+        hd.innerHTML = `<b></b><span></span>`; hd.firstChild.textContent = k || "Loose files";
+        hd.lastChild.textContent = (home >= 0 && !k.toLowerCase().includes(cities[home].name.toLowerCase()) ? "\u2192 " + cities[home].name + " · " : "") + list.length;
+        col.appendChild(hd);
+        const body = document.createElement("div"); body.className = "pb-colbody"; col.appendChild(body);
+        list.forEach(f => tile(f, body, home));
+        pbGrid.appendChild(col);
       });
       mark();
     }
     // which tiles are in use: a city's number lights up in its colour on the sound it is playing
     function mark() {
       pbGrid.querySelectorAll(".pb-tile").forEach(t => {
-        t.querySelectorAll(".pb-to button").forEach((b, i) => {
-          const c = cities[i], on = !!(c && c.voice === "sample" && c.samp && c.samp.binPath === t.dataset.path);
+        t.querySelectorAll(".pb-to button").forEach(b => {
+          const c = cities[Number(b.dataset.i)], on = !!(c && c.voice === "sample" && c.samp && c.samp.binPath === t.dataset.path);
           b.classList.toggle("is", on); b.setAttribute("aria-pressed", String(on));
         });
         t.classList.toggle("used", !!t.querySelector(".pb-to .is"));
@@ -6068,6 +6095,10 @@ body.perform .city .vol-wrap input { height: 32px; }
       files = out; loaded(out.length, dir.name);
     }
     pbFind.addEventListener("input", show);
+    const pbTog = bin.querySelector("#pbToggle");
+    function pbShut(on) { bin.classList.toggle("shut", on); pbTog.textContent = on ? "Show" : "Hide"; pbTog.setAttribute("aria-expanded", String(!on)); try { localStorage.setItem("tc-bin-shut", on ? "1" : "0"); } catch (e) {} }
+    pbTog.addEventListener("click", () => pbShut(!bin.classList.contains("shut")));
+    try { if (localStorage.getItem("tc-bin-shut") === "1") pbShut(true); } catch (e) {}
     bin.querySelector("#pbPick").addEventListener("click", async () => {
       if (window.showDirectoryPicker) {
         try { const dir = await showDirectoryPicker({ id: "tc-samples", mode: "read" }); kvSet("dir", dir); pbReopen.hidden = true; await scan(dir); }
@@ -6076,7 +6107,7 @@ body.perform .city .vol-wrap input { height: 32px; }
         const inp = document.createElement("input"); inp.type = "file"; inp.multiple = true; inp.setAttribute("webkitdirectory", "");
         inp.addEventListener("change", () => {
           const list = [...inp.files].filter(f => AUDIO_RE.test(f.name) && !f.name.startsWith(".")).slice(0, 600);
-          files = list.map(f => ({ name: f.webkitRelativePath || f.name, get: async () => f }));
+          files = list.map(f => ({ name: f.webkitRelativePath ? f.webkitRelativePath.split("/").slice(1).join("/") || f.name : f.name, get: async () => f }));
           files.sort((a, b) => a.name.localeCompare(b.name, undefined, { numeric: true }));
           loaded(files.length, (list[0] && list[0].webkitRelativePath || "").split("/")[0] || "that folder");
         });
