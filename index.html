@@ -920,6 +920,8 @@ body.perform .city .vol-wrap input { height: 32px; }
 .perf-lead button[aria-pressed="true"] { background: #fff; color: #1a100d; }
 .perf-lead label { display: flex; align-items: center; gap: 8px; font-size: 11px; letter-spacing: .12em; text-transform: uppercase; color: var(--ink-dim); }
 .perf-lead input[type=range] { width: 110px; }
+.pl-shape-btn { display: none !important; }
+body.perform.fit .pl-shape-btn { display: inline-block !important; }
 .pl-oct { display: flex; align-items: center; gap: 6px; font-size: 11px; letter-spacing: .12em; text-transform: uppercase; color: var(--ink-dim); }
 .pl-oct button { min-width: 38px; padding: 8px 0; }
 .pl-cam { display: flex; gap: 14px; align-items: flex-start; margin-top: 10px; }
@@ -977,7 +979,9 @@ body.perform .city .vol-wrap input { height: 32px; }
   body.perform.fit .groove-vc-title { display: none; }
   body.perform.fit .groove-grid { align-self: start; }
   body.perform.fit .perf-lead { margin-top: 8px; padding: 8px 14px; }
-  body.perform.fit .pl-synth, body.perform.fit .pl-keys, body.perform.fit .pl-note, body.perform.fit .pl-cam { display: none; }
+  body.perform.fit .pl-keys, body.perform.fit .pl-note, body.perform.fit .pl-cam { display: none; }
+  body.perform.fit .perf-lead:not(.shape-open) .pl-synth { display: none; }
+  body.perform.fit .pl-shape-btn { display: inline-block; }
   body.perform.fit .perf-lead input[type=range] { width: 80px; }
   body.perform.fit .perf-bin { margin-top: 8px; padding: 8px 14px; }
   body.perform.fit .perf-bin .pb-head { margin-bottom: 6px; }
@@ -6206,7 +6210,8 @@ body.perform .city .vol-wrap input { height: 32px; }
       <label>Filter <input type="range" id="plTone" min="0" max="100" value="100"></label>
       <label>Reverb <input type="range" id="plRev" min="0" max="100" value="40"></label>
       <label>Delay <input type="range" id="plDel" min="0" max="100" value="15"></label>
-      <button type="button" id="plHand" aria-pressed="false" title="Play the lead with your hand, using the camera">Hand: off</button></div>
+      <button type="button" id="plHand" aria-pressed="false" title="Play the lead with your hand, using the camera">Hand: off</button>
+      <button type="button" id="plShape" class="pl-shape-btn" aria-pressed="false" title="Show the attack, length, glide and LFO controls">Shape</button></div>
       <div class="pl-row pl-synth"><span class="perf-title">Shape</span>
       <label>Attack <input type="range" id="plAtk" min="0" max="100" value="0"></label>
       <label>Length <input type="range" id="plLen" min="0" max="100" value="50"></label>
@@ -6316,6 +6321,7 @@ body.perform .city .vol-wrap input { height: 32px; }
     const setOct = d => { LEAD.oct = Math.max(-2, Math.min(2, LEAD.oct + d)); L$("plOct").textContent = (LEAD.oct > 0 ? "+" : "") + LEAD.oct; };
     L$("plDn").addEventListener("click", () => setOct(-1)); L$("plUp").addEventListener("click", () => setOct(1));
     [["plLevel", "level"], ["plTone", "tone"], ["plRev", "rev"], ["plDel", "del"], ["plAtk", "atk"], ["plLen", "len"], ["plQ", "q"], ["plGlide", "glide"], ["plLfoR", "lfoR"], ["plLfoD", "lfoD"]].forEach(([id, k]) => L$(id).addEventListener("input", e => { LEAD[k] = Number(e.target.value) / 100; leadSet(); }));
+    L$("plShape").addEventListener("click", e => { const on = lead.classList.toggle("shape-open"); e.currentTarget.setAttribute("aria-pressed", String(on)); });
     L$("plLfo").addEventListener("change", e => { LEAD.lfoT = e.target.value; leadSet(); e.target.blur(); });
     // computer keyboard
     document.addEventListener("keydown", e => {
