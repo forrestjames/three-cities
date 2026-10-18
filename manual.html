@@ -147,7 +147,7 @@ kbd { display: inline-block; min-width: 26px; text-align: center; border: 1.5px 
   <ol class="steps">
     <li><b>Press Hear my three cities.</b> The three cities begin, each in its own rhythm. On an iPhone, flick the silent switch off first.</li>
     <li><b>Look at the cards.</b> Each one shows a city's temperature, local time, its rhythm ring and the sun. Those numbers are the score.</li>
-    <li><b>Change a sound.</b> Pick a new instrument from the menu at the bottom of any card. Felt piano, flute and grain clouds are good places to start. Or press <b>Shuffle sounds</b> above the cards and each city gets a random instrument from a different family. Now and then it deals an all-rhythm kit instead: something low, something in the middle, something on top. <b>Shuffle effects</b>, next to it, sends every city to the reverb and delay, rolls a new reverb, a new delay with gentle echoes, and a new filter setting with its own LFO. Both shuffles also give each card's Chance a very light nudge and now and then drop a city down an octave (never the bass or kick sounds).</li>
+    <li><b>Change a sound.</b> Pick a new instrument from the menu on any card. Felt piano, flute and grain clouds are good places to start. Or press <b>Shuffle sounds</b> above the cards and each city gets a random instrument from a different family. Now and then it deals an all-rhythm kit instead: something low, something in the middle, something on top. <b>Shuffle effects</b>, next to it, sends every city to the reverb and delay, rolls a new reverb, a new delay with gentle echoes, and a new filter setting with its own LFO. Both shuffles also give each card's Chance a very light nudge and now and then drop a city down an octave (never the bass or kick sounds).</li>
     <li><b>Play any.</b> Type any three places, or tap Surprise me, then Play these.</li>
     <li><b>Share it.</b> The Share button copies a link with your cities, sounds and settings in it. Whoever opens it hears your version, with today's weather.</li>
   </ol>
@@ -239,13 +239,23 @@ kbd { display: inline-block; min-width: 26px; text-align: center; border: 1.5px 
         <g><circle cx="412" cy="398" r="11"/><text x="412" y="402" text-anchor="middle" style="fill:var(--paper)" font-weight="600">10</text><text x="432" y="402">More: the deep controls</text></g>
       </g>
     </svg>
-    <figcaption>Fig. 2 · A city card. The chips at 6 are tappable: the hits chip lets you change which weather sets the hits.</figcaption>
+    <figcaption>Fig. 2 · A city card (sketch). The controls now sit right on the card, so you can play it. Weather, sun and bars live under More.</figcaption>
   </figure>
 
-  <h3>Behind the More button</h3>
+  <h3>On the card</h3>
+  <p>Everything you want to play with is out in the open. Sound, Mute, Volume, Pan, Length, Octave, Reverb and Delay sends, Hits from, Rate, Density and Chance.</p>
   <table>
     <tr><th>Control</th><th>What it does</th></tr>
-    <tr><td>Weather bars</td><td>Temperature, humidity, wind, cloud and rain, as they are right now.</td></tr>
+    <tr><td>Pan</td><td>Where the city sits, left to right. Auto is the gentle drift the weather gives it. Move the slider and Auto switches off. Press Auto to go back. Manual pan also sends MIDI CC 10 on the city's channel.</td></tr>
+    <tr><td>Length</td><td>How long each note rings, from 25% to 250%. It is the decay, the ring time, not a sustain. Short is plucky. Long blurs into the reverb.</td></tr>
+  </table>
+  <p>The controls below are the same ones, described once more for reference.</p>
+
+  <h3>Behind the More button</h3>
+  <p>More now holds the weather: the readings, the sun, the bars and the swap-city box, plus your own samples for that city.</p>
+  <table>
+    <tr><th>Control</th><th>What it does</th></tr>
+    <tr><td>Weather, sun and bars</td><td>Temperature, humidity, wind, cloud and rain, as they are right now.</td></tr>
     <tr><td>Hits from</td><td>Which weather sets the number of hits: humidity, wind, cloud or rain. The menu shows each one's reading right now, like 10 km/h wind. Rain is the sparse one. On a dry day it's almost silence.</td></tr>
     <tr><td>Rate</td><td>How long each step lasts, from 1/32 to a whole bar. The weather nudges it too, through air pressure.</td></tr>
     <tr><td>Density</td><td>Scales the number of hits up or down from what the weather says.</td></tr>
@@ -500,6 +510,8 @@ kbd { display: inline-block; min-width: 26px; text-align: center; border: 1.5px 
   <h2>What's new</h2>
   <p class="kicker">This manual is kept up to date with the instrument. Newest first.</p>
   <dl class="log">
+    <dt>18 October 2026</dt>
+    <dd>The city cards are now playable. Pan, Length, Octave, the Reverb and Delay sends, Hits from, Rate, Density and Chance all sit on the card. The weather, sun and bars moved under More. New: a Pan control with Auto (the old drift) and a manual setting, and a Length control for how long each note rings.</dd>
     <dt>17 October 2026</dt>
     <dd>Perform mode on a phone: the three cities now sit side by side as mixer channels. Each has a tall volume fader, a mute button, Solo, Fade, and Filter, Attack and Length sliders, all in reach of your thumbs. The sample bin and the lead keyboard picture are hidden on phones, where they can't be used.</dd>
     <dt>17 October 2026</dt>
