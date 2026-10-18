@@ -6101,7 +6101,7 @@ body.perform .city .vol-wrap input { height: 32px; }
     // ----- lead line: solo on top of the three cities, always in the key and scale -----
     const LEAD_SOUNDS = [["synth", "Lead synth (held)"], ["felt", "Felt piano"], ["piano", "Grand piano"], ["epiano", "Electric piano"], ["junokeys", "Juno keys"], ["organ", "Organ"], ["marimba", "Marimba"], ["kalimba", "Kalimba"], ["bell", "Bell"], ["flute", "Warm flute"], ["soft", "Soft lead"], ["breath", "Breath"], ["pluck", "Pluck"], ["harp", "Harp"]]
       .filter(([v]) => v === "synth" || SOUND_NAME[v]);
-    const LEAD = { on: false, sound: "synth", oct: 0, level: 0.75, tone: 1, rev: 0.4, del: 0.15, bus: null, held: new Map(), pedal: false, late: [], fake: { voice: "felt", steps: 0, base: 60, pos: 0, w: null } };
+    const LEAD = { on: false, sound: "synth", oct: 0, level: 0.75, tone: 1, rev: 0.4, del: 0.15, atk: 0, len: 1, q: 0, glide: 0, lfoT: "off", lfoR: 0.4, lfoD: 0.4, lastF: 0, bus: null, held: new Map(), pedal: false, late: [], fake: { voice: "felt", steps: 0, base: 60, pos: 0, w: null, shape: { atk: 0, len: 1 } } };
     const lead = document.createElement("section");
     lead.className = "perf-lead"; lead.setAttribute("aria-label", "Lead line");
     lead.innerHTML = `<div class="pl-row"><span class="perf-title">Lead</span>
@@ -6113,6 +6113,15 @@ body.perform .city .vol-wrap input { height: 32px; }
       <label>Reverb <input type="range" id="plRev" min="0" max="100" value="40"></label>
       <label>Delay <input type="range" id="plDel" min="0" max="100" value="15"></label>
       <button type="button" id="plHand" aria-pressed="false" title="Play the lead with your hand, using the camera">Hand: off</button></div>
+      <div class="pl-row pl-synth"><span class="perf-title">Shape</span>
+      <label>Attack <input type="range" id="plAtk" min="0" max="100" value="0"></label>
+      <label>Length <input type="range" id="plLen" min="0" max="100" value="50"></label>
+      <label>Resonance <input type="range" id="plQ" min="0" max="100" value="0"></label>
+      <label>Glide <input type="range" id="plGlide" min="0" max="100" value="0" title="Slides from the last note. The Lead synth only."></label>
+      <span class="perf-title">LFO</span>
+      <select id="plLfo" aria-label="LFO goes to"><option value="off">LFO off</option><option value="filter">To filter</option><option value="pitch">To pitch</option><option value="trem">To volume</option></select>
+      <label>Rate <input type="range" id="plLfoR" min="0" max="100" value="40"></label>
+      <label>Depth <input type="range" id="plLfoD" min="0" max="100" value="40"></label></div>
       <div class="pl-cam" id="plCam" hidden><canvas id="plCanvas" width="320" height="240" aria-label="Camera view with the hand and the note zones"></canvas><p id="plCamNote"></p></div>
       <div class="pl-keys" id="plKeys" aria-hidden="true"></div>
       <div class="pl-note" id="plNote">Turn it on, then play the keys below, or a MIDI keyboard. Every note lands in the current key and scale.</div>`;
@@ -6131,9 +6140,12 @@ body.perform .city .vol-wrap input { height: 32px; }
       if (!ac) setupAudio();
       if (LEAD.bus) return LEAD.bus;
       const filt = ac.createBiquadFilter(); filt.type = "lowpass"; filt.Q.value = 0.6;
-      const out = ac.createGain(), rv = ac.createGain(), dl = ac.createGain();
-      filt.connect(out); out.connect(master); out.connect(rv).connect(reverb); out.connect(dl).connect(delay);
-      LEAD.bus = { filt, out, rv, dl };
+      const out = ac.createGain(), rv = ac.createGain(), dl = ac.createGain(), trem = ac.createGain();
+      filt.connect(trem); trem.connect(out); out.connect(master); out.connect(rv).connect(reverb); out.connect(dl).connect(delay);
+      const lfo = ac.createOscillator(), lf = ac.createGain(), lt = ac.createGain(), lp = ac.createGain();   // one LFO, three places it can go
+      lfo.type = "sine"; lf.gain.value = 0; lt.gain.value = 0; lp.gain.value = 0;
+      lfo.connect(lf).connect(filt.detune); lfo.connect(lt).connect(trem.gain); lfo.connect(lp); lfo.start();
+      LEAD.bus = { filt, out, rv, dl, trem, lfo, lf, lt, lp };
       buses.set(LEAD.fake, { input: filt, filter: filt, out, vol: out });   // so every city sound can play through it unchanged
       leadSet(); return LEAD.bus;
     }
@@ -6142,6 +6154,15 @@ body.perform .city .vol-wrap input { height: 32px; }
       b.out.gain.setTargetAtTime(Math.pow(LEAD.level, 2) * 0.5, t, 0.03);
       b.filt.frequency.setTargetAtTime(chordFilterHz(LEAD.tone) * 1.2, t, 0.03);
       b.rv.gain.setTargetAtTime(LEAD.rev, t, 0.05); b.dl.gain.setTargetAtTime(LEAD.del, t, 0.05);
+      b.filt.Q.setTargetAtTime(0.6 + LEAD.q * 13, t, 0.03);
+      b.lfo.frequency.setTargetAtTime(0.1 * Math.pow(200, LEAD.lfoR), t, 0.05);
+      const d = LEAD.lfoD, on = x => LEAD.lfoT === x ? 1 : 0;
+      b.lf.gain.setTargetAtTime(on("filter") * d * 2400, t, 0.05);   // cents: up to two octaves
+      b.lt.gain.setTargetAtTime(on("trem") * d * 0.5, t, 0.05);
+      b.lp.gain.setTargetAtTime(on("pitch") * d * 60, t, 0.05);      // cents: up to a slow vibrato
+      LEAD.fake.shape.atk = 1.2 * Math.pow(LEAD.atk, 2);
+      LEAD.fake.shape.len = 0.25 * Math.pow(16, LEAD.len);
+      if (Math.abs(LEAD.fake.shape.len - 1) < 0.04) LEAD.fake.shape.len = 1;
     }
     // any note lands on the nearest note of the scale (down first on a tie)
     function snap(m) {
@@ -6157,12 +6178,18 @@ body.perform .city .vol-wrap input { height: 32px; }
       const t = ac.currentTime + 0.005, f = mtof(midi);
       const o1 = ac.createOscillator(), o2 = ac.createOscillator(), lp = ac.createBiquadFilter(), g = ac.createGain();
       o1.type = "sawtooth"; o2.type = "triangle"; o1.frequency.value = f; o2.frequency.value = f; o1.detune.value = 6; o2.detune.value = -5;
+      const gl = Math.pow(LEAD.glide, 2) * 0.6;
+      if (gl > 0.005 && LEAD.lastF) for (const o of [o1, o2]) { o.frequency.setValueAtTime(LEAD.lastF, t); o.frequency.exponentialRampToValueAtTime(f, t + gl); }
+      LEAD.lastF = f;
+      const lfoP = LEAD.bus.lp; lfoP.connect(o1.detune); lfoP.connect(o2.detune);
+      o1.onended = () => { try { lfoP.disconnect(o1.detune); lfoP.disconnect(o2.detune); } catch (e) {} };
       lp.type = "lowpass"; lp.Q.value = 1.2; lp.frequency.setValueAtTime(900 + vel * 5200, t); lp.frequency.setTargetAtTime(500 + vel * 2200, t, 0.35);
       const peak = 0.2 * (0.35 + 0.65 * vel);
-      g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(peak, t + 0.012); g.gain.setTargetAtTime(peak * 0.7, t + 0.012, 0.12);
+      const at = Math.max(0.012, LEAD.fake.shape.atk), rl = 0.14 * LEAD.fake.shape.len;
+      g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(peak, t + at); g.gain.setTargetAtTime(peak * 0.7, t + at, 0.12);
       o1.connect(lp); o2.connect(lp); lp.connect(g).connect(LEAD.bus.filt);
       o1.start(t); o2.start(t);
-      return { release(at) { const tt = Math.max(at, ac.currentTime); g.gain.cancelScheduledValues(tt); g.gain.setTargetAtTime(0, tt, 0.14); o1.stop(tt + 1); o2.stop(tt + 1); } };
+      return { release(at) { const tt = Math.max(at, ac.currentTime); g.gain.cancelScheduledValues(tt); g.gain.setTargetAtTime(0, tt, rl); o1.stop(tt + 1 + rl * 5); o2.stop(tt + 1 + rl * 5); } };
     }
     async function leadOn(id, m, vel) {
       if (!LEAD.on) return;
@@ -6194,7 +6221,8 @@ body.perform .city .vol-wrap input { height: 32px; }
     const sndSel = L$("plSound"); sndSel.addEventListener("change", () => { LEAD.sound = sndSel.value; sndSel.blur(); });
     const setOct = d => { LEAD.oct = Math.max(-2, Math.min(2, LEAD.oct + d)); L$("plOct").textContent = (LEAD.oct > 0 ? "+" : "") + LEAD.oct; };
     L$("plDn").addEventListener("click", () => setOct(-1)); L$("plUp").addEventListener("click", () => setOct(1));
-    [["plLevel", "level"], ["plTone", "tone"], ["plRev", "rev"], ["plDel", "del"]].forEach(([id, k]) => L$(id).addEventListener("input", e => { LEAD[k] = Number(e.target.value) / 100; leadSet(); }));
+    [["plLevel", "level"], ["plTone", "tone"], ["plRev", "rev"], ["plDel", "del"], ["plAtk", "atk"], ["plLen", "len"], ["plQ", "q"], ["plGlide", "glide"], ["plLfoR", "lfoR"], ["plLfoD", "lfoD"]].forEach(([id, k]) => L$(id).addEventListener("input", e => { LEAD[k] = Number(e.target.value) / 100; leadSet(); }));
+    L$("plLfo").addEventListener("change", e => { LEAD.lfoT = e.target.value; leadSet(); e.target.blur(); });
     // computer keyboard
     document.addEventListener("keydown", e => {
       if (!LEAD.on || e.ctrlKey || e.metaKey || e.altKey || e.repeat) return;
