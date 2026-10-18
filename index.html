@@ -6362,30 +6362,60 @@ body.perform.fit .pl-shape-btn { display: inline-block !important; }
     const HAND = { on: false, stream: null, video: null, hands: null, raf: 0, busy: false, zone: -1, pinch: false, id: "hand" };
     const loadScript = src => new Promise((res, rej) => { const e = document.createElement("script"); e.src = src; e.crossOrigin = "anonymous"; e.onload = res; e.onerror = () => rej(new Error("script")); document.head.appendChild(e); });
     const zonesN = () => scale.length * 2 + 1;   // two octaves and the top note
+    // Up to four hands at once. MediaPipe doesn't keep hands in a fixed order, so each frame the hands are matched to the
+    // ones seen last frame by how close their wrists are. Each hand has its own pinch, its own note and its own colour.
+    const HAND_COL = ["#ffffff", "#ffd98a", "#8fd6c3", "#e89ac7"], MAX_HANDS = 4;
+    HAND.tracks = [];
+    function handRelease(t, now) { if (t.pinch) { t.pinch = false; leadOff(t.id, now); } }
     function handFrame(r) {
-      const W = camCv.width, H = camCv.height, lm = r.multiHandLandmarks && r.multiHandLandmarks[0];
+      const W = camCv.width, H = camCv.height, all = r.multiHandLandmarks || [];
       camCtx.save(); camCtx.clearRect(0, 0, W, H); camCtx.translate(W, 0); camCtx.scale(-1, 1);
       if (r.image) camCtx.drawImage(r.image, 0, 0, W, H);
       camCtx.restore();
       const n = zonesN();
       camCtx.strokeStyle = "rgba(255,255,255,.25)"; camCtx.lineWidth = 1;
       for (let i = 1; i < n; i++) { camCtx.beginPath(); camCtx.moveTo(W * i / n, 0); camCtx.lineTo(W * i / n, H); camCtx.stroke(); }
-      if (!lm) { if (HAND.pinch) { HAND.pinch = false; leadOff(HAND.id); } HAND.zone = -1; camNote.textContent = "Show your hand to the camera. Pinch thumb and finger to play."; return; }
-      const d = (a, b) => Math.hypot(lm[a].x - lm[b].x, lm[a].y - lm[b].y), palm = d(0, 9) || 0.1;
-      const ratio = d(4, 8) / palm, wasPinch = HAND.pinch;
-      HAND.pinch = wasPinch ? ratio < 0.5 : ratio < 0.32;   // a little slack so the note doesn't flutter
-      const x = 1 - lm[8].x, y = lm[8].y;
-      // the zone only changes once you're well past the edge, so a note holds still near a boundary
-      let z = Math.max(0, Math.min(n - 1, Math.floor(x * n)));
-      if (HAND.zone >= 0 && z !== HAND.zone) { const edge = z > HAND.zone ? (HAND.zone + 1) / n : HAND.zone / n; if (Math.abs(x - edge) < 0.18 / n) z = HAND.zone; }
-      LEAD.tone = Math.max(0.12, Math.min(1, 1.15 - 1.1 * y)); L$("plTone").value = Math.round(LEAD.tone * 100); leadSet();
-      if (HAND.pinch && (!wasPinch || z !== HAND.zone)) { if (LEAD.held.has(HAND.id)) leadOff(HAND.id, true); leadOn(HAND.id, keyDegreeNote(0, z), 0.8); }
-      if (!HAND.pinch && wasPinch) leadOff(HAND.id);
-      HAND.zone = z;
-      camCtx.fillStyle = HAND.pinch ? "#fff" : "rgba(255,255,255,.5)";
-      lm.forEach(p => { camCtx.beginPath(); camCtx.arc((1 - p.x) * W, p.y * H, 3, 0, 6.3); camCtx.fill(); });
-      camCtx.fillStyle = "rgba(255,255,255,.2)"; camCtx.fillRect(W * z / n, 0, W / n, H);
-      camNote.textContent = HAND.pinch ? `Playing ${plNote.textContent}. Move left or right to change note, up or down for the filter.` : "Pinch thumb and finger to play.";
+      // match each seen hand to a track, nearest wrist first
+      const pairs = [];
+      all.forEach((lm, hi) => HAND.tracks.forEach((t, ti) => pairs.push([Math.hypot(lm[0].x - t.wx, lm[0].y - t.wy), hi, ti])));
+      pairs.sort((a, b) => a[0] - b[0]);
+      const hOf = new Map(), tUsed = new Set();
+      pairs.forEach(([d, hi, ti]) => { if (!hOf.has(hi) && !tUsed.has(ti) && d < 0.35) { hOf.set(hi, HAND.tracks[ti]); tUsed.add(ti); } });
+      HAND.tracks.forEach((t, ti) => { if (!tUsed.has(ti)) { handRelease(t); t.gone = true; } });
+      HAND.tracks = HAND.tracks.filter(t => !t.gone);
+      const used = new Set(HAND.tracks.map(t => t.slot));
+      all.forEach((lm, hi) => {
+        if (hOf.has(hi)) return;
+        let slot = 0; while (used.has(slot)) slot++;
+        if (slot >= MAX_HANDS) return;
+        used.add(slot);
+        const t = { slot, id: "hand" + slot, pinch: false, zone: -1, wx: lm[0].x, wy: lm[0].y };
+        HAND.tracks.push(t); hOf.set(hi, t);
+      });
+      let ys = 0, ny = 0, playing = 0;
+      all.forEach((lm, hi) => {
+        const t = hOf.get(hi); if (!t) return;
+        t.wx = lm[0].x; t.wy = lm[0].y;
+        const d = (a, b) => Math.hypot(lm[a].x - lm[b].x, lm[a].y - lm[b].y), palm = d(0, 9) || 0.1;
+        const ratio = d(4, 8) / palm, was = t.pinch;
+        t.pinch = was ? ratio < 0.5 : ratio < 0.32;   // a little slack so the note doesn't flutter
+        const x = 1 - lm[8].x, y = lm[8].y;
+        // the zone only changes once you're well past the edge, so a note holds still near a boundary
+        let z = Math.max(0, Math.min(n - 1, Math.floor(x * n)));
+        if (t.zone >= 0 && z !== t.zone) { const edge = z > t.zone ? (t.zone + 1) / n : t.zone / n; if (Math.abs(x - edge) < 0.18 / n) z = t.zone; }
+        ys += y; ny++;
+        if (t.pinch && (!was || z !== t.zone)) { if (LEAD.held.has(t.id)) leadOff(t.id, true); leadOn(t.id, keyDegreeNote(0, z), 0.8); }
+        if (!t.pinch && was) leadOff(t.id);
+        t.zone = z; if (t.pinch) playing++;
+        const col = HAND_COL[t.slot];
+        camCtx.globalAlpha = t.pinch ? 1 : 0.55; camCtx.fillStyle = col;
+        lm.forEach(p => { camCtx.beginPath(); camCtx.arc((1 - p.x) * W, p.y * H, 3, 0, 6.3); camCtx.fill(); });
+        camCtx.globalAlpha = 0.18; camCtx.fillRect(W * z / n, 0, W / n, H); camCtx.globalAlpha = 1;
+      });
+      // one filter for the whole lead: the hands' average height
+      if (ny) { LEAD.tone = Math.max(0.12, Math.min(1, 1.15 - 1.1 * (ys / ny))); L$("plTone").value = Math.round(LEAD.tone * 100); leadSet(); }
+      camNote.textContent = !ny ? "Show your hand to the camera. Pinch thumb and finger to play. Up to four hands work together."
+        : playing ? `${playing} note${playing === 1 ? "" : "s"} playing. Move left or right to change note, up or down for the filter.` : `${ny} hand${ny === 1 ? "" : "s"} seen. Pinch thumb and finger to play.`;
     }
     async function handStart() {
       handBtn.textContent = "Hand: starting…"; camBox.hidden = false; camNote.textContent = "Starting the camera. The first time, the hand tracking (about 13 MB) loads from jsDelivr.";
@@ -6395,11 +6425,11 @@ body.perform.fit .pl-shape-btn { display: inline-block !important; }
         const v = HAND.video = document.createElement("video"); v.muted = true; v.playsInline = true; v.srcObject = HAND.stream; await v.play();
         if (!window.Hands) await loadScript(MP_BASE + "hands.js");
         HAND.hands = new window.Hands({ locateFile: f => MP_BASE + f });
-        HAND.hands.setOptions({ maxNumHands: 1, modelComplexity: 0, minDetectionConfidence: 0.6, minTrackingConfidence: 0.5, selfieMode: false });
+        HAND.hands.setOptions({ maxNumHands: 4, modelComplexity: 0, minDetectionConfidence: 0.6, minTrackingConfidence: 0.5, selfieMode: false });
         HAND.hands.onResults(handFrame);
         if (!LEAD.on) await setLead(true);
         HAND.on = true; handBtn.setAttribute("aria-pressed", "true"); handBtn.textContent = "Hand: on";
-        camNote.textContent = "Show your hand to the camera. Pinch thumb and finger to play.";
+        camNote.textContent = "Show your hand to the camera. Pinch thumb and finger to play. Up to four hands work together.";
         const loop = async () => {
           if (!HAND.on) return;
           if (!HAND.busy && HAND.video.readyState >= 2) { HAND.busy = true; try { await HAND.hands.send({ image: HAND.video }); } catch (e) {} HAND.busy = false; }
@@ -6414,7 +6444,7 @@ body.perform.fit .pl-shape-btn { display: inline-block !important; }
     }
     function handStop() {
       HAND.on = false; cancelAnimationFrame(HAND.raf);
-      if (HAND.pinch) { HAND.pinch = false; leadOff(HAND.id, true); }
+      HAND.tracks.forEach(t => handRelease(t, true)); HAND.tracks = [];
       if (HAND.stream) HAND.stream.getTracks().forEach(t => t.stop());
       HAND.stream = null; HAND.zone = -1;
       try { HAND.hands && HAND.hands.close(); } catch (e) {}
