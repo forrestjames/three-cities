@@ -3461,6 +3461,18 @@ body.perform.fit .pl-shape-btn { display: inline-block !important; }
       line.innerHTML = `Your sound is in <b>${name}</b>. Kept the old key: with Pitch on, the sound is still tuned to it.`;
     }, { once: true });
   }
+  // A short, readable label for the Sound menu: the first recognisable words of a file name, without the clutter
+  // (track numbers, tempos, keys, version tags and filler like "loop" or "final"). Falls back to the plain name.
+  function sampleLabel(name) {
+    const base = name.replace(/\.[^.]+$/, "");
+    const NOISE = /^(a|an|the|of|at|in|on|and|my|for|sample|samples|loop|final|master|mix|mixdown|bounce|copy|take|rec|recording|audio|new|untitled|track|file|export|render|wav|mp3|v\d+|\d+bpm|bpm|[a-g][#b]?(maj|min|m)?|stereo|mono|dry|wet|fx)$/i;
+    const words = base.replace(/([a-z])([A-Z])/g, "$1 $2").split(/[\s_\-.()\[\]+]+/).filter(Boolean);
+    let keep = words.filter(w => /[a-z]/i.test(w) && !NOISE.test(w));
+    if (!keep.length) keep = words.filter(w => /[a-z]/i.test(w));
+    let out = keep.slice(0, 2).map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()).join(" ");
+    if (!out) out = base.trim();
+    return out.length > 18 ? out.slice(0, 17).trimEnd() + "\u2026" : out;
+  }
   async function loadUserSample(c, file) {
     if (!ac) setupAudio();
     c.ref.sampName.textContent = "Loading " + file.name + "…";
@@ -3470,7 +3482,7 @@ body.perform.fit .pl-shape-btn { display: inline-block !important; }
       for (let ch = 0; ch < buf.numberOfChannels; ch++) { const d = buf.getChannelData(ch); for (let i = 0; i < d.length; i += 4) peak = Math.max(peak, Math.abs(d[i])); }
       c.samp = { buf, name: file.name.replace(/\.[^.]+$/, ""), norm: peak > 0.001 ? 0.9 / peak : 1 };
       c.ref.sampName.textContent = `${c.samp.name} · ${buf.duration < 10 ? buf.duration.toFixed(1) : Math.round(buf.duration)} s`;
-      c.voice = "sample"; { const sel = c.el.querySelector("select[id$='-sound']"); if (sel) sel.value = "sample"; } c.ref.samp.hidden = false; applySound(c);
+      c.voice = "sample"; { const sel = c.el.querySelector("select[id$='-sound']"); if (sel) { sel.value = "sample"; const o = [...sel.options].find(x => x.value === "sample"); if (o) { o.textContent = "\u266A " + sampleLabel(file.name); o.title = c.samp.name; } } } c.ref.samp.hidden = false; applySound(c);
       matchSampleKey(c);
     } catch (err) { c.ref.sampName.textContent = "Couldn't read that file. Try a WAV, MP3 or M4A."; c.ref.sampLoad.classList.add("nudge"); }
   }
