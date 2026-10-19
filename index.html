@@ -3461,16 +3461,19 @@ body.perform.fit .pl-shape-btn { display: inline-block !important; }
       line.innerHTML = `Your sound is in <b>${name}</b>. Kept the old key: with Pitch on, the sound is still tuned to it.`;
     }, { once: true });
   }
-  // A short, readable label for the Sound menu: the first recognisable words of a file name, without the clutter
-  // (track numbers, tempos, keys, version tags and filler like "loop" or "final"). Falls back to the plain name.
+  // A short, readable label for the Sound menu: real words from the file name. Initials (BD, SN, TR), codes, track
+  // numbers, tempos, keys and version tags are left out, and so are underscores. Words we know from music and field
+  // recording win first; any other proper-looking word fills the rest. Falls back to a tidied version of the name.
+  const KNOWN_WORDS = new Set(("kick snare hat hihat clap rim tom cymbal crash ride shaker tambourine conga bongo cowbell clave woodblock drum drums perc percussion bell bells chime chimes gong marimba kalimba xylophone vibes piano keys organ synth pad pads bass sub lead pluck stab arp strings string violin viola cello harp guitar banjo ukulele flute oboe clarinet sax trumpet horn brass choir voice vocal vocals whisper breath speech rain thunder storm wind waves ocean sea river stream water drip fire crackle birds bird crow gull owl insects crickets cicadas frog forest street traffic bus train tram tube station crowd market cafe church bridge harbour harbor clock tick door footsteps steps engine siren whistle horn noise static hiss hum drone texture grain tape vinyl radio glitch riser sweep swell impact hit boom rumble fx ambience ambient atmosphere night morning dawn dusk snow ice wood metal glass stone paper boston copenhagen london").split(" "));
   function sampleLabel(name) {
     const base = name.replace(/\.[^.]+$/, "");
-    const NOISE = /^(a|an|the|of|at|in|on|and|my|for|sample|samples|loop|final|master|mix|mixdown|bounce|copy|take|rec|recording|audio|new|untitled|track|file|export|render|wav|mp3|v\d+|\d+bpm|bpm|[a-g][#b]?(maj|min|m)?|stereo|mono|dry|wet|fx)$/i;
-    const words = base.replace(/([a-z])([A-Z])/g, "$1 $2").split(/[\s_\-.()\[\]+]+/).filter(Boolean);
-    let keep = words.filter(w => /[a-z]/i.test(w) && !NOISE.test(w));
-    if (!keep.length) keep = words.filter(w => /[a-z]/i.test(w));
-    let out = keep.slice(0, 2).map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()).join(" ");
-    if (!out) out = base.trim();
+    const NOISE = /^(a|an|the|of|at|in|on|and|my|for|sample|samples|loop|final|master|mix|mixdown|bounce|copy|take|rec|recording|audio|new|untitled|track|file|export|render|wav|mp3|bpm|stereo|mono|dry|wet|one|shot|oneshot|hit|part|version|demo|test|temp|edit|edited|processed|normalized|normalised)$/i;
+    const words = base.replace(/([a-z])([A-Z])/g, "$1 $2").split(/[^A-Za-z]+/).filter(Boolean);   // digits and underscores split words and disappear
+    const real = w => w.length >= 3 && !/^[a-g][#b]?(maj|min|m)$/i.test(w) && /[aeiouy]/i.test(w) && !NOISE.test(w) && !(w === w.toUpperCase() && w.length <= 4 && !KNOWN_WORDS.has(w.toLowerCase()));
+    const ok = words.map((w, i) => ({ w, i })).filter(x => real(x.w));
+    const pick = ok.filter(x => KNOWN_WORDS.has(x.w.toLowerCase())).concat(ok.filter(x => !KNOWN_WORDS.has(x.w.toLowerCase()))).slice(0, 2).sort((a, b) => a.i - b.i).map(x => x.w);
+    let out = pick.map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()).join(" ");
+    if (!out) out = words.filter(w => w.length >= 3).slice(0, 2).map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()).join(" ") || base.replace(/[_\-]+/g, " ").trim();
     return out.length > 18 ? out.slice(0, 17).trimEnd() + "\u2026" : out;
   }
   async function loadUserSample(c, file) {
