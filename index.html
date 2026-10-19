@@ -538,6 +538,7 @@ body.mood-immersive .fab { display: none !important; }
 .glance-src { background: transparent; border: 0; color: var(--ink); font: inherit; font-size: 12px; letter-spacing: 0.04em; padding: 3px 2px 3px 8px; cursor: pointer; max-width: 100%; }
 .glance-src option { background: #1a1210; color: var(--ink); }
 .glance b { font-weight: 400; color: var(--accent); }
+body:not(.perform) .cities.open .glance { display: none; }
 .quick { display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr) 36px auto; gap: 10px; align-items: center; padding-top: 14px; border-top: 1px solid var(--line); }
 .quick select { width: 100%; min-height: 36px; background: rgba(16,8,6,0.6); font-size: 11px; letter-spacing: 0; padding: 4px 4px 4px 6px; }
 .quick input[type="range"] { width: 100%; accent-color: var(--accent); }
@@ -563,10 +564,10 @@ body.mood-immersive .fab { display: none !important; }
 .mute[aria-pressed="true"] { border-color: var(--accent); color: var(--accent); }
 .cities:not(.open) .quick { margin-top: auto; }
 .more { display: none; flex-direction: column; gap: 18px; }
-/* playable cards: the ring and the performance controls are always out; the weather lives under More */
-.city { padding: 18px; gap: 12px; }
-.viz { display: block; }
-.viz .ring { display: block; width: 100%; max-width: 190px; aspect-ratio: 1; margin: 0 auto; }
+/* playable cards (/perform only): the ring and the performance controls are always out; the weather lives under More */
+body.perform .city { padding: 18px; gap: 12px; }
+body.perform .viz { display: block; }
+body.perform .viz .ring { display: block; width: 100%; max-width: 190px; aspect-ratio: 1; margin: 0 auto; }
 .perf { display: grid; gap: 10px; padding-top: 12px; border-top: 1px solid var(--line); }
 .perf-top { display: grid; grid-template-columns: minmax(0, 1fr) 36px auto; gap: 8px; align-items: center; }
 .perf-top select { width: 100%; min-height: 36px; background: rgba(16,8,6,0.6); font-size: 11px; letter-spacing: 0; padding: 4px 4px 4px 6px; }
@@ -2008,7 +2009,8 @@ body.perform.fit .pl-shape-btn { display: inline-block !important; }
     const el = document.createElement("article");
     el.className = "city";
     el.style.setProperty("--accent", `var(${c.color})`);
-    el.innerHTML = `
+    // The playable layout (controls out, weather under More) is for /perform. The main page keeps the weather up front.
+    el.innerHTML = QS.has("perform") ? `
       <div class="photo" data-r="photo" aria-hidden="true"></div>
       <div class="veil" aria-hidden="true"></div>
       <div class="city-head">
@@ -2091,6 +2093,81 @@ body.perform.fit .pl-shape-btn { display: inline-block !important; }
           <button type="submit">Swap</button>
         </form>
         <div class="swap-note" data-r="swapnote" style="grid-column: 1 / -1"></div>
+      </div>` : `
+      <div class="photo" data-r="photo" aria-hidden="true"></div>
+      <div class="veil" aria-hidden="true"></div>
+      <div class="city-head">
+        <div>
+          <h3 class="city-name" data-r="name">${c.name}</h3>
+          <div class="city-place" data-r="place"></div>
+          <div class="city-meta"><span class="hit-led" data-r="led" aria-hidden="true"></span><span data-r="meta">–</span></div>
+        </div>
+        <div class="temp" data-r="temp">–</div>
+      </div>
+      <div class="viz">
+        <canvas class="ring" data-r="ring" width="520" height="520" aria-label="${c.name} rhythm ring"></canvas>
+        <div class="sunbox"><canvas class="sun" data-r="sun" width="192" height="120" aria-hidden="true"></canvas><span data-r="sunlabel">–</span></div>
+      </div>
+      <div class="glance" data-r="glance"></div>
+      <div class="quick">
+        <select id="${id}-sound" aria-label="${c.name} sound">${SOUND_GROUPS.map(([g, vs]) => `<optgroup label="${g}">${vs.map(v => `<option value="${v}"${v === c.voice ? " selected" : ""}>${SOUND_NAME[v]}</option>`).join("")}</optgroup>`).join("")}</select>
+        <span class="vol-wrap"><input id="${id}-vol" type="range" min="0" max="100" value="${c.volume}" aria-label="${c.name} volume"><i class="vol-swell" data-r="volSwell" aria-hidden="true"></i></span>
+        <button class="mute" type="button" aria-pressed="false" data-r="mute" aria-label="Mute ${c.name}" title="Mute ${c.name}">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9h4l5-4v14l-5-4H4z" fill="currentColor"/><path class="on" d="M16 9.5a4 4 0 0 1 0 5M18.5 7a7.5 7.5 0 0 1 0 10" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/><path class="off" d="M16.5 9.5l5 5m0-5l-5 5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+        </button>
+        <button class="more-btn" type="button" data-r="moreBtn" aria-expanded="false" aria-label="More controls" title="More controls">
+          <svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round">
+            <path d="M4 7h9M17 7h3M4 17h3M11 17h9"/><circle cx="15" cy="7" r="2"/><circle cx="9" cy="17" r="2"/>
+          </svg><span class="more-word">More</span>
+        </button>
+      </div>
+      <div class="more">
+      <div class="bars">
+        ${[["temp", "temp"], ["hum", "humidity"], ["wind", "wind"], ["cloud", "cloud"], ["rain", "rain"]].map(([k, label]) => `<div class="bar"><span>${label}</span><div class="track"><div class="fill" data-r="b-${k}"></div></div><span class="val" data-r="v-${k}">–</span></div>`).join("")}
+      </div>
+      <div class="pattern" data-r="pattern">–</div>
+      <div class="controls">
+        <label for="${id}-src">Hits from
+          <select id="${id}-src" data-r="srcSel">${SOURCES.map(s => `<option value="${s}"${s === c.source ? " selected" : ""}>${s}</option>`).join("")}</select>
+        </label>
+        <label for="${id}-rate">Rate
+          <select id="${id}-rate">${RATES.map(([n, v]) => `<option value="${v}"${v === c.rate ? " selected" : ""}>${n}</option>`).join("")}</select>
+        </label>
+        <label for="${id}-dens"><span class="row">Density <output data-r="o-dens">${c.density}%</output></span>
+          <input id="${id}-dens" type="range" min="0" max="100" value="${c.density}">
+        </label>
+        <label for="${id}-chance"><span class="row">Chance <output data-r="o-chance">${c.chance}%</output></span>
+          <input id="${id}-chance" type="range" min="0" max="100" value="${c.chance}">
+        </label>
+          <label for="${id}-pan"><span class="row">Pan <button type="button" class="panauto" id="${id}-panauto" data-r="panAuto" aria-pressed="true" title="Auto lets the city drift around the stereo field by itself. Move the slider to place it yourself.">Auto</button></span><input id="${id}-pan" data-r="pan" type="range" min="-100" max="100" value="0" aria-label="${c.name} pan"></label>
+          <label for="${id}-len"><span class="row">Length <output data-r="o-len">100%</output></span><input id="${id}-len" type="range" min="25" max="250" value="100" title="How long each note rings. Short is plucky, long is washy."></label>
+        <div class="octave" role="group" aria-label="${c.name} octave" data-r="oct">
+          <span class="octave-label">Octave</span>
+          ${[-2, -1, 0, 1, 2].map(o => `<button type="button" data-oct="${o}" aria-pressed="${o === c.octave}">${o > 0 ? "+" + o : o < 0 ? "\u2212" + -o : "0"}</button>`).join("")}
+        </div>
+        <div class="samp" data-r="samp" ${c.voice === "sample" ? "" : "hidden"} style="grid-column: 1 / -1">
+          <div class="samp-head"><span class="samp-name" data-r="sampName">No sample yet</span><button type="button" class="samp-load" data-r="sampLoad">Load a sound</button><input type="file" ${SAMP_ACCEPT} data-r="sampFile" hidden></div>
+          <div class="samp-shape" role="group" aria-label="What the steps change">
+            <span class="samp-label">Steps shape</span>
+            <button type="button" data-shape="vel" aria-pressed="true" title="Loud at the top of the loop, softer towards the middle">Velocity</button>
+            <button type="button" data-shape="filter" aria-pressed="true" title="The filter opens step by step across the loop">Filter</button>
+            <button type="button" data-shape="start" aria-pressed="true" title="Each step plays from further into your sound, and the whole pattern drifts on with the wind every lap">Start</button>
+            <button type="button" data-shape="pitch" aria-pressed="true" title="Tuned to the melody, with your sound's own pitch as middle C. Off plays it as recorded">Pitch</button>
+          </div>
+          <div class="samp-key" data-r="sampKey" hidden></div>
+          <div class="samp-hint">${SAMP_COARSE ? "Tap Load a sound to pick one from your files. iCloud, Dropbox and Google Drive show up there too. MP3, WAV, M4A and most others." : "Drop a sound anywhere on this card, or load one."} It stays on your device.</div>
+        </div>
+        <div class="fxsends">
+          <button type="button" class="fxsend" aria-pressed="true" data-r="sendRev">Reverb</button>
+          <button type="button" class="fxsend" aria-pressed="true" data-r="sendDel">Delay</button>
+        </div>
+        <form class="swap" data-r="swap" style="grid-column: 1 / -1">
+          <label for="${id}-swap" style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)">Swap city</label>
+          <div class="ta"><input id="${id}-swap" type="text" placeholder="Swap city" autocomplete="off"><button class="dice dice-swap" type="button" aria-label="Random city" title="Random city"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="4" width="16" height="16" rx="3.5" fill="none" stroke="currentColor" stroke-width="1.5"/><circle cx="8.6" cy="8.6" r="1.5" fill="currentColor"/><circle cx="12" cy="12" r="1.5" fill="currentColor"/><circle cx="15.4" cy="15.4" r="1.5" fill="currentColor"/></svg></button></div>
+          <button type="submit">Swap</button>
+        </form>
+        <div class="swap-note" data-r="swapnote" style="grid-column: 1 / -1"></div>
+      </div>
       </div>`;
     wrap.appendChild(el);
     c.el = el;
