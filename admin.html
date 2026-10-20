@@ -273,6 +273,7 @@ function drawVisits() {
   card("How long the music plays", "Share of visits that heard this much", ladder("heard", [["30s", "30 seconds"], ["1m", "1 minute"], ["3m", "3 minutes"], ["10m", "10 minutes"], ["30m", "30 minutes"]]), x => x, visits);
   card("Where they come from", "A site that sent them, a ?ref= tag you added, or direct", tally(inRange, "src"), k => k === "direct" ? "Direct or unknown" : k.startsWith("ref:") ? "Link tagged " + k.slice(4) : k, visits);
   card("Countries", "From Cloudflare. No address is kept", tally(inRange, "country"), countryName, visits);
+  card("Cities they visit from", "A guess from the network, so it can be the nearest big town. Daily totals only, no address is kept", tally(inRange, "vcity"), k => { const i = k.lastIndexOf(", "); return i < 0 ? cap(k) : cap(k.slice(0, i)) + ", " + countryName(k.slice(i + 2)); }, visits);
   card("Devices", "Phone, tablet or computer", tally(inRange, "device"), cap, visits);
   card("What they do", "Share of visits that did this", Object.keys(ACTNAME).map(k => [k, sumBy(inRange, "act", k)]).filter(x => x[1]).sort((a, b) => b[1] - a[1]), k => ACTNAME[k] || k, visits);
   card("Links they click", "Where people go from the app", tally(inRange, "link"), k => k === "manual" ? "The manual" : k === "email" ? "Email" : k, visits);

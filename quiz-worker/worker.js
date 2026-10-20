@@ -69,6 +69,9 @@ async function collect(req, env) {
       bump("visit", "all"); bump("src", key || "direct");
       const c = (req.cf && req.cf.country) || "unknown"; bump("country", c === "XX" ? "unknown" : c);
       bump("device", deviceOf(req.headers.get("User-Agent") || ""));
+      // the visitor's own city, as Cloudflare guesses it from the network. Only the daily total is kept, never the address.
+      const vc = clean2(req.cf && req.cf.city), cc = clean2(c === "XX" ? "" : c);
+      if (vc) { bump("vcity", vc + (cc ? ", " + cc : "")); free.set("vcity", true); }
       continue;
     }
     const allowed = KINDS[kind];

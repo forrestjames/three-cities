@@ -2,7 +2,7 @@
 
 A tiny Cloudflare Worker with a D1 database. It keeps two kinds of anonymous counts:
 - The quiz: two counts per question and city (how often the city was offered, how often it was picked).
-- Visits: one counter per day, kind and value (visits, country, source, device, how long visits last, cities, sounds, kits, shares and so on), shown on /admin under Visitors.
+- Visits: one counter per day, kind and value (visits, country, visitor city, source, device, how long visits last, cities, sounds, kits, shares and so on), shown on /admin under Visitors.
 
 Nothing else: no IPs, no ids, no cookies, no times per event.
 
