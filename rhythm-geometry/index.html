@@ -1115,12 +1115,14 @@ function laneBus(v) {
   return laneOut[v];
 }
 // The shaker plays the genre's shaker if it has one, otherwise a hat or ride from the kit
-const SHAKER_FALLBACK = ['closed_hat', 'ride', 'open_hat', 'hat_roll', 'hi_hat_pedal'];
+const SHAKER_FALLBACK = ['closed_hat', 'hi_hat_pedal', 'hat_roll', 'open_hat', 'ride', 'tambourine', 'crash', 'guacharaca', 'alegre', 'tamborim', 'snare_brush', 'perc_high'];
 function shakerSrc(k) {
-  if (!k) return null;
+  if (!k || !k.steps) return null;
   if (k.sh && k.sh.some(Boolean)) return { bits: k.sh, src: null };
   const v = SHAKER_FALLBACK.find(x => k.voices && k.voices[x] && k.voices[x].some(Boolean));
-  return v ? { bits: k.voices[v], src: v } : null;
+  if (v) return { bits: k.voices[v], src: v };
+  // nothing shaker-like in this genre: keep time on every second step
+  return { bits: Array.from({ length: k.steps }, (_, i) => (i % 2 === 0 ? 1 : 0)), src: null, steady: true };
 }
 function extrasOf(k) {
   if (!k || !k.voices) return [];
@@ -1145,7 +1147,8 @@ function renderLanes() {
   const has = !!shakerSrc(state.kick);
   $('shakerCard').classList.toggle('off', !has);
   $('shakerCard').querySelectorAll('input, select, button').forEach(el => { el.disabled = !has; });
-  $('shakerCard').querySelector('h2 small').textContent = has ? 'from the genre' : 'none in this genre';
+  const sh = shakerSrc(state.kick);
+  $('shakerCard').querySelector('h2 small').textContent = sh && sh.steady ? 'keeps time: none in this genre' : sh && sh.src ? `from the ${sh.src.replace(/_/g, ' ')}` : 'from the genre';
   const box = $('kit');
   box.innerHTML = '';
   kitCells = {};
@@ -1527,6 +1530,13 @@ const DRUM = {
   conga_low:   (o, t, v) => INSTR.conga(o, t, mtof(50), v),
   conga_high:  (o, t, v) => INSTR.conga(o, t, mtof(64), v),
   conga:       (o, t, v) => INSTR.conga(o, t, mtof(57), v),
+  tambourine:  (o, t, v) => noiseBurst(o, t, 'highpass', 7000, 0.6, 0.12, 0.3 * v),
+  crash:       (o, t, v) => noiseBurst(o, t, 'highpass', 4500, 0.5, 0.6, 0.25 * v),
+  guacharaca:  (o, t, v) => noiseBurst(o, t, 'bandpass', 5500, 1.2, 0.08, 0.3 * v),
+  alegre:      (o, t, v) => noiseBurst(o, t, 'highpass', 6000, 0.8, 0.06, 0.25 * v),
+  tamborim:    (o, t, v) => { pitchedHit(o, t, 900, 700, 0.2 * v, 0.05); noiseBurst(o, t, 'highpass', 5000, 0.7, 0.05, 0.2 * v); },
+  snare_brush: (o, t, v) => noiseBurst(o, t, 'bandpass', 4000, 0.9, 0.1, 0.2 * v),
+  perc_high:   (o, t, v) => pitchedHit(o, t, 700, 500, 0.3 * v, 0.08),
   default:     (o, t, v) => pitchedHit(o, t, 220, 180, 0.4 * v, 0.12),
 };
 function drumHit(v, t, out) {
