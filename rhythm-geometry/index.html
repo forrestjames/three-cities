@@ -560,6 +560,10 @@
         <div class="knob-cell"><div class="head"><span class="label">Filter</span><output id="congaCutOut">open</output></div><input id="congaCut" type="range" min="0" max="100" value="100" aria-label="conga filter cutoff"></div>
         <div class="knob-cell"><div class="head"><span class="label">Res</span><output id="congaResOut">0</output></div><input id="congaRes" type="range" min="0" max="100" value="0" aria-label="conga filter resonance"></div>
       </div>
+      <div class="knobs" style="--n:2" aria-label="Conga reverb">
+        <div class="knob-cell"><div class="head"><span class="label">Rev level</span><output id="congaRevOut">0%</output></div><input id="congaRev" type="range" min="0" max="100" value="0" aria-label="Conga reverb level"></div>
+        <div class="knob-cell"><div class="head"><span class="label">Rev decay</span><output id="congaRevDecOut">2.0 s</output></div><input id="congaRevDec" type="range" min="0" max="100" value="40" aria-label="Conga reverb decay"></div>
+      </div>
       <div class="auto-row" aria-label="Conga auto filter">
         <button id="congaAuto" class="btn small" type="button" aria-pressed="false" title="Auto filter: the filter sweeps in time with the beat">Auto</button>
         <select id="congaAutoRate" class="auto-sel" aria-label="Conga auto filter rate" title="How often the filter sweeps"><option value="4">1/16</option><option value="2">1/8</option><option value="1" selected>1/4</option><option value="0.5">1/2</option><option value="0.25">1 bar</option><option value="0.125">2 bars</option></select>
@@ -610,6 +614,10 @@
         <div class="knob-cell"><div class="head"><span class="label">Tune</span><output id="shakerTuneOut">0</output></div><input id="shakerTune" type="range" min="-12" max="12" value="0" aria-label="shaker tune in semitones"></div>
         <div class="knob-cell"><div class="head"><span class="label">Filter</span><output id="shakerCutOut">open</output></div><input id="shakerCut" type="range" min="0" max="100" value="100" aria-label="shaker filter cutoff"></div>
         <div class="knob-cell"><div class="head"><span class="label">Res</span><output id="shakerResOut">0</output></div><input id="shakerRes" type="range" min="0" max="100" value="0" aria-label="shaker filter resonance"></div>
+      </div>
+      <div class="knobs" style="--n:2" aria-label="Shaker reverb">
+        <div class="knob-cell"><div class="head"><span class="label">Rev level</span><output id="shakerRevOut">0%</output></div><input id="shakerRev" type="range" min="0" max="100" value="0" aria-label="Shaker reverb level"></div>
+        <div class="knob-cell"><div class="head"><span class="label">Rev decay</span><output id="shakerRevDecOut">2.0 s</output></div><input id="shakerRevDec" type="range" min="0" max="100" value="40" aria-label="Shaker reverb decay"></div>
       </div>
       <div class="auto-row" aria-label="Shaker auto filter">
         <button id="shakerAuto" class="btn small" type="button" aria-pressed="false" title="Auto filter: the filter sweeps in time with the beat">Auto</button>
@@ -1238,6 +1246,41 @@ for (const name of ['kick', 'conga', 'shaker', 'sample']) {
   flt[name].frequency.value = 12000;
   flt[name].connect(out[name]);
   bus[name] = flt[name];
+}
+
+// Reverb per voice (conga and shaker): a room made from a generated impulse. Level sends the voice in; decay sets the tail.
+const REV = { conga: { level: 0, decay: 2 }, shaker: { level: 0, decay: 2 } };
+const revSend = {}, revConv = {}, revOut = {}, revT = {};
+const revSecs = v => 0.3 * Math.pow(20, v / 100);   // knob 0 to 100 gives 0.3 s to 6 s
+function roomImpulse(seconds) {
+  const len = Math.max(1, Math.round(ctx.sampleRate * seconds)), buf = ctx.createBuffer(2, len, ctx.sampleRate);
+  for (let ch = 0; ch < 2; ch++) {
+    const d = buf.getChannelData(ch);
+    for (let i = 0; i < len; i++) d[i] = (Math.random() * 2 - 1) * Math.exp(-i / ctx.sampleRate * 6.9 / seconds);   // 6.9 = ln 1000, so the tail is 60 dB down at 'seconds'
+  }
+  return buf;
+}
+for (const name of ['conga', 'shaker']) {
+  revSend[name] = ctx.createGain(); revSend[name].gain.value = 0;
+  revConv[name] = ctx.createConvolver(); revConv[name].buffer = roomImpulse(REV[name].decay);
+  revOut[name] = ctx.createGain(); revOut[name].gain.value = 1;
+  flt[name].connect(revSend[name]).connect(revConv[name]).connect(revOut[name]).connect(out[name]);
+}
+function setRevLevel(name, v) {
+  REV[name].level = v;
+  revSend[name].gain.setTargetAtTime(v / 100 * 0.8, ctx.currentTime, 0.02);
+}
+function setRevDecay(name, v) {
+  REV[name].decay = revSecs(v);
+  $(name + 'RevDecOut').textContent = REV[name].decay.toFixed(1) + ' s';
+  clearTimeout(revT[name]);   // rebuild the tail once the knob settles, so dragging does not click
+  revT[name] = setTimeout(() => { revConv[name].buffer = roomImpulse(REV[name].decay); }, 150);
+}
+for (const name of ['conga', 'shaker']) {
+  const lvl = $(name + 'Rev'), dec = $(name + 'RevDec');
+  lvl.addEventListener('input', () => { setRevLevel(name, Number(lvl.value)); $(name + 'RevOut').textContent = lvl.value + '%'; });
+  dec.addEventListener('input', () => setRevDecay(name, Number(dec.value)));
+  setRevDecay(name, Number(dec.value));
 }
 
 // Shaping: decay and tune are read by the voices at each hit; the filter is set live
