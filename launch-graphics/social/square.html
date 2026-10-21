@@ -91,7 +91,7 @@ const cols = (items, y, x0 = 60, total = 960, size = 29) => { const gap = 30, cw
 const line = (txt, y, size = 31, color = 'var(--ink)') => `<div class="t" style="top:${y}px;font-size:${size}px;line-height:1.2;color:${color};padding:0 90px;text-shadow:0 1px 8px rgba(30,14,8,.6)">${txt}</div>`;
 const D = {};
 
-D['01-temperature'] = () => { const f = figS('p-card0-top', 50, 300, 600, [[1, .93, .2], [2, .62, .22], [3, .92, .47]]);
+D['01-temperature'] = () => { const f = figS('p-card0-topfull', 50, 300, 600, [[1, .93, .27], [2, .45, .4], [3, .93, .57]]);
   return sq('warm', head('Temperature<br>sets the loop') + f.html + nt([[1, 'Temperature', '12.7°C rounds to a loop 13 steps long. Colder is shorter.'], [2, 'The ring', 'Each dot is a step. The bright ones play.'], [3, 'The sun', 'Its height opens the filter.']], 695, 310, 340) + footS()); };
 
 D['02-humidity'] = () => { const f = figS('p-card1-chips', 70, 295, 940);

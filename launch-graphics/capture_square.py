@@ -19,7 +19,7 @@ def clipbox(pg, sels):
     return pg.evaluate("""(L)=>{const E=L.map(([s,i])=>document.querySelectorAll(s)[i]); E[0].scrollIntoView({block:'center',inline:'center'}); let x0=1e9,y0=1e9,x1=-1e9,y1=-1e9;for(const e of E){const r=e.getBoundingClientRect();x0=Math.min(x0,r.x);x1=Math.max(x1,r.right);y0=Math.min(y0,r.y);y1=Math.max(y1,r.bottom);}return {x:x0,y:y0,width:x1-x0,height:y1-y0}}""", sels)
 def run(p, prefix, vw, vh, mobile):
     b = p.chromium.launch(); ctx = b.new_context(viewport={'width': vw, 'height': vh}, device_scale_factor=DSF, is_mobile=mobile, has_touch=mobile); ctx.add_init_script(mock)
-    pg = ctx.new_page(); pg.on('pageerror', lambda e: print('ERR', e))
+    pg = ctx.new_page(); pg.clock.install(time='2026-10-21T17:30:00Z'); pg.on('pageerror', lambda e: print('ERR', e))
     pg.route('**/*', lambda r: r.abort() if r.request.url.startswith('http') else r.continue_())
     pg.goto((root / 'index.html').as_uri()); pg.wait_for_timeout(2500)
     pg.add_style_tag(content='*{animation:none!important;transition:none!important}')
@@ -27,6 +27,8 @@ def run(p, prefix, vw, vh, mobile):
     for i in range(3):
         S(f'card{i}', box(pg, '.city', i))
         S(f'card{i}-top', clipbox(pg, [['.city .city-head', i], ['.city .viz', i]]))
+        cb = box(pg, '.city', i); vb = pg.evaluate("(i)=>{const r=document.querySelectorAll('.city .viz')[i].getBoundingClientRect();return r.bottom}", i)
+        S(f'card{i}-topfull', {'x': cb['x'], 'y': cb['y'], 'width': cb['width'], 'height': vb - cb['y'] + 6})
         S(f'card{i}-chips', box(pg, '.city .glance', i), 6)
         S(f'card{i}-lower', clipbox(pg, [['.city .glance', i], ['.city .quick', i]]), 6)
     S('harm', box(pg, '.mod-harm'))
