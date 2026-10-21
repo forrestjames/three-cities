@@ -172,7 +172,7 @@ D['20-hero'] = () => { const f = figS('hero', 60, 335, 960);
   return sq('warm', head('A weather-played<br>instrument') + f.html + line('Three places playing live from their weather.<br>Free, in your browser.', 895, 34) + footS()); };
 
 D['c02-how'] = () => { let art='', txt='';
-  const st=[['Weather',COL.sun,'Live from Boston, Copenhagen and London.'],['Rhythm',COL.ember,'Temperature sets the steps. Humidity sets the hits.'],['Sound',COL.lon,'Each city plays its own voice. You pick the key.']];
+  const st=[['Weather',COL.sun,'Live from any city you pick. I started with three I\'ve lived in.'],['Rhythm',COL.ember,'Temperature sets the steps. Humidity sets the hits.'],['Sound',COL.lon,'Each city plays its own voice. You pick the key.']];
   st.forEach(([h,c,b],i)=>{ const cy=385+i*205; const n=[13,16,9][i], k=[5,7,4][i];
     art += ringSvg(190, cy, 75, n, k, c, {dotR:10});
     txt += `<div class="a mono" style="left:340px;top:${cy-62}px;font-size:25px;letter-spacing:.16em;text-transform:uppercase;color:#ffb08a">${i+1} · ${h}</div><div class="a" style="left:340px;top:${cy-20}px;width:680px;font-size:37px;line-height:1.15;color:var(--ink);text-shadow:0 1px 8px rgba(30,14,8,.6)">${b}</div>`; });
