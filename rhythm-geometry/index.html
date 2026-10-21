@@ -1164,11 +1164,14 @@ function renderLanes() {
     name.addEventListener('click', lane.toggle);
     const cells = document.createElement('div');
     cells.className = 'cells';
-    cells.style.gridTemplateColumns = `repeat(${Math.max(1, lane.n)}, minmax(0, 1fr))`;
+    // the grid is 16 wide when the pattern divides into 16 (8 or 4 steps repeat); other lengths keep their own grid
+    const L = Math.max(1, lane.n), D = lane.idx === 'k' && L < 16 && 16 % L === 0 ? 16 : L;
+    lane.len = L;
+    cells.style.gridTemplateColumns = `repeat(${D}, minmax(0, 1fr))`;
     kitCells[lane.id] = [];
-    for (let i = 0; i < lane.n; i++) {
+    for (let i = 0; i < D; i++) {
       const c = document.createElement('i');
-      c.className = lane.bits[i] ? 'on' : '';
+      c.className = lane.bits[i % L] ? 'on' : '';
       cells.appendChild(c);
       kitCells[lane.id].push(c);
     }
@@ -1207,9 +1210,12 @@ function markNow(k, r) {
   for (const el of nowEls) el.classList.remove('now');
   nowEls = [];
   for (const lane of kitList) {
-    const i = lane.idx === 'r' ? r : k;
-    const el = i >= 0 && kitCells[lane.id] && kitCells[lane.id][i];
-    if (el) nowEls.push(el);
+    const cells = kitCells[lane.id];
+    if (!cells) continue;
+    if (lane.idx === 'r') { if (r >= 0 && cells[r]) nowEls.push(cells[r]); continue; }
+    if (k < 0) continue;
+    const L = lane.len || 1;
+    for (let j = k % L; j < cells.length; j += L) nowEls.push(cells[j]);   // every repeat of this step
   }
   for (const el of nowEls) el.classList.add('now');
 }
