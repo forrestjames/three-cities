@@ -1387,7 +1387,7 @@ body.perform.fit .pl-shape-btn { display: inline-block !important; }
     ["junopad", "Juno pad"], ["junostrings", "Juno strings"], ["junokeys", "Juno keys"],
     ["graincloud", "Grain cloud"], ["grainshimmer", "Grain shimmer"], ["graindust", "Grain dust"],
     ["handdrum", "Hand drum"], ["woodblock", "Woodblock"], ["tongue", "Tongue drum"], ["clave", "Clave"],
-    ["kick", "Kick"], ["snare", "Snare"], ["hat", "Hi-hat"], ["rimshot", "Rimshot"], ["conga", "Conga"], ["cowbell", "Cowbell"],
+    ["kick", "Kick"], ["snare", "Snare"], ["hat", "Hi-hat"], ["rimshot", "Rimshot"], ["conga", "Conga"], ["congahi", "Conga, high"], ["congamid", "Conga, mid"], ["congalo", "Conga, low"], ["cowbell", "Cowbell"],
     ["sample", "Your sample…"]
   ];
   // The menu, sorted into families
@@ -1401,7 +1401,7 @@ body.perform.fit .pl-shape-btn { display: inline-block !important; }
     ["Pads and strings", ["bowed", "pad", "choir", "junopad", "junostrings"]],
     ["Grain textures", ["graincloud", "grainshimmer", "graindust"]],
     ["Bass", ["sub", "acid"]],
-    ["Percussion", ["kick", "snare", "hat", "rimshot", "conga", "cowbell", "handdrum", "woodblock", "tongue", "clave", "drum", "shaker"]]
+    ["Percussion", ["kick", "snare", "hat", "rimshot", "conga", "congahi", "congamid", "congalo", "cowbell", "handdrum", "woodblock", "tongue", "clave", "drum", "shaker"]]
   ].map(([g, vs]) => [g, vs.filter(v => SOUND_NAME[v])]);
   const KEYS = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"];
   const SCALES = [
@@ -1928,7 +1928,7 @@ body.perform.fit .pl-shape-btn { display: inline-block !important; }
   document.getElementById("shuffleSounds").addEventListener("click", () => {
     const any = a => a[Math.floor(Math.random() * a.length)];
     const kit = Math.random() < 0.3;   // now and then, all rhythm: something low, something in the middle, something on top
-    const pick = kit ? [any(["kick", "drum", "handdrum", "conga"]), any(["snare", "rimshot", "woodblock", "clave", "cowbell", "tongue"]), any(["hat", "shaker"])].sort(() => Math.random() - 0.5)
+    const pick = kit ? [any(["kick", "drum", "handdrum", "conga", "congalo", "congamid"]), any(["snare", "rimshot", "woodblock", "clave", "cowbell", "tongue", "congahi"]), any(["hat", "shaker"])].sort(() => Math.random() - 0.5)
       : SOUND_GROUPS.filter(([g, vs]) => g !== "Your own" && vs.length).sort(() => Math.random() - 0.5).slice(0, 3).map(([, vs]) => any(vs)).sort(() => Math.random() - 0.5);
     cities.forEach((c, i) => {
       const sel = document.getElementById(c.key.toLowerCase() + "-sound") || (c.el && c.el.querySelector('select[id$="-sound"]'));
@@ -3567,7 +3567,7 @@ body.perform.fit .pl-shape-btn { display: inline-block !important; }
     } catch (err) { c.ref.sampName.textContent = "Couldn't read that file. Try a WAV, MP3 or M4A."; c.ref.sampLoad.classList.add("nudge"); }
   }
   const SAMPLE_USER_G = 0.32;
-  const PERC_G = { handdrum: 0.36, woodblock: 0.3, tongue: 0.2, clave: 0.6, kick: 0.6, snare: 0.34, hat: 0.5, rimshot: 0.34, conga: 0.34, cowbell: 0.13 };
+  const PERC_G = { handdrum: 0.36, woodblock: 0.3, tongue: 0.2, clave: 0.6, kick: 0.6, snare: 0.34, hat: 0.5, rimshot: 0.34, conga: 0.34, congahi: 0.32, congamid: 0.34, congalo: 0.4, cowbell: 0.13 };
   // Perform mode can soften every note's attack and stretch or clip its length, per city. Untouched (the default), this is a straight pass-through.
   let voiceShaping = false;
   function voice(c, midi, vel, t, L = 1) {
@@ -3925,6 +3925,12 @@ body.perform.fit .pl-shape-btn { display: inline-block !important; }
         const fr = fold(f, 380, 800); tone("triangle", fr, 1, 0.05, 0.001); tone("sine", fr * 2.3, 0.3, 0.03, 0.001); click(3200, 2, 0.7, 0.02);
       } else if (c.voice === "conga") {        // a higher skin than the hand drum, with a bright slap
         const fr = fold(f, 180, 420); tone("sine", fr, 1, 0.22 * Math.max(0.6, L), 0.002, fr * 1.3); tone("sine", fr * 1.5, 0.2, 0.06); click(2400, 1.2, 0.45, 0.02);
+      } else if (c.voice === "congahi") {      // the small drum: tight, high and bright, with a crisp slap
+        const fr = fold(f, 330, 680); tone("sine", fr, 1, 0.16 * Math.max(0.6, L), 0.002, fr * 1.25); tone("sine", fr * 1.6, 0.18, 0.045); click(3400, 1.4, 0.5, 0.016);
+      } else if (c.voice === "congamid") {     // the middle drum: a rounder skin between the two
+        const fr = fold(f, 210, 460); tone("sine", fr, 1, 0.26 * Math.max(0.6, L), 0.002, fr * 1.28); tone("sine", fr * 1.5, 0.2, 0.06); click(2200, 1.1, 0.4, 0.02);
+      } else if (c.voice === "congalo") {      // the big drum: a deep, round tone that rings longer, with a soft slap
+        const fr = fold(f, 110, 250); tone("sine", fr, 1, 0.42 * Math.max(0.6, L), 0.003, fr * 1.4); tone("sine", fr * 1.5, 0.16, 0.1); click(1500, 0.9, 0.32, 0.026);
       } else if (c.voice === "cowbell") {      // two clangy squares a fifth-ish apart
         const fr = fold(f, 520, 900); tone("square", fr, 0.5, 0.28, 0.001); tone("square", fr * 1.48, 0.35, 0.22, 0.001);
       } else {                                 // clave: two hardwood sticks, very short and bright
