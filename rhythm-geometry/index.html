@@ -1115,7 +1115,7 @@ function laneBus(v) {
   return laneOut[v];
 }
 // The shaker plays the genre's shaker if it has one, otherwise a hat or ride from the kit
-const SHAKER_FALLBACK = ['closed_hat', 'hi_hat_pedal', 'hat_roll', 'open_hat', 'ride', 'tambourine', 'crash', 'guacharaca', 'alegre', 'tamborim', 'snare_brush', 'perc_high'];
+const SHAKER_FALLBACK = [];   // off: a hat is not a shaker, so genres without one keep the steady shaker
 function shakerSrc(k) {
   if (!k || !k.steps) return null;
   if (k.sh && k.sh.some(Boolean)) return { bits: k.sh, src: null };
