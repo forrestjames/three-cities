@@ -171,6 +171,19 @@ D['19-record-share'] = () => { const f = figS('phone-hero', 70, 290, 330, [[1, .
 D['20-hero'] = () => { const f = figS('hero', 60, 335, 960);
   return sq('warm', head('A weather-played<br>instrument') + f.html + line('Three places playing live from their weather.<br>Free, in your browser.', 895, 34) + footS()); };
 
+D['c02-how'] = () => { let art='', txt='';
+  const st=[['Weather',COL.sun,'Live from Boston, Copenhagen and London.'],['Rhythm',COL.ember,'Temperature sets the steps. Humidity sets the hits.'],['Sound',COL.lon,'Each city plays its own voice. You pick the key.']];
+  st.forEach(([h,c,b],i)=>{ const cy=385+i*205; const n=[13,16,9][i], k=[5,7,4][i];
+    art += ringSvg(190, cy, 75, n, k, c, {dotR:10});
+    txt += `<div class="a mono" style="left:340px;top:${cy-62}px;font-size:25px;letter-spacing:.16em;text-transform:uppercase;color:#ffb08a">${i+1} · ${h}</div><div class="a" style="left:340px;top:${cy-20}px;width:680px;font-size:37px;line-height:1.15;color:var(--ink);text-shadow:0 1px 8px rgba(30,14,8,.6)">${b}</div>`; });
+  return sq('warm', head('Weather in.<br>Music out.') + svgBox(W,H,art) + txt + footS()); };
+
+D['c11-sounds'] = () => { const g=[['Percussion','Kicks, snares, hats, congas'],['Tones','Notes for the melody and chords'],['Your own','Drop in any audio file']];
+  return sq('plum', head('Forty sounds.<br>And yours.') + `<div class="a" style="left:60px;top:330px;width:960px;display:flex;flex-direction:column;gap:34px">` + g.map(([h,b],i)=>`<div class="note" style="align-items:center"><div class="n">${i+1}</div><div><div class="h" style="font-size:25px">${h}</div><div class="b" style="font-size:40px;margin-top:6px">${b}</div></div></div>`).join('') + `</div>` + line('Mix them across the three cities.', 800, 36) + footS()); };
+
+D['c12-cta'] = () => { const f = figS('hero', 60, 330, 960);
+  return sq('gold', head('Play it now') + f.html + line('Free. In your browser. Live weather.', 880, 36) + `<div class="t mono" style="top:950px;font-size:30px;letter-spacing:.08em;color:var(--emberL)">${URL_TXT}</div>`); };
+
 window.NAMES = Object.keys(D);
 function build(name) { const f = D[name](); const st = document.getElementById('stage'); st.style.width = f.W + 'px'; st.style.height = f.H + 'px'; st.innerHTML = f.html + '<div class="grain"></div>'; return f; }
 const q = new URLSearchParams(location.search).get('d'); if (q) build(q);
