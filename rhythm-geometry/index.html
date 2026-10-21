@@ -668,6 +668,38 @@
         <div class="knob-cell"><div class="head"><span class="label">Filter</span><output id="sampleCutOut">open</output></div><input id="sampleCut" type="range" min="0" max="100" value="100" aria-label="Your sound filter cutoff"></div>
         <div class="knob-cell"><div class="head"><span class="label">Res</span><output id="sampleResOut">0</output></div><input id="sampleRes" type="range" min="0" max="100" value="0" aria-label="Your sound filter resonance"></div>
       </div>
+      <div class="row2">
+        <div class="field grow">
+          <label class="label" for="sampleDelay">Delay</label>
+          <select id="sampleDelay">
+            <option value="off" selected>Off</option>
+            <option value="32">1/32</option>
+            <option value="16">1/16</option>
+            <option value="16t">1/16 triplet</option>
+            <option value="8t">1/8 triplet</option>
+            <option value="8">1/8</option>
+            <option value="d8">Dotted 1/8</option>
+            <option value="4t">1/4 triplet</option>
+            <option value="4">1/4</option>
+            <option value="d4">Dotted 1/4</option>
+          </select>
+        </div>
+        <div class="field grow">
+          <label class="label" for="sampleStyle">Style</label>
+          <select id="sampleStyle">
+            <option value="mono" selected>Mono</option>
+            <option value="ping-pong">Ping-pong</option>
+            <option value="tape">Tape (darkens)</option>
+            <option value="slapback">Slapback</option>
+            <option value="dub">Dub (dark, long)</option>
+          </select>
+        </div>
+      </div>
+      <div class="knobs" style="--n:3">
+        <div class="knob-cell"><div class="head"><span class="label">Echo</span><output id="sampleFbOut">35%</output></div><input id="sampleFb" type="range" min="0" max="100" value="35" aria-label="Your sound delay feedback"></div>
+        <div class="knob-cell"><div class="head"><span class="label">Rev level</span><output id="sampleRevOut">0%</output></div><input id="sampleRev" type="range" min="0" max="100" value="0" aria-label="Your sound reverb level"></div>
+        <div class="knob-cell"><div class="head"><span class="label">Rev decay</span><output id="sampleRevDecOut">1.0 s</output></div><input id="sampleRevDec" type="range" min="0" max="100" value="40" aria-label="Your sound reverb decay"></div>
+      </div>
       <p class="samp-hint">Drop a sound on this card, or load one. It stays on your device.</p>
     </div>
 
@@ -1250,7 +1282,7 @@ for (const name of ['kick', 'conga', 'shaker', 'sample']) {
 }
 
 // Reverb per voice (conga and shaker): a room made from a generated impulse. Level sends the voice in; decay sets the tail.
-const REV = { conga: { level: 0, decay: 2 }, shaker: { level: 0, decay: 2 } };
+const REV = { conga: { level: 0, decay: 2 }, shaker: { level: 0, decay: 2 }, sample: { level: 0, decay: 2 } };
 const revSend = {}, revConv = {}, revOut = {}, revT = {};
 const revSecs = v => 0.3 * Math.pow(20, v / 100);   // knob 0 to 100 gives 0.3 s to 6 s
 function roomImpulse(seconds) {
@@ -1261,7 +1293,7 @@ function roomImpulse(seconds) {
   }
   return buf;
 }
-for (const name of ['conga', 'shaker']) {
+for (const name of ['conga', 'shaker', 'sample']) {
   revSend[name] = ctx.createGain(); revSend[name].gain.value = 0;
   revConv[name] = ctx.createConvolver(); revConv[name].buffer = roomImpulse(REV[name].decay);
   revOut[name] = ctx.createGain(); revOut[name].gain.value = 1;
@@ -1277,7 +1309,7 @@ function setRevDecay(name, v) {
   clearTimeout(revT[name]);   // rebuild the tail once the knob settles, so dragging does not click
   revT[name] = setTimeout(() => { revConv[name].buffer = roomImpulse(REV[name].decay); }, 150);
 }
-for (const name of ['conga', 'shaker']) {
+for (const name of ['conga', 'shaker', 'sample']) {
   const lvl = $(name + 'Rev'), dec = $(name + 'RevDec');
   lvl.addEventListener('input', () => { setRevLevel(name, Number(lvl.value)); $(name + 'RevOut').textContent = lvl.value + '%'; });
   dec.addEventListener('input', () => setRevDecay(name, Number(dec.value)));
@@ -1370,6 +1402,7 @@ function makeFx(name) {
 }
 makeFx('conga');
 makeFx('shaker');
+makeFx('sample');
 // Length of a delay in seconds, timed to the tempo
 function delaySeconds(f, bpm) {
   if (f.mode && DELAY_MODES[f.mode].slap) return 0.09;
@@ -1876,7 +1909,6 @@ for (const name of ['conga', 'shaker', 'sample']) {
     applyBus(name);
     syncKit();
   });
-  if (name === 'sample') continue;   // Your sound has no delay of its own
   $(name + 'Delay').addEventListener('change', () => setDelay(name));
   $(name + 'Style').addEventListener('change', () => setDelay(name));
   $(name + 'Fb').addEventListener('input', () => { $(name + 'FbOut').textContent = $(name + 'Fb').value + '%'; setDelay(name); });
