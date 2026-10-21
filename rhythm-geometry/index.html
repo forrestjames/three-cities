@@ -1344,7 +1344,8 @@ function setShape(name) {
   const cv = Number($(name + 'Cut').value), rv = Number($(name + 'Res').value);
   DECAY.set(bus[name], Math.pow(2, (dv - 50) / 25));       // 0.25x at the left, 4x at the right
   TUNE.set(bus[name], Math.pow(2, tv / 12));
-  const hz = 200 * Math.pow(60, cv / 100);                 // 200 Hz to 12 kHz
+  const lo = (name === 'kick' || name === 'conga') ? 30 : 200;   // the kick and conga live low, so their filter reaches down to 30 Hz
+  const hz = lo * Math.pow(12000 / lo, cv / 100);          // lo to 12 kHz
   cutBase[name] = hz;
   if (!(AUTO[name] && AUTO[name].on)) flt[name].frequency.value = hz;   // the auto filter moves it while it's on
   flt[name].Q.value = 0.5 + (rv / 100) * 9.5;
