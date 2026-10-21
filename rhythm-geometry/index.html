@@ -221,6 +221,7 @@
   .transport .bpm { display: flex; flex-direction: row; align-items: center; gap: 8px; }
   .transport .bpm input[type=number] { width: 70px; padding: 7px 8px; }
   .brand { min-width: 0; }
+  @media (max-width: 1000px) { .transport { flex-wrap: wrap; } }
   .search-row { position: relative; }
   .search-row input { flex: 1 1 260px; }
   #results { position: absolute; top: 100%; left: 0; right: 0; z-index: 5; background: var(--panel); border: 1px solid var(--line); padding: 8px; margin-top: 4px; }
@@ -367,6 +368,7 @@
     .midcol > section:first-child .knobs { gap: 0; }
     .kitcard { display: flex; flex-direction: column; }
     .kitcard h2 { margin-bottom: 0; }
+  }
   .rec-wrap { position: relative; display: inline-flex; }
   .rec-split { display: inline-flex; align-items: stretch; min-height: 34px; border: 1px solid rgba(243,236,230,0.4); border-radius: 3px; background: rgba(243,236,230,0.04); overflow: hidden; }
   .rec-split button { background: none; border: 0; color: var(--ink); font: 11px "Source Code Pro", ui-monospace, monospace; letter-spacing: .08em; cursor: pointer; }
@@ -391,6 +393,7 @@
   .auto-sel { font: inherit; font-size: 10.5px; color: var(--ink-dim); background: rgba(243,236,230,0.06); border: 1px solid rgba(243,236,230,0.2); border-radius: 3px; padding: 2px 3px; }
   .kithead { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; }
   .kitsel { font: inherit; font-size: 11px; letter-spacing: .04em; color: var(--ink); background: rgba(243,236,230,0.06); border: 1px solid rgba(243,236,230,0.22); border-radius: 3px; padding: 4px 6px; max-width: 160px; flex: 0 0 auto; cursor: pointer; }
+  @media (min-width: 1001px) and (min-height: 600px) {
     .kit { flex: 1 1 0; }
     .kit .lane { grid-template-columns: 84px minmax(0, 1fr); }
     .kit .lane .cells i { height: 10px; }
@@ -1347,7 +1350,24 @@ function renderLanes() {
       cells.appendChild(c);
       kitCells[lane.id].push(c);
     }
-    row.append(dot, name, cells);
+    // every ring has a volume slider next to its name; the three voices share theirs with the sound panel
+    const VOLKEY = { kick: 'kick', shaker: 'shaker', ring: 'conga' }[lane.id];
+    const vs = document.createElement('input');
+    vs.type = 'range'; vs.min = '0'; vs.max = '100'; vs.step = '1';
+    vs.className = 'lane-vol';
+    vs.title = vs.ariaLabel = `${lane.label} volume`;
+    if (VOLKEY) {
+      vs.dataset.vol = VOLKEY;
+      vs.value = String(vol[VOLKEY]);
+      vs.addEventListener('input', () => setVol(VOLKEY, Number(vs.value)));
+    } else {
+      vs.value = String(laneVol[lane.id] ?? 80);
+      vs.addEventListener('input', () => {
+        laneVol[lane.id] = Number(vs.value);
+        laneBus(lane.id).gain.value = laneVol[lane.id] / 100;
+      });
+    }
+    row.append(dot, name, cells, vs);
     if (LANE_VOICE[lane.id]) {
       const edit = document.createElement('button');
       edit.type = 'button';
@@ -1356,18 +1376,10 @@ function renderLanes() {
       edit.title = edit.ariaLabel = `Edit the ${lane.label} sound`;
       edit.addEventListener('click', () => openVoice(LANE_VOICE[lane.id]));
       row.appendChild(edit);
-    }
-    if (lane.extra) {
-      const vol = document.createElement('input');
-      vol.type = 'range'; vol.min = '0'; vol.max = '100'; vol.step = '1';
-      vol.className = 'lane-vol';
-      vol.value = String(laneVol[lane.id] ?? 80);
-      vol.title = vol.ariaLabel = `${lane.label} volume`;
-      vol.addEventListener('input', () => {
-        laneVol[lane.id] = Number(vol.value);
-        laneBus(lane.id).gain.value = laneVol[lane.id] / 100;
-      });
-      row.appendChild(vol);
+    } else {
+      const gap = document.createElement('span');   // keeps the sliders in one column
+      gap.className = 'lane-edit'; gap.textContent = 'Edit'; gap.setAttribute('aria-hidden', 'true'); gap.style.visibility = 'hidden';
+      row.appendChild(gap);
     }
     box.appendChild(row);
   }
@@ -1595,6 +1607,8 @@ function applyBus(name) {
 function setVol(name, v) {
   vol[name] = v;
   $(name + 'VolOut').textContent = String(v);
+  $(name + 'Vol').value = String(v);
+  document.querySelectorAll(`.lane-vol[data-vol="${name}"]`).forEach(el => { el.value = String(v); });   // the Rings list slider
   applyBus(name);
 }
 setVol('kick', Number($('kickVol').value));
@@ -1626,8 +1640,8 @@ function makeFx(name) {
   dL.connect(fbSelf); fbSelf.connect(loopLp); loopLp.connect(dL);     // repeat loop on the left
   dL.connect(xA); xA.connect(dR);                                    // ping-pong: left feeds right
   dR.connect(fbX); fbX.connect(dL);                                  // ping-pong: right feeds back to left
-  dL.connect(wL); wL.connect(panL); panL.connect(master);
-  dR.connect(wR); wR.connect(panR); panR.connect(master);
+  dL.connect(wL); wL.connect(panL); panL.connect(out[name]);   // through the volume, so Volume and Mute cover the echoes
+  dR.connect(wR); wR.connect(panR); panR.connect(out[name]);
   fx[name] = { delay: dL, delayR: dR, fbSelf, loopLp, xA, fbX, wL, wR, panL, panR, div: 'off', mode: 'mono' };
 }
 makeFx('conga');
