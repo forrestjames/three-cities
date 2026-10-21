@@ -80,9 +80,11 @@
   .wxbtn span { font-size: 10.5px; letter-spacing: .08em; text-transform: uppercase; color: var(--ink-dim); white-space: nowrap; }
   .wxbtn b { font-family: var(--display); font-weight: 400; font-size: 18px; line-height: 1.1; white-space: nowrap; }
   .wxbtn[aria-expanded="true"] { border-color: var(--accent); background: rgba(208, 138, 106, 0.14); }
-  .modes { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 0; border: 1px solid var(--line); }
-  .modes button { background: transparent; border: 0; padding: 9px 6px; font-size: 12px; letter-spacing: .14em; text-transform: uppercase; color: var(--ink-dim); }
-  .modes button + button { border-left: 1px solid var(--line); }
+  .ringrow { display: flex; gap: 12px; flex: 1 1 0; min-height: 0; }
+  .ringrow .ringbox { flex: 1 1 0; min-width: 0; min-height: 0; }
+  .modes { flex: none; align-self: center; display: flex; flex-direction: column; width: 74px; border: 1px solid var(--line); }
+  .modes button { background: transparent; border: 0; padding: 5px 4px; font-size: 10px; letter-spacing: .1em; text-transform: uppercase; color: var(--ink-dim); }
+  .modes button + button { border-top: 1px solid var(--line); }
   .modes button[aria-pressed="true"] { background: var(--accent); color: var(--ground); }
   .wxpanel { position: absolute; top: 60px; right: 22px; z-index: 6; width: min(400px, calc(100% - 44px)); background: var(--panel); border: 1px solid var(--line); padding: 14px; display: flex; flex-direction: column; gap: 10px; box-shadow: 0 16px 40px rgba(0, 0, 0, 0.6); opacity: 0; transform: translateY(-8px) scale(0.97); transform-origin: top right; pointer-events: none; transition: opacity 120ms ease-out, transform 160ms cubic-bezier(0.2, 0.8, 0.2, 1); }
   .wxpanel.open { opacity: 1; transform: none; pointer-events: auto; }
@@ -474,12 +476,14 @@
         </button>
       </div>
       <span id="ringSub" hidden>steps from temperature, hits from the chosen source</span>
-      <div class="modes" role="group" aria-label="How the hits are placed">
-        <button type="button" data-mode="euclid" aria-pressed="true" title="Evenly spaced Euclidean rhythm">Euclid</button>
-        <button type="button" data-mode="drift" aria-pressed="false" title="Each rotation, random hits move one step">Drift</button>
-        <button type="button" data-mode="cluster" aria-pressed="false" title="Hits bunch together in random bursts, new each rotation">Cluster</button>
+      <div class="ringrow">
+        <div class="ringbox"><canvas id="ring" width="520" height="520" aria-label="Euclidean rhythm ring"></canvas></div>
+        <div class="modes" role="group" aria-label="How the hits are placed">
+          <button type="button" data-mode="euclid" aria-pressed="true" title="Evenly spaced Euclidean rhythm">Euclid</button>
+          <button type="button" data-mode="drift" aria-pressed="false" title="Each rotation, random hits move one step">Drift</button>
+          <button type="button" data-mode="cluster" aria-pressed="false" title="Hits bunch together in random bursts, new each rotation">Cluster</button>
+        </div>
       </div>
-      <div class="ringbox"><canvas id="ring" width="520" height="520" aria-label="Euclidean rhythm ring"></canvas></div>
       <p id="readout" class="readout"></p>
       <p id="patternInfo" class="pattern-info"></p>
       <div id="wxPanel" class="wxpanel" aria-hidden="true">
