@@ -65,7 +65,8 @@
   .tiles { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 4px; }
   .tile { background: rgba(243, 236, 230, 0.03); border: 1px solid var(--line); padding: 5px 6px; text-align: left; min-width: 0; }
   .tile b { display: block; font-family: var(--display); font-weight: 400; font-size: 18px; line-height: 1.05; white-space: nowrap; }
-  .tile span { display: block; font-size: 10.5px; letter-spacing: .1em; text-transform: uppercase; color: var(--ink-dim); margin-top: 1px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .tile b small { font-family: var(--mono); font-size: 10px; color: var(--ink-dim); letter-spacing: 0; }
+  .tile span { display: block; font-size: 10.5px; letter-spacing: .06em; text-transform: uppercase; color: var(--ink-dim); margin-top: 1px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .tile[aria-pressed="true"] { border-color: var(--accent); background: rgba(208, 138, 106, 0.14); }
   .tile.static { cursor: default; }
   .tile.static b { color: var(--ink); }
@@ -87,7 +88,8 @@
   .cells i.shk.on { background: var(--sourced); }
   .cells i.now { outline: 2px solid var(--ink); outline-offset: 1px; }
   .pattern-info { font-size: 12.5px; color: var(--ink-dim); margin: 0; }
-  #status { display: none; }   /* the weather line is hidden to give the drum kit its height */
+  #status { font-size: 11px; color: var(--approx); margin: 0; }
+  #status[hidden] { display: none; }
 
   /* mixer */
   .mixer { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 24px; align-items: center; }
@@ -104,7 +106,7 @@
   .voices { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 20px; margin-top: 20px; }
   .voice { gap: 14px; }
   .samp-head { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
-  .samp-name { flex: 1; min-width: 0; font-size: 12px; color: var(--ink); overflow-wrap: anywhere; }
+  .samp-name { flex: 1; min-width: 0; font-size: 12px; color: var(--ink-dim); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .sb-overlay { position: fixed; inset: 0; z-index: 60; background: rgba(8, 4, 3, 0.72); display: flex; align-items: center; justify-content: center; padding: 28px; }
   .sb-overlay[hidden] { display: none; }
   .sb-dialog { width: min(1100px, 100%); height: min(820px, 100%); background: var(--panel); border: 1px solid var(--line); box-shadow: 0 24px 70px rgba(0, 0, 0, 0.7); display: flex; flex-direction: column; gap: 14px; padding: 18px 22px; }
@@ -171,6 +173,18 @@
 
   /* one-screen layout for laptops: everything fits the window, no scrolling */
   .vhead { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+  .vtabs { display: flex; gap: 16px; border-bottom: 1px solid var(--line); }
+  .vtabs button { background: none; border: 0; border-bottom: 2px solid transparent; margin-bottom: -1px; padding: 2px 0 6px; font: 10.5px var(--mono); letter-spacing: .1em; text-transform: uppercase; color: var(--ink-dim); cursor: pointer; display: inline-flex; align-items: center; gap: 6px; }
+  .vtabs button:hover { color: var(--ink); }
+  .vtabs button[aria-selected="true"] { color: var(--ink); border-bottom-color: var(--accent); }
+  .vtabs button:focus-visible { outline: 1px solid var(--accent); outline-offset: 2px; }
+  .tab-dot { width: 5px; height: 5px; border-radius: 50%; background: var(--accent); display: none; }
+  .vtabs button.live .tab-dot { display: inline-block; }
+  .vpanel { display: flex; flex-direction: column; gap: 10px; min-height: 0; }
+  .vpanel[hidden] { display: none; }
+  .brand-text { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+  .brand-text .place { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .brand-text h1 { margin: 0; line-height: 1.05; }
   .vhead h2 { min-width: 0; }
   .knobs { display: grid; grid-template-columns: repeat(var(--n, 3), minmax(0, 1fr)); align-items: end; gap: 6px; }
   .knobs .knob-cell { min-width: 0; }
@@ -181,8 +195,9 @@
   .knob-cell { flex: 0 0 auto; }
   .knobs .knob-cell { min-width: 64px; }
   .place { font-size: 15px; color: var(--ink); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
-  .transport { display: flex; gap: 10px; align-items: flex-end; }
-  .transport .bpm input[type=number] { width: 76px; padding: 7px 8px; }
+  .transport { display: flex; gap: 10px; align-items: center; flex-wrap: nowrap; }
+  .transport .bpm { display: flex; flex-direction: row; align-items: center; gap: 8px; }
+  .transport .bpm input[type=number] { width: 70px; padding: 7px 8px; }
   .brand { min-width: 0; }
   .search-row { position: relative; }
   .search-row input { flex: 1 1 260px; }
@@ -193,10 +208,11 @@
   @media (min-width: 1001px) and (min-height: 600px) {
     html, body { height: 100%; overflow: hidden; }
     .wrap { height: 100vh; display: grid; grid-template-rows: auto minmax(0, 1fr) auto; gap: 10px; padding: 12px clamp(14px, 2vw, 28px); }
-    .top { display: grid; grid-template-columns: auto minmax(200px, 1fr) minmax(0, 1fr) auto auto; align-items: center; gap: 14px; margin: 0; }
+    .top { display: grid; grid-template-columns: minmax(0, 1fr) minmax(220px, 320px) auto; align-items: center; gap: 20px; margin: 0; }
+    .top .transport { justify-self: end; }
     .top .transport { white-space: nowrap; }
     .top .place { min-width: 0; }
-    .brand { display: flex; align-items: baseline; gap: 12px; }
+    .brand { display: flex; align-items: center; gap: 14px; min-width: 0; }
     .wordmark { font-size: 11px; }
     h1 { font-size: 24px; }
     #clock { white-space: nowrap; }
@@ -204,7 +220,7 @@
     .search-row input { padding: 7px 10px; font-size: 14px; }
     .btn { padding: 7px 12px; }
     .btn.play { min-width: 96px; padding: 9px 14px; font-size: 13px; }
-    .place { font-size: 14px; }
+    .place { font-size: 13.5px; }
     .grid3 { margin: 0; min-height: 0; grid-template-columns: minmax(0, 0.9fr) minmax(0, 1fr) minmax(0, 1.1fr); gap: 10px; align-items: stretch; }
     .grid3 > .card { min-height: 0; overflow: hidden; gap: 8px; padding: 12px 14px; }
     .card h2 { font-size: 14px; }
@@ -221,6 +237,7 @@
     .genre-note, #genreNote { font-size: 11.5px; margin: 0; }
     .gbody { flex: 1 1 0; min-height: 0; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; padding-right: 6px; }
     .gbody .chips { gap: 5px; }
+    .gbody.more { -webkit-mask-image: linear-gradient(to bottom, #000 calc(100% - 30px), transparent); mask-image: linear-gradient(to bottom, #000 calc(100% - 30px), transparent); }
     .ringcard { gap: 6px; }
     .ringbox { position: relative; flex: 1 1 0; min-height: 0; width: 100%; }
     #ring { position: absolute; top: 0; left: 50%; transform: translateX(-50%); height: 100%; width: auto; max-width: 100%; aspect-ratio: 1; margin: 0; }
@@ -269,14 +286,14 @@
 
   /* ---- drum kit: one lane per drum, same look as Three Cities ---- */
   .kit { display: grid; gap: 6px; }
-  .kit .lane { display: grid; grid-template-columns: 64px minmax(0, 1fr); gap: 8px; align-items: center; }
+  .kit .lane { display: grid; grid-template-columns: 84px minmax(0, 1fr); gap: 8px; align-items: center; }
   .lane-name { background: none; border: 0; padding: 0; margin: 0; font: inherit; font-size: 10.5px; letter-spacing: .12em; text-transform: uppercase; color: var(--ink-dim); text-align: left; cursor: pointer; }
   .lane-name:hover { color: var(--ink); }
   .lane-name[aria-pressed="true"] { opacity: .4; text-decoration: line-through; }
   .lane[data-lane="shaker"] .cells i.on { background: var(--sourced); }
   .voice.off { opacity: 0.45; }
   .voice.off input, .voice.off select, .voice.off button { cursor: not-allowed; }
-  .lane[data-lane="conga"] .cells i.on { background: var(--approx); }
+  .lane[data-lane="ring"] .cells i.on { background: var(--approx); }
   .lane .cells { gap: 2px; }
   .lane .cells i { height: 12px; }
 
@@ -352,7 +369,7 @@
   .kithead { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; }
   .kitsel { font: inherit; font-size: 11px; letter-spacing: .04em; color: var(--ink); background: rgba(243,236,230,0.06); border: 1px solid rgba(243,236,230,0.22); border-radius: 3px; padding: 4px 6px; max-width: 160px; flex: 0 0 auto; cursor: pointer; }
     .kit { flex: 1 1 0; }
-    .kit .lane { grid-template-columns: 64px minmax(0, 1fr); }
+    .kit .lane { grid-template-columns: 84px minmax(0, 1fr); }
     .kit .lane .cells i { height: 10px; }
   }
   @media (max-width: 1000px) { .midcol { display: flex; flex-direction: column; gap: 16px; } }
@@ -393,15 +410,17 @@
 
   <header class="top">
     <div class="brand">
-      <h1>Rhythm Geometry</h1>
-      <button id="toMap" class="btn small" type="button" title="Back to the map (Esc)">Map</button>
+      <div class="brand-text">
+        <h1>Rhythm Geometry</h1>
+        <p class="place"><span id="placeLine"></span><span id="clock"></span></p>
+      </div>
     </div>
     <form id="findForm" class="search-row">
+      <button id="toMap" class="btn small" type="button" title="Back to the map">Map</button>
       <input id="city" type="text" value="London" autocomplete="off" aria-label="Find a city" placeholder="Find any city, e.g. Copenhagen">
       <button class="btn primary" type="submit">Find</button>
       <div id="results" class="chips"></div>
     </form>
-    <p id="placeLine" class="muted place"></p>
     <div class="transport">
       <button id="play" class="btn primary play" type="button">Play</button>
       <div class="field bpm">
@@ -422,7 +441,6 @@
       <button id="share" class="btn small" type="button" title="Copy a link to this city, genre and tempo">Share</button>
       <span id="shareNote" class="muted note" aria-live="polite"></span>
     </div>
-    <div class="wordmark" id="clock"></div>
   </header>
 
   <div class="grid3">
@@ -471,108 +489,84 @@
 
   <section class="voices" aria-label="Voices">
 
-    <div class="card voice">
+    <div class="card voice" id="kickCard">
       <div class="vhead">
         <h2>Kick <small>from the genre</small></h2>
-        <button id="kickOn" class="btn small" type="button" aria-pressed="true">On</button>
+        <button id="kickOn" class="btn small" type="button" aria-pressed="false">Mute</button>
       </div>
-      <div class="knobs" style="--n:5">
-        <div class="knob-cell"><div class="head"><span class="label">Volume</span><output id="kickVolOut">80</output></div><input id="kickVol" type="range" min="0" max="100" value="80" aria-label="Kick volume"></div>
-        <div class="knob-cell"><div class="head"><span class="label">Decay</span><output id="kickDecayOut">1.0x</output></div><input id="kickDecay" type="range" min="0" max="100" value="50" aria-label="kick decay"></div>
-        <div class="knob-cell"><div class="head"><span class="label">Tune</span><output id="kickTuneOut">0</output></div><input id="kickTune" type="range" min="-12" max="12" value="0" aria-label="kick tune in semitones"></div>
-        <div class="knob-cell"><div class="head"><span class="label">Filter</span><output id="kickCutOut">open</output></div><input id="kickCut" type="range" min="0" max="100" value="100" aria-label="kick filter cutoff"></div>
-        <div class="knob-cell"><div class="head"><span class="label">Res</span><output id="kickResOut">0</output></div><input id="kickRes" type="range" min="0" max="100" value="0" aria-label="kick filter resonance"></div>
+      <div class="vtabs" role="tablist">
+        <button type="button" role="tab" data-tab="sound" aria-selected="true">Sound<i class="tab-dot" aria-hidden="true"></i></button>
+        <button type="button" role="tab" data-tab="auto" aria-selected="false">Auto filter<i class="tab-dot" aria-hidden="true"></i></button>
       </div>
-      <div class="auto-row" aria-label="Kick auto filter">
-        <button id="kickAuto" class="btn small" type="button" aria-pressed="false" title="Auto filter: the filter sweeps in time with the beat">Auto</button>
-        <select id="kickAutoRate" class="auto-sel" aria-label="Kick auto filter rate" title="How often the filter sweeps"><option value="4">1/16</option><option value="2">1/8</option><option value="1" selected>1/4</option><option value="0.5">1/2</option><option value="0.25">1 bar</option><option value="0.125">2 bars</option></select>
-        <select id="kickAutoWave" class="auto-sel" aria-label="Kick auto filter wave" title="The shape of the sweep"><option value="sine" selected>Sine</option><option value="tri">Triangle</option><option value="square">Square</option><option value="rampup">Ramp up</option><option value="rampdown">Ramp down</option><option value="random">Random</option></select>
+      <div class="vpanel" data-panel="sound">
+        <div class="knobs" style="--n:5">
+          <div class="knob-cell"><div class="head"><span class="label">Volume</span><output id="kickVolOut">80</output></div><input id="kickVol" type="range" min="0" max="100" value="80" aria-label="Kick volume"></div>
+          <div class="knob-cell"><div class="head"><span class="label">Decay</span><output id="kickDecayOut">1.0x</output></div><input id="kickDecay" type="range" min="0" max="100" value="50" aria-label="Kick decay"></div>
+          <div class="knob-cell"><div class="head"><span class="label">Tune</span><output id="kickTuneOut">0</output></div><input id="kickTune" type="range" min="-12" max="12" value="0" aria-label="Kick tune in semitones"></div>
+          <div class="knob-cell"><div class="head"><span class="label">Filter</span><output id="kickCutOut">open</output></div><input id="kickCut" type="range" min="0" max="100" value="100" aria-label="Kick filter cutoff"></div>
+          <div class="knob-cell"><div class="head"><span class="label">Res</span><output id="kickResOut">0</output></div><input id="kickRes" type="range" min="0" max="100" value="0" aria-label="Kick filter resonance"></div>
+        </div>
       </div>
-      <div class="knobs" style="--n:2">
-        <div class="knob-cell"><div class="head"><span class="label">Amount</span><output id="kickAutoAmtOut">0</output></div><input id="kickAutoAmt" type="range" min="0" max="100" value="0" aria-label="Kick auto filter amount"></div>
-        <div class="knob-cell"><div class="head"><span class="label">Offset</span><output id="kickAutoOffOut">Mid</output></div><input id="kickAutoOff" type="range" min="-100" max="100" value="0" aria-label="Kick auto filter offset"></div>
+      <div class="vpanel" data-panel="auto" hidden>
+        <div class="auto-row">
+          <button id="kickAuto" class="btn small" type="button" aria-pressed="false" title="The filter sweeps in time with the beat">Off</button>
+          <select id="kickAutoRate" class="auto-sel" aria-label="Kick auto filter rate" title="How often the filter sweeps"><option value="4">1/16</option><option value="2">1/8</option><option value="1" selected>1/4</option><option value="0.5">1/2</option><option value="0.25">1 bar</option><option value="0.125">2 bars</option></select>
+          <select id="kickAutoWave" class="auto-sel" aria-label="Kick auto filter wave" title="The shape of the sweep"><option value="sine" selected>Sine</option><option value="tri">Triangle</option><option value="square">Square</option><option value="rampup">Ramp up</option><option value="rampdown">Ramp down</option><option value="random">Random</option></select>
+        </div>
+        <div class="knobs" style="--n:2">
+          <div class="knob-cell"><div class="head"><span class="label">Amount</span><output id="kickAutoAmtOut">0</output></div><input id="kickAutoAmt" type="range" min="0" max="100" value="0" aria-label="Kick auto filter amount"></div>
+          <div class="knob-cell"><div class="head"><span class="label">Offset</span><output id="kickAutoOffOut">Mid</output></div><input id="kickAutoOff" type="range" min="-100" max="100" value="0" aria-label="Kick auto filter offset"></div>
+        </div>
       </div>
     </div>
 
-    <div class="card voice">
+    <div class="card voice" id="congaCard">
       <div class="vhead">
         <h2>Conga <small>the ring's hits</small></h2>
         <button id="congaMute" class="btn small" type="button" aria-pressed="false">Mute</button>
       </div>
-      <div class="row2">
-        <div class="field grow">
-          <label class="label" for="congaInst">Instrument</label>
-          <select id="congaInst">
-            <option value="conga" selected>Conga</option>
-            <option value="bongo">Bongo</option>
-            <option value="clave">Clave</option>
-            <option value="cowbell">Cowbell</option>
-            <option value="woodblock">Woodblock</option>
-          </select>
-        </div>
-        <div class="field">
-          <span class="label">Octave</span>
-          <div class="row-inline">
-            <button id="octDown" class="btn small" type="button" aria-label="Octave down">-</button>
-            <output id="octOut" aria-live="polite">0</output>
-            <button id="octUp" class="btn small" type="button" aria-label="Octave up">+</button>
-          </div>
-        </div>
+      <div class="vtabs" role="tablist">
+        <button type="button" role="tab" data-tab="sound" aria-selected="true">Sound<i class="tab-dot" aria-hidden="true"></i></button>
+        <button type="button" role="tab" data-tab="fx" aria-selected="false">Effects<i class="tab-dot" aria-hidden="true"></i></button>
+        <button type="button" role="tab" data-tab="auto" aria-selected="false">Auto filter<i class="tab-dot" aria-hidden="true"></i></button>
       </div>
-      <div class="row2">
-        <div class="field grow">
-          <label class="label" for="pitch">Pitch</label>
-          <select id="pitch">
-            <option value="alt" selected>Alternate hi / lo</option>
-            <option value="rand">Random</option>
-          </select>
+      <div class="vpanel" data-panel="sound">
+        <div class="row2">
+          <div class="field grow"><label class="label" for="congaInst">Instrument</label><select id="congaInst"><option value="conga" selected>Conga</option><option value="bongo">Bongo</option><option value="clave">Clave</option><option value="cowbell">Cowbell</option><option value="woodblock">Woodblock</option></select></div>
+          <div class="field grow"><label class="label" for="pitch">Pitch</label><select id="pitch"><option value="alt" selected>Alternate</option><option value="rand">Random</option></select></div>
         </div>
-        <div class="field grow">
-          <label class="label" for="congaDelay">Delay</label>
-          <select id="congaDelay">
-            <option value="off" selected>Off</option>
-            <option value="32">1/32</option>
-            <option value="16">1/16</option>
-            <option value="16t">1/16 triplet</option>
-            <option value="8t">1/8 triplet</option>
-            <option value="8">1/8</option>
-            <option value="d8">Dotted 1/8</option>
-            <option value="4t">1/4 triplet</option>
-            <option value="4">1/4</option>
-            <option value="d4">Dotted 1/4</option>
-          </select>
+        <div class="row2">
+          <div class="field"><span class="label">Octave</span><div class="row-inline"><button id="octDown" class="btn small" type="button" aria-label="Octave down">-</button><output id="octOut" aria-live="polite">0</output><button id="octUp" class="btn small" type="button" aria-label="Octave up">+</button></div></div>
         </div>
-        <div class="field grow">
-          <label class="label" for="congaStyle">Style</label>
-          <select id="congaStyle">
-            <option value="mono" selected>Mono</option>
-            <option value="ping-pong">Ping-pong</option>
-            <option value="tape">Tape (darkens)</option>
-            <option value="slapback">Slapback</option>
-            <option value="dub">Dub (dark, long)</option>
-          </select>
+        <div class="knobs" style="--n:5">
+          <div class="knob-cell"><div class="head"><span class="label">Volume</span><output id="congaVolOut">80</output></div><input id="congaVol" type="range" min="0" max="100" value="80" aria-label="Conga volume"></div>
+          <div class="knob-cell"><div class="head"><span class="label">Decay</span><output id="congaDecayOut">1.0x</output></div><input id="congaDecay" type="range" min="0" max="100" value="50" aria-label="Conga decay"></div>
+          <div class="knob-cell"><div class="head"><span class="label">Tune</span><output id="congaTuneOut">0</output></div><input id="congaTune" type="range" min="-12" max="12" value="0" aria-label="Conga tune in semitones"></div>
+          <div class="knob-cell"><div class="head"><span class="label">Filter</span><output id="congaCutOut">open</output></div><input id="congaCut" type="range" min="0" max="100" value="100" aria-label="Conga filter cutoff"></div>
+          <div class="knob-cell"><div class="head"><span class="label">Res</span><output id="congaResOut">0</output></div><input id="congaRes" type="range" min="0" max="100" value="0" aria-label="Conga filter resonance"></div>
         </div>
       </div>
-      <div class="knobs" style="--n:6">
-        <div class="knob-cell"><div class="head"><span class="label">Volume</span><output id="congaVolOut">80</output></div><input id="congaVol" type="range" min="0" max="100" value="80" aria-label="Conga volume"></div>
-        <div class="knob-cell"><div class="head"><span class="label">Echo</span><output id="congaFbOut">35%</output></div><input id="congaFb" type="range" min="0" max="100" value="35" aria-label="Conga delay feedback"></div>
-        <div class="knob-cell"><div class="head"><span class="label">Decay</span><output id="congaDecayOut">1.0x</output></div><input id="congaDecay" type="range" min="0" max="100" value="50" aria-label="conga decay"></div>
-        <div class="knob-cell"><div class="head"><span class="label">Tune</span><output id="congaTuneOut">0</output></div><input id="congaTune" type="range" min="-12" max="12" value="0" aria-label="conga tune in semitones"></div>
-        <div class="knob-cell"><div class="head"><span class="label">Filter</span><output id="congaCutOut">open</output></div><input id="congaCut" type="range" min="0" max="100" value="100" aria-label="conga filter cutoff"></div>
-        <div class="knob-cell"><div class="head"><span class="label">Res</span><output id="congaResOut">0</output></div><input id="congaRes" type="range" min="0" max="100" value="0" aria-label="conga filter resonance"></div>
+      <div class="vpanel" data-panel="fx" hidden>
+        <div class="row2">
+          <div class="field grow"><label class="label" for="congaDelay">Delay</label><select id="congaDelay"><option value="off" selected>Off</option><option value="32">1/32</option><option value="16">1/16</option><option value="16t">1/16 triplet</option><option value="8t">1/8 triplet</option><option value="8">1/8</option><option value="d8">Dotted 1/8</option><option value="4t">1/4 triplet</option><option value="4">1/4</option><option value="d4">Dotted 1/4</option></select></div>
+          <div class="field grow"><label class="label" for="congaStyle">Style</label><select id="congaStyle"><option value="mono" selected>Mono</option><option value="ping-pong">Ping-pong</option><option value="tape">Tape (darkens)</option><option value="slapback">Slapback</option><option value="dub">Dub (dark, long)</option></select></div>
+        </div>
+        <div class="knobs" style="--n:3">
+          <div class="knob-cell"><div class="head"><span class="label">Echo</span><output id="congaFbOut">35%</output></div><input id="congaFb" type="range" min="0" max="100" value="35" aria-label="Conga delay feedback"></div>
+          <div class="knob-cell"><div class="head"><span class="label">Reverb</span><output id="congaRevOut">0%</output></div><input id="congaRev" type="range" min="0" max="100" value="0" aria-label="Conga reverb level"></div>
+          <div class="knob-cell"><div class="head"><span class="label">Rev decay</span><output id="congaRevDecOut">1.0 s</output></div><input id="congaRevDec" type="range" min="0" max="100" value="40" aria-label="Conga reverb decay"></div>
+        </div>
       </div>
-      <div class="knobs" style="--n:2" aria-label="Conga reverb">
-        <div class="knob-cell"><div class="head"><span class="label">Rev level</span><output id="congaRevOut">0%</output></div><input id="congaRev" type="range" min="0" max="100" value="0" aria-label="Conga reverb level"></div>
-        <div class="knob-cell"><div class="head"><span class="label">Rev decay</span><output id="congaRevDecOut">2.0 s</output></div><input id="congaRevDec" type="range" min="0" max="100" value="40" aria-label="Conga reverb decay"></div>
-      </div>
-      <div class="auto-row" aria-label="Conga auto filter">
-        <button id="congaAuto" class="btn small" type="button" aria-pressed="false" title="Auto filter: the filter sweeps in time with the beat">Auto</button>
-        <select id="congaAutoRate" class="auto-sel" aria-label="Conga auto filter rate" title="How often the filter sweeps"><option value="4">1/16</option><option value="2">1/8</option><option value="1" selected>1/4</option><option value="0.5">1/2</option><option value="0.25">1 bar</option><option value="0.125">2 bars</option></select>
-        <select id="congaAutoWave" class="auto-sel" aria-label="Conga auto filter wave" title="The shape of the sweep"><option value="sine" selected>Sine</option><option value="tri">Triangle</option><option value="square">Square</option><option value="rampup">Ramp up</option><option value="rampdown">Ramp down</option><option value="random">Random</option></select>
-      </div>
-      <div class="knobs" style="--n:2">
-        <div class="knob-cell"><div class="head"><span class="label">Amount</span><output id="congaAutoAmtOut">0</output></div><input id="congaAutoAmt" type="range" min="0" max="100" value="0" aria-label="Conga auto filter amount"></div>
-        <div class="knob-cell"><div class="head"><span class="label">Offset</span><output id="congaAutoOffOut">Mid</output></div><input id="congaAutoOff" type="range" min="-100" max="100" value="0" aria-label="Conga auto filter offset"></div>
+      <div class="vpanel" data-panel="auto" hidden>
+        <div class="auto-row">
+          <button id="congaAuto" class="btn small" type="button" aria-pressed="false" title="The filter sweeps in time with the beat">Off</button>
+          <select id="congaAutoRate" class="auto-sel" aria-label="Conga auto filter rate" title="How often the filter sweeps"><option value="4">1/16</option><option value="2">1/8</option><option value="1" selected>1/4</option><option value="0.5">1/2</option><option value="0.25">1 bar</option><option value="0.125">2 bars</option></select>
+          <select id="congaAutoWave" class="auto-sel" aria-label="Conga auto filter wave" title="The shape of the sweep"><option value="sine" selected>Sine</option><option value="tri">Triangle</option><option value="square">Square</option><option value="rampup">Ramp up</option><option value="rampdown">Ramp down</option><option value="random">Random</option></select>
+        </div>
+        <div class="knobs" style="--n:2">
+          <div class="knob-cell"><div class="head"><span class="label">Amount</span><output id="congaAutoAmtOut">0</output></div><input id="congaAutoAmt" type="range" min="0" max="100" value="0" aria-label="Conga auto filter amount"></div>
+          <div class="knob-cell"><div class="head"><span class="label">Offset</span><output id="congaAutoOffOut">Mid</output></div><input id="congaAutoOff" type="range" min="-100" max="100" value="0" aria-label="Conga auto filter offset"></div>
+        </div>
       </div>
     </div>
 
@@ -581,126 +575,85 @@
         <h2>Shaker <small>from the genre</small></h2>
         <button id="shakerMute" class="btn small" type="button" aria-pressed="false">Mute</button>
       </div>
-      <div class="row2">
-        <div class="field grow">
-          <label class="label" for="shakerDelay">Delay</label>
-          <select id="shakerDelay">
-            <option value="off" selected>Off</option>
-            <option value="32">1/32</option>
-            <option value="16">1/16</option>
-            <option value="16t">1/16 triplet</option>
-            <option value="8t">1/8 triplet</option>
-            <option value="8">1/8</option>
-            <option value="d8">Dotted 1/8</option>
-            <option value="4t">1/4 triplet</option>
-            <option value="4">1/4</option>
-            <option value="d4">Dotted 1/4</option>
-          </select>
-        </div>
-        <div class="field grow">
-          <label class="label" for="shakerStyle">Style</label>
-          <select id="shakerStyle">
-            <option value="mono" selected>Mono</option>
-            <option value="ping-pong">Ping-pong</option>
-            <option value="tape">Tape (darkens)</option>
-            <option value="slapback">Slapback</option>
-            <option value="dub">Dub (dark, long)</option>
-          </select>
+      <div class="vtabs" role="tablist">
+        <button type="button" role="tab" data-tab="sound" aria-selected="true">Sound<i class="tab-dot" aria-hidden="true"></i></button>
+        <button type="button" role="tab" data-tab="fx" aria-selected="false">Effects<i class="tab-dot" aria-hidden="true"></i></button>
+        <button type="button" role="tab" data-tab="auto" aria-selected="false">Auto filter<i class="tab-dot" aria-hidden="true"></i></button>
+      </div>
+      <div class="vpanel" data-panel="sound">
+        <div class="knobs" style="--n:5">
+          <div class="knob-cell"><div class="head"><span class="label">Volume</span><output id="shakerVolOut">60</output></div><input id="shakerVol" type="range" min="0" max="100" value="60" aria-label="Shaker volume"></div>
+          <div class="knob-cell"><div class="head"><span class="label">Decay</span><output id="shakerDecayOut">1.0x</output></div><input id="shakerDecay" type="range" min="0" max="100" value="50" aria-label="Shaker decay"></div>
+          <div class="knob-cell"><div class="head"><span class="label">Tune</span><output id="shakerTuneOut">0</output></div><input id="shakerTune" type="range" min="-12" max="12" value="0" aria-label="Shaker tune in semitones"></div>
+          <div class="knob-cell"><div class="head"><span class="label">Filter</span><output id="shakerCutOut">open</output></div><input id="shakerCut" type="range" min="0" max="100" value="100" aria-label="Shaker filter cutoff"></div>
+          <div class="knob-cell"><div class="head"><span class="label">Res</span><output id="shakerResOut">0</output></div><input id="shakerRes" type="range" min="0" max="100" value="0" aria-label="Shaker filter resonance"></div>
         </div>
       </div>
-      <div class="knobs" style="--n:6">
-        <div class="knob-cell"><div class="head"><span class="label">Volume</span><output id="shakerVolOut">60</output></div><input id="shakerVol" type="range" min="0" max="100" value="60" aria-label="Shaker volume"></div>
-        <div class="knob-cell"><div class="head"><span class="label">Echo</span><output id="shakerFbOut">35%</output></div><input id="shakerFb" type="range" min="0" max="100" value="35" aria-label="Shaker delay feedback"></div>
-        <div class="knob-cell"><div class="head"><span class="label">Decay</span><output id="shakerDecayOut">1.0x</output></div><input id="shakerDecay" type="range" min="0" max="100" value="50" aria-label="shaker decay"></div>
-        <div class="knob-cell"><div class="head"><span class="label">Tune</span><output id="shakerTuneOut">0</output></div><input id="shakerTune" type="range" min="-12" max="12" value="0" aria-label="shaker tune in semitones"></div>
-        <div class="knob-cell"><div class="head"><span class="label">Filter</span><output id="shakerCutOut">open</output></div><input id="shakerCut" type="range" min="0" max="100" value="100" aria-label="shaker filter cutoff"></div>
-        <div class="knob-cell"><div class="head"><span class="label">Res</span><output id="shakerResOut">0</output></div><input id="shakerRes" type="range" min="0" max="100" value="0" aria-label="shaker filter resonance"></div>
+      <div class="vpanel" data-panel="fx" hidden>
+        <div class="row2">
+          <div class="field grow"><label class="label" for="shakerDelay">Delay</label><select id="shakerDelay"><option value="off" selected>Off</option><option value="32">1/32</option><option value="16">1/16</option><option value="16t">1/16 triplet</option><option value="8t">1/8 triplet</option><option value="8">1/8</option><option value="d8">Dotted 1/8</option><option value="4t">1/4 triplet</option><option value="4">1/4</option><option value="d4">Dotted 1/4</option></select></div>
+          <div class="field grow"><label class="label" for="shakerStyle">Style</label><select id="shakerStyle"><option value="mono" selected>Mono</option><option value="ping-pong">Ping-pong</option><option value="tape">Tape (darkens)</option><option value="slapback">Slapback</option><option value="dub">Dub (dark, long)</option></select></div>
+        </div>
+        <div class="knobs" style="--n:3">
+          <div class="knob-cell"><div class="head"><span class="label">Echo</span><output id="shakerFbOut">35%</output></div><input id="shakerFb" type="range" min="0" max="100" value="35" aria-label="Shaker delay feedback"></div>
+          <div class="knob-cell"><div class="head"><span class="label">Reverb</span><output id="shakerRevOut">0%</output></div><input id="shakerRev" type="range" min="0" max="100" value="0" aria-label="Shaker reverb level"></div>
+          <div class="knob-cell"><div class="head"><span class="label">Rev decay</span><output id="shakerRevDecOut">1.0 s</output></div><input id="shakerRevDec" type="range" min="0" max="100" value="40" aria-label="Shaker reverb decay"></div>
+        </div>
       </div>
-      <div class="knobs" style="--n:2" aria-label="Shaker reverb">
-        <div class="knob-cell"><div class="head"><span class="label">Rev level</span><output id="shakerRevOut">0%</output></div><input id="shakerRev" type="range" min="0" max="100" value="0" aria-label="Shaker reverb level"></div>
-        <div class="knob-cell"><div class="head"><span class="label">Rev decay</span><output id="shakerRevDecOut">2.0 s</output></div><input id="shakerRevDec" type="range" min="0" max="100" value="40" aria-label="Shaker reverb decay"></div>
-      </div>
-      <div class="auto-row" aria-label="Shaker auto filter">
-        <button id="shakerAuto" class="btn small" type="button" aria-pressed="false" title="Auto filter: the filter sweeps in time with the beat">Auto</button>
-        <select id="shakerAutoRate" class="auto-sel" aria-label="Shaker auto filter rate" title="How often the filter sweeps"><option value="4">1/16</option><option value="2">1/8</option><option value="1" selected>1/4</option><option value="0.5">1/2</option><option value="0.25">1 bar</option><option value="0.125">2 bars</option></select>
-        <select id="shakerAutoWave" class="auto-sel" aria-label="Shaker auto filter wave" title="The shape of the sweep"><option value="sine" selected>Sine</option><option value="tri">Triangle</option><option value="square">Square</option><option value="rampup">Ramp up</option><option value="rampdown">Ramp down</option><option value="random">Random</option></select>
-      </div>
-      <div class="knobs" style="--n:2">
-        <div class="knob-cell"><div class="head"><span class="label">Amount</span><output id="shakerAutoAmtOut">0</output></div><input id="shakerAutoAmt" type="range" min="0" max="100" value="0" aria-label="Shaker auto filter amount"></div>
-        <div class="knob-cell"><div class="head"><span class="label">Offset</span><output id="shakerAutoOffOut">Mid</output></div><input id="shakerAutoOff" type="range" min="-100" max="100" value="0" aria-label="Shaker auto filter offset"></div>
+      <div class="vpanel" data-panel="auto" hidden>
+        <div class="auto-row">
+          <button id="shakerAuto" class="btn small" type="button" aria-pressed="false" title="The filter sweeps in time with the beat">Off</button>
+          <select id="shakerAutoRate" class="auto-sel" aria-label="Shaker auto filter rate" title="How often the filter sweeps"><option value="4">1/16</option><option value="2">1/8</option><option value="1" selected>1/4</option><option value="0.5">1/2</option><option value="0.25">1 bar</option><option value="0.125">2 bars</option></select>
+          <select id="shakerAutoWave" class="auto-sel" aria-label="Shaker auto filter wave" title="The shape of the sweep"><option value="sine" selected>Sine</option><option value="tri">Triangle</option><option value="square">Square</option><option value="rampup">Ramp up</option><option value="rampdown">Ramp down</option><option value="random">Random</option></select>
+        </div>
+        <div class="knobs" style="--n:2">
+          <div class="knob-cell"><div class="head"><span class="label">Amount</span><output id="shakerAutoAmtOut">0</output></div><input id="shakerAutoAmt" type="range" min="0" max="100" value="0" aria-label="Shaker auto filter amount"></div>
+          <div class="knob-cell"><div class="head"><span class="label">Offset</span><output id="shakerAutoOffOut">Mid</output></div><input id="shakerAutoOff" type="range" min="-100" max="100" value="0" aria-label="Shaker auto filter offset"></div>
+        </div>
       </div>
     </div>
 
-      <div class="card voice" id="sampCard">
+    <div class="card voice" id="sampCard">
       <div class="vhead">
-        <h2>Your sound <small>played on a drum-kit rhythm</small></h2>
+        <h2>Your sound <small>on a rhythm from the kit</small></h2>
         <button id="sampleMute" class="btn small" type="button" aria-pressed="false">Mute</button>
       </div>
-      <div class="samp-head"><span class="samp-name" id="sampName">No sound yet</span><button id="sampLoad" class="btn small" type="button">Load a sound</button><button id="sampSearch" class="btn small" type="button" aria-expanded="false">Freesound</button><input id="sampFile" type="file" accept="audio/*" hidden></div>
-      <div class="row2">
-        <div class="field grow">
-          <label class="label" for="sampRhythm">Rhythm from the kit</label>
-          <select id="sampRhythm"></select>
-        </div>
-        <div class="field">
-          <label class="label" for="sampRepeat">Repeat</label>
-          <select id="sampRepeat" title="How many hits play the same start point before it moves on">
-            <option value="auto" selected>Auto</option>
-            <option value="2">2 hits</option>
-            <option value="3">3 hits</option>
-            <option value="4">4 hits</option>
-            <option value="6">6 hits</option>
-            <option value="8">8 hits</option>
-          </select>
-        </div>
+      <div class="vtabs" role="tablist">
+        <button type="button" role="tab" data-tab="sound" aria-selected="true">Sound<i class="tab-dot" aria-hidden="true"></i></button>
+        <button type="button" role="tab" data-tab="fx" aria-selected="false">Effects<i class="tab-dot" aria-hidden="true"></i></button>
       </div>
-      <div class="samp-shape" id="sampShape" role="group" aria-label="What the steps change">
-        <button type="button" data-shape="vel" aria-pressed="true" title="Loud on the one, softer halfway round the rhythm">Velocity</button>
-        <button type="button" data-shape="filter" aria-pressed="true" title="The filter opens step by step across the rhythm">Filter</button>
-        <button type="button" data-shape="start" aria-pressed="true" title="Each step plays from further into your sound, and the whole pattern drifts on every lap">Start</button>
-        <button type="button" data-shape="pitch" aria-pressed="true" title="Tuned to the conga's notes, with your sound's key as middle C. Off plays it as recorded">Pitch</button>
-      </div>
-      <div class="samp-key" id="sampKey" hidden></div>
-      <div class="knobs" style="--n:5">
-        <div class="knob-cell"><div class="head"><span class="label">Volume</span><output id="sampleVolOut">80</output></div><input id="sampleVol" type="range" min="0" max="100" value="80" aria-label="Your sound volume"></div>
-        <div class="knob-cell"><div class="head"><span class="label">Decay</span><output id="sampleDecayOut">1.0x</output></div><input id="sampleDecay" type="range" min="0" max="100" value="50" aria-label="Your sound decay"></div>
-        <div class="knob-cell"><div class="head"><span class="label">Tune</span><output id="sampleTuneOut">0</output></div><input id="sampleTune" type="range" min="-12" max="12" value="0" aria-label="Your sound tune in semitones"></div>
-        <div class="knob-cell"><div class="head"><span class="label">Filter</span><output id="sampleCutOut">open</output></div><input id="sampleCut" type="range" min="0" max="100" value="100" aria-label="Your sound filter cutoff"></div>
-        <div class="knob-cell"><div class="head"><span class="label">Res</span><output id="sampleResOut">0</output></div><input id="sampleRes" type="range" min="0" max="100" value="0" aria-label="Your sound filter resonance"></div>
-      </div>
-      <div class="row2">
-        <div class="field grow">
-          <label class="label" for="sampleDelay">Delay</label>
-          <select id="sampleDelay">
-            <option value="off" selected>Off</option>
-            <option value="32">1/32</option>
-            <option value="16">1/16</option>
-            <option value="16t">1/16 triplet</option>
-            <option value="8t">1/8 triplet</option>
-            <option value="8">1/8</option>
-            <option value="d8">Dotted 1/8</option>
-            <option value="4t">1/4 triplet</option>
-            <option value="4">1/4</option>
-            <option value="d4">Dotted 1/4</option>
-          </select>
+      <div class="vpanel" data-panel="sound">
+        <div class="samp-head"><button id="sampLoad" class="btn small" type="button">Load</button><button id="sampSearch" class="btn small" type="button" aria-expanded="false">Freesound</button><span class="samp-name" id="sampName">No sound yet</span><input id="sampFile" type="file" accept="audio/*" hidden></div>
+        <div class="row2">
+          <div class="field grow"><label class="label" for="sampRhythm">Rhythm</label><select id="sampRhythm"></select></div>
+          <div class="field"><label class="label" for="sampRepeat">Repeat</label><select id="sampRepeat" title="How many hits play the same start point before it moves on"><option value="auto" selected>Auto</option><option value="2">2 hits</option><option value="3">3 hits</option><option value="4">4 hits</option><option value="6">6 hits</option><option value="8">8 hits</option></select></div>
         </div>
-        <div class="field grow">
-          <label class="label" for="sampleStyle">Style</label>
-          <select id="sampleStyle">
-            <option value="mono" selected>Mono</option>
-            <option value="ping-pong">Ping-pong</option>
-            <option value="tape">Tape (darkens)</option>
-            <option value="slapback">Slapback</option>
-            <option value="dub">Dub (dark, long)</option>
-          </select>
+        <div class="samp-shape" id="sampShape" role="group" aria-label="What the steps change">
+          <button type="button" data-shape="vel" aria-pressed="true" title="Loud on the one, softer halfway round the rhythm">Velocity</button>
+          <button type="button" data-shape="filter" aria-pressed="true" title="The filter opens step by step across the rhythm">Filter</button>
+          <button type="button" data-shape="start" aria-pressed="true" title="Each step plays from further into your sound, and the whole pattern drifts on every lap">Start</button>
+          <button type="button" data-shape="pitch" aria-pressed="true" title="Tuned to the conga's notes, with your sound's key as middle C. Off plays it as recorded">Pitch</button>
+        </div>
+        <div class="samp-key" id="sampKey" hidden></div>
+        <div class="knobs" style="--n:5">
+          <div class="knob-cell"><div class="head"><span class="label">Volume</span><output id="sampleVolOut">80</output></div><input id="sampleVol" type="range" min="0" max="100" value="80" aria-label="Your sound volume"></div>
+          <div class="knob-cell"><div class="head"><span class="label">Decay</span><output id="sampleDecayOut">1.0x</output></div><input id="sampleDecay" type="range" min="0" max="100" value="50" aria-label="Your sound decay"></div>
+          <div class="knob-cell"><div class="head"><span class="label">Tune</span><output id="sampleTuneOut">0</output></div><input id="sampleTune" type="range" min="-12" max="12" value="0" aria-label="Your sound tune in semitones"></div>
+          <div class="knob-cell"><div class="head"><span class="label">Filter</span><output id="sampleCutOut">open</output></div><input id="sampleCut" type="range" min="0" max="100" value="100" aria-label="Your sound filter cutoff"></div>
+          <div class="knob-cell"><div class="head"><span class="label">Res</span><output id="sampleResOut">0</output></div><input id="sampleRes" type="range" min="0" max="100" value="0" aria-label="Your sound filter resonance"></div>
         </div>
       </div>
-      <div class="knobs" style="--n:3">
-        <div class="knob-cell"><div class="head"><span class="label">Echo</span><output id="sampleFbOut">35%</output></div><input id="sampleFb" type="range" min="0" max="100" value="35" aria-label="Your sound delay feedback"></div>
-        <div class="knob-cell"><div class="head"><span class="label">Rev level</span><output id="sampleRevOut">0%</output></div><input id="sampleRev" type="range" min="0" max="100" value="0" aria-label="Your sound reverb level"></div>
-        <div class="knob-cell"><div class="head"><span class="label">Rev decay</span><output id="sampleRevDecOut">1.0 s</output></div><input id="sampleRevDec" type="range" min="0" max="100" value="40" aria-label="Your sound reverb decay"></div>
+      <div class="vpanel" data-panel="fx" hidden>
+        <div class="row2">
+          <div class="field grow"><label class="label" for="sampleDelay">Delay</label><select id="sampleDelay"><option value="off" selected>Off</option><option value="32">1/32</option><option value="16">1/16</option><option value="16t">1/16 triplet</option><option value="8t">1/8 triplet</option><option value="8">1/8</option><option value="d8">Dotted 1/8</option><option value="4t">1/4 triplet</option><option value="4">1/4</option><option value="d4">Dotted 1/4</option></select></div>
+          <div class="field grow"><label class="label" for="sampleStyle">Style</label><select id="sampleStyle"><option value="mono" selected>Mono</option><option value="ping-pong">Ping-pong</option><option value="tape">Tape (darkens)</option><option value="slapback">Slapback</option><option value="dub">Dub (dark, long)</option></select></div>
+        </div>
+        <div class="knobs" style="--n:3">
+          <div class="knob-cell"><div class="head"><span class="label">Echo</span><output id="sampleFbOut">35%</output></div><input id="sampleFb" type="range" min="0" max="100" value="35" aria-label="Your sound delay feedback"></div>
+          <div class="knob-cell"><div class="head"><span class="label">Reverb</span><output id="sampleRevOut">0%</output></div><input id="sampleRev" type="range" min="0" max="100" value="0" aria-label="Your sound reverb level"></div>
+          <div class="knob-cell"><div class="head"><span class="label">Rev decay</span><output id="sampleRevDecOut">1.0 s</output></div><input id="sampleRevDec" type="range" min="0" max="100" value="40" aria-label="Your sound reverb decay"></div>
+        </div>
       </div>
-      <p class="samp-hint">Drop a sound on this card, or load one. It stays on your device.</p>
     </div>
 
   </section>
@@ -899,14 +852,14 @@ async function getJSON(url, ms = 8000) {
 const SOURCES = [
   { id: 'humidity', label: 'Humidity',   unit: '%',    lo: 0,   hi: 100, get: w => w && w.h },
   { id: 'cloud',    label: 'Cloud',      unit: '%',    lo: 0,   hi: 100, get: w => w && w.c },
-  { id: 'wind',     label: 'Wind km/h',  unit: '',     lo: 0,   hi: 50,  get: w => w && w.w },
-  { id: 'rain',     label: 'Rain mm',    unit: '',     lo: 0,   hi: 5,   get: w => w && w.r },
-  { id: 'snow',     label: 'Snow cm',    unit: '',     lo: 0,   hi: 2,   get: () => envOf('snow') },
-  { id: 'pop',      label: 'Rain chance', unit: '%',   lo: 0,   hi: 100, get: () => envOf('pop') },
+  { id: 'wind',     label: 'Wind',       unit: ' km/h', lo: 0,   hi: 50,  get: w => w && w.w },
+  { id: 'rain',     label: 'Rain',       unit: ' mm',  lo: 0,   hi: 5,   get: w => w && w.r },
+  { id: 'snow',     label: 'Snow',       unit: ' cm',  lo: 0,   hi: 2,   get: () => envOf('snow') },
+  { id: 'pop',      label: 'Rain odds',  unit: '%',    lo: 0,   hi: 100, get: () => envOf('pop') },
   { id: 'dew',      label: 'Dew point',  unit: '°C',   lo: -10, hi: 25,  get: () => envOf('dew') },
   { id: 'cloudLow', label: 'Low cloud',  unit: '%',    lo: 0,   hi: 100, get: () => envOf('cloudLow') },
   { id: 'cloudHi',  label: 'High cloud', unit: '%',    lo: 0,   hi: 100, get: () => envOf('cloudHigh') },
-  { id: 'gust',     label: 'Gusts km/h', unit: '',     lo: 0,   hi: 80,  get: () => envOf('gust') },
+  { id: 'gust',     label: 'Gusts',      unit: ' km/h', lo: 0,   hi: 80,  get: () => envOf('gust') },
   { id: 'pres',     label: 'Pressure',   unit: ' hPa', lo: 980, hi: 1040, get: () => envOf('pres') },
   { id: 'vis',      label: 'Visibility', unit: ' km',  lo: 0,   hi: 20,  get: () => { const v = envOf('vis'); return v == null ? null : v / 1000; }, invert: true },
   { id: 'day',      label: 'Daylight',   unit: '',     lo: 0,   hi: 1,   get: () => envOf('day') },
@@ -960,7 +913,10 @@ function renderTiles() {
   const w = state.w;
   const defs = [{ key: null, v: w ? `${state.steps}` : '-', l: 'steps' }].concat(SOURCES.map(d => {
     const v = w ? sourceValue(d.id, w) : null;
-    return { key: d.id, v: v == null ? '-' : `${Math.round(v * 10) / 10}${d.unit}`, l: d.label };
+    if (v == null) return { key: d.id, v: '-', u: '', l: d.label };
+    if (d.id === 'day') return { key: d.id, v: v ? 'Day' : 'Night', u: '', l: d.label };
+    const n = Math.abs(v) >= 100 ? Math.round(v) : Math.round(v * 10) / 10;
+    return { key: d.id, v: String(n), u: d.unit.trim(), l: d.label };
   }));
   const box = $('tiles');
   box.innerHTML = '';
@@ -977,6 +933,7 @@ function renderTiles() {
       b.addEventListener('click', () => { state.source = d.key; rebuild(); renderTiles(); });
     }
     const v = document.createElement('b'); v.textContent = d.v;
+    if (d.u) { const u = document.createElement('small'); u.textContent = d.u === '%' ? '%' : ' ' + d.u; v.appendChild(u); }
     const l = document.createElement('span'); l.textContent = d.l;
     b.append(v, l);
     box.appendChild(b);
@@ -992,7 +949,7 @@ function rebuild() {
   renderTiles();
 }
 
-function setStatus(text) { $('status').textContent = text; }
+function setStatus(text) { $('status').textContent = text; $('status').hidden = /^Live weather/.test(text); }
 
 async function fetchWeather() {
   const p = state.place, seq = ++state.seq;
@@ -1006,10 +963,12 @@ async function fetchWeather() {
     const k = j.current;
     state.w = { t: k.temperature_2m, h: k.relative_humidity_2m, w: k.wind_speed_10m, c: k.cloud_cover, r: k.precipitation };
     // the same hour from the hourly list (dew point, low and high cloud, visibility, chance of rain)
-    const hi = j.hourly ? j.hourly.time.indexOf(k.time) : -1, H = (name) => (hi >= 0 && j.hourly[name] ? j.hourly[name][hi] : null);
+    const hi = j.hourly ? j.hourly.time.indexOf(k.time.slice(0, 13) + ':00') : -1, H = (name) => (hi >= 0 && j.hourly[name] ? j.hourly[name][hi] : null);
     state.env = { rain: k.rain, showers: k.showers, snow: k.snowfall, feels: k.apparent_temperature, pres: k.pressure_msl,
       windDir: k.wind_direction_10m, gust: k.wind_gusts_10m, day: k.is_day, pop: H('precipitation_probability'),
       dew: H('dew_point_2m'), cloudLow: H('cloud_cover_low'), cloudHigh: H('cloud_cover_high'), vis: H('visibility') };
+    state.utcOffset = typeof j.utc_offset_seconds === 'number' ? j.utc_offset_seconds : null;
+    tickClock();
     rebuild();
     setStatus(`Live weather · local time ${k.time.slice(11, 16)} · refreshes every 10 minutes`);
   } catch (e) {
@@ -1034,6 +993,32 @@ function chip(label, pressed, onClick, dotClass) {
   b.append(d, t);
   b.addEventListener('click', onClick);
   return b;
+}
+
+// Tidy the genre lists once: the same genre from two sources becomes one chip (every pattern, the surer source,
+// any notes), and every name starts with a capital, keeping the capitals in names like UK and R&B.
+const NAME_FIX = { uk: 'UK', us: 'US', usa: 'USA', nyc: 'NYC', 'r&b': 'R&B', edm: 'EDM', idm: 'IDM', dnb: 'DnB', mpb: 'MPB', dj: 'DJ', 'k-pop': 'K-pop', 'j-pop': 'J-pop', 'c-pop': 'C-pop' };
+const CONF_RANK = { sourced: 0, approximate: 1, memory: 2 };
+function niceName(n) {
+  const out = n.split(' ').map(x => NAME_FIX[x.toLowerCase()] || x).join(' ');
+  return out.charAt(0).toUpperCase() + out.slice(1);
+}
+for (const city of ATLAS.cities) {
+  const byKey = new Map(), list = [];
+  for (const g of city.genres) {
+    const key = g.name.toLowerCase().trim(), have = byKey.get(key);
+    const atlasSpelling = g.name.charAt(0) !== g.name.charAt(0).toLowerCase();
+    if (!have) {
+      const c = { ...g, ids: [...g.ids], name: atlasSpelling ? g.name : niceName(g.name) };
+      byKey.set(key, c); list.push(c); continue;
+    }
+    for (const id of g.ids) if (!have.ids.includes(id)) have.ids.push(id);
+    if ((CONF_RANK[g.conf] ?? 9) < (CONF_RANK[have.conf] ?? 9)) { have.conf = g.conf; have.src = g.src; if (g.bpm) have.bpm = g.bpm; }
+    if (!have.info && g.info) have.info = g.info;
+    if (!have.bpm && g.bpm) have.bpm = g.bpm;
+    if (atlasSpelling) have.name = g.name;
+  }
+  city.genres = list;
 }
 
 function renderGenres() {
@@ -1065,6 +1050,7 @@ function renderGenres() {
     : '';
   $('about').disabled = false;
   $('about').textContent = g && g.info ? 'About this genre' : 'Notes for this genre';
+  requestAnimationFrame(() => typeof markMore === 'function' && markMore());
 }
 
 function selectGenre(g) {
@@ -1138,7 +1124,7 @@ function kitLanes() {
   }
   const sh = shakerSrc(k);
   if (sh) lanes.push({ id: 'shaker', label: sh.src ? `shaker (${sh.src.replace(/_/g, ' ')})` : 'shaker', idx: 'k', bits: sh.bits, n, muted: () => muted.shaker, toggle: () => $('shakerMute').click() });
-  lanes.push({ id: 'conga', label: 'conga', idx: 'r', bits: state.pattern, n: state.pattern.length, muted: () => muted.conga, toggle: () => $('congaMute').click() });
+  lanes.push({ id: 'ring', label: 'conga ring', idx: 'r', bits: state.pattern, n: state.pattern.length, muted: () => muted.conga, toggle: () => $('congaMute').click() });
   return lanes;
 }
 
@@ -1253,10 +1239,13 @@ $('findForm').addEventListener('submit', async e => {
 function setPlace(p) {
   state.place = p;
   state.w = null;
+  state.utcOffset = null;
   const r = resolveCity(p);
   state.city = r.city;
   state.cityDist = r.dist;
-  $('placeLine').textContent = `${p.name}${p.country ? ', ' + p.country : ''} · ${r.city ? 'genres from ' + r.city.name : 'no genres yet'}`;
+  // 'genres from' only when the genres come from a different (nearest) city
+  const from = !r.city ? ' · no genres yet' : r.city.name.toLowerCase() === p.name.toLowerCase() ? '' : ` · genres from ${r.city.name}`;
+  $('placeLine').textContent = `${p.name}${p.country ? ', ' + p.country : ''}${from}`;
   $('readout').textContent = '';
   $('tiles').innerHTML = '';
   setStatus('Loading weather...');
@@ -1747,7 +1736,7 @@ function matchYoursKey(buf) {
 function refreshYourRhythm() {
   const sel = $('sampRhythm'), keep = yours.rhythm;
   sel.innerHTML = '';
-  for (const l of kitList) sel.append(new Option(l.id === 'conga' ? 'conga ring' : l.label, l.id));
+  for (const l of kitList) sel.append(new Option(l.label, l.id));
   yours.rhythm = kitList.some(l => l.id === keep) ? keep : (kitList[0] ? kitList[0].id : 'kick');
   sel.value = yours.rhythm;
 }
@@ -1827,7 +1816,6 @@ function closeFreesound() {
 $('sampSearch').addEventListener('click', openFreesound);
 $('sbClose').addEventListener('click', closeFreesound);
 $('sbOverlay').addEventListener('click', e => { if (e.target === $('sbOverlay')) closeFreesound(); });
-document.addEventListener('keydown', e => { if (e.key === 'Escape' && !$('sbOverlay').hidden) closeFreesound(); });
 const sampCard = $('sampCard');
 sampCard.addEventListener('dragover', e => { e.preventDefault(); });
 sampCard.addEventListener('drop', e => { const f = e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files[0]; if (!f) return; e.preventDefault(); loadYourSound(f); });
@@ -1891,6 +1879,7 @@ for (const name of ['kick', 'conga', 'shaker']) {
   $(name + 'Auto').addEventListener('click', () => {
     A.on = !A.on;
     $(name + 'Auto').setAttribute('aria-pressed', String(A.on));
+    $(name + 'Auto').textContent = A.on ? 'On' : 'Off';
     if (!A.on) flt[name].frequency.value = cutBase[name];
   });
   $(name + 'AutoRate').addEventListener('change', e => { A.rate = Number(e.target.value); });
@@ -1905,7 +1894,8 @@ for (const name of ['kick', 'conga', 'shaker']) {
 $('play').addEventListener('click', () => (playing ? stop() : start()));
 $('kickOn').addEventListener('click', () => {
   kickOn = !kickOn;
-  $('kickOn').setAttribute('aria-pressed', String(kickOn));
+  $('kickOn').setAttribute('aria-pressed', String(!kickOn));
+  $('kickOn').textContent = kickOn ? 'Mute' : 'Muted';
   syncKit();
 });
 function setOct(o) {
@@ -2405,11 +2395,12 @@ function mapFrame() {
   requestAnimationFrame(mapFrame);
 }
 
-// Esc: close the notes panel first, otherwise go back to the map
+// Esc closes whatever is open on top: Freesound, the record menu, then the genre notes. It never leaves the app.
 document.addEventListener('keydown', e => {
   if (e.key !== 'Escape') return;
-  if (!$('about-panel').hidden) closeAbout();
-  else if (!document.body.classList.contains('on-map')) showMap();
+  if (!$('sbOverlay').hidden) closeFreesound();
+  else if (!$('recMenu').hidden) { recMenuOpen(false); $('recFmt').focus(); }
+  else if (!$('about-panel').hidden) closeAbout();
 });
 
 // ---------- record and share (after Three Cities) ----------
@@ -2431,7 +2422,6 @@ if (!window.AudioWorkletNode) { recMenu.querySelector('[data-fmt="wav"]').disabl
 recFmt.addEventListener('click', e => { e.stopPropagation(); if (!REC.on) recMenuOpen(recMenu.hidden); });
 recMenu.addEventListener('click', e => { const b = e.target.closest('button[data-fmt]'); if (!b || b.disabled) return; setRecFmt(b.dataset.fmt === 'wav'); recMenuOpen(false); recFmt.focus(); });
 document.addEventListener('click', e => { if (!recMenu.hidden && !e.target.closest('.rec-wrap')) recMenuOpen(false); });
-document.addEventListener('keydown', e => { if (e.key === 'Escape' && !recMenu.hidden) { recMenuOpen(false); recFmt.focus(); } });
 const mmss = s => `${String(Math.floor(s / 60)).padStart(2, '0')}:${String(Math.floor(s % 60)).padStart(2, '0')}`;
 const mb = n => n < 1e6 ? `${Math.max(1, Math.round(n / 1e3))} KB` : `${(n / 1e6).toFixed(1)} MB`;
 // The file says what it is: the city, genre, tempo and kit, then the date
@@ -2442,7 +2432,7 @@ function musicTag() {
 function recFileName(ext) {
   const d = new Date(REC.t0 || Date.now()), pad = n => String(n).padStart(2, '0');
   const date = `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
-  return `Euclid engine - ${REC.tag} - ${date}.${ext}`.replace(/[\\/:*?"<>|]/g, '');
+  return `Rhythm Geometry - ${REC.tag} - ${date}.${ext}`.replace(/[\\/:*?"<>|]/g, '');
 }
 function recTap() {
   if (!REC.tap) { REC.tap = ctx.createMediaStreamDestination(); comp.connect(REC.tap); }   // after the compressor: exactly what you hear
@@ -2534,7 +2524,7 @@ $('share').addEventListener('click', async () => {
   const url = shareURL(), g = state.genre ? `${state.genre.name}, ` : '';
   const line = `${state.place.name} as a city rhythm: ${g}${$('bpm').value} bpm, ${activeKit.name} kit.`;
   if (navigator.share && matchMedia('(pointer: coarse)').matches) {
-    navigator.share({ title: 'Euclid engine \u00b7 City rhythm', text: line, url }).catch(() => {});
+    navigator.share({ title: 'Rhythm Geometry', text: line, url }).catch(() => {});
     return;
   }
   try { history.replaceState(null, '', url); } catch (e) {}   // the address bar holds the same link
@@ -2551,15 +2541,44 @@ function readSharedLink() {
 function applyShared(s) {
   if (s.follow) { state.follow = true; $('follow').setAttribute('aria-pressed', 'true'); }
   if (s.kit && KITS.some(k => k.id === s.kit)) { kitSel.value = s.kit; activeKit = KITS.find(k => k.id === s.kit); kitSel.title = activeKit.note; }
-  const g = state.city && state.city.genres.find(x => x.name === s.genre);
+  const want = (s.genre || '').toLowerCase();
+  const g = state.city && state.city.genres.find(x => x.name.toLowerCase() === want);
   if (g) selectGenre(g);
   if (s.bpm && Number(s.bpm) >= 60 && Number(s.bpm) <= 200) $('bpm').value = String(Math.round(Number(s.bpm)));   // last, so the genre's tempo doesn't overwrite it
 }
 
+// The genre list fades at the bottom while there is more to scroll
+function markMore() {
+  const g = document.querySelector('.gbody');
+  if (g) g.classList.toggle('more', g.scrollTop + g.clientHeight < g.scrollHeight - 4);
+}
+document.querySelector('.gbody') && document.querySelector('.gbody').addEventListener('scroll', markMore);
+window.addEventListener('resize', markMore);
+
+// ---------- voice tabs: Sound, Effects, Auto filter ----------
+function markTabs(card) {
+  const live = {
+    fx: [...card.querySelectorAll('select[id$="Delay"]')].some(e => e.value !== 'off') || [...card.querySelectorAll('input[id$="Rev"]')].some(e => Number(e.value) > 0),
+    auto: [...card.querySelectorAll('button[id$="Auto"]')].some(e => e.getAttribute('aria-pressed') === 'true'),
+  };
+  card.querySelectorAll('.vtabs [data-tab]').forEach(t => t.classList.toggle('live', !!live[t.dataset.tab]));
+}
+for (const card of document.querySelectorAll('.voice')) {
+  const tabs = [...card.querySelectorAll('.vtabs [data-tab]')];
+  tabs.forEach(t => t.addEventListener('click', () => {
+    tabs.forEach(x => x.setAttribute('aria-selected', String(x === t)));
+    card.querySelectorAll('.vpanel').forEach(p => { p.hidden = p.dataset.panel !== t.dataset.tab; });
+  }));
+  for (const ev of ['input', 'change', 'click']) card.addEventListener(ev, () => markTabs(card));
+  markTabs(card);
+}
+
 // ---------- start up ----------
+// The time in the city you are listening to (from the weather's UTC offset)
 function tickClock() {
-  const d = new Date();
-  $('clock').textContent = d.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
+  if (state.utcOffset == null) { $('clock').textContent = ''; return; }
+  const d = new Date(Date.now() + state.utcOffset * 1000);
+  $('clock').textContent = ` · ${String(d.getUTCHours()).padStart(2, '0')}:${String(d.getUTCMinutes()).padStart(2, '0')} local time`;
 }
 tickClock();
 setInterval(tickClock, 30000);
