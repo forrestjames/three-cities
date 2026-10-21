@@ -405,6 +405,66 @@
     .kitcard { height: auto; min-height: 170px; overflow: visible; }
     .kit { flex: none; min-height: 0; overflow: visible; }
   }
+
+  /* ---- concentric rings: city and hits | the big rings | rings list and genre. Sound controls slide in over the right. ---- */
+  .stage { align-items: stretch; }
+  .sidecard { position: relative; gap: 16px; }
+  .sidebox { display: flex; flex-direction: column; gap: 6px; }
+  .sidebox .label { margin: 0; }
+  .ringplace b { font-size: 30px; }
+  .wxbtn { align-items: flex-start; text-align: left; width: 100%; }
+  .wxbtn b { font-size: 26px; }
+  .modes { width: 92px; align-self: flex-start; }
+  .sidecard .readout { text-align: left; margin: auto 0 0; font-size: 12px; }
+  .sidecard .pattern-info { display: block; font-size: 11.5px; margin: 0; }
+  .wxpanel { visibility: hidden; transition: opacity 120ms ease-out, transform 160ms cubic-bezier(.2, .8, .2, 1), visibility 0s linear 160ms; }
+  .wxpanel.open { visibility: visible; transition-delay: 0s; }
+  .ringcard { align-items: center; justify-content: center; }
+  .kit .lane { display: flex; align-items: center; gap: 10px; padding: 6px 8px; border: 1px solid transparent; }
+  .kit .lane.sel { background: rgba(243, 236, 230, 0.07); border-color: var(--line); }
+  .kit .lane .cells { display: none; }
+  .lane-dot { display: block; width: 12px; height: 12px; border-radius: 50%; flex: none; }
+  .kit .lane .lane-name { flex: 1 1 0; min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+  .kit .lane.muted .lane-dot { opacity: .35; }
+  .lane-edit { flex: none; background: none; border: 1px solid var(--line); color: var(--ink-dim); padding: 3px 9px; font-size: 10px; letter-spacing: .1em; text-transform: uppercase; }
+  .lane-edit:hover { color: var(--ink); border-color: var(--ink-dim); }
+  #openSamp { align-self: flex-start; }
+  .kit .lane .lane-vol { flex: none; width: 64px; }
+  .rightcol .kithead { flex-wrap: wrap; gap: 6px; }
+  .rightcol .kitsel { max-width: 130px; }
+  .sidecard .readout, .sidecard .pattern-info { white-space: normal; word-break: break-word; overflow: visible; text-overflow: clip; }
+  /* the sound panel: one voice card at a time */
+  .vpwrap { position: fixed; z-index: 15; right: clamp(14px, 2vw, 28px); top: 78px; width: 380px; max-width: calc(100vw - 28px); max-height: calc(100vh - 96px); overflow-y: auto; display: flex; flex-direction: column; gap: 8px; background: var(--panel); border: 1px solid var(--line); border-top: 3px solid var(--accent); padding: 12px 14px; box-shadow: 0 18px 44px rgba(0, 0, 0, 0.6); opacity: 0; visibility: hidden; transform: translateX(14px); pointer-events: none; transition: opacity 120ms ease-out, transform 170ms cubic-bezier(.2, .8, .2, 1), visibility 0s linear 170ms; }
+  .vpwrap.open { opacity: 1; visibility: visible; transform: none; pointer-events: auto; transition-delay: 0s; }
+  .vp-head { display: flex; justify-content: space-between; align-items: center; gap: 10px; }
+  .vp-tabs { display: flex; border: 1px solid var(--line); }
+  .vp-tabs button { background: none; border: 0; padding: 6px 10px; font-size: 10.5px; letter-spacing: .1em; text-transform: uppercase; color: var(--ink-dim); }
+  .vp-tabs button + button { border-left: 1px solid var(--line); }
+  .vp-tabs button[aria-pressed="true"] { background: var(--accent); color: var(--ground); }
+  .vpwrap .voices { display: block; margin: 0; }
+  .vpwrap .voice { display: none; border: 0; padding: 4px 0 0; background: none; overflow: visible; }
+  .vpwrap .voice.sel { display: flex; }
+  .vpwrap .knobs { gap: 2px; }
+  .vpwrap .knobs .knob-cell { min-width: 0; }
+  @media (prefers-reduced-motion: reduce) { .vpwrap, .wxpanel { transition: none; } }
+  @media (max-width: 1000px) {
+    .vpwrap { left: 0; right: 0; top: auto; bottom: 0; width: auto; max-width: none; max-height: 72vh; border-left: 0; border-right: 0; transform: translateY(18px); }
+    .vpwrap.open { transform: none; }
+    #ring { max-width: 640px; }
+  }
+  @media (min-width: 1001px) and (min-height: 600px) {
+    html, body { height: 100%; overflow: hidden; }
+    .wrap { height: 100vh; grid-template-rows: auto minmax(0, 1fr); }
+    .stage { grid-template-columns: 250px minmax(0, 1fr) 300px; gap: 12px; }
+    .grid3 > .sidecard { overflow: visible; padding: 16px; gap: 14px; }
+    .grid3 > .ringcard { overflow: hidden; padding: 10px; }
+    .ringcard .ringbox { position: relative; flex: 1 1 0; min-height: 0; width: 100%; }
+    .ringcard #ring { position: absolute; top: 0; left: 50%; transform: translateX(-50%); height: 100%; width: auto; max-width: 100%; aspect-ratio: 1; margin: 0; cursor: pointer; }
+    .wxpanel { left: calc(100% + 10px); right: auto; top: 118px; width: 400px; max-width: calc(100vw - 40px); transform-origin: top left; }
+    .rightcol { display: grid; grid-template-rows: auto minmax(0, 1fr); gap: 10px; min-height: 0; min-width: 0; }
+    .rightcol > .kitcard { height: auto; min-height: 0; max-height: 46vh; overflow: hidden; }
+    .rightcol .kit { flex: 1 1 auto; min-height: 0; overflow-y: auto; }
+  }
 </style>
 </head>
 <body class="on-map">
@@ -466,18 +526,19 @@
     </div>
   </header>
 
-  <div class="grid3">
+  <div class="grid3 stage">
 
-    <section class="card ringcard" aria-label="Ring">
-      <div class="ringtop">
-        <div class="ringplace"><b id="ringCity"></b><span id="ringTemp"></span></div>
+    <section class="card sidecard" aria-label="City and hits">
+      <div class="ringplace"><b id="ringCity"></b><span id="ringTemp"></span></div>
+      <span id="ringSub" hidden>steps from temperature, hits from the chosen source</span>
+      <div class="sidebox">
+        <p class="label">Hits from</p>
         <button id="wxBtn" class="wxbtn" type="button" aria-expanded="false" aria-controls="wxPanel" title="Choose where the hits come from">
           <span id="wxKey">Humidity</span><b id="wxVal">-</b>
         </button>
       </div>
-      <span id="ringSub" hidden>steps from temperature, hits from the chosen source</span>
-      <div class="ringrow">
-        <div class="ringbox"><canvas id="ring" width="520" height="520" aria-label="Euclidean rhythm ring"></canvas></div>
+      <div class="sidebox">
+        <p class="label">Hit mode</p>
         <div class="modes" role="group" aria-label="How the hits are placed">
           <button type="button" data-mode="euclid" aria-pressed="true" title="Evenly spaced Euclidean rhythm">Euclid</button>
           <button type="button" data-mode="drift" aria-pressed="false" title="Each rotation, random hits move one step">Drift</button>
@@ -496,15 +557,19 @@
       </div>
     </section>
 
-    <div class="midcol">
-    <section class="card kitcard" aria-label="Drum kit">
+    <section class="card ringcard" aria-label="Rhythm rings">
+      <div class="ringbox"><canvas id="ring" width="800" height="800" aria-label="Concentric rhythm rings. Tap a ring to edit its sound or mute it."></canvas></div>
+    </section>
+
+    <div class="midcol rightcol">
+    <section class="card kitcard" aria-label="Rings">
       <div class="kithead">
-        <h2>Drum kit <small>one lane per drum in the genre's pattern</small></h2>
+        <h2>Rings <small>outside in, one per drum</small></h2>
         <select id="kitSel" class="kitsel" aria-label="Drum kit sound" title="Drum kit sound"></select>
       </div>
       <div id="kit" class="kit"></div>
+      <button id="openSamp" class="btn small" type="button">Your sound</button>
     </section>
-    </div>
 
     <section class="card" aria-label="Genres">
       <h2>Genre <small id="genreSub">kick and shaker come from here</small></h2>
@@ -522,9 +587,20 @@
       </div>
       <p id="genreNote" class="muted"></p>
     </section>
+    </div>
 
   </div>
 
+  <aside id="voicePanel" class="vpwrap" aria-hidden="true" aria-label="Sound controls">
+  <div class="vp-head">
+    <div class="vp-tabs" role="group" aria-label="Which sound to edit">
+      <button type="button" data-voice="kick" aria-pressed="false">Kick</button>
+      <button type="button" data-voice="conga" aria-pressed="false" title="The weather ring">Conga</button>
+      <button type="button" data-voice="shaker" aria-pressed="false">Shaker</button>
+      <button type="button" data-voice="sample" aria-pressed="false">Yours</button>
+    </div>
+    <button id="vpClose" class="btn small" type="button">Close</button>
+  </div>
   <section class="voices" aria-label="Voices">
 
     <div class="card voice" id="kickCard">
@@ -695,6 +771,7 @@
     </div>
 
   </section>
+  </aside>
 
   <pre id="log"></pre>
 </div>
@@ -1216,16 +1293,21 @@ function extrasOf(k) {
   const sh = shakerSrc(k), used = sh && sh.src;
   return Object.keys(k.voices).filter(v => v !== 'kick' && v !== 'shaker' && v !== k.bdVoice && v !== k.shVoice && v !== used);
 }
+// Colours for the rings: kick orange, shaker green, the weather ring uses the accent, other drums take a colour in turn
+const RING_COLORS = ['#f3ece6', '#f0c878', '#c9bfb7', '#9db4e8', '#e6a0c4', '#b8d98a'];
+// Which sound card a lane opens (the other drums only have a mute and a volume)
+const LANE_VOICE = { kick: 'kick', shaker: 'shaker', ring: 'conga' };
 function kitLanes() {
   const k = state.kick, n = k ? k.steps : 0;
-  const lanes = [{ id: 'kick', label: 'kick', idx: 'k', bits: k ? k.bd : [], n, muted: () => !kickOn, toggle: () => $('kickOn').click() }];
+  const lanes = [{ id: 'kick', label: 'kick', idx: 'k', bits: k ? k.bd : [], n, color: '#e8845c', muted: () => !kickOn, toggle: () => $('kickOn').click() }];
+  let ci = 0;
   for (const v of extrasOf(k)) {
-    lanes.push({ id: v, label: v.replace(/_/g, ' '), idx: 'k', bits: k.voices[v], n, extra: true,
+    lanes.push({ id: v, label: v.replace(/_/g, ' '), idx: 'k', bits: k.voices[v], n, extra: true, color: RING_COLORS[ci++ % RING_COLORS.length],
       muted: () => !!laneMuted[v], toggle: () => { laneMuted[v] = !laneMuted[v]; syncKit(); } });
   }
   const sh = shakerSrc(k);
-  if (sh) lanes.push({ id: 'shaker', label: sh.src ? `shaker (${sh.src.replace(/_/g, ' ')})` : 'shaker', idx: 'k', bits: sh.bits, n, muted: () => muted.shaker, toggle: () => $('shakerMute').click() });
-  lanes.push({ id: 'ring', label: 'conga ring', idx: 'r', bits: state.pattern, n: state.pattern.length, muted: () => muted.conga, toggle: () => $('congaMute').click() });
+  if (sh) lanes.push({ id: 'shaker', label: sh.src ? `shaker (${sh.src.replace(/_/g, ' ')})` : 'shaker', idx: 'k', bits: sh.bits, n, color: '#6fc3a6', muted: () => muted.shaker, toggle: () => $('shakerMute').click() });
+  lanes.push({ id: 'ring', label: 'conga ring', idx: 'r', bits: state.pattern, n: state.pattern.length, color: ACCENT, muted: () => muted.conga, toggle: () => $('congaMute').click() });
   return lanes;
 }
 
@@ -1243,6 +1325,9 @@ function renderLanes() {
     const row = document.createElement('div');
     row.className = 'lane' + (lane.extra ? ' extra' : '');
     row.dataset.lane = lane.id;
+    const dot = document.createElement('i');
+    dot.className = 'lane-dot';
+    dot.style.background = lane.color;
     const name = document.createElement('button');
     name.type = 'button';
     name.className = 'lane-name';
@@ -1262,7 +1347,16 @@ function renderLanes() {
       cells.appendChild(c);
       kitCells[lane.id].push(c);
     }
-    row.append(name, cells);
+    row.append(dot, name, cells);
+    if (LANE_VOICE[lane.id]) {
+      const edit = document.createElement('button');
+      edit.type = 'button';
+      edit.className = 'lane-edit';
+      edit.textContent = 'Edit';
+      edit.title = edit.ariaLabel = `Edit the ${lane.label} sound`;
+      edit.addEventListener('click', () => openVoice(LANE_VOICE[lane.id]));
+      row.appendChild(edit);
+    }
     if (lane.extra) {
       const vol = document.createElement('input');
       vol.type = 'range'; vol.min = '0'; vol.max = '100'; vol.step = '1';
@@ -1289,8 +1383,37 @@ function syncKit() {
     const m = lane.muted();
     row.querySelector('.lane-name').setAttribute('aria-pressed', String(m));
     row.classList.toggle('muted', m);
+    row.classList.toggle('sel', !!openVoiceName && LANE_VOICE[lane.id] === openVoiceName);
   }
 }
+
+// ---------- sound controls: one voice card at a time, in a panel that slides over the right-hand side ----------
+const VOICE_CARD = { kick: 'kickCard', conga: 'congaCard', shaker: 'shakerCard', sample: 'sampCard' };
+let openVoiceName = null;
+function openVoice(name) {
+  if (!VOICE_CARD[name]) return;
+  openVoiceName = name;
+  for (const v in VOICE_CARD) $(VOICE_CARD[v]).classList.toggle('sel', v === name);
+  document.querySelectorAll('.vp-tabs button').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.voice === name)));
+  $('voicePanel').classList.add('open');
+  $('voicePanel').setAttribute('aria-hidden', 'false');
+  syncKit();
+}
+function closeVoice() {
+  openVoiceName = null;
+  $('voicePanel').classList.remove('open');
+  $('voicePanel').setAttribute('aria-hidden', 'true');
+  syncKit();
+}
+$('vpClose').addEventListener('click', closeVoice);
+document.querySelectorAll('.vp-tabs button').forEach(b => b.addEventListener('click', () => openVoice(b.dataset.voice)));
+$('openSamp').addEventListener('click', () => (openVoiceName === 'sample' ? closeVoice() : openVoice('sample')));
+// a tap on empty background closes it; taps on controls, the rings or the panel do not
+document.addEventListener('click', e => {
+  if (!openVoiceName) return;
+  if (e.target.closest('#voicePanel, #ring, .kit, #sbOverlay, #openSamp, button, input, select, a, label')) return;
+  closeVoice();
+});
 
 // Light the cells under the playhead: kick, shaker and other drums follow the genre's steps, the conga follows the ring
 function markNow(k, r) {
@@ -2039,21 +2162,77 @@ for (const name of ['conga', 'shaker', 'sample']) {
 
 
 // ---------- drawing ----------
+// The ring picture: the weather ring in the middle, one ring per drum around it (kick outermost)
+const RING_S = 800;
+function ringGeometry() {
+  const S = RING_S, cx = S / 2, cy = S / 2, Rmax = S * 0.46, Rmain = S * 0.17;
+  const kit = kitList.filter(l => l.idx !== 'r' && l.n > 0);
+  const sp = kit.length ? (Rmax - Rmain) / kit.length : 0;
+  const rings = kit.map((lane, i) => {
+    const L = Math.max(1, lane.n);
+    // the same 16-step grid as before: 4 and 8 step patterns repeat around the ring
+    const D = L < 16 && 16 % L === 0 ? 16 : L;
+    return { lane, R: Rmax - i * sp, L, D };
+  });
+  return { S, cx, cy, Rmax, Rmain, sp, rings };
+}
 function drawRing(now) {
   const g = $('ring').getContext('2d');
-  const S = 520, cx = S / 2, cy = S / 2, R = 200;
+  const G = ringGeometry(), { S, cx, cy, Rmax, Rmain, sp, rings } = G;
   g.clearRect(0, 0, S, S);
-  g.strokeStyle = 'rgba(243,236,230,0.12)'; g.lineWidth = 2;
-  g.beginPath(); g.arc(cx, cy, R, 0, Math.PI * 2); g.stroke();
+  const at = (R, i, n) => { const a = -Math.PI / 2 + 2 * Math.PI * i / n; return [cx + R * Math.cos(a), cy + R * Math.sin(a)]; };
+  const sel = openVoiceName && Object.keys(LANE_VOICE).find(id => LANE_VOICE[id] === openVoiceName);
 
+  // tracks
+  g.lineWidth = 2;
+  for (const r of rings.concat([{ lane: { id: 'ring', color: ACCENT }, R: Rmain }])) {
+    g.strokeStyle = sel === r.lane.id ? r.lane.color : 'rgba(243,236,230,0.12)';
+    g.lineWidth = sel === r.lane.id ? 3 : 2;
+    g.beginPath(); g.arc(cx, cy, r.R, 0, Math.PI * 2); g.stroke();
+  }
+
+  // the playhead beam follows the kick's step, once for each repeat of a short pattern
+  if (playKick >= 0 && rings.length) {
+    const { L, D } = rings[0];
+    for (let m = 0; m < D / L; m++) {
+      const a = -Math.PI / 2 + 2 * Math.PI * ((playKick % L) + m * L) / D;
+      const grad = g.createLinearGradient(cx + Rmain * Math.cos(a), cy + Rmain * Math.sin(a), cx + (Rmax + 14) * Math.cos(a), cy + (Rmax + 14) * Math.sin(a));
+      grad.addColorStop(0, 'rgba(243,236,230,0)'); grad.addColorStop(1, 'rgba(243,236,230,0.6)');
+      g.strokeStyle = grad; g.lineWidth = 3;
+      g.beginPath();
+      g.moveTo(cx + Rmain * Math.cos(a), cy + Rmain * Math.sin(a));
+      g.lineTo(cx + (Rmax + 14) * Math.cos(a), cy + (Rmax + 14) * Math.sin(a));
+      g.stroke();
+    }
+  }
+
+  // the drum rings
+  const hitR = Math.max(4.5, Math.min(10, sp * 0.2));
+  for (const r of rings) {
+    const dim = r.lane.muted() ? 0.3 : 1;
+    for (let i = 0; i < r.D; i++) {
+      const hit = !!r.lane.bits[i % r.L], [x, y] = at(r.R, i, r.D);
+      const lit = hit && playKick >= 0 && (i % r.L) === playKick;
+      g.globalAlpha = dim * (hit ? 1 : 0.3);
+      g.fillStyle = hit ? r.lane.color : '#f3ece6';
+      if (lit) {
+        g.globalAlpha = dim * 0.25;
+        g.beginPath(); g.arc(x, y, hitR + 9, 0, Math.PI * 2); g.fill();
+        g.globalAlpha = dim;
+      }
+      g.beginPath(); g.arc(x, y, hit ? hitR + (lit ? 3 : 0) : hitR * 0.38, 0, Math.PI * 2); g.fill();
+    }
+  }
+  g.globalAlpha = 1;
+
+  // the weather ring in the middle
   const n = state.pattern.length;
   if (!n) return;
-  const at = i => { const a = -Math.PI / 2 + 2 * Math.PI * i / n; return [cx + R * Math.cos(a), cy + R * Math.sin(a)]; };
-  const dot = Math.max(5, Math.min(16, 180 / n));
-
+  const mainDim = muted.conga ? 0.3 : 1;
+  const dot = Math.max(5, Math.min(16, (2 * Math.PI * Rmain / n) * 0.34));
   for (let i = 0; i < n; i++) {
-    const [x, y] = at(i), hit = state.pattern[i] === 1;
-    g.globalAlpha = hit ? 1 : 0.3;
+    const [x, y] = at(Rmain, i, n), hit = state.pattern[i] === 1;
+    g.globalAlpha = mainDim * (hit ? 1 : 0.3);
     g.fillStyle = hit ? ACCENT : '#f3ece6';
     g.beginPath(); g.arc(x, y, hit ? dot : dot * 0.42, 0, Math.PI * 2); g.fill();
   }
@@ -2061,27 +2240,41 @@ function drawRing(now) {
 
   flashes = flashes.filter(f => now - f.t < 0.6);
   for (const f of flashes) {
-    const k = 1 - (now - f.t) / 0.6, [x, y] = at(f.pos);
+    const k = 1 - (now - f.t) / 0.6, [x, y] = at(Rmain, f.pos, n);
     g.globalAlpha = k * 0.5; g.fillStyle = ACCENT;
-    g.beginPath(); g.arc(x, y, dot + 22 * (1 - k) + 6, 0, Math.PI * 2); g.fill();
+    g.beginPath(); g.arc(x, y, dot + 18 * (1 - k) + 5, 0, Math.PI * 2); g.fill();
   }
   g.globalAlpha = 1;
 
   if (playRing >= 0 && playRing < n) {
     const a = -Math.PI / 2 + 2 * Math.PI * playRing / n;
-    g.strokeStyle = 'rgba(243,236,230,0.6)'; g.lineWidth = 3;
+    g.strokeStyle = 'rgba(243,236,230,0.7)'; g.lineWidth = 3;
     g.beginPath();
-    g.moveTo(cx + (R - 34) * Math.cos(a), cy + (R - 34) * Math.sin(a));
-    g.lineTo(cx + (R - 18) * Math.cos(a), cy + (R - 18) * Math.sin(a));
+    g.moveTo(cx + (Rmain - 34) * Math.cos(a), cy + (Rmain - 34) * Math.sin(a));
+    g.lineTo(cx + (Rmain - 20) * Math.cos(a), cy + (Rmain - 20) * Math.sin(a));
     g.stroke();
   }
 
   g.fillStyle = '#f3ece6'; g.textAlign = 'center';
-  g.font = '84px "Source Code Pro", ui-monospace, monospace'; g.fillText(String(n), cx, cy + 26);
+  g.font = '84px "Source Code Pro", ui-monospace, monospace'; g.fillText(String(n), cx, cy + 22);
   g.fillStyle = 'rgba(243,236,230,0.6)';
   g.font = '24px "Source Code Pro", ui-monospace, monospace';
-  g.fillText(`${state.hits} ${state.hits === 1 ? 'hit' : 'hits'}`, cx, cy + 66);
+  g.fillText(`${state.hits} ${state.hits === 1 ? 'hit' : 'hits'}`, cx, cy + 60);
 }
+
+// Tap a ring: the kick, shaker and weather ring open their sound controls, any other drum is muted or unmuted
+$('ring').addEventListener('click', e => {
+  const box = $('ring').getBoundingClientRect(), G = ringGeometry();
+  const x = (e.clientX - box.left) / box.width * G.S - G.cx, y = (e.clientY - box.top) / box.height * G.S - G.cy;
+  const d = Math.hypot(x, y);
+  const all = G.rings.map(r => ({ lane: r.lane, R: r.R })).concat([{ lane: kitList.find(l => l.idx === 'r'), R: G.Rmain }]);
+  let best = null, bd = Infinity;
+  for (const r of all) { const gap = Math.abs(d - r.R); if (r.lane && gap < bd) { bd = gap; best = r; } }
+  if (!best || bd > Math.max(14, (G.sp || 40) / 2)) { if (openVoiceName) closeVoice(); return; }
+  const v = LANE_VOICE[best.lane.id];
+  if (v) (openVoiceName === v ? closeVoice() : openVoice(v));
+  else best.lane.toggle();
+});
 
 function frame() {
   const now = ctx.currentTime;
@@ -2518,6 +2711,7 @@ document.addEventListener('keydown', e => {
   else if (!$('recMenu').hidden) { recMenuOpen(false); $('recFmt').focus(); }
   else if (!$('about-panel').hidden) closeAbout();
   else if ($('wxPanel').classList.contains('open')) { wxOpen(false); $('wxBtn').focus(); }
+  else if (openVoiceName) closeVoice();
 });
 
 // ---------- record and share (after Three Cities) ----------
