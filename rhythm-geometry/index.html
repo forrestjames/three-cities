@@ -70,6 +70,26 @@
   .tile[aria-pressed="true"] { border-color: var(--accent); background: rgba(208, 138, 106, 0.14); }
   .tile.static { cursor: default; }
   .tile.static b { color: var(--ink); }
+  /* ring card: city line, weather button, mode switch and the weather overlay */
+  .ringcard { position: relative; }
+  .ringtop { display: flex; align-items: center; justify-content: space-between; gap: 12px; min-width: 0; }
+  .ringplace { display: flex; align-items: baseline; gap: 10px; min-width: 0; }
+  .ringplace b { font-family: var(--display); font-weight: 400; font-size: 20px; letter-spacing: .08em; text-transform: uppercase; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .ringplace span { font-family: var(--mono); font-size: 14px; color: var(--ink-dim); white-space: nowrap; }
+  .wxbtn { display: flex; flex-direction: column; align-items: flex-end; gap: 1px; flex: none; background: rgba(243, 236, 230, 0.03); border: 1px solid var(--line); padding: 5px 9px; text-align: right; min-width: 92px; }
+  .wxbtn span { font-size: 10.5px; letter-spacing: .08em; text-transform: uppercase; color: var(--ink-dim); white-space: nowrap; }
+  .wxbtn b { font-family: var(--display); font-weight: 400; font-size: 18px; line-height: 1.1; white-space: nowrap; }
+  .wxbtn[aria-expanded="true"] { border-color: var(--accent); background: rgba(208, 138, 106, 0.14); }
+  .modes { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 0; border: 1px solid var(--line); }
+  .modes button { background: transparent; border: 0; padding: 9px 6px; font-size: 12px; letter-spacing: .14em; text-transform: uppercase; color: var(--ink-dim); }
+  .modes button + button { border-left: 1px solid var(--line); }
+  .modes button[aria-pressed="true"] { background: var(--accent); color: var(--ground); }
+  .wxpanel { position: absolute; top: 60px; right: 22px; z-index: 6; width: min(400px, calc(100% - 44px)); background: var(--panel); border: 1px solid var(--line); padding: 14px; display: flex; flex-direction: column; gap: 10px; box-shadow: 0 16px 40px rgba(0, 0, 0, 0.6); opacity: 0; transform: translateY(-8px) scale(0.97); transform-origin: top right; pointer-events: none; transition: opacity 120ms ease-out, transform 160ms cubic-bezier(0.2, 0.8, 0.2, 1); }
+  .wxpanel.open { opacity: 1; transform: none; pointer-events: auto; }
+  .wxhead { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; }
+  .wxhead h3 { margin: 0; font-family: var(--display); font-weight: 400; font-size: 15px; letter-spacing: .16em; text-transform: uppercase; }
+  .wxhead small { display: block; margin-top: 3px; font-family: var(--mono); font-size: 11px; letter-spacing: .12em; text-transform: none; color: var(--ink-dim); }
+  @media (prefers-reduced-motion: reduce) { .wxpanel { transition: none; } }
   .slider-row { display: grid; gap: 6px; }
   .slider-row .head { display: flex; justify-content: space-between; align-items: baseline; }
   output { font-size: 12px; color: var(--ink-dim); }
@@ -223,6 +243,7 @@
     .place { font-size: 13.5px; }
     .grid3 { margin: 0; min-height: 0; grid-template-columns: minmax(0, 0.9fr) minmax(0, 1fr) minmax(0, 1.1fr); gap: 10px; align-items: stretch; }
     .grid3 > .card { min-height: 0; overflow: hidden; gap: 8px; padding: 12px 14px; }
+    .grid3 > .ringcard { overflow: visible; }   /* lets the weather overlay sit over the next card */
     .card h2 { font-size: 14px; }
     .card h2 small { font-size: 10.5px; }
     .label { font-size: 10px; }
@@ -446,19 +467,32 @@
   <div class="grid3">
 
     <section class="card ringcard" aria-label="Ring">
-      <h2>Ring <small id="ringSub">steps from temperature, hits from the chosen source</small></h2>
+      <div class="ringtop">
+        <div class="ringplace"><b id="ringCity"></b><span id="ringTemp"></span></div>
+        <button id="wxBtn" class="wxbtn" type="button" aria-expanded="false" aria-controls="wxPanel" title="Choose where the hits come from">
+          <span id="wxKey">Humidity</span><b id="wxVal">-</b>
+        </button>
+      </div>
+      <span id="ringSub" hidden>steps from temperature, hits from the chosen source</span>
+      <div class="modes" role="group" aria-label="How the hits are placed">
+        <button type="button" data-mode="euclid" aria-pressed="true" title="Evenly spaced Euclidean rhythm">Euclid</button>
+        <button type="button" data-mode="drift" aria-pressed="false" title="Each rotation, random hits move one step">Drift</button>
+        <button type="button" data-mode="cluster" aria-pressed="false" title="Hits bunch together in random bursts, new each rotation">Cluster</button>
+      </div>
       <div class="ringbox"><canvas id="ring" width="520" height="520" aria-label="Euclidean rhythm ring"></canvas></div>
       <p id="readout" class="readout"></p>
       <p id="patternInfo" class="pattern-info"></p>
+      <div id="wxPanel" class="wxpanel" aria-hidden="true">
+        <div class="wxhead">
+          <h3>Weather <small>tap a name to choose where the hits come from</small></h3>
+          <button id="wxClose" class="btn small" type="button">Close</button>
+        </div>
+        <div id="tiles" class="tiles"></div>
+        <p id="status"></p>
+      </div>
     </section>
 
     <div class="midcol">
-    <section class="card" aria-label="Weather and hits">
-      <h2>Weather <small>tap a name to choose where the hits come from</small></h2>
-      <div id="tiles" class="tiles"></div>
-      <p id="status"></p>
-    </section>
-
     <section class="card kitcard" aria-label="Drum kit">
       <div class="kithead">
         <h2>Drum kit <small>one lane per drum in the genre's pattern</small></h2>
@@ -894,7 +928,7 @@ const state = {
   place: LONDON, w: null, steps: 0, hits: 0, pattern: [],
   source: 'humidity', density: 50,   // fixed at 50% now the knob is gone
   city: null, cityDist: 0, genre: null, patId: null, kick: null,
-  seq: 0, follow: false,
+  seq: 0, follow: false, mode: 'euclid',
 };
 
 // Which Atlas city's genres a place uses: the place's own city if it is close, else the nearest one
@@ -930,7 +964,7 @@ function renderTiles() {
     } else {
       b.className = 'tile';
       b.setAttribute('aria-pressed', String(state.source === d.key));
-      b.addEventListener('click', () => { state.source = d.key; rebuild(); renderTiles(); });
+      b.addEventListener('click', () => { state.source = d.key; rebuild(); renderTiles(); wxOpen(false); });
     }
     const v = document.createElement('b'); v.textContent = d.v;
     if (d.u) { const u = document.createElement('small'); u.textContent = d.u === '%' ? '%' : ' ' + d.u; v.appendChild(u); }
@@ -939,13 +973,75 @@ function renderTiles() {
     box.appendChild(b);
   }
   $('ringSub').textContent = `steps from temperature, hits from ${SOURCE_LABEL[state.source].toLowerCase()}`;
+  // the button on the ring shows the chosen source and its live value
+  const cur = w ? SOURCES.find(d => d.id === state.source) : null, cv = cur ? sourceValue(cur.id, w) : null;
+  $('wxKey').textContent = SOURCE_LABEL[state.source];
+  $('wxVal').textContent = cv == null ? '-' : cur.id === 'day' ? (cv ? 'Day' : 'Night') : (Math.abs(cv) >= 100 ? Math.round(cv) : Math.round(cv * 10) / 10) + cur.unit.replace(/ /g, '');
 }
+
+// The weather overlay in the top right of the ring card
+function wxOpen(open) {
+  $('wxPanel').classList.toggle('open', open);
+  $('wxPanel').setAttribute('aria-hidden', String(!open));
+  $('wxBtn').setAttribute('aria-expanded', String(open));
+}
+$('wxBtn').addEventListener('click', () => wxOpen(!$('wxPanel').classList.contains('open')));
+$('wxClose').addEventListener('click', () => { wxOpen(false); $('wxBtn').focus(); });
+document.addEventListener('click', e => {
+  if ($('wxPanel').classList.contains('open') && !$('wxPanel').contains(e.target) && !$('wxBtn').contains(e.target)) wxOpen(false);
+});
+
+// ---------- hit modes ----------
+// Euclid: evenly spaced, as before. Drift: each rotation, random hits move one step. Cluster: hits bunch into random bursts.
+// Every mode keeps the same number of hits and steps.
+const MODE_NAME = { euclid: 'Euclid', drift: 'Drift', cluster: 'Cluster' };
+function walkHits(H, L, gaps, start) {
+  const p = new Array(L).fill(0);
+  let pos = start, placed = 0, i = 0, guard = 0;
+  while (placed < H && guard++ < L * 8) {
+    const at = ((pos % L) + L) % L;
+    if (p[at]) { pos += 1; continue; }          // taken: slide on to the next free step
+    p[at] = 1; placed++;
+    pos += gaps[i++ % gaps.length];
+  }
+  return p;
+}
+function makeRing(mode, H, L, prev) {
+  if (!H || !L) return euclid(H, L);
+  if (mode === 'drift' && prev && prev.length === L && prev.filter(Boolean).length === H) {
+    const next = new Array(L).fill(0);
+    for (let i = 0; i < L; i++) {
+      if (!prev[i]) continue;
+      const to = (i + 1) % L;
+      // a hit moves one step forward half the time, but only into an empty step
+      if (Math.random() < 0.5 && !prev[to]) next[to] = 1; else next[i] = 1;
+    }
+    return next;
+  }
+  if (mode === 'drift') return euclid(H, L);
+  if (mode === 'cluster') {
+    // a new random burst pattern each rotation: 2 to 4 gaps of 1, 2 or 3 steps
+    const gaps = Array.from({ length: 2 + Math.floor(Math.random() * 3) }, () => 1 + Math.floor(Math.random() * 3));
+    return walkHits(H, L, gaps, Math.floor(Math.random() * L));
+  }
+  return euclid(H, L);
+}
+function showPattern() {
+  $('readout').textContent = `${state.steps} steps · ${state.hits} ${state.hits === 1 ? 'hit' : 'hits'} · ${toStr(state.pattern)}`;
+}
+function setMode(m) {
+  state.mode = m;
+  document.querySelectorAll('.modes button').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.mode === m)));
+  rebuild();
+}
+document.querySelectorAll('.modes button').forEach(b => b.addEventListener('click', () => setMode(b.dataset.mode)));
 
 function rebuild() {
   if (!state.w) return;
   Object.assign(state, mapWeather(state.w, state.source, state.density));
+  if (state.mode !== 'euclid') state.pattern = makeRing(state.mode, state.hits, state.steps, null);
   renderLanes();
-  $('readout').textContent = `${state.steps} steps · ${state.hits} ${state.hits === 1 ? 'hit' : 'hits'} · ${toStr(state.pattern)}`;
+  showPattern();
   renderTiles();
 }
 
@@ -962,6 +1058,7 @@ async function fetchWeather() {
     if (seq !== state.seq) return;
     const k = j.current;
     state.w = { t: k.temperature_2m, h: k.relative_humidity_2m, w: k.wind_speed_10m, c: k.cloud_cover, r: k.precipitation };
+    $('ringTemp').textContent = `${Math.round(k.temperature_2m)}°C`;
     // the same hour from the hourly list (dew point, low and high cloud, visibility, chance of rain)
     const hi = j.hourly ? j.hourly.time.indexOf(k.time.slice(0, 13) + ':00') : -1, H = (name) => (hi >= 0 && j.hourly[name] ? j.hourly[name][hi] : null);
     state.env = { rain: k.rain, showers: k.showers, snow: k.snowfall, feels: k.apparent_temperature, pres: k.pressure_msl,
@@ -1246,6 +1343,8 @@ function setPlace(p) {
   // 'genres from' only when the genres come from a different (nearest) city
   const from = !r.city ? ' · no genres yet' : r.city.name.toLowerCase() === p.name.toLowerCase() ? '' : ` · genres from ${r.city.name}`;
   $('placeLine').textContent = `${p.name}${p.country ? ', ' + p.country : ''}${from}`;
+  $('ringCity').textContent = p.name;
+  $('ringTemp').textContent = '';
   $('readout').textContent = '';
   $('tiles').innerHTML = '';
   setStatus('Loading weather...');
@@ -1832,6 +1931,13 @@ function schedule(t, n) {
   if (yours.buf) yoursStep(t, n);
   const k = state.kick ? n % state.kick.steps : -1;
   const r = state.pattern.length ? n % state.pattern.length : -1;
+  // at the start of each rotation, Drift and Cluster make a new ring (same hits, same steps)
+  if (r === 0 && n > 0 && state.mode !== 'euclid') {
+    const next = makeRing(state.mode, state.hits, state.pattern.length, state.pattern);
+    state.pattern.splice(0, state.pattern.length, ...next);   // same array, so the lanes and the ring see it
+    renderLanes();
+    showPattern();
+  }
   const congaNow = r >= 0 && state.pattern[r] === 1;
   if (congaNow) congaHit(t);
   if (k >= 0 && kickOn && state.kick.bd[k]) kickHit(t);
@@ -2401,6 +2507,7 @@ document.addEventListener('keydown', e => {
   if (!$('sbOverlay').hidden) closeFreesound();
   else if (!$('recMenu').hidden) { recMenuOpen(false); $('recFmt').focus(); }
   else if (!$('about-panel').hidden) closeAbout();
+  else if ($('wxPanel').classList.contains('open')) { wxOpen(false); $('wxBtn').focus(); }
 });
 
 // ---------- record and share (after Three Cities) ----------
