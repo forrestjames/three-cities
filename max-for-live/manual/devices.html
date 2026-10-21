@@ -1,0 +1,131 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><title>Three Cities devices, drawn from the patches</title>
+<style>
+/* These are drawings made from the devices' own layout (presentation rectangles in the .amxd files)
+   and the dashboard's own drawing code. They are not screenshots from Live. */
+html, body { margin: 0; background: #1b1b1b; }
+body { width: max-content; padding: 0; font-family: Arial, Helvetica, sans-serif; }
+.dev { position: relative; background: #343434; color: #d8d8d8; border: 1px solid #1a1a1a; border-radius: 3px; overflow: hidden; }
+.bar { position: absolute; left: 0; top: 0; right: 0; height: 20px; background: #4a4a4a; border-bottom: 1px solid #222; font-size: 11px; line-height: 20px; padding-left: 26px; color: #e8e8e8; }
+.bar i { position: absolute; left: 8px; top: 5px; width: 10px; height: 10px; border-radius: 50%; background: #ffb24a; }
+.body { position: absolute; left: 0; top: 21px; right: 0; bottom: 0; }
+.a { position: absolute; }
+.menu { position: absolute; height: 15px; background: #1d1d1d; border: 1px solid #101010; border-radius: 2px; font-size: 10px; line-height: 15px; padding: 0 6px; color: #ffb24a; box-sizing: border-box; }
+.menu::after { content: ""; position: absolute; right: 5px; top: 5px; border: 3px solid transparent; border-top: 4px solid #aaa; }
+.lbl { position: absolute; font-size: 10px; color: #bdbdbd; }
+.title { position: absolute; font-size: 11px; color: #e8e8e8; font-weight: bold; }
+.btn { position: absolute; height: 20px; background: #474747; border: 1px solid #1d1d1d; border-radius: 2px; font-size: 10px; line-height: 19px; text-align: center; color: #e0e0e0; box-sizing: border-box; }
+.line { position: absolute; left: 6px; font-size: 10px; color: #cfcfcf; white-space: nowrap; font-family: Arial, Helvetica, sans-serif; }
+.dial { position: absolute; width: 44px; height: 48px; text-align: center; }
+.dial svg { display: block; margin: 0 auto; }
+.dial b { display: block; font-size: 9px; color: #bdbdbd; font-weight: normal; margin-top: -2px; }
+.dial span { display: block; font-size: 10px; color: #ffb24a; }
+.edit { position: absolute; background: #1d1d1d; border: 1px solid #101010; border-radius: 2px; font-size: 11px; color: #ffb24a; padding: 3px 5px; box-sizing: border-box; line-height: 14px; }
+</style></head><body>
+<div id="out"></div>
+<script>
+const ACC = ['#d08a6a', '#6fa38c', '#a98bc4'];
+
+// ---------- City Track (412 x ~160 device area) ----------
+function dial(x, y, label, value, frac) {
+  const a0 = 135, a1 = 405, a = a0 + (a1 - a0) * frac, r = 15, c = 22;
+  const pt = (d) => [c + r * Math.cos(d * Math.PI / 180), 20 + r * Math.sin(d * Math.PI / 180)];
+  const [sx, sy] = pt(a0), [ex, ey] = pt(a1), [vx, vy] = pt(a);
+  const big = (a - a0) > 180 ? 1 : 0;
+  return `<div class="dial" style="left:${x}px;top:${y}px"><svg width="44" height="36" viewBox="0 0 44 40">
+    <path d="M${sx},${sy} A${r},${r} 0 1 1 ${ex},${ey}" fill="none" stroke="#1d1d1d" stroke-width="4"/>
+    <path d="M${sx},${sy} A${r},${r} 0 ${big} 1 ${vx},${vy}" fill="none" stroke="#ffb24a" stroke-width="4"/>
+    <circle cx="${c}" cy="20" r="9" fill="#2a2a2a"/><line x1="${c}" y1="20" x2="${vx - (vx - c) * .2}" y2="${vy - (vy - 20) * .2}" stroke="#f0f0f0" stroke-width="2"/></svg>
+    <b>${label}</b><span>${value}</span></div>`;
+}
+function euclidStr(n, k) { let s = ''; for (let i = 0; i < n; i++) s += (i * k) % n < k ? 'x' : '.'; return s; }
+function cityTrack(o = {}) {
+  const city = o.city ?? 'City 1', src = o.src ?? 'humidity', note = o.note ?? '60', dens = o.dens ?? '50', chance = o.chance ?? '100 %', rate = o.rate ?? 'Auto', mode = o.mode ?? 'Melody';
+  const l1 = o.l1 ?? 'Boston 16°C | minor pentatonic';
+  const l2 = o.l2 ?? 'hum 62% | wind 14 km/h | gusts 22 | 1017 hPa | rain 0 mm (5%)';
+  const l3 = o.l3 ?? `16 steps | 5 hits from humidity | auto 1/8 | ${euclidStr(16, 5)}`;
+  return `<div class="dev" id="track" style="width:412px;height:170px"><div class="bar"><i></i>City Track</div><div class="body">
+   <div class="title" style="left:6px;top:4px">City Track v2</div>
+   <div class="menu" style="left:6px;top:26px;width:100px">${city}</div>
+   <div class="menu" style="left:6px;top:48px;width:100px">${src}</div>
+   ${dial(120, 18, 'Note', note, .47)}${dial(170, 18, 'Density', dens, .5)}${dial(220, 18, 'Chance', chance, 1)}
+   <div class="lbl" style="left:272px;top:25px">Rate</div><div class="menu" style="left:272px;top:44px;width:60px">${rate}</div>
+   <div class="lbl" style="left:340px;top:25px">Mode</div><div class="menu" style="left:340px;top:44px;width:64px">${mode}</div>
+   <div class="btn" style="left:6px;top:72px;width:55px">refresh</div><div class="btn" style="left:66px;top:72px;width:55px">restart</div>
+   <div class="line" style="top:99px">${l1}</div><div class="line" style="top:118px">${l2}</div><div class="line" style="top:137px">${l3}</div>
+  </div></div>`;
+}
+
+// ---------- City Dashboard (780 x ~169) ----------
+const NAMES = ['Boston', 'Copenhagen', 'London'];
+const SAMPLE = [
+  { w: [16, 62, 14, 40, 0, '11:04'], sun: { day: true, arc: .8, prog: .62 }, sleep: 0, label: 'day' },
+  { w: [11, 81, 22, 90, 0.4, '17:04'], sun: { day: false }, sleep: .3, label: 'drifting off' },
+  { w: [14, 72, 12, 55, 0, '16:04'], sun: { day: true, arc: .5, prog: .8 }, sleep: 0, label: 'day' },
+];
+function drawDash(cv, names) {
+  const K = 3; const W = 640, H = 169; cv.width = W * K; cv.height = H * K; cv.style.width = W + 'px'; cv.style.height = H + 'px';
+  const ctx = cv.getContext('2d'); ctx.scale(K, K);
+  ctx.fillStyle = '#1f1f1f'; ctx.fillRect(0, 0, W, H);
+  const gap = 6, pw = (W - gap * 4) / 3;
+  names.forEach((n, i) => panel(ctx, n, i, gap + i * (pw + gap), gap, pw, H - gap * 2));
+}
+function rr(ctx, x, y, w, h, r) { ctx.beginPath(); ctx.moveTo(x + r, y); ctx.arcTo(x + w, y, x + w, y + h, r); ctx.arcTo(x + w, y + h, x, y + h, r); ctx.arcTo(x, y + h, x, y, r); ctx.arcTo(x, y, x + w, y, r); ctx.closePath(); }
+function panel(ctx, name, i, x, y, w, h) {
+  const c = SAMPLE[i], acc = ACC[i], day = c.sun.day, glow = day ? c.sun.arc : 0;
+  const bg = day ? [0.17 + 0.07 * glow, 0.16 + 0.04 * glow, 0.15] : [0.09, 0.10, 0.16];
+  const rgb = (a, al = 1) => `rgba(${Math.round(a[0] * 255)},${Math.round(a[1] * 255)},${Math.round(a[2] * 255)},${al})`;
+  const hexA = (h, a) => { const v = parseInt(h.slice(1), 16); return `rgba(${v >> 16 & 255},${v >> 8 & 255},${v & 255},${a})`; };
+  ctx.fillStyle = rgb(bg); rr(ctx, x, y, w, h, 8); ctx.fill();
+  const white = 'rgba(242,242,242,1)', dim = 'rgba(242,242,242,.45)';
+  const txt = (s, tx, ty, size, col, bold, right) => { ctx.font = `${bold ? 'bold ' : ''}${size}px Arial`; ctx.fillStyle = col; ctx.textAlign = right ? 'right' : 'left'; ctx.fillText(s, tx, ty); };
+  txt(name, x + 10, y + 18, 12, acc, true);
+  const [temp, hum, wind, cloud, rain, time] = c.w;
+  txt(time + '  ' + c.label, x + 10, y + 33, 10, dim);
+  txt(temp + '°', x + w - 10, y + 26, 20, white, true, true);
+  // ring
+  const shape = euclidStr(temp, Math.max(1, Math.round(temp * hum / 100 * 0.5))), n = shape.length;
+  const cx = x + 58, cy = y + h - 58, R = 40; const pos = [3, 6, 9][i];
+  ctx.strokeStyle = hexA(acc, .18); ctx.lineWidth = 1; ctx.beginPath(); ctx.arc(cx, cy, R, 0, 7); ctx.stroke();
+  const dot = Math.max(2, Math.min(5, 70 / n));
+  for (let k = 0; k < n; k++) {
+    const ang = -Math.PI / 2 + 2 * Math.PI * k / n, px = cx + R * Math.cos(ang), py = cy + R * Math.sin(ang), hit = shape[k] === 'x', here = k === pos;
+    let r = hit ? dot : dot * .5; if (here) { r += hit ? 3 : 1.5; ctx.fillStyle = hit ? white : hexA(acc, .9); } else ctx.fillStyle = hit ? hexA(acc, day ? 1 : .55) : 'rgba(255,255,255,.2)';
+    ctx.beginPath(); ctx.arc(px, py, r, 0, 7); ctx.fill();
+  }
+  const hits = shape.split('').filter(s => s === 'x').length;
+  ctx.textAlign = 'center'; txt(String(n), cx, cy + 2, 13, white, true); ctx.textAlign = 'center'; txt(hits + (hits === 1 ? ' hit' : ' hits'), cx, cy + 13, 9, dim);
+  ctx.textAlign = 'left';
+  // sun
+  const sx = x + w - 52, sy = y + 66, SR = 26;
+  ctx.strokeStyle = 'rgba(255,255,255,.25)'; ctx.beginPath(); ctx.arc(sx, sy, SR, Math.PI, 2 * Math.PI); ctx.stroke(); ctx.beginPath(); ctx.moveTo(sx - SR - 6, sy); ctx.lineTo(sx + SR + 6, sy); ctx.stroke();
+  if (day) { const a = Math.PI + Math.PI * c.sun.prog, ux = sx + SR * Math.cos(a), uy = sy + SR * Math.sin(a); ctx.fillStyle = 'rgba(255,209,89,.25)'; ctx.beginPath(); ctx.arc(ux, uy, 8, 0, 7); ctx.fill(); ctx.fillStyle = '#ffd159'; ctx.beginPath(); ctx.arc(ux, uy, 4.5, 0, 7); ctx.fill(); }
+  else { ctx.fillStyle = 'rgba(217,224,255,.9)'; ctx.beginPath(); ctx.arc(sx, sy + 9, 5, 0, 7); ctx.fill(); ctx.fillStyle = rgb(bg); ctx.beginPath(); ctx.arc(sx + 3, sy + 7, 5, 0, 7); ctx.fill(); }
+  // bars
+  const bars = [['hum', hum / 100, Math.round(hum) + '%'], ['wind', Math.min(wind, 50) / 50, Math.round(wind) + ' km/h'], ['cloud', cloud / 100, Math.round(cloud) + '%'], ['rain', Math.min(rain, 5) / 5, rain + ' mm']];
+  const bx = x + 112, bw = w - 122;
+  bars.forEach((b, k) => {
+    const by = y + h - 64 + k * 15; txt(b[0], bx, by + 7, 9, dim);
+    const barX = bx + 30, barW = bw - 30 - 46; ctx.fillStyle = 'rgba(255,255,255,.1)'; ctx.fillRect(barX, by, barW, 6);
+    ctx.fillStyle = hexA(acc, .85); ctx.fillRect(barX, by, Math.max(1, barW * Math.max(0, Math.min(1, b[1]))), 6);
+    txt(b[2], x + w - 10, by + 7, 8, 'rgba(255,255,255,.35)', false, true);
+  });
+}
+function cityDashboard() {
+  return `<div class="dev" id="dash" style="width:780px;height:190px"><div class="bar"><i></i>City Dashboard</div><div class="body">
+   <canvas id="cv" width="640" height="169" style="position:absolute;left:0;top:0"></canvas>
+   <div class="lbl" style="left:646px;top:6px">Cities (a, b, c ↵)</div>
+   <div class="edit" style="left:646px;top:22px;width:130px;height:38px">Boston / Copenhagen / London</div>
+   <div class="lbl" style="left:646px;top:68px">Key</div><div class="menu" style="left:690px;top:68px;width:86px">C</div>
+   <div class="lbl" style="left:646px;top:92px">Scale</div><div class="menu" style="left:646px;top:108px;width:130px">minor pentatonic</div>
+   <div class="lbl" style="left:646px;top:130px">Chords change</div><div class="menu" style="left:646px;top:146px;width:130px">4 bars</div>
+  </div></div>`;
+}
+
+const which = new URLSearchParams(location.search).get('d') || 'both';
+const o = document.getElementById('out');
+if (which === 'track') o.innerHTML = cityTrack();
+else if (which === 'dash') { o.innerHTML = cityDashboard(); drawDash(document.getElementById('cv'), NAMES); }
+else if (which === 'track-rhythm') o.innerHTML = cityTrack({ city: 'City 2', src: 'wind', note: '38', dens: '60', mode: 'Rhythm', rate: '1/16', l1: 'Copenhagen 11°C (drifting off)', l2: 'hum 81% | wind 22 km/h | gusts 31 | 1009 hPa | rain 0.4 mm (30%)', l3: '11 steps | 3 hits from wind | 1/16 | ' + euclidStr(11, 3) });
+else { o.innerHTML = cityTrack() + '<div style="height:12px"></div>' + cityDashboard(); drawDash(document.getElementById('cv'), NAMES); }
+</script></body></html>

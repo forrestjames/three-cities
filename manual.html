@@ -250,13 +250,15 @@ kbd { display: inline-block; min-width: 26px; text-align: center; border: 1.5px 
     <tr><td>Rate</td><td>How long each step lasts, from 1/32 to a whole bar. The weather nudges it too, through air pressure.</td></tr>
     <tr><td>Density</td><td>Scales the number of hits up or down from what the weather says.</td></tr>
     <tr><td>Chance</td><td>The chance each hit actually plays. Lower it for a looser, breathier line.</td></tr>
+    <tr><td>Pan</td><td>Where the city sits, left to right. Auto is the gentle drift the weather gives it. Move the slider and Auto switches off. Press Auto to go back. Manual pan also sends MIDI CC 10 on the city's channel.</td></tr>
+    <tr><td>Length</td><td>How long each note rings, from 25% to 250%. It is the decay, the ring time, not a sustain. Short is plucky. Long blurs into the reverb.</td></tr>
     <tr><td>Octave</td><td>Moves the city from two octaves down to two up.</td></tr>
     <tr><td>Reverb, Delay</td><td>Sends this city to the reverb and the delay. Each visit starts with a random mix, so both pedals get used.</td></tr>
     <tr><td>Swap city</td><td>Type a place, or roll the dice, to replace this city.</td></tr>
   </table>
 
   <h3>Sounds</h3>
-  <p>Thirty-seven, from gentle to unhinged, sorted in the menu into families: keys, mallets and bells, plucked, breath and leads, pads and strings, grain textures, bass, percussion, and your own. A few favourites:</p>
+  <p>Forty, from gentle to unhinged, sorted in the menu into families: keys, mallets and bells, plucked, breath and leads, pads and strings, grain textures, bass, percussion, and your own. A few favourites:</p>
   <table>
     <tr><th>Sound</th><th>Character</th></tr>
     <tr><td>Felt piano</td><td>A piano with felt on the hammers. Soft, close, a little bit sad.</td></tr>
@@ -265,7 +267,7 @@ kbd { display: inline-block; min-width: 26px; text-align: center; border: 1.5px 
     <tr><td>Grand piano, Harp</td><td>Real recorded instruments, credited at the bottom of the page.</td></tr>
     <tr><td>Juno pad, strings, keys</td><td>In the spirit of an old Roland polysynth. Chorus included.</td></tr>
     <tr><td>Grain cloud, shimmer, dust</td><td>Tiny slices of sound scattered into a haze. Best on slow, cloudy cities.</td></tr>
-    <tr><td>Kick, Snare, Hi-hat, Rimshot, Conga, Cowbell, Hand drum, Woodblock, Tongue drum, Clave</td><td>Tuned percussion. Each hit still follows the melody, folded into the range where that instrument lives, so a city can be its own little percussionist. Put a kick, a snare and a hi-hat on the three cities and the weather plays a whole kit.</td></tr>
+    <tr><td>Kick, Snare, Hi-hat, Rimshot, Conga, Conga high, Conga mid, Conga low, Cowbell, Hand drum, Woodblock, Tongue drum, Clave</td><td>Tuned percussion. Each hit still follows the melody, folded into the range where that instrument lives, so a city can be its own little percussionist. Put a kick, a snare and a hi-hat on the three cities and the weather plays a whole kit.</td></tr>
     <tr><td>Sub bass, Acid bass</td><td>The low end. When only one city is awake it never gets the sub bass, so the night doesn't rumble.</td></tr>
   </table>
 </section>
@@ -274,7 +276,7 @@ kbd { display: inline-block; min-width: 26px; text-align: center; border: 1.5px 
   <span class="sec-no">05</span>
   <h2>Your own sample</h2>
   <p class="kicker">Feed a city any sound you like. The weather cuts it up.</p>
-  <p>Choose <b>Your sample…</b> from the top of a card's sound menu and pick a file, or just drop an audio file onto the card. On a phone, choosing it opens the card's extra controls and lights up <b>Load a sound</b>: tap it to pick a file. Your phone's file picker reaches iCloud, Dropbox and Google Drive too, if you have their apps. WAV, MP3, M4A, AIFF: most things work. The sound stays on your device and is never uploaded.</p>
+  <p>Choose <b>Your sample…</b> from the top of a card's sound menu and pick a file, or just drop an audio file onto the card. Once it loads, the menu shows a short version of its name. On a phone, choosing it opens the card's extra controls and lights up <b>Load a sound</b>: tap it to pick a file. Your phone's file picker reaches iCloud, Dropbox and Google Drive too, if you have their apps. WAV, MP3, M4A, AIFF: most things work. The sound stays on your device and is never uploaded.</p>
   <p>It isn't played straight. Every note asks one question: <span class="mark">where am I in this city's loop?</span> The answer, from the first step to the last, shapes the sound. Because the loop length is the temperature, a 21°C city cuts your sound into 21 places and a 4°C city into four.</p>
   <table>
     <tr><th>Steps shape</th><th>What happens across the loop</th></tr>
@@ -297,7 +299,7 @@ kbd { display: inline-block; min-width: 26px; text-align: center; border: 1.5px 
   <table>
     <tr><th>Module</th><th>Controls</th></tr>
     <tr><td>Play</td><td>Tempo and volume. Tempo is the speed with every city awake. The display shows what you're actually hearing, and the lamp blinks on the beat.</td></tr>
-    <tr><td>Harmony</td><td>Key and scale for all three cities. Seventeen scales, from minor pentatonic to Japanese yo and Okinawan ryukyu. Change them and the cities follow from their next note. Under the menus a little keyboard shows the scale: the key's note is brightest, the rest of the scale is lit, and a white dot marks the notes of the chord playing right now. Each key flashes in a city's colour as that city plays it. Chords lives at the bottom of Harmony, under a line, with its own lamp. When the lamp is off, only the Chords knobs dim. The rack has three columns now: Play with MIDI under it, then Harmony with Chords, then Filter.</td></tr>
+    <tr><td>Harmony</td><td>Key and scale for all three cities. Twenty-eight scales, from minor pentatonic to Japanese yo, Okinawan ryukyu, Balinese pelog and Indian bhairav. Change them and the cities follow from their next note. Under the menus a little keyboard shows the scale: the key's note is brightest, the rest of the scale is lit, and a white dot marks the notes of the chord playing right now. Each key flashes in a city's colour as that city plays it. Chords lives at the bottom of Harmony, under a line, with its own lamp. When the lamp is off, only the Chords knobs dim. The rack has three columns now: Play with MIDI under it, then Harmony with Chords, then Filter.</td></tr>
     <tr><td>Chords</td><td>Its own panel, next to Harmony. Press the lamp to switch on the chord bed: slow, soft chords from the shared progression, underneath everything. Each chord swells in, holds and fades as the next arrives. Change sets how long each chord holds: every 4 bars (the default), 8, 16 or 32. Drone holds the home chord the whole time, with no changes. Filter is a lowpass just for the chords, open by default (16k); turn it down to darken the bed on its own. Auto sweeps that filter towards the moment the cities line up, as the Rhythm section does. Octave moves the whole chord bed up or down, up to two octaves either way, and it changes straight away while playing. The main Filter still applies to everything, chords included. Reverb and Delay set how much of the chord bed goes into the hall and the echo, like the cities' own sends. Reverb starts at the same level as before; Delay starts off. The knob sets how loud it sits, and Chord sound picks the voice: Bowed (the default, each chord blooms open like a long bow stroke), Warm pad, Glass (pure, slowly shimmering sines), Air (breath through a pitched filter), Tape strings (an old string machine on a tired tape), Strings, Choir, Soft organ or Shimmer (octaves above, mostly in the hall). As the cities fall asleep the bed gets darker and quieter too.</td></tr>
     <tr><td>Filter</td><td>A DJ-style filter on the whole mix. Left is low-pass, right is high-pass, 12 o'clock is off. It moves like the Auto Filter in Ableton Live. The <b>Filter</b> knob sets the centre. <b>Amount</b> sets how far it swings from there, up to half the knob's travel either way. Leave Amount at 0 and nothing moves. <b>Offset</b> sets where the swing sits around the knob. In the middle it goes either side. Turn it left and it only goes below the knob, into the warm lows. Turn it right and it only goes above, thinner and brighter. A faint band on the Filter knob's ring shows the exact range, even before you press play, and a small dot rides along it as it moves. The knob and its readout stay where you set them. The <b>LFO</b> always moves it in time with the beat, starting at the top of the band on the beat. <b>LFO rate</b> picks how often, from 1/64 (a fast flutter) through 1/32, 1/24, 1/16 and 1/8 up to 4 bars. <b>Wave</b> picks its shape: sine, triangle, square, ramp up, ramp down, or random, which wanders somewhere new every cycle. The lamp next to the name switches the movement on and off. It lights whenever Amount is up. Switch it off and Amount parks at 0, switch it on and your Amount comes back, or 40 if you hadn't set one.</td></tr>
     <tr><td>MIDI</td><td>Sends everything to your synths. See <a href="#midi">MIDI out</a>.</td></tr>
@@ -408,11 +410,12 @@ kbd { display: inline-block; min-width: 26px; text-align: center; border: 1.5px 
     <tr><td>Rim</td><td>Note 37</td></tr>
     <tr><td>Closed hat</td><td>Note 42 (ride 51 with the Jazz kit)</td></tr>
     <tr><td>Drum filter</td><td>A control change on the drums' channel. CC 19 drives the Roland TR-8S Master FX knob.</td></tr>
+    <tr><td>Chord filter</td><td>A control change on the chords' channel, Auto sweeps included. CC 74 (the standard cutoff) by default. You can pick CC 71, CC 1 or CC 21 instead, or turn it off.</td></tr>
     <tr><td>Clock out</td><td>Off by default. Sends MIDI clock with Start and Stop, to this output or to every output.</td></tr>
   </table>
   <p>Fills, ratchets and ghost notes all come through, so a TR-8S or Digitakt on channel 10 gets the whole performance.</p>
   <p>Turn on <b>Clock out</b> and everything in your studio keeps time with the cities. Drum machines, sequencers, arpeggiators and synced delays all follow the tempo, and slow down with it as the cities fall asleep. Pick <b>To every output</b> to send it to all your MIDI interfaces at once. Press Start listening and they start together on the first bar. Stop, and they stop. Turn it on mid-song and they join on the next bar. Set each unit to follow external MIDI clock.</p>
-  <p>If MIDI is on when you press Share, the link carries your MIDI setup too: every channel, the drum filter CC and Clock out. It never carries the output itself, since that's a device on your computer. Whoever opens it picks their own output and everything else is already set.</p>
+  <p>If MIDI is on when you press Share, the link carries your MIDI setup too: every channel, the drum and chord filter CCs and Clock out. It never carries the output itself, since that's a device on your computer. Whoever opens it picks their own output and everything else is already set.</p>
 </section>
 
 <section class="sec" id="map">
@@ -465,7 +468,7 @@ kbd { display: inline-block; min-width: 26px; text-align: center; border: 1.5px 
   <h3>Can I use recordings in my own music?</h3>
   <p>Please do. A credit to Forrest James and a link back would be lovely.</p>
   <h3>Do you collect anything?</h3>
-  <p>No accounts, no cookies. I count visits with Cloudflare Web Analytics, which tells me how many people came by and roughly from where, but not who you are. Settings live in the share link, and memory map marks stay on your device. The one thing that leaves your device is a city quiz answer, as an anonymous count, and only if you leave the box ticked. See <a href="#quiz">the city quiz</a>.</p>
+  <p>No accounts, no cookies. I count visits with Cloudflare Web Analytics, and I keep a few simple daily totals of my own: how many people came, which country and nearest city, which site sent them, how long the page stayed open, and which cities, sounds and buttons got used, and which of my links get clicked. They are added up into counts with no names, no addresses and nothing that follows you from one visit to the next. If your browser says Do Not Track, I don't count you at all. Settings live in the share link, and memory map marks stay on your device. The other thing that leaves your device is a city quiz answer, as an anonymous count, and only if you leave the box ticked. See <a href="#quiz">the city quiz</a>.</p>
 </section>
 
 <section class="sec" id="specs">
@@ -477,7 +480,7 @@ kbd { display: inline-block; min-width: 26px; text-align: center; border: 1.5px 
     <tr><td>Polyphony</td><td>Plenty. The weather rarely needs more</td></tr>
     <tr><td>Pattern length</td><td>1 to 50ish steps, depending on how hot it gets</td></tr>
     <tr><td>Sounds</td><td>31, plus your own, plus 10 drum kits</td></tr>
-    <tr><td>Scales</td><td>17</td></tr>
+    <tr><td>Scales</td><td>28</td></tr>
     <tr><td>Outputs</td><td>Stereo audio, 5 MIDI channels, files</td></tr>
     <tr><td>Loudness</td><td>About −15 LUFS by day, much quieter at night, peaks held below −1 dB</td></tr>
     <tr><td>Power</td><td>One browser tab. The sun does the rest</td></tr>
@@ -490,6 +493,24 @@ kbd { display: inline-block; min-width: 26px; text-align: center; border: 1.5px 
   <h2>What's new</h2>
   <p class="kicker">This manual is kept up to date with the instrument. Newest first.</p>
   <dl class="log">
+    <dt>21 October 2026</dt>
+    <dd>Three new sounds: Conga high, Conga mid and Conga low. A small bright drum, a round middle one and a deep one that rings longer. They sit in the Percussion group and follow the key like the other percussion.</dd>
+    <dt>20 October 2026</dt>
+    <dd>A little more about what's counted: the nearest city people visit from, as part of the daily totals. It is a rough guess from the network, kept only as a count with no address attached.</dd>
+    <dt>19 October 2026</dt>
+    <dd>When you load your own sound, its name now shows in the card's sound menu, so you can tell your sounds apart at a glance. Three Cities picks out real words and leaves the clutter behind: initials, codes, numbers, tempos, keys and underscores. <i>01_Boston_Rain_Loop_120bpm_v3.wav</i> becomes <i>Boston Rain</i>. Hover the menu item to see the full file name.</dd>
+    <dt>18 October 2026</dt>
+    <dd>New: Pan and Length for each city, under More. Pan has Auto (the old drift) and a manual setting. Length sets how long each note rings.</dd>
+    <dt>17 October 2026</dt>
+    <dd>Fixed: the drum filter now reaches the effects. A drum you send to the reverb or the delay goes through the filter first, so closing the filter darkens the echoes and the reverb too. Before, the effects heard the drums unfiltered. The drum Volume now shapes the sends as well.</dd>
+    <dt>17 October 2026</dt>
+    <dd>Eleven new scales in the Scale menu: harmonic major, melodic minor, dorian #4, phrygian dominant, lydian dominant, hirajoshi, in-sen, iwato, pelog selisir, pelog tembung and bhairav. They sit at the end of the list, so shared links keep working. A first listen still starts on one of the gentler scales.</dd>
+    <dt>17 October 2026</dt>
+    <dd>Three Cities is live. Thank you for being here. If something sounds wrong or breaks, tell me and I will fix it.</dd>
+    <dt>16 October 2026</dt>
+    <dd>A little more about what's counted. I now keep anonymous daily totals of visits, countries, where people came from, how long they stay and what they choose, so I can see what's worth improving. No cookies, no addresses, and nothing is kept about you. Do Not Track switches it off. The privacy note near the end says the same.</dd>
+    <dt>16 October 2026</dt>
+    <dd>The chords' filter can now drive your synth too. In the MIDI section, Chord filter as CC sends it on the chords' channel as CC 74 by default, with a few other numbers to pick from. Recordings, reels and teasers now carry the key, scale and tempo in their file names, like "C minor 90 bpm".</dd>
     <dt>15 October 2026</dt>
     <dd>Chords have a Change menu: a new chord every 4, 8, 16 or 32 bars, or Drone, which holds the home chord without moving. Your choice is kept in shared links.</dd>
     <dd>Chords have their own Filter and Auto, like the Rhythm section. It starts open, so nothing changes until you turn it down.</dd>
@@ -511,7 +532,7 @@ kbd { display: inline-block; min-width: 26px; text-align: center; border: 1.5px 
     <dd>Your own cities get the memory map too. Tick I've lived in these cities when you pick them, or switch above the map between Places I've lived and Just exploring.</dd>
     <dd>The city quiz. Play any cities that aren't mine and the memory map asks about the places instead, then shows what everyone said. Answers are anonymous counts, and you can untick the box to keep yours to yourself.</dd>
     <dd>Fixed the Wild card. It now checks the weather in a few dozen places at a time instead of hundreds, which is faster and keeps inside the weather service's limits.</dd>
-    <dd>Share links carry your MIDI channels, drum filter CC and clock when MIDI is on. Share on a computer copies a clean link for the address bar, with the line about your cities coming along when you paste into mail or chat.</dd>
+    <dd>Share links carry your MIDI channels, filter CCs and clock when MIDI is on. Share on a computer copies a clean link for the address bar, with the line about your cities coming along when you paste into mail or chat.</dd>
     <dd>Two ways in at the top: Hear my three cities, or Play any. The picker says what it is now, any three cities, and Surprise me has a ✦ Wild card that picks a theme from the live weather and tells you what you got.</dd>
     <dd>Clock out in the MIDI section. Your drum machines, sequencers and delays can follow the tempo, to one output or to all of them.</dd>
     <dd>The MIDI menu now lists every output and keeps up when you plug in or switch on an interface, so there is no need to reload the page.</dd>

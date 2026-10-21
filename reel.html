@@ -46,6 +46,7 @@ textarea { width: 100%; min-height: 170px; background: var(--panel); color: var(
 .notes b { color: var(--ink); font-weight: 600; }
 .notes li { margin-bottom: 8px; }
 .status { color: var(--faint); font-size: 12px; }
+.linkbtn { background: none; border: 0; padding: 0; color: inherit; font: inherit; text-decoration: underline; cursor: pointer; }
 .recent { color: var(--faint); font-size: 12px; }
 .recent button { background: none; border: 0; color: var(--dim); text-decoration: underline; font: inherit; cursor: pointer; padding: 0; }
 .opts { display: flex; flex-wrap: wrap; gap: 10px 22px; margin: 18px 0 0; font-size: 12px; color: var(--dim); }
@@ -153,7 +154,7 @@ const PLACES = [
   ["Niseko",42.86,140.69,"Japan",""],["Bariloche",-41.13,-71.31,"Argentina","l"],["Erzurum",39.9,41.27,"Türkiye",""],["Asahikawa",43.77,142.36,"Japan",""],["Cortina",46.54,12.14,"Italy",""]
 ];
 const $ = id => document.getElementById(id);
-const RELEASED = false;   // until the official release, captions say Coming soon and don't give the address
+const RELEASED = true;   // released: captions give the address
 const CODES = { 0: "clear", 1: "mostly clear", 2: "partly cloudy", 3: "overcast", 45: "fog", 48: "freezing fog", 51: "light drizzle", 53: "drizzle", 55: "heavy drizzle", 56: "freezing drizzle", 57: "freezing drizzle",
   61: "light rain", 63: "rain", 65: "heavy rain", 66: "freezing rain", 67: "freezing rain", 71: "light snow", 73: "snow", 75: "heavy snow", 77: "snow grains", 80: "showers", 81: "showers", 82: "heavy showers",
   85: "snow showers", 86: "snow showers", 95: "thunderstorm", 96: "thunderstorm with hail", 99: "thunderstorm with hail" };
@@ -421,7 +422,144 @@ const THEMES = [
     pick: R => top3(ranked(R, r => -r.rain7 * 5 - (r.pp ?? 0) / 10 + r.sunH / 4, r => has(r, "c") && !wet(r) && r.rainToday < 0.1),
       ["Driest capital", "Bone dry", "No umbrella"], r => `${fix(r.rain7, 1)} mm`, r => `of rain in 7 days · ${desc(r)}`, "city"),
     caption: p => `Leave the umbrella at home in ${p[0].name}, ${p[1].name} and ${p[2].name}. Barely a drop all week.`,
-    tags: "#capitals #sunnyday #weather" }
+    tags: "#capitals #sunnyday #weather" },
+
+  { id: "windiest", q: "Where's the windiest place on Earth right now?", sound: "extremes", group: "Extremes", name: "Windiest", title: "Windiest place right now",
+    why: "The strongest steady wind and the biggest gusts on Earth right now.",
+    pick: R => top3(ranked(R, r => r.w + r.g / 3), ["Windiest", "Hold your hat", "Breezy"], r => `${Math.round(r.g)} km/h`, r => `gusts · wind ${Math.round(r.w)} km/h`, "wind"),
+    caption: p => `The windiest places on Earth right now: ${p[0].name} (${Math.round(p[0].g)} km/h gusts), ${p[1].name} and ${p[2].name}. Hold on to your hat.`,
+    tags: "#wind #windy #extremeweather" },
+
+  { id: "wettest", q: "Where is it raining hardest right now?", sound: "extremes", group: "Extremes", name: "Wettest", title: "Wettest place right now",
+    why: "The heaviest rain falling right now, and the most rain over the last week.",
+    pick: R => top3(ranked(R, r => r.pr * 3 + r.rainToday / 3 + r.rain7 / 40, r => wet(r)), ["Wettest", "Soaked", "Pouring"], r => r.pr ? `${fix(r.pr, 1)} mm` : `${fix(r.rainToday, 1)} mm`, r => r.pr ? `of rain this hour · ${desc(r)}` : `of rain today · ${desc(r)}`, "rain"),
+    caption: p => `The wettest places on Earth right now: ${p[0].name}, ${p[1].name} and ${p[2].name}. Umbrella time.`,
+    tags: "#rain #rainyday #weather" },
+
+  { id: "snowiest", q: "Where has the most snow fallen this week?", sound: "cosy", group: "Extremes", name: "Snowiest", title: "Snowiest place this week",
+    why: "The most snowfall over the last seven days, with snow still falling if there is any.",
+    pick: R => top3(ranked(R, r => r.snowWeek + r.snowToday * 2 + r.snowNow * 5, r => r.snowWeek + r.snowToday > 1), ["Snowiest", "Deep snow", "Powder day"], r => `${Math.round(r.snowWeek + r.snowToday)} cm`, r => `of snow this week · ${deg(r.t)}`, "snow"),
+    caption: p => `The snowiest places on Earth this week: ${p[0].name} (${Math.round(p[0].snowWeek + p[0].snowToday)} cm), ${p[1].name} and ${p[2].name}.`,
+    tags: "#snow #snowfall #winter" },
+
+  { id: "uv", q: "Where is the sun strongest today?", sound: "bright", group: "Extremes", name: "Strongest sun", title: "Strongest sun today",
+    why: "The highest UV index on Earth today. Sunscreen, please.",
+    pick: R => top3(ranked(R, r => r.uvmax, r => r.uvmax > 0), ["Strongest sun", "Sunscreen on", "Seek shade"], r => `UV ${fix(r.uvmax, 1)}`, r => `${deg(r.tmax)} high · ${fix(r.sunH, 1)} h of sun`, "sun"),
+    caption: p => `The strongest sun on Earth today: ${p[0].name} (UV ${fix(p[0].uvmax, 1)}), ${p[1].name} and ${p[2].name}. Sunscreen on.`,
+    tags: "#uvindex #sunshine #sunscreen" },
+
+  { id: "muggy", q: "Where does it feel the hottest, not just read the hottest?", sound: "extremes", group: "Extremes", name: "Muggiest", title: "Muggiest place right now",
+    why: "Where the feels-like temperature is furthest above the real one. Heavy, sticky air.",
+    pick: R => top3(ranked(R, r => (r.feels - r.t) + r.h / 40, r => r.t > 20), ["Muggiest", "Sticky", "Sweaty"], r => deg(r.feels), r => `feels like · it's ${deg(r.t)} · humidity ${Math.round(r.h)}%`, "tropical"),
+    caption: p => `It's ${deg(p[0].t)} in ${p[0].name} but it feels like ${deg(p[0].feels)}. ${p[1].name} and ${p[2].name} are just as sticky.`,
+    tags: "#humid #muggy #heat" },
+
+  { id: "pressure", q: "Where is the air pressure highest and lowest?", sound: "calm", group: "Extremes", name: "Highest and lowest pressure", title: "Highest and lowest pressure",
+    why: "High pressure means settled and still. Low pressure means weather on the way.",
+    pick: R => slots([
+      { label: "Highest pressure", list: ranked(R, r => r.p), big: r => `${Math.round(r.p)}`, stat: r => `hPa · ${desc(r)}`, flav: "landscape" },
+      { label: "Lowest pressure", list: ranked(R, r => -r.p), big: r => `${Math.round(r.p)}`, stat: r => `hPa · ${desc(r)}`, flav: "storm clouds" },
+      { label: "Right in the middle", list: ranked(R, r => -Math.abs(r.p - 1013)), big: r => `${Math.round(r.p)}`, stat: r => `hPa · ${desc(r)}`, flav: "street" }]),
+    caption: p => `Air pressure right now: ${Math.round(p[0].p)} hPa in ${p[0].name}, ${Math.round(p[1].p)} in ${p[1].name}, and a middling ${Math.round(p[2].p)} in ${p[2].name}.`,
+    tags: "#pressure #barometer #weather" },
+
+  { id: "seaswim", q: "Where's the warmest sea to swim in right now?", sound: "bright", group: "Travel", name: "Warmest sea", title: "Warmest sea right now",
+    why: "Coastal places with the warmest sea water on Earth right now.",
+    pick: R => top3(ranked(R, r => r.sst, r => r.sst != null), ["Warmest sea", "Bathwater", "Dive in"], r => deg(r.sst), r => `sea temperature · air ${deg(r.t)}`, "beach"),
+    caption: p => `The warmest sea on Earth right now: ${p[0].name} at ${deg(p[0].sst)}, then ${p[1].name} and ${p[2].name}. Come on in.`,
+    tags: "#swimming #sea #beach" },
+
+  { id: "surf", q: "Where are the biggest waves right now?", sound: "drama", group: "Travel", name: "Surf's up", title: "Biggest waves right now",
+    why: "Coastal places with the biggest waves on Earth right now.",
+    pick: R => top3(ranked(R, r => r.wave, r => r.wave != null), ["Biggest waves", "Surf's up", "Swell"], r => `${fix(r.wave, 1)} m`, r => `wave height · wind ${Math.round(r.w)} km/h`, "surf waves"),
+    caption: p => `The biggest waves on Earth right now: ${p[0].name} (${fix(p[0].wave, 1)} m), ${p[1].name} and ${p[2].name}. Surf's up.`,
+    tags: "#surf #waves #ocean" },
+
+  { id: "stars", q: "Where's the best night for stargazing?", sound: "night", group: "Travel", name: "Stargazing", title: "Best night for stargazing",
+    why: "Dark, clear, still nights with clean air. Look up.",
+    pick: R => top3(ranked(R, r => -r.cloud / 10 - r.w / 8 - (r.pm25 ?? 10) / 6 + (r.vis ?? 20000) / 10000, r => !r.day && r.cloud < 25 && !wet(r)), ["Best stars", "Clear skies", "Look up"], r => `${r.cloud}%`, r => `cloud · ${localNow(r)} local · ${deg(r.t)}`, "night sky stars"),
+    caption: p => `It's a clear, dark night in ${p[0].name}, ${p[1].name} and ${p[2].name}. Perfect for stargazing.`,
+    tags: "#stargazing #nightsky #stars" },
+
+  { id: "picnic", q: "Where's the perfect picnic weather today?", sound: "bright", group: "Travel", name: "Picnic weather", title: "Perfect picnic weather",
+    why: "Warm, dry, sunny and hardly any wind. Blanket out.",
+    pick: R => top3(ranked(R, r => -Math.abs(r.t - 23) / 3 + r.sunH / 3 - r.w / 6 - r.rainToday * 2 - (r.pp ?? 0) / 25, r => r.day && !wet(r) && r.w < 22), ["Picnic perfect", "Blanket out", "Sandwiches"], r => deg(r.t), r => `${fix(r.sunH, 1)} h of sun · wind ${Math.round(r.w)} km/h`, "park"),
+    caption: p => `Perfect picnic weather in ${p[0].name} (${deg(p[0].t)} and calm), ${p[1].name} and ${p[2].name}. Pack the sandwiches.`,
+    tags: "#picnic #sunnyday #outdoors" },
+
+  { id: "powder", q: "Where's the best skiing right now?", sound: "cosy", group: "Travel", name: "Powder day", title: "Powder day",
+    why: "Mountain places with fresh snow, cold air and light wind.",
+    pick: R => top3(ranked(R, r => r.snowWeek / 5 + r.snowToday - Math.abs(r.t + 5) / 4 - r.w / 15, r => r.t < 2 && r.snowWeek + r.snowToday > 1 && r.w < 35), ["Powder day", "Fresh tracks", "Lift open"], r => `${Math.round(r.snowWeek + r.snowToday)} cm`, r => `fresh snow this week · ${deg(r.t)}`, "ski snow"),
+    caption: p => `Powder day: ${p[0].name} has had ${Math.round(p[0].snowWeek + p[0].snowToday)} cm of fresh snow this week. ${p[1].name} and ${p[2].name} aren't far behind.`,
+    tags: "#skiing #powder #snow" },
+
+  { id: "rainsong", q: "Where is it raining softly right now?", sound: "cosy", group: "Mood", name: "Soft rain", title: "Soft rain right now",
+    why: "Gentle, steady rain with hardly any wind. The kind you want to listen to.",
+    pick: R => top3(ranked(R, r => r.pr * 2 - r.g / 20 + r.cloud / 50, r => wet(r) && r.pr > 0 && r.pr < 3 && r.g < 35), ["Soft rain", "Rain on the window", "Pitter patter"], r => `${fix(r.pr, 1)} mm`, r => `${desc(r)} · ${deg(r.t)}`, "rain window"),
+    caption: p => `Soft rain right now in ${p[0].name}, ${p[1].name} and ${p[2].name}. Put the kettle on and listen.`,
+    tags: "#rain #rainsounds #cosy" },
+
+  { id: "snowglobe", q: "Where is it snowing gently right now?", sound: "cosy", group: "Mood", name: "Snow globe", title: "Snow globe",
+    why: "Snow falling right now with hardly any wind. Quiet and still.",
+    pick: R => top3(ranked(R, r => r.snowNow * 4 + (r.code >= 71 && r.code <= 77 ? 3 : 0) - r.g / 15, r => (r.snowNow > 0 || (r.code >= 71 && r.code <= 77) || r.code === 85 || r.code === 86) && r.g < 40), ["Snow globe", "Falling softly", "Winter wonder"], r => deg(r.t), r => `${desc(r)} · ${localNow(r)} local`, "snowfall"),
+    caption: p => `It's snowing right now in ${p[0].name}, ${p[1].name} and ${p[2].name}. Quiet and still.`,
+    tags: "#snow #snowfall #winter" },
+
+  { id: "midnight", q: "Where is it midnight right now?", sound: "night", group: "Time", name: "Midnight somewhere", title: "Midnight somewhere",
+    why: "Three places where the clock is about to strike twelve.",
+    pick: R => top3(ranked(R, r => -Math.min(localHour(r), 24 - localHour(r)), r => localHour(r) > 23 || localHour(r) < 1), ["Midnight", "Just past twelve", "Almost midnight"], r => localNow(r), r => `local · ${desc(r)} · ${deg(r.t)}`, "night city"),
+    caption: p => `It's midnight in ${p[0].name}, ${p[1].name} and ${p[2].name} right now. What does midnight sound like?`,
+    tags: "#midnight #nightowl #citylights" },
+
+  { id: "lunch", q: "Where is it lunchtime right now?", sound: "bright", group: "Time", name: "Lunchtime", title: "Lunchtime somewhere",
+    why: "Three places where it's midday and the weather is good for eating outside.",
+    pick: R => top3(ranked(R, r => -Math.abs(localHour(r) - 12.5) * 2 - Math.abs(r.t - 22) / 4 - (wet(r) ? 4 : 0) + r.cloud / -60, r => localHour(r) > 11.5 && localHour(r) < 13.5 && r.day), ["Lunchtime", "Eat outside", "Midday sun"], r => localNow(r), r => `local · ${desc(r)} · ${deg(r.t)}`, "cafe terrace"),
+    caption: p => `It's lunchtime in ${p[0].name}, ${p[1].name} and ${p[2].name}. ${deg(p[0].t)} and ${desc(p[0])} in ${p[0].name}.`,
+    tags: "#lunch #midday #weather" },
+
+  { id: "swing", q: "Where is the biggest swing between day and night today?", sound: "", group: "Contrast", name: "Biggest swing today", title: "Biggest swing today",
+    why: "The biggest gap between today's high and low. Shorts by day, coat by night.",
+    pick: R => top3(ranked(R, r => r.tmax - r.tmin), ["Biggest swing", "Shorts and a coat", "Layers"], r => `${Math.round(r.tmax - r.tmin)}°`, r => `swing · ${deg(r.tmin)} to ${deg(r.tmax)}`, "desert"),
+    caption: p => `Today ${p[0].name} goes from ${deg(p[0].tmin)} to ${deg(p[0].tmax)}. ${p[1].name} and ${p[2].name} swing almost as far. Pack layers.`,
+    tags: "#temperature #weather #layers" },
+
+  { id: "neighbours", q: "Which neighbours have the most different weather?", sound: "", group: "Contrast", name: "Odd neighbours", title: "Odd neighbours",
+    why: "Two places close together with very different weather right now.",
+    pick: R => {
+      const F = R.filter(r => !isRecent(r)); let best = null;
+      for (let i = 0; i < F.length; i++) for (let j = i + 1; j < F.length; j++) { const k = km(F[i], F[j]); if (k > 1200) continue; const x = Math.abs(F[i].t - F[j].t) - k / 400; if (!best || x > best.x) best = { a: F[i], b: F[j], x }; }
+      if (!best) return null;
+      const [hot, cold] = best.a.t > best.b.t ? [best.a, best.b] : [best.b, best.a];
+      return slots([
+        { label: "Warm side", list: [hot], big: r => deg(r.t), stat: r => `${desc(r)} · ${Math.round(km(hot, cold))} km from ${cold.name}`, flav: "street" },
+        { label: "Cold side", list: [cold], big: r => deg(r.t), stat: r => `${desc(r)} · ${Math.round(km(hot, cold))} km from ${hot.name}`, flav: "street" },
+        { label: "Not far away", list: ranked(R, r => -Math.abs(r.t - (hot.t + cold.t) / 2) - km(r, hot) / 300, r => r !== hot && r !== cold && km(r, hot) < 1500, 6), big: r => deg(r.t), stat: r => `${desc(r)} · in between`, flav: "city" }]); },
+    caption: p => `${p[0].name} is ${deg(p[0].t)}. ${p[1].name} is ${deg(p[1].t)}. They are only ${Math.round(km(p[0], p[1]))} km apart.`,
+    tags: "#weather #neighbours #perspective" },
+
+  { id: "kite", q: "Where's the best kite flying weather?", sound: "playful", group: "Playful", name: "Kite weather", title: "Kite flying weather",
+    why: "A steady breeze around 20 to 30 km/h, dry, with some sun.",
+    pick: R => top3(ranked(R, r => -Math.abs(r.w - 25) / 4 - (r.g - r.w) / 10 + r.sunH / 4, r => r.day && !wet(r) && r.w > 14 && r.g < 55), ["Kite weather", "Let it fly", "String out"], r => `${Math.round(r.w)} km/h`, r => `steady wind · gusts ${Math.round(r.g)} · ${desc(r)}`, "kite"),
+    caption: p => `Best kite weather on Earth right now: ${p[0].name} (${Math.round(p[0].w)} km/h and steady), ${p[1].name} and ${p[2].name}. Let it fly.`,
+    tags: "#kite #kiteflying #windy" },
+
+  { id: "icecream", q: "Where is it ice cream weather?", sound: "playful", group: "Playful", name: "Ice cream weather", title: "Ice cream weather",
+    why: "Hot, sunny afternoons where a cone is the only sensible choice.",
+    pick: R => top3(ranked(R, r => r.t + r.sunH / 2 - r.h / 30, r => r.day && r.t > 24 && !wet(r) && r.cloud < 60), ["Ice cream weather", "Two scoops", "Extra sprinkles"], r => deg(r.t), r => `${desc(r)} · ${localNow(r)} local`, "ice cream"),
+    caption: p => `It's ice cream weather in ${p[0].name} (${deg(p[0].t)}), ${p[1].name} and ${p[2].name}. Two scoops.`,
+    tags: "#icecream #summer #sunny" },
+
+  { id: "duvet", q: "Where's the best duvet day on Earth?", sound: "cosy", group: "Playful", name: "Duvet day", title: "Duvet day",
+    why: "Grey, wet, windy and cold in the daytime. Stay in.",
+    pick: R => top3(ranked(R, r => r.cloud / 30 + (wet(r) ? 3 : 0) + r.g / 25 - Math.abs(r.t - 5) / 4, r => r.day && r.t < 12), ["Duvet day", "Stay in bed", "Another cuppa"], r => deg(r.t), r => `${desc(r)} · gusts ${Math.round(r.g)} km/h`, "rainy window"),
+    caption: p => `Today's a duvet day in ${p[0].name} (${deg(p[0].t)} and ${desc(p[0])}), ${p[1].name} and ${p[2].name}. Stay in.`,
+    tags: "#duvetday #cosy #rainyday" },
+
+  { id: "puddle", q: "Where's the best puddle jumping weather?", sound: "playful", group: "Playful", name: "Puddle jumping", title: "Puddle jumping weather",
+    why: "Mild, light rain in the daytime. Wellies on.",
+    pick: R => top3(ranked(R, r => r.rainToday / 2 + r.pr * 2 - Math.abs(r.t - 14) / 4 - r.g / 30, r => r.day && wet(r) && r.t > 6 && r.g < 40), ["Puddle jumping", "Wellies on", "Splash"], r => deg(r.t), r => `${desc(r)} · ${fix(r.rainToday, 1)} mm today`, "puddle"),
+    caption: p => `Puddle weather in ${p[0].name}, ${p[1].name} and ${p[2].name}. Wellies on, everyone.`,
+    tags: "#puddles #rain #wellies" }
 ];
 // a weekly shape for Pick for me: weekday -> group
 const WEEK = { 1: "Travel", 2: "Mood", 3: "Time", 4: "Contrast", 5: "Playful", 6: "Extremes", 0: "Extremes" };
@@ -431,28 +569,49 @@ const LOOKS = { Extremes: "split", Travel: "postcard", Mood: "weather", Time: "w
 const LOOK_NAMES = { postcard: "Postcards", weather: "Weather you can see", split: "Split screen", classic: "Classic collage" };
 
 // ---------- data ----------
-async function getJSON(u) { const r = await fetch(u); if (!r.ok) throw new Error(r.status); return r.json(); }
-async function batched(base, params, list, size = 80) {
-  const out = [];
-  for (let i = 0; i < list.length; i += size) {
-    const part = list.slice(i, i + size), lat = part.map(p => p[1]).join(","), lon = part.map(p => p[2]).join(",");
-    try { const j = await getJSON(`${base}?latitude=${lat}&longitude=${lon}&${params}`); const arr = Array.isArray(j) ? j : [j]; part.forEach((_, k) => out.push(arr[k] || null)); }
-    catch (e) { part.forEach(() => out.push(null)); }
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+// one request with a time limit, and a couple of patient retries when the weather service is busy (429) or slow
+async function getJSON(u, tries = 3) {
+  for (let i = 0; i < tries; i++) {
+    const ctl = new AbortController(), timer = setTimeout(() => ctl.abort(), 20000);
+    try { const r = await fetch(u, { signal: ctl.signal }); if (!r.ok) throw new Error(r.status); return await r.json(); }
+    catch (e) { if (i === tries - 1) throw e; await sleep(2000 * (i + 1)); }
+    finally { clearTimeout(timer); }
   }
-  return out;
 }
+// all the batches go at once, so the wait is one request long, not four
+async function batched(base, params, list, size = 80) {
+  const parts = []; for (let i = 0; i < list.length; i += size) parts.push(list.slice(i, i + size));
+  const got = await Promise.all(parts.map(async part => {
+    const lat = part.map(p => p[1]).join(","), lon = part.map(p => p[2]).join(",");
+    try { const j = await getJSON(`${base}?latitude=${lat}&longitude=${lon}&${params}`); const arr = Array.isArray(j) ? j : [j]; return part.map((_, k) => arr[k] || null); }
+    catch (e) { return part.map(() => null); }
+  }));
+  return got.flat();
+}
+// the last good scan is kept for 15 minutes, so reloading the page is instant
+const CACHE_KEY = "reel-scan";
+const loadCache = () => { try { const c = JSON.parse(localStorage.getItem(CACHE_KEY)); return c && Date.now() - c.t < 15 * 60e3 && c.rows && c.rows.length > 100 ? c : null; } catch (e) { return null; } };
+const saveCache = r => { try { localStorage.setItem(CACHE_KEY, JSON.stringify({ t: Date.now(), rows: r })); } catch (e) {} };
 let rows = [], themeId = null, autoId = null, chosen = [], slotsNow = null;
-async function scan() {
-  const F = await batched("https://api.open-meteo.com/v1/forecast",
-    "current=temperature_2m,apparent_temperature,relative_humidity_2m,is_day,precipitation,snowfall,weather_code,cloud_cover,pressure_msl,wind_speed_10m,wind_gusts_10m,visibility,uv_index" +
-    "&daily=temperature_2m_max,temperature_2m_min,sunrise,sunset,daylight_duration,sunshine_duration,uv_index_max,precipitation_sum,snowfall_sum,precipitation_probability_max" +
-    "&past_days=7&forecast_days=1&timezone=auto&timeformat=unixtime", PLACES);
-  if (!F.some(Boolean)) throw new Error("no weather");
-  $("status").textContent = "Checking the seas and the air…";
+async function scan(fresh) {
+  const cached = fresh ? null : loadCache();
+  if (cached) {
+    rows = cached.rows; const t = new Date(cached.t).toTimeString().slice(0, 5);
+    $("status").innerHTML = `Using the weather from ${t}. <button type="button" id="again" class="linkbtn">Check again</button>`;
+    $("again").addEventListener("click", () => { $("status").textContent = "Checking the planet…"; scan(true).catch(fail); });
+    pickAuto(); drawThemes(); choose(autoId); return;
+  }
+  $("status").textContent = "Checking the planet…";
   const sea = PLACES.filter(p => p[4].includes("s"));
-  const [M, A] = await Promise.all([
+  const [F, M, A] = await Promise.all([
+    batched("https://api.open-meteo.com/v1/forecast",
+      "current=temperature_2m,apparent_temperature,relative_humidity_2m,is_day,precipitation,snowfall,weather_code,cloud_cover,pressure_msl,wind_speed_10m,wind_gusts_10m,visibility,uv_index" +
+      "&daily=temperature_2m_max,temperature_2m_min,sunrise,sunset,daylight_duration,sunshine_duration,uv_index_max,precipitation_sum,snowfall_sum,precipitation_probability_max" +
+      "&past_days=7&forecast_days=1&timezone=auto&timeformat=unixtime", PLACES),
     batched("https://marine-api.open-meteo.com/v1/marine", "current=wave_height,sea_surface_temperature", sea),
     batched("https://air-quality-api.open-meteo.com/v1/air-quality", "current=pm2_5", PLACES)]);
+  if (!F.some(Boolean)) throw new Error("no weather");
   rows = [];
   PLACES.forEach((p, i) => {
     const d = F[i]; if (!d || !d.current || typeof d.current.temperature_2m !== "number") return;
@@ -470,7 +629,10 @@ async function scan() {
       pm25: a && a.current ? a.current.pm2_5 ?? null : null
     });
   });
-  $("status").textContent = `Checked ${rows.length} places at ${new Date().toTimeString().slice(0, 5)}.`;
+  const hhmm = new Date().toTimeString().slice(0, 5);
+  if (rows.length < PLACES.length * 0.7) $("status").innerHTML = `Only ${rows.length} of ${PLACES.length} places answered at ${hhmm}. The weather service is busy. <button type="button" id="again" class="linkbtn">Check again</button>`;
+  else { $("status").innerHTML = `Checked ${rows.length} places at ${hhmm}. <button type="button" id="again" class="linkbtn">Check again</button>`; saveCache(rows); }
+  $("again").addEventListener("click", () => { $("status").textContent = "Checking the planet…"; scan(true).catch(fail); });
   pickAuto(); drawThemes(); choose(autoId);
 }
 // Pick for me: today's group, shuffled at random once per day (same result all day), skipping any with nothing to show
@@ -569,7 +731,8 @@ $("open").addEventListener("click", () => {
   setTimeout(drawRecent, 100);
 });
 $("copy").addEventListener("click", async () => { try { await navigator.clipboard.writeText($("caption").value); $("copy").textContent = "Copied"; } catch (e) { $("caption").select(); } setTimeout(() => $("copy").textContent = "Copy caption", 1600); });
-scan().catch(e => { console.error(e); $("status").textContent = "Couldn't reach the weather service. Try again in a minute."; });
+function fail(e) { console.error(e); $("status").innerHTML = `Couldn't reach the weather service. <button type="button" id="again" class="linkbtn">Try again</button>`; $("again").addEventListener("click", () => { $("status").textContent = "Checking the planet…"; scan(true).catch(fail); }); }
+scan().catch(fail);
 </script>
 </body>
 </html>

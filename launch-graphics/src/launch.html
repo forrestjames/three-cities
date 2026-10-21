@@ -1,0 +1,293 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8">
+<title>Three Cities launch graphics</title>
+<style>
+@font-face { font-family: "Abel"; src: url("../../design-assets/fonts/Abel-Regular.ttf"); }
+@font-face { font-family: "Source Code Pro"; font-weight: 400; src: url("../../design-assets/fonts/SourceCodePro-Regular.ttf"); }
+@font-face { font-family: "Source Code Pro"; font-weight: 500; src: url("../../design-assets/fonts/SourceCodePro-Medium.ttf"); }
+:root { --ground:#2e1c17; --panel:#3a241e; --ink:#f3ece6; --dim:#e2d6cc; --ember:#e07a4f; --sun:#f0c27a; --bos:#d08a6a; --cph:#6fa38c; --lon:#a98bc4; --bosL:#f5b496; --cphL:#9be0c0; --lonL:#d2b6f0; }
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { background: var(--ground); }
+body { width: max-content; }
+#stage { position: relative; overflow: hidden; background: radial-gradient(120% 70% at 50% 100%, #6a3a2c 0%, rgba(106,58,44,0) 70%), linear-gradient(180deg, #4a2f2c 0%, #2e1c17 100%); color: var(--ink); font-family: "Abel", "Arial Narrow", sans-serif; }
+#stage > svg.art { position: absolute; inset: 0; }
+.t { position: absolute; left: 0; right: 0; text-align: center; }
+.mono { font-family: "Source Code Pro", ui-monospace, monospace; text-transform: uppercase; letter-spacing: .22em; }
+.disp { text-transform: uppercase; letter-spacing: .06em; line-height: .98; font-weight: 400; }
+.dim { color: var(--dim); }
+.mono, .disp { text-shadow: 0 2px 10px rgba(36,18,12,.75), 0 0 2px rgba(36,18,12,.6); }
+.live { position:absolute; display:inline-flex; align-items:center; gap:16px; padding:12px 34px 12px 26px; border-radius:999px; background:linear-gradient(90deg,#ffd27a,#ff8a4f); color:#2a120b; font-family:"Source Code Pro",monospace; font-weight:500; letter-spacing:.24em; text-transform:uppercase; white-space:nowrap; text-shadow:none; box-shadow:0 0 0 7px rgba(255,190,120,.45), 0 0 0 18px rgba(255,170,100,.22), 0 0 0 32px rgba(255,150,80,.10), 0 0 70px rgba(255,150,80,.9); }
+.live i { width:18px; height:18px; border-radius:50%; background:#2a120b; box-shadow:0 0 0 5px rgba(42,18,11,.25); }
+.pill { position: absolute; left: 50%; transform: translateX(-50%); border: 2px solid rgba(243,236,230,.75); padding: 18px 34px; font-family: "Source Code Pro", monospace; letter-spacing: .12em; text-transform: lowercase; white-space: nowrap; background: rgba(16,8,6,.35); }
+.grain { position: absolute; inset: 0; opacity: .13; mix-blend-mode: overlay; pointer-events: none;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='300' height='300'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 1  0 0 0 0 1  0 0 0 0 1  0 0 0 .9 0'/></filter><rect width='300' height='300' filter='url(%23n)'/></svg>"); }
+</style></head>
+<body><div id="stage"></div>
+<script src="d3-array.min.js"></script><script src="d3-geo.min.js"></script>
+<script src="land.js"></script><script src="skylines.js"></script>
+<script>
+const COL = { ground:'#2e1c17', ink:'#f3ece6', dim:'#e2d6cc', ember:'#e07a4f', sun:'#f0c27a', bos:'#d08a6a', cph:'#6fa38c', lon:'#a98bc4', bosL:'#f5b496', cphL:'#9be0c0', lonL:'#d2b6f0' };
+const URL_TXT = '<i style="display:inline-block;width:.62em;height:.62em;border-radius:50%;background:#ff8a4f;margin-right:.8em;vertical-align:.04em"></i>Now live &nbsp;·&nbsp; threecities.forrestjamesmusic.com';
+const HOME = [
+  { n:'Boston', c:COL.bos, lat:42.36, lon:-71.06, sub:'Massachusetts' },
+  { n:'Copenhagen', c:COL.cph, lat:55.68, lon:12.57, sub:'Denmark' },
+  { n:'London', c:COL.lon, lat:51.51, lon:-0.13, sub:'United Kingdom' },
+];
+const WORLD = [['New York',40.71,-74.0],['Paris',48.86,2.35],['Tokyo',35.68,139.69],['Sydney',-33.87,151.21],['Cape Town',-33.92,18.42],['Rio',-22.91,-43.17],['Mexico City',19.43,-99.13],['Mumbai',19.08,72.88],['Istanbul',41.01,28.98],['Cairo',30.04,31.24],['Lagos',6.52,3.38],['Nairobi',-1.29,36.82],['Reykjavik',64.15,-21.94],['Seoul',37.57,126.98],['Bangkok',13.76,100.5],['Singapore',1.35,103.82],['Delhi',28.61,77.21],['Dubai',25.2,55.27],['Moscow',55.76,37.62],['Berlin',52.52,13.4],['Madrid',40.42,-3.7],['Lisbon',38.72,-9.14],['Rome',41.9,12.5],['Buenos Aires',-34.6,-58.38],['Lima',-12.05,-77.04],['Bogotá',4.71,-74.07],['Toronto',43.65,-79.38],['Vancouver',49.28,-123.12],['San Francisco',37.77,-122.42],['Los Angeles',34.05,-118.24],['Chicago',41.88,-87.63],['Honolulu',21.31,-157.86],['Auckland',-36.85,174.76],['Melbourne',-37.81,144.96],['Beijing',39.9,116.41],['Shanghai',31.23,121.47],['Hong Kong',22.32,114.17],['Jakarta',-6.2,106.85],['Kathmandu',27.7,85.32],['Addis Ababa',9.03,38.74],['Marrakech',31.63,-8.0],['Stockholm',59.33,18.07],['Helsinki',60.17,24.94],['Dublin',53.35,-6.26],['Cologne',50.94,6.96],['Halifax',44.65,-63.57],['Havana',23.11,-82.37],['Edinburgh',55.95,-3.19]];
+const CYC = [COL.bos, COL.cph, COL.lon, COL.sun, COL.ember];
+
+const MARK = `<path d="M0.5 24v-6.6h11V24zM1.6 17.4v-1.6h8.8v1.6zM3 15.8v-2.4h6v2.4zM2.9 13.4a3.1 3.1 0 0 1 6.2 0zM5.4 10.4V8.2h1.2v2.2zM5.2 8.2L6 6.6l.8 1.6z"/><path fill-rule="evenodd" d="M13.4 24V13h12.6v11h-3.6v-5.2a2.7 2.7 0 0 0-5.4 0V24zM13 13v-1.4h13.4V13zM15.8 11.6a3.9 3.9 0 0 1 7.8 0zM19.3 7.7V5.6h.8v2.1zM19.1 5.6l.6-1.8.6 1.8zM13.6 11.6v-1.8h.9v1.8zM24.9 11.6v-1.8h.9v1.8zM13.4 9.8l.65-1.4.65 1.4zM24.7 9.8l.65-1.4.65 1.4z"/><path fill-rule="evenodd" d="M27.9 24v-3.5h.6V9h-.4V7.6h1V5.4h.8L31.4 0l1.5 5.4h.8v2.2h1V9h-.4v11.5h.6V24zM31.4 10a1.7 1.7 0 1 0 0 3.4 1.7 1.7 0 0 0 0-3.4z"/>`;
+const liveBadge = (top, size = 26, left = null) => `<div class="live" style="top:${top}px;font-size:${size}px;${left === null ? 'left:50%;transform:translateX(-50%)' : 'left:' + left + 'px'}"><i></i>Now live</div>`;
+const logoMark = (x, y, h, align = 'c') => { const sc = h / 24; const w = 34 * sc; const tx = align === 'c' ? x - w / 2 : x; return `<g transform="translate(${tx} ${y}) scale(${sc})" fill="#f3ece6" style="filter:drop-shadow(0 2px 8px rgba(36,18,12,.6))">${MARK}</g>`; };
+const $ = (h) => { const d = document.createElement('div'); d.innerHTML = h; return d.firstElementChild; };
+const euclid = (n, k) => { const a = Array(n).fill(0); for (let i = 0; i < k; i++) a[Math.floor(i * n / k)] = 1; return a; };
+const sk = (name, x, baseY, w, fill, acc) => { const s = w / 300; return `<g transform="translate(${x} ${baseY - 160 * s}) scale(${s})">${SK[name](fill, acc || fill)}</g>`; };
+const defs = `<defs>
+  <filter id="blur6" x="-200%" y="-200%" width="500%" height="500%"><feGaussianBlur stdDeviation="6"/></filter>
+  <filter id="blur14" x="-300%" y="-300%" width="700%" height="700%"><feGaussianBlur stdDeviation="14"/></filter>
+  <filter id="blur40" x="-100%" y="-100%" width="300%" height="300%"><feGaussianBlur stdDeviation="40"/></filter>
+  <radialGradient id="sphere" cx="38%" cy="32%" r="75%"><stop offset="0" stop-color="#4a3029"/><stop offset=".7" stop-color="#2e1c17"/><stop offset="1" stop-color="#22130f"/></radialGradient>
+  <filter id="paper" x="-5%" y="-5%" width="110%" height="110%"><feTurbulence type="fractalNoise" baseFrequency=".035" numOctaves="3" seed="4" result="w"/><feDisplacementMap in="SourceGraphic" in2="w" scale="6" result="d"/><feTurbulence type="fractalNoise" baseFrequency=".7" numOctaves="3" seed="9" result="n"/><feColorMatrix in="n" values="0 0 0 0 .42  0 0 0 0 .3  0 0 0 0 .22  0 0 0 -1.6 1.15" result="fib"/><feComposite in="fib" in2="d" operator="in" result="fi"/><feMerge><feMergeNode in="d"/><feMergeNode in="fi"/></feMerge></filter>
+</defs>`;
+const glowDot = (x, y, c, r = 7, g = 1) => `<circle cx="${x}" cy="${y}" r="${r * 3.4 * g}" fill="${c}" opacity=".55" filter="url(#blur14)"/><circle cx="${x}" cy="${y}" r="${r * 2.2}" fill="none" stroke="${c}" stroke-opacity=".35" stroke-width="1.5"/><circle cx="${x}" cy="${y}" r="${r * 3.6}" fill="none" stroke="${c}" stroke-opacity=".16" stroke-width="1.5"/><circle cx="${x}" cy="${y}" r="${r}" fill="${c}"/>`;
+
+// ---- maps
+function globe({ cx, cy, R, rot = [30, -42], dot = 2.4, cities = HOME, arcs = true, labels = true, labelSize = 22, extra = [] }) {
+  const proj = d3.geoOrthographic().translate([cx, cy]).scale(R).rotate(rot).clipAngle(90);
+  const path = d3.geoPath(proj);
+  const center = [-rot[0], -rot[1]];
+  let s = `<circle cx="${cx}" cy="${cy}" r="${R * 1.06}" fill="${COL.ember}" opacity=".10" filter="url(#blur40)"/>`;
+  s += `<circle cx="${cx}" cy="${cy}" r="${R}" fill="url(#sphere)" stroke="rgba(243,236,230,.22)" stroke-width="1.5"/>`;
+  s += `<path d="${path(d3.geoGraticule10())}" fill="none" stroke="rgba(243,236,230,.07)" stroke-width="1"/>`;
+  let dots = '';
+  for (const [lon, lat] of LAND) {
+    if (d3.geoDistance([lon, lat], center) > Math.PI / 2 - 0.02) continue;
+    const p = proj([lon, lat]); dots += `<circle cx="${p[0].toFixed(1)}" cy="${p[1].toFixed(1)}" r="${dot}"/>`;
+  }
+  s += `<g fill="rgba(243,236,230,.5)">${dots}</g>`;
+  if (arcs) for (let i = 0; i < cities.length; i++) for (let j = i + 1; j < cities.length; j++) {
+    s += `<path d="${path({ type: 'LineString', coordinates: [[cities[i].lon, cities[i].lat], [cities[j].lon, cities[j].lat]] })}" fill="none" stroke="rgba(243,236,230,.55)" stroke-width="1.8" stroke-dasharray="6 7"/>`;
+  }
+  for (const [lon, lat, c] of extra) { const p = proj([lon, lat]); if (d3.geoDistance([lon, lat], center) < Math.PI / 2 - 0.05) s += `<circle cx="${p[0]}" cy="${p[1]}" r="${dot * 2.4}" fill="${c}"/><circle cx="${p[0]}" cy="${p[1]}" r="${dot * 6}" fill="${c}" opacity=".25" filter="url(#blur6)"/>`; }
+  for (const c of cities) {
+    const p = proj([c.lon, c.lat]); s += glowDot(p[0], p[1], c.c, R / 52);
+    c._p = p;
+  }
+  return { svg: s, proj };
+}
+function flat({ x = 0, y = 0, w, h, dot = 2.1, cities = [], dotColor = 'rgba(243,236,230,.42)', showWorld = true, r = 7 }) {
+  const proj = d3.geoEqualEarth().fitExtent([[x, y], [x + w, y + h]], { type: 'Sphere' });
+  let dots = '';
+  for (const [lon, lat] of LANDF) { const p = proj([lon, lat]); dots += `<circle cx="${p[0].toFixed(1)}" cy="${p[1].toFixed(1)}" r="${dot}"/>`; }
+  let s = `<g fill="${dotColor}">${dots}</g>`;
+  return { svg: s, proj };
+}
+function ring(cx, cy, r, steps, hits, color, { rot = 0, play = -1, dotR = 7 } = {}) {
+  const pat = euclid(steps, hits); let s = `<circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="${color}" stroke-opacity=".3" stroke-width="1.5"/>`;
+  const pts = []; const all = [];
+  for (let i = 0; i < steps; i++) { const a = (-90 + rot + 360 * i / steps) * Math.PI / 180; const p = [cx + r * Math.cos(a), cy + r * Math.sin(a)]; all.push(p); if (pat[i]) pts.push(p); }
+  if (false) s += `<polygon points="${pts.map(p => p.map(v => v.toFixed(1)).join(',')).join(' ')}" fill="${color}" fill-opacity=".10" stroke="${color}" stroke-opacity=".55" stroke-width="2"/>`;
+  all.forEach((p, i) => { s += pat[i] ? `<circle cx="${p[0]}" cy="${p[1]}" r="${dotR}" fill="${color}"/>` : `<circle cx="${p[0]}" cy="${p[1]}" r="${dotR * .34}" fill="${color}" fill-opacity=".5"/>`; });
+  if (play >= 0) { const p = all[play]; s += `<line x1="${cx}" y1="${cy}" x2="${p[0]}" y2="${p[1]}" stroke="${COL.ink}" stroke-opacity=".7" stroke-width="2"/>`; s += `<circle cx="${p[0]}" cy="${p[1]}" r="${dotR * 1.7}" fill="none" stroke="${COL.ink}" stroke-width="2"/>`; }
+  return s;
+}
+const mark = (src, w, extra = '') => `<img src="../../design-assets/logo/${src}" style="width:${w}px;display:block;${extra}">`;
+const bgGlow = (W, H, list) => list.map(([x, y, r, c, o]) => `<circle cx="${x}" cy="${y}" r="${r}" fill="${c}" opacity="${Math.min(.6, o * 1.3)}" filter="url(#blur40)"/>`).join('');
+const sky = (id, W, H, stops) => `<linearGradient id="${id}" x1="0" y1="0" x2="0" y2="1">${stops.map(([o, c]) => `<stop offset="${o}" stop-color="${c}"/>`).join('')}</linearGradient>`;
+
+const D = {};
+const frame = (W, H, art, html) => ({ W, H, art, html });
+
+// 01 live square -----------------------------------------------------------
+D['01-live-square'] = () => {
+  const W = 1080, H = 1080; const g = globe({ cx: 540, cy: 880, R: 540, rot: [28, -40], dot: 2.6, labelSize: 24 });
+  const lab = HOME.map(c => `<text x="${c._p[0] + (c.n === 'Boston' ? -20 : 22)}" y="${c._p[1] + 6}" text-anchor="${c.n === 'Boston' ? 'end' : 'start'}" fill="${COL[{Boston:'bosL',Copenhagen:'cphL',London:'lonL'}[c.n]]}" font-family="Source Code Pro" font-size="30" font-weight="500" letter-spacing="4" stroke="#1d0f0b" stroke-width="9" paint-order="stroke">${c.n.toUpperCase()}</text>`).join('');
+  return frame(W, H, `${defs}${bgGlow(W, H, [[200, 200, 380, COL.ember, .32], [900, 120, 320, COL.cph, .22]])}${g.svg}${lab}`,
+    `
+     <div class="t disp" style="top:118px;font-size:112px;letter-spacing:.09em">It's live</div>
+     <div class="t" style="top:262px;font-size:34px;color:var(--dim);letter-spacing:.04em">Three places I've called home, playing in real time.</div>
+     <div class="pill" style="bottom:46px;font-size:25px;background:rgba(16,8,6,.7)">${URL_TXT}</div>`);
+};
+
+// 02 world map square ---------------------------------------------------------
+D['02-world-map-square'] = () => {
+  const W = 1080, H = 1080; const m = flat({ x: 20, y: 430, w: 1040, h: 560, dot: 2.3 });
+  let dots = ''; WORLD.forEach(([n, lat, lon], i) => { const p = m.proj([lon, lat]); const c = CYC[i % 3]; dots += `<circle cx="${p[0]}" cy="${p[1]}" r="12" fill="${c}" opacity=".5" filter="url(#blur6)"/><circle cx="${p[0]}" cy="${p[1]}" r="5" fill="${c}"/>`; });
+  const home = HOME.map(c => { const p = m.proj([c.lon, c.lat]); return glowDot(p[0], p[1], c.c, 8); }).join('');
+  return frame(W, H, `${defs}${bgGlow(W, H, [[900, 900, 380, COL.lon, .3], [120, 300, 360, COL.ember, .26]])}${m.svg}${dots}${home}`,
+    `
+     <div class="t disp" style="top:122px;font-size:104px;letter-spacing:.07em">Pick any<br>three cities</div>
+     <div class="t" style="top:358px;font-size:31px;color:var(--dim)">Type in the places you've lived. Hear them play.</div>
+     <div class="pill" style="bottom:44px;font-size:24px;background:rgba(16,8,6,.75)">${URL_TXT}</div>`);
+};
+
+// 03 home skylines square -------------------------------------------------------
+D['03-home-skylines-square'] = () => {
+  const W = 1080, H = 1080; let art = defs + `${sky('a', W, H, [[0, '#3a2620'], [1, '#150b09']])}<rect width="${W}" height="${H}" fill="url(#a)"/>`;
+  const cols = [[0, COL.bos, 'boston', 14, 5], [1, COL.cph, 'copenhagen', 11, 4], [2, COL.lon, 'london', 16, 7]];
+  const cw = W / 3;
+  cols.forEach(([i, c, nm, st, ht]) => {
+    const x0 = i * cw; art += `<rect x="${x0}" y="0" width="${cw}" height="${H}" fill="${c}" opacity="${[.10, .14, .12][i]}"/>`;
+    art += ring(x0 + cw / 2, 410, 108, st, ht, c, { rot: i * 14, play: i * 3, dotR: 8 });
+    art += `<g filter="url(#paper)">${sk(nm, x0 + 4, 960, cw - 8, ['#f3d3bd', '#cfe8dc', '#e0d2f0'][i], ['#f3d3bd', '#cfe8dc', '#e0d2f0'][i])}</g>`;
+    if (i) art += `<line x1="${x0}" y1="300" x2="${x0}" y2="1000" stroke="rgba(243,236,230,.16)"/>`;
+  });
+  return frame(W, H, art + `<rect y="960" width="${W}" height="120" fill="#25140f"/>`,
+    `
+     <div class="t disp" style="top:132px;font-size:84px;letter-spacing:.08em">Three cities</div>
+     <div class="t mono" style="top:560px;left:0;width:360px;color:var(--bosL,#fff);font-size:30px;font-weight:500">Boston</div>
+     <div class="t mono" style="top:560px;left:360px;width:360px;color:var(--cphL,#fff);font-size:30px;font-weight:500">Copenhagen</div>
+     <div class="t mono" style="top:560px;left:720px;width:360px;color:var(--lonL,#fff);font-size:30px;font-weight:500">London</div>
+     <div class="t mono dim" style="top:1000px;font-size:21px;letter-spacing:.16em">${URL_TXT}</div>`);
+};
+
+// 04 euclid explainer square ----------------------------------------------------
+D['04-how-it-works-square'] = () => {
+  const W = 1080, H = 1080;
+  let art = defs + `${sky('b', W, H, [[0, '#6a4535'], [.55, '#4b3340'], [1, '#1b1018']])}<rect width="${W}" height="${H}" fill="url(#b)"/>`;
+  art += bgGlow(W, H, [[820, 260, 330, COL.cph, .32], [180, 900, 340, COL.lon, .32]]);
+  art += ring(760, 640, 250, 16, 5, COL.ink, { rot: 0, play: 4, dotR: 15 });
+  art += ring(760, 640, 170, 13, 5, COL.sun, { rot: 10, play: 7, dotR: 11 });
+  art += ring(760, 640, 96, 11, 4, COL.cph, { rot: 20, play: 2, dotR: 8 });
+  return frame(W, H, art,
+    `
+     <div class="disp" style="position:absolute;left:84px;top:140px;font-size:96px;line-height:1.02;letter-spacing:.05em;width:620px">Weather<br>becomes<br>rhythm</div>
+     <div style="position:absolute;left:84px;top:520px;width:380px;font-size:34px;line-height:1.32;color:rgba(243,236,230,.88)">Temperature sets how long each rhythm is.<br><br>Humidity, wind and rain decide how many notes play.</div>
+     <div class="mono" style="position:absolute;left:84px;bottom:70px;font-size:20px;color:var(--ink)">${URL_TXT}</div>`);
+};
+
+// 05 skyline grid square -----------------------------------------------------------
+D['05-skyline-grid-square'] = () => {
+  const W = 1080, H = 1080; const names = [['newyork', 'New York', 'USA', 12, 5], ['paris', 'Paris', 'France', 14, 6], ['tokyo', 'Tokyo', 'Japan', 17, 7], ['sydney', 'Sydney', 'Australia', 22, 8], ['istanbul', 'Istanbul', 'Turkey', 16, 5], ['rio', 'Rio', 'Brazil', 27, 9], ['capetown', 'Cape Town', 'South Africa', 19, 6], ['mexicocity', 'Mexico City', 'Mexico', 21, 7], ['mumbai', 'Mumbai', 'India', 30, 10]];
+  const acc = [[COL.bos, COL.bosL], [COL.cph, COL.cphL], [COL.lon, COL.lonL]];
+  const T = 244, gap = 6, x0 = 171, y0 = 272; let art = defs; let html = '';
+  names.forEach(([nm, label, ctry, st, ht], i) => {
+    const cx = x0 + (i % 3) * (T + gap), cy = y0 + Math.floor(i / 3) * (T + gap); const [c, cl] = acc[i % 3];
+    art += `${sky('g' + i, T, T, [[0, '#4d302c'], [1, '#26140f']])}<svg x="${cx}" y="${cy}" width="${T}" height="${T}" viewBox="0 0 300 300"><rect width="300" height="300" fill="url(#g${i})"/><rect width="300" height="300" fill="${c}" opacity=".10"/><g opacity=".16">${SK[nm](c, c).replace(/^/, '<g transform="translate(6 150) scale(.96)">') + '</g>'}</g>${ring(150, 168, 66, st, ht, c, { rot: i * 11, play: (i * 2) % st, dotR: 8 })}<text x="150" y="180" text-anchor="middle" font-family="Abel" font-size="46" fill="#f3ece6">${st}</text><text x="150" y="203" text-anchor="middle" font-family="Source Code Pro" font-size="13" letter-spacing="3" fill="#e2d6cc">STEPS</text></svg>`;
+    html += `<div style="position:absolute;left:${cx + 14}px;top:${cy + 10}px;font-family:Abel;font-size:32px;letter-spacing:.1em;text-transform:uppercase;color:${cl};text-shadow:0 2px 10px rgba(20,8,4,.9)">${label}</div><div class="mono" style="position:absolute;left:${cx + 15}px;top:${cy + 50}px;font-size:13px;letter-spacing:.14em;color:#e2d6cc">${ctry}</div>`;
+  });
+  return frame(W, H, art, html + `
+     
+     <div class="t disp" style="top:122px;font-size:88px;letter-spacing:.07em">Your cities next</div>
+     <div class="t" style="top:220px;font-size:30px;color:var(--dim)">Any city on Earth. Tokyo to Cape Town, Rio to Mumbai.</div>
+     <div class="t mono dim" style="top:1036px;font-size:20px;letter-spacing:.16em">${URL_TXT}</div>`);
+};
+
+// 06 sunset square --------------------------------------------------------------------
+D['06-sunset-square'] = () => {
+  const W = 1080, H = 1080; let art = defs + `${sky('s', W, H, [[0, '#24162a'], [.38, '#7a3f4a'], [.62, '#e07a4f'], [.78, '#f0c27a'], [1, '#f0c27a']])}<rect width="${W}" height="${H}" fill="url(#s)"/>`;
+  art += `<circle cx="540" cy="740" r="250" fill="#ffe3a8" opacity=".5" filter="url(#blur40)"/><circle cx="540" cy="760" r="120" fill="#fff0c8"/>`;
+  art += `<path d="M120,820 A420,420 0 0 1 960,820" fill="none" stroke="rgba(255,240,200,.5)" stroke-width="2" stroke-dasharray="3 10"/>`;
+  [[210, 650], [320, 560], [540, 520], [760, 560], [870, 650]].forEach(([x, y], i) => art += `<circle cx="${x}" cy="${y}" r="${i === 2 ? 9 : 6}" fill="#fff0c8" opacity="${i === 2 ? 1 : .7}"/>`);
+  art += sk('london', -40, 1030, 520, '#1a0d0c', '#1a0d0c') + sk('boston', 300, 1030, 440, '#120807', '#120807') + sk('copenhagen', 640, 1030, 480, '#1a0d0c', '#1a0d0c');
+  art += `<rect y="1000" width="${W}" height="80" fill="#25140f"/>`;
+  return frame(W, H, art, `
+     
+     <div class="t disp" style="top:128px;font-size:104px;letter-spacing:.06em">Listen before<br>they dream</div>
+     <div class="t" style="top:356px;font-size:36px;line-height:1.3;color:#fff4e6;padding:0 130px;text-shadow:0 2px 12px rgba(36,18,12,.8)">Boston, Copenhagen and London play live from their weather. Tune in before they fall asleep.</div>
+     <div class="t mono" style="top:1022px;font-size:21px;letter-spacing:.16em;color:var(--ink)">${URL_TXT}</div>`);
+};
+
+// 07 type square --------------------------------------------------------------------------
+D['07-type-square'] = () => {
+  const W = 1080, H = 1080; let art = defs + `<rect width="${W}" height="${H}" fill="${COL.ember}"/>` + bgGlow(W, H, [[900, 160, 360, COL.sun, .6], [120, 980, 420, '#6a2a2a', .6]]);
+  art += `<g fill="#2e1c17">${sk('boston', 20, 1080, 340, '#2e1c17')}${sk('copenhagen', 370, 1080, 340, '#2e1c17')}${sk('london', 720, 1080, 340, '#2e1c17')}</g>`;
+  return frame(W, H, art, `
+     <div class="disp" style="position:absolute;left:84px;top:150px;font-size:124px;line-height:1;color:#2e1c17;letter-spacing:.03em;width:920px">Three places<br>I've called home,<br>playing in<br>real time.</div>
+     <div class="mono" style="position:absolute;left:84px;top:800px;font-size:21px;color:#2e1c17">${URL_TXT}</div>`);
+};
+
+// 08 live story ----------------------------------------------------------------------------
+D['08-live-story'] = () => {
+  const W = 1080, H = 1920; const g = globe({ cx: 540, cy: 1110, R: 450, rot: [28, -40], dot: 2.4 });
+  const lab = HOME.map(c => `<text x="${c._p[0] + (c.n === 'Boston' ? -22 : 24)}" y="${c._p[1] + 7}" text-anchor="${c.n === 'Boston' ? 'end' : 'start'}" fill="${COL[{Boston:'bosL',Copenhagen:'cphL',London:'lonL'}[c.n]]}" font-family="Source Code Pro" font-size="30" letter-spacing="4" stroke="#2e1c17" stroke-width="6" paint-order="stroke">${c.n.toUpperCase()}</text>`).join('');
+  return frame(W, H, `${defs}${bgGlow(W, H, [[160, 420, 420, COL.ember, .3], [940, 1500, 420, COL.lon, .3], [900, 300, 300, COL.cph, .18]])}${g.svg}${lab}`, `
+     
+     <div class="t disp" style="top:392px;font-size:158px;letter-spacing:.06em">Now live</div>
+     <div class="t" style="top:566px;font-size:38px;color:var(--dim);padding:0 120px;line-height:1.25">Three places I've called home, playing in real time.</div>
+     <div class="pill" style="top:1460px;font-size:25px;background:rgba(16,8,6,.75)">${URL_TXT}</div>`);
+};
+
+// 09 horizons story --------------------------------------------------------------------------
+D['09-horizons-story'] = () => {
+  const W = 1080, H = 1920; let art = defs; const bands = [['boston', 'Boston', COL.bos, '#7a4636', '#2a1612', 640], ['copenhagen', 'Copenhagen', COL.cph, '#3f6a5c', '#14231f', 920], ['london', 'London', COL.lon, '#6d5486', '#201729', 1200]];
+  bands.forEach(([nm, label, c, a, b, y], i) => { art += `${sky('h' + i, W, 280, [[0, a], [1, b]])}<svg x="0" y="${y}" width="${W}" height="280" viewBox="0 0 ${W} 280"><rect width="${W}" height="280" fill="url(#h${i})"/><circle cx="${[860, 200, 820][i]}" cy="${[80, 90, 76][i]}" r="${[40, 30, 34][i]}" fill="${c}" opacity=".85"/>${sk(nm, 270, 280, 540, '#0f0705', c)}</svg>`; });
+  return frame(W, H, art, `
+     
+     <div class="t disp" style="top:374px;font-size:100px;letter-spacing:.05em;line-height:1">Three cities.<br>Three clocks.</div>
+     ${bands.map(([, label, c, , , y]) => `<div class="mono" style="position:absolute;left:90px;top:${y + 26}px;font-size:32px;font-weight:500;color:#fff6ec">${label}</div>`).join('')}
+     <div class="pill" style="top:1514px;font-size:24px">${URL_TXT}</div>`);
+};
+
+// 10 three steps story --------------------------------------------------------------------------
+D['10-steps-story'] = () => {
+  const W = 1080, H = 1920; let art = defs + `${sky('p', W, H, [[0, '#7a4a44'], [1, '#2e1a15']])}<rect width="${W}" height="${H}" fill="url(#p)"/>` + bgGlow(W, H, [[900, 340, 360, COL.ember, .3], [120, 1500, 380, COL.cph, .25]]);
+  const steps = [['1', 'Pick your cities', 'The three places you’ve lived, or any three on Earth.', COL.bos, 14, 5], ['2', 'Press start', 'Their live weather turns into rhythm.', COL.cph, 11, 4], ['3', 'Share your link', 'Send friends the version you made.', COL.lon, 16, 7]];
+  let html = `<div class="t disp" style="top:392px;font-size:104px;letter-spacing:.05em">Make yours</div>`;
+  steps.forEach(([n, t, d, c, st, ht], i) => { const y = 600 + i * 300; art += ring(190, y + 90, 64, st, ht, c, { dotR: 6, play: i * 2 }); html += `<div class="mono" style="position:absolute;left:320px;top:${y + 16}px;font-size:20px;color:${c}">Step ${n}</div><div style="position:absolute;left:320px;top:${y + 52}px;font-size:50px;letter-spacing:.02em">${t}</div><div style="position:absolute;left:320px;top:${y + 122}px;width:620px;font-size:29px;line-height:1.3;color:var(--dim)">${d}</div>`; });
+  html += `<div class="pill" style="top:1500px;font-size:25px">${URL_TXT}</div>`;
+  return frame(W, H, art, html);
+};
+
+// 11 world story ---------------------------------------------------------------------------------
+D['11-world-story'] = () => {
+  const W = 1080, H = 1920; let art = defs + `${sky('w', W, H, [[0, '#1b1018'], [1, '#2e1c17']])}<rect width="${W}" height="${H}" fill="url(#w)"/>`;
+  const rows = [['tokyo', 'Tokyo', '#d96a5a', '#4a1f2a'], ['paris', 'Paris', '#8d6f9e', '#2f1f38'], ['capetown', 'Cape Town', '#cdd7d0', '#53727a'], ['sydney', 'Sydney', '#f0c27a', '#a8573f'], ['rio', 'Rio', '#e8b47f', '#6b3b49']];
+  const rh = 218, y0 = 600; let html = `<div class="t disp" style="top:372px;font-size:104px;letter-spacing:.05em;line-height:1">Whose three<br>cities?</div>`;
+  rows.forEach(([nm, label, a, b], i) => { const y = y0 + i * (rh + 6); art += `${sky('r' + i, W, rh, [[0, a], [1, b]])}<svg x="80" y="${y}" width="920" height="${rh}" viewBox="0 0 920 ${rh}"><rect width="920" height="${rh}" fill="url(#r${i})"/>${sk(nm, [290, 300, 250, 320, 300][i], rh, 340, '#120807')}</svg>`; html += `<div class="mono" style="position:absolute;left:108px;top:${y + 22}px;font-size:30px;font-weight:500;letter-spacing:.14em;color:#fff6ec;text-shadow:0 2px 12px rgba(20,8,4,.9),0 0 3px rgba(20,8,4,.9)">${label}</div>`; });
+  html += `<div class="pill" style="top:1710px;font-size:24px">${URL_TXT}</div>`;
+  return frame(W, H, art.replace(/(<rect y="1520"[^>]*>)/, ''), html);
+};
+
+// 12 banner --------------------------------------------------------------------------------------
+D['12-banner'] = () => {
+  const W = 1500, H = 500; const m = flat({ x: 660, y: 40, w: 800, h: 420, dot: 1.9 });
+  const home = HOME.map(c => { const p = m.proj([c.lon, c.lat]); return glowDot(p[0], p[1], c.c, 6); }).join('');
+  const p = HOME.map(c => m.proj([c.lon, c.lat]));
+  const arcs = `<path d="M${p[0][0]},${p[0][1]} Q${(p[0][0] + p[2][0]) / 2},${p[0][1] - 70} ${p[2][0]},${p[2][1]}" fill="none" stroke="rgba(243,236,230,.5)" stroke-dasharray="5 6"/><path d="M${p[2][0]},${p[2][1]} Q${(p[1][0] + p[2][0]) / 2},${p[2][1] - 30} ${p[1][0]},${p[1][1]}" fill="none" stroke="rgba(243,236,230,.5)" stroke-dasharray="5 6"/>`;
+  return frame(W, H, `${defs}${bgGlow(W, H, [[200, 250, 380, COL.ember, .3], [1300, 100, 300, COL.cph, .2]])}${m.svg}${arcs}${home}${sk('boston', 40, 500, 200, 'rgba(243,236,230,.12)')}${sk('london', 260, 500, 200, 'rgba(243,236,230,.12)')}${sk('copenhagen', 480, 500, 200, 'rgba(243,236,230,.12)')}`,
+    `
+     <div class="disp" style="position:absolute;left:84px;top:124px;font-size:112px;letter-spacing:.07em">Three Cities</div>
+     <div style="position:absolute;left:88px;top:268px;font-size:34px;color:var(--dim)">Live weather, played as rhythm.</div>
+     <div class="mono" style="position:absolute;left:88px;top:352px;font-size:19px">${URL_TXT}</div>`);
+};
+
+// 13 link card ------------------------------------------------------------------------------------
+D['13-link-card'] = () => {
+  const W = 1200, H = 630; const g = globe({ cx: 900, cy: 400, R: 330, rot: [24, -38], dot: 1.9, arcs: true });
+  return frame(W, H, `${defs}${bgGlow(W, H, [[200, 120, 380, COL.ember, .32], [1100, 560, 300, COL.lon, .25]])}${g.svg}`,
+    `
+     <div class="disp" style="position:absolute;left:80px;top:136px;font-size:112px;letter-spacing:.06em;line-height:1">Three<br>Cities</div>
+     <div style="position:absolute;left:84px;top:380px;width:520px;font-size:31px;line-height:1.3;color:var(--dim)">Boston, Copenhagen and London, played by their live weather.</div>
+     <div class="mono" style="position:absolute;left:84px;top:540px;font-size:18px">${URL_TXT}</div>`);
+};
+
+// 14 portrait ----------------------------------------------------------------------------------------
+D['14-portrait'] = () => {
+  const W = 1080, H = 1350; const m = flat({ x: 10, y: 410, w: 1060, h: 560, dot: 2.3 });
+  const home = HOME.map(c => { const p = m.proj([c.lon, c.lat]); return glowDot(p[0], p[1], c.c, 8); }).join('');
+  const lab = HOME.map(c => { const p = m.proj([c.lon, c.lat]); return `<text x="${p[0] + (c.n === 'Boston' ? -22 : 20)}" y="${p[1] + (c.n === 'London' ? 34 : 6)}" text-anchor="${c.n === 'Boston' ? 'end' : 'start'}" fill="${COL[{Boston:'bosL',Copenhagen:'cphL',London:'lonL'}[c.n]]}" font-family="Source Code Pro" font-size="30" letter-spacing="4" stroke="#2e1c17" stroke-width="6" paint-order="stroke">${c.n.toUpperCase()}</text>`; }).join('');
+  const p = HOME.map(c => m.proj([c.lon, c.lat]));
+  const arcs = `<path d="M${p[0][0]},${p[0][1]} Q${(p[0][0] + p[2][0]) / 2},${p[0][1] - 110} ${p[1][0]},${p[1][1]}" fill="none" stroke="rgba(243,236,230,.55)" stroke-dasharray="6 7" stroke-width="1.8"/>`;
+  return frame(W, H, `${defs}${sky('q', W, H, [[0, '#a06a4c'], [.5, '#6a4650'], [1, '#2e1a15']])}<rect width="${W}" height="${H}" fill="url(#q)"/>${bgGlow(W, H, [[860, 260, 340, COL.cph, .3], [180, 1160, 380, COL.lon, .3]])}${m.svg}${arcs}${home}${lab}${sk('boston', 20, 1350, 340, 'rgba(16,8,6,.92)')}${sk('copenhagen', 370, 1350, 340, 'rgba(16,8,6,.92)')}${sk('london', 720, 1350, 340, 'rgba(16,8,6,.92)')}`,
+    `
+     <div class="t disp" style="top:134px;font-size:150px;letter-spacing:.06em;line-height:.96">Three<br>Cities</div>
+     <div class="t" style="top:446px;font-size:0px">.</div>
+     <div class="t" style="top:1010px;font-size:36px;color:var(--ink)">Now live. Press start and listen.</div>
+     <div class="t mono" style="top:1068px;font-size:20px;color:var(--dim)">${URL_TXT}</div>`);
+};
+
+function build(name) {
+  const f = D[name](); const st = document.getElementById('stage'); st.style.width = f.W + 'px'; st.style.height = f.H + 'px';
+  const lg = HDR[name]; st.innerHTML = `<svg class="art" xmlns="http://www.w3.org/2000/svg" width="${f.W}" height="${f.H}" viewBox="0 0 ${f.W} ${f.H}">${f.art}</svg><svg class="art" xmlns="http://www.w3.org/2000/svg" width="${f.W}" height="${f.H}" viewBox="0 0 ${f.W} ${f.H}" style="z-index:3">${lg ? logoMark(lg[0], lg[1], lg[2], lg[3]) : ''}</svg>${f.html}<div class="grain"></div>`;
+  return f;
+}
+const HDR = { // [x, top, logoH, align]  (centered logos sit on the middle; left-aligned layouts get a left logo)
+  '01-live-square': [540, 26, 62, 'c'], '02-world-map-square': [540, 26, 62, 'c'], '03-home-skylines-square': [540, 22, 58, 'c'],
+  '04-how-it-works-square': [84, 40, 58, 'l'], '05-skyline-grid-square': [540, 16, 50, 'c'], '06-sunset-square': [540, 26, 62, 'c'], '07-type-square': [84, 44, 58, 'l'],
+  '08-live-story': [540, 292, 56, 'c'], '09-horizons-story': [540, 292, 56, 'c'], '10-steps-story': [540, 292, 56, 'c'], '11-world-story': [540, 292, 56, 'c'],
+  '12-banner': [60, 24, 50, 'l'], '13-link-card': [60, 32, 56, 'l'], '14-portrait': [540, 36, 66, 'c']
+};
+window.NAMES = Object.keys(D);
+const q = new URLSearchParams(location.search).get('d'); if (q) build(q);
+</script><script src="../anim.js"></script></body></html>

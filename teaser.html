@@ -65,7 +65,7 @@ canvas { width: 100%; height: auto; aspect-ratio: 9 / 16; background: #100806; b
 <script>
 const $ = id => document.getElementById(id);
 const W = 1080, H = 1920, COLORS = ["#d08a6a", "#6fa38c", "#a98bc4"];
-const RELEASED = false;
+const RELEASED = true;
 // Instagram covers the top, the right edge and the bottom of a reel unless it's full screen,
 // and taller phones crop a little off each side. Every scene keeps its type and interface inside what's left.
 const SAFE = true;   // every scene is laid out to clear Instagram's buttons
@@ -84,11 +84,11 @@ function drawCityInputs() {
 }
 drawCityInputs();
 // "Three Cities - Cologne 09.00 12C - Halifax 04.00 5C - Mexico City 01.00 15C - 2026-10-13.m4a"
-let recDate = "";
+let recDate = "", recTag = "";   // recTag: the key, scale and tempo, e.g. "C minor 90 bpm"
 function fromFilename(n) {
   const parts = n.replace(/\.[^.]+$/, "").replace(/_/g, " ").split(/\s+-\s+/).slice(1);
   const out = [];
-  parts.forEach(p => { const m = p.match(/^(.*?)\s+(\d{1,2})[.:](\d{2})\s+(-?\d+(?:\.\d+)?)\s*[CF]?$/i); if (m) out.push({ name: m[1].trim(), time: `${m[2].padStart(2, "0")}:${m[3]}`, temp: m[4] }); else if (/^\d{4}-\d{2}-\d{2}$/.test(p)) recDate = p; });
+  parts.forEach(p => { const m = p.match(/^(.*?)\s+(\d{1,2})[.:](\d{2})\s+(-?\d+(?:\.\d+)?)\s*[CF]?$/i); if (m) out.push({ name: m[1].trim(), time: `${m[2].padStart(2, "0")}:${m[3]}`, temp: m[4] }); else if (/^\d{4}-\d{2}-\d{2}$/.test(p)) recDate = p; else if (/\d+\s*bpm$/i.test(p)) recTag = p.trim(); });
   return out.length === 3 ? out : null;
 }
 
@@ -603,7 +603,7 @@ async function go(record) {
   })();
 }
 function save(blob, type) {
-  const ext = /mp4/.test(type) ? "mp4" : "webm", name = `Three Cities teaser - ${CITY.map(c => c.name).join(", ")}.${ext}`.replace(/[\\/:*?"<>|]/g, "");
+  const ext = /mp4/.test(type) ? "mp4" : "webm", name = `Three Cities teaser - ${CITY.map(c => c.name).join(", ")}${recTag ? " - " + recTag : ""}.${ext}`.replace(/[\\/:*?"<>|]/g, "");
   const size = `${(blob.size / 1e6).toFixed(1)} MB, .${ext}`;
   let file = null; try { file = new File([blob], name, { type }); } catch (e) {}
   if (file && navigator.canShare && navigator.canShare({ files: [file] }) && matchMedia("(pointer: coarse)").matches) {

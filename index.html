@@ -538,7 +538,7 @@ body.mood-immersive .fab { display: none !important; }
 .glance-src { background: transparent; border: 0; color: var(--ink); font: inherit; font-size: 12px; letter-spacing: 0.04em; padding: 3px 2px 3px 8px; cursor: pointer; max-width: 100%; }
 .glance-src option { background: #1a1210; color: var(--ink); }
 .glance b { font-weight: 400; color: var(--accent); }
-.cities.open .glance { display: none; }
+body:not(.perform) .cities.open .glance { display: none; }
 .quick { display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr) 36px auto; gap: 10px; align-items: center; padding-top: 14px; border-top: 1px solid var(--line); }
 .quick select { width: 100%; min-height: 36px; background: rgba(16,8,6,0.6); font-size: 11px; letter-spacing: 0; padding: 4px 4px 4px 6px; }
 .quick input[type="range"] { width: 100%; accent-color: var(--accent); }
@@ -564,6 +564,40 @@ body.mood-immersive .fab { display: none !important; }
 .mute[aria-pressed="true"] { border-color: var(--accent); color: var(--accent); }
 .cities:not(.open) .quick { margin-top: auto; }
 .more { display: none; flex-direction: column; gap: 18px; }
+/* playable cards (/perform only): the ring and the performance controls are always out; the weather lives under More */
+body.perform .city { padding: 18px; gap: 12px; }
+body.perform .viz { display: block; }
+body.perform .viz .ring { display: block; width: 100%; max-width: 190px; aspect-ratio: 1; margin: 0 auto; }
+.perf { display: grid; gap: 10px; padding-top: 12px; border-top: 1px solid var(--line); }
+.perf-top { display: grid; grid-template-columns: minmax(0, 1fr) 36px auto; gap: 8px; align-items: center; }
+.perf-top select { width: 100%; min-height: 36px; background: rgba(16,8,6,0.6); font-size: 11px; letter-spacing: 0; padding: 4px 4px 4px 6px; }
+.perf-sliders { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
+.perf-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px 12px; }
+.perf label { display: flex; flex-direction: column; gap: 4px; font-size: 10px; text-transform: uppercase; letter-spacing: 0.12em; color: var(--ink-dim); min-width: 0; }
+.perf .row { display: flex; justify-content: space-between; align-items: center; gap: 6px; min-height: 18px; }
+.perf output { color: var(--ink); font-variant-numeric: tabular-nums; }
+.perf input[type="range"] { width: 100%; accent-color: var(--accent); }
+.perf select { min-width: 0; width: 100%; background: rgba(16,8,6,0.6); }
+.perf-mid { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 8px; align-items: stretch; }
+.perf-mid .octave { grid-column: auto; }
+.perf-mid .octave-label { display: none; }
+.perf-mid .octave button { min-height: 34px; min-width: 26px; }
+.perf-mid .fxsends { grid-column: auto; display: flex; gap: 6px; }
+.perf-mid .fxsend { min-height: 34px; padding: 0 8px; letter-spacing: 0.08em; }
+.panauto { background: none; border: 1px solid var(--line); color: var(--ink-dim); font: inherit; font-size: 9px; letter-spacing: 0.1em; text-transform: uppercase; padding: 1px 6px; cursor: pointer; }
+.panauto[aria-pressed="true"] { border-color: var(--accent); color: var(--ink); }
+.wx-top { display: flex; justify-content: space-between; align-items: flex-end; gap: 12px; }
+.wx .temp { font-size: 34px; }
+@media (max-width: 600px), (pointer: coarse) and (max-width: 1100px) {
+  .perf-top select { min-height: 44px; font-size: 12.5px; }
+  .perf-sliders { grid-template-columns: 1fr; gap: 12px; }
+  .perf-grid { gap: 10px 10px; }
+  .perf-mid { grid-template-columns: 1fr; }
+  .perf-mid .octave button { min-height: 44px; }
+  .perf-mid .fxsend { min-height: 44px; flex: 1; }
+  .perf input[type="range"] { height: 28px; }
+}
+
 .cities.open .more { display: flex; animation: moreIn 0.35s ease; }
 @keyframes moreIn { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: none; } }
 @media (prefers-reduced-motion: reduce) { .cities.open .more { animation: none; } }
@@ -824,6 +858,208 @@ body.mood-immersive .fab { display: none !important; }
 .rack .chord-knobs .kn { flex: 0 0 auto; min-width: 104px; }
 @media (max-width: 1100px) { .rack > :last-child:nth-child(odd) { grid-column: 1 / -1; } }
 
+
+/* ---------- perform mode (?perform): the playing surface only ---------- */
+body.perform .hero .title-cities, body.perform .hero h1, body.perform .hero .lede, body.perform .hero .brand-link, body.perform .hero .where-map, body.perform .hero #mine, body.perform .hero #mineToggle, body.perform .hero .country-note, body.perform .hero .share-note, body.perform .hero #share, body.perform .hero #backMine, body.perform .hero #grain,
+body.perform .mood, body.perform .project, body.perform .about, body.perform .more-card, body.perform .units-row .shuffle-note, body.perform .dots, body.perform footer, body.perform .welcome { display: none !important; }
+body.perform .hero { padding: 10px 16px 4px; min-height: 0; }
+body.perform .hero-inner { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 12px; padding: 0; max-width: 1400px; margin: 0 auto; }
+body.perform .hero .play-big { min-width: 200px; padding: 12px 22px; }
+body.perform .hero .status { flex-basis: 100%; text-align: center; }
+body.perform .hero-actions, body.perform .invite-row { margin: 0; }
+body.perform .status { margin: 0; font-size: 12px; }
+body.perform .perf-bar { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; padding: 8px 16px; max-width: 1400px; margin: 0 auto; }
+body.perform .perf-bar[hidden] { display: none; }
+.perf-title { font-size: 11px; letter-spacing: .22em; text-transform: uppercase; color: var(--ink-dim); }
+.pf-bars { font-size: 12px; color: var(--ink-dim); display: flex; gap: 6px; align-items: center; }
+.pf-bars select { font: inherit; background: transparent; color: var(--ink); border: 1px solid var(--line, #5a4038); border-radius: 6px; padding: 3px 6px; }
+.perf-keys { margin-left: auto; font-size: 11px; color: var(--ink-dim); letter-spacing: .04em; }
+.perf-strip { position: relative; z-index: 3; display: grid; grid-template-columns: auto auto 1fr; gap: 8px; align-items: center; padding: 8px 10px; background: rgba(0,0,0,.45); }
+.perf-strip button { white-space: nowrap; font: inherit; font-size: 12px; letter-spacing: .08em; text-transform: uppercase; padding: 8px 12px; min-height: 40px; border-radius: 8px; border: 1px solid rgba(255,255,255,.35); background: rgba(0,0,0,.35); color: #fff; cursor: pointer; }
+.perf-strip button[aria-pressed="true"] { background: var(--accent, #e8a33d); color: #1a100d; border-color: transparent; }
+.perf-strip label { display: flex; align-items: center; gap: 8px; font-size: 11px; letter-spacing: .12em; text-transform: uppercase; color: #fff; }
+.perf-strip .pf-row2 { grid-column: 1 / -1; justify-content: space-between; }
+.perf-strip .pf-row2 input { max-width: 70%; }
+.perf-strip input[type=range] { flex: 1; min-width: 80px; }
+body.perform .hero .status, body.perform .units-row, body.perform .city .glance, body.perform .city .sunbox, body.perform .city .city-place { display: none !important; }
+body.perform .hero-actions, body.perform .invite-row { flex: 0 0 auto; width: auto; display: flex; align-items: center; }
+body.perform .hero-inner > * { margin-top: 0; margin-bottom: 0; }
+body.perform .city .viz { max-height: 190px; }
+body.perform .city .viz .ring { max-height: 180px; width: auto; }
+body.perform .city .quick { min-height: 52px; }
+body.perform .city .quick .mute { min-width: 44px; min-height: 44px; }
+body.perform .city .vol-wrap input { height: 32px; }
+
+.perf-bin { box-sizing: border-box; width: calc(100% - 32px); max-width: 1400px; margin: 14px auto 0; padding: 12px 16px; border: 1px solid rgba(255,255,255,.14); border-radius: 12px; background: rgba(0,0,0,.28); }
+.pb-head { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin-bottom: 10px; }
+.pb-head .perf-title { margin-right: 4px; }
+.pb-head button, .pb-head input { font: inherit; font-size: 12px; letter-spacing: .08em; text-transform: uppercase; padding: 8px 12px; min-height: 38px; border-radius: 8px; border: 1px solid rgba(255,255,255,.35); background: rgba(0,0,0,.35); color: #fff; }
+.pb-head input[type=search] { text-transform: none; letter-spacing: 0; min-width: 160px; }
+.pb-note { font-size: 12px; color: var(--ink-dim); }
+.pb-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 8px; max-height: 300px; overflow-y: auto; padding: 2px; }
+.pb-tile { display: flex; flex-direction: column; gap: 6px; padding: 8px 10px; border-radius: 8px; border: 1px solid rgba(255,255,255,.18); background: rgba(255,255,255,.05); cursor: grab; color: #fff; font-size: 12px; min-width: 0; }
+.pb-tile.on { border-color: #fff; background: rgba(255,255,255,.14); }
+.pb-name { white-space: normal; overflow-wrap: anywhere; text-align: left; line-height: 1.25; background: none; border: 0; color: inherit; font: inherit; padding: 0; cursor: pointer; }
+.pb-dir { font-size: 10px; color: var(--ink-dim); overflow-wrap: anywhere; }
+.pb-tile.used { border-color: rgba(255,255,255,.5); }
+.pb-grid.cols { display: flex; gap: 10px; align-items: flex-start; overflow-x: auto; overflow-y: hidden; max-height: none; }
+.pb-col { flex: 1 0 200px; min-width: 200px; max-width: 320px; display: flex; flex-direction: column; gap: 6px; }
+.pb-colhead { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; padding: 6px 10px; border-radius: 8px; background: color-mix(in srgb, var(--c, #fff) 22%, transparent); border-bottom: 2px solid var(--c, rgba(255,255,255,.4)); font-size: 11px; letter-spacing: .1em; text-transform: uppercase; }
+.pb-colhead span { color: var(--ink-dim); font-size: 10px; letter-spacing: .06em; white-space: nowrap; }
+.pb-colbody { display: flex; flex-direction: column; gap: 6px; max-height: 260px; overflow-y: auto; padding: 2px; }
+.pb-to button.home { flex: 2.2; text-transform: uppercase; letter-spacing: .06em; font-size: 10px; }
+.perf-bin.shut .pb-grid, .perf-bin.shut #pbFind { display: none !important; }
+.perf-bin.shut .pb-head { margin-bottom: 0; }
+.pb-to { display: flex; gap: 4px; margin-top: auto; }
+.pb-to button { flex: 1; min-height: 30px; font: inherit; font-size: 11px; border-radius: 6px; border: 1px solid var(--c, #fff); background: transparent; color: #fff; cursor: pointer; }
+.pb-to button:hover, .pb-to button.is { background: var(--c, #fff); color: #1a100d; font-weight: 700; }
+.city.pb-over { outline: 3px solid #fff; outline-offset: -3px; }
+
+.perf-lead { box-sizing: border-box; width: calc(100% - 32px); max-width: 1400px; margin: 12px auto 0; padding: 12px 16px; border: 1px solid rgba(255,255,255,.14); border-radius: 12px; background: rgba(0,0,0,.28); }
+.pl-row { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 16px; }
+.perf-lead button, .perf-lead select { font: inherit; font-size: 12px; letter-spacing: .08em; text-transform: uppercase; padding: 8px 12px; min-height: 38px; border-radius: 8px; border: 1px solid rgba(255,255,255,.35); background: rgba(0,0,0,.35); color: #fff; cursor: pointer; }
+.perf-lead button[aria-pressed="true"] { background: #fff; color: #1a100d; }
+.perf-lead label { display: flex; align-items: center; gap: 8px; font-size: 11px; letter-spacing: .12em; text-transform: uppercase; color: var(--ink-dim); }
+.perf-lead input[type=range] { width: 110px; }
+.pl-shape-btn { display: none !important; }
+body.perform.fit .pl-shape-btn { display: inline-block !important; }
+.pl-oct { display: flex; align-items: center; gap: 6px; font-size: 11px; letter-spacing: .12em; text-transform: uppercase; color: var(--ink-dim); }
+.pl-oct button { min-width: 38px; padding: 8px 0; }
+.pl-cam { display: flex; gap: 14px; align-items: flex-start; margin-top: 10px; }
+.pl-cam canvas { width: 320px; max-width: 45%; aspect-ratio: 4 / 3; border-radius: 8px; border: 1px solid rgba(255,255,255,.3); background: #000; }
+.pl-cam p { margin: 0; font-size: 12px; line-height: 1.5; color: var(--ink-dim); max-width: 46ch; }
+.pl-note { margin-top: 8px; font-size: 12px; color: var(--ink-dim); }
+.pl-keys { display: grid; gap: 4px; margin-top: 10px; }
+.pl-keys div { display: flex; gap: 4px; }
+.pl-keys span { flex: 1; max-width: 54px; text-align: center; padding: 6px 0; border-radius: 6px; border: 1px solid rgba(255,255,255,.2); font-size: 11px; color: var(--ink-dim); text-transform: uppercase; }
+.pl-keys span.dn { background: #fff; color: #1a100d; }
+.pl-keys span.rt { border-color: #fff; color: #fff; }
+
+/* fit to screen (desktop perform): cards, lead, samples and rhythm together; the rack drops below */
+@media (min-width: 1001px) {
+  body.perform.fit main { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); column-gap: 12px; align-items: start; }
+  body.perform.fit main > * { grid-column: 1 / -1; }
+  body.perform.fit main { row-gap: 8px; padding-top: 0; padding-bottom: 12px; }
+  body.perform.fit main > * { margin-top: 0 !important; margin-bottom: 0 !important; }
+  body.perform.fit .cities { padding-bottom: 0; margin-bottom: 0; min-height: 0; }
+  body.perform.fit .hero { margin-bottom: 0; }
+  body.perform.fit .groove { padding-top: 6px; }
+  body.perform.fit .groove-head { gap: 6px; }
+  body.perform.fit .rack { margin-top: 4px !important; }
+  body.perform.fit main > .perf-lead { grid-column: 1; order: 5; }
+  body.perform.fit main > .perf-bin { grid-column: 2; order: 5; }
+  body.perform.fit main > .perf-lead, body.perform.fit main > .perf-bin { width: 100%; box-sizing: border-box; height: 100%; margin-left: 0; margin-right: 0; }
+  body.perform.fit .groove-controls { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 6px 18px; }
+  body.perform.fit .groove-top { grid-column: auto; flex: 0 0 160px; }
+  body.perform.fit .groove-row { flex: 1 1 auto; }
+  body.perform.fit .groove-vc-knobs, body.perform.fit .groove-dials { gap: 8px; }
+  body.perform.fit .rack { order: 20; }
+  body.perform.fit .fxwrap, body.perform.fit .pedal { order: 30; }
+  body.perform.fit .hero { padding: 4px 16px 0; }
+  body.perform.fit .hero-inner { gap: 8px; }
+  body.perform.fit .hero .play-big { padding: 8px 18px; min-width: 150px; }
+  body.perform.fit .perf-bar { padding: 2px 16px; }
+  body.perform.fit .city .viz, body.perform.fit .city .city-meta { display: none; }
+  body.perform.fit .city .city-head { padding-bottom: 0; }
+  body.perform.fit .city .city-name { font-size: 22px; }
+  body.perform.fit .perf { padding-top: 8px; gap: 8px; }
+  body.perform.fit .perf-sliders, body.perform.fit .perf-grid { gap: 6px 10px; }
+  body.perform.fit main > .foot, body.perform.fit main > .keys-hint { order: 40; }
+  body.perform.fit .perf-strip { display: flex; flex-wrap: wrap; padding: 6px 10px; gap: 6px 8px; }
+  body.perform.fit .perf-strip button { min-height: 32px; padding: 4px 10px; }
+  body.perform.fit .perf-strip > label:not(.pf-row2) { flex: 1 1 90px; }
+  body.perform.fit .perf-strip .pf-row2 { flex: 1 1 45%; min-width: 0; }
+  body.perform.fit .perf-strip .pf-row2 input { max-width: none; }
+  body.perform.fit .perf-lead .pl-row { gap: 4px 10px; }
+  body.perform.fit .perf-lead .pl-row label { gap: 4px; font-size: 10px; letter-spacing: .06em; }
+  body.perform.fit .perf-lead input[type=range] { width: 56px; }
+  body.perform.fit .perf-lead button, body.perform.fit .perf-lead select { min-height: 32px; padding: 4px 8px; font-size: 11px; }
+  body.perform.fit .hero-inner { flex-direction: row; flex-wrap: nowrap; }
+  body.perform.fit .hero { padding-bottom: 0; }
+  body.perform.fit .groove-vc .kn, body.perform.fit .groove-fx .kn { transform: scale(.8); transform-origin: top left; margin-right: -14px; margin-bottom: -14px; }
+  body.perform.fit .groove-vc-title { display: none; }
+  body.perform.fit .groove-grid { align-self: start; }
+  body.perform.fit .perf-lead { margin-top: 8px; padding: 8px 14px; }
+  body.perform.fit .pl-keys, body.perform.fit .pl-note, body.perform.fit .pl-cam { display: none; }
+  body.perform.fit .perf-lead:not(.shape-open) .pl-synth { display: none; }
+  body.perform.fit .pl-shape-btn { display: inline-block; }
+  body.perform.fit .perf-lead input[type=range] { width: 80px; }
+  body.perform.fit .perf-bin { margin-top: 8px; padding: 8px 14px; }
+  body.perform.fit .perf-bin .pb-head { margin-bottom: 6px; }
+  body.perform.fit .pb-note { display: none; }
+  body.perform.fit .pb-colbody { max-height: 120px; }
+  body.perform.fit .pb-grid:not(.cols) { max-height: 140px; }
+  body.perform.fit .groove { order: 10; padding: 8px 0 0; gap: 6px; }
+  body.perform.fit .groove-info, body.perform.fit .groove-auto-note { display: none; }
+  body.perform.fit .groove-body { grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr); gap: 10px 20px; }
+  body.perform.fit .groove-grid i { height: 8px; }
+  body.perform.fit .groove-controls { gap: 6px; }
+}
+/* perform on phones and tablets: the three cities stack as compact channel strips so all three are in reach */
+@media (max-width: 960px) {
+  body.perform .cities { display: grid; grid-template-columns: minmax(0, 1fr); gap: 10px; overflow: visible; scroll-snap-type: none; margin-inline: 0; padding-inline: 0; padding-bottom: 0; }
+  body.perform .city { flex: none; padding: 14px; min-height: 0; }
+  body.perform .city .viz, body.perform .city .city-meta, body.perform .city .more { display: none !important; }
+  body.perform .city .city-head .city-name { font-size: 24px; }
+  body.perform .city .temp { font-size: 30px; }
+  body.perform .city .quick { margin-top: 8px; }
+  body.perform .perf-bar { padding: 8px 0; gap: 8px; }
+  body.perform .perf-bar .perf-title, body.perform .perf-keys { display: none; }
+  body.perform .perf-bar .ghost { flex: 1 1 0; min-width: 0; padding: 12px 8px; white-space: nowrap; }
+  body.perform .pf-bars { flex: 1 0 100%; }
+  .perf-strip { grid-template-columns: 1fr 1fr; padding: 10px; }
+  .perf-strip label { grid-column: 1 / -1; min-width: 0; }
+  .perf-strip label input[type=range] { flex: 1; width: auto; max-width: none; min-width: 0; }
+  .perf-strip .pf-row2 input { max-width: none; }
+  .perf-strip .pf-row2 { justify-content: flex-start; }
+  .perf-strip .pf-row2 { display: grid; grid-template-columns: 70px 1fr; }
+  .perf-strip label:not(.pf-row2) { display: grid; grid-template-columns: 70px 1fr; }
+  .perf-lead, .perf-bin { width: 100%; padding: 12px; }
+  .pl-row { gap: 8px 10px; }
+  .perf-lead label { flex: 1 0 100%; display: grid; grid-template-columns: 70px 1fr; }
+  .perf-lead input[type=range] { width: auto; }
+  .perf-lead #plSound { flex: 1 1 100%; }
+  .perf-lead #plHand { flex: 1 1 100%; }
+  .pl-cam { flex-direction: column; }
+  .pl-cam canvas { max-width: 100%; width: 100%; }
+  .pb-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); max-height: 360px; }
+  body.perform .hero-inner { gap: 8px; }
+}
+@media (pointer: coarse) { .pl-keys { display: none; } }
+
+/* perform on a phone: the three cities become three mixer channels side by side */
+@media (max-width: 700px) {
+  body.perform .hero { padding: 8px 10px 2px; }
+  body.perform .hero .play-big { min-width: 0; flex: 1 1 150px; padding: 12px 14px; }
+  body.perform .perf-bar { padding: 6px 10px; gap: 8px; }
+  body.perform .perf-bar .perf-title, body.perform .perf-keys { display: none; }
+  body.perform .perf-bar .ghost.small { flex: 1 1 120px; }
+  body.perform main { padding-left: 6px; padding-right: 6px; }
+  body.perform .cities { display: grid !important; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; padding: 0; overflow: visible; scroll-snap-type: none; }
+  body.perform .cities > .city { min-width: 0; width: auto; flex: none; min-height: 0; }
+  body.perform .city .photo, body.perform .city .veil, body.perform .city .viz, body.perform .city .samp, body.perform .city .more-btn, body.perform .city .city-meta, body.perform .city .vol-swell { display: none !important; }
+  body.perform .city .city-head { display: block; padding: 8px 6px 0; height: 62px; overflow: hidden; }
+  body.perform .city .city-name { font-size: 10.5px; letter-spacing: .02em; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  body.perform .city .temp { font-size: 15px; margin-top: 2px; }
+  body.perform .city .quick { display: flex; flex-direction: column; align-items: stretch; gap: 8px; padding: 6px; min-height: 0; }
+  body.perform .city .quick select { width: 100%; min-width: 0; font-size: 11px; padding: 6px 2px; -webkit-appearance: none; appearance: none; text-align: center; text-align-last: center; text-overflow: ellipsis; }
+  body.perform .city .vol-wrap { display: flex; justify-content: center; }
+  body.perform .city .vol-wrap input { writing-mode: vertical-lr; direction: rtl; -webkit-appearance: slider-vertical; appearance: slider-vertical; width: 44px; height: 170px; margin: 0; }
+  body.perform .city .quick .mute { width: 100%; min-height: 44px; }
+  .perf-strip { display: flex; flex-direction: column; align-items: stretch; padding: 6px; gap: 8px; }
+  .perf-strip button { width: 100%; padding: 8px 4px; font-size: 11px; letter-spacing: .04em; }
+  .perf-strip label, .perf-strip label:not(.pf-row2), .perf-strip .pf-row2 { display: block; grid-template-columns: none; font-size: 10px; letter-spacing: .08em; }
+  .perf-strip label input[type=range], .perf-strip .pf-row2 input { display: block; width: 100%; max-width: 100%; min-width: 0; flex: none; margin: 4px 0 0; }
+  .perf-strip { grid-template-columns: none; }
+  .perf-strip input[type=range], .perf-strip .pf-row2 input { flex: none; min-width: 0; width: 100%; max-width: 100%; height: 28px; }
+  .perf-strip .pf-row2 { justify-content: flex-start; }
+  .perf-lead, .perf-bin { width: calc(100% - 20px); padding: 10px; }
+  .perf-lead .pl-keys, .perf-bin { display: none; }
+  .pl-row { gap: 8px; }
+  .perf-lead select { flex: 1 1 100%; }
+  .pl-cam { flex-direction: column; }
+  .pl-cam canvas { max-width: 100%; width: 100%; }
+}
 </style>
 </head>
 <body>
@@ -882,6 +1118,14 @@ body.mood-immersive .fab { display: none !important; }
   </div>
 </div>
 
+<div class="perf-bar" id="perfBar" hidden>
+  <span class="perf-title">Perform</span>
+  <button type="button" class="ghost small" id="pfAllOut">Fade all out</button>
+  <button type="button" class="ghost small" id="pfAllIn">Fade all in</button>
+  <button type="button" class="ghost small" id="pfFit" aria-pressed="false" title="Squeeze the cards, lead, samples and rhythm onto one screen">Fit to screen</button>
+  <label class="pf-bars">Fade over <select id="pfBars"><option value="1">1 bar</option><option value="2">2 bars</option><option value="4" selected>4 bars</option><option value="8">8 bars</option><option value="16">16 bars</option></select></label>
+  <span class="perf-keys">1 2 3 mute · 4 5 6 solo · Shift+1 2 3 fade · 0 fade all · Space play</span>
+</div>
 <main>
 
 
@@ -900,12 +1144,14 @@ body.mood-immersive .fab { display: none !important; }
       </div>
     </div>
     <div class="pedal rack-mod mod-midi midi-bit" aria-label="MIDI">
-      <div class="mod-head"><span class="mod-name">MIDI</span><button class="info" type="button" aria-label="How MIDI works" data-tip="MIDI out sends each city's notes to a synth or music app on its own channel. Pick each city's channel, the chords' and the drums' in the menus here, or turn any of them off. By default the cities use channels 1, 2 and 3, the chords channel 4 (held until the next chord, when the Chords lamp is on) and the rhythm section channel 10, with standard General MIDI drum notes: kick 36, snare 38, rim 37, closed hat 42, ride 51 with the jazz kit, so any drum rack maps it. Fills, ratchets and ghost notes come through too. Clock out sends MIDI clock, 24 pulses a beat, with Start and Stop, to this output or to every output, so drum machines, sequencers and synced delays keep time with the cities, slowing with them as they fall asleep. Turn it on mid-song and it starts them on the next bar. The rhythm section's filter, Auto sweeps included, goes out as a control change on the drums' channel so your drum machine's own filter follows. CC 19 drives the Roland TR-8S Master FX knob and switches its Master FX on. It works in Chrome and Edge on a computer."></button></div>
+      <div class="mod-head"><span class="mod-name">MIDI</span><button class="info" type="button" aria-label="How MIDI works" data-tip="MIDI out sends each city's notes to a synth or music app on its own channel. Pick each city's channel, the chords' and the drums' in the menus here, or turn any of them off. By default the cities use channels 1, 2 and 3, the chords channel 4 (held until the next chord, when the Chords lamp is on) and the rhythm section channel 10, with standard General MIDI drum notes: kick 36, snare 38, rim 37, closed hat 42, ride 51 with the jazz kit, so any drum rack maps it. Fills, ratchets and ghost notes come through too. Clock out sends MIDI clock, 24 pulses a beat, with Start and Stop, to this output or to every output, so drum machines, sequencers and synced delays keep time with the cities, slowing with them as they fall asleep. Turn it on mid-song and it starts them on the next bar. The rhythm section's filter, Auto sweeps included, goes out as a control change on the drums' channel so your drum machine's own filter follows. The chords' filter does the same on the chords' channel, as CC 74 (the standard cutoff) unless you pick another number. CC 19 drives the Roland TR-8S Master FX knob and switches its Master FX on. It works in Chrome and Edge on a computer."></button></div>
       <div class="mod-body">
         <label class="midi-port" for="midi"><span class="kn-label">Out to</span><select id="midi" class="lcd"><option value="">Off</option></select></label>
         <div class="midi-chans" id="midiChans" aria-label="MIDI channel for each part"></div>
         <label class="midi-ch midi-fcc" for="filterCC" title="Send the rhythm section filter, Auto sweeps included, as a control change on the drums' channel"><span class="kn-label">Drum filter as CC</span>
           <select id="filterCC" class="lcd"><option value="-1">Off</option><option value="19" selected>CC 19 · TR-8S Master FX</option><option value="74">CC 74 · Cutoff</option><option value="1">CC 1 · Mod wheel</option></select></label>
+        <label class="midi-ch midi-fcc" for="chordCC" title="Send the chords' filter, Auto sweeps included, as a control change on the chords' channel"><span class="kn-label">Chord filter as CC</span>
+          <select id="chordCC" class="lcd"><option value="-1">Off</option><option value="74" selected>CC 74 · Cutoff</option><option value="71">CC 71 · Resonance</option><option value="1">CC 1 · Mod wheel</option><option value="21">CC 21 · Free</option></select></label>
         <label class="midi-ch midi-fcc" for="midiClock" title="Send MIDI clock with Start and Stop, so drum machines, sequencers and delays follow the tempo"><span class="kn-label">Clock out</span>
           <select id="midiClock" class="lcd"><option value="off" selected>Off</option><option value="one">To this output</option><option value="all">To every output</option></select></label>
       </div>
@@ -1141,7 +1387,7 @@ body.mood-immersive .fab { display: none !important; }
     ["junopad", "Juno pad"], ["junostrings", "Juno strings"], ["junokeys", "Juno keys"],
     ["graincloud", "Grain cloud"], ["grainshimmer", "Grain shimmer"], ["graindust", "Grain dust"],
     ["handdrum", "Hand drum"], ["woodblock", "Woodblock"], ["tongue", "Tongue drum"], ["clave", "Clave"],
-    ["kick", "Kick"], ["snare", "Snare"], ["hat", "Hi-hat"], ["rimshot", "Rimshot"], ["conga", "Conga"], ["cowbell", "Cowbell"],
+    ["kick", "Kick"], ["snare", "Snare"], ["hat", "Hi-hat"], ["rimshot", "Rimshot"], ["conga", "Conga"], ["congahi", "Conga, high"], ["congamid", "Conga, mid"], ["congalo", "Conga, low"], ["cowbell", "Cowbell"],
     ["sample", "Your sample…"]
   ];
   // The menu, sorted into families
@@ -1155,7 +1401,7 @@ body.mood-immersive .fab { display: none !important; }
     ["Pads and strings", ["bowed", "pad", "choir", "junopad", "junostrings"]],
     ["Grain textures", ["graincloud", "grainshimmer", "graindust"]],
     ["Bass", ["sub", "acid"]],
-    ["Percussion", ["kick", "snare", "hat", "rimshot", "conga", "cowbell", "handdrum", "woodblock", "tongue", "clave", "drum", "shaker"]]
+    ["Percussion", ["kick", "snare", "hat", "rimshot", "conga", "congahi", "congamid", "congalo", "cowbell", "handdrum", "woodblock", "tongue", "clave", "drum", "shaker"]]
   ].map(([g, vs]) => [g, vs.filter(v => SOUND_NAME[v])]);
   const KEYS = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"];
   const SCALES = [
@@ -1176,13 +1422,78 @@ body.mood-immersive .fab { display: none !important; }
     ["kumoi", [0, 2, 3, 7, 9]],
     ["major hexatonic", [0, 2, 4, 7, 9, 11]],
     ["minor hexatonic", [0, 2, 3, 5, 7, 10]],
-    ["ryukyu (Okinawan)", [0, 4, 5, 7, 11]]
+    ["ryukyu (Okinawan)", [0, 4, 5, 7, 11]],
+    // more colour, added at the end so shared links keep their scale. Not offered on a first listen.
+    ["harmonic major", [0, 2, 4, 5, 7, 8, 11]],
+    ["melodic minor", [0, 2, 3, 5, 7, 9, 11]],
+    ["dorian #4", [0, 2, 3, 6, 7, 9, 10]],
+    ["phrygian dominant", [0, 1, 4, 5, 7, 8, 10]],
+    ["lydian dominant", [0, 2, 4, 6, 7, 9, 10]],
+    ["hirajoshi", [0, 2, 3, 7, 8]],
+    ["in-sen", [0, 1, 5, 7, 10]],
+    ["iwato", [0, 1, 5, 6, 10]],
+    ["pelog selisir", [0, 1, 3, 7, 8]],
+    ["pelog tembung", [0, 1, 5, 7, 8]],
+    ["bhairav", [0, 1, 4, 5, 7, 8, 11]]
   ];
   // the scales a first listen can land on; the tenser ones stay in the menu for anyone who goes looking
   const GENTLE = ["minor pentatonic", "major pentatonic", "dorian", "major", "lydian", "suspended pentatonic", "yo (Japanese folk)",
     "kumoi", "major hexatonic", "minor hexatonic", "ryukyu (Okinawan)"].map(n => SCALES.findIndex(x => x[0] === n));
   // a fresh key and scale every time the page loads
   const QS = (() => { try { return new URLSearchParams(location.search); } catch (e) { return new URLSearchParams(); } })();
+
+  // ---------- anonymous visit counts ----------
+  // Counts, never people. No cookies, nothing saved on the device, no IP address kept. The server adds up daily totals
+  // (visits, where from, what was chosen) and /admin shows them. Skipped when Do Not Track or Global Privacy Control is on,
+  // in reel mode, on a local copy, and on any device where /admin has switched it off for the owner.
+  const TRACK = (() => {
+    let q = [], timer = null, off = false, heard = 0;
+    try { if (navigator.doNotTrack === "1" || navigator.globalPrivacyControl === true) off = true; } catch (e) {}
+    // open the site once with ?notrack=1 on each of your own devices to leave them out, ?notrack=0 to count them again
+    try { if (QS.get("notrack") === "1") localStorage.setItem("tc-notrack", "1"); else if (QS.get("notrack") === "0") localStorage.removeItem("tc-notrack"); } catch (e) {}
+    try { if (localStorage.getItem("tc-notrack") === "1") off = true; } catch (e) {}
+    if (QS.has("reel") || (/^(localhost|127\.0\.0\.1)$/.test(location.hostname) && !QS.get("quizapi"))) off = true;
+    const base = () => { try { return QUIZ_API; } catch (e) { return ""; } };
+    const seen = new Set();
+    function flush() {
+      timer = null; const a = base();
+      if (off || !a) { q = []; return; }
+      if (!q.length) return;
+      const body = JSON.stringify({ e: q.splice(0, 40) });
+      try { fetch(a + "/e", { method: "POST", headers: { "Content-Type": "text/plain" }, body, keepalive: true }).catch(() => {}); } catch (e) {}
+      if (q.length) timer = setTimeout(flush, 500);
+    }
+    function add(kind, key) {
+      if (off) return;
+      q.push([kind, String(key == null ? "" : key).slice(0, 60)]);
+      if (!timer) timer = setTimeout(flush, 1500);
+    }
+    function once(kind, key) { const k = kind + "|" + key; if (seen.has(k)) return false; seen.add(k); add(kind, key); return true; }
+    // how long they stay: one count each time a visit passes 10 seconds, 30 seconds, a minute and so on
+    [[10, "10s"], [30, "30s"], [60, "1m"], [180, "3m"], [600, "10m"], [1800, "30m"]].forEach(([s, l]) => setTimeout(() => once("stay", l), s * 1000));
+    // and how long the music plays for
+    setInterval(() => {
+      try { if (!playing) return; } catch (e) { return; }
+      heard += 5;
+      [[30, "30s"], [60, "1m"], [180, "3m"], [600, "10m"], [1800, "30m"]].forEach(([s, l]) => { if (heard >= s) once("heard", l); });
+    }, 5000);
+    return { add, once, get off() { return off; } };
+  })();
+  const track = (kind, key) => TRACK.add(kind, key);
+  // which of my links get clicked: the site's name only, never the address of the page they were on
+  const linkClick = e => {
+    try {
+      const a = e.target && e.target.closest && e.target.closest("a[href]"); if (!a) return;
+      const u = new URL(a.getAttribute("href"), location.href);
+      if (u.protocol === "mailto:") return track("link", "email");
+      if (!/^https?:$/.test(u.protocol)) return;
+      const h = u.hostname.replace(/^www\./, "");
+      if (h === location.hostname.replace(/^www\./, "")) { if (/^\/manual/.test(u.pathname)) track("link", "manual"); return; }
+      track("link", h);
+    } catch (err) {}
+  };
+  document.addEventListener("click", linkClick); document.addEventListener("auxclick", linkClick);
+  let TRACK_READY = false; setTimeout(() => { TRACK_READY = true; }, 4000);   // city picks only count once the page has settled, so a shared link's cities are not picks
   let keyRoot = Math.floor(Math.random() * KEYS.length);
   if (QS.has("key") && KEYS.indexOf(QS.get("key")) >= 0) keyRoot = KEYS.indexOf(QS.get("key"));
   // any scale can come up; the shared chords below keep the three cities agreeing with each other
@@ -1206,7 +1517,7 @@ body.mood-immersive .fab { display: none !important; }
       base: 60, degrees: [-2, -1, 0, 1, 2], rate: 2, source: "humidity" }
   ];
   cities.forEach((c, i) => Object.assign(c, {
-    index: i, w: null, density: 50, chance: 100, volume: 80, octave: c.octave || 0, muted: false, fxRev: true, fxDel: true,
+    index: i, w: null, density: 50, chance: 100, volume: 80, pan: 0, panAuto: true, len: 100, octave: c.octave || 0, muted: false, fxRev: true, fxDel: true,
     steps: 0, hits: 0, pattern: [], pos: 0, hitCount: 0,
     flashes: [], playhead: -1
   }));
@@ -1617,7 +1928,7 @@ body.mood-immersive .fab { display: none !important; }
   document.getElementById("shuffleSounds").addEventListener("click", () => {
     const any = a => a[Math.floor(Math.random() * a.length)];
     const kit = Math.random() < 0.3;   // now and then, all rhythm: something low, something in the middle, something on top
-    const pick = kit ? [any(["kick", "drum", "handdrum", "conga"]), any(["snare", "rimshot", "woodblock", "clave", "cowbell", "tongue"]), any(["hat", "shaker"])].sort(() => Math.random() - 0.5)
+    const pick = kit ? [any(["kick", "drum", "handdrum", "conga", "congalo", "congamid"]), any(["snare", "rimshot", "woodblock", "clave", "cowbell", "tongue", "congahi"]), any(["hat", "shaker"])].sort(() => Math.random() - 0.5)
       : SOUND_GROUPS.filter(([g, vs]) => g !== "Your own" && vs.length).sort(() => Math.random() - 0.5).slice(0, 3).map(([, vs]) => any(vs)).sort(() => Math.random() - 0.5);
     cities.forEach((c, i) => {
       const sel = document.getElementById(c.key.toLowerCase() + "-sound") || (c.el && c.el.querySelector('select[id$="-sound"]'));
@@ -1698,7 +2009,91 @@ body.mood-immersive .fab { display: none !important; }
     const el = document.createElement("article");
     el.className = "city";
     el.style.setProperty("--accent", `var(${c.color})`);
-    el.innerHTML = `
+    // The playable layout (controls out, weather under More) is for /perform. The main page keeps the weather up front.
+    el.innerHTML = QS.has("perform") ? `
+      <div class="photo" data-r="photo" aria-hidden="true"></div>
+      <div class="veil" aria-hidden="true"></div>
+      <div class="city-head">
+        <div>
+          <h3 class="city-name" data-r="name">${c.name}</h3>
+          <div class="city-place" data-r="place"></div>
+          <div class="city-meta"><span class="hit-led" data-r="led" aria-hidden="true"></span></div>
+        </div>
+      </div>
+      <div class="viz">
+        <canvas class="ring" data-r="ring" width="520" height="520" aria-label="${c.name} rhythm ring"></canvas>
+      </div>
+      <div class="perf">
+        <div class="perf-top">
+          <select id="${id}-sound" aria-label="${c.name} sound">${SOUND_GROUPS.map(([g, vs]) => `<optgroup label="${g}">${vs.map(v => `<option value="${v}"${v === c.voice ? " selected" : ""}>${SOUND_NAME[v]}</option>`).join("")}</optgroup>`).join("")}</select>
+          <button class="mute" type="button" aria-pressed="false" data-r="mute" aria-label="Mute ${c.name}" title="Mute ${c.name}">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9h4l5-4v14l-5-4H4z" fill="currentColor"/><path class="on" d="M16 9.5a4 4 0 0 1 0 5M18.5 7a7.5 7.5 0 0 1 0 10" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/><path class="off" d="M16.5 9.5l5 5m0-5l-5 5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+        </button>
+          <button class="more-btn" type="button" data-r="moreBtn" aria-expanded="false" aria-label="More controls" title="More controls">
+          <svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round">
+            <path d="M4 7h9M17 7h3M4 17h3M11 17h9"/><circle cx="15" cy="7" r="2"/><circle cx="9" cy="17" r="2"/>
+          </svg><span class="more-word">More</span>
+        </button>
+        </div>
+        <div class="perf-sliders">
+          <label class="sl" for="${id}-vol"><span class="row">Volume</span><span class="vol-wrap"><input id="${id}-vol" type="range" min="0" max="100" value="${c.volume}" aria-label="${c.name} volume"><i class="vol-swell" data-r="volSwell" aria-hidden="true"></i></span></label>
+          <label class="sl" for="${id}-pan"><span class="row">Pan <button type="button" class="panauto" id="${id}-panauto" data-r="panAuto" aria-pressed="true" title="Auto lets the city drift around the stereo field by itself. Move the slider to place it yourself.">Auto</button></span><input id="${id}-pan" data-r="pan" type="range" min="-100" max="100" value="0" aria-label="${c.name} pan"></label>
+          <label class="sl" for="${id}-len"><span class="row">Length <output data-r="o-len">100%</output></span><input id="${id}-len" type="range" min="25" max="250" value="100" title="How long each note rings. Short is plucky, long is washy."></label>
+        </div>
+        <div class="perf-mid">
+          <div class="octave" role="group" aria-label="${c.name} octave" data-r="oct">
+          <span class="octave-label">Octave</span>
+          ${[-2, -1, 0, 1, 2].map(o => `<button type="button" data-oct="${o}" aria-pressed="${o === c.octave}">${o > 0 ? "+" + o : o < 0 ? "\u2212" + -o : "0"}</button>`).join("")}
+        </div>
+          <div class="fxsends">
+          <button type="button" class="fxsend" aria-pressed="true" data-r="sendRev">Reverb</button>
+          <button type="button" class="fxsend" aria-pressed="true" data-r="sendDel">Delay</button>
+        </div>
+        </div>
+        <div class="perf-grid">
+          <label for="${id}-src">Hits from
+          <select id="${id}-src" data-r="srcSel">${SOURCES.map(s => `<option value="${s}"${s === c.source ? " selected" : ""}>${s}</option>`).join("")}</select>
+        </label>
+          <label for="${id}-rate">Rate
+          <select id="${id}-rate">${RATES.map(([n, v]) => `<option value="${v}"${v === c.rate ? " selected" : ""}>${n}</option>`).join("")}</select>
+        </label>
+          <label for="${id}-dens"><span class="row">Density <output data-r="o-dens">${c.density}%</output></span>
+          <input id="${id}-dens" type="range" min="0" max="100" value="${c.density}">
+        </label>
+          <label for="${id}-chance"><span class="row">Chance <output data-r="o-chance">${c.chance}%</output></span>
+          <input id="${id}-chance" type="range" min="0" max="100" value="${c.chance}">
+        </label>
+        </div>
+      </div>
+      <div class="more">
+        <div class="wx">
+          <div class="wx-top"><div><div class="city-meta"><span data-r="meta">–</span></div><div class="temp" data-r="temp">–</div></div>
+          <div class="sunbox"><canvas class="sun" data-r="sun" width="192" height="120" aria-hidden="true"></canvas><span data-r="sunlabel">–</span></div></div>
+        </div>
+        <div class="glance" data-r="glance"></div>
+        <div class="bars">
+        ${[["temp", "temp"], ["hum", "humidity"], ["wind", "wind"], ["cloud", "cloud"], ["rain", "rain"]].map(([k, label]) => `<div class="bar"><span>${label}</span><div class="track"><div class="fill" data-r="b-${k}"></div></div><span class="val" data-r="v-${k}">–</span></div>`).join("")}
+        </div>
+        <div class="pattern" data-r="pattern">–</div>
+        <div class="samp" data-r="samp" ${c.voice === "sample" ? "" : "hidden"} style="grid-column: 1 / -1">
+          <div class="samp-head"><span class="samp-name" data-r="sampName">No sample yet</span><button type="button" class="samp-load" data-r="sampLoad">Load a sound</button><input type="file" ${SAMP_ACCEPT} data-r="sampFile" hidden></div>
+          <div class="samp-shape" role="group" aria-label="What the steps change">
+            <span class="samp-label">Steps shape</span>
+            <button type="button" data-shape="vel" aria-pressed="true" title="Loud at the top of the loop, softer towards the middle">Velocity</button>
+            <button type="button" data-shape="filter" aria-pressed="true" title="The filter opens step by step across the loop">Filter</button>
+            <button type="button" data-shape="start" aria-pressed="true" title="Each step plays from further into your sound, and the whole pattern drifts on with the wind every lap">Start</button>
+            <button type="button" data-shape="pitch" aria-pressed="true" title="Tuned to the melody, with your sound's own pitch as middle C. Off plays it as recorded">Pitch</button>
+          </div>
+          <div class="samp-key" data-r="sampKey" hidden></div>
+          <div class="samp-hint">${SAMP_COARSE ? "Tap Load a sound to pick one from your files. iCloud, Dropbox and Google Drive show up there too. MP3, WAV, M4A and most others." : "Drop a sound anywhere on this card, or load one."} It stays on your device.</div>
+        </div>
+        <form class="swap" data-r="swap" style="grid-column: 1 / -1">
+          <label for="${id}-swap" style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)">Swap city</label>
+          <div class="ta"><input id="${id}-swap" type="text" placeholder="Swap city" autocomplete="off"><button class="dice dice-swap" type="button" aria-label="Random city" title="Random city"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="4" width="16" height="16" rx="3.5" fill="none" stroke="currentColor" stroke-width="1.5"/><circle cx="8.6" cy="8.6" r="1.5" fill="currentColor"/><circle cx="12" cy="12" r="1.5" fill="currentColor"/><circle cx="15.4" cy="15.4" r="1.5" fill="currentColor"/></svg></button></div>
+          <button type="submit">Swap</button>
+        </form>
+        <div class="swap-note" data-r="swapnote" style="grid-column: 1 / -1"></div>
+      </div>` : `
       <div class="photo" data-r="photo" aria-hidden="true"></div>
       <div class="veil" aria-hidden="true"></div>
       <div class="city-head">
@@ -1744,6 +2139,8 @@ body.mood-immersive .fab { display: none !important; }
         <label for="${id}-chance"><span class="row">Chance <output data-r="o-chance">${c.chance}%</output></span>
           <input id="${id}-chance" type="range" min="0" max="100" value="${c.chance}">
         </label>
+          <label for="${id}-pan"><span class="row">Pan <button type="button" class="panauto" id="${id}-panauto" data-r="panAuto" aria-pressed="true" title="Auto lets the city drift around the stereo field by itself. Move the slider to place it yourself.">Auto</button></span><input id="${id}-pan" data-r="pan" type="range" min="-100" max="100" value="0" aria-label="${c.name} pan"></label>
+          <label for="${id}-len"><span class="row">Length <output data-r="o-len">100%</output></span><input id="${id}-len" type="range" min="25" max="250" value="100" title="How long each note rings. Short is plucky, long is washy."></label>
         <div class="octave" role="group" aria-label="${c.name} octave" data-r="oct">
           <span class="octave-label">Octave</span>
           ${[-2, -1, 0, 1, 2].map(o => `<button type="button" data-oct="${o}" aria-pressed="${o === c.octave}">${o > 0 ? "+" + o : o < 0 ? "\u2212" + -o : "0"}</button>`).join("")}
@@ -1793,6 +2190,7 @@ body.mood-immersive .fab { display: none !important; }
     }));
     el.querySelector(`#${id}-sound`).addEventListener("change", e => {
       c.voice = e.target.value; if (ac && NEEDS[c.voice]) loadSamples(NEEDS[c.voice]); applySound(c);
+      if (e.isTrusted) { track("soundpick", c.voice); if (c.voice === "sample") track("act", "own-sound"); }   // a person chose it
       c.ref.samp.hidden = c.voice !== "sample";
       if (c.voice === "sample" && e.isTrusted) showSampPanel(c, !c.samp);   // a person chose it (not a shared link): open the panel and bring it into view
     });
@@ -1826,6 +2224,11 @@ body.mood-immersive .fab { display: none !important; }
     el.querySelector(`#${id}-rate`).addEventListener("change", e => { c.rate = Number(e.target.value); c.rateByHand = true; updateCycle(); render(c); });
     el.querySelector(`#${id}-dens`).addEventListener("input", e => { c.density = Number(e.target.value); c.ref["o-dens"].value = c.density + "%"; rebuild(c); });
     el.querySelector(`#${id}-chance`).addEventListener("input", e => { c.chance = Number(e.target.value); c.ref["o-chance"].value = c.chance + "%"; });
+    // Pan: Auto lets the city wander the stereo field by itself, as it always has. Moving the slider places it by hand.
+    c.ref.pan.addEventListener("input", () => { c.pan = Number(c.ref.pan.value); setPanAuto(c, false); applyPan(c); sendPanCC(c); });
+    c.ref.panAuto.addEventListener("click", () => { setPanAuto(c, c.ref.panAuto.getAttribute("aria-pressed") !== "true"); applyPan(c); });
+    // Length: how long each note rings. It scales the length the weather and the memory map already give the note.
+    el.querySelector(`#${id}-len`).addEventListener("input", e => { c.len = Number(e.target.value); c.ref["o-len"].value = c.len + "%"; });
     c.ref.mute.addEventListener("click", () => {
       c.muted = !c.muted;
       c.ref.mute.setAttribute("aria-pressed", String(c.muted));
@@ -1892,6 +2295,7 @@ body.mood-immersive .fab { display: none !important; }
       setPhoto(c, null);
       findPhoto(hit.name).then(ph => { if (ph && c.name === hit.name) setPhoto(c, ph); }).catch(() => {});
       updateIdentity();
+      if (TRACK_READY) track("citypick", c.name);
       return true;
     } catch (err) {
       c.ref.swapnote.textContent = ON_SITE ? "The weather service isn't answering just now. Try again in a minute." : "Swapping cities needs the live weather service, which this copy of the page can't reach.";
@@ -2086,7 +2490,7 @@ body.mood-immersive .fab { display: none !important; }
       const u = new URL(location.href);
       ["cities", "key", "scale", "kit", "mix"].forEach(k => u.searchParams.delete(k));   // rebuilt below, by hand, so it reads cleanly
       const enc = x => encodeURIComponent(x).replace(/%20/g, "+");
-      ["midi"].forEach(k => u.searchParams.delete(k));
+      ["midi", "ref"].forEach(k => u.searchParams.delete(k));   // a campaign tag (?ref=) shouldn't travel in a shared link
       const extra2 = u.searchParams.toString(), m = midiShareCode();
       u.search = "?cities=" + cities.map(c => enc(c.name)).join(",") + "&mix=" + mixCode.enc(soundDiff()) + (m ? "&midi=" + m : "") + (extra2 ? "&" + extra2 : "");
       return u.toString();
@@ -2168,6 +2572,7 @@ body.mood-immersive .fab { display: none !important; }
       label.textContent = msg;
       clearTimeout(btn._t); btn._t = setTimeout(() => { label.textContent = "Share"; }, 2000);
     };
+    track("act", navigator.share && matchMedia("(pointer: coarse)").matches ? "share-sheet" : "share-copy");
     if (navigator.share && matchMedia("(pointer: coarse)").matches) {
       navigator.share({ title: "Three Cities · Forrest James", text: line, url }).catch(() => {});   // the link travels as a link, so Copy in the sheet gives a clean address; closing the sheet is fine
       return;
@@ -2941,12 +3346,18 @@ body.mood-immersive .fab { display: none !important; }
       const swell = ac.createGain();
       input.connect(filter).connect(breath).connect(mood);
       mood.connect(moodGain);
-      moodGain.connect(pan).connect(out).connect(swellTone).connect(swell).connect(vol).connect(master);
+      // perform stage: a fade level and a DJ-style filter, before the sends so reverb and delay follow the fade (transparent until used)
+      const pHP = ac.createBiquadFilter(); pHP.type = "highpass"; pHP.frequency.value = 20; pHP.Q.value = 0.7;
+      const pLP = ac.createBiquadFilter(); pLP.type = "lowpass"; pLP.frequency.value = 20000; pLP.Q.value = 0.7;
+      const pG = ac.createGain();
+      moodGain.connect(pan).connect(pHP).connect(pLP).connect(pG).connect(out).connect(swellTone).connect(swell).connect(vol).connect(master);
       vol.connect(rev).connect(reverb);
       vol.connect(del).connect(delay);
-      buses.set(c, { input, filter, out, swell, swellTone, vol, rev, del, mood, moodGain, breath, breathLfo, breathDepth, gust, pan, panDrift, chorusIn });
+      buses.set(c, { input, filter, out, swell, swellTone, vol, rev, del, mood, moodGain, breath, breathLfo, breathDepth, gust, pan, panDrift, chorusIn, pHP, pLP, pG });
       applyMood(c, true);
+      if (typeof PERF !== "undefined" && PERF) PERF.apply(c);
       applySound(c);
+      applyPan(c);
     });
     setTempo();
   }
@@ -2955,6 +3366,18 @@ body.mood-immersive .fab { display: none !important; }
     if (!c.steps) return 0;
     const perBeat = (c.hits / c.steps) * (8 / c.rate);   // 8 = 32nd ticks in a beat
     return Math.max(0, Math.min(1, (perBeat - 0.6) / 1.6));
+  }
+  function setPanAuto(c, on) { c.panAuto = on; c.ref.panAuto.setAttribute("aria-pressed", String(on)); c.ref.pan.setAttribute("aria-valuetext", on ? "Auto" : c.pan + ""); }
+  // where the city sits in the stereo field: its own drifting and the memory map in Auto, or exactly where you put it
+  function applyPan(c) {
+    const b = buses.get(c); if (!b) return;
+    const t = ac.currentTime;
+    if (c.panAuto) { b.pan.pan.setTargetAtTime(b.moodPan || 0, t, 0.6); b.panDrift.offset.setTargetAtTime((Math.random() * 2 - 1) * 0.45, t, 4); }
+    else { b.pan.pan.setTargetAtTime(Math.max(-1, Math.min(1, c.pan / 100)), t, 0.08); b.panDrift.offset.setTargetAtTime(0, t, 0.08); }
+  }
+  function sendPanCC(c) {   // CC 10 on the city's channel, so a synth on the other end pans with it
+    const ch = c.midiCh ?? c.index; if (ch < 0 || !midiOut) return;
+    try { midiOut.send([0xB0 | ch, 10, Math.max(0, Math.min(127, Math.round((c.pan + 100) / 200 * 127)))]); } catch (e) {}
   }
   function applySound(c) {
     const b = buses.get(c);
@@ -3001,7 +3424,7 @@ body.mood-immersive .fab { display: none !important; }
     if (!ac || !playing) return;
     cities.forEach(c => {
       const b = buses.get(c);
-      if (!b || !b.panDrift || Math.random() > 0.08) return;
+      if (!b || !b.panDrift || !c.panAuto || Math.random() > 0.08) return;
       b.panDrift.offset.setTargetAtTime((Math.random() * 2 - 1) * 0.5, ac.currentTime, 8 + Math.random() * 8);
     });
   }, 1000);
@@ -3115,6 +3538,21 @@ body.mood-immersive .fab { display: none !important; }
       line.innerHTML = `Your sound is in <b>${name}</b>. Kept the old key: with Pitch on, the sound is still tuned to it.`;
     }, { once: true });
   }
+  // A short, readable label for the Sound menu: real words from the file name. Initials (BD, SN, TR), codes, track
+  // numbers, tempos, keys and version tags are left out, and so are underscores. Words we know from music and field
+  // recording win first; any other proper-looking word fills the rest. Falls back to a tidied version of the name.
+  const KNOWN_WORDS = new Set(("kick snare hat hihat clap rim tom cymbal crash ride shaker tambourine conga bongo cowbell clave woodblock drum drums perc percussion bell bells chime chimes gong marimba kalimba xylophone vibes piano keys organ synth pad pads bass sub lead pluck stab arp strings string violin viola cello harp guitar banjo ukulele flute oboe clarinet sax trumpet horn brass choir voice vocal vocals whisper breath speech rain thunder storm wind waves ocean sea river stream water drip fire crackle birds bird crow gull owl insects crickets cicadas frog forest street traffic bus train tram tube station crowd market cafe church bridge harbour harbor clock tick door footsteps steps engine siren whistle horn noise static hiss hum drone texture grain tape vinyl radio glitch riser sweep swell impact hit boom rumble fx ambience ambient atmosphere night morning dawn dusk snow ice wood metal glass stone paper boston copenhagen london").split(" "));
+  function sampleLabel(name) {
+    const base = name.replace(/\.[^.]+$/, "");
+    const NOISE = /^(a|an|the|of|at|in|on|and|my|for|sample|samples|loop|final|master|mix|mixdown|bounce|copy|take|rec|recording|audio|new|untitled|track|file|export|render|wav|mp3|bpm|stereo|mono|dry|wet|one|shot|oneshot|hit|part|version|demo|test|temp|edit|edited|processed|normalized|normalised)$/i;
+    const words = base.replace(/([a-z])([A-Z])/g, "$1 $2").split(/[^A-Za-z]+/).filter(Boolean);   // digits and underscores split words and disappear
+    const real = w => w.length >= 3 && !/^[a-g][#b]?(maj|min|m)$/i.test(w) && /[aeiouy]/i.test(w) && !NOISE.test(w) && !(w === w.toUpperCase() && w.length <= 4 && !KNOWN_WORDS.has(w.toLowerCase()));
+    const ok = words.map((w, i) => ({ w, i })).filter(x => real(x.w));
+    const pick = ok.filter(x => KNOWN_WORDS.has(x.w.toLowerCase())).concat(ok.filter(x => !KNOWN_WORDS.has(x.w.toLowerCase()))).slice(0, 2).sort((a, b) => a.i - b.i).map(x => x.w);
+    let out = pick.map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()).join(" ");
+    if (!out) out = words.filter(w => w.length >= 3).slice(0, 2).map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()).join(" ") || base.replace(/[_\-]+/g, " ").trim();
+    return out.length > 18 ? out.slice(0, 17).trimEnd() + "\u2026" : out;
+  }
   async function loadUserSample(c, file) {
     if (!ac) setupAudio();
     c.ref.sampName.textContent = "Loading " + file.name + "…";
@@ -3124,13 +3562,26 @@ body.mood-immersive .fab { display: none !important; }
       for (let ch = 0; ch < buf.numberOfChannels; ch++) { const d = buf.getChannelData(ch); for (let i = 0; i < d.length; i += 4) peak = Math.max(peak, Math.abs(d[i])); }
       c.samp = { buf, name: file.name.replace(/\.[^.]+$/, ""), norm: peak > 0.001 ? 0.9 / peak : 1 };
       c.ref.sampName.textContent = `${c.samp.name} · ${buf.duration < 10 ? buf.duration.toFixed(1) : Math.round(buf.duration)} s`;
-      c.voice = "sample"; { const sel = c.el.querySelector("select[id$='-sound']"); if (sel) sel.value = "sample"; } c.ref.samp.hidden = false; applySound(c);
+      c.voice = "sample"; { const sel = c.el.querySelector("select[id$='-sound']"); if (sel) { sel.value = "sample"; const o = [...sel.options].find(x => x.value === "sample"); if (o) { o.textContent = "\u266A " + sampleLabel(file.name); o.title = c.samp.name; } } } c.ref.samp.hidden = false; applySound(c);
       matchSampleKey(c);
     } catch (err) { c.ref.sampName.textContent = "Couldn't read that file. Try a WAV, MP3 or M4A."; c.ref.sampLoad.classList.add("nudge"); }
   }
   const SAMPLE_USER_G = 0.32;
-  const PERC_G = { handdrum: 0.36, woodblock: 0.3, tongue: 0.2, clave: 0.6, kick: 0.6, snare: 0.34, hat: 0.5, rimshot: 0.34, conga: 0.34, cowbell: 0.13 };
+  const PERC_G = { handdrum: 0.36, woodblock: 0.3, tongue: 0.2, clave: 0.6, kick: 0.6, snare: 0.34, hat: 0.5, rimshot: 0.34, conga: 0.34, congahi: 0.32, congamid: 0.34, congalo: 0.4, cowbell: 0.13 };
+  // Perform mode can soften every note's attack and stretch or clip its length, per city. Untouched (the default), this is a straight pass-through.
+  let voiceShaping = false;
   function voice(c, midi, vel, t, L = 1) {
+    const sh = c.shape, b = buses.get(c);
+    if (voiceShaping || !sh || !b || (sh.atk <= 0.004 && sh.len === 1)) return voiceCore(c, midi, vel, t, L);
+    voiceShaping = true;
+    const realIn = b.input, realCh = b.chorusIn;
+    const gi = ac.createGain(), gc = ac.createGain();
+    for (const g of [gi, gc]) { g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(1, t + Math.max(0.002, sh.atk)); }
+    gi.connect(realIn); if (realCh) gc.connect(realCh);
+    b.input = gi; if (realCh) b.chorusIn = gc;
+    try { voiceCore(c, midi, vel, t, L * sh.len); } finally { b.input = realIn; if (realCh) b.chorusIn = realCh; voiceShaping = false; }
+  }
+  function voiceCore(c, midi, vel, t, L = 1) {
     // Your sample, not loaded yet (or the link came from someone else's computer): felt piano keeps the seat warm
     if (c.voice === "sample" && !(c.samp && c.samp.buf)) {
       c.voice = "felt";
@@ -3474,6 +3925,12 @@ body.mood-immersive .fab { display: none !important; }
         const fr = fold(f, 380, 800); tone("triangle", fr, 1, 0.05, 0.001); tone("sine", fr * 2.3, 0.3, 0.03, 0.001); click(3200, 2, 0.7, 0.02);
       } else if (c.voice === "conga") {        // a higher skin than the hand drum, with a bright slap
         const fr = fold(f, 180, 420); tone("sine", fr, 1, 0.22 * Math.max(0.6, L), 0.002, fr * 1.3); tone("sine", fr * 1.5, 0.2, 0.06); click(2400, 1.2, 0.45, 0.02);
+      } else if (c.voice === "congahi") {      // the small drum: tight, high and bright, with a crisp slap
+        const fr = fold(f, 330, 680); tone("sine", fr, 1, 0.16 * Math.max(0.6, L), 0.002, fr * 1.25); tone("sine", fr * 1.6, 0.18, 0.045); click(3400, 1.4, 0.5, 0.016);
+      } else if (c.voice === "congamid") {     // the middle drum: a rounder skin between the two
+        const fr = fold(f, 210, 460); tone("sine", fr, 1, 0.26 * Math.max(0.6, L), 0.002, fr * 1.28); tone("sine", fr * 1.5, 0.2, 0.06); click(2200, 1.1, 0.4, 0.02);
+      } else if (c.voice === "congalo") {      // the big drum: a deep, round tone that rings longer, with a soft slap
+        const fr = fold(f, 110, 250); tone("sine", fr, 1, 0.42 * Math.max(0.6, L), 0.003, fr * 1.4); tone("sine", fr * 1.5, 0.16, 0.1); click(1500, 0.9, 0.32, 0.026);
       } else if (c.voice === "cowbell") {      // two clangy squares a fifth-ish apart
         const fr = fold(f, 520, 900); tone("square", fr, 0.5, 0.28, 0.001); tone("square", fr * 1.48, 0.35, 0.22, 0.001);
       } else {                                 // clave: two hardwood sticks, very short and bright
@@ -3615,6 +4072,10 @@ body.mood-immersive .fab { display: none !important; }
     GROOVE.bus.connect(GROOVE.filter).connect(master);   // dry unless a drum's own H or D switch is on
     GROOVE.hallSend = ac.createGain(); GROOVE.hallSend.gain.value = GROOVE.rev; GROOVE.hallSend.connect(reverb);
     GROOVE.delaySend = ac.createGain(); GROOVE.delaySend.gain.value = GROOVE.del; GROOVE.delaySend.connect(delay);
+    // The effects sit after the drum filter: a drum sent to reverb or delay goes through its own copy of the drum volume and filter
+    // first, so closing the filter darkens the echoes and the reverb too, not just the dry drums.
+    const lane = send => { const bus = ac.createGain(), filter = ac.createBiquadFilter(); filter.type = "lowpass"; filter.Q.value = 0.5; bus.connect(filter).connect(send); return { bus, filter }; };
+    GROOVE.hallLane = lane(GROOVE.hallSend); GROOVE.delayLane = lane(GROOVE.delaySend);
     applyGroove();
   }
   function grooveSleep() {
@@ -3624,8 +4085,10 @@ body.mood-immersive .fab { display: none !important; }
   function applyGroove() {
     if (!GROOVE.bus) return;
     const t = ac.currentTime, sl = grooveSleep();
-    GROOVE.bus.gain.setTargetAtTime(GROOVE.on ? GROOVE.vol * GROOVE.vol * 1.3 * (1 - sl * 0.5) : 0, t, 0.08);
-    if (!GROOVE.auto) { GROOVE.filter.frequency.setTargetAtTime(250 * Math.pow(16000 / 250, GROOVE.tone) * (1 - sl * 0.4), t, 0.08); sendFilterCC(GROOVE.tone); }
+    const g = GROOVE.on ? GROOVE.vol * GROOVE.vol * 1.3 * (1 - sl * 0.5) : 0;
+    GROOVE.bus.gain.setTargetAtTime(g, t, 0.08);
+    [GROOVE.hallLane, GROOVE.delayLane].forEach(l => l && l.bus.gain.setTargetAtTime(g, t, 0.08));
+    if (!GROOVE.auto) { const f = 250 * Math.pow(16000 / 250, GROOVE.tone) * (1 - sl * 0.4); [GROOVE.filter, GROOVE.hallLane && GROOVE.hallLane.filter, GROOVE.delayLane && GROOVE.delayLane.filter].forEach(x => x && x.frequency.setTargetAtTime(f, t, 0.08)); sendFilterCC(GROOVE.tone); }
   }
   const KITS = {   // [kick: start Hz, end Hz, decay s, level] [snare: band Hz, Q, decay, level, body Hz] [hat: highpass Hz, decay, level] [rim: Hz, decay, level]
     soft:    { kick: [110, 46, 0.32, 0.8], snare: [1800, 0.8, 0.14, 1.1, 0], hat: [7000, 0.035, 0.5], rim: [880, 0.05, 0.44], drive: 0 },
@@ -3810,6 +4273,19 @@ body.mood-immersive .fab { display: none !important; }
     const at = t != null && ac ? performance.now() + Math.max(0, t - ac.currentTime) * 1000 : undefined;
     midiOut.send([0xB0 | drumCh, filterCC, v], at);
   }
+  // The chords' filter goes out the same way, on the chords' channel. CC 74 is the standard filter cutoff,
+  // so a synth playing the chords opens and closes with the app's filter. 0 is shut, 127 is wide open.
+  let chordCC = 74, lastChordCC = -1, lastChordCCAt = 0;
+  function sendChordCC(norm, t) {
+    if (chordCC < 0 || chordCh < 0 || !midiOut) return;
+    const v = Math.max(0, Math.min(127, Math.round(norm * 127)));
+    const now = performance.now();
+    if (v === lastChordCC) return;
+    if (now - lastChordCCAt < 25) { clearTimeout(sendChordCC.late); sendChordCC.late = setTimeout(() => sendChordCC(norm), 30); return; }   // keep the last value of a fast drag
+    lastChordCC = v; lastChordCCAt = now;
+    const at = t != null && ac ? performance.now() + Math.max(0, t - ac.currentTime) * 1000 : undefined;
+    midiOut.send([0xB0 | chordCh, chordCC, v], at);
+  }
   function sendDrumMidi(kind, t, vel) {
     if (drumCh < 0 || !midiOut) return;
     const note = kind === "hat" && GROOVE.kit === "jazz" ? GM_DRUMS.ride : GM_DRUMS[kind];
@@ -3827,8 +4303,8 @@ body.mood-immersive .fab { display: none !important; }
       const ws = ac.createWaveShaper(); ws.curve = driveCurve; out.connect(ws).connect(GROOVE.bus);
     } else out.connect(GROOVE.bus);
     { const sd = GROOVE.send[kind];   // this drum's own sends, if switched on
-      if (sd && sd.h && GROOVE.hallSend) out.connect(GROOVE.hallSend);
-      if (sd && sd.d && GROOVE.delaySend) out.connect(GROOVE.delaySend); }
+      if (sd && sd.h && GROOVE.hallLane) out.connect(GROOVE.hallLane.bus);
+      if (sd && sd.d && GROOVE.delayLane) out.connect(GROOVE.delayLane.bus); }
     out.gain.value = GROOVE.laneVol[kind] ?? 1;   // the drum row's volume
     const env = (node, peak, dec, att = 0.002) => {
       const g = ac.createGain(); g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(peak, t + att);
@@ -3901,7 +4377,7 @@ body.mood-immersive .fab { display: none !important; }
     const top = 250 * Math.pow(16000 / 250, GROOVE.tone), low = 260;
     const k = ph < 0.03 ? 1 - ph / 0.03 : Math.pow((ph - 0.03) / 0.97, 2.2);   // a quick drop just after the one, then a slow climb
     const f = low * Math.pow(top / low, Math.max(0, Math.min(1, k)));
-    GROOVE.filter.frequency.setTargetAtTime(f * (1 - grooveSleep() * 0.4), t, ph < 0.03 ? 0.04 : 0.12);
+    [GROOVE.filter, GROOVE.hallLane && GROOVE.hallLane.filter, GROOVE.delayLane && GROOVE.delayLane.filter].forEach(x => x && x.frequency.setTargetAtTime(f * (1 - grooveSleep() * 0.4), t, ph < 0.03 ? 0.04 : 0.12));
     sendFilterCC(Math.log(f / 250) / Math.log(16000 / 250), t);
     const bars = Math.round((cyc.ticks - (tickNow % cyc.ticks)) / 32);
     GROOVE.note = `Auto: opening up as ${cyc.all ? "all three cities" : "two of the cities"} head for the one together, ${bars} ${bars === 1 ? "bar" : "bars"} away`;
@@ -4114,7 +4590,7 @@ body.mood-immersive .fab { display: none !important; }
     const pos = c.pos;
     const s = sunNow(c);
     const sl = sleepOf(c).depth;
-    const played = !c.muted && c.pattern[pos] && Math.random() * 100 < c.chance && Math.random() > sl * 0.75   // asleep, most notes rest
+    const played = !c.muted && !(typeof PERF !== "undefined" && PERF && PERF.off(c)) && c.pattern[pos] && Math.random() * 100 < c.chance && Math.random() > sl * 0.75   // asleep, most notes rest
       && Math.random() > rainGap(c);                                                                             // rain on the way, a patchier line
     if (played) {
       const deg = nextDegree(c, pos);
@@ -4124,7 +4600,7 @@ body.mood-immersive .fab { display: none !important; }
       // closeness on the memory map, eased at the city's own pace: 0 far away, 1 the middle, 3 right on it
       const f = Math.max(0, Math.min(3, c.moodShown ?? 1));
       const near = Math.max(0, Math.min(1, (f - 1) / 2)), far = Math.max(0, 1 - f);
-      const L = (0.7 + 0.3 * Math.min(f, 1) + near * 1.6) * (1 + sl * 0.8);    // short and plucky far away, long and held up close, longer still asleep
+      const L = (0.7 + 0.3 * Math.min(f, 1) + near * 1.6) * (1 + sl * 0.8) * (c.len / 100);    // short and plucky far away, long and held up close, longer still asleep
       let vel = pos === 0 ? 1 : 0.7;
       vel *= 0.55 + 0.45 * s.light;
       vel *= 1 - sl * 0.3;                                                         // sleep talk is soft
@@ -4200,6 +4676,11 @@ body.mood-immersive .fab { display: none !important; }
     HARM.prog = null; HARM.root = 0;
     timer = setInterval(scheduler, 25);
     playing = true;
+    if (TRACK.once("listen", "start")) {   // once per visit: who they are listening to, and with what
+      cities.forEach(c => { track("city", c.name); track("sound", c.voice); });
+      track("kit", GROOVE.kit); track("chords", CHORD.on ? CHORD.sound : "off");
+      track("scale", (SCALES.find(x => x[1] === scale) || [""])[0]); track("tempo", Math.round((bpmNow || +tempo.value || 90) / 10) * 10);
+    }
     if (REC.supported()) { document.getElementById("recWrap").hidden = false; document.getElementById("inviteRow").hidden = false; }
     listenFrom = Date.now(); clearTimeout(moreTimer); moreTimer = setTimeout(() => { if (playing) showMore(); }, 4 * 60 * 1000);   // a few minutes in
   }
@@ -4250,11 +4731,16 @@ body.mood-immersive .fab { display: none !important; }
   const mmss = s => `${String(Math.floor(s / 60)).padStart(2, "0")}:${String(Math.floor(s % 60)).padStart(2, "0")}`;
   const mb = n => n < 1e6 ? `${Math.max(1, Math.round(n / 1e3))} KB` : `${(n / 1e6).toFixed(1)} MB`;
   // the file says where and when: each city's local time and temperature as the take began, then the date
+  // e.g. "C minor 90 bpm" (a sharp is written "sharp" in the name would be wordy, so it stays as #, which file names allow)
+  function musicTag() {
+    const sc = SCALES.find(x => x[1] === scale);
+    return `${KEYS[keyRoot]} ${sc ? sc[0].toLowerCase() : ""} ${bpmNow || tempo.value} bpm`.replace(/\s+/g, " ").trim();
+  }
   function recFileName(ext) {
     const d = new Date(REC.t0 || Date.now()), pad = n => String(n).padStart(2, "0");
     const date = `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
     const parts = (REC.snap || []).join(" - ");
-    return `Three Cities - ${parts} - ${date}.${ext}`.replace(/[\\/:*?"<>|]/g, "");
+    return `Three Cities - ${parts} - ${REC.tag || musicTag()} - ${date}.${ext}`.replace(/[\\/:*?"<>|]/g, "");
   }
   function recTap() {
     if (!REC.tap) { REC.tap = ac.createMediaStreamDestination(); outNode.connect(REC.tap); }   // after the master filter and compressor: exactly what you hear
@@ -4283,7 +4769,7 @@ body.mood-immersive .fab { display: none !important; }
       REC.mr.ondataavailable = e => { if (e.data && e.data.size) REC.chunks.push(e.data); };
       REC.mr.start(1000);
     }
-    REC.on = true; REC.t0 = Date.now();
+    REC.on = true; REC.t0 = Date.now(); REC.tag = musicTag();   // the key, scale and tempo as the recording starts
     REC.snap = cities.map(c => `${c.name} ${localTime(c).replace(":", ".")}${c.w ? " " + fmtTemp(c.w.t, 0).replace("°", "") : ""}`);   // e.g. London 06.28 13C (Chrome rejects a degree sign in file names)
     recBtn.setAttribute("aria-pressed", "true"); recFmt.disabled = true; recMenuOpen(false);
     const tick = () => {
@@ -4297,6 +4783,7 @@ body.mood-immersive .fab { display: none !important; }
     recNote.textContent = `Recording${REC.wav ? " as WAV" : ""}. It saves to this device when you stop.${coarse ? " Keep this tab open and the screen on while recording." : ""}`;
   }
   function recSave(blob, ext, extra) {
+    track("act", "record-saved");   // a recording finished and was handed over
     if (REC.url) URL.revokeObjectURL(REC.url);
     REC.url = URL.createObjectURL(blob);
     const name = recFileName(ext), secs = (Date.now() - REC.t0) / 1000;
@@ -4330,7 +4817,7 @@ body.mood-immersive .fab { display: none !important; }
       mr.stop();
     }
   }
-  recBtn.addEventListener("click", () => { if (REC.on) recStop(); else recStart().catch(err => { REC.on = false; recNote.hidden = false; recNote.textContent = "Recording didn't start in this browser. Try Chrome, Safari or Firefox."; console.warn(err); }); });
+  recBtn.addEventListener("click", () => { if (REC.on) recStop(); else { track("act", "record"); recStart().catch(err => { REC.on = false; recNote.hidden = false; recNote.textContent = "Recording didn't start in this browser. Try Chrome, Safari or Firefox."; console.warn(err); }); } });
 
   // ---------- chord bed: slow chords from the shared progression, underneath everything ----------
   // Off by default. Each chord swells in over a couple of seconds, holds for its four bars and fades as the next arrives.
@@ -4411,6 +4898,7 @@ body.mood-immersive .fab { display: none !important; }
     return CHORD.filt;
   }
   function chordApplyFilter() {
+    if (!CHORD.auto) sendChordCC(CHORD.tone);
     if (!CHORD.filt || CHORD.auto) return;
     CHORD.filt.frequency.setTargetAtTime(chordFilterHz(CHORD.tone) * (1 - grooveSleep() * 0.4), ac.currentTime, 0.08);
   }
@@ -4421,6 +4909,7 @@ body.mood-immersive .fab { display: none !important; }
     const k = ph < 0.03 ? 1 - ph / 0.03 : Math.pow((ph - 0.03) / 0.97, 2.2);
     const f = low * Math.pow(top / low, Math.max(0, Math.min(1, k)));
     CHORD.filt.frequency.setTargetAtTime(f * (1 - grooveSleep() * 0.4), t, ph < 0.03 ? 0.04 : 0.12);
+    sendChordCC(Math.log(f / 250) / Math.log(16000 / 250), t);   // same position as the knob's 0 to 1
     const bars = Math.round((cyc.ticks - (tickNow % cyc.ticks)) / 32);
     CHORD.note = `Auto: the chord filter opens as ${cyc.all ? "all three cities" : "two of the cities"} head for the one together, ${bars} ${bars === 1 ? "bar" : "bars"} away`;
   }
@@ -4458,7 +4947,7 @@ body.mood-immersive .fab { display: none !important; }
   { const btn = document.getElementById("chordOn"), lvl = document.getElementById("chordLevel");
     const sync = () => { CHORD.level = Number(lvl.value) / 100; document.getElementById("chordLevelOut").value = lvl.value; CHORD.voices.forEach(v => v.lvl && v.lvl.gain.setTargetAtTime(1, ac.currentTime, 0.1)); };
     btn.addEventListener("click", () => {
-      CHORD.on = !CHORD.on; btn.setAttribute("aria-pressed", String(CHORD.on));
+      CHORD.on = !CHORD.on; btn.setAttribute("aria-pressed", String(CHORD.on)); if (CHORD.on) track("act", "chords-on");
       if (!ac) return;
       if (CHORD.on && playing) chordBed(ac.currentTime + 0.05);
       else { chordMidiOff(ac.currentTime); CHORD.voices.forEach(v => { v.g.gain.cancelScheduledValues(ac.currentTime); v.g.gain.setTargetAtTime(0, ac.currentTime, 0.8); v.stop(ac.currentTime + 4); }); }
@@ -4648,21 +5137,23 @@ body.mood-immersive .fab { display: none !important; }
       midiSel.options[0].textContent = "Off (MIDI blocked here)";
     }
   }
-  midiSel.addEventListener("change", () => { chordMidiOff(0); clockStop(); midiOut = midiAccess && midiSel.value ? midiAccess.outputs.get(midiSel.value) : null; document.querySelector(".mod-midi").classList.toggle("midi-live", !!midiOut); ccStart(); });
+  midiSel.addEventListener("change", e => { if (midiSel.value && e.isTrusted) track("act", "midi-out"); chordMidiOff(0); clockStop(); midiOut = midiAccess && midiSel.value ? midiAccess.outputs.get(midiSel.value) : null; document.querySelector(".mod-midi").classList.toggle("midi-live", !!midiOut); ccStart(); });
   // switching to CC 19 also turns the TR-8S Master FX on (CC 15) so the knob has something to move
   function ccStart() {
     lastCC = -1;
     if (midiOut && filterCC === 19 && drumCh >= 0) midiOut.send([0xB0 | drumCh, 15, 127]);
     if (!GROOVE.auto) sendFilterCC(GROOVE.tone);
+    lastChordCC = -1; if (!CHORD.auto) sendChordCC(CHORD.tone);
   }
   document.getElementById("filterCC").addEventListener("change", e => { filterCC = Number(e.target.value); ccStart(); });
+  document.getElementById("chordCC").addEventListener("change", e => { chordCC = Number(e.target.value); ccStart(); });
   document.getElementById("midiClock").addEventListener("change", e => { clockStop(); clockMode = e.target.value; });   // restarts on the next bar
   // MIDI settings travel in a shared link when someone is using MIDI: channels, the drum filter CC and clock.
   // Never the output itself, since that's a device on their computer. Reads like midi=0.1.2.3.9.19.all, x for off.
   function midiShareCode() {
     if (!midiOut) return "";
     const ch = v => v < 0 ? "x" : String(v + 1);
-    return [...cities.map(c => ch(c.midiCh ?? c.index)), ch(chordCh), ch(drumCh), filterCC < 0 ? "x" : filterCC, clockMode].join(".");
+    return [...cities.map(c => ch(c.midiCh ?? c.index)), ch(chordCh), ch(drumCh), filterCC < 0 ? "x" : filterCC, clockMode, chordCC < 0 ? "x" : chordCC].join(".");
   }
   try {
     const m = QS.get("midi");
@@ -4674,6 +5165,10 @@ body.mood-immersive .fab { display: none !important; }
         const cc = p[5] === "x" ? -1 : parseInt(p[5], 10);
         if ([...document.getElementById("filterCC").options].some(o => Number(o.value) === cc)) { filterCC = cc; document.getElementById("filterCC").value = String(cc); }
         if (["off", "one", "all"].includes(p[6])) { clockMode = p[6]; document.getElementById("midiClock").value = p[6]; }
+        if (p[7] != null) {
+          const cc2 = p[7] === "x" ? -1 : parseInt(p[7], 10);
+          if ([...document.getElementById("chordCC").options].some(o => Number(o.value) === cc2)) { chordCC = cc2; document.getElementById("chordCC").value = String(cc2); }
+        }
         buildMidiChans();
       }
     }
@@ -4835,7 +5330,7 @@ body.mood-immersive .fab { display: none !important; }
     const qid = order[qIndex], keys = cities.map(quizKey), sig = qid + "@" + keys.join("~");
     if (!quizShare.checked || quizSent.has(sig)) return;   // one count per question per visit, the first clear choice
     quizSent.add(sig);
-    try { await fetch(QUIZ_API + "/answer", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ q: qid, c: keys, p: best }) }); } catch (e) {}
+    try { await fetch(QUIZ_API + "/answer", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ q: qid, c: keys, p: best }) }); track("act", "quiz-answer"); } catch (e) {}
   }
   const FOLLOW = [1.2, 5, 14];   // seconds each city takes to respond: quick, steady, slow
   const pad = document.getElementById("moodPad"), pg = pad.getContext("2d");
@@ -4992,7 +5487,8 @@ body.mood-immersive .fab { display: none !important; }
     // where the city sits around you: relative to the light, left or right
     if (dot && corners.length && PW) {
       const [dx] = toXY(dot.w);
-      b.pan.pan.setTargetAtTime(Math.max(-1, Math.min(1, (corners[c.index][0] - dx) / (PW / 2))) * 0.5, ac.currentTime, tau);
+      b.moodPan = Math.max(-1, Math.min(1, (corners[c.index][0] - dx) / (PW / 2))) * 0.5;
+      if (c.panAuto) b.pan.pan.setTargetAtTime(b.moodPan, ac.currentTime, tau);
     }
     b.rev.gain.setTargetAtTime(revSend(c), ac.currentTime, tau);
   }
@@ -5413,7 +5909,7 @@ body.mood-immersive .fab { display: none !important; }
   // ---------- the mix as the visitor set it, carried in the share link ----------
   // Every sound control on the page, under a name that stays put. MIDI routing and the
   // freeze switches are left out: they belong to the listener's setup and the moment.
-  const SAVE_SKIP = new Set(["mine1", "mine2", "mine3", "midi", "filterCC", "midiClock", "moodPause", "hallFreeze", "delayFreeze"]);
+  const SAVE_SKIP = new Set(["mine1", "mine2", "mine3", "midi", "filterCC", "chordCC", "midiClock", "moodPause", "hallFreeze", "delayFreeze"]);
   function soundControls() {
     const out = [];
     drawGrooveGrid();   // makes sure the drum mute switches exist
@@ -5467,7 +5963,7 @@ body.mood-immersive .fab { display: none !important; }
   };
   // Short, readable mix codes for links: "1s~felt_k~3_t~84" instead of a long base64 blob.
   // Cities are 1, 2 and 3; everything else has a one or two letter name. Unknown names pass through as they are.
-  const MIX_CITY = { boston: "1", copenhagen: "2", london: "3" }, MIX_PART = { sound: "s", vol: "v", src: "w", rate: "r", dens: "d", chance: "p", mute: "m", sendRev: "R", sendDel: "D", oct: "o" };
+  const MIX_CITY = { boston: "1", copenhagen: "2", london: "3" }, MIX_PART = { sound: "s", vol: "v", src: "w", rate: "r", dens: "d", chance: "p", mute: "m", sendRev: "R", sendDel: "D", oct: "o", pan: "n", panauto: "na", len: "l" };
   const MIX_GLOBAL = { key: "k", scale: "sc", tempo: "t", volume: "V", djFilter: "f", grooveOn: "g", grooveKit: "gk", grooveVol: "gv", grooveTone: "gt", grooveAuto: "ga", grooveChance: "gc", grooveRev: "gr", grooveDel: "gd",
     "gm-kick": "mk", "gm-snare": "ms", "gm-hat": "mh", "gm-rim": "mr",
     "gh-kick": "hk", "gh-snare": "hs", "gh-hat": "hh", "gh-rim": "hr", "gd-kick": "dk", "gd-snare": "ds", "gd-hat": "dh", "gd-rim": "dr", hallOn: "h", fxRevLevel: "hl", fxRevDecay: "hd", fxRevPre: "hp", fxRevTone: "ht",
@@ -5592,9 +6088,484 @@ body.mood-immersive .fab { display: none !important; }
       if (typing || tag === "INPUT" || tag === "SELECT") return;
       if (k === " " && !(tag === "BUTTON" || tag === "A" || tag === "SUMMARY" || tag === "CANVAS")) { e.preventDefault(); playBtn.click(); return; }
       if (["1", "2", "3"].includes(k)) { const c = cities[Number(k) - 1]; if (c && c.ref && c.ref.mute) c.ref.mute.click(); return; }
-      if (DRUM_KEYS[k]) { const b = document.getElementById("gm-" + DRUM_KEYS[k]); if (b) b.click(); }
+      if (DRUM_KEYS[k] && !window.__leadKeys) { const b = document.getElementById("gm-" + DRUM_KEYS[k]); if (b) b.click(); }
     });
   }
+
+  // ---------- perform mode: open with ?perform (or /perform) ----------
+  // The same instrument with the explaining taken away: faders, mutes, solos, fades and a filter per city, nothing else in the way.
+  const PERF = (() => {
+    if (!QS.has("perform")) return null;
+    document.body.classList.add("perform");
+    document.title = "Three Cities · Perform";
+    document.getElementById("perfBar").hidden = false;
+    { const fb = document.getElementById("pfFit");
+      const fit = on => { document.body.classList.toggle("fit", on); fb.setAttribute("aria-pressed", String(on)); try { localStorage.setItem("tc-fit", on ? "1" : "0"); } catch (e) {} };
+      fb.addEventListener("click", () => fit(!document.body.classList.contains("fit")));
+      try { if (localStorage.getItem("tc-fit") === "1") fit(true); } catch (e) {} }
+    const barsSel = document.getElementById("pfBars");
+    const anySolo = () => cities.some(c => c.solo);
+    const off = c => anySolo() && !c.solo;
+    function apply(c) {
+      const b = buses.get(c); if (!b || !b.pG || !ac) return;
+      const t = ac.currentTime, base = (c.pf || 0) / 100;
+      b.pG.gain.setTargetAtTime((c.fade == null ? 1 : c.fade) * (off(c) ? 0 : 1), t, 0.04);
+      b.pLP.frequency.setTargetAtTime(20000 * Math.pow(180 / 20000, -Math.min(0, base)), t, 0.03);
+      b.pHP.frequency.setTargetAtTime(20 * Math.pow(4000 / 20, Math.max(0, base)), t, 0.03);
+    }
+    const applyAll = () => cities.forEach(apply);
+    const barSecs = () => Number(barsSel.value) * 4 * 60 / (bpmNow || 92);
+    function fadeTo(c, target) {
+      const from = c.fade == null ? 1 : c.fade, t0 = performance.now(), dur = barSecs() * 1000;
+      c._fadeId = (c._fadeId || 0) + 1; const id = c._fadeId;
+      c._fadeTarget = target;
+      const step = now => {
+        if (id !== c._fadeId) return;
+        const k = Math.min(1, (now - t0) / dur);
+        c.fade = from + (target - from) * k; apply(c); paint(c);
+        if (k < 1) requestAnimationFrame(step);
+      };
+      requestAnimationFrame(step);
+    }
+    const fadeToggle = c => fadeTo(c, (c._fadeTarget == null ? 1 : c._fadeTarget) > 0.5 ? 0 : 1);
+    function paint(c) {
+      const r = c.perf; if (!r) return;
+      r.solo.setAttribute("aria-pressed", String(!!c.solo));
+      r.fade.setAttribute("aria-pressed", String((c._fadeTarget == null ? 1 : c._fadeTarget) < 0.5));
+      r.fade.textContent = (c._fadeTarget == null ? 1 : c._fadeTarget) < 0.5 ? "Fade in" : "Fade out";
+      c.el.style.opacity = c.fade != null && c.fade < 1 ? String(0.45 + 0.55 * c.fade) : "";
+    }
+    cities.forEach((c, i) => {
+      const id = c.key.toLowerCase();
+      const d = document.createElement("div");
+      d.className = "perf-strip";
+      d.innerHTML = `<button type="button" data-p="solo" aria-pressed="false" title="Solo ${c.name} (${i + 4})">Solo</button>
+        <button type="button" data-p="fade" aria-pressed="false" title="Fade ${c.name} out or in (Shift+${i + 1})">Fade out</button>
+        <label>Filter <input type="range" min="-100" max="100" value="0" aria-label="${c.name} filter: left is low pass, right is high pass"></label>
+        <label class="pf-row2">Attack <input type="range" min="0" max="100" value="0" data-p="atk" aria-label="${c.name} attack: left is sharp, right is a slow swell"></label>
+        <label class="pf-row2">Length <input type="range" min="0" max="100" value="50" data-p="len" aria-label="${c.name} note length: left is short, middle is as it was, right is long"></label>`;
+      c.el.appendChild(d);
+      c.perf = { solo: d.querySelector('[data-p="solo"]'), fade: d.querySelector('[data-p="fade"]'), flt: d.querySelector("input") };
+      c.perf.solo.addEventListener("click", () => { c.solo = !c.solo; cities.forEach(paint); applyAll(); });
+      c.perf.fade.addEventListener("click", () => fadeToggle(c));
+      c.shape = { atk: 0, len: 1 };
+      const shp = () => { c.shape.atk = 1.2 * Math.pow(Number(d.querySelector('[data-p="atk"]').value) / 100, 2); c.shape.len = 0.25 * Math.pow(16, Number(d.querySelector('[data-p="len"]').value) / 100); if (Math.abs(c.shape.len - 1) < 0.04) c.shape.len = 1; };
+      d.querySelector('[data-p="atk"]').addEventListener("input", shp);
+      d.querySelector('[data-p="len"]').addEventListener("input", shp);
+      d.querySelector('[data-p="len"]').addEventListener("dblclick", e => { e.target.value = 50; shp(); });
+      d.querySelector('[data-p="atk"]').addEventListener("dblclick", e => { e.target.value = 0; shp(); });
+      c.perf.flt.addEventListener("input", () => { c.pf = Number(c.perf.flt.value); apply(c); });
+      c.perf.flt.addEventListener("dblclick", () => { c.perf.flt.value = 0; c.pf = 0; apply(c); });
+    });
+
+    // ----- sample bin: point at a folder, audition, drag onto a city -----
+    const bin = document.createElement("section");
+    bin.className = "perf-bin"; bin.setAttribute("aria-label", "Sample bin");
+    bin.innerHTML = `<div class="pb-head"><span class="perf-title">Samples</span>
+      <button type="button" id="pbPick">Choose folder</button><button type="button" id="pbToggle" aria-expanded="true">Hide</button><button type="button" id="pbReopen" hidden>Reopen last folder</button>
+      <input type="search" id="pbFind" placeholder="Filter by name" aria-label="Filter samples" hidden>
+      <span class="pb-note" id="pbNote">Pick a folder of sounds. Click a name to hear it, drag it onto a city, or use the 1 2 3 buttons.</span></div>
+      <div class="pb-grid" id="pbGrid"></div>`;
+    wrap.parentNode.insertBefore(bin, wrap.nextSibling);
+    const pbGrid = bin.querySelector("#pbGrid"), pbNote = bin.querySelector("#pbNote"), pbFind = bin.querySelector("#pbFind"), pbReopen = bin.querySelector("#pbReopen");
+    const AUDIO_RE = /\.(wav|aiff?|mp3|m4a|ogg|flac|caf|aac)$/i;
+    let files = [], dragFile = null, cue = null;
+    const idb = () => new Promise((res, rej) => { const r = indexedDB.open("tc-perform", 1); r.onupgradeneeded = () => r.result.createObjectStore("kv"); r.onsuccess = () => res(r.result); r.onerror = () => rej(r.error); });
+    const kvGet = k => idb().then(d => new Promise(res => { const q = d.transaction("kv").objectStore("kv").get(k); q.onsuccess = () => res(q.result); q.onerror = () => res(null); })).catch(() => null);
+    const kvSet = (k, v) => idb().then(d => new Promise(res => { const t = d.transaction("kv", "readwrite"); t.objectStore("kv").put(v, k); t.oncomplete = () => res(); t.onerror = () => res(); })).catch(() => {});
+    async function walk(dir, path, out) {
+      for await (const [name, h] of dir.entries()) {
+        if (out.length >= 600) return;
+        if (h.kind === "directory") { if (!name.startsWith(".")) await walk(h, path + name + "/", out); }
+        else if (AUDIO_RE.test(name) && !name.startsWith(".")) out.push({ name: path + name, get: () => h.getFile() });
+      }
+    }
+    function show() {
+      const q = pbFind.value.trim().toLowerCase();
+      pbGrid.textContent = "";
+      const shown = files.filter(f => !q || f.name.toLowerCase().includes(q));
+      // folders become columns: the first three line up with the three cities, in order
+      const groups = new Map();
+      shown.forEach(f => { const k = f.name.includes("/") ? f.name.split("/")[0] : ""; if (!groups.has(k)) groups.set(k, []); groups.get(k).push(f); });
+      const cols = [...groups.keys()].some(k => k);
+      pbGrid.classList.toggle("cols", cols);
+      function tile(f, into, home) {
+        const t = document.createElement("div"); t.className = "pb-tile"; t.draggable = true;
+        const parts = f.name.split("/"), base = parts.pop(), folder = (cols ? parts.slice(1) : parts).join("/");
+        t.innerHTML = `<button type="button" class="pb-name" title="Click to hear"></button><div class="pb-dir"></div><div class="pb-to"></div>`;
+        t.querySelector(".pb-name").textContent = base;
+        t.querySelector(".pb-dir").textContent = folder; if (!folder) t.querySelector(".pb-dir").remove();
+        t.dataset.path = f.name;
+        cities.forEach((c, i) => { const b = document.createElement("button"); b.type = "button"; b.dataset.i = String(i); b.textContent = i === home ? c.name : String(i + 1); b.title = `Load into ${c.name}`; b.style.setProperty("--c", `var(${c.color})`);
+          if (i === home) { b.classList.add("home"); t.querySelector(".pb-to").prepend(b); } else t.querySelector(".pb-to").appendChild(b);
+          b.addEventListener("click", () => give(c, f)); });
+        t.querySelector(".pb-name").addEventListener("click", () => audition(f, t));
+        t.addEventListener("dragstart", e => { dragFile = f; e.dataTransfer.effectAllowed = "copy"; try { e.dataTransfer.setData("text/plain", f.name); } catch (er) {} });
+        t.addEventListener("dragend", () => { dragFile = null; cities.forEach(c => c.el.classList.remove("pb-over")); });
+        into.appendChild(t);
+      }
+      if (!cols) shown.forEach(f => tile(f, pbGrid, -1));
+      else [...groups.entries()].forEach(([k, list], gi) => {
+        const col = document.createElement("div"); col.className = "pb-col";
+        const home = k && gi - (groups.has("") ? 1 : 0) < cities.length ? gi - (groups.has("") ? 1 : 0) : -1;
+        const hd = document.createElement("div"); hd.className = "pb-colhead";
+        if (home >= 0) hd.style.setProperty("--c", `var(${cities[home].color})`);
+        hd.innerHTML = `<b></b><span></span>`; hd.firstChild.textContent = k || "Loose files";
+        hd.lastChild.textContent = (home >= 0 && !k.toLowerCase().includes(cities[home].name.toLowerCase()) ? "\u2192 " + cities[home].name + " · " : "") + list.length;
+        col.appendChild(hd);
+        const body = document.createElement("div"); body.className = "pb-colbody"; col.appendChild(body);
+        list.forEach(f => tile(f, body, home));
+        pbGrid.appendChild(col);
+      });
+      mark();
+    }
+    // which tiles are in use: a city's number lights up in its colour on the sound it is playing
+    function mark() {
+      pbGrid.querySelectorAll(".pb-tile").forEach(t => {
+        t.querySelectorAll(".pb-to button").forEach(b => {
+          const c = cities[Number(b.dataset.i)], on = !!(c && c.voice === "sample" && c.samp && c.samp.binPath === t.dataset.path);
+          b.classList.toggle("is", on); b.setAttribute("aria-pressed", String(on));
+        });
+        t.classList.toggle("used", !!t.querySelector(".pb-to .is"));
+      });
+    }
+    async function give(c, f) {
+      try { await loadUserSample(c, await f.get()); if (c.samp) c.samp.binPath = f.name; mark(); }
+      catch (e) { pbNote.textContent = "Couldn't open that file."; }
+    }
+    wrap.addEventListener("change", () => setTimeout(mark, 0));
+    async function audition(f, tile) {
+      try {
+        if (!ac) setupAudio();
+        if (ac.state === "suspended") await ac.resume();
+        if (cue) { try { cue.stop(); } catch (e) {} cue = null; }
+        pbGrid.querySelectorAll(".pb-tile.on").forEach(x => x.classList.remove("on"));
+        tile.classList.add("on");
+        const file = await f.get();
+        const buf = await new Promise((res, rej) => file.arrayBuffer().then(a => ac.decodeAudioData(a, res, rej)).catch(rej));
+        const src = ac.createBufferSource(), g = ac.createGain(); src.buffer = buf; g.gain.value = 0.7;
+        src.connect(g).connect(ac.destination);   // straight to the speakers: a cue you hear but the recording doesn't
+        src.onended = () => tile.classList.remove("on");
+        src.start(); cue = src;
+      } catch (e) { tile.classList.remove("on"); pbNote.textContent = "Couldn't play that file."; }
+    }
+    function loaded(n, name) {
+      pbNote.textContent = n ? `${n} sound${n === 1 ? "" : "s"} in ${name}${n >= 600 ? " (first 600)" : ""}.` : `No sounds found in ${name}.`;
+      pbFind.hidden = !n; show();
+    }
+    async function scan(dir) {
+      pbNote.textContent = "Reading the folder…";
+      const out = []; await walk(dir, "", out);
+      out.sort((a, b) => a.name.localeCompare(b.name, undefined, { numeric: true }));
+      files = out; loaded(out.length, dir.name);
+    }
+    pbFind.addEventListener("input", show);
+    const pbTog = bin.querySelector("#pbToggle");
+    function pbShut(on) { bin.classList.toggle("shut", on); pbTog.textContent = on ? "Show" : "Hide"; pbTog.setAttribute("aria-expanded", String(!on)); try { localStorage.setItem("tc-bin-shut", on ? "1" : "0"); } catch (e) {} }
+    pbTog.addEventListener("click", () => pbShut(!bin.classList.contains("shut")));
+    try { if (localStorage.getItem("tc-bin-shut") === "1") pbShut(true); } catch (e) {}
+    bin.querySelector("#pbPick").addEventListener("click", async () => {
+      if (window.showDirectoryPicker) {
+        try { const dir = await showDirectoryPicker({ id: "tc-samples", mode: "read" }); kvSet("dir", dir); pbReopen.hidden = true; await scan(dir); }
+        catch (e) { if (e.name !== "AbortError") pbNote.textContent = "Couldn't open that folder."; }
+      } else {
+        const inp = document.createElement("input"); inp.type = "file"; inp.multiple = true; inp.setAttribute("webkitdirectory", "");
+        inp.addEventListener("change", () => {
+          const list = [...inp.files].filter(f => AUDIO_RE.test(f.name) && !f.name.startsWith(".")).slice(0, 600);
+          files = list.map(f => ({ name: f.webkitRelativePath ? f.webkitRelativePath.split("/").slice(1).join("/") || f.name : f.name, get: async () => f }));
+          files.sort((a, b) => a.name.localeCompare(b.name, undefined, { numeric: true }));
+          loaded(files.length, (list[0] && list[0].webkitRelativePath || "").split("/")[0] || "that folder");
+        });
+        inp.click();
+      }
+    });
+    kvGet("dir").then(dir => { if (dir && dir.kind === "directory") { pbReopen.hidden = false; pbReopen.textContent = "Reopen " + dir.name;
+      pbReopen.addEventListener("click", async () => {
+        try { if ((await dir.requestPermission({ mode: "read" })) === "granted") { pbReopen.hidden = true; await scan(dir); } else pbNote.textContent = "The browser needs your OK to read that folder."; }
+        catch (e) { pbNote.textContent = "Couldn't reopen that folder. Choose it again."; } }); } });
+    // dropping a bin sound onto a city card loads it as that city's own sound
+    cities.forEach(c => {
+      c.el.addEventListener("dragover", e => { if (!dragFile) return; e.preventDefault(); e.stopImmediatePropagation(); e.dataTransfer.dropEffect = "copy"; c.el.classList.add("pb-over"); }, true);
+      c.el.addEventListener("dragleave", e => { if (dragFile && !c.el.contains(e.relatedTarget)) c.el.classList.remove("pb-over"); }, true);
+      c.el.addEventListener("drop", async e => {
+        if (!dragFile) return; e.preventDefault(); e.stopImmediatePropagation(); c.el.classList.remove("pb-over");
+        const f = dragFile; dragFile = null;
+        give(c, f);
+      }, true);
+    });
+
+    // ----- lead line: solo on top of the three cities, always in the key and scale -----
+    const LEAD_SOUNDS = [["synth", "Lead synth (held)"], ["felt", "Felt piano"], ["piano", "Grand piano"], ["epiano", "Electric piano"], ["junokeys", "Juno keys"], ["organ", "Organ"], ["marimba", "Marimba"], ["kalimba", "Kalimba"], ["bell", "Bell"], ["flute", "Warm flute"], ["soft", "Soft lead"], ["breath", "Breath"], ["pluck", "Pluck"], ["harp", "Harp"]]
+      .filter(([v]) => v === "synth" || SOUND_NAME[v]);
+    const LEAD = { on: false, sound: "synth", oct: 0, level: 0.75, tone: 1, rev: 0.4, del: 0.15, atk: 0, len: 1, q: 0, glide: 0, lfoT: "off", lfoR: 0.4, lfoD: 0.4, lastF: 0, bus: null, held: new Map(), pedal: false, late: [], fake: { voice: "felt", steps: 0, base: 60, pos: 0, w: null, shape: { atk: 0, len: 1 } } };
+    const lead = document.createElement("section");
+    lead.className = "perf-lead"; lead.setAttribute("aria-label", "Lead line");
+    lead.innerHTML = `<div class="pl-row"><span class="perf-title">Lead</span>
+      <button type="button" id="plOn" aria-pressed="false" title="Turn the lead on. The computer keyboard then plays notes.">Lead off</button>
+      <select id="plSound" aria-label="Lead sound">${LEAD_SOUNDS.map(([v, n]) => `<option value="${v}">${n}</option>`).join("")}</select>
+      <span class="pl-oct">Octave <button type="button" id="plDn" aria-label="Octave down">&minus;</button><b id="plOct">0</b><button type="button" id="plUp" aria-label="Octave up">+</button></span>
+      <label>Level <input type="range" id="plLevel" min="0" max="100" value="75"></label>
+      <label>Filter <input type="range" id="plTone" min="0" max="100" value="100"></label>
+      <label>Reverb <input type="range" id="plRev" min="0" max="100" value="40"></label>
+      <label>Delay <input type="range" id="plDel" min="0" max="100" value="15"></label>
+      <button type="button" id="plHand" aria-pressed="false" title="Play the lead with your hand, using the camera">Hand: off</button>
+      <button type="button" id="plShape" class="pl-shape-btn" aria-pressed="false" title="Show the attack, length, glide and LFO controls">Shape</button></div>
+      <div class="pl-row pl-synth"><span class="perf-title">Shape</span>
+      <label>Attack <input type="range" id="plAtk" min="0" max="100" value="0"></label>
+      <label>Length <input type="range" id="plLen" min="0" max="100" value="50"></label>
+      <label>Resonance <input type="range" id="plQ" min="0" max="100" value="0"></label>
+      <label>Glide <input type="range" id="plGlide" min="0" max="100" value="0" title="Slides from the last note. The Lead synth only."></label>
+      <span class="perf-title">LFO</span>
+      <select id="plLfo" aria-label="LFO goes to"><option value="off">LFO off</option><option value="filter">To filter</option><option value="pitch">To pitch</option><option value="trem">To volume</option></select>
+      <label>Rate <input type="range" id="plLfoR" min="0" max="100" value="40"></label>
+      <label>Depth <input type="range" id="plLfoD" min="0" max="100" value="40"></label></div>
+      <div class="pl-cam" id="plCam" hidden><canvas id="plCanvas" width="320" height="240" aria-label="Camera view with the hand and the note zones"></canvas><p id="plCamNote"></p></div>
+      <div class="pl-keys" id="plKeys" aria-hidden="true"></div>
+      <div class="pl-note" id="plNote">Turn it on, then play the keys below, or a MIDI keyboard. Every note lands in the current key and scale.</div>`;
+    bin.parentNode.insertBefore(lead, bin);
+    const L$ = id => lead.querySelector("#" + id), plNote = L$("plNote");
+    const ROWS = ["zxcvbnm,.", "asdfghjkl;", "qwertyuiop"];   // each row starts a scale octave higher
+    const keyMap = {};
+    const keysBox = L$("plKeys"), keyEls = {};
+    ROWS.slice().reverse().forEach(r => {
+      const row = document.createElement("div");
+      [...r].forEach(ch => { const sp = document.createElement("span"); sp.textContent = ch; row.appendChild(sp); keyEls[ch] = sp; });
+      keysBox.appendChild(row);
+    });
+    ROWS.forEach((r, ri) => [...r].forEach((ch, i) => { keyMap[ch] = { ri, i }; }));
+    function leadBus() {
+      if (!ac) setupAudio();
+      if (LEAD.bus) return LEAD.bus;
+      const filt = ac.createBiquadFilter(); filt.type = "lowpass"; filt.Q.value = 0.6;
+      const out = ac.createGain(), rv = ac.createGain(), dl = ac.createGain(), trem = ac.createGain();
+      filt.connect(trem); trem.connect(out); out.connect(master); out.connect(rv).connect(reverb); out.connect(dl).connect(delay);
+      const lfo = ac.createOscillator(), lf = ac.createGain(), lt = ac.createGain(), lp = ac.createGain();   // one LFO, three places it can go
+      lfo.type = "sine"; lf.gain.value = 0; lt.gain.value = 0; lp.gain.value = 0;
+      lfo.connect(lf).connect(filt.detune); lfo.connect(lt).connect(trem.gain); lfo.connect(lp); lfo.start();
+      LEAD.bus = { filt, out, rv, dl, trem, lfo, lf, lt, lp };
+      buses.set(LEAD.fake, { input: filt, filter: filt, out, vol: out });   // so every city sound can play through it unchanged
+      leadSet(); return LEAD.bus;
+    }
+    function leadSet() {
+      const b = LEAD.bus; if (!b || !ac) return; const t = ac.currentTime;
+      b.out.gain.setTargetAtTime(Math.pow(LEAD.level, 2) * 0.5, t, 0.03);
+      b.filt.frequency.setTargetAtTime(chordFilterHz(LEAD.tone) * 1.2, t, 0.03);
+      b.rv.gain.setTargetAtTime(LEAD.rev, t, 0.05); b.dl.gain.setTargetAtTime(LEAD.del, t, 0.05);
+      b.filt.Q.setTargetAtTime(0.6 + LEAD.q * 13, t, 0.03);
+      b.lfo.frequency.setTargetAtTime(0.1 * Math.pow(200, LEAD.lfoR), t, 0.05);
+      const d = LEAD.lfoD, on = x => LEAD.lfoT === x ? 1 : 0;
+      b.lf.gain.setTargetAtTime(on("filter") * d * 2400, t, 0.05);   // cents: up to two octaves
+      b.lt.gain.setTargetAtTime(on("trem") * d * 0.5, t, 0.05);
+      b.lp.gain.setTargetAtTime(on("pitch") * d * 60, t, 0.05);      // cents: up to a slow vibrato
+      LEAD.fake.shape.atk = 1.2 * Math.pow(LEAD.atk, 2);
+      LEAD.fake.shape.len = 0.25 * Math.pow(16, LEAD.len);
+      if (Math.abs(LEAD.fake.shape.len - 1) < 0.04) LEAD.fake.shape.len = 1;
+    }
+    // any note lands on the nearest note of the scale (down first on a tie)
+    function snap(m) {
+      const k = ((keyRoot % 12) + 12) % 12, pcs = scale.map(x => (k + x) % 12);
+      for (let d = 0; d < 7; d++) { if (pcs.includes(((m - d) % 12 + 12) % 12)) return m - d; if (pcs.includes(((m + d) % 12 + 12) % 12)) return m + d; }
+      return m;
+    }
+    const keyDegreeNote = (ri, i) => {
+      const n = scale.length, deg = ri * n + i, o = Math.floor(deg / n), j = deg % n;
+      return 60 + (keyRoot > 6 ? keyRoot - 12 : keyRoot) + scale[j] + 12 * o + 12 * LEAD.oct;
+    };
+    function heldNote(id, midi, vel) {
+      const t = ac.currentTime + 0.005, f = mtof(midi);
+      const o1 = ac.createOscillator(), o2 = ac.createOscillator(), lp = ac.createBiquadFilter(), g = ac.createGain();
+      o1.type = "sawtooth"; o2.type = "triangle"; o1.frequency.value = f; o2.frequency.value = f; o1.detune.value = 6; o2.detune.value = -5;
+      const gl = Math.pow(LEAD.glide, 2) * 0.6;
+      if (gl > 0.005 && LEAD.lastF) for (const o of [o1, o2]) { o.frequency.setValueAtTime(LEAD.lastF, t); o.frequency.exponentialRampToValueAtTime(f, t + gl); }
+      LEAD.lastF = f;
+      const lfoP = LEAD.bus.lp; lfoP.connect(o1.detune); lfoP.connect(o2.detune);
+      o1.onended = () => { try { lfoP.disconnect(o1.detune); lfoP.disconnect(o2.detune); } catch (e) {} };
+      lp.type = "lowpass"; lp.Q.value = 1.2; lp.frequency.setValueAtTime(900 + vel * 5200, t); lp.frequency.setTargetAtTime(500 + vel * 2200, t, 0.35);
+      const peak = 0.2 * (0.35 + 0.65 * vel);
+      const at = Math.max(0.012, LEAD.fake.shape.atk), rl = 0.14 * LEAD.fake.shape.len;
+      g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(peak, t + at); g.gain.setTargetAtTime(peak * 0.7, t + at, 0.12);
+      o1.connect(lp); o2.connect(lp); lp.connect(g).connect(LEAD.bus.filt);
+      o1.start(t); o2.start(t);
+      return { release(at) { const tt = Math.max(at, ac.currentTime); g.gain.cancelScheduledValues(tt); g.gain.setTargetAtTime(0, tt, rl); o1.stop(tt + 1 + rl * 5); o2.stop(tt + 1 + rl * 5); } };
+    }
+    async function leadOn(id, m, vel) {
+      if (!LEAD.on) return;
+      leadBus(); if (ac.state === "suspended") { try { await ac.resume(); } catch (e) {} }
+      const midi = snap(m);
+      if (LEAD.held.has(id)) leadOff(id, true);
+      if (LEAD.sound === "synth") LEAD.held.set(id, heldNote(id, midi, vel));
+      else { LEAD.fake.voice = LEAD.sound; LEAD.held.set(id, { release() {} }); voice(LEAD.fake, midi, 0.35 + 0.65 * vel, ac.currentTime + 0.005, 1.3); }
+      const el = keyEls[id]; if (el) el.classList.add("dn");
+      plNote.textContent = `${KEYS[((midi % 12) + 12) % 12]}${Math.floor(midi / 12) - 1}`;
+    }
+    function leadOff(id, now) {
+      const h = LEAD.held.get(id); if (!h) return;
+      const el = keyEls[id]; if (el) el.classList.remove("dn");
+      if (LEAD.pedal && !now) { LEAD.late.push(h); LEAD.held.delete(id); return; }
+      LEAD.held.delete(id); h.release(ac.currentTime);
+    }
+    function leadAllOff() { [...LEAD.held.keys()].forEach(k => leadOff(k, true)); LEAD.late.splice(0).forEach(h => h.release(ac.currentTime)); }
+    const onBtn = L$("plOn");
+    async function setLead(on) {
+      LEAD.on = on; onBtn.setAttribute("aria-pressed", String(on)); onBtn.textContent = on ? "Lead on" : "Lead off";
+      window.__leadKeys = on;   // the drum-mute letters step aside while the letters play notes
+      Object.values(keyEls).forEach((el, i) => el.classList.toggle("rt", on));
+      if (!on) { leadAllOff(); if (typeof handStop === "function" && HAND.on) handStop(); return; }
+      plNote.textContent = "Play the keys, or a MIDI keyboard. Every note lands in the current key and scale.";
+      if (navigator.requestMIDIAccess) { try { await loadMidi(); attachMidi(); } catch (e) {} }
+    }
+    onBtn.addEventListener("click", () => setLead(!LEAD.on));
+    const sndSel = L$("plSound"); sndSel.addEventListener("change", () => { LEAD.sound = sndSel.value; sndSel.blur(); });
+    const setOct = d => { LEAD.oct = Math.max(-2, Math.min(2, LEAD.oct + d)); L$("plOct").textContent = (LEAD.oct > 0 ? "+" : "") + LEAD.oct; };
+    L$("plDn").addEventListener("click", () => setOct(-1)); L$("plUp").addEventListener("click", () => setOct(1));
+    [["plLevel", "level"], ["plTone", "tone"], ["plRev", "rev"], ["plDel", "del"], ["plAtk", "atk"], ["plLen", "len"], ["plQ", "q"], ["plGlide", "glide"], ["plLfoR", "lfoR"], ["plLfoD", "lfoD"]].forEach(([id, k]) => L$(id).addEventListener("input", e => { LEAD[k] = Number(e.target.value) / 100; leadSet(); }));
+    L$("plShape").addEventListener("click", e => { const on = lead.classList.toggle("shape-open"); e.currentTarget.setAttribute("aria-pressed", String(on)); });
+    L$("plLfo").addEventListener("change", e => { LEAD.lfoT = e.target.value; leadSet(); e.target.blur(); });
+    // computer keyboard
+    document.addEventListener("keydown", e => {
+      if (!LEAD.on || e.ctrlKey || e.metaKey || e.altKey || e.repeat) return;
+      const t = e.target, tag = t && t.tagName;
+      if (tag === "TEXTAREA" || tag === "SELECT" || (tag === "INPUT" && /^(text|search|email|url)$/.test(t.type))) return;
+      const ch = (e.key || "").toLowerCase(), km = keyMap[ch];
+      if (e.key === "[" || e.key === "]") { setOct(e.key === "]" ? 1 : -1); e.preventDefault(); return; }
+      if (!km) return;
+      e.preventDefault(); e.stopPropagation();
+      const el = keyEls[ch]; leadOn(ch, keyDegreeNote(km.ri, km.i), e.shiftKey ? 1 : 0.75);
+    }, true);
+    document.addEventListener("keyup", e => { const ch = (e.key || "").toLowerCase(); if (keyMap[ch] && LEAD.held.has(ch)) leadOff(ch); });
+    window.addEventListener("blur", () => { if (LEAD.on) leadAllOff(); });
+    // MIDI keyboard: every input the computer offers
+    function midiMsg(e) {
+      const [st, a, b] = e.data, cmd = st & 0xf0;
+      const id = "m" + e.target.id + "_" + a;
+      if (cmd === 0x90 && b > 0) leadOn(id, a, b / 127);
+      else if (cmd === 0x80 || (cmd === 0x90 && b === 0)) leadOff(id);
+      else if (cmd === 0xb0 && a === 64) { LEAD.pedal = b >= 64; if (!LEAD.pedal) LEAD.late.splice(0).forEach(h => h.release(ac.currentTime)); }
+      else if (cmd === 0xb0 && a === 1) { LEAD.tone = 0.25 + 0.75 * b / 127; L$("plTone").value = Math.round(LEAD.tone * 100); leadSet(); }   // mod wheel opens the filter
+    }
+    let midiHooked = false;
+    function attachMidi() {
+      if (!midiAccess) return;
+      const names = [];
+      midiAccess.inputs.forEach(inp => { inp.onmidimessage = midiMsg; names.push(inp.name); });
+      if (!midiHooked) { midiHooked = true; const prev = midiAccess.onstatechange; midiAccess.onstatechange = ev => { if (prev) prev(ev); attachMidi(); }; }
+      plNote.textContent = names.length ? `MIDI keyboard: ${names.join(", ")}. The mod wheel opens the filter and the sustain pedal holds notes.` : "No MIDI keyboard found. The computer keyboard works: [ and ] change octave.";
+    }
+
+    // ----- hand control: the camera sees your hand and plays the lead -----
+    // Pinch thumb and finger to sound a note. Left and right picks the note (in the key and scale), up and down opens the filter.
+    // The tracking comes from Google's MediaPipe Hands, fetched from jsDelivr the first time you press the button. The video never leaves the page.
+    const MP_BASE = "https://cdn.jsdelivr.net/npm/@mediapipe/hands@0.4.1675469240/";
+    const handBtn = L$("plHand"), camBox = L$("plCam"), camCv = L$("plCanvas"), camNote = L$("plCamNote"), camCtx = camCv.getContext("2d");
+    const HAND = { on: false, stream: null, video: null, hands: null, raf: 0, busy: false, zone: -1, pinch: false, id: "hand" };
+    const loadScript = src => new Promise((res, rej) => { const e = document.createElement("script"); e.src = src; e.crossOrigin = "anonymous"; e.onload = res; e.onerror = () => rej(new Error("script")); document.head.appendChild(e); });
+    const zonesN = () => scale.length * 2 + 1;   // two octaves and the top note
+    // Up to two hands at once. MediaPipe doesn't keep hands in a fixed order, so each frame the hands are matched to the
+    // ones seen last frame by how close their wrists are. Each hand has its own pinch, its own note and its own colour.
+    const HAND_COL = ["#ffffff", "#ffd98a", "#8fd6c3", "#e89ac7"], MAX_HANDS = 2;
+    HAND.tracks = [];
+    function handRelease(t, now) { if (t.pinch) { t.pinch = false; leadOff(t.id, now); } }
+    function handFrame(r) {
+      const W = camCv.width, H = camCv.height, all = r.multiHandLandmarks || [];
+      camCtx.save(); camCtx.clearRect(0, 0, W, H); camCtx.translate(W, 0); camCtx.scale(-1, 1);
+      if (r.image) camCtx.drawImage(r.image, 0, 0, W, H);
+      camCtx.restore();
+      const n = zonesN();
+      camCtx.strokeStyle = "rgba(255,255,255,.25)"; camCtx.lineWidth = 1;
+      for (let i = 1; i < n; i++) { camCtx.beginPath(); camCtx.moveTo(W * i / n, 0); camCtx.lineTo(W * i / n, H); camCtx.stroke(); }
+      // match each seen hand to a track, nearest wrist first
+      const pairs = [];
+      all.forEach((lm, hi) => HAND.tracks.forEach((t, ti) => pairs.push([Math.hypot(lm[0].x - t.wx, lm[0].y - t.wy), hi, ti])));
+      pairs.sort((a, b) => a[0] - b[0]);
+      const hOf = new Map(), tUsed = new Set();
+      pairs.forEach(([d, hi, ti]) => { if (!hOf.has(hi) && !tUsed.has(ti) && d < 0.35) { hOf.set(hi, HAND.tracks[ti]); tUsed.add(ti); } });
+      HAND.tracks.forEach((t, ti) => { if (!tUsed.has(ti)) { handRelease(t); t.gone = true; } });
+      HAND.tracks = HAND.tracks.filter(t => !t.gone);
+      const used = new Set(HAND.tracks.map(t => t.slot));
+      all.forEach((lm, hi) => {
+        if (hOf.has(hi)) return;
+        let slot = 0; while (used.has(slot)) slot++;
+        if (slot >= MAX_HANDS) return;
+        used.add(slot);
+        const t = { slot, id: "hand" + slot, pinch: false, zone: -1, wx: lm[0].x, wy: lm[0].y };
+        HAND.tracks.push(t); hOf.set(hi, t);
+      });
+      let ys = 0, ny = 0, playing = 0;
+      all.forEach((lm, hi) => {
+        const t = hOf.get(hi); if (!t) return;
+        t.wx = lm[0].x; t.wy = lm[0].y;
+        const d = (a, b) => Math.hypot(lm[a].x - lm[b].x, lm[a].y - lm[b].y), palm = d(0, 9) || 0.1;
+        const ratio = d(4, 8) / palm, was = t.pinch;
+        t.pinch = was ? ratio < 0.5 : ratio < 0.32;   // a little slack so the note doesn't flutter
+        const x = 1 - lm[8].x, y = lm[8].y;
+        // the zone only changes once you're well past the edge, so a note holds still near a boundary
+        let z = Math.max(0, Math.min(n - 1, Math.floor(x * n)));
+        if (t.zone >= 0 && z !== t.zone) { const edge = z > t.zone ? (t.zone + 1) / n : t.zone / n; if (Math.abs(x - edge) < 0.18 / n) z = t.zone; }
+        ys += y; ny++;
+        if (t.pinch && (!was || z !== t.zone)) { if (LEAD.held.has(t.id)) leadOff(t.id, true); leadOn(t.id, keyDegreeNote(0, z), 0.8); }
+        if (!t.pinch && was) leadOff(t.id);
+        t.zone = z; if (t.pinch) playing++;
+        const col = HAND_COL[t.slot];
+        camCtx.globalAlpha = t.pinch ? 1 : 0.55; camCtx.fillStyle = col;
+        lm.forEach(p => { camCtx.beginPath(); camCtx.arc((1 - p.x) * W, p.y * H, 3, 0, 6.3); camCtx.fill(); });
+        camCtx.globalAlpha = 0.18; camCtx.fillRect(W * z / n, 0, W / n, H); camCtx.globalAlpha = 1;
+      });
+      // one filter for the whole lead: the hands' average height
+      if (ny) { LEAD.tone = Math.max(0.12, Math.min(1, 1.15 - 1.1 * (ys / ny))); L$("plTone").value = Math.round(LEAD.tone * 100); leadSet(); }
+      camNote.textContent = !ny ? "Show your hand to the camera. Pinch thumb and finger to play. Two hands work together."
+        : playing ? `${playing} note${playing === 1 ? "" : "s"} playing. Move left or right to change note, up or down for the filter.` : `${ny} hand${ny === 1 ? "" : "s"} seen. Pinch thumb and finger to play.`;
+    }
+    async function handStart() {
+      handBtn.textContent = "Hand: starting…"; camBox.hidden = false; camNote.textContent = "Starting the camera. The first time, the hand tracking (about 13 MB) loads from jsDelivr.";
+      try {
+        if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) throw new Error("nocam");
+        HAND.stream = await navigator.mediaDevices.getUserMedia({ video: { width: 640, height: 480, facingMode: "user" }, audio: false });
+        const v = HAND.video = document.createElement("video"); v.muted = true; v.playsInline = true; v.srcObject = HAND.stream; await v.play();
+        if (!window.Hands) await loadScript(MP_BASE + "hands.js");
+        HAND.hands = new window.Hands({ locateFile: f => MP_BASE + f });
+        HAND.hands.setOptions({ maxNumHands: 2, modelComplexity: 0, minDetectionConfidence: 0.6, minTrackingConfidence: 0.5, selfieMode: false });
+        HAND.hands.onResults(handFrame);
+        if (!LEAD.on) await setLead(true);
+        HAND.on = true; handBtn.setAttribute("aria-pressed", "true"); handBtn.textContent = "Hand: on";
+        camNote.textContent = "Show your hand to the camera. Pinch thumb and finger to play. Two hands work together.";
+        const loop = async () => {
+          if (!HAND.on) return;
+          if (!HAND.busy && HAND.video.readyState >= 2) { HAND.busy = true; try { await HAND.hands.send({ image: HAND.video }); } catch (e) {} HAND.busy = false; }
+          HAND.raf = requestAnimationFrame(loop);
+        };
+        loop();
+      } catch (e) {
+        handStop();
+        camBox.hidden = false;
+        camNote.textContent = e && e.message === "script" ? "Couldn't load the hand tracking. Check your connection and try again." : e && e.name === "NotAllowedError" ? "The browser blocked the camera. Allow it for this site and try again." : "Couldn't start the camera.";
+      }
+    }
+    function handStop() {
+      HAND.on = false; cancelAnimationFrame(HAND.raf);
+      HAND.tracks.forEach(t => handRelease(t, true)); HAND.tracks = [];
+      if (HAND.stream) HAND.stream.getTracks().forEach(t => t.stop());
+      HAND.stream = null; HAND.zone = -1;
+      try { HAND.hands && HAND.hands.close(); } catch (e) {}
+      HAND.hands = null;
+      handBtn.setAttribute("aria-pressed", "false"); handBtn.textContent = "Hand: off"; camBox.hidden = true;
+    }
+    handBtn.addEventListener("click", () => { if (HAND.on || HAND.stream) handStop(); else handStart(); });
+    document.getElementById("pfAllOut").addEventListener("click", () => cities.forEach(c => fadeTo(c, 0)));
+    document.getElementById("pfAllIn").addEventListener("click", () => cities.forEach(c => fadeTo(c, 1)));
+    document.addEventListener("keydown", e => {
+      if (e.ctrlKey || e.metaKey || e.altKey || e.repeat) return;
+      const t = e.target, tag = t && t.tagName;
+      if (tag === "SELECT" || tag === "TEXTAREA" || (tag === "INPUT" && /^(text|search|email|url)$/.test(t.type))) return;
+      const m = /^Digit([0-9])$/.exec(e.code || "");
+      if (!m) return;
+      const n = Number(m[1]);
+      if (e.shiftKey && n >= 1 && n <= 3) { fadeToggle(cities[n - 1]); e.preventDefault(); return; }
+      if (e.shiftKey) return;
+      if (n >= 4 && n <= 6 && cities[n - 4]) { cities[n - 4].perf.solo.click(); e.preventDefault(); return; }
+      if (n === 0) { const down = cities.some(c => (c._fadeTarget == null ? 1 : c._fadeTarget) > 0.5); cities.forEach(c => fadeTo(c, down ? 0 : 1)); e.preventDefault(); }
+    });
+    return { apply, off, fadeTo, applyAll };
+  })();
 
   // ---------- reel: a 9:16 collage of today's three cities, recorded with the music ----------
   // Open with ?reel=Hottest,Coldest,Wildest (labels for the three cities). The studio page (/reel) picks the cities.
@@ -5608,7 +6579,7 @@ body.mood-immersive .fab { display: none !important; }
     // Instagram covers the top ~290px, a strip down the right from y 1040, and the bottom ~360px, and taller phones crop the sides.
     // Every word and number stays in x 80-1000 (80-880 below y 1040) and y 330-1550. Photos may run underneath.
     const SAFE = { l: 80, r: 1000, rLow: 880, top: 330, bot: 1550, low: 1040 };
-    const REEL_RELEASED = false;   // until the official release the end card says Coming soon instead of the address
+    const REEL_RELEASED = true;   // released: the end card shows the address
     const wrap = document.createElement("div"); wrap.className = "reel";
     wrap.innerHTML = `<div class="reel-frame"><canvas width="${W}" height="${H}" aria-label="Reel preview"></canvas><svg class="reel-ig" viewBox="0 0 1080 1920" aria-hidden="true" hidden><g fill="rgba(255,255,255,.92)" font-family="-apple-system,system-ui,sans-serif"><rect width="1080" height="290" fill="rgba(255,60,60,.16)"/><text x="110" y="250" font-size="64" font-weight="700">Reels</text><text x="400" y="250" font-size="64" font-weight="700" opacity=".6">Friends</text><rect x="900" y="1040" width="180" height="520" fill="rgba(255,60,60,.16)"/><g transform="translate(990 0)"><circle cy="1130" r="34" fill="none" stroke="#fff" stroke-width="7"/><circle cy="1290" r="34" fill="none" stroke="#fff" stroke-width="7"/><circle cy="1450" r="34" fill="none" stroke="#fff" stroke-width="7"/><circle cy="1610" r="34" fill="none" stroke="#fff" stroke-width="7"/></g><rect y="1560" width="1080" height="360" fill="rgba(255,60,60,.16)"/><circle cx="125" cy="1700" r="62" fill="#888"/><text x="215" y="1722" font-size="50" font-weight="600">forrest_james</text><text x="55" y="1850" font-size="46">Three Cities · today’s cities</text><rect width="45" height="1920" fill="rgba(255,60,60,.22)"/><rect x="1035" width="45" height="1920" fill="rgba(255,60,60,.22)"/></g></svg></div>
       <div class="reel-bar"><button type="button" data-a="preview">▶ Preview</button><button type="button" data-a="record">● Record reel</button><button type="button" data-a="guide" aria-pressed="false" title="Show where Instagram's buttons sit. Never recorded.">Instagram guide</button><button type="button" data-a="hide">Hide</button><button type="button" data-a="close" aria-label="Close reel mode">✕ Close</button><span class="reel-status" aria-live="polite">Getting the weather and photos…</span></div>`;
@@ -6067,7 +7038,7 @@ body.mood-immersive .fab { display: none !important; }
         rec.ondataavailable = e => { if (e.data.size) chunks.push(e.data); };
         rec.onstop = () => {
           const t = rec.mimeType || "video/webm", blob = new Blob(chunks, { type: t }), ext = /mp4/.test(t) ? "mp4" : "webm";
-          const name = `Three Cities reel - ${cities.map(c => c.name).join(", ")} - ${new Date().toISOString().slice(0, 10)}.${ext}`.replace(/[\\/:*?"<>|]/g, "");
+          const name = `Three Cities reel - ${cities.map(c => c.name).join(", ")} - ${musicTag()} - ${new Date().toISOString().slice(0, 10)}.${ext}`.replace(/[\\/:*?"<>|]/g, "");
           const size = `${(blob.size / 1e6).toFixed(1)} MB, .${ext}`;
           rec = null;
           // On a phone, the share sheet is the way into the photo library ("Save Video"). It has to come from a tap,
@@ -6160,6 +7131,14 @@ body.mood-immersive .fab { display: none !important; }
   setInterval(() => { if (live) refreshAll(); }, 10 * 60 * 1000);
   setInterval(() => { if (!live && ON_SITE) refreshAll(); }, 60 * 1000);   // no weather yet: try again every minute
   requestAnimationFrame(frame);
+  // the visit: where it came from (a ?ref= tag on a link you post, else the site that sent them) and whether a shared link brought them
+  (() => {
+    let src = (QS.get("ref") || "").toLowerCase().replace(/[^a-z0-9._-]/g, "").slice(0, 30);
+    if (src) src = "ref:" + src;
+    else { try { const h = new URL(document.referrer).hostname.replace(/^www\./, ""); if (h && h !== location.hostname.replace(/^www\./, "")) src = h; } catch (e) {} }
+    track("visit", src);
+    if (QS.has("cities") || QS.has("mix")) track("act", "opened-shared-link");
+  })();
 })();
 </script>
 
