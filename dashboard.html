@@ -1,0 +1,344 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>Three Cities Admin</title>
+<link rel="icon" href="/favicon.svg?v=5" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Abel&family=Source+Code+Pro:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root { --bg: #100806; --panel: #1b1210; --ink: #f3ece6; --dim: rgba(243,236,230,0.6); --faint: rgba(243,236,230,0.14); --ember: #e07a4f; --mono: "Source Code Pro", monospace; }
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--ink); font: 15px/1.5 Abel, "Arial Narrow", sans-serif; letter-spacing: 0.02em; }
+.wrap { max-width: 1080px; margin: 0 auto; padding: 32px 16px 80px; }
+header { display: flex; align-items: center; gap: 14px; margin-bottom: 28px; }
+header svg { width: 46px; height: 32px; fill: var(--ink); }
+h1 { font-weight: 400; font-size: 26px; letter-spacing: 0.18em; text-transform: uppercase; margin: 0; }
+h1 span { color: var(--dim); }
+h2 { font: 500 11px var(--mono); letter-spacing: 0.2em; text-transform: uppercase; color: var(--dim); margin: 36px 0 12px; }
+.pages { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 12px; }
+.page { display: block; padding: 16px 18px; border: 1px solid var(--faint); border-radius: 16px; background: var(--panel); color: var(--ink); text-decoration: none; transition: border-color .2s; }
+.page:hover { border-color: var(--ember); }
+.page b { display: block; font-weight: 400; font-size: 19px; letter-spacing: 0.06em; }
+.page span { font: 12px var(--mono); color: var(--dim); }
+.bar-row { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+input, select, button { font: 13px var(--mono); color: var(--ink); background: var(--panel); border: 1px solid var(--faint); border-radius: 10px; padding: 9px 12px; }
+button { cursor: pointer; border-radius: 18px; padding: 9px 16px; }
+button.main { border-color: var(--ember); }
+button:hover { border-color: var(--ink); }
+.stats { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 12px; margin-top: 16px; }
+.stat { padding: 14px 16px; border-radius: 14px; background: var(--panel); border: 1px solid var(--faint); }
+.stat b { display: block; font-size: 30px; font-weight: 400; }
+.stat span { font: 11px var(--mono); color: var(--dim); letter-spacing: 0.12em; text-transform: uppercase; }
+.qs { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 14px; margin-top: 16px; }
+.q { padding: 18px; border-radius: 16px; background: var(--panel); border: 1px solid var(--faint); }
+.q h3 { margin: 0 0 4px; font-weight: 400; font-size: 19px; }
+.q .meta { font: 11px var(--mono); color: var(--dim); letter-spacing: 0.08em; margin-bottom: 12px; display: flex; justify-content: space-between; gap: 8px; }
+.row { display: grid; grid-template-columns: 22px minmax(0, 1fr) 90px 60px; gap: 8px; align-items: center; font-size: 15px; padding: 3px 0; }
+.row .n { font: 11px var(--mono); color: var(--dim); }
+.row .c { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.row .tr { height: 8px; border-radius: 4px; background: var(--faint); overflow: hidden; }
+.row .tr i { display: block; height: 100%; background: var(--ember); border-radius: 4px; }
+.row .p { font: 12px var(--mono); text-align: right; }
+.row .p small { color: var(--dim); }
+.empty { font: 12px var(--mono); color: var(--dim); }
+.q .acts { margin-top: 12px; display: flex; gap: 8px; }
+.q .acts button { font-size: 11px; padding: 6px 12px; }
+.note { font: 12px var(--mono); color: var(--dim); margin-top: 10px; min-height: 1.4em; }
+.hint { color: var(--dim); font-size: 14px; max-width: 720px; }
+.sg { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 14px; margin-top: 12px; }
+.sc { border: 1px solid var(--faint); border-radius: 16px; background: var(--panel); overflow: hidden; display: flex; flex-direction: column; }
+.sc .th { display: flex; align-items: center; justify-content: center; height: 190px; background: #000; }
+.sc .th img { max-width: 100%; max-height: 100%; display: block; }
+.sc .in { padding: 12px 14px 14px; display: flex; flex-direction: column; gap: 8px; }
+.sc b { font-weight: 400; font-size: 17px; letter-spacing: 0.04em; }
+.sc .sz { font: 11px var(--mono); color: var(--dim); }
+.sc .acts { display: flex; flex-wrap: wrap; gap: 6px; }
+.sc .acts a, .sc .acts button { font: 11px var(--mono); padding: 6px 12px; border-radius: 16px; border: 1px solid var(--faint); background: var(--panel); color: var(--ink); text-decoration: none; cursor: pointer; }
+.sc .acts a:hover, .sc .acts button:hover { border-color: var(--ink); }
+.sc .acts .go { border-color: var(--ember); }
+.sc .done { font: 11px var(--mono); color: var(--ember); min-height: 1.3em; }
+.sgh { font: 500 12px var(--mono); letter-spacing: 0.14em; text-transform: uppercase; color: var(--ink); margin: 22px 0 0; }
+.vtiles { display: grid; grid-template-columns: repeat(auto-fill, minmax(136px, 1fr)); gap: 12px; margin-top: 14px; }
+.seg { display: inline-flex; border: 1px solid var(--faint); border-radius: 18px; overflow: hidden; }
+.seg button { border: 0; border-radius: 0; background: transparent; padding: 7px 14px; font-size: 12px; }
+.seg button[aria-pressed="true"] { background: var(--ember); color: #100806; }
+.chart { margin-top: 14px; padding: 14px 14px 8px; border-radius: 16px; background: var(--panel); border: 1px solid var(--faint); }
+.chart svg { width: 100%; height: auto; display: block; }
+.chart .lg { display: flex; gap: 16px; font: 11px var(--mono); color: var(--dim); margin-bottom: 6px; }
+.chart .lg i { display: inline-block; width: 10px; height: 10px; border-radius: 2px; margin-right: 6px; vertical-align: -1px; }
+.vg { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 14px; margin-top: 14px; }
+.vc { padding: 16px 18px; border-radius: 16px; background: var(--panel); border: 1px solid var(--faint); }
+.vc h3 { margin: 0 0 2px; font-weight: 400; font-size: 18px; letter-spacing: 0.04em; }
+.vc .sub { font: 11px var(--mono); color: var(--dim); margin-bottom: 10px; }
+.vr { display: grid; grid-template-columns: minmax(0, 1fr) 64px 92px; gap: 8px; align-items: center; padding: 3px 0; font-size: 15px; }
+.vr .c { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.vr .tr { height: 8px; border-radius: 4px; background: var(--faint); overflow: hidden; }
+.vr .tr i { display: block; height: 100%; background: var(--ember); border-radius: 4px; }
+.vr .p { font: 12px var(--mono); text-align: right; }
+.vr .p small { color: var(--dim); }
+.vnote { font: 12px var(--mono); color: var(--dim); margin-top: 10px; max-width: 760px; line-height: 1.6; }
+@media (max-width: 600px) { .qs { grid-template-columns: 1fr; } .row { grid-template-columns: 20px minmax(0, 1fr) 60px 56px; } }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <svg viewBox="0 0 35.4 24" aria-hidden="true"><path d="M0.5 24v-6.6h11V24zM1.6 17.4v-1.6h8.8v1.6zM3 15.8v-2.4h6v2.4zM2.9 13.4a3.1 3.1 0 0 1 6.2 0zM5.4 10.4V8.2h1.2v2.2zM5.2 8.2L6 6.6l.8 1.6z"/><path fill-rule="evenodd" d="M13.4 24V13h12.6v11h-3.6v-5.2a2.7 2.7 0 0 0-5.4 0V24zM13 13v-1.4h13.4V13zM15.8 11.6a3.9 3.9 0 0 1 7.8 0zM19.3 7.7V5.6h.8v2.1zM19.1 5.6l.6-1.8.6 1.8zM13.6 11.6v-1.8h.9v1.8zM24.9 11.6v-1.8h.9v1.8zM13.4 9.8l.65-1.4.65 1.4zM24.7 9.8l.65-1.4.65 1.4z"/><path fill-rule="evenodd" d="M27.9 24v-3.5h.6V9h-.4V7.6h1V5.4h.8L31.4 0l1.5 5.4h.8v2.2h1V9h-.4v11.5h.6V24zM31.4 10a1.7 1.7 0 1 0 0 3.4 1.7 1.7 0 0 0 0-3.4z"/></svg>
+    <h1>Three Cities <span>· Admin</span></h1>
+  </header>
+
+  <h2>Pages</h2>
+  <div class="pages">
+    <a class="page" href="/"><b>The app</b><span>threecities…/</span></a>
+    <a class="page" href="/manual"><b>Manual</b><span>/manual</span></a>
+    <a class="page" href="/reel"><b>Reel Studio</b><span>/reel · daily posts</span></a>
+    <a class="page" href="/today"><b>Today's reel</b><span>/today · made at 8am, ready to post</span></a>
+    <a class="page" href="/teaser"><b>Teaser</b><span>/teaser · the launch video</span></a>
+    <a class="page" href="/design"><b>Design system</b><span>/design · colours, type, files for Figma</span></a>
+    <a class="page" href="/graphics"><b>Graphics</b><span>/graphics · every launch and social graphic, with Figma files</span></a>
+    <a class="page" href="/perform"><b>Perform</b><span>/perform · the playing surface: faders, solos, fades, filters</span></a>
+    <a class="page" href="https://three-cities-quiz.jim-4cc.workers.dev/" target="_blank" rel="noopener"><b>Quiz server</b><span>Cloudflare Worker</span></a>
+    <a class="page" href="https://dash.cloudflare.com/" target="_blank" rel="noopener"><b>Cloudflare</b><span>visits, Worker, database</span></a>
+    <a class="page" href="https://github.com/forrestjames/three-cities" target="_blank" rel="noopener"><b>GitHub</b><span>the code</span></a>
+    <a class="page" href="https://claude.ai/code/artifact/3688992c-ef40-4375-acb2-f70b887b7474" target="_blank" rel="noopener"><b>Press and community plan</b><span>the Max, forum and press outreach doc</span></a>
+  </div>
+
+  <h2>Visitors</h2>
+  <p class="hint">Anonymous daily counts from the app: no cookies, no addresses, nobody followed from visit to visit. A visit is one time someone opens the page. Days are London days.</p>
+  <div class="bar-row">
+    <input id="key" type="password" placeholder="Admin key, if you set one" autocomplete="off" size="26">
+    <button class="main" id="load" type="button">Load</button>
+    <span class="seg" id="gran" role="group" aria-label="Show by"><button type="button" data-g="day" aria-pressed="true">Days</button><button type="button" data-g="week" aria-pressed="false">Weeks</button><button type="button" data-g="month" aria-pressed="false">Months</button></span>
+    <label class="hint" for="vrange">Lists and tiles cover</label>
+    <select id="vrange"><option value="7">the last 7 days</option><option value="30" selected>the last 30 days</option><option value="90">the last 90 days</option><option value="400">everything</option></select>
+  </div>
+  <div class="note" id="vnote"></div>
+  <div class="vtiles" id="vtiles"></div>
+  <div class="chart" id="vchart"></div>
+  <div class="vg" id="vlists"></div>
+  <div class="vnote" id="vfoot"></div>
+  <div class="bar-row" style="margin-top:14px"><button type="button" id="notrack"></button> <button type="button" id="myip">Show my address</button></div>
+  <div class="note" id="myipnote"></div>
+
+  <h2>Social images</h2>
+  <p class="hint">Solid backgrounds, ready to post. Save puts the file in your downloads. Copy puts the picture on your clipboard to paste into a post. On a phone, Save to Photos opens the share sheet.</p>
+  <div class="bar-row"><a class="page" style="padding:9px 16px;border-radius:18px;display:inline-block" href="/social-images/three-cities-social-images.zip" download>Download all 12 (zip)</a></div>
+  <div id="social"></div>
+
+  <h2>City quiz</h2>
+  <p class="hint">Every answer people have added, as counts. A city's score is how often it wins when it comes up, so a city offered 40 times and picked 30 times scores 75%.</p>
+  <div class="bar-row">
+    <label class="hint" for="min">Only cities that came up at least</label>
+    <select id="min"><option>1</option><option>3</option><option selected>5</option><option>10</option><option>20</option><option>50</option></select>
+    <input id="find" type="search" placeholder="Find a city" size="16">
+    <button id="csv" type="button">Download CSV</button>
+  </div>
+  <div class="note" id="note"></div>
+  <div class="stats" id="stats"></div>
+  <div class="qs" id="qs"></div>
+</div>
+<script>
+const API = "https://three-cities-quiz.jim-4cc.workers.dev";
+const $ = id => document.getElementById(id);
+let data = null;
+try { $("key").value = localStorage.getItem("tc-admin-key") || ""; } catch (e) {}
+const nice = k => { const [n, p] = String(k).split("|"); const t = s => (s || "").replace(/(^|[\s(-])(\p{L})/gu, (m, a, b) => a + b.toUpperCase()).replace(/\bUsa\b/, "USA"); return t(n) + (p ? ", " + t(p) : ""); };
+const pct = r => Math.round(100 * r.picked / Math.max(1, r.shown));
+async function load() {
+  const key = $("key").value.trim();
+  try { localStorage.setItem("tc-admin-key", key); } catch (e) {}
+  $("note").textContent = "Loading…";
+  try {
+    const r = await fetch(`${API}/stats${key ? "?key=" + encodeURIComponent(key) : ""}`);
+    const j = await r.json();
+    if (!r.ok) throw new Error(j.error || r.status);
+    data = j; draw();
+    $("note").textContent = `Loaded ${new Date().toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" })}.${j.locked ? "" : " Tip: set an ADMIN_KEY secret on the Worker to lock this page's data."}`;
+  } catch (e) { $("note").textContent = "Couldn't load: " + e.message; }
+}
+function draw() {
+  if (!data) return;
+  const min = Number($("min").value), find = $("find").value.trim().toLowerCase();
+  const rows = data.rows, answers = rows.reduce((a, r) => a + r.picked, 0);
+  const citiesSeen = new Set(rows.map(r => r.city)).size, qsAnswered = new Set(rows.filter(r => r.picked).map(r => r.q)).size;
+  $("stats").innerHTML = "";
+  [["Answers", answers], ["Cities", citiesSeen], ["Questions answered", `${qsAnswered} of ${data.questions.length}`]].forEach(([l, v]) => {
+    const d = document.createElement("div"); d.className = "stat"; d.innerHTML = `<b></b><span></span>`; d.querySelector("b").textContent = typeof v === "number" ? v.toLocaleString("en-GB") : v; d.querySelector("span").textContent = l; $("stats").appendChild(d);
+  });
+  const box = $("qs"); box.innerHTML = "";
+  data.questions.forEach(([id, text]) => {
+    const all = rows.filter(r => r.q === id), n = all.reduce((a, r) => a + r.picked, 0);
+    let list = all.filter(r => r.shown >= min).sort((a, b) => pct(b) - pct(a) || b.shown - a.shown);
+    if (find) list = list.filter(r => r.city.includes(find));
+    const card = document.createElement("div"); card.className = "q";
+    const h = document.createElement("h3"); h.textContent = text;
+    const meta = document.createElement("div"); meta.className = "meta"; meta.innerHTML = `<span>${n.toLocaleString("en-GB")} answers</span><span>${id}</span>`;
+    card.append(h, meta);
+    if (!list.length) { const e = document.createElement("div"); e.className = "empty"; e.textContent = all.length ? `No city has come up ${min} times yet.` : "No answers yet."; card.appendChild(e); }
+    list.slice(0, find ? 50 : 8).forEach((r, i) => {
+      const row = document.createElement("div"); row.className = "row";
+      row.innerHTML = `<span class="n">${i + 1}</span><span class="c"></span><span class="tr"><i style="width:${pct(r)}%"></i></span><span class="p">${pct(r)}% <small>${r.picked}/${r.shown}</small></span>`;
+      row.querySelector(".c").textContent = nice(r.city); row.querySelector(".c").title = nice(r.city);
+      card.appendChild(row);
+    });
+    if (list.length >= 3) {
+      const acts = document.createElement("div"); acts.className = "acts";
+      const b = document.createElement("button"); b.type = "button"; b.textContent = "Copy for a post";
+      b.onclick = () => {
+        const top = list.slice(0, 3).map((r, i) => `${i + 1}. ${nice(r.city).split(",")[0]}, picked ${pct(r)}% of the time`).join("\n");
+        navigator.clipboard.writeText(`${text}\nHere's what everyone said in the Three Cities quiz.\n\n${top}\n\nFrom ${n.toLocaleString("en-GB")} answers.`).then(() => { b.textContent = "Copied"; setTimeout(() => b.textContent = "Copy for a post", 1500); });
+      };
+      acts.appendChild(b); card.appendChild(acts);
+    }
+    box.appendChild(card);
+  });
+}
+$("load").onclick = () => { load(); loadVisits(); };
+$("min").onchange = draw; $("find").oninput = draw;
+$("key").onkeydown = e => { if (e.key === "Enter") { load(); loadVisits(); } };
+$("csv").onclick = () => {
+  if (!data) return;
+  const lines = ["question,question_text,city,shown,picked,score"].concat(data.rows.map(r => [r.q, `"${(data.questions.find(q => q[0] === r.q) || [, ""])[1].replace(/"/g, '""')}"`, `"${r.city.replace(/"/g, '""')}"`, r.shown, r.picked, (r.picked / Math.max(1, r.shown)).toFixed(3)].join(",")));
+  const a = document.createElement("a"); a.href = URL.createObjectURL(new Blob([lines.join("\n")], { type: "text/csv" }));
+  a.download = `three-cities-quiz-${new Date().toISOString().slice(0, 10)}.csv`; a.click();
+};
+load();
+
+// ---------- visitors ----------
+let V = null, gran = "day";
+const EN = new Intl.DisplayNames(["en"], { type: "region" });
+const cap = t => String(t).replace(/(^|[\s(-])(\p{L})/gu, (m, a, b) => a + b.toUpperCase());
+const countryName = c => { try { return c === "unknown" ? "Unknown" : EN.of(c.toUpperCase()); } catch (e) { return c; } };
+const ACTNAME = { "share-copy": "Copied a share link", "share-sheet": "Used the share sheet", record: "Started a recording", "record-saved": "Saved a recording", "quiz-answer": "Answered a quiz question", "midi-out": "Turned on MIDI out", "own-sound": "Chose their own sound", "opened-shared-link": "Arrived by a shared link", "chords-on": "Turned chords on" };
+async function loadVisits() {
+  const key = $("key").value.trim();
+  $("vnote").textContent = "Loading…";
+  try {
+    const r = await fetch(`${API}/analytics?days=400${key ? "&key=" + encodeURIComponent(key) : ""}`);
+    const j = await r.json();
+    if (!r.ok) throw new Error(j.error || r.status);
+    V = j; drawVisits();
+    $("vnote").textContent = j.rows.length ? `Loaded ${new Date().toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" })}.` : "No visits counted yet. They start counting once the new version of the Worker is live.";
+  } catch (e) { $("vnote").textContent = "Couldn't load: " + e.message + (/404|not found/i.test(e.message) ? " (The Worker needs the new code and the events table first. See quiz-worker/README.md.)" : ""); }
+}
+const dayKey = d => d.toLocaleDateString("en-CA", { timeZone: "Europe/London" });
+const addDays = (iso, n) => { const d = new Date(iso + "T12:00:00Z"); d.setUTCDate(d.getUTCDate() + n); return d.toISOString().slice(0, 10); };
+const weekStart = iso => { const d = new Date(iso + "T12:00:00Z"), w = (d.getUTCDay() + 6) % 7; return addDays(iso, -w); };
+function sumBy(rows, kind, key) { let n = 0; rows.forEach(r => { if (r[1] === kind && (key == null || r[2] === key)) n += r[3]; }); return n; }
+function tally(rows, kind) { const m = new Map(); rows.forEach(r => { if (r[1] === kind) m.set(r[2], (m.get(r[2]) || 0) + r[3]); }); return [...m].sort((a, b) => b[1] - a[1]); }
+function drawVisits() {
+  if (!V) return;
+  const today = V.today, span = Number($("vrange").value), from = addDays(today, -(span - 1));
+  const inRange = V.rows.filter(r => r[0] >= from), visits = sumBy(inRange, "visit", "all");
+  const listens = sumBy(inRange, "listen", "start"), pc = (n, d) => d ? Math.round(100 * n / d) + "%" : "–";
+  // tiles
+  const last7 = V.rows.filter(r => r[0] >= addDays(today, -6)), todayRows = V.rows.filter(r => r[0] === today);
+  const shares = sumBy(inRange, "act", "share-copy") + sumBy(inRange, "act", "share-sheet");
+  const tiles = [["Visits today", sumBy(todayRows, "visit", "all")], ["Visits, last 7 days", sumBy(last7, "visit", "all")], ["Visits in range", visits],
+    ["Pressed play", pc(listens, visits)], ["Stayed a minute", pc(sumBy(inRange, "stay", "1m"), visits)], ["Listened 3 minutes", pc(sumBy(inRange, "heard", "3m"), visits)], ["Shared", shares], ["Recordings saved", sumBy(inRange, "act", "record-saved")], ["Link clicks", sumBy(inRange, "link")]];
+  $("vtiles").innerHTML = ""; tiles.forEach(([l, v]) => { const d = document.createElement("div"); d.className = "stat"; d.innerHTML = "<b></b><span></span>"; d.querySelector("b").textContent = typeof v === "number" ? v.toLocaleString("en-GB") : v; d.querySelector("span").textContent = l; $("vtiles").appendChild(d); });
+  // chart: visits and plays per day, week or month
+  const periods = [];
+  if (gran === "day") for (let i = 29; i >= 0; i--) periods.push(addDays(today, -i));
+  else if (gran === "week") for (let i = 15; i >= 0; i--) periods.push(addDays(weekStart(today), -7 * i));
+  else { const y = +today.slice(0, 4), m = +today.slice(5, 7); for (let i = 11; i >= 0; i--) { const t = new Date(Date.UTC(y, m - 1 - i, 1)); periods.push(t.toISOString().slice(0, 7)); } }
+  const bucket = d => gran === "day" ? d : gran === "week" ? weekStart(d) : d.slice(0, 7);
+  const vis = new Map(periods.map(p => [p, 0])), plays = new Map(periods.map(p => [p, 0]));
+  V.rows.forEach(r => { const b = bucket(r[0]); if (!vis.has(b)) return; if (r[1] === "visit" && r[2] === "all") vis.set(b, vis.get(b) + r[3]); if (r[1] === "listen") plays.set(b, plays.get(b) + r[3]); });
+  const W = 900, H = 230, L = 36, B = 30, T = 10, max = Math.max(5, ...vis.values()), top = Math.ceil(max / 5) * 5 || 5, bw = (W - L) / periods.length;
+  const label = p => gran === "month" ? new Date(p + "-15T12:00:00Z").toLocaleDateString("en-GB", { month: "short" }) : new Date(p + "T12:00:00Z").toLocaleDateString("en-GB", { day: "numeric", month: "short" });
+  let svg = `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Visits and plays by ${gran}">`;
+  for (let i = 0; i <= 4; i++) { const y = T + (H - B - T) * (1 - i / 4); svg += `<line x1="${L}" x2="${W}" y1="${y}" y2="${y}" stroke="rgba(243,236,230,0.08)"/><text x="${L - 6}" y="${y + 4}" text-anchor="end" fill="rgba(243,236,230,0.5)" font-size="11" font-family="monospace">${Math.round(top * i / 4)}</text>`; }
+  const every = Math.ceil(periods.length / 9), last = periods.length - 1;
+  periods.forEach((p, i) => {
+    const v = vis.get(p), pl = plays.get(p), h = (H - B - T) * v / top, h2 = (H - B - T) * pl / top, x = L + i * bw, w = bw * 0.68;
+    svg += `<g><title>${label(p)}${gran === "week" ? " (week starting)" : ""}: ${v} visits, ${pl} pressed play</title><rect x="${x + bw * 0.16}" y="${H - B - h}" width="${w}" height="${Math.max(h, v ? 1 : 0)}" rx="2" fill="#e07a4f"/><rect x="${x + bw * 0.16}" y="${H - B - h2}" width="${w}" height="${Math.max(h2, pl ? 1 : 0)}" rx="2" fill="#f3ece6" fill-opacity="0.85"/></g>`;
+    if ((last - i) % every === 0) svg += `<text x="${i === last ? x + bw : x + bw / 2}" y="${H - 10}" text-anchor="${i === last ? "end" : "middle"}" fill="rgba(243,236,230,0.55)" font-size="11" font-family="monospace">${label(p)}</text>`;
+  });
+  $("vchart").innerHTML = `<div class="lg"><span><i style="background:#e07a4f"></i>Visits</span><span><i style="background:#f3ece6"></i>Pressed play</span></div>` + svg + "</svg>";
+  // lists
+  const box = $("vlists"); box.innerHTML = "";
+  const card = (title, sub, items, fmt, total) => {
+    const c = document.createElement("div"); c.className = "vc"; const h = document.createElement("h3"); h.textContent = title; const s2 = document.createElement("div"); s2.className = "sub"; s2.textContent = sub; c.append(h, s2);
+    if (!items.length) { const e = document.createElement("div"); e.className = "empty"; e.textContent = "Nothing yet."; c.appendChild(e); }
+    const topN = items.slice(0, 10), mx = Math.max(1, ...topN.map(x => x[1]));
+    topN.forEach(([k, n]) => { const r = document.createElement("div"); r.className = "vr"; r.innerHTML = `<span class="c"></span><span class="tr"><i style="width:${Math.round(100 * n / mx)}%"></i></span><span class="p">${n.toLocaleString("en-GB")} <small>${total ? pc(n, total) : ""}</small></span>`; const t = fmt(k); r.querySelector(".c").textContent = t; r.querySelector(".c").title = t; c.appendChild(r); });
+    box.appendChild(c);
+  };
+  const ladder = (kind, labels, total) => labels.map(([k, l]) => [l, sumBy(inRange, kind, k)]);
+  card("How long they stay", "Share of visits still open at each point", ladder("stay", [["10s", "10 seconds"], ["30s", "30 seconds"], ["1m", "1 minute"], ["3m", "3 minutes"], ["10m", "10 minutes"], ["30m", "30 minutes"]]), x => x, visits);
+  card("How long the music plays", "Share of visits that heard this much", ladder("heard", [["30s", "30 seconds"], ["1m", "1 minute"], ["3m", "3 minutes"], ["10m", "10 minutes"], ["30m", "30 minutes"]]), x => x, visits);
+  card("Where they come from", "A site that sent them, a ?ref= tag you added, or direct", tally(inRange, "src"), k => k === "direct" ? "Direct or unknown" : k.startsWith("ref:") ? "Link tagged " + k.slice(4) : k, visits);
+  card("Countries", "From Cloudflare. No address is kept", tally(inRange, "country"), countryName, visits);
+  card("Cities they visit from", "A guess from the network, so it can be the nearest big town. Daily totals only, no address is kept", tally(inRange, "vcity"), k => { const i = k.lastIndexOf(", "); return i < 0 ? cap(k) : cap(k.slice(0, i)) + ", " + countryName(k.slice(i + 2)); }, visits);
+  card("Devices", "Phone, tablet or computer", tally(inRange, "device"), cap, visits);
+  card("What they do", "Share of visits that did this", Object.keys(ACTNAME).map(k => [k, sumBy(inRange, "act", k)]).filter(x => x[1]).sort((a, b) => b[1] - a[1]), k => ACTNAME[k] || k, visits);
+  card("Links they click", "Where people go from the app", tally(inRange, "link"), k => k === "manual" ? "The manual" : k === "email" ? "Email" : k, visits);
+  card("Cities they hear", "The three cities playing when they pressed play", tally(inRange, "city"), cap, listens);
+  card("Cities they search for", "Added by hand or by the dice, after the page opened", tally(inRange, "citypick"), cap, null);
+  card("Sounds they hear", "Per city, when they pressed play", tally(inRange, "sound"), cap, null);
+  card("Sounds they choose", "Picked from the menu by a person", tally(inRange, "soundpick"), cap, null);
+  card("Drum kits", "When they pressed play", tally(inRange, "kit"), cap, listens);
+  card("Chords", "Off, or the chord sound in use", tally(inRange, "chords"), cap, listens);
+  card("Scales", "The scale playing when they pressed play", tally(inRange, "scale"), cap, listens);
+  card("Tempo", "Beats per minute, rounded to the nearest ten", tally(inRange, "tempo").sort((a, b) => Number(a[0]) - Number(b[0])), k => k + " bpm", listens);
+  $("vfoot").textContent = "Counting skips people with Do Not Track on, bots, and any device where you switch it off below. Tag a link you post with ?ref=reddit (or any word) to see which post sent people. Return visitors can't be counted, since nothing is stored on their device.";
+}
+document.querySelectorAll("#gran button").forEach(b => b.onclick = () => { gran = b.dataset.g; document.querySelectorAll("#gran button").forEach(x => x.setAttribute("aria-pressed", String(x === b))); drawVisits(); });
+$("vrange").onchange = drawVisits;
+function notrackLabel() { let on = false; try { on = localStorage.getItem("tc-notrack") === "1"; } catch (e) {} $("notrack").textContent = on ? "My visits on this device: not counted (tap to count them)" : "Don't count my own visits on this device"; }
+$("notrack").onclick = () => { try { if (localStorage.getItem("tc-notrack") === "1") localStorage.removeItem("tc-notrack"); else localStorage.setItem("tc-notrack", "1"); } catch (e) {} notrackLabel();
+};
+$("myip").onclick = async () => {
+  const n = $("myipnote"); n.textContent = "Asking…";
+  try { const r = await fetch(API + "/myip").then(r => r.json());
+    if (!r.ip) { n.textContent = "The counter doesn't know this yet. Paste the newest worker.js into Cloudflare and deploy it, then try again. Meanwhile, searching \"what is my IP\" on this network gives the same address."; return; }
+    n.textContent = r.counted_out ? `Your address is ${r.ip}. It is already on your list, so visits from here are not counted.` : `Your address is ${r.ip}. To leave this network out, add it to OWNER_IPS in the Worker (Settings, Variables and Secrets), then it applies straight away. A comma separated list works, so add each place you use.`;
+  } catch (e) { n.textContent = "Couldn't reach the counter. If you haven't pasted the newest worker.js into Cloudflare yet, that is why. Searching \"what is my IP\" on this network gives the same address."; } };
+notrackLabel();
+loadVisits();
+
+// ---------- social images ----------
+const SOCIAL = [
+  ["Poster look", [["poster-main", "Square post", "1080 × 1080"], ["poster-portrait", "Portrait post", "1080 × 1350"], ["poster-story", "Story or reel cover", "1080 × 1920"], ["poster-banner", "Banner", "1500 × 500"], ["poster-linkcard", "Link card", "1200 × 630"], ["poster-avatar", "Profile picture", "1080 × 1080"]]],
+  ["Map look", [["map-post", "Wide post", "1000 × 460"], ["map-portrait", "Wide post, taller", "1000 × 560"], ["map-story", "Story map", "1080 × 760"], ["map-banner", "Banner", "1500 × 500"], ["map-card", "Link card", "1200 × 630"], ["map-avatar", "Profile picture", "1080 × 1080"]]],
+];
+(function () {
+  const root = document.getElementById("social");
+  SOCIAL.forEach(([title, items]) => {
+    const h = document.createElement("div"); h.className = "sgh"; h.textContent = title; root.appendChild(h);
+    const g = document.createElement("div"); g.className = "sg"; root.appendChild(g);
+    items.forEach(([id, name, size]) => {
+      const url = `/social-images/${id}.png`, file = `Three Cities ${title.split(" ")[0].toLowerCase()} ${name.toLowerCase()}.png`;
+      const c = document.createElement("div"); c.className = "sc";
+      c.innerHTML = `<div class="th"><img loading="lazy" src="${url}" alt="${name}, ${title}"></div><div class="in"><b>${name}</b><span class="sz">${size}</span><div class="acts"></div><div class="done" aria-live="polite"></div></div>`;
+      const acts = c.querySelector(".acts"), done = c.querySelector(".done");
+      const say = t => { done.textContent = t; setTimeout(() => { done.textContent = ""; }, 2500); };
+      const save = document.createElement("a"); save.className = "go"; save.textContent = "Save"; save.href = url; save.download = file; acts.appendChild(save);
+      if (navigator.clipboard && window.ClipboardItem) {
+        const cp = document.createElement("button"); cp.type = "button"; cp.textContent = "Copy";
+        cp.addEventListener("click", async () => {
+          try { await navigator.clipboard.write([new ClipboardItem({ "image/png": fetch(url).then(r => r.blob()) })]); say("Copied"); }
+          catch (e) { say("Could not copy here. Use Save."); }
+        });
+        acts.appendChild(cp);
+      }
+      if (navigator.canShare && matchMedia("(pointer: coarse)").matches) {
+        const sh = document.createElement("button"); sh.type = "button"; sh.textContent = "Save to Photos";
+        sh.addEventListener("click", async () => {
+          try { const blob = await (await fetch(url)).blob(), f = new File([blob], file, { type: "image/png" });
+            if (navigator.canShare({ files: [f] })) await navigator.share({ files: [f], title: name }); else say("Use Save instead."); }
+          catch (e) { if (e && e.name !== "AbortError") say("Could not open the share sheet."); }
+        });
+        acts.appendChild(sh);
+      }
+      g.appendChild(c);
+    });
+  });
+})();
+</script>
+</body>
+</html>

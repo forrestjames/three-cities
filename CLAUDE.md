@@ -43,6 +43,7 @@ Three Cities is an interactive generative music project that turns live weather 
 
 ## Internal pages (noindex, no manual coverage)
 - admin.html (/admin) is the internal hub: links to every page plus the city quiz results.
+- dashboard.html (/dashboard) is an identical copy of admin.html under a fresh name, made on 21 Oct because /admin was stuck in a cache. Keep the two the same, or delete it once /admin refreshes.
 - design.html (/design) is the design system page, with the kit in design-assets/ (fonts, logos, icons, tokens, screens, and a zip). Rebuild the zip when assets change.
 - perform.html (/perform) forwards to /?perform, the performance surface built into index.html (body.perform). Listed in admin; the manual covers it.
 - graphics.html (/graphics) is the library of every launch and social graphic and its earlier versions, with PNG, MP4 and Figma SVG links. Rebuild it with launch-graphics/build_graphics_page.py after adding or re-rendering graphics. Linked from admin.
