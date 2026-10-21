@@ -1268,7 +1268,7 @@ master.connect(comp).connect(ctx.destination);
 
 // one bus per voice, so each fader sets its own level
 // Each voice: sources -> filter (bus) -> volume (out) -> master
-const bus = {}, out = {}, flt = {};
+const bus = {}, out = {}, flt = {}, gate = {};   // gate: the way into the effects, closed while a voice is muted
 for (const name of ['kick', 'conga', 'shaker', 'sample']) {
   out[name] = ctx.createGain();
   out[name].connect(master);
@@ -1277,6 +1277,8 @@ for (const name of ['kick', 'conga', 'shaker', 'sample']) {
   flt[name].frequency.value = 12000;
   flt[name].connect(out[name]);
   bus[name] = flt[name];
+  gate[name] = ctx.createGain();   // fed from the filter; the reverb and delay take their sound from here
+  flt[name].connect(gate[name]);
 }
 
 // Reverb per voice (conga and shaker): a room made from a generated impulse. Level sends the voice in; decay sets the tail.
@@ -1295,7 +1297,7 @@ for (const name of ['conga', 'shaker', 'sample']) {
   revSend[name] = ctx.createGain(); revSend[name].gain.value = 0;
   revConv[name] = ctx.createConvolver(); revConv[name].buffer = roomImpulse(REV[name].decay);
   revOut[name] = ctx.createGain(); revOut[name].gain.value = 1;
-  flt[name].connect(revSend[name]).connect(revConv[name]).connect(revOut[name]).connect(out[name]);
+  gate[name].connect(revSend[name]).connect(revConv[name]).connect(revOut[name]).connect(out[name]);
 }
 function setRevLevel(name, v) {
   REV[name].level = v;
@@ -1360,7 +1362,10 @@ for (const name of ['kick', 'conga', 'shaker', 'sample']) {
 }
 const vol = {};
 const muted = { kick: false, conga: false, shaker: false, sample: false };
-function applyBus(name) { out[name].gain.value = muted[name] ? 0 : (vol[name] || 0) / 100; }
+function applyBus(name) {
+  out[name].gain.value = muted[name] ? 0 : (vol[name] || 0) / 100;
+  gate[name].gain.setTargetAtTime(muted[name] ? 0 : 1, ctx.currentTime, 0.01);   // muted: nothing new reaches the reverb or delay
+}
 function setVol(name, v) {
   vol[name] = v;
   $(name + 'VolOut').textContent = String(v);
@@ -1391,7 +1396,7 @@ function makeFx(name) {
   loopLp.type = 'lowpass'; loopLp.frequency.value = 20000; loopLp.Q.value = 0.5;
   const xA = ctx.createGain(), fbX = ctx.createGain();
   const wL = ctx.createGain(), wR = ctx.createGain(), panL = ctx.createStereoPanner(), panR = ctx.createStereoPanner();
-  bus[name].connect(dL);
+  gate[name].connect(dL);   // from the gate, so a muted voice sends nothing to the delay
   dL.connect(fbSelf); fbSelf.connect(loopLp); loopLp.connect(dL);     // repeat loop on the left
   dL.connect(xA); xA.connect(dR);                                    // ping-pong: left feeds right
   dR.connect(fbX); fbX.connect(dL);                                  // ping-pong: right feeds back to left
