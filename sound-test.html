@@ -3672,10 +3672,11 @@ body.perform.fit .pl-shape-btn { display: inline-block !important; }
     // The Groove grid's drum kit (drumHit in the rhythm section): the same Tidal machine, one sample per drum
     const KIT = { kick: { t: "bd", g: 0.9 }, snare: { t: "sd", g: 0.7 }, hat: { t: "hh", g: 0.45 }, rim: { t: "rim", g: 0.6 } };
     function playKit(kind, out, t, vel) {
-      const s = KIT[kind]; if (!s || !st.list || !ac) return false;
+      const s = KIT[kind]; if (!s || !st.list || !ac) { ST.misses = (ST.misses || 0) + 1; return false; }
       const pick = mach => { const files = st.list[mach + "_" + s.t]; return files && files.length ? files[Math.min(files.length - 1, Math.floor(files.length / 3))] : null; };
       const f = pick(st.machine) || pick("RolandTR808"); if (!f) return false;
-      const d = loadDrum(f); if (!d.buf) return false;
+      const d = loadDrum(f); if (!d.buf) { ST.misses = (ST.misses || 0) + 1; return false; }
+      ST.hits = (ST.hits || 0) + 1;
       const src = ac.createBufferSource(), g = ac.createGain(); src.buffer = d.buf;
       g.gain.value = s.g * d.norm * Math.min(1.2, vel);
       src.connect(g).connect(out); src.start(t);
@@ -3782,7 +3783,7 @@ body.perform.fit .pl-shape-btn { display: inline-block !important; }
       paint(); status();
     }
     if (document.body) mount(); else document.addEventListener("DOMContentLoaded", mount);
-    window.__ST = { st, banks, drums, GM, DR, loadBank, drumFile, loadDrum };
+    window.__ST = { st, banks, drums, GM, DR, loadBank, drumFile, loadDrum, playKit, get hits() { return ST.hits; }, get misses() { return ST.misses; } };
     return { get on() { return st.on; }, play, playKit, st, banks, drums };
   })();
   function voiceCore(c, midi, vel, t, L = 1) {
