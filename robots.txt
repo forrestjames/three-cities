@@ -6,6 +6,7 @@ Disallow: /reel
 Disallow: /design
 Disallow: /teaser
 Disallow: /today
+Disallow: /sound-test
 Disallow: /daily-reel/
 Disallow: /social-images/
 
