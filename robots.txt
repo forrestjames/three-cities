@@ -7,6 +7,7 @@ Disallow: /design
 Disallow: /teaser
 Disallow: /today
 Disallow: /sound-test
+Disallow: /sound-shelf
 Disallow: /daily-reel/
 Disallow: /social-images/
 
