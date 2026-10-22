@@ -1237,6 +1237,7 @@ function renderGenres() {
 function selectGenre(g) {
   state.genre = g;
   state.patId = g.ids[0];
+  pickTwin();
   setKick(state.patId);
   applyGenreTempo(g);
   renderGenres();
@@ -1264,6 +1265,59 @@ function setKick(id) {
   renderLanes();
   const k = state.kick;
   $('patternInfo').textContent = `${k.name} · ${k.steps} steps · kick and shaker from ${state.genre ? state.genre.name : '-'}`;
+}
+
+
+// ---------- twin city and sub bass ----------
+// The twin is a second city with the same genre. Its kick ring slips one step each time the first ring's cycle starts,
+// so the two drift apart and meet. When both kicks land on the same step, the sub bass moves to a new note.
+const SUB_NOTES = [33, 36, 38, 40, 43];   // MIDI: A1, C2, D2, E2, G2 (55 to 98 Hz)
+const twin = { city: '', bits: [], n: 0, off: 0 };
+function pickTwin() {
+  twin.city = ''; twin.bits = []; twin.n = 0; twin.off = 0;
+  const g = state.genre, here = state.place ? state.place.name.toLowerCase() : '';
+  if (!g || !ATLAS.cities) return;
+  const same = [];
+  for (const c of ATLAS.cities) {
+    if (c.name.toLowerCase() === here) continue;
+    const m = c.genres.find(x => x.name === g.name && x.ids && x.ids.length);
+    if (m) same.push({ city: c.name, id: m.ids[0] });
+  }
+  if (!same.length) return;
+  const pick = same[Math.floor(Math.random() * same.length)];
+  const K = ATLAS.kicks[pick.id];
+  if (!K || !K.bd) return;
+  twin.city = pick.city; twin.bits = K.bd.slice(); twin.n = K.steps;
+}
+const sub = { osc: null, g: null, note: 0 };
+function subSetup() {
+  if (sub.osc) return;
+  sub.osc = ctx.createOscillator();
+  sub.osc.type = 'sine';
+  sub.osc.frequency.value = mtof(SUB_NOTES[0]);
+  sub.g = ctx.createGain();
+  sub.g.gain.value = 0;
+  sub.osc.connect(sub.g).connect(laneBus('sub'));   // the Rings list volume sits on laneBus
+  sub.osc.start();
+}
+function subLevel() { return playing && !laneMuted.sub ? 0.5 : 0; }
+// Fades the sub gate. Clears queued kick dips first, or they would hold the gain where it was.
+function subGate(v) {
+  if (!sub.g) return;
+  const now = ctx.currentTime;
+  sub.g.gain.cancelScheduledValues(now);
+  sub.g.gain.setTargetAtTime(v, now, 0.02);
+}
+function duckSub(t) {   // a short dip on each kick, so the sub and kick do not fight
+  if (!sub.g) return;
+  const base = subLevel();
+  sub.g.gain.setValueAtTime(base * 0.35, t);
+  sub.g.gain.linearRampToValueAtTime(base, t + 0.09);
+}
+function subMeet(t) {   // both rings land together: the sub moves to another note
+  if (!sub.osc) return;
+  sub.note = (sub.note + 1 + Math.floor(Math.random() * (SUB_NOTES.length - 1))) % SUB_NOTES.length;
+  sub.osc.frequency.setValueAtTime(mtof(SUB_NOTES[sub.note]), t);
 }
 
 // ---------- the drum kit: one lane per drum ----------
@@ -1308,6 +1362,11 @@ function kitLanes() {
     lanes.push({ id: v, label: v.replace(/_/g, ' '), idx: 'k', bits: k.voices[v], n, extra: true, color: RING_COLORS[ci++ % RING_COLORS.length],
       muted: () => !!laneMuted[v], toggle: () => { laneMuted[v] = !laneMuted[v]; syncKit(); } });
   }
+  if (twin.bits.length) lanes.push({ id: 'twin', label: 'twin: ' + twin.city.toLowerCase(), idx: 'k', bits: twin.bits, n: twin.n, extra: true, color: '#9db4e8',
+    muted: () => !!laneMuted.twin, toggle: () => { laneMuted.twin = !laneMuted.twin; syncKit(); } });
+  // the sub bass follows the kick, so its row shows the kick's pattern and it has no ring of its own
+  if (k) lanes.push({ id: 'sub', label: 'sub bass', idx: 'k', bits: k.bd, n, extra: true, noRing: true, color: '#c58ad8',
+    muted: () => !!laneMuted.sub, toggle: () => { laneMuted.sub = !laneMuted.sub; subGate(subLevel()); syncKit(); } });
   const sh = shakerSrc(k);
   if (sh) lanes.push({ id: 'shaker', label: sh.src ? `shaker (${sh.src.replace(/_/g, ' ')})` : 'shaker', idx: 'k', bits: sh.bits, n, color: '#6fc3a6', muted: () => muted.shaker, toggle: () => $('shakerMute').click() });
   lanes.push({ id: 'ring', label: 'conga ring', idx: 'r', bits: state.pattern, n: state.pattern.length, color: ACCENT, muted: () => muted.conga, toggle: () => $('congaMute').click() });
@@ -1882,7 +1941,7 @@ function congaHit(t) {
   INSTR[$('congaInst').value](bus.conga, t, f, v);
 }
 
-function kickHit(t) {
+function kickHit(t, dest) {
   const K = activeKit.kick || KICK;   // the kit's kick, or the standard one
   const o = ctx.createOscillator(), g = ctx.createGain();
   const tu = tuneOf(bus.kick), D = dec(bus.kick, K.dec);
@@ -1890,7 +1949,7 @@ function kickHit(t) {
   o.frequency.exponentialRampToValueAtTime(K.f1 * tu, t + 0.09);
   g.gain.setValueAtTime(K.level, t);
   g.gain.exponentialRampToValueAtTime(0.0008, t + D);
-  o.connect(g).connect(bus.kick);
+  o.connect(g).connect(dest || bus.kick);
   o.start(t); o.stop(t + D + 0.05);
 }
 
@@ -2087,7 +2146,13 @@ function schedule(t, n) {
   }
   const congaNow = r >= 0 && state.pattern[r] === 1;
   if (congaNow) congaHit(t);
-  if (k >= 0 && kickOn && state.kick.bd[k]) kickHit(t);
+  if (k === 0 && n > 0) twin.off++;   // the twin slips one step each cycle
+  const kickNow = k >= 0 && kickOn && state.kick.bd[k];
+  const tj = twin.n ? (k + twin.off) % twin.n : -1;
+  const twinNow = tj >= 0 && twin.bits[tj] && !laneMuted.twin;
+  if (kickNow) { kickHit(t); duckSub(t); }
+  if (twinNow) kickHit(t, laneBus('twin'));
+  if (kickNow && twinNow) subMeet(t);
   const sh = k >= 0 ? shakerSrc(state.kick) : null;
   if (sh && sh.bits[k]) { if (sh.src) drumHit(sh.src, t, bus.shaker); else shakerHit(t); }
   if (k >= 0) for (const v of extrasOf(state.kick)) if (state.kick.voices[v][k] && !laneMuted[v]) drumHit(v, t);
@@ -2109,16 +2174,20 @@ function tick() {
 
 async function start() {
   await ctx.resume();
+  subSetup();
+  twin.off = 0;
   autoT0 = ctx.currentTime;
   stepN = 0;
   nextTime = ctx.currentTime + 0.05;
   timer = setInterval(tick, 25);
   playing = true;
+  subGate(subLevel());
   $('play').textContent = 'Stop';
 }
 function stop() {
   clearInterval(timer);
   playing = false;
+  subGate(0);
   $('play').textContent = 'Play';
   events.length = 0;
   playRing = -1; playKick = -1; flashes = [];
@@ -2180,7 +2249,7 @@ for (const name of ['conga', 'shaker', 'sample']) {
 const RING_S = 800;
 function ringGeometry() {
   const S = RING_S, cx = S / 2, cy = S / 2, Rmax = S * 0.46, Rmain = S * 0.17;
-  const kit = kitList.filter(l => l.idx !== 'r' && l.n > 0);
+  const kit = kitList.filter(l => l.idx !== 'r' && !l.noRing && l.n > 0);
   const sp = kit.length ? (Rmax - Rmain) / kit.length : 0;
   const rings = kit.map((lane, i) => {
     const L = Math.max(1, lane.n);
