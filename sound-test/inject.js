@@ -88,6 +88,18 @@
         }).catch(() => { d.failed = true; });
       return d;
     }
+    // The Groove grid's drum kit (drumHit in the rhythm section): the same Tidal machine, one sample per drum
+    const KIT = { kick: { t: "bd", g: 0.9 }, snare: { t: "sd", g: 0.7 }, hat: { t: "hh", g: 0.45 }, rim: { t: "rim", g: 0.6 } };
+    function playKit(kind, out, t, vel) {
+      const s = KIT[kind]; if (!s || !st.list || !ac) return false;
+      const pick = mach => { const files = st.list[mach + "_" + s.t]; return files && files.length ? files[Math.min(files.length - 1, Math.floor(files.length / 3))] : null; };
+      const f = pick(st.machine) || pick("RolandTR808"); if (!f) return false;
+      const d = loadDrum(f); if (!d.buf) return false;
+      const src = ac.createBufferSource(), g = ac.createGain(); src.buffer = d.buf;
+      g.gain.value = s.g * d.norm * Math.min(1.2, vel);
+      src.connect(g).connect(out); src.start(t);
+      return true;
+    }
     function play(c, midi, vel, t, L) {
       const v = c.voice, b = buses.get(c); if (!ac || !b) return false;
       if (v === "sub" && loneAwake(c)) return false;
@@ -116,6 +128,7 @@
     function ensure() {
       if (!st.on || !ac) return;
       try {
+        ["kick", "snare", "hat", "rim"].forEach(k => { const t = st.machine + "_" + KIT[k].t; const files = st.list && (st.list[t] || st.list["RolandTR808_" + KIT[k].t]); if (files && files.length) loadDrum(files[Math.min(files.length - 1, Math.floor(files.length / 3))]); });
         cities.forEach(c => { const v = c.voice; if (GM[v]) loadBank(GM[v].i); else if (DR[v]) { const f = drumFile(v); if (f) loadDrum(f); } });
       } catch (e) {}
     }
@@ -146,5 +159,5 @@
     }
     if (document.body) mount(); else document.addEventListener("DOMContentLoaded", mount);
     window.__ST = { st, banks, drums, GM, DR, loadBank, drumFile, loadDrum };
-    return { get on() { return st.on; }, play, st, banks, drums };
+    return { get on() { return st.on; }, play, playKit, st, banks, drums };
   })();

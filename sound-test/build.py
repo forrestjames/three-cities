@@ -18,5 +18,7 @@ s = sub('<title>Three Cities by Forrest James · Music played by live weather</t
 s = sub('if (QS.has("reel") ||', 'if (true || QS.has("reel") ||', s)
 # put the test kit in front of the original voices
 s = sub('  function voiceCore(c, midi, vel, t, L = 1) {\n', inj + '  function voiceCore(c, midi, vel, t, L = 1) {\n    if (ST.on && c.voice !== "sample" && ST.play(c, midi, vel, t, L)) return;\n', s)
+# the Groove grid's drum kit gets the same Tidal samples
+s = sub('    if (k.make && k.make(kind, t, vel, { env, noise, out })) return;', '    if (ST.on && ST.playKit(kind, out, t, vel)) return;\n    if (k.make && k.make(kind, t, vel, { env, noise, out })) return;', s)
 open('sound-test.html', 'w', encoding='utf-8').write(s)
 print('wrote sound-test.html', len(s))
