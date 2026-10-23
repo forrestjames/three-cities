@@ -680,6 +680,7 @@
           <div class="knob-cell"><div class="head"><span class="label">Tune</span><output id="kickTuneOut">0</output></div><input id="kickTune" type="range" min="-12" max="12" value="0" aria-label="Kick tune in semitones"></div>
           <div class="knob-cell"><div class="head"><span class="label">Filter</span><output id="kickCutOut">open</output></div><input id="kickCut" type="range" min="0" max="100" value="100" aria-label="Kick filter cutoff"></div>
           <div class="knob-cell"><div class="head"><span class="label">Res</span><output id="kickResOut">0</output></div><input id="kickRes" type="range" min="0" max="100" value="0" aria-label="Kick filter resonance"></div>
+          <div class="knob-cell"><div class="head"><span class="label">Pan</span><output id="kickPanOut">C</output></div><input id="kickPan" type="range" min="-100" max="100" value="0" aria-label="Kick pan, left to right"></div>
         </div>
       </div>
       <div class="vpanel" data-panel="auto" hidden>
@@ -719,6 +720,7 @@
           <div class="knob-cell"><div class="head"><span class="label">Tune</span><output id="congaTuneOut">0</output></div><input id="congaTune" type="range" min="-12" max="12" value="0" aria-label="Conga tune in semitones"></div>
           <div class="knob-cell"><div class="head"><span class="label">Filter</span><output id="congaCutOut">open</output></div><input id="congaCut" type="range" min="0" max="100" value="100" aria-label="Conga filter cutoff"></div>
           <div class="knob-cell"><div class="head"><span class="label">Res</span><output id="congaResOut">0</output></div><input id="congaRes" type="range" min="0" max="100" value="0" aria-label="Conga filter resonance"></div>
+          <div class="knob-cell"><div class="head"><span class="label">Pan</span><output id="congaPanOut">C</output></div><input id="congaPan" type="range" min="-100" max="100" value="0" aria-label="Conga pan, left to right"></div>
         </div>
       </div>
       <div class="vpanel" data-panel="fx" hidden>
@@ -763,6 +765,7 @@
           <div class="knob-cell"><div class="head"><span class="label">Tune</span><output id="shakerTuneOut">0</output></div><input id="shakerTune" type="range" min="-12" max="12" value="0" aria-label="Shaker tune in semitones"></div>
           <div class="knob-cell"><div class="head"><span class="label">Filter</span><output id="shakerCutOut">open</output></div><input id="shakerCut" type="range" min="0" max="100" value="100" aria-label="Shaker filter cutoff"></div>
           <div class="knob-cell"><div class="head"><span class="label">Res</span><output id="shakerResOut">0</output></div><input id="shakerRes" type="range" min="0" max="100" value="0" aria-label="Shaker filter resonance"></div>
+          <div class="knob-cell"><div class="head"><span class="label">Pan</span><output id="shakerPanOut">C</output></div><input id="shakerPan" type="range" min="-100" max="100" value="0" aria-label="Shaker pan, left to right"></div>
         </div>
       </div>
       <div class="vpanel" data-panel="fx" hidden>
@@ -818,6 +821,7 @@
           <div class="knob-cell"><div class="head"><span class="label">Tune</span><output id="sampleTuneOut">0</output></div><input id="sampleTune" type="range" min="-12" max="12" value="0" aria-label="Your sound tune in semitones"></div>
           <div class="knob-cell"><div class="head"><span class="label">Filter</span><output id="sampleCutOut">open</output></div><input id="sampleCut" type="range" min="0" max="100" value="100" aria-label="Your sound filter cutoff"></div>
           <div class="knob-cell"><div class="head"><span class="label">Res</span><output id="sampleResOut">0</output></div><input id="sampleRes" type="range" min="0" max="100" value="0" aria-label="Your sound filter resonance"></div>
+          <div class="knob-cell"><div class="head"><span class="label">Pan</span><output id="samplePanOut">C</output></div><input id="samplePan" type="range" min="-100" max="100" value="0" aria-label="Your sound pan, left to right"></div>
         </div>
       </div>
       <div class="vpanel" data-panel="fx" hidden>
@@ -1729,9 +1733,12 @@ master.connect(comp).connect(ctx.destination);
 // one bus per voice, so each fader sets its own level
 // Each voice: sources -> filter (bus) -> volume (out) -> master
 const bus = {}, out = {}, flt = {}, gate = {};   // gate: the way into the effects, closed while a voice is muted
+const pan = {};   // stereo position of each voice, after its volume
 for (const name of ['kick', 'conga', 'shaker', 'sample']) {
   out[name] = ctx.createGain();
-  out[name].connect(master);
+  pan[name] = ctx.createStereoPanner();
+  out[name].connect(pan[name]);
+  pan[name].connect(master);
   flt[name] = ctx.createBiquadFilter();
   flt[name].type = 'lowpass';
   flt[name].frequency.value = 12000;
@@ -1832,6 +1839,13 @@ function setVol(name, v) {
   $(name + 'Vol').value = String(v);
   document.querySelectorAll(`.lane-vol[data-vol="${name}"]`).forEach(el => { el.value = String(v); });   // the Rings list slider
   applyBus(name);
+}
+const panText = v => (v === 0 ? 'C' : (v < 0 ? 'L' : 'R') + Math.abs(v));
+for (const name of ['kick', 'conga', 'shaker', 'sample']) {
+  const el = $(name + 'Pan');
+  const set = () => { const v = Number(el.value); pan[name].pan.value = v / 100; $(name + 'PanOut').textContent = panText(v); };
+  el.addEventListener('input', set);
+  set();
 }
 setVol('kick', Number($('kickVol').value));
 setVol('conga', Number($('congaVol').value));
