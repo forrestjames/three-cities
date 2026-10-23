@@ -2677,7 +2677,7 @@ for (const name of ['conga', 'shaker', 'sample']) {
 // The ring picture: the weather ring in the middle, one ring per drum around it (kick outermost)
 const RING_S = 800;
 function ringGeometry() {
-  const S = RING_S, cx = S / 2, cy = S / 2, Rmax = S * 0.46, Rmain = S * 0.17;
+  const S = RING_S, cx = S / 2, cy = S / 2, Rmax = S * 0.44, Rmain = S * 0.17;
   const kit = kitList.filter(l => l.idx !== 'r' && !l.noRing && l.n > 0);
   const sp = kit.length ? (Rmax - Rmain) / kit.length : 0;
   const rings = kit.map((lane, i) => {
@@ -2736,6 +2736,27 @@ function drawRing(now) {
     }
   }
   g.globalAlpha = 1;
+
+  // a name above the top of each ring, so you can see which instrument is which; it brightens when that ring plays
+  const ringName = (x, y, text, color, lit, dimmed) => {
+    g.font = '18px "Source Code Pro", ui-monospace, monospace';
+    g.textAlign = 'center'; g.textBaseline = 'alphabetic';
+    if ('letterSpacing' in g) g.letterSpacing = '2px';
+    g.globalAlpha = (lit ? 1 : 0.6) * (dimmed ? 0.45 : 1);
+    g.lineJoin = 'round'; g.lineWidth = 6; g.strokeStyle = '#130b09';
+    g.strokeText(text, x, y); g.fillStyle = lit ? '#f3ece6' : color; g.fillText(text, x, y);
+    if ('letterSpacing' in g) g.letterSpacing = '0px';
+    g.globalAlpha = 1;
+  };
+  for (const r of rings) {
+    const lit = playKick >= 0 && !!r.lane.bits[playKick % r.L];
+    ringName(cx, cy - r.R - 19, r.lane.label.replace(/_/g, ' ').toUpperCase().slice(0, 22), r.lane.color, lit, r.lane.muted());
+  }
+  {
+    const congaLit = flashes.some(f => now - f.t < 0.25);
+    const inst = $('congaInst').selectedOptions[0];
+    ringName(cx, cy - Rmain - 19, (inst ? inst.textContent : 'conga').toUpperCase(), ACCENT, congaLit, muted.conga);
+  }
 
   // the weather ring in the middle
   const n = state.pattern.length;
