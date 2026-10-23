@@ -1510,7 +1510,7 @@ body.perform.fit .pl-shape-btn { display: inline-block !important; }
     { key: "Boston", name: "Boston", place: "Massachusetts, USA", lat: 42.36, lon: -71.06, color: "--boston", voice: "marimba",
       base: 48, degrees: [0, -2, 1, -1, -3], rate: 2, source: "humidity" },
     { key: "Copenhagen", name: "Copenhagen", place: "Denmark", lat: 55.68, lon: 12.57, color: "--copenhagen", voice: "mallet", ceil: 76,
-      base: 64, degrees: [0, 1, 2, 3, 4], rate: 2, source: "humidity" },
+      base: 60, pull: 0.8, degrees: [0, 1, 2, 3, 4], rate: 2, source: "humidity" },   // base was 64 (E), four semitones off the key; 60 keeps it in tune
     { key: "London", name: "London", place: "United Kingdom", lat: 51.51, lon: -0.13, color: "--london", voice: "sub",
       base: 60, degrees: [-2, -1, 0, 1, 2], rate: 2, source: "humidity" }
   ];
@@ -4200,7 +4200,7 @@ body.perform.fit .pl-shape-btn { display: inline-block !important; }
       d = c.mel + dir * size;
     }
     const tones = chordTones(n), isTone = x => tones.includes(((x % n) + n) % n);
-    const pull = c.base >= 62 ? 0.8 : 0.55;   // the top voice is the most exposed, so it sits on the chord more often
+    const pull = c.pull ?? (c.base >= 62 ? 0.8 : 0.55);   // the top voice is the most exposed, so it sits on the chord more often
     if ((pos === 0 || Math.random() < pull) && !isTone(d)) {                 // lean onto the chord
       const way = dir || (Math.random() < 0.5 ? 1 : -1);                     // keep moving the way the line was going
       for (let k = 1; k <= 3; k++) { if (isTone(d + way * k) && d + way * k !== c.mel) { d += way * k; break; } }
