@@ -358,6 +358,13 @@
   .kit .lane.extra { grid-template-columns: 92px minmax(0, 1fr) 52px; }
   .lane-name { white-space: nowrap; }
   .kit .lane.muted .cells { opacity: .35; }
+  .yours-row { margin-bottom: 8px; }
+  .yours-row .lane { display: grid; grid-template-columns: 84px minmax(0, 1fr) auto; gap: 8px; align-items: center; }
+  .yours-name { font-size: 11px; color: var(--ink); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .yours-edit { height: 28px; min-width: 28px; display: inline-flex; align-items: center; gap: 5px; padding: 0 8px 0 6px; font: inherit; font-size: 10px; letter-spacing: 0.14em; text-transform: uppercase; background: rgba(16,8,6,0.6); border: 1px solid var(--line); color: var(--ink-dim); cursor: pointer; transition: color 0.2s, border-color 0.2s; }
+  .yours-edit svg { width: 14px; height: 14px; flex: none; }
+  .yours-edit:hover { color: var(--ink); border-color: var(--ink-dim); }
+  .yours-edit:focus-visible { outline: 1px solid var(--accent); outline-offset: 2px; }
   .lane-vol { -webkit-appearance: none; appearance: none; width: 52px; height: 14px; background: none; margin: 0; cursor: pointer; }
   .lane-vol::-webkit-slider-runnable-track { height: 2px; background: rgba(243,236,230,0.3); }
   .lane-vol::-webkit-slider-thumb { -webkit-appearance: none; width: 9px; height: 9px; margin-top: -3.5px; border-radius: 50%; background: #ffd98a; border: 0; }
@@ -447,22 +454,38 @@
   .rightcol .kitsel { max-width: 130px; }
   .sidecard .readout, .sidecard .pattern-info { white-space: normal; word-break: break-word; overflow: visible; text-overflow: clip; }
   /* the sound panel: one voice card at a time */
-  .vpwrap { position: fixed; z-index: 15; right: clamp(14px, 2vw, 28px); top: 78px; width: 380px; max-width: calc(100vw - 28px); max-height: calc(100vh - 96px); overflow-y: auto; display: flex; flex-direction: column; gap: 8px; background: var(--panel); border: 1px solid var(--line); border-top: 3px solid var(--accent); padding: 12px 14px; box-shadow: 0 18px 44px rgba(0, 0, 0, 0.6); opacity: 0; visibility: hidden; transform: translateX(14px); pointer-events: none; transition: opacity 120ms ease-out, transform 170ms cubic-bezier(.2, .8, .2, 1), visibility 0s linear 170ms; }
-  .vpwrap.open { opacity: 1; visibility: visible; transform: none; pointer-events: auto; transition-delay: 0s; }
+  .vpwrap { display: flex; flex-direction: column; gap: 8px; min-height: 0; height: 100%; overflow-y: auto; background: var(--panel); border: 1px solid var(--line); border-top: 3px solid var(--accent); padding: 12px 14px; }
   .vp-head { display: flex; justify-content: space-between; align-items: center; gap: 10px; }
-  .vp-tabs { display: flex; border: 1px solid var(--line); }
+  .vp-tabs { display: flex; flex: 1; min-width: 0; border: 1px solid var(--line); }
+  .vp-tabs button { flex: 1; min-width: 0; padding: 6px 4px !important; font-size: 9.5px !important; letter-spacing: .06em !important; }
+  .vp-head #vpClose { flex: none; }
   .vp-tabs button { background: none; border: 0; padding: 6px 10px; font-size: 10.5px; letter-spacing: .1em; text-transform: uppercase; color: var(--ink-dim); }
   .vp-tabs button + button { border-left: 1px solid var(--line); }
   .vp-tabs button[aria-pressed="true"] { background: rgba(243, 236, 230, 0.14); color: var(--ink); box-shadow: inset 0 -2px 0 var(--accent); }
   .vpwrap .voices { display: block; margin: 0; }
   .vpwrap .voice { display: none; border: 0; padding: 4px 0 0; background: none; overflow: visible; }
   .vpwrap .voice.sel { display: flex; }
-  .vpwrap .knobs { gap: 2px; }
+  .vpwrap .knobs { gap: 2px; grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  /* while a voice is open, it takes the whole right column; Rings and Genre wait underneath */
+  #rightcol:not(.editing) > #voicePanel { display: none; }
+  #rightcol.editing { grid-template-rows: minmax(0, 1fr); }
+  #rightcol.editing > :not(#voicePanel) { display: none !important; }
+  #rightcol.editing > #voicePanel { min-height: 0; }
+  .vpwrap .vtabs { display: none; }
+  .vpwrap .vpanel[hidden] { display: flex; }
+  .vpwrap .sec { margin-top: 6px; color: var(--ink-dim); }
+  .vpwrap .row2 { flex-direction: column; align-items: stretch; }
+  .vpwrap .auto-row { flex-wrap: wrap; }
+  /* quick picks: delay times, styles and filter rates are one tap each */
+  .qpick { display: flex; flex-wrap: wrap; gap: 4px; width: 100%; }
+  .qpick[hidden] { display: none; }
+  .qpick button { background: rgba(16, 8, 6, 0.6); border: 1px solid var(--line); color: var(--ink-dim); font: inherit; font-size: 10px; letter-spacing: 0.06em; padding: 5px 7px; cursor: pointer; transition: color 0.15s, border-color 0.15s; }
+  .qpick button:hover { color: var(--ink); border-color: var(--ink-dim); }
+  .qpick button:focus-visible { outline: 1px solid var(--accent); outline-offset: 2px; }
+  .qpick button[aria-pressed="true"] { color: var(--ground); background: var(--accent); border-color: var(--accent); }
   .vpwrap .knobs .knob-cell { min-width: 0; }
-  @media (prefers-reduced-motion: reduce) { .vpwrap, .wxpanel { transition: none; } }
+  @media (prefers-reduced-motion: reduce) { .wxpanel { transition: none; } }
   @media (max-width: 1000px) {
-    .vpwrap { left: 0; right: 0; top: auto; bottom: 0; width: auto; max-width: none; max-height: 72vh; border-left: 0; border-right: 0; transform: translateY(18px); }
-    .vpwrap.open { transform: none; }
     #ring { max-width: 640px; }
   }
   @media (min-width: 1001px) and (min-height: 600px) {
@@ -585,8 +608,8 @@
       <div class="sidebox">
         <p class="label">Hit mode</p>
         <div class="modes" role="group" aria-label="How the hits are placed">
-          <button type="button" data-mode="euclid" aria-pressed="true" title="Evenly spaced Euclidean rhythm">Euclid</button>
-          <button type="button" data-mode="drift" aria-pressed="false" title="Each rotation, random hits move one step">Drift</button>
+          <button type="button" data-mode="euclid" aria-pressed="false" title="Evenly spaced Euclidean rhythm">Euclid</button>
+          <button type="button" data-mode="drift" aria-pressed="true" title="Each rotation, random hits move one step">Drift</button>
           <button type="button" data-mode="cluster" aria-pressed="false" title="Hits bunch together in random bursts, new each rotation">Cluster</button>
         </div>
       </div>
@@ -607,38 +630,7 @@
       <div class="ringbox"><canvas id="ring" width="800" height="800" aria-label="Concentric rhythm rings. Tap a ring to edit its sound or mute it."></canvas></div>
     </section>
 
-    <div class="midcol rightcol">
-    <section class="card kitcard" aria-label="Rings">
-      <div class="kithead">
-        <h2>Rings <small>outside in</small></h2>
-        <select id="kitSel" class="kitsel" aria-label="Drum kit sound" title="Drum kit sound"></select>
-      </div>
-      <div id="kit" class="kit"></div>
-      <button id="openSamp" class="btn small" type="button">Your sound</button>
-    </section>
-
-    <section class="card" aria-label="Genres">
-      <div class="genrehead">
-        <h2>Genre <small id="genreSub">kick and shaker come from here</small></h2>
-        <button id="about" class="btn small" type="button" disabled>Genre notes</button>
-      </div>
-      <div class="gbody">
-        <div class="label">Genres for this place</div>
-        <div id="genreChips" class="chips"></div>
-        <div class="label">Pattern</div>
-        <div id="patChips" class="chips"></div>
-      </div>
-      <div class="legend" aria-label="Confidence key">
-        <span><i class="dot sourced"></i>sourced</span>
-        <span><i class="dot approximate"></i>approximate</span>
-        <span><i class="dot"></i>from memory</span>
-      </div>
-      <p id="genreNote" class="muted"></p>
-    </section>
-    </div>
-
-  </div>
-
+    <div class="midcol rightcol" id="rightcol">
   <aside id="voicePanel" class="vpwrap" aria-hidden="true" aria-label="Sound controls">
   <div class="vp-head">
     <div class="vp-tabs" role="group" aria-label="Which sound to edit">
@@ -747,7 +739,7 @@
           <div class="field grow"><label class="label" for="shakerInst">Sound</label><select id="shakerInst"><option value="shaker" selected>Shaker</option><option value="bright">Shaker, bright</option><option value="maracas">Maracas</option><option value="cabasa">Cabasa</option><option value="synth">Synth shaker</option></select></div>
         </div>
         <div class="knobs" style="--n:5">
-          <div class="knob-cell"><div class="head"><span class="label">Volume</span><output id="shakerVolOut">60</output></div><input id="shakerVol" type="range" min="0" max="100" value="60" aria-label="Shaker volume"></div>
+          <div class="knob-cell"><div class="head"><span class="label">Volume</span><output id="shakerVolOut">35</output></div><input id="shakerVol" type="range" min="0" max="100" value="35" aria-label="Shaker volume"></div>
           <div class="knob-cell"><div class="head"><span class="label">Decay</span><output id="shakerDecayOut">1.0x</output></div><input id="shakerDecay" type="range" min="0" max="100" value="50" aria-label="Shaker decay"></div>
           <div class="knob-cell"><div class="head"><span class="label">Tune</span><output id="shakerTuneOut">0</output></div><input id="shakerTune" type="range" min="-12" max="12" value="0" aria-label="Shaker tune in semitones"></div>
           <div class="knob-cell"><div class="head"><span class="label">Filter</span><output id="shakerCutOut">open</output></div><input id="shakerCut" type="range" min="0" max="100" value="100" aria-label="Shaker filter cutoff"></div>
@@ -823,6 +815,38 @@
 
   </section>
   </aside>
+    <section class="card kitcard" aria-label="Rings">
+      <div class="kithead">
+        <h2>Rings <small>outside in</small></h2>
+        <select id="kitSel" class="kitsel" aria-label="Drum kit sound" title="Drum kit sound"></select>
+      </div>
+      <div id="kit" class="kit"></div>
+      <div id="yoursRow" class="kit yours-row" hidden></div>
+      <button id="openSamp" class="btn small" type="button">Your sound</button>
+    </section>
+
+    <section class="card" aria-label="Genres">
+      <div class="genrehead">
+        <h2>Genre <small id="genreSub">kick and shaker come from here</small></h2>
+        <button id="about" class="btn small" type="button" disabled>Genre notes</button>
+      </div>
+      <div class="gbody">
+        <div class="label">Genres for this place</div>
+        <div id="genreChips" class="chips"></div>
+        <div class="label">Pattern</div>
+        <div id="patChips" class="chips"></div>
+      </div>
+      <div class="legend" aria-label="Confidence key">
+        <span><i class="dot sourced"></i>sourced</span>
+        <span><i class="dot approximate"></i>approximate</span>
+        <span><i class="dot"></i>from memory</span>
+      </div>
+      <p id="genreNote" class="muted"></p>
+    </section>
+    </div>
+
+  </div>
+
 
   <pre id="log"></pre>
 </div>
@@ -1124,7 +1148,7 @@ const state = {
   place: LONDON, w: null, steps: 0, hits: 0, pattern: [],
   source: 'humidity', density: 50,   // fixed at 50% now the knob is gone
   city: null, cityDist: 0, genre: null, patId: null, kick: null,
-  seq: 0, follow: false, mode: 'euclid',
+  seq: 0, follow: false, mode: 'drift',
 };
 
 // Which Atlas city's genres a place uses: the place's own city if it is close, else the nearest one
@@ -1478,7 +1502,7 @@ function kitLanes() {
       muted: () => !!laneMuted[v], toggle: () => { laneMuted[v] = !laneMuted[v]; syncKit(); } });
   }
   if (twin.bits.length) lanes.push({ id: 'twin', label: 'twin: ' + twin.city.toLowerCase(), idx: 'k', bits: twin.bits, n: twin.n, extra: true, color: '#9db4e8',
-    muted: () => !!laneMuted.twin, toggle: () => { laneMuted.twin = !laneMuted.twin; syncKit(); } });
+    muted: () => !kickOn || !!laneMuted.twin, toggle: () => { laneMuted.twin = !laneMuted.twin; syncKit(); } });
   // the sub bass follows the kick, so its row shows the kick's pattern and it has no ring of its own
   if (k) lanes.push({ id: 'sub', label: 'sub bass', idx: 'k', bits: k.bd, n, extra: true, noRing: true, color: '#c58ad8',
     muted: () => !!laneMuted.sub, toggle: () => { laneMuted.sub = !laneMuted.sub; subGate(subLevel()); syncKit(); } });
@@ -1581,12 +1605,14 @@ function openVoice(name) {
   openVoiceName = name;
   for (const v in VOICE_CARD) $(VOICE_CARD[v]).classList.toggle('sel', v === name);
   document.querySelectorAll('.vp-tabs button').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.voice === name)));
+  $('rightcol').classList.add('editing');
   $('voicePanel').classList.add('open');
   $('voicePanel').setAttribute('aria-hidden', 'false');
   syncKit();
 }
 function closeVoice() {
   openVoiceName = null;
+  $('rightcol').classList.remove('editing');
   $('voicePanel').classList.remove('open');
   $('voicePanel').setAttribute('aria-hidden', 'true');
   syncKit();
@@ -2222,12 +2248,12 @@ function shakerFeel(t, k, steps) {
   const beat = steps % 4 === 0 ? k % 4 : (k % 2 ? 1 : 0);   // 0 = on the beat, 2 = the "and", odd = the sixteenths between
   const odd = steps % 4 === 0 ? k % 2 === 1 : k % 2 === 1;
   const breathe = 1 + 0.08 * Math.sin(stepN / (steps * 2) * Math.PI * 2);   // swells gently over two bars
-  let base = beat === 0 ? 0.62 : beat === 2 ? 0.95 : 0.36;
-  if (steps % 4 !== 0) base = odd ? 0.5 : 0.9;
-  const ghost = base < 0.45;
+  let base = beat === 0 ? 0.5 : beat === 2 ? 1.0 : 0.26;
+  if (steps % 4 !== 0) base = odd ? 0.4 : 0.85;
+  const ghost = base < 0.42;
   // soft hits are sometimes left out, which keeps it from sounding busy
   if (ghost && Math.random() < 0.3) return false;
-  const vel = clamp(base * breathe * (1 + (Math.random() - 0.5) * 0.28), 0.12, 1.15);
+  const vel = clamp(base * breathe * (1 + (Math.random() - 0.5) * 0.6), 0.06, 1.2);   // wide: some hits much softer or louder than others
   const late = ghost ? 0.004 + Math.random() * 0.007 : beat === 2 ? Math.random() * 0.004 : Math.random() * 0.002;   // soft hits lag a touch
   return {
     t: t + late, vel,
@@ -2313,6 +2339,7 @@ function setYourBuffer(buf, name) {
   const label = yours.name.length > 22 ? yours.name.slice(0, 21) + '…' : yours.name;
   $('sampName').textContent = `${label} · ${buf.duration < 10 ? buf.duration.toFixed(1) : Math.round(buf.duration)} s`;
   matchYoursKey(buf);
+  renderYoursRow();
 }
 function matchYoursKey(buf) {
   const k = detectKey(buf), line = $('sampKey');
@@ -2324,6 +2351,34 @@ function matchYoursKey(buf) {
 }
 
 // Fill the rhythm list from the kit's lanes (kick, drums, shaker, conga ring)
+// Your sound shows in the Rings list once a file is loaded: name, volume slider and an Edit button
+function renderYoursRow() {
+  const box = $('yoursRow');
+  box.textContent = '';
+  box.hidden = !yours.buf;
+  if (!yours.buf) return;
+  const row = document.createElement('div');
+  row.className = 'lane';
+  const name = document.createElement('span');
+  name.className = 'yours-name';
+  name.textContent = yours.name;
+  name.title = yours.name;
+  const vs = document.createElement('input');
+  vs.type = 'range'; vs.min = '0'; vs.max = '100'; vs.step = '1';
+  vs.className = 'lane-vol';
+  vs.title = vs.ariaLabel = 'Your sound volume';
+  vs.dataset.vol = 'sample';
+  vs.value = String(vol.sample);
+  vs.addEventListener('input', () => setVol('sample', Number(vs.value)));
+  const edit = document.createElement('button');
+  edit.type = 'button';
+  edit.className = 'yours-edit';
+  edit.title = edit.ariaLabel = 'Edit Your sound';
+  edit.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M4 7h9M17 7h3M4 17h3M11 17h9"/><circle cx="15" cy="7" r="2"/><circle cx="9" cy="17" r="2"/></svg><span>Edit</span>';
+  edit.addEventListener('click', () => openVoice('sample'));
+  row.append(name, vs, edit);
+  box.appendChild(row);
+}
 function refreshYourRhythm() {
   const sel = $('sampRhythm'), keep = yours.rhythm;
   sel.innerHTML = '';
@@ -2473,7 +2528,7 @@ function schedule(t, n) {
   if (k === 0 && n > 0) twin.off++;   // the twin slips one step each cycle
   const kickNow = k >= 0 && kickOn && state.kick.bd[k];
   const tj = twin.n ? (k + twin.off) % twin.n : -1;
-  const twinNow = tj >= 0 && twin.bits[tj] && !laneMuted.twin;
+  const twinNow = tj >= 0 && twin.bits[tj] && kickOn && !laneMuted.twin;   // Mute on the kick silences its twin too
   if (kickNow) { kickHit(t); duckSub(t); }
   if (twinNow) kickHit(t, laneBus('twin'));
   if (kickNow && twinNow) subMeet(t);
@@ -3288,6 +3343,14 @@ function markTabs(card) {
   };
   card.querySelectorAll('.vtabs [data-tab]').forEach(t => t.classList.toggle('live', !!live[t.dataset.tab]));
 }
+// The sound panel shows Sound, Effects and Auto filter together, so each one gets a label instead of a tab
+const SECTION_NAME = { sound: 'Sound', fx: 'Effects', auto: 'Auto filter' };
+for (const card of document.querySelectorAll('.voice')) {
+  for (const p of card.querySelectorAll('.vpanel')) {
+    const h = document.createElement('div'); h.className = 'label sec'; h.textContent = SECTION_NAME[p.dataset.panel] || '';
+    p.prepend(h);
+  }
+}
 for (const card of document.querySelectorAll('.voice')) {
   const tabs = [...card.querySelectorAll('.vtabs [data-tab]')];
   tabs.forEach(t => t.addEventListener('click', () => {
@@ -3296,6 +3359,28 @@ for (const card of document.querySelectorAll('.voice')) {
   }));
   for (const ev of ['input', 'change', 'click']) card.addEventListener(ev, () => markTabs(card));
   markTabs(card);
+}
+
+// Delay times, styles, filter rates and waves: one tap each. The dropdown stays in the page, hidden, so the sound code is unchanged.
+const QUICK_PICK = /(Delay|Style|AutoRate|AutoWave)$/;
+for (const sel of document.querySelectorAll('select')) {
+  if (!QUICK_PICK.test(sel.id)) continue;
+  const box = document.createElement('div');
+  box.className = 'qpick';
+  box.setAttribute('role', 'group');
+  box.setAttribute('aria-label', sel.getAttribute('aria-label') || sel.id);
+  const paint = () => box.querySelectorAll('button').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.v === sel.value)));
+  for (const o of sel.options) {
+    const b = document.createElement('button');
+    b.type = 'button'; b.dataset.v = o.value; b.textContent = o.textContent;
+    b.title = o.textContent;
+    b.addEventListener('click', () => { sel.value = o.value; sel.dispatchEvent(new Event('change', { bubbles: true })); paint(); });
+    box.appendChild(b);
+  }
+  sel.hidden = true;
+  sel.after(box);
+  sel.addEventListener('change', paint);
+  paint();
 }
 
 // ---------- start up ----------
