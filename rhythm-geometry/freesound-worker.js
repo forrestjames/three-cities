@@ -21,7 +21,7 @@ function json(obj, cors, status = 200, cache = 'no-store') {
 }
 
 export default {
-  async fetch(req, env) {
+  async fetch(req, env, ctx) {
     const url = new URL(req.url);
     const origin = req.headers.get('Origin') || '';
     const allowed = (env.ALLOWED_ORIGINS || '').split(',').map(s => s.trim()).filter(Boolean);
@@ -91,7 +91,7 @@ export default {
       if (near) filters.push(`geotag:"Intersects(${near.box})"`);
       if (filters.length) api.searchParams.set('filter', filters.join(' '));
 
-      const r = await fetch(api.toString(), { headers: { Accept: 'application/json' } });
+      const r = await fetch(api.toString(), { headers: { Accept: 'application/json' }, cf: { cacheTtl: 86400, cacheEverything: true } });
       if (!r.ok) return json({ error: `Freesound ${r.status}` }, cors, 502);
       const data = await r.json();
       const payload = {
@@ -105,9 +105,10 @@ export default {
           licence: s.license,
           page: s.url,
           preview: (s.previews && (s.previews['preview-hq-mp3'] || s.previews['preview-lq-mp3'])) || null,
+          previewLq: (s.previews && (s.previews['preview-lq-mp3'] || s.previews['preview-hq-mp3'])) || null,   // smaller file, quicker to audition
         })),
       };
-      await cache.put(cacheKey, new Response(JSON.stringify(payload), { headers: { 'Cache-Control': 'public, max-age=3600' } }));
+      ctx.waitUntil(cache.put(cacheKey, new Response(JSON.stringify(payload), { headers: { 'Cache-Control': 'public, max-age=3600' } })));
       return json(payload, cors, 200, 'public, max-age=3600');
     }
 

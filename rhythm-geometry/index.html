@@ -865,8 +865,8 @@ const SampleBrowser = (() => {
       if (!r.ok) throw new Error(`search ${r.status}`);
       return (await r.json()).results;
     }
-    function previewUrl(item) {
-      return `${base}/preview?u=${encodeURIComponent(item.preview)}`;
+    function previewUrl(item, small) {
+      return `${base}/preview?u=${encodeURIComponent((small && item.previewLq) || item.preview)}`;
     }
     async function loadBuffer(item) {
       const r = await fetch(previewUrl(item));
@@ -938,26 +938,35 @@ const SampleBrowser = (() => {
       active = cat; drawCats(); input.value = '';
       stop(); list.textContent = ''; status.textContent = `Searching ${cat.label.toLowerCase()}…`;
       const cc = cc0.checked, ask = qs => Promise.allSettled(qs.map(q => find(q, cc)));
-      const [near, anywhere] = await Promise.all([ask(place ? terms.slice(0, 2).map(t => `${t} ${place}`) : []), ask(terms)]);
-      if (active !== cat) return;   // another chip was tapped while this was searching
-      if ([...near, ...anywhere].length && [...near, ...anywhere].every(r => r.status === 'rejected')) {
-        status.textContent = "Couldn't reach Freesound. Check the Worker settings."; return;
-      }
-      const seen = new Set();
-      const take = results => {
-        const out = [];
-        for (const r of results) if (r.status === 'fulfilled') for (const it of r.value) {
-          const key = it.id != null ? it.id : (it.preview || it.name + '|' + it.user);
-          if (!seen.has(key)) { seen.add(key); out.push(it); }
+      let near = null, anywhere = null;
+      const paint = () => {
+        if (active !== cat) return;   // another chip was tapped while this was searching
+        const all = [...(near || []), ...(anywhere || [])];
+        if (near && anywhere && all.length && all.every(r => r.status === 'rejected')) {
+          status.textContent = "Couldn't reach Freesound. Check the Worker settings."; return;
         }
-        return out.slice(0, 14);
+        const seen = new Set();
+        const take = results => {
+          const out = [];
+          for (const r of results || []) if (r.status === 'fulfilled') for (const it of r.value) {
+            const key = it.id != null ? it.id : (it.preview || it.name + '|' + it.user);
+            if (!seen.has(key)) { seen.add(key); out.push(it); }
+          }
+          return out.slice(0, 14);
+        };
+        const here = take(near), more = take(anywhere);
+        const waiting = !(near && anywhere);
+        list.textContent = '';
+        const heading = text => { const li = document.createElement('li'); li.className = 'sb-sub'; li.textContent = text; list.appendChild(li); };
+        if (here.length) { heading(`Heard in ${place}`); for (const it of here) list.appendChild(row(it)); }
+        if (more.length) { heading(here.length || !place ? 'From anywhere' : `Nothing tagged ${place} yet. From anywhere:`); for (const it of more) list.appendChild(row(it)); }
+        const n = here.length + more.length;
+        status.textContent = waiting ? (n ? `${n} sounds so far. Still looking…` : `Searching ${cat.label.toLowerCase()}…`) : n ? `${n} sounds. Each one shows its licence.` : 'Nothing found. Try turning off CC0 only.';
       };
-      const here = take(near), more = take(anywhere);
-      const heading = text => { const li = document.createElement('li'); li.className = 'sb-sub'; li.textContent = text; list.appendChild(li); };
-      if (here.length) { heading(`Heard in ${place}`); for (const it of here) list.appendChild(row(it)); }
-      if (more.length) { heading(here.length || !place ? 'From anywhere' : `Nothing tagged ${place} yet. From anywhere:`); for (const it of more) list.appendChild(row(it)); }
-      const n = here.length + more.length;
-      status.textContent = n ? `${n} sounds. Each one shows its licence.` : 'Nothing found. Try turning off CC0 only.';
+      await Promise.all([
+        ask(place ? terms.slice(0, 2).map(t => `${t} ${place}`) : []).then(r => { near = r; paint(); }),
+        ask(terms.slice(0, 2)).then(r => { anywhere = r; paint(); }),
+      ]);
     }
     function row(item) {
       const li = document.createElement('li'); li.className = 'sb-row';
@@ -970,7 +979,7 @@ const SampleBrowser = (() => {
       prev.disabled = !item.preview;
       prev.addEventListener('click', () => {
         if (playingBtn === prev) return stop();
-        stop(); audio.src = sb.previewUrl(item); audio.play().catch(() => {}); prev.textContent = 'Stop'; playingBtn = prev;
+        stop(); audio.src = sb.previewUrl(item, true); audio.play().catch(() => {}); prev.textContent = 'Stop'; playingBtn = prev;
       });
       const load = document.createElement('button'); load.type = 'button'; load.className = 'btn small'; load.textContent = 'Load';
       load.disabled = !item.preview;
