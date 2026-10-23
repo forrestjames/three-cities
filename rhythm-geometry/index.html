@@ -359,6 +359,10 @@
   .lane-name { white-space: nowrap; }
   .kit .lane.muted .cells { opacity: .35; }
   .yours-row { margin-bottom: 8px; }
+  .rings-foot { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+  .chance-row .knob-cell { flex-direction: row; align-items: center; gap: 8px; }
+  .chance-row .knob-cell .head { width: auto; flex-direction: column; align-items: flex-start; gap: 1px; }
+  .chance-row .dial { order: -1; width: 36px; height: 36px; }
   .yours-row .lane { display: grid; grid-template-columns: 84px minmax(0, 1fr) auto; gap: 8px; align-items: center; }
   .yours-name { font-size: 11px; color: var(--ink); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .yours-edit { height: 28px; min-width: 28px; display: inline-flex; align-items: center; gap: 5px; padding: 0 8px 0 6px; font: inherit; font-size: 10px; letter-spacing: 0.14em; text-transform: uppercase; background: rgba(16,8,6,0.6); border: 1px solid var(--line); color: var(--ink-dim); cursor: pointer; transition: color 0.2s, border-color 0.2s; }
@@ -882,7 +886,12 @@
       </div>
       <div id="kit" class="kit"></div>
       <div id="yoursRow" class="kit yours-row" hidden></div>
-      <button id="openSamp" class="btn small" type="button">Your sound</button>
+      <div class="rings-foot">
+        <button id="openSamp" class="btn small" type="button">Your sound</button>
+        <div class="chance-row" title="How likely each hit is to play, for every ring. Lower it and the rhythms scramble.">
+          <div class="knob-cell"><div class="head"><span class="label">Chance</span><output id="chanceOut">100%</output></div><input id="chance" type="range" min="0" max="100" value="100" aria-label="Chance that each hit plays, for every ring"></div>
+        </div>
+      </div>
     </section>
 
     <section class="card" aria-label="Genres">
@@ -2489,7 +2498,7 @@ function yoursStep(t, n) {
   if (!L) return;
   const i = n % L;
   if (n === 0) { yours.hitN = 0; yours.group = -1; yours.drift = 0; }   // a fresh start
-  if (lane.bits[i]) yoursHit(t, i / L, lane);
+  if (lane.bits[i] && roll()) yoursHit(t, i / L, lane);
 }
 // How many hits share one start point. Auto: the number of hits in one lap of the rhythm, so each bar repeats and the next bar moves on.
 function repeatCount(lane) {
@@ -2770,6 +2779,10 @@ function chordFollow() {
 
 // ---------- scheduler (sixteenth-note steps on the audio clock) ----------
 let playing = false, timer = null, nextTime = 0, stepN = 0, kickOn = true;
+// Chance: how likely each hit is to play, on every ring at once. 100% plays the rhythms as written; lower, and each ring drops hits at random.
+let chance = 1;
+const roll = () => chance >= 1 || Math.random() < chance;
+$('chance').addEventListener('input', e => { chance = Number(e.target.value) / 100; $('chanceOut').textContent = e.target.value + '%'; });
 let playRing = -1, playKick = -1, flashes = [];
 const events = [];
 
@@ -2790,24 +2803,24 @@ function schedule(t, n) {
     renderLanes();
     showPattern();
   }
-  const congaNow = r >= 0 && state.pattern[r] === 1;
+  const congaNow = r >= 0 && state.pattern[r] === 1 && roll();
   if (congaNow) congaHit(t);
   if (k === 0 && n > 0) twin.off++;   // the twin slips one step each cycle
-  const kickNow = k >= 0 && kickOn && state.kick.bd[k];
+  const kickNow = k >= 0 && kickOn && state.kick.bd[k] && roll();
   const tj = twin.n ? (k + twin.off) % twin.n : -1;
-  const twinNow = tj >= 0 && twin.bits[tj] && kickOn && !laneMuted.twin;   // Mute on the kick silences its twin too
+  const twinNow = tj >= 0 && twin.bits[tj] && kickOn && !laneMuted.twin && roll();   // Mute on the kick silences its twin too
   if (kickNow) { kickHit(t); duckSub(t); }
   if (twinNow) kickHit(t, laneBus('twin'));
   if (kickNow && twinNow) subMeet(t);
   const sh = k >= 0 ? shakerSrc(state.kick) : null;
-  if (sh && sh.bits[k]) {
+  if (sh && sh.bits[k] && roll()) {
     const f = shakerFeel(t, k, state.kick.steps);
     if (f !== false) {
       const tt = f ? f.t : t;
       if (sh.src) drumHit(sh.src, tt, bus.shaker, f ? f.vel * 1.1 : undefined); else shakerHit(tt, f);
     }
   }
-  if (k >= 0) for (const v of extrasOf(state.kick)) if (state.kick.voices[v][k] && !laneMuted[v]) drumHit(v, t);
+  if (k >= 0) for (const v of extrasOf(state.kick)) if (state.kick.voices[v][k] && !laneMuted[v] && roll()) drumHit(v, t);
   events.push({ t, r, k, hit: congaNow });
 }
 
