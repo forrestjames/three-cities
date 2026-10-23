@@ -447,6 +447,11 @@
   .chord-knobs .knob-cell { min-width: 0; }
   .chord-knobs .knob-cell .label { font-size: 9.5px; letter-spacing: 0.06em; }
   .chord-knobs .dial { width: 38px; height: 38px; }
+  .groove-knobs { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 2px; }
+  .groove-knobs .knob-cell { min-width: 0; }
+  .groove-knobs .knob-cell .label { font-size: 9.5px; letter-spacing: 0.06em; }
+  .groove-knobs .dial { width: 38px; height: 38px; }
+  .groove-knobs .knob-cell.hand .label::after { content: ""; display: inline-block; width: 5px; height: 5px; margin-left: 4px; border-radius: 50%; background: var(--accent); vertical-align: middle; }
   .chord-row { display: flex; align-items: flex-end; justify-content: space-between; gap: 8px; flex-wrap: wrap; }
   .chord-note { margin: 0; font-size: 10.5px; line-height: 1.4; color: var(--ink-dim); }
   .ringplace b { font-size: 30px; }
@@ -651,6 +656,19 @@
           <button type="button" data-mode="drift" aria-pressed="true" title="Each rotation, random hits move one step">Drift</button>
           <button type="button" data-mode="cluster" aria-pressed="false" title="Hits bunch together in random bursts, new each rotation">Cluster</button>
         </div>
+      </div>
+      <div class="sidebox groove-sec" id="grooveSec">
+        <div class="chord-head">
+          <p class="label">Groove</p>
+          <button id="grooveAuto" class="btn small tog" type="button" aria-pressed="true" title="The weather sets these knobs. Move one and it is yours. Tap here to hand them all back."><i class="tog-dot" aria-hidden="true"></i>Weather</button>
+        </div>
+        <div class="knobs groove-knobs" style="--n:4">
+          <div class="knob-cell"><div class="head"><span class="label">Swing</span><output id="grooveSwingOut">54%</output></div><input id="grooveSwing" type="range" min="0" max="100" value="25" aria-label="Swing: how late the off-beat sixteenths land"></div>
+          <div class="knob-cell"><div class="head"><span class="label">Pocket</span><output id="groovePocketOut">0</output></div><input id="groovePocket" type="range" min="-100" max="100" value="0" aria-label="Pocket: pushing ahead of the beat or laid back behind it"></div>
+          <div class="knob-cell"><div class="head"><span class="label">Ghosts</span><output id="grooveGhostOut">30%</output></div><input id="grooveGhost" type="range" min="0" max="100" value="30" aria-label="Ghost notes: quiet hits between the written ones"></div>
+          <div class="knob-cell"><div class="head"><span class="label">Accent</span><output id="grooveAccentOut">50%</output></div><input id="grooveAccent" type="range" min="0" max="100" value="50" aria-label="Accent: how much louder the strong beats are"></div>
+        </div>
+        <p class="chord-note" id="grooveNote"></p>
       </div>
       <div class="sidebox chord-sec" id="chordSec">
         <div class="chord-head">
@@ -1354,6 +1372,7 @@ async function fetchWeather() {
       windDir: k.wind_direction_10m, gust: k.wind_gusts_10m, day: k.is_day, pop: H('precipitation_probability'),
       dew: H('dew_point_2m'), cloudLow: H('cloud_cover_low'), cloudHigh: H('cloud_cover_high'), vis: H('visibility') };
     state.utcOffset = typeof j.utc_offset_seconds === 'number' ? j.utc_offset_seconds : null;
+    if (typeof grooveApply === 'function') grooveApply();   // the weather moves the groove knobs you have not touched
     tickClock();
     rebuild();
     setStatus(`Live weather · local time ${k.time.slice(11, 16)} · refreshes every 10 minutes`);
@@ -2298,9 +2317,9 @@ function nextPitch() {
   congaCount++;
   return pitchHold;
 }
-function congaHit(t) {
+function congaHit(t, vel = 1) {
   const P = nextPitch(), hi = P.hi, oct = congaOct + P.oct;
-  const f = mtof(CONGA_NOTES[hi] + oct * 12) * tuneOf(bus.conga), v = 0.85 + Math.random() * 0.3;
+  const f = mtof(CONGA_NOTES[hi] + oct * 12) * tuneOf(bus.conga), v = (0.85 + Math.random() * 0.3) * vel;
   const name = $('congaInst').value, S = SAMP_INSTR[name], s = S && SAMPLES.get(hi && S.hi ? S.hi : S.lo);
   if (s) {
     // two samples alternate low and high; a single one alternates with a small step up in pitch
@@ -2311,15 +2330,15 @@ function congaHit(t) {
   INSTR[name](bus.conga, t, f, v);
 }
 
-function kickHit(t, dest) {
+function kickHit(t, dest, vel = 1) {
   const ks = activeKit.samples && SAMPLES.get(activeKit.samples.kick);
-  if (ks) { playSample(dest || bus.kick, t, ks, 1, tuneOf(bus.kick), 2, bus.kick); return; }
+  if (ks) { playSample(dest || bus.kick, t, ks, vel, tuneOf(bus.kick), 2, bus.kick); return; }
   const K = activeKit.kick || KICK;   // the kit's kick, or the standard one
   const o = ctx.createOscillator(), g = ctx.createGain();
   const tu = tuneOf(bus.kick), D = dec(bus.kick, K.dec);
   o.frequency.setValueAtTime(K.f0 * tu, t);
   o.frequency.exponentialRampToValueAtTime(K.f1 * tu, t + 0.09);
-  g.gain.setValueAtTime(K.level, t);
+  g.gain.setValueAtTime(K.level * vel, t);
   g.gain.exponentialRampToValueAtTime(0.0008, t + D);
   o.connect(g).connect(dest || bus.kick);
   o.start(t); o.stop(t + D + 0.05);
@@ -2777,6 +2796,96 @@ function chordFollow() {
   CHORD.sig = (() => { const { k, oct } = chordKey(); return k + '|' + oct; })();
 }
 
+// ---------- Groove: the feel of the kit ----------
+// Swing: the off-beat sixteenths land late. Pocket: the rings sit ahead of the beat or behind it, each a little differently.
+// Ghosts: quiet hits between the written ones. Accent: how much louder the strong beats are.
+// The weather sets the four knobs. Move one and it is yours until you hand it back with the Weather button.
+const GROOVE = { swing: 25, pocket: 0, ghost: 30, accent: 50 };
+const grooveHand = { swing: false, pocket: false, ghost: false, accent: false };   // true once you have moved the knob yourself
+let grooveSetting = false;                                                          // true while the weather is moving a knob
+const POCKET_MS = 22;                                                               // the most the pocket moves a ring, in milliseconds
+const POCKET_WHO = { kick: 0.3, twin: 0.3, conga: 0.8, extra: 1, shaker: -0.5 };    // the hats push while the backbeat lays back
+const grooveKnobs = { swing: 'grooveSwing', pocket: 'groovePocket', ghost: 'grooveGhost', accent: 'grooveAccent' };
+function grooveOut(key) {
+  const v = GROOVE[key], o = $(grooveKnobs[key] + 'Out');
+  o.textContent = key === 'swing' ? Math.round(50 + v * 0.17) + '%'
+    : key === 'pocket' ? (v === 0 ? '0' : (v > 0 ? '+' : '-') + Math.round(Math.abs(v) / 100 * POCKET_MS) + ' ms')
+    : v + '%';
+}
+// what the weather says about the feel
+function grooveFromWeather() {
+  const w = state.w, e = state.env || {};
+  if (!w) return null;
+  const wind = w.w || 0, gust = e.gust != null ? e.gust : wind, gusty = clamp((gust - wind) / 25, 0, 1), windy = clamp(wind / 30, 0, 1);
+  return {
+    swing: Math.round(10 + 55 * gusty + 20 * windy),                                        // gusty, windy air is loose
+    pocket: Math.round(clamp((w.h - 55) * 1.6 + (1013 - (e.pres != null ? e.pres : 1013)) * 2.5, -100, 100)),   // humid and low pressure is heavy, so laid back
+    ghost: Math.round(clamp(10 + 85 * clamp((w.t + 5) / 37, 0, 1) - (e.day === 0 ? 10 : 0), 0, 100)),         // cold is sparse, warm is busy
+    accent: Math.round(clamp(25 + 0.6 * (100 - w.c) - (w.r > 0 ? 10 : 0), 0, 100)),         // clear skies hit harder, cloud flattens
+  };
+}
+function grooveSay(g) {
+  const bits = [];
+  if (g.swing >= 45) bits.push('gusty wind, loose swing'); else if (g.swing <= 18) bits.push('steady air, straight feel');
+  if (g.pocket >= 25) bits.push('humid and heavy, laid back'); else if (g.pocket <= -25) bits.push('crisp air, pushing ahead');
+  if (g.ghost >= 65) bits.push('warm, busy ghost notes'); else if (g.ghost <= 25) bits.push('cold, sparse');
+  if (g.accent >= 65) bits.push('clear sky, strong accents'); else if (g.accent <= 35) bits.push('cloud, soft accents');
+  return bits.length ? bits.join(' · ') : 'settled weather, an even feel';
+}
+function grooveNote() {
+  const mine = Object.keys(grooveHand).filter(k => grooveHand[k]);
+  const g = grooveFromWeather();
+  $('grooveNote').textContent = !g ? 'The weather sets these when it arrives.'
+    : mine.length ? `You set: ${mine.join(', ')}. Tap Weather to hand them back.` : 'Weather: ' + grooveSay(g);
+  const auto = !mine.length;
+  $('grooveAuto').setAttribute('aria-pressed', String(auto));
+  for (const k in grooveKnobs) $(grooveKnobs[k]).parentElement.classList.toggle('hand', grooveHand[k]);
+}
+function grooveApply() {
+  const g = grooveFromWeather();
+  if (g) {
+    grooveSetting = true;
+    for (const k in g) if (!grooveHand[k]) { const el = $(grooveKnobs[k]); el.value = String(g[k]); el.dispatchEvent(new Event('input')); }
+    grooveSetting = false;
+  }
+  grooveNote();
+}
+for (const k in grooveKnobs) {
+  const el = $(grooveKnobs[k]);
+  el.addEventListener('input', () => { GROOVE[k] = Number(el.value); grooveOut(k); if (!grooveSetting) { grooveHand[k] = true; grooveNote(); } });
+  grooveOut(k);
+}
+$('grooveAuto').addEventListener('click', () => {
+  const anyHand = Object.values(grooveHand).some(Boolean);
+  for (const k in grooveHand) grooveHand[k] = !anyHand;   // hand them all back, or hold them all where they are
+  grooveApply();
+});
+// The time a hit lands: on the grid, plus the swing on off-beat sixteenths and the pocket of its ring
+function grooveAt(t, n, who) {
+  const swing = n % 2 === 1 ? GROOVE.swing / 100 * 0.33 * stepSecs() : 0;
+  const pocket = GROOVE.pocket / 100 * POCKET_MS / 1000 * (POCKET_WHO[who] || 0);
+  return Math.max(ctx.currentTime + 0.001, t + swing + pocket);
+}
+// How loud a step is: the one and the beats strong, the in-betweens softer, by as much as Accent says
+function grooveVel(n) {
+  const a = GROOVE.accent / 100, pos = n % 4 === 0 ? 1 : n % 4 === 2 ? 0.85 : 0.68;
+  return (1 - (1 - pos) * (0.4 + 1.2 * a)) * (n % 16 === 0 ? 1 + 0.15 * a : 1);
+}
+// Quiet hits in the gaps. Only where the genre already has that voice, so a techno kit stays techno.
+function grooveGhosts(t, n, k, r, tK, tC, tS, tX, shaker) {
+  const gp = GROOVE.ghost / 100;
+  if (gp <= 0.02 || !playing) return;
+  const soft = () => 0.14 + Math.random() * 0.14;
+  const V = state.kick && state.kick.voices;
+  if (k >= 0 && shaker && !shaker.bits[k] && Math.random() < gp * (k % 2 ? 0.5 : 0.12) && roll()) {
+    const f = { vel: soft() * 1.6, rate: 0.97, cap: 0.08, len: 0.6, t: tS };
+    if (shaker.src) drumHit(shaker.src, tS, bus.shaker, f.vel); else shakerHit(tS, f);
+  }
+  if (k >= 0 && V && V.snare && V.snare.some(Boolean) && !V.snare[k] && !laneMuted.snare && (k % 4 === 1 || k % 4 === 3) && Math.random() < gp * 0.3 && roll()) drumHit('snare', tX, undefined, soft() * 1.4);
+  if (k >= 0 && kickOn && state.kick.bd.some((b, i) => b && i % 4 !== 0) && !state.kick.bd[k] && (k % 4 === 3 || k % 4 === 1) && Math.random() < gp * 0.18 && roll()) kickHit(tK, undefined, 0.3 + Math.random() * 0.12);
+  if (r >= 0 && state.pattern[r] !== 1 && Math.random() < gp * 0.22 && roll()) congaHit(tC, 0.3);
+}
+
 // ---------- scheduler (sixteenth-note steps on the audio clock) ----------
 let playing = false, timer = null, nextTime = 0, stepN = 0, kickOn = true;
 // Chance: how likely each hit is to play, on every ring at once. 100% plays the rhythms as written; lower, and each ring drops hits at random.
@@ -2787,7 +2896,9 @@ let playRing = -1, playKick = -1, flashes = [];
 const events = [];
 
 function schedule(t, n) {
-  if (yours.buf) yoursStep(t, n);
+  const vel = grooveVel(n);
+  const tK = grooveAt(t, n, 'kick'), tC = grooveAt(t, n, 'conga'), tS = grooveAt(t, n, 'shaker'), tX = grooveAt(t, n, 'extra');
+  if (yours.buf) yoursStep(tC, n);
   // chords: a new one every few bars, and the filter's Auto sweep
   if (n % (16 * (CHORD.drone ? 1024 : CHORD.bars)) === 0) {
     if (n > 0 && n % (16 * 64) === 0 && CHORD.prog) { const k = 1 + Math.floor(Math.random() * 2); CHORD.prog = CHORD.prog.slice(k).concat(CHORD.prog.slice(0, k)); }   // every 64 bars the progression moves on a place or two
@@ -2804,23 +2915,24 @@ function schedule(t, n) {
     showPattern();
   }
   const congaNow = r >= 0 && state.pattern[r] === 1 && roll();
-  if (congaNow) congaHit(t);
+  if (congaNow) congaHit(tC, vel);
   if (k === 0 && n > 0) twin.off++;   // the twin slips one step each cycle
   const kickNow = k >= 0 && kickOn && state.kick.bd[k] && roll();
   const tj = twin.n ? (k + twin.off) % twin.n : -1;
   const twinNow = tj >= 0 && twin.bits[tj] && kickOn && !laneMuted.twin && roll();   // Mute on the kick silences its twin too
-  if (kickNow) { kickHit(t); duckSub(t); }
-  if (twinNow) kickHit(t, laneBus('twin'));
+  if (kickNow) { kickHit(tK, undefined, vel); duckSub(tK); }
+  if (twinNow) kickHit(tK, laneBus('twin'), vel);
   if (kickNow && twinNow) subMeet(t);
   const sh = k >= 0 ? shakerSrc(state.kick) : null;
   if (sh && sh.bits[k] && roll()) {
     const f = shakerFeel(t, k, state.kick.steps);
     if (f !== false) {
-      const tt = f ? f.t : t;
+      const tt = f ? f.t + (tS - t) : tS;
       if (sh.src) drumHit(sh.src, tt, bus.shaker, f ? f.vel * 1.1 : undefined); else shakerHit(tt, f);
     }
   }
-  if (k >= 0) for (const v of extrasOf(state.kick)) if (state.kick.voices[v][k] && !laneMuted[v] && roll()) drumHit(v, t);
+  if (k >= 0) for (const v of extrasOf(state.kick)) if (state.kick.voices[v][k] && !laneMuted[v] && roll()) drumHit(v, tX, undefined, vel * (0.85 + Math.random() * 0.3));
+  grooveGhosts(t, n, k, r, tK, tC, tS, tX, sh);
   events.push({ t, r, k, hit: congaNow });
 }
 
@@ -3133,6 +3245,8 @@ function makeKnob(input) {
   drawKnob(input);
 }
 document.querySelectorAll('input[type=range]').forEach(makeKnob);
+// double-click on a groove knob hands it back to the weather (after makeKnob has built the dials)
+for (const k in grooveKnobs) $(grooveKnobs[k])._dial.addEventListener('dblclick', () => { grooveHand[k] = false; grooveApply(); });
 
 
 // ---------- genre notes ----------
