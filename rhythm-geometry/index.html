@@ -2053,9 +2053,9 @@ function sampleFor(v) {
   const path = activeKit.samples[key] || SHARED_SAMPLES[key], s = path && SAMPLES.get(path);
   return s ? { s, k: a ? a[1] : 1, cap: SAMPLE_CAP[key] || 4 } : null;
 }
-function drumHit(v, t, out) {
+function drumHit(v, t, out, velIn) {
   if (SILENT.has(v)) return;
-  const vel = 0.85 + Math.random() * 0.3, sp = sampleFor(v);
+  const vel = velIn != null ? velIn : 0.85 + Math.random() * 0.3, sp = sampleFor(v);
   if (sp) { playSample(out || laneBus(v), t, sp.s, vel * sp.k, 1, sp.cap); return; }
   ((activeKit.drums && activeKit.drums[v]) || DRUM[v] || DRUM.default)(out || laneBus(v), t, vel);
 }
@@ -2185,18 +2185,44 @@ function kickHit(t, dest) {
 }
 
 // Shaker: a sampled shaker, or the original burst of high noise (a little different every time)
-function shakerHit(t) {
+function shakerHit(t, f) {
+  f = f || { vel: 0.8 + Math.random() * 0.4, rate: 1, cap: 1, len: 1 };
   const ss = SAMPLES.get(SHAKER_SOUNDS[$('shakerInst').value]);
-  if (ss) { playSample(bus.shaker, t, ss, 0.8 + Math.random() * 0.4, tuneOf(bus.shaker), 1, bus.shaker); return; }
+  if (ss) { playSample(bus.shaker, t, ss, f.vel, tuneOf(bus.shaker) * f.rate, f.cap, bus.shaker); return; }
   const n = ctx.createBufferSource(), hp = ctx.createBiquadFilter(), bp = ctx.createBiquadFilter(), g = ctx.createGain();
   n.buffer = noiseBuf;
   hp.type = 'highpass'; hp.frequency.value = 6000;
   bp.type = 'bandpass'; bp.frequency.value = 9000 * tuneOf(bus.shaker); bp.Q.value = 0.9;
-  const v = 0.8 + Math.random() * 0.4;
+  const v = f.vel;
+  bp.frequency.value = 9000 * tuneOf(bus.shaker) * f.rate * (0.8 + 0.2 * Math.min(1.2, v));   // soft hits are duller
   g.gain.setValueAtTime(0.5 * v, t);
-  g.gain.exponentialRampToValueAtTime(0.0008, t + dec(bus.shaker, 0.045));
+  g.gain.exponentialRampToValueAtTime(0.0008, t + dec(bus.shaker, 0.045 * f.len));
   n.connect(hp).connect(bp).connect(g).connect(bus.shaker);
-  n.start(t, Math.random() * 0.05); n.stop(t + dec(bus.shaker, 0.06));
+  n.start(t, Math.random() * 0.05); n.stop(t + dec(bus.shaker, 0.06 * f.len));
+}
+
+// Make the shaker feel played by a hand, not a machine.
+// Beats are strong or soft by where they fall, a few soft ones are left out, every hit is a little
+// different in loudness, pitch and timing, and soft hits are short and duller. HUMAN 0 turns it all off.
+const HUMAN = 1;
+function shakerFeel(t, k, steps) {
+  if (!HUMAN) return null;
+  const beat = steps % 4 === 0 ? k % 4 : (k % 2 ? 1 : 0);   // 0 = on the beat, 2 = the "and", odd = the sixteenths between
+  const odd = steps % 4 === 0 ? k % 2 === 1 : k % 2 === 1;
+  const breathe = 1 + 0.08 * Math.sin(stepN / (steps * 2) * Math.PI * 2);   // swells gently over two bars
+  let base = beat === 0 ? 0.62 : beat === 2 ? 0.95 : 0.36;
+  if (steps % 4 !== 0) base = odd ? 0.5 : 0.9;
+  const ghost = base < 0.45;
+  // soft hits are sometimes left out, which keeps it from sounding busy
+  if (ghost && Math.random() < 0.3) return false;
+  const vel = clamp(base * breathe * (1 + (Math.random() - 0.5) * 0.28), 0.12, 1.15);
+  const late = ghost ? 0.004 + Math.random() * 0.007 : beat === 2 ? Math.random() * 0.004 : Math.random() * 0.002;   // soft hits lag a touch
+  return {
+    t: t + late, vel,
+    rate: (ghost ? 0.97 : 1) * (1 + (Math.random() - 0.5) * 0.04),
+    cap: ghost ? 0.09 : 1,
+    len: ghost ? 0.6 : 1,
+  };
 }
 
 // Load what the current kit, instrument and shaker need, so the first bar already plays the samples
@@ -2440,7 +2466,13 @@ function schedule(t, n) {
   if (twinNow) kickHit(t, laneBus('twin'));
   if (kickNow && twinNow) subMeet(t);
   const sh = k >= 0 ? shakerSrc(state.kick) : null;
-  if (sh && sh.bits[k]) { if (sh.src) drumHit(sh.src, t, bus.shaker); else shakerHit(t); }
+  if (sh && sh.bits[k]) {
+    const f = shakerFeel(t, k, state.kick.steps);
+    if (f !== false) {
+      const tt = f ? f.t : t;
+      if (sh.src) drumHit(sh.src, tt, bus.shaker, f ? f.vel * 1.1 : undefined); else shakerHit(tt, f);
+    }
+  }
   if (k >= 0) for (const v of extrasOf(state.kick)) if (state.kick.voices[v][k] && !laneMuted[v]) drumHit(v, t);
   events.push({ t, r, k, hit: congaNow });
 }
