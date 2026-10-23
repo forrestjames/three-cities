@@ -85,7 +85,7 @@
   .modes { flex: none; align-self: center; display: flex; flex-direction: column; width: 74px; border: 1px solid var(--line); }
   .modes button { background: transparent; border: 0; padding: 5px 4px; font-size: 10px; letter-spacing: .1em; text-transform: uppercase; color: var(--ink-dim); }
   .modes button + button { border-top: 1px solid var(--line); }
-  .modes button[aria-pressed="true"] { background: var(--accent); color: var(--ground); }
+  .modes button[aria-pressed="true"] { background: rgba(243, 236, 230, 0.14); color: var(--ink); box-shadow: inset 2px 0 0 var(--accent); }
   .wxpanel { position: absolute; top: 60px; right: 22px; z-index: 6; width: min(400px, calc(100% - 44px)); background: var(--panel); border: 1px solid var(--line); padding: 14px; display: flex; flex-direction: column; gap: 10px; box-shadow: 0 16px 40px rgba(0, 0, 0, 0.6); opacity: 0; transform: translateY(-8px) scale(0.97); transform-origin: top right; pointer-events: none; transition: opacity 120ms ease-out, transform 160ms cubic-bezier(0.2, 0.8, 0.2, 1); }
   .wxpanel.open { opacity: 1; transform: none; pointer-events: auto; }
   .wxhead { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; }
@@ -137,6 +137,12 @@
   .sb-mount { flex: 1; min-height: 0; display: flex; flex-direction: column; gap: 10px; }
   .sb-bar { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
   .sb-bar input[type="search"] { flex: 1; min-width: 120px; background: rgba(243,236,230,0.05); border: 1px solid var(--line); color: var(--ink); padding: 6px 8px; font: 12px var(--mono); }
+  .sb-cats { display: flex; flex-wrap: wrap; gap: 6px; }
+  .sb-cat { font: 11px var(--mono); letter-spacing: .04em; padding: 5px 11px; border-radius: 14px; border: 1px solid var(--line); background: none; color: var(--ink-dim); cursor: pointer; }
+  .sb-cat:hover { border-color: var(--ink-dim); color: var(--ink); }
+  .sb-cat[aria-pressed="true"] { border-color: rgba(243, 236, 230, 0.6); background: rgba(243, 236, 230, 0.12); color: var(--ink); }
+  .sb-sub { font: 10.5px var(--mono); letter-spacing: .12em; text-transform: uppercase; color: var(--ink-dim); padding: 10px 0 2px; }
+  .sb-sub:first-child { padding-top: 0; }
   .sb-cc0 { font: 10.5px var(--mono); color: var(--ink-dim); letter-spacing: .06em; white-space: nowrap; }
   .sb-note { font: 10.5px var(--mono); color: var(--ink-dim); margin: 0; }
   .sb-list { list-style: none; margin: 0; padding: 0; flex: 1; min-height: 0; overflow-y: auto; display: flex; flex-direction: column; gap: 4px; }
@@ -153,7 +159,11 @@
 
   .row-inline { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
   .row-inline output { min-width: 2.5ch; text-align: center; font-size: 14px; color: var(--ink); }
-  .btn[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: var(--ground); }
+  /* switches: quiet outline with a small light, like the Record button. Only Play is solid orange. */
+  .btn[aria-pressed="true"] { background: rgba(243, 236, 230, 0.1); border-color: rgba(243, 236, 230, 0.5); color: var(--ink); }
+  .btn.tog, .auto-row .btn { display: inline-flex; align-items: center; gap: 8px; }
+  .tog-dot, .auto-row .btn::before { content: ""; width: 8px; height: 8px; border-radius: 50%; border: 1px solid var(--ink-dim); flex: none; box-sizing: border-box; }
+  .btn.tog[aria-pressed="true"] .tog-dot, .auto-row .btn[aria-pressed="true"]::before { background: var(--accent); border-color: var(--accent); box-shadow: 0 0 6px rgba(208, 138, 106, 0.7); }
   .btn.small { padding: 6px 12px; }
   .delay-row { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 8px 12px; align-items: center; }
   .delay-row select { background: transparent; border: 1px solid var(--line); padding: 7px 8px; }
@@ -443,7 +453,7 @@
   .vp-tabs { display: flex; border: 1px solid var(--line); }
   .vp-tabs button { background: none; border: 0; padding: 6px 10px; font-size: 10.5px; letter-spacing: .1em; text-transform: uppercase; color: var(--ink-dim); }
   .vp-tabs button + button { border-left: 1px solid var(--line); }
-  .vp-tabs button[aria-pressed="true"] { background: var(--accent); color: var(--ground); }
+  .vp-tabs button[aria-pressed="true"] { background: rgba(243, 236, 230, 0.14); color: var(--ink); box-shadow: inset 0 -2px 0 var(--accent); }
   .vpwrap .voices { display: block; margin: 0; }
   .vpwrap .voice { display: none; border: 0; padding: 4px 0 0; background: none; overflow: visible; }
   .vpwrap .voice.sel { display: flex; }
@@ -467,6 +477,38 @@
     .rightcol { display: grid; grid-template-rows: auto minmax(0, 1fr); gap: 10px; min-height: 0; min-width: 0; }
     .rightcol > .kitcard { height: auto; min-height: 0; max-height: 46vh; overflow: hidden; }
     .rightcol .kit { flex: 1 1 auto; min-height: 0; overflow-y: auto; }
+  }
+
+  /* ---- polish (23 Oct): a round ring in every browser, a tighter Rings list, long city names, a quieter header ---- */
+  .sidecard { gap: 12px; }
+  .ringplace { flex-wrap: wrap; align-items: baseline; gap: 0 10px; }
+  .ringplace b { white-space: normal; overflow: visible; text-overflow: clip; overflow-wrap: anywhere; line-height: 1.05; font-size: clamp(22px, 2vw, 30px); }
+  .brand-text .place { white-space: normal; overflow: visible; text-overflow: clip; line-height: 1.3; }
+  .top .place { overflow: visible; }
+  .kitcard { padding: 10px 12px; gap: 6px; }
+  .kit { gap: 1px; }
+  .kit .lane { padding: 3px 6px; gap: 8px; }
+  .lane-dot { width: 10px; height: 10px; }
+  .lane-edit { padding: 2px 7px; font-size: 9.5px; }
+  .kit .lane .lane-vol { width: 56px; }
+  .kit .lane .lane-name { font-size: 10px; }
+  .kit-credit { margin: 0; font-size: 10px; letter-spacing: .02em; color: var(--ink-faint); line-height: 1.4; }
+  .kit-credit a { color: var(--ink-dim); }
+  .rightcol .kithead { flex-wrap: nowrap; align-items: center; }
+  .genrehead { display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; }
+  .genrehead .btn { flex: none; }
+  .rightcol .legend { gap: 2px 10px; font-size: 10px; }
+  @media (min-width: 1001px) and (min-height: 600px) { #clock { white-space: normal; } }
+  @media (min-width: 1001px) and (min-height: 600px) {
+    .rightcol { grid-template-rows: minmax(0, auto) minmax(170px, 1fr); }
+    .rightcol > .kitcard { max-height: none; }
+  }
+  /* the ring is always a square that fits the card; the old width:auto + max-width pair squashed it when the card was narrower than it was tall */
+  @supports (width: 1cqw) {
+    @media (min-width: 1001px) and (min-height: 600px) {
+      .ringcard .ringbox { container-type: size; }
+      .ringcard #ring { top: 50%; transform: translate(-50%, -50%); width: min(100cqw, 100cqh); height: min(100cqw, 100cqh); max-width: none; }
+    }
   }
 </style>
 </head>
@@ -503,8 +545,8 @@
     </div>
     <form id="findForm" class="search-row">
       <button id="toMap" class="btn small" type="button" title="Back to the map">Map</button>
-      <input id="city" type="text" value="London" autocomplete="off" aria-label="Find a city" placeholder="Find any city, e.g. Copenhagen">
-      <button class="btn primary" type="submit">Find</button>
+      <input id="city" type="text" value="" autocomplete="off" aria-label="Find a city" placeholder="Find another city">
+      <button class="btn" type="submit">Find</button>
       <div id="results" class="chips"></div>
     </form>
     <div class="transport">
@@ -513,7 +555,7 @@
         <label class="label" for="bpm">BPM</label>
         <input id="bpm" type="number" value="100" min="60" max="200">
       </div>
-      <button id="follow" class="btn small" type="button" aria-pressed="false" title="Follow genre tempo: when on, the BPM jumps to the genre's suggested tempo">Follow tempo</button>
+      <button id="follow" class="btn small tog" type="button" aria-pressed="false" title="Follow genre tempo: when on, the BPM jumps to the genre's suggested tempo"><i class="tog-dot" aria-hidden="true"></i>Follow tempo</button>
       <span class="rec-wrap" id="recWrap">
         <span class="rec-split">
           <button class="rec-main" id="rec" type="button" aria-pressed="false" title="Record what's playing and save it to your device"><i class="rec-dot" aria-hidden="true"></i><span class="rec-label">Record</span></button>
@@ -550,6 +592,7 @@
       </div>
       <p id="readout" class="readout"></p>
       <p id="patternInfo" class="pattern-info"></p>
+      <p class="kit-credit">Drum sounds: the <a href="https://github.com/geikha/tidal-drum-machines" target="_blank" rel="noopener">Tidal drum machines</a> sample pack.</p>
       <div id="wxPanel" class="wxpanel" aria-hidden="true">
         <div class="wxhead">
           <h3>Weather <small>tap a name to choose where the hits come from</small></h3>
@@ -567,7 +610,7 @@
     <div class="midcol rightcol">
     <section class="card kitcard" aria-label="Rings">
       <div class="kithead">
-        <h2>Rings <small>outside in, one per drum</small></h2>
+        <h2>Rings <small>outside in</small></h2>
         <select id="kitSel" class="kitsel" aria-label="Drum kit sound" title="Drum kit sound"></select>
       </div>
       <div id="kit" class="kit"></div>
@@ -575,10 +618,12 @@
     </section>
 
     <section class="card" aria-label="Genres">
-      <h2>Genre <small id="genreSub">kick and shaker come from here</small></h2>
+      <div class="genrehead">
+        <h2>Genre <small id="genreSub">kick and shaker come from here</small></h2>
+        <button id="about" class="btn small" type="button" disabled>Genre notes</button>
+      </div>
       <div class="gbody">
-        <div class="genre-about"><button id="about" class="btn small" type="button" disabled>About this genre</button></div>
-      <div class="label">Genres for this place</div>
+        <div class="label">Genres for this place</div>
         <div id="genreChips" class="chips"></div>
         <div class="label">Pattern</div>
         <div id="patChips" class="chips"></div>
@@ -649,7 +694,7 @@
       </div>
       <div class="vpanel" data-panel="sound">
         <div class="row2">
-          <div class="field grow"><label class="label" for="congaInst">Instrument</label><select id="congaInst"><option value="conga" selected>Conga</option><option value="bongo">Bongo</option><option value="clave">Clave</option><option value="cowbell">Cowbell</option><option value="woodblock">Woodblock</option></select></div>
+          <div class="field grow"><label class="label" for="congaInst">Instrument</label><select id="congaInst"><option value="conga" selected>Conga</option><option value="bongo">Bongo</option><option value="clave">Clave</option><option value="cowbell">Cowbell</option><option value="woodblock">Woodblock</option><option value="agogo">Agogo</option><option value="timbale">Timbale</option><option value="guiro">Guiro</option><option value="triangle">Triangle</option><option value="tambourine">Tambourine</option></select></div>
           <div class="field grow"><label class="label" for="pitch">Pitch</label><select id="pitch"><option value="alt" selected>Alternate</option><option value="rand">Random</option></select></div>
         </div>
         <div class="row2">
@@ -698,6 +743,9 @@
         <button type="button" role="tab" data-tab="auto" aria-selected="false">Auto filter<i class="tab-dot" aria-hidden="true"></i></button>
       </div>
       <div class="vpanel" data-panel="sound">
+        <div class="row2">
+          <div class="field grow"><label class="label" for="shakerInst">Sound</label><select id="shakerInst"><option value="shaker" selected>Shaker</option><option value="bright">Shaker, bright</option><option value="maracas">Maracas</option><option value="cabasa">Cabasa</option><option value="synth">Synth shaker</option></select></div>
+        </div>
         <div class="knobs" style="--n:5">
           <div class="knob-cell"><div class="head"><span class="label">Volume</span><output id="shakerVolOut">60</output></div><input id="shakerVol" type="range" min="0" max="100" value="60" aria-label="Shaker volume"></div>
           <div class="knob-cell"><div class="head"><span class="label">Decay</span><output id="shakerDecayOut">1.0x</output></div><input id="shakerDecay" type="range" min="0" max="100" value="50" aria-label="Shaker decay"></div>
@@ -828,8 +876,9 @@ const SampleBrowser = (() => {
     return { configured, search, previewUrl, loadBuffer };
   }
 
-  // The panel: search box, CC0 switch, results with Preview and Load. Text is set with textContent only.
-  function mount(el, sb, onLoaded) {
+  // The panel: search box, CC0 switch, category chips, results with Preview and Load. Text is set with textContent only.
+  // opts.categories: [{ id, label, terms }]. opts.place(): the place to listen for. opts.terms(cat): search words for a category. opts.label(cat): chip text.
+  function mount(el, sb, onLoaded, opts = {}) {
     el.textContent = '';
     if (!sb.configured) {
       const p = document.createElement('p'); p.className = 'sb-note';
@@ -837,6 +886,7 @@ const SampleBrowser = (() => {
       el.appendChild(p);
       return;
     }
+    const cats = opts.categories || [];
     const bar = document.createElement('div'); bar.className = 'sb-bar';
     const input = document.createElement('input');
     input.type = 'search'; input.placeholder = 'Search Freesound: kick, shaker, tabla…'; input.setAttribute('aria-label', 'Search Freesound');
@@ -845,22 +895,69 @@ const SampleBrowser = (() => {
     cc0Label.append(cc0, ' CC0 only');
     const go = document.createElement('button'); go.type = 'button'; go.className = 'btn small'; go.textContent = 'Search';
     bar.append(input, cc0Label, go);
+    // category chips: one tap searches a kind of sound, here first and then anywhere
+    const catBar = document.createElement('div'); catBar.className = 'sb-cats'; catBar.setAttribute('role', 'group'); catBar.setAttribute('aria-label', 'Kinds of sound');
+    let active = null;
+    const chipOf = new Map();
+    function drawCats() {
+      for (const [cat, btn] of chipOf) { btn.textContent = opts.label ? opts.label(cat) : cat.label; btn.setAttribute('aria-pressed', String(active === cat)); }
+    }
+    for (const cat of cats) {
+      const btn = document.createElement('button'); btn.type = 'button'; btn.className = 'sb-cat';
+      btn.addEventListener('click', () => { if (active === cat) { active = null; drawCats(); return; } runCategory(cat); });
+      chipOf.set(cat, btn); catBar.appendChild(btn);
+    }
+    drawCats();
     const status = document.createElement('p'); status.className = 'sb-note'; status.setAttribute('aria-live', 'polite');
     const list = document.createElement('ul'); list.className = 'sb-list';
     const audio = new Audio(); let playingBtn = null;
     function stop() { audio.pause(); if (playingBtn) playingBtn.textContent = 'Preview'; playingBtn = null; }
     audio.addEventListener('ended', stop);
+    const cache = new Map();   // the same words are never asked twice
+    async function find(q, cc) {
+      const key = q + '|' + cc;
+      if (!cache.has(key)) cache.set(key, await sb.search(q, cc));
+      return cache.get(key);
+    }
     async function run() {
       const q = input.value.trim();
       if (!q) return;
+      active = null; drawCats();
       stop(); list.textContent = ''; status.textContent = 'Searching…';
       try {
-        const items = await sb.search(q, cc0.checked);
+        const items = await find(q, cc0.checked);
         status.textContent = items.length ? `${items.length} sounds. Each one shows its licence.` : 'Nothing found. Try another word, or turn off CC0 only.';
         for (const item of items) list.appendChild(row(item));
       } catch (err) {
         status.textContent = `Couldn't reach Freesound (${err.message}). Check the Worker settings.`;
       }
+    }
+    async function runCategory(cat) {
+      const place = ((opts.place && opts.place()) || '').trim();
+      const terms = ((opts.terms && opts.terms(cat)) || cat.terms).slice(0, 3);
+      active = cat; drawCats(); input.value = '';
+      stop(); list.textContent = ''; status.textContent = `Searching ${cat.label.toLowerCase()}…`;
+      const cc = cc0.checked, ask = qs => Promise.allSettled(qs.map(q => find(q, cc)));
+      const [near, anywhere] = await Promise.all([ask(place ? terms.slice(0, 2).map(t => `${t} ${place}`) : []), ask(terms)]);
+      if (active !== cat) return;   // another chip was tapped while this was searching
+      if ([...near, ...anywhere].length && [...near, ...anywhere].every(r => r.status === 'rejected')) {
+        status.textContent = "Couldn't reach Freesound. Check the Worker settings."; return;
+      }
+      const seen = new Set();
+      const take = results => {
+        const out = [];
+        for (const r of results) if (r.status === 'fulfilled') for (const it of r.value) {
+          const key = it.id != null ? it.id : (it.preview || it.name + '|' + it.user);
+          if (!seen.has(key)) { seen.add(key); out.push(it); }
+        }
+        return out.slice(0, 14);
+      };
+      const here = take(near), more = take(anywhere);
+      const heading = text => { const li = document.createElement('li'); li.className = 'sb-sub'; li.textContent = text; list.appendChild(li); };
+      if (here.length) { heading(`Heard in ${place}`); for (const it of here) list.appendChild(row(it)); }
+      if (more.length) { heading(here.length || !place ? 'From anywhere' : `Nothing tagged ${place} yet. From anywhere:`); for (const it of more) list.appendChild(row(it)); }
+      const n = here.length + more.length;
+      status.textContent = n ? `${n} sounds. Each one shows its licence.` : 'Nothing found. Try turning off CC0 only.';
     }
     function row(item) {
       const li = document.createElement('li'); li.className = 'sb-row';
@@ -894,9 +991,15 @@ const SampleBrowser = (() => {
     input.addEventListener('keydown', e => { if (e.key === 'Enter') run(); });
     const credit = document.createElement('p'); credit.className = 'sb-note';
     credit.textContent = 'Sounds from Freesound.org. Credit each sound as shown.';
-    el.append(bar, status, list, credit);
+    el.append(bar);
+    if (cats.length) {
+      const hint = document.createElement('p'); hint.className = 'sb-note';
+      hint.textContent = 'Or pick a kind of sound. Voices, language and singing from a place make the piece feel more personal.';
+      el.append(hint, catBar);
+    }
+    el.append(status, list, credit);
     // the host can start a search from code, for example with the city name
-    return { search(q) { input.value = q; return run(); } };
+    return { search(q) { input.value = q; return run(); }, update() { drawCats(); } };
   }
 
   return { create, mount, attribution, licenceOf };
@@ -1209,7 +1312,7 @@ function renderGenres() {
   if (!city) return;
   for (const g of city.genres) {
     const gc = chip(g.name, g === state.genre, () => selectGenre(g), confClass(g.conf));
-    if (g.info) { gc.classList.add('has-notes'); gc.title = 'Has notes: press About this genre'; }
+    if (g.info) { gc.classList.add('has-notes'); gc.title = 'Has notes: press Genre notes'; }
     gBox.appendChild(gc);
   }
   if (state.genre) {
@@ -1230,7 +1333,7 @@ function renderGenres() {
     ? `${g.name}: ${g.bpm ? 'suggested ' + g.bpm + ' BPM · ' : ''}${g.conf} · ${g.src}` + (city && city.note ? `. Place note: ${city.note}` : '')
     : '';
   $('about').disabled = false;
-  $('about').textContent = g && g.info ? 'About this genre' : 'Notes for this genre';
+  $('about').textContent = 'Genre notes';
   requestAnimationFrame(() => typeof markMore === 'function' && markMore());
 }
 
@@ -1522,6 +1625,7 @@ $('findForm').addEventListener('submit', async e => {
       const label = [r.name, r.admin1, r.country].filter(Boolean).join(', ');
       box.appendChild(chip(label, false, () => {
         box.innerHTML = '';
+        $('city').value = '';   // the place is shown in the header; the box stays free for the next search
         setPlace({ name: r.name, country: r.country, lat: r.latitude, lon: r.longitude });
       }, ''));
     }
@@ -1792,6 +1896,110 @@ const INSTR = {
   },
 };
 
+// ---------- sampled sounds: the Tidal drum machines pack ----------
+// The samples come from github.com/geikha/tidal-drum-machines, pinned to one commit, and load when they are needed.
+// Until a sample has loaded (or if it can't), the original synth sound plays, so nothing ever goes silent.
+const TDM = 'https://raw.githubusercontent.com/geikha/tidal-drum-machines/6577395a4d05031728ced2ec3e5637fa89d8be48/machines/';
+const SAMPLES = new Map();      // path -> { buf, gain, lead, dur }, once decoded and level-matched
+const sampLoading = new Map();  // path -> Promise
+const sampFailed = new Set();
+// How loud each kind of sound should sit (short-term level), so switching kits or instruments does not jump in volume
+const ROLE_LEVEL = { bd: 0.30, sd: 0.20, hh: 0.10, oh: 0.14, cp: 0.15, cr: 0.14, rd: 0.13, rim: 0.15, cb: 0.16, perc: 0.17, sh: 0.13, tb: 0.13, misc: 0.15 };
+function prepSample(buf, path) {
+  const d = buf.getChannelData(0), sr = buf.sampleRate;
+  let peak = 0;
+  for (let i = 0; i < d.length; i++) { const a = Math.abs(d[i]); if (a > peak) peak = a; }
+  if (!peak) return { buf, gain: 1, lead: 0, dur: buf.duration };
+  let i0 = 0;
+  while (i0 < d.length && Math.abs(d[i0]) < peak * 0.02) i0++;
+  i0 = Math.max(0, i0 - Math.round(sr * 0.001));            // start just before the first sound, so no dead air
+  const n = Math.min(d.length, i0 + Math.round(sr * 0.2));
+  let sum = 0;
+  for (let i = i0; i < n; i++) sum += d[i] * d[i];
+  const rms = Math.sqrt(sum / Math.max(1, n - i0)) || 1e-4;
+  const role = (path.match(/-+([a-z]+)\/[^/]*$/) || [])[1];
+  const gain = Math.min(0.9 / peak, (ROLE_LEVEL[role] || 0.15) / rms);
+  return { buf, gain, lead: i0 / sr, dur: buf.duration - i0 / sr };
+}
+function loadSample(path) {
+  if (!path) return Promise.resolve(null);
+  if (SAMPLES.has(path)) return Promise.resolve(SAMPLES.get(path));
+  if (sampFailed.has(path)) return Promise.resolve(null);
+  if (!sampLoading.has(path)) {
+    sampLoading.set(path, fetch(TDM + path.split('/').map(encodeURIComponent).join('/'))
+      .then(r => { if (!r.ok) throw new Error('HTTP ' + r.status); return r.arrayBuffer(); })
+      .then(ab => ctx.decodeAudioData(ab))
+      .then(buf => { const s = prepSample(buf, path); SAMPLES.set(path, s); return s; })
+      .catch(() => { sampFailed.add(path); sampLoading.delete(path); return null; }));
+  }
+  return sampLoading.get(path);
+}
+function loadSamples(paths, ms = 4000) {
+  return Promise.race([Promise.all(paths.map(loadSample)), new Promise(r => setTimeout(r, ms))]);
+}
+// Play one sample on a bus. rate: pitch (1 = as recorded). cap: the most seconds of it to play. dnode: the bus whose Decay knob applies.
+// Decay below 1x cuts the tail short; at 1x and above the whole sample plays.
+function playSample(dest, t, s, v, rate = 1, cap = 4, dnode = dest) {
+  const src = ctx.createBufferSource(), g = ctx.createGain();
+  src.buffer = s.buf; src.playbackRate.value = rate;
+  const lvl = s.gain * v;
+  g.gain.setValueAtTime(lvl, t);
+  src.connect(g).connect(dest);
+  const m = DECAY.get(dnode) || 1, body = Math.min(s.dur, cap);
+  let real = body / rate;
+  if (m < 0.98) { real = Math.max(0.03, real * m); g.gain.exponentialRampToValueAtTime(0.0008, t + real); }
+  else if (s.dur > cap) { g.gain.setValueAtTime(lvl, Math.max(t, t + real - 0.08)); g.gain.linearRampToValueAtTime(0, t + real); }
+  src.start(t, s.lead, body);
+  src.stop(t + real + 0.05);
+}
+// Instruments for the weather ring. Two samples alternate low and high; one sample alternates with a small step up in pitch.
+const SAMP_INSTR = {
+  conga:      { lo: 'LinnDrum/linndrum-perc/Conga L-01.wav', hi: 'LinnDrum/linndrum-perc/Conga H-01.wav' },
+  bongo:      { lo: 'RolandTR727/rolandtr727-perc/Bongo L.wav', hi: 'RolandTR727/rolandtr727-perc/Bongo H.wav' },
+  clave:      { lo: 'BossDR550/bossdr550-perc/Claves.wav' },
+  cowbell:    { lo: 'BossDR550/bossdr550-cb/Cowbell-02.wav', hi: 'BossDR550/bossdr550-cb/Cowbell-01.wav' },
+  woodblock:  { lo: 'AlesisHR16/alesishr16-perc/Wood Block L.wav', hi: 'AlesisHR16/alesishr16-perc/Wood Block H.wav' },
+  agogo:      { lo: 'RolandTR727/rolandtr727-perc/Agogo L.wav', hi: 'RolandTR727/rolandtr727-perc/Agogo H.wav' },
+  timbale:    { lo: 'RolandTR727/rolandtr727-perc/Timbale L.wav', hi: 'RolandTR727/rolandtr727-perc/Timbale H.wav' },
+  guiro:      { lo: 'BossDR660/bossdr660-perc/GuiroL.wav', hi: 'BossDR660/bossdr660-perc/GuiroS.wav' },
+  triangle:   { lo: 'AlesisHR16/alesishr16-perc/Triangle.wav' },
+  tambourine: { lo: 'LinnDrum/linndrum-tb/Tambourine.wav' },
+};
+const SHAKER_SOUNDS = {
+  shaker:  'AlesisHR16/alesishr16-sh/Shaker.wav',
+  bright:  'AlesisSR16/alesissr16-sh/Shaker.wav',
+  maracas: 'RolandTR727/rolandtr727-sh/Maracas.wav',
+  cabasa:  'LinnDrum/linndrum-sh/Cabasa.wav',
+};
+// Sounds a sampled kit borrows when its machine does not have them
+const SHARED_SAMPLES = {
+  cowbell: 'RolandTR808/rolandtr808-cb/Cowbell.wav',
+  clave: 'RolandTR808/rolandtr808-perc/CL.WAV',
+  tambourine: 'LinnDrum/linndrum-tb/Tambourine.wav',
+  conga: 'LinnDrum/linndrum-perc/Conga M-01.wav',
+  conga_low: 'LinnDrum/linndrum-perc/Conga L-01.wav',
+  conga_high: 'LinnDrum/linndrum-perc/Conga H-01.wav',
+  crash: 'RolandTR909/rolandtr909-cr/Crash.wav',
+  ride: 'LinnDrum/linndrum-rd/Ride.wav',
+};
+// Genre pattern drums that reuse another sample, a little softer
+const SAMPLE_ALIAS = { ghost_snare: ['snare', 0.45], snare_comp: ['snare', 0.9], rim_snare: ['rim', 1], hi_hat_pedal: ['closed_hat', 0.7], hat_roll: ['closed_hat', 0.55], hand_clap: ['clap', 1], conga_tumbao: ['conga', 1] };
+const SAMPLE_CAP = { crash: 2.2, ride: 1.8, open_hat: 0.8 };
+const kitSamples = (machine, map) => {
+  const o = {};
+  for (const [k, v] of Object.entries(map)) { const [folder, file] = v.split('/'); o[k] = `${machine}/${machine.toLowerCase()}-${folder}/${file}`; }
+  return o;
+};
+
+// More instruments for the weather ring: the synth versions play until the samples arrive
+Object.assign(INSTR, {
+  agogo:      (out, t, f, v) => { const g = f * 3.2; square(out, t, g, 0.1 * v, 0.18); square(out, t, g * 1.5, 0.07 * v, 0.14); },
+  timbale:    (out, t, f, v) => { pitchedHit(out, t, f * 3.2, f * 2.8, 0.3 * v, 0.25); slap(out, t, 0.2 * v); },
+  guiro:      (out, t, f, v) => noiseBurst(out, t, 'bandpass', 5500, 1.2, 0.12, 0.3 * v),
+  triangle:   (out, t, f, v) => { const g = f * 10; pitchedHit(out, t, g, g, 0.12 * v, 0.5); pitchedHit(out, t, g * 2.7, g * 2.7, 0.05 * v, 0.3); },
+  tambourine: (out, t, f, v) => noiseBurst(out, t, 'highpass', 7000, 0.6, 0.12, 0.3 * v),
+});
+
 // Other drums from the genre pattern. Each plays into its own lane bus, with its own volume.
 // The sounds are simple stand-ins built from the same parts as the kick and conga. Some are only approximate.
 function noiseBurst(out, t, type, freq, q, d, peak) {
@@ -1839,9 +2047,17 @@ const DRUM = {
   perc_high:   (o, t, v) => pitchedHit(o, t, 700, 500, 0.3 * v, 0.08),
   default:     (o, t, v) => pitchedHit(o, t, 220, 180, 0.4 * v, 0.12),
 };
+function sampleFor(v) {
+  if (!activeKit.samples) return null;
+  const a = SAMPLE_ALIAS[v], key = a ? a[0] : v;
+  const path = activeKit.samples[key] || SHARED_SAMPLES[key], s = path && SAMPLES.get(path);
+  return s ? { s, k: a ? a[1] : 1, cap: SAMPLE_CAP[key] || 4 } : null;
+}
 function drumHit(v, t, out) {
   if (SILENT.has(v)) return;
-  ((activeKit.drums && activeKit.drums[v]) || DRUM[v] || DRUM.default)(out || laneBus(v), t, 0.85 + Math.random() * 0.3);
+  const vel = 0.85 + Math.random() * 0.3, sp = sampleFor(v);
+  if (sp) { playSample(out || laneBus(v), t, sp.s, vel * sp.k, 1, sp.cap); return; }
+  ((activeKit.drums && activeKit.drums[v]) || DRUM[v] || DRUM.default)(out || laneBus(v), t, vel);
 }
 
 // ---------- drum kits: each one sets the kick and can replace any drum's sound. Anything it leaves out uses the standard sound. ----------
@@ -1849,22 +2065,29 @@ const K_LAZY = (fn) => (o, t, v) => fn(o, t, v);
 const KITS = [
   { id: 'standard', group: 'Basic', name: 'Standard', note: 'The sounds this app started with', kick: null, drums: {} },
 
-  { id: '808', group: 'Electronic', name: '808', note: 'Long, round kick and a soft, fat snare', kick: { f0: 55, f1: 36, dec: 0.7, level: 0.9 }, drums: {
-    snare: (o, t, v) => { pitchedHit(o, t, 175, 150, 0.4 * v, 0.18); noiseBurst(o, t, 'bandpass', 1700, 0.7, 0.18, 0.45 * v); },
-    closed_hat: (o, t, v) => noiseBurst(o, t, 'highpass', 8500, 0.8, 0.035, 0.25 * v),
-    open_hat: (o, t, v) => noiseBurst(o, t, 'highpass', 8000, 0.8, 0.4, 0.25 * v),
-    clap: (o, t, v) => { for (const dt of [0, 0.011, 0.022]) noiseBurst(o, t + dt, 'bandpass', 1400, 0.7, 0.05, 0.45 * v); noiseBurst(o, t + 0.03, 'bandpass', 1400, 0.7, 0.2, 0.25 * v); } } },
+  { id: '808', group: 'Machines', name: 'Roland TR-808', note: 'The real TR-808: a long, round kick and a snappy snare', kick: { f0: 55, f1: 36, dec: 0.7, level: 0.9 }, drums: {},
+    samples: kitSamples('RolandTR808', { kick: 'bd/BD2550.WAV', snare: 'sd/SD0010.WAV', closed_hat: 'hh/CH.WAV', open_hat: 'oh/OH25.WAV', clap: 'cp/cp3.wav', rim: 'rim/RS.WAV', cowbell: 'cb/Cowbell.wav', clave: 'perc/CL.WAV', crash: 'cr/CY0025.WAV' }) },
 
-  { id: '909', group: 'Electronic', name: '909', note: 'Short, punchy kick and a bright, crisp snare', kick: { f0: 150, f1: 48, dec: 0.28, level: 0.9 }, drums: {
-    snare: (o, t, v) => { pitchedHit(o, t, 210, 160, 0.5 * v, 0.1); noiseBurst(o, t, 'bandpass', 2600, 0.9, 0.16, 0.55 * v); },
-    closed_hat: (o, t, v) => noiseBurst(o, t, 'highpass', 9000, 0.7, 0.03, 0.35 * v),
-    open_hat: (o, t, v) => noiseBurst(o, t, 'highpass', 8000, 0.7, 0.3, 0.3 * v),
-    clap: (o, t, v) => { for (const dt of [0, 0.011, 0.022]) noiseBurst(o, t + dt, 'bandpass', 2000, 0.8, 0.05, 0.5 * v); noiseBurst(o, t + 0.03, 'bandpass', 2000, 0.8, 0.12, 0.3 * v); } } },
+  { id: '909', group: 'Machines', name: 'Roland TR-909', note: 'The real TR-909: a short, punchy kick and a bright, crisp snare', kick: { f0: 150, f1: 48, dec: 0.28, level: 0.9 }, drums: {},
+    samples: kitSamples('RolandTR909', { kick: 'bd/Bassdrum-01.wav', snare: 'sd/sd01.wav', closed_hat: 'hh/hh01.wav', open_hat: 'oh/Hat Open.wav', clap: 'cp/Clap.wav', rim: 'rim/Rimhot.wav', crash: 'cr/Crash.wav', ride: 'rd/Ride.wav' }) },
 
-  { id: 'boom_bap', group: 'Electronic', name: 'Boom bap', note: 'Dusty drums with a thick, woody snare', kick: { f0: 90, f1: 46, dec: 0.3, level: 0.85 }, drums: {
-    snare: (o, t, v) => { pitchedHit(o, t, 200, 170, 0.45 * v, 0.12); noiseBurst(o, t, 'bandpass', 1300, 0.6, 0.22, 0.5 * v); },
-    closed_hat: (o, t, v) => noiseBurst(o, t, 'highpass', 6500, 0.7, 0.03, 0.22 * v),
-    open_hat: (o, t, v) => noiseBurst(o, t, 'highpass', 6000, 0.7, 0.25, 0.22 * v) } },
+  { id: 'linndrum', group: 'Machines', name: 'LinnDrum', note: 'Tight, dry 80s drums: gated snare, handclap and sidestick', kick: { f0: 100, f1: 50, dec: 0.2, level: 0.85 }, drums: {},
+    samples: kitSamples('LinnDrum', { kick: 'bd/Bassdrum.wav', snare: 'sd/0Snarderum-01.wav', closed_hat: 'hh/Hat Closed-01.wav', open_hat: 'oh/Hat Open.wav', clap: 'cp/Clap.wav', rim: 'rim/Sidestick-01.wav', cowbell: 'cb/Cowbell.wav', crash: 'cr/Crash.wav', ride: 'rd/Ride.wav', tambourine: 'tb/Tambourine.wav' }) },
+
+  { id: 'dmx', group: 'Machines', name: 'Oberheim DMX', note: 'Early hip hop and electro: a hard kick and a crackling snare', kick: { f0: 100, f1: 50, dec: 0.2, level: 0.85 }, drums: {},
+    samples: kitSamples('OberheimDMX', { kick: 'bd/Bassdrum-01.wav', snare: 'sd/Snaredrum-01.wav', closed_hat: 'hh/Hat Closed.wav', open_hat: 'oh/Hat Open.wav', clap: 'cp/Clap.wav', rim: 'rim/Rim Shot.wav', crash: 'cr/Crash.wav', ride: 'rd/Ride.wav', tambourine: 'tb/Tamborine.wav' }) },
+
+  { id: 'tr707', group: 'Machines', name: 'Roland TR-707', note: 'Clean, bright digital drums from the 80s', kick: { f0: 120, f1: 50, dec: 0.2, level: 0.85 }, drums: {},
+    samples: kitSamples('RolandTR707', { kick: 'bd/Bassdrum-01.wav', snare: 'sd/Snaredrum-01.wav', closed_hat: 'hh/Hat Closed.wav', open_hat: 'oh/Hat Open.wav', clap: 'cp/Clap.wav', rim: 'rim/Rimshot.wav', cowbell: 'cb/Cowbell.wav', crash: 'cr/Crash.wav', tambourine: 'tb/Tambourine.wav' }) },
+
+  { id: 'tr606', group: 'Machines', name: 'Roland TR-606', note: 'Small and ticky: a soft kick and papery hats', kick: { f0: 110, f1: 55, dec: 0.2, level: 0.8 }, drums: {},
+    samples: kitSamples('RolandTR606', { kick: 'bd/Bassdrum.wav', snare: 'sd/Snaredrum.wav', closed_hat: 'hh/Hat Closed.wav', open_hat: 'oh/Hat Open.wav', crash: 'cr/Cymbal.wav' }) },
+
+  { id: 'boom_bap', group: 'Machines', name: 'E-mu SP-12 (boom bap)', note: 'Dusty 90s hip hop: a thick kick and a woody snare', kick: { f0: 90, f1: 46, dec: 0.3, level: 0.85 }, drums: {},
+    samples: kitSamples('EmuSP12', { kick: 'bd/Bassdrum-03.wav', snare: 'sd/Snaredrum-03.wav', closed_hat: 'hh/Hat Closed-01.wav', open_hat: 'oh/Hhopen1.wav', clap: 'cp/Clap.wav', rim: 'rim/zRim Shot-01.wav', cowbell: 'cb/Cowbell.wav', crash: 'cr/Crash.wav', ride: 'rd/Ride.wav' }) },
+
+  { id: 'mpc60', group: 'Machines', name: 'Akai MPC60', note: 'Punchy sampled drums with a gated kick', kick: { f0: 90, f1: 46, dec: 0.3, level: 0.85 }, drums: {},
+    samples: kitSamples('AkaiMPC60', { kick: 'bd/Bassdrum Gated.wav', snare: 'sd/Snare 2.wav', closed_hat: 'hh/Closed Hat.wav', open_hat: 'oh/Open Hat.wav', clap: 'cp/Clap.wav', rim: 'rim/Rim Gated.wav', crash: 'cr/Crash.wav', ride: 'rd/Ride.wav' }) },
 
   { id: 'lo_fi', group: 'Electronic', name: 'Lo-fi tape', note: 'Muffled and soft, as if played back on tape', kick: { f0: 70, f1: 42, dec: 0.35, level: 0.7 }, drums: {
     snare: (o, t, v) => { pitchedHit(o, t, 160, 130, 0.25 * v, 0.15); noiseBurst(o, t, 'bandpass', 900, 0.5, 0.25, 0.4 * v); },
@@ -1914,9 +2137,9 @@ const KITS = [
     open_hat: (o, t, v) => pitchedHit(o, t, 1800, 1750, 0.12 * v, 0.6),
     clap: K_LAZY((o, t, v) => INSTR.cowbell(o, t, mtof(79), 0.5 * v)) } },
 ];
-let activeKit = KITS[0];
+let activeKit = KITS.find(k => k.id === '808') || KITS[0];
 const kitSel = $('kitSel');
-for (const g of ['Basic', 'Electronic', 'World']) {
+for (const g of ['Basic', 'Machines', 'Electronic', 'World']) {
   const og = document.createElement('optgroup');
   og.label = g;
   for (const k of KITS.filter(x => x.group === g)) og.append(new Option(k.name, k.id));
@@ -1926,6 +2149,7 @@ kitSel.value = activeKit.id;
 kitSel.addEventListener('change', () => {
   activeKit = KITS.find(k => k.id === kitSel.value) || KITS[0];
   kitSel.title = activeKit.note;
+  preloadSamples();
 });
 kitSel.title = activeKit.note;
 
@@ -1933,15 +2157,22 @@ kitSel.title = activeKit.note;
 let congaCount = 0;
 let congaOct = 0;   // -2 to +2 octaves
 function congaHit(t) {
-  const base = $('pitch').value === 'rand'
-    ? CONGA_NOTES[Math.floor(Math.random() * CONGA_NOTES.length)]
-    : CONGA_NOTES[congaCount % CONGA_NOTES.length];
+  const hi = $('pitch').value === 'rand' ? Math.floor(Math.random() * CONGA_NOTES.length) : congaCount % CONGA_NOTES.length;
   congaCount++;
-  const f = mtof(base + congaOct * 12) * tuneOf(bus.conga), v = 0.85 + Math.random() * 0.3;
-  INSTR[$('congaInst').value](bus.conga, t, f, v);
+  const f = mtof(CONGA_NOTES[hi] + congaOct * 12) * tuneOf(bus.conga), v = 0.85 + Math.random() * 0.3;
+  const name = $('congaInst').value, S = SAMP_INSTR[name], s = S && SAMPLES.get(hi && S.hi ? S.hi : S.lo);
+  if (s) {
+    // two samples alternate low and high; a single one alternates with a small step up in pitch
+    const step = S.hi ? 1 : (hi ? Math.pow(2, 3 / 12) : 1);
+    playSample(bus.conga, t, s, v, clamp(step * Math.pow(2, congaOct) * tuneOf(bus.conga), 0.25, 4), 2, bus.conga);
+    return;
+  }
+  INSTR[name](bus.conga, t, f, v);
 }
 
 function kickHit(t, dest) {
+  const ks = activeKit.samples && SAMPLES.get(activeKit.samples.kick);
+  if (ks) { playSample(dest || bus.kick, t, ks, 1, tuneOf(bus.kick), 2, bus.kick); return; }
   const K = activeKit.kick || KICK;   // the kit's kick, or the standard one
   const o = ctx.createOscillator(), g = ctx.createGain();
   const tu = tuneOf(bus.kick), D = dec(bus.kick, K.dec);
@@ -1953,8 +2184,10 @@ function kickHit(t, dest) {
   o.start(t); o.stop(t + D + 0.05);
 }
 
-// Shaker: a short burst of high noise, a little different every time
+// Shaker: a sampled shaker, or the original burst of high noise (a little different every time)
 function shakerHit(t) {
+  const ss = SAMPLES.get(SHAKER_SOUNDS[$('shakerInst').value]);
+  if (ss) { playSample(bus.shaker, t, ss, 0.8 + Math.random() * 0.4, tuneOf(bus.shaker), 1, bus.shaker); return; }
   const n = ctx.createBufferSource(), hp = ctx.createBiquadFilter(), bp = ctx.createBiquadFilter(), g = ctx.createGain();
   n.buffer = noiseBuf;
   hp.type = 'highpass'; hp.frequency.value = 6000;
@@ -1965,6 +2198,21 @@ function shakerHit(t) {
   n.connect(hp).connect(bp).connect(g).connect(bus.shaker);
   n.start(t, Math.random() * 0.05); n.stop(t + dec(bus.shaker, 0.06));
 }
+
+// Load what the current kit, instrument and shaker need, so the first bar already plays the samples
+function wantedSamples() {
+  const want = new Set();
+  if (activeKit.samples) { Object.values(activeKit.samples).forEach(p => want.add(p)); Object.values(SHARED_SAMPLES).forEach(p => want.add(p)); }
+  const ci = SAMP_INSTR[$('congaInst').value];
+  if (ci) { want.add(ci.lo); if (ci.hi) want.add(ci.hi); }
+  const sh = SHAKER_SOUNDS[$('shakerInst').value];
+  if (sh) want.add(sh);
+  return [...want];
+}
+function preloadSamples(ms) { return loadSamples(wantedSamples(), ms); }
+$('congaInst').addEventListener('change', () => preloadSamples());
+$('shakerInst').addEventListener('change', () => preloadSamples());
+setTimeout(() => preloadSamples(), 600);
 
 // ---------- Your sound: a file of your own, played on a rhythm from the drum kit (from Three Cities) ----------
 // Each step of the chosen rhythm shapes the sound: velocity, filter, start point and pitch.
@@ -2102,10 +2350,48 @@ $('sampFile').addEventListener('change', e => { const f = e.target.files && e.ta
 // Freesound goes through the Worker in freesound-worker/worker.js. Paste the Worker's address here once it is deployed.
 const FREESOUND_PROXY = 'https://rhythm-freesound.jim-4cc.workers.dev';
 const sampleBrowser = SampleBrowser.create({ baseUrl: FREESOUND_PROXY, getContext: () => ctx });
+// Kinds of sound to browse. Voices, language and singing from a place make the piece feel personal.
+const SOUND_CATEGORIES = [
+  { id: 'voices', label: 'Voices and chat', terms: ['crowd conversation', 'people talking', 'street voices'] },
+  { id: 'language', label: 'Language', terms: ['speech', 'spoken words', 'greeting'] },
+  { id: 'singing', label: 'Singing', terms: ['singing', 'choir', 'humming'] },
+  { id: 'transport', label: 'Transport', terms: ['train station', 'bus', 'tram'] },
+  { id: 'landmarks', label: 'Landmarks', terms: ['church bells', 'fountain', 'harbour'] },
+  { id: 'street', label: 'Street and market', terms: ['street market', 'cafe', 'busker'] },
+  { id: 'nature', label: 'Nature and weather', terms: ['birds', 'rain', 'wind'] },
+];
+// The main spoken language of a place, by country name or code, so the Language chip can ask for the right one
+const LANGUAGE_OF = {
+  dk: 'Danish', denmark: 'Danish', gb: 'English', uk: 'English', 'united kingdom': 'English', us: 'English', usa: 'English', 'united states': 'English',
+  ie: 'English', ireland: 'English', au: 'English', australia: 'English', nz: 'English', 'new zealand': 'English', jm: 'Patois', jamaica: 'Patois',
+  fr: 'French', france: 'French', de: 'German', germany: 'German', at: 'German', austria: 'German', es: 'Spanish', spain: 'Spanish',
+  mx: 'Spanish', mexico: 'Spanish', ar: 'Spanish', argentina: 'Spanish', co: 'Spanish', colombia: 'Spanish', cl: 'Spanish', chile: 'Spanish', pe: 'Spanish', peru: 'Spanish', cu: 'Spanish', cuba: 'Spanish',
+  it: 'Italian', italy: 'Italian', pt: 'Portuguese', portugal: 'Portuguese', br: 'Portuguese', brazil: 'Portuguese', nl: 'Dutch', netherlands: 'Dutch',
+  se: 'Swedish', sweden: 'Swedish', no: 'Norwegian', norway: 'Norwegian', fi: 'Finnish', finland: 'Finnish', is: 'Icelandic', iceland: 'Icelandic',
+  pl: 'Polish', poland: 'Polish', cz: 'Czech', czechia: 'Czech', 'czech republic': 'Czech', hu: 'Hungarian', hungary: 'Hungarian', ro: 'Romanian', romania: 'Romanian',
+  gr: 'Greek', greece: 'Greek', tr: 'Turkish', turkey: 'Turkish', 'türkiye': 'Turkish', ru: 'Russian', russia: 'Russian', ua: 'Ukrainian', ukraine: 'Ukrainian',
+  jp: 'Japanese', japan: 'Japanese', kr: 'Korean', 'south korea': 'Korean', cn: 'Mandarin', china: 'Mandarin', tw: 'Mandarin', taiwan: 'Mandarin', hk: 'Cantonese', 'hong kong': 'Cantonese',
+  in: 'Hindi', india: 'Hindi', pk: 'Urdu', pakistan: 'Urdu', bd: 'Bengali', bangladesh: 'Bengali', th: 'Thai', thailand: 'Thai', vn: 'Vietnamese', vietnam: 'Vietnamese',
+  id: 'Indonesian', indonesia: 'Indonesian', ph: 'Tagalog', philippines: 'Tagalog', eg: 'Arabic', egypt: 'Arabic', ma: 'Arabic', morocco: 'Arabic', sa: 'Arabic', 'saudi arabia': 'Arabic', ae: 'Arabic', 'united arab emirates': 'Arabic',
+  il: 'Hebrew', israel: 'Hebrew', ir: 'Persian', iran: 'Persian', ke: 'Swahili', kenya: 'Swahili', tz: 'Swahili', tanzania: 'Swahili', et: 'Amharic', ethiopia: 'Amharic',
+};
+function placeLanguage() {
+  const c = String((state.place && state.place.country) || '').trim().toLowerCase();
+  return LANGUAGE_OF[c] || null;
+}
 let sbMounted = false, sbPanel = null, sbLastCity = '';
 function openFreesound() {
   const ov = $('sbOverlay');
-  if (!sbMounted) { sbPanel = SampleBrowser.mount($('sbMount'), sampleBrowser, (buf, item) => setYourBuffer(buf, item.name)); sbMounted = true; }
+  if (!sbMounted) {
+    sbPanel = SampleBrowser.mount($('sbMount'), sampleBrowser, (buf, item) => setYourBuffer(buf, item.name), {
+      categories: SOUND_CATEGORIES,
+      place: () => (state.place ? state.place.name : ''),
+      terms: cat => { const l = cat.id === 'language' && placeLanguage(); return l ? [`${l} speech`, `${l} conversation`, `${l} words`] : cat.terms; },
+      label: cat => { const l = cat.id === 'language' && placeLanguage(); return l ? `Language: ${l}` : cat.label; },
+    });
+    sbMounted = true;
+  }
+  if (sbPanel) sbPanel.update();   // the Language chip follows the place
   ov.hidden = false;
   // the search starts on the city you are looking at
   const city = state.place ? state.place.name : '';
@@ -2174,6 +2460,7 @@ function tick() {
 
 async function start() {
   await ctx.resume();
+  await preloadSamples(3500);
   subSetup();
   twin.off = 0;
   autoT0 = ctx.currentTime;
@@ -2934,7 +3221,7 @@ function readSharedLink() {
 }
 function applyShared(s) {
   if (s.follow) { state.follow = true; $('follow').setAttribute('aria-pressed', 'true'); }
-  if (s.kit && KITS.some(k => k.id === s.kit)) { kitSel.value = s.kit; activeKit = KITS.find(k => k.id === s.kit); kitSel.title = activeKit.note; }
+  if (s.kit && KITS.some(k => k.id === s.kit)) { kitSel.value = s.kit; activeKit = KITS.find(k => k.id === s.kit); kitSel.title = activeKit.note; preloadSamples(); }
   const want = (s.genre || '').toLowerCase();
   const g = state.city && state.city.genres.find(x => x.name.toLowerCase() === want);
   if (g) selectGenre(g);
