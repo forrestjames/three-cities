@@ -1439,12 +1439,15 @@ function laneBus(v) {
   return laneOut[v];
 }
 // The shaker plays the genre's shaker if it has one, otherwise a hat or ride from the kit
+const HAT_VOICES = ['closed_hat', 'open_hat', 'hat_roll', 'hi_hat_pedal', 'ride'];
 const SHAKER_FALLBACK = [];   // off: a hat is not a shaker, so genres without one keep the steady shaker
 function shakerSrc(k) {
   if (!k || !k.steps) return null;
   if (k.sh && k.sh.some(Boolean)) return { bits: k.sh, src: null };
   const v = SHAKER_FALLBACK.find(x => k.voices && k.voices[x] && k.voices[x].some(Boolean));
   if (v) return { bits: k.voices[v], src: v };
+  // a hat or ride already keeps time, so the steady shaker would only crowd it
+  if (k.voices && HAT_VOICES.some(x => k.voices[x] && k.voices[x].some(Boolean))) return null;
   // nothing shaker-like in this genre: keep time on every second step
   return { bits: Array.from({ length: k.steps }, (_, i) => (i % 2 === 0 ? 1 : 0)), src: null, steady: true };
 }
@@ -1482,7 +1485,7 @@ function renderLanes() {
   $('shakerCard').classList.toggle('off', !has);
   $('shakerCard').querySelectorAll('input, select, button').forEach(el => { el.disabled = !has; });
   const sh = shakerSrc(state.kick);
-  $('shakerCard').querySelector('h2 small').textContent = sh && sh.steady ? 'keeps time: none in this genre' : sh && sh.src ? `from the ${sh.src.replace(/_/g, ' ')}` : 'from the genre';
+  $('shakerCard').querySelector('h2 small').textContent = !sh ? 'off: the hats keep time here' : sh.steady ? 'keeps time: none in this genre' : sh.src ? `from the ${sh.src.replace(/_/g, ' ')}` : 'from the genre';
   const box = $('kit');
   box.innerHTML = '';
   kitCells = {};
