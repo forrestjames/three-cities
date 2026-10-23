@@ -431,6 +431,20 @@
   .sidecard { position: relative; gap: 16px; }
   .sidebox { display: flex; flex-direction: column; gap: 6px; }
   .sidebox .label { margin: 0; }
+  .sidecard { overflow-y: auto; }
+  .chord-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+  .chord-fold { display: inline-flex; align-items: center; gap: 8px; background: none; border: 0; padding: 2px 0; cursor: pointer; color: inherit; }
+  .chord-chev { width: 6px; height: 6px; border-right: 1.5px solid var(--ink-dim); border-bottom: 1.5px solid var(--ink-dim); transform: rotate(-45deg); transition: transform 0.2s; }
+  .chord-fold[aria-expanded="true"] .chord-chev { transform: rotate(45deg); }
+  .chord-fold:focus-visible { outline: 1px solid var(--accent); outline-offset: 3px; }
+  .chord-body { display: flex; flex-direction: column; gap: 10px; padding: 10px; border: 1px solid rgba(243, 236, 230, 0.07); border-left: 2px solid rgba(190, 150, 230, 0.7); background: rgba(190, 150, 230, 0.05); }
+  .chord-body[hidden] { display: none; }
+  .chord-knobs { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 2px; }
+  .chord-knobs .knob-cell { min-width: 0; }
+  .chord-knobs .knob-cell .label { font-size: 9.5px; letter-spacing: 0.06em; }
+  .chord-knobs .dial { width: 38px; height: 38px; }
+  .chord-row { display: flex; align-items: flex-end; justify-content: space-between; gap: 8px; flex-wrap: wrap; }
+  .chord-note { margin: 0; font-size: 10.5px; line-height: 1.4; color: var(--ink-dim); }
   .ringplace b { font-size: 30px; }
   .wxbtn { align-items: flex-start; text-align: left; width: 100%; }
   .wxbtn b { font-size: 26px; }
@@ -632,6 +646,27 @@
           <button type="button" data-mode="euclid" aria-pressed="false" title="Evenly spaced Euclidean rhythm">Euclid</button>
           <button type="button" data-mode="drift" aria-pressed="true" title="Each rotation, random hits move one step">Drift</button>
           <button type="button" data-mode="cluster" aria-pressed="false" title="Hits bunch together in random bursts, new each rotation">Cluster</button>
+        </div>
+      </div>
+      <div class="sidebox chord-sec" id="chordSec">
+        <div class="chord-head">
+          <button id="chordFold" class="chord-fold" type="button" aria-expanded="false" aria-controls="chordBody" title="Show or hide the chord controls"><span class="label">Chords</span><span class="chord-chev" aria-hidden="true"></span></button>
+          <button id="chordOn" class="btn small tog" type="button" aria-pressed="false" title="A slow bed of chords under the rings. It follows the conga's pitch."><i class="tog-dot" aria-hidden="true"></i><span id="chordOnText">Off</span></button>
+        </div>
+        <div id="chordBody" class="chord-body" hidden>
+          <div class="knobs chord-knobs" style="--n:4">
+            <div class="knob-cell"><div class="head"><span class="label">Level</span><output id="chordLevelOut">40</output></div><input id="chordLevel" type="range" min="0" max="100" value="40" aria-label="Chords level"></div>
+            <div class="knob-cell"><div class="head"><span class="label">Filter</span><output id="chordToneOut">16k</output></div><input id="chordTone" type="range" min="0" max="100" value="100" aria-label="Chords filter"></div>
+            <div class="knob-cell"><div class="head"><span class="label">Reverb</span><output id="chordRevOut">55</output></div><input id="chordRev" type="range" min="0" max="100" value="55" aria-label="Chords reverb"></div>
+            <div class="knob-cell"><div class="head"><span class="label">Delay</span><output id="chordDelOut">0</output></div><input id="chordDel" type="range" min="0" max="100" value="0" aria-label="Chords delay"></div>
+          </div>
+          <div class="field"><label class="label" for="chordSound">Sound</label><select id="chordSound"><option value="warm">Warm pad</option><option value="glass">Glass</option><option value="air">Air</option><option value="tape">Tape strings</option><option value="strings">Strings</option><option value="choir">Choir</option><option value="organ">Soft organ</option><option value="bowed" selected>Bowed</option><option value="shimmer">Shimmer</option></select></div>
+          <div class="field"><label class="label" for="chordMove">Change</label><select id="chordMove"><option value="4" selected>4 bars</option><option value="8">8 bars</option><option value="16">16 bars</option><option value="32">32 bars</option><option value="drone">Drone</option></select></div>
+          <div class="chord-row">
+            <div class="field"><span class="label">Octave</span><div class="row-inline"><button id="chordOctDown" class="btn small" type="button" aria-label="Chords down an octave">-</button><output id="chordOctOut" aria-live="polite">0</output><button id="chordOctUp" class="btn small" type="button" aria-label="Chords up an octave">+</button></div></div>
+            <button id="chordAuto" class="btn small tog" type="button" aria-pressed="false" title="The filter opens across each chord and closes as the next one arrives"><i class="tog-dot" aria-hidden="true"></i>Auto filter</button>
+          </div>
+          <p class="chord-note" id="chordNote">The key follows the conga: its Tune and Octave move the chords too.</p>
         </div>
       </div>
       <p id="readout" class="readout"></p>
@@ -2566,6 +2601,173 @@ document.querySelectorAll('#sampShape button').forEach(b => {
   b.addEventListener('click', () => { const k = b.dataset.shape; yours.shape[k] = !yours.shape[k]; b.setAttribute('aria-pressed', String(yours.shape[k])); });
 });
 
+// ---------- Chords: a slow bed of chords under the rings (the same as Three Cities) ----------
+// The key follows the conga: its Tune moves the chords with it, and its octave buttons lift or drop them.
+// A new chord arrives every few bars from a short progression in the conga's minor key; each swells in and fades as the next comes.
+const CHORD = { on: false, level: 0.4, voices: [], sound: 'bowed', bars: 4, drone: false, tone: 1, auto: false, shift: 0, rev: 0.55, del: 0,
+  bus: null, filt: null, revSend: null, revIn: null, delSend: null, delay: null, prog: null, sig: '', timer: null };
+const CHORD_SCALE = [0, 2, 3, 5, 7, 8, 10];   // natural minor, which holds the conga's A and E
+const CHORD_PROGS = [[0, 5, 3, 4], [0, 3, 4, 0], [0, 4, 5, 3], [5, 3, 0, 4]];   // i VI iv v, i iv v i, i v VI iv, VI iv i v
+const padOsc = (type, f, out, t, end, gain = 1, det = 0) => {
+  const o = ctx.createOscillator(); o.type = type; o.frequency.value = f; o.detune.value = det;
+  const g = ctx.createGain(); g.gain.value = gain; o.connect(g).connect(out); o.start(t); o.stop(end); return o;
+};
+const padLfo = (rate, depth, param, t, end) => {
+  const l = ctx.createOscillator(); l.frequency.value = rate; const d = ctx.createGain(); d.gain.value = depth;
+  l.connect(d).connect(param); l.start(t); l.stop(end); return l;
+};
+// Each pad builds one held note into "out" and returns its sources so they can be stopped.
+// bright scales the filter, gain evens out the levels, attack and release are in seconds.
+const PADS = {
+  warm:    { bright: 1, gain: 1, attack: 2.4, release: 1.4, make: (f, out, t, end) =>
+             [padOsc('sawtooth', f, out, t, end, 0.35, -6), padOsc('sawtooth', f, out, t, end, 0.35, 6), padOsc('sine', f, out, t, end, 0.9)] },
+  glass:   { bright: 5, gain: 1.15, attack: 3, release: 2, make: (f, out, t, end) => {
+             const a = padOsc('sine', f, out, t, end, 0.9), b = padOsc('sine', f * 2, out, t, end, 0.28), c = padOsc('sine', f * 3, out, t, end, 0.08);
+             return [a, b, c, padLfo(0.18 + Math.random() * 0.08, 4, a.detune, t, end), padLfo(0.23, 6, b.detune, t, end)]; } },
+  air:     { bright: 4, gain: 4, attack: 3.5, release: 2.2, make: (f, out, t, end) => {
+             const n = ctx.createBufferSource(); n.buffer = noiseBuf; n.loop = true;
+             const bp = ctx.createBiquadFilter(); bp.type = 'bandpass'; bp.frequency.value = f * 2; bp.Q.value = 28;
+             const bp2 = ctx.createBiquadFilter(); bp2.type = 'bandpass'; bp2.frequency.value = f * 4; bp2.Q.value = 34;
+             const ng = ctx.createGain(); ng.gain.value = 1.6; n.connect(bp).connect(ng).connect(out); n.connect(bp2).connect(ng);
+             n.start(t, Math.random() * 0.05); n.stop(end);
+             return [n, padOsc('sine', f, out, t, end, 0.25)]; } },
+  tape:    { bright: 1.5, gain: 2.8, attack: 2.2, release: 1.6, make: (f, out, t, end) => {
+             const os = [-11, -3, 4, 12].map(d => padOsc('sawtooth', f, out, t, end, 0.26, d + Math.random() * 3));
+             return os.concat(os.map(o => padLfo(0.32 + Math.random() * 0.1, 7, o.detune, t, end))); } },
+  strings: { bright: 2.4, gain: 3.6, attack: 1.8, release: 1.4, make: (f, out, t, end) =>
+             [padOsc('sawtooth', f, out, t, end, 0.3, -7), padOsc('sawtooth', f, out, t, end, 0.3, 7), padOsc('triangle', f * 2, out, t, end, 0.12)] },
+  choir:   { bright: 3.5, gain: 10, attack: 2.6, release: 1.8, make: (f, out, t, end) => {
+             const mix = ctx.createGain(), vib = [];
+             [[700, 6, 1], [1220, 8, 0.5], [2600, 10, 0.25]].forEach(([fr, q, g]) => {
+               const bp = ctx.createBiquadFilter(); bp.type = 'bandpass'; bp.frequency.value = fr; bp.Q.value = q;
+               const gg = ctx.createGain(); gg.gain.value = g; mix.connect(bp).connect(gg).connect(out); });
+             const os = [-5, 5].map(d => padOsc('sawtooth', f, mix, t, end, 0.5, d));
+             os.forEach(o => vib.push(padLfo(4.6 + Math.random() * 0.6, 9, o.detune, t, end)));
+             return os.concat(vib); } },
+  organ:   { bright: 2.6, gain: 0.9, attack: 1.2, release: 1, make: (f, out, t, end) => {
+             const trem = ctx.createGain(); trem.gain.value = 0.85; trem.connect(out);
+             const os = [[0.5, 0.45], [1, 0.8], [2, 0.3], [3, 0.12]].map(([m, g]) => padOsc('sine', f * m, trem, t, end, g));
+             return os.concat([padLfo(0.9, 0.12, trem.gain, t, end)]); } },
+  bowed:   { bright: 1.8, gain: 2.2, attack: 3.2, release: 2, make: (f, out, t, end) => {
+             const lp = ctx.createBiquadFilter(); lp.type = 'lowpass'; lp.Q.value = 1.2; lp.connect(out);
+             lp.frequency.setValueAtTime(f * 1.2, t); lp.frequency.linearRampToValueAtTime(f * 4, t + 3.5);
+             return [padOsc('sawtooth', f, lp, t, end, 0.45, -3), padOsc('triangle', f, lp, t, end, 0.6, 3), padLfo(5, 6, lp.detune, t, end)]; } },
+  shimmer: { bright: 8, gain: 0.9, attack: 4, release: 2.6, wet: 1.2, make: (f, out, t, end) => {
+             const fl = ctx.createGain(); fl.gain.value = 0.6; fl.connect(out);
+             return [padOsc('sine', f * 2, fl, t, end, 0.7), padOsc('sine', f * 4, fl, t, end, 0.3, 5), padOsc('sine', f * 1, out, t, end, 0.3),
+                     padLfo(0.4 + Math.random() * 0.4, 0.35, fl.gain, t, end)]; } },
+};
+const chordFilterHz = tone => 250 * Math.pow(16000 / 250, tone);   // a lowpass from 250 Hz up to 16 kHz, open by default
+function chordBus() {
+  if (!CHORD.bus) {
+    CHORD.filt = ctx.createBiquadFilter(); CHORD.filt.type = 'lowpass'; CHORD.filt.Q.value = 0.5;
+    CHORD.bus = ctx.createGain(); CHORD.bus.gain.value = 1;
+    CHORD.filt.connect(CHORD.bus); CHORD.bus.connect(master);
+    // reverb send: a hall of its own, so the bed can sit far back
+    const conv = ctx.createConvolver(); conv.buffer = roomImpulse(3.5);
+    CHORD.revIn = ctx.createGain();
+    CHORD.revSend = ctx.createGain(); CHORD.revSend.gain.value = CHORD.rev;
+    CHORD.bus.connect(CHORD.revSend).connect(CHORD.revIn); CHORD.revIn.connect(conv).connect(master);
+    // delay send: a dotted eighth that follows the tempo, with each repeat a little darker
+    CHORD.delay = ctx.createDelay(2.0);
+    const fb = ctx.createGain(), lp = ctx.createBiquadFilter(), wet = ctx.createGain();
+    fb.gain.value = 0.4; lp.type = 'lowpass'; lp.frequency.value = 2800; wet.gain.value = 0.8;
+    CHORD.delay.connect(fb); fb.connect(lp); lp.connect(CHORD.delay); CHORD.delay.connect(wet).connect(master);
+    CHORD.delSend = ctx.createGain(); CHORD.delSend.gain.value = CHORD.del;
+    CHORD.bus.connect(CHORD.delSend).connect(CHORD.delay);
+    chordApplyFilter();
+  }
+  return CHORD.filt;
+}
+function chordApplyFilter() {
+  if (!CHORD.filt || CHORD.auto) return;
+  CHORD.filt.frequency.setTargetAtTime(chordFilterHz(CHORD.tone), ctx.currentTime, 0.08);
+}
+// Auto: the filter is shut as a chord arrives, then opens slowly across it, as the sweep does in Three Cities
+function chordAutoSweep(n, t) {
+  const cyc = 16 * (CHORD.drone ? 16 : CHORD.bars), ph = (n % cyc) / cyc;
+  const top = chordFilterHz(CHORD.tone), low = 260;
+  const k = ph < 0.03 ? 1 - ph / 0.03 : Math.pow((ph - 0.03) / 0.97, 2.2);
+  CHORD.filt.frequency.setTargetAtTime(low * Math.pow(top / low, clamp(k, 0, 1)), t, ph < 0.03 ? 0.04 : 0.12);
+}
+// The key follows the conga: A plus its Tune, and its octave buttons add to the chords' own
+function chordKey() {
+  const semis = Math.round(12 * Math.log2(tuneOf(bus.conga))), pc = (((CONGA_NOTES[0] + semis) % 12) + 12) % 12;
+  return { k: pc > 6 ? pc - 12 : pc, oct: clamp(CHORD.shift + congaOct, -2, 2) };
+}
+function chordRootAt(n) {
+  if (!CHORD.prog) CHORD.prog = CHORD_PROGS[Math.floor(Math.random() * CHORD_PROGS.length)].slice();
+  if (CHORD.drone) return 0;
+  return CHORD.prog[Math.floor(n / (16 * CHORD.bars)) % CHORD.prog.length];
+}
+function chordBed(t, root, stepDur) {
+  if (!CHORD.on || CHORD.level <= 0) return;
+  const n = CHORD_SCALE.length, len = 16 * (CHORD.drone ? 1024 : CHORD.bars) * stepDur;   // a drone is held for 1024 bars, then re-armed
+  const { k, oct } = chordKey();
+  const note = d => 48 + k + CHORD_SCALE[((d % n) + n) % n] + 12 * Math.floor(d / n);
+  const notes = [note(root) - 12, note(root), note(root + 2), note(root + 4)].map(m => m + 12 * oct);
+  CHORD.voices.forEach(v => { try { v.g.gain.cancelScheduledValues(t); v.g.gain.setTargetAtTime(0, t, 1.2); v.stop(t + 5); } catch (e) {} });
+  const P = PADS[CHORD.sound] || PADS.warm;
+  CHORD.voices = notes.map((m, i) => {
+    const f = 440 * Math.pow(2, (m - 69) / 12), g = ctx.createGain(), lp = ctx.createBiquadFilter();
+    lp.type = 'lowpass'; lp.Q.value = 0.4; lp.frequency.value = Math.min(16000, 1450 * P.bright);
+    const peak = CHORD.level * (i === 0 ? 0.03 : 0.019) * P.gain;   // a bed, not another voice
+    g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(peak, t + P.attack);
+    g.gain.setValueAtTime(peak, t + len); g.gain.setTargetAtTime(0, t + len, P.release);
+    const srcs = P.make(f, lp, t, t + len + 8, i);
+    lp.connect(g).connect(chordBus());
+    if (P.wet) { const ws = ctx.createGain(); ws.gain.value = P.wet; g.connect(ws).connect(CHORD.revIn); }
+    return { g, stop: when => srcs.forEach(o => { try { o.stop(when); } catch (e) {} }) };
+  });
+}
+function chordFade(secs = 0.8) {
+  const t = ctx.currentTime;
+  CHORD.voices.forEach(v => { try { v.g.gain.cancelScheduledValues(t); v.g.gain.setTargetAtTime(0, t, secs); v.stop(t + 4); } catch (e) {} });
+  CHORD.voices = [];
+}
+const stepSecs = () => 60 / clamp(Number($('bpm').value) || 100, 60, 200) / 4;
+// Keep the bed in the conga's key: if its Tune or octave change, the chords move to match a moment later
+function chordFollow() {
+  const { k, oct } = chordKey(), sig = k + '|' + oct;
+  if (sig === CHORD.sig) return;
+  CHORD.sig = sig;
+  if (!CHORD.on || !playing) return;
+  clearTimeout(CHORD.timer);
+  CHORD.timer = setTimeout(() => { if (CHORD.on && playing) chordBed(ctx.currentTime + 0.05, chordRootAt(stepN), stepSecs()); }, 350);
+}
+{
+  const on = $('chordOn'), fold = $('chordFold'), body = $('chordBody'), note = $('chordNote');
+  const show = open => { body.hidden = !open; fold.setAttribute('aria-expanded', String(open)); };
+  fold.addEventListener('click', () => show(body.hidden));
+  on.addEventListener('click', () => {
+    CHORD.on = !CHORD.on;
+    on.setAttribute('aria-pressed', String(CHORD.on)); $('chordOnText').textContent = CHORD.on ? 'On' : 'Off';
+    if (CHORD.on) { show(true); if (playing) chordBed(ctx.currentTime + 0.05, chordRootAt(stepN), stepSecs()); }
+    else chordFade();
+  });
+  const rearm = () => { if (CHORD.on && playing) chordBed(ctx.currentTime + 0.05, chordRootAt(stepN), stepSecs()); };
+  $('chordLevel').addEventListener('input', e => { CHORD.level = Number(e.target.value) / 100; $('chordLevelOut').textContent = e.target.value; });
+  $('chordLevel').addEventListener('change', rearm);   // a new level applies to the next chord and to this one when you let go
+  $('chordSound').addEventListener('change', e => { CHORD.sound = e.target.value; rearm(); });
+  $('chordMove').addEventListener('change', e => { const v = e.target.value; CHORD.drone = v === 'drone'; if (!CHORD.drone) CHORD.bars = Number(v); rearm(); });
+  const readout = hz => (hz >= 1000 ? (hz / 1000).toFixed(hz >= 10000 ? 0 : 1) + 'k' : Math.round(hz) + ' Hz');
+  $('chordTone').addEventListener('input', e => { CHORD.tone = Number(e.target.value) / 100; $('chordToneOut').textContent = readout(chordFilterHz(CHORD.tone)); chordApplyFilter(); });
+  $('chordAuto').addEventListener('click', () => {
+    CHORD.auto = !CHORD.auto; $('chordAuto').setAttribute('aria-pressed', String(CHORD.auto));
+    note.textContent = CHORD.auto ? 'Auto: the filter starts shut on each new chord and opens across it. Filter sets how far.' : 'The key follows the conga: its Tune and Octave move the chords too.';
+    if (!CHORD.auto) chordApplyFilter();
+  });
+  for (const [id, key, node] of [['chordRev', 'rev', 'revSend'], ['chordDel', 'del', 'delSend']]) {
+    $(id).addEventListener('input', e => { CHORD[key] = Number(e.target.value) / 100; $(id + 'Out').textContent = e.target.value; if (CHORD[node]) CHORD[node].gain.setTargetAtTime(CHORD[key], ctx.currentTime, 0.1); });
+  }
+  const octLabel = () => { $('chordOctOut').textContent = CHORD.shift ? (CHORD.shift > 0 ? '+' : '-') + Math.abs(CHORD.shift) : '0'; };
+  const octMove = d => { CHORD.shift = clamp(CHORD.shift + d, -2, 2); octLabel(); chordFollow(); };
+  $('chordOctUp').addEventListener('click', () => octMove(1));
+  $('chordOctDown').addEventListener('click', () => octMove(-1));
+  octLabel();
+  CHORD.sig = (() => { const { k, oct } = chordKey(); return k + '|' + oct; })();
+}
+
 // ---------- scheduler (sixteenth-note steps on the audio clock) ----------
 let playing = false, timer = null, nextTime = 0, stepN = 0, kickOn = true;
 let playRing = -1, playKick = -1, flashes = [];
@@ -2573,6 +2775,12 @@ const events = [];
 
 function schedule(t, n) {
   if (yours.buf) yoursStep(t, n);
+  // chords: a new one every few bars, and the filter's Auto sweep
+  if (n % (16 * (CHORD.drone ? 1024 : CHORD.bars)) === 0) {
+    if (n > 0 && n % (16 * 64) === 0 && CHORD.prog) { const k = 1 + Math.floor(Math.random() * 2); CHORD.prog = CHORD.prog.slice(k).concat(CHORD.prog.slice(0, k)); }   // every 64 bars the progression moves on a place or two
+    chordBed(t, chordRootAt(n), stepSecs());
+  }
+  if (CHORD.on && CHORD.auto && CHORD.filt && n % 2 === 0) chordAutoSweep(n, t);
   const k = state.kick ? n % state.kick.steps : -1;
   const r = state.pattern.length ? n % state.pattern.length : -1;
   // at the start of each rotation, Drift and Cluster make a new ring (same hits, same steps)
@@ -2609,6 +2817,8 @@ function tick() {
   const beats = (ctx.currentTime - autoT0) * bpm / 60;
   for (const name of ['kick', 'conga', 'shaker']) if (AUTO[name].on) applyAuto(name, beats);
   for (const n in fx) { const t = delaySeconds(fx[n], bpm); fx[n].delay.delayTime.value = t; fx[n].delayR.delayTime.value = t; }
+  if (CHORD.delay) CHORD.delay.delayTime.value = Math.min(1.9, 60 / bpm * 0.75);
+  chordFollow();
   while (nextTime < ctx.currentTime + 0.1) {
     schedule(nextTime, stepN);
     nextTime += stepDur;
@@ -2633,6 +2843,7 @@ function stop() {
   clearInterval(timer);
   playing = false;
   subGate(0);
+  chordFade(0.6);
   $('play').textContent = 'Play';
   events.length = 0;
   playRing = -1; playKick = -1; flashes = [];
@@ -3443,7 +3654,7 @@ for (const card of document.querySelectorAll('.voice')) {
 }
 
 // Delay times, styles, filter rates and waves: one tap each. The dropdown stays in the page, hidden, so the sound code is unchanged.
-const QUICK_PICK = /(Delay|Style|AutoRate|AutoWave)$|^pitch(Repeat)?$/;
+const QUICK_PICK = /(Delay|Style|AutoRate|AutoWave)$|^pitch(Repeat)?$|^chord(Sound|Move)$/;
 for (const sel of document.querySelectorAll('select')) {
   if (!QUICK_PICK.test(sel.id)) continue;
   const box = document.createElement('div');
