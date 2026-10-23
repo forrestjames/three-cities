@@ -1354,7 +1354,7 @@ body.perform.fit .pl-shape-btn { display: inline-block !important; }
     <div class="more-links"><a href="https://forrestjamesmusic.com" target="_blank" rel="noopener">forrestjamesmusic.com</a><a href="https://open.spotify.com/artist/14xv3fvOMsrHGIwGOTPm90" target="_blank" rel="noopener">Spotify</a><a href="https://forrestjames.bandcamp.com" target="_blank" rel="noopener">Bandcamp</a></div>
   </aside>
   <p class="foot"><a href="manual">Read the manual</a> · Weather from <a href="https://open-meteo.com" target="_blank" rel="noopener">Open-Meteo</a> · Forrest James</p>
-  <p class="foot credits">Grand piano: <a href="https://archive.org/details/SalamanderGrandPianoV3" target="_blank" rel="noopener">Salamander Grand Piano</a> by Alexander Holm, CC BY 3.0 · Harp: <a href="https://vis.versilstudios.net/vsco-community.html" target="_blank" rel="noopener">VSCO 2 Community Edition</a>, CC0</p>
+  <p class="foot credits">Grand piano: <a href="https://archive.org/details/SalamanderGrandPianoV3" target="_blank" rel="noopener">Salamander Grand Piano</a> by Alexander Holm, CC BY 3.0 · Harp: <a href="https://vis.versilstudios.net/vsco-community.html" target="_blank" rel="noopener">VSCO 2 Community Edition</a>, CC0 · Marimba, xylophone and soft mallets: <a href="https://github.com/sgossner/VCSL" target="_blank" rel="noopener">Versilian Community Sample Library</a>, CC0</p>
   <p class="foot credits" id="credits"></p>
 </main>
 
@@ -1384,6 +1384,7 @@ body.perform.fit .pl-shape-btn { display: inline-block !important; }
     ["pad", "Pad"], ["choir", "Choir"], ["acid", "Acid bass"], ["sub", "Sub bass"],
     ["drum", "Drum"], ["shaker", "Shaker"],
     ["piano", "Grand piano"], ["organ", "Organ"], ["harp", "Harp"],
+    ["marimbarec", "Marimba, recorded"], ["xylophone", "Xylophone, recorded"], ["vibes", "Soft mallets, recorded"],
     ["junopad", "Juno pad"], ["junostrings", "Juno strings"], ["junokeys", "Juno keys"],
     ["graincloud", "Grain cloud"], ["grainshimmer", "Grain shimmer"], ["graindust", "Grain dust"],
     ["handdrum", "Hand drum"], ["woodblock", "Woodblock"], ["tongue", "Tongue drum"], ["clave", "Clave"],
@@ -1395,7 +1396,7 @@ body.perform.fit .pl-shape-btn { display: inline-block !important; }
   const SOUND_GROUPS = [
     ["Your own", ["sample"]],   // first, so loading your own sound is easy to find
     ["Keys", ["felt", "piano", "epiano", "junokeys", "organ"]],
-    ["Mallets and bells", ["mallet", "marimba", "kalimba", "bell"]],
+    ["Mallets and bells", ["mallet", "marimba", "kalimba", "bell", "marimbarec", "xylophone", "vibes"]],
     ["Plucked", ["pluck", "string", "harp"]],
     ["Breath and leads", ["flute", "breath", "soft"]],
     ["Pads and strings", ["bowed", "pad", "choir", "junopad", "junostrings"]],
@@ -3211,13 +3212,20 @@ body.perform.fit .pl-shape-btn { display: inline-block !important; }
   }
   // ---------- recorded instruments ----------
   // Grand piano: Salamander Grand Piano by Alexander Holm (CC BY 3.0). Harp: VSCO 2 Community Edition (CC0).
+  // Marimba, xylophone and soft-mallet vibraphone: Versilian Community Sample Library (CC0), trimmed, mono, peak-matched.
   const SAMPLE_SETS = {
+    marimbarec: { dir: "samples/marimba/", fallback: "marimba",
+                  notes: "F1 C2 G2 B2 F3 C4 G4 B4 F5 C6" },
+    xylophone:  { dir: "samples/xylophone/", fallback: "marimba",
+                  notes: "G3 C4 G4 C5 G5 C6 G6 C7" },
+    vibes:      { dir: "samples/vibes/", fallback: "mallet",
+                  notes: "F2 A2 C3 E3 G3 B3 D4 F4 A4 C5 E5" },
     piano: { dir: "samples/piano/", fallback: "epiano",
              notes: "C1 Ds1 Fs1 A1 C2 Ds2 Fs2 A2 C3 Ds3 Fs3 A3 C4 Ds4 Fs4 A4 C5 Ds5 Fs5 A5 C6 Ds6 Fs6 A6 C7" },
     harp:  { dir: "samples/harp/", fallback: "string",
              notes: "E1 G1 B1 D2 F2 A2 C3 E3 G3 B3 D4 F4 A4 C5 E5 G5 B5 D6 F6 A6 D7 F7" }
   };
-  const NEEDS = { piano: "piano", harp: "harp", graincloud: "piano", grainshimmer: "harp" };
+  const NEEDS = { piano: "piano", harp: "harp", marimbarec: "marimbarec", xylophone: "xylophone", vibes: "vibes", graincloud: "piano", grainshimmer: "harp" };
   const sampleBank = {};
   const noteMidi = n => { const m = n.match(/^([A-G])(s?)(\d)$/); return 12 * (+m[3] + 1) + { C: 0, D: 2, E: 4, F: 5, G: 7, A: 9, B: 11 }[m[1]] + (m[2] ? 1 : 0); };
   function loadSamples(name) {
@@ -3389,7 +3397,7 @@ body.perform.fit .pl-shape-btn { display: inline-block !important; }
     b.filter.frequency.setTargetAtTime((650 + s.light * 250 + s.arc * 5200) * (1 - sl * 0.45) * (1 - 0.25 * crowd), t, 20);   // asleep or crowded, duller
     b.out.gain.setTargetAtTime((0.4 + 0.6 * s.light) * (1 - sl * 0.5), t, 20);   // and quieter still, the deeper the sleep
     b.rev.gain.setTargetAtTime(revSend(c), t, c.fxRev ? 0.3 : 0.05);
-    b.del.gain.setTargetAtTime(c.fxDel ? (["bell", "marimba", "kalimba", "epiano", "string", "piano", "harp", "junokeys", "felt", "mallet"].includes(c.voice) ? 0.22 : 0.12) * (1 + 0.6 * grooveSleep()) : 0, t, 0.05);   // at night notes trail on into the gaps
+    b.del.gain.setTargetAtTime(c.fxDel ? (["bell", "marimba", "kalimba", "epiano", "string", "piano", "harp", "junokeys", "felt", "mallet", "marimbarec", "xylophone", "vibes"].includes(c.voice) ? 0.22 : 0.12) * (1 + 0.6 * grooveSleep()) : 0, t, 0.05);   // at night notes trail on into the gaps
     // busier cities sit back a little, slower ones step forward, so pace changes don't upset the mix
     const busy = busyTrim(c);
     // an awake city keeps its voice down while the others sleep, like someone moving quietly through a sleeping house:
@@ -3444,6 +3452,7 @@ body.perform.fit .pl-shape-btn { display: inline-block !important; }
   }, 1000);
   const mtof = m => 440 * Math.pow(2, (m - 69) / 12);
 
+  const MALLET_REC = { marimbarec: { g: 0.42, hold: 1.2, tail: 0.3 }, xylophone: { g: 0.4, hold: 0.8, tail: 0.22 }, vibes: { g: 0.28, hold: 2.4, tail: 0.5 } };
   const PIANO_G = 1.25, HARP_G = 0.45, ORGAN_G = 0.085, JUNO_G = { pad: 0.1, strings: 0.13, keys: 0.11 }, GRAIN_G = { cloud: 4.5, shimmer: 3.4, dust: 6 };
   const FELT_G = { felt: 0.13, flute: 0.105, mallet: 0.13, bowed: 0.042 };   // mallet was 0.25: it sat high and bright and jumped out of the mix
   // awake while the other two sleep
@@ -3638,6 +3647,16 @@ body.perform.fit .pl-shape-btn { display: inline-block !important; }
       env.gain.linearRampToValueAtTime(lvl, t + 0.003);
       env.gain.setValueAtTime(lvl, t + hold); env.gain.setTargetAtTime(0, t + hold, piano ? 0.35 : 0.5);   // dampers down
       src.start(t); src.stop(t + hold + 2.2);
+    } else if (c.voice === "marimbarec" || c.voice === "xylophone" || c.voice === "vibes") {
+      // recorded mallets: each file was peak-matched, so no top-end boost here; a soft touch is darker and the note rings out on its own
+      const x = nearestSample(c.voice, midi), P = MALLET_REC[c.voice];
+      const src = ac.createBufferSource(); src.buffer = x.buf; src.playbackRate.value = Math.pow(2, (midi - x.midi) / 12);
+      const lp = ac.createBiquadFilter(); lp.type = "lowpass"; lp.frequency.value = 2200 + vel * vel * 9000;
+      src.connect(lp).connect(env);
+      const hold = P.hold * L, lvl = P.g * vel;
+      env.gain.linearRampToValueAtTime(lvl, t + 0.002);
+      env.gain.setValueAtTime(lvl, t + hold); env.gain.setTargetAtTime(0, t + hold, P.tail);
+      src.start(t); src.stop(t + hold + P.tail * 5 + 0.2);
     } else if (c.voice === "organ") {
       const trem = ac.createGain(); trem.gain.value = 0.85;
       const lfo = ac.createOscillator(); lfo.frequency.value = 5.5 + Math.random() * 0.7;   // a slow-ish rotating speaker
