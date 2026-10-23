@@ -473,9 +473,30 @@
   #rightcol.editing > #voicePanel { min-height: 0; }
   .vpwrap .vtabs { display: none; }
   .vpwrap .vpanel[hidden] { display: flex; }
-  .vpwrap .sec { margin-top: 6px; color: var(--ink-dim); }
   .vpwrap .row2 { flex-direction: column; align-items: stretch; }
-  .vpwrap .auto-row { flex-wrap: wrap; }
+  /* each section of a voice is a little panel, with a faint tint of its own so they are quick to tell apart */
+  .vpwrap .vpanel { padding: 9px 10px 11px; gap: 8px; border: 1px solid rgba(243, 236, 230, 0.07); border-left-width: 2px; background: rgba(243, 236, 230, 0.03); }
+  .vpwrap .vpanel[data-panel="sound"] { border-left-color: rgba(208, 138, 106, 0.7); }
+  .vpwrap .vpanel[data-panel="fx"] { border-left-color: rgba(157, 180, 232, 0.7); background: rgba(157, 180, 232, 0.05); }
+  .vpwrap .vpanel[data-panel="auto"] { border-left-color: rgba(111, 195, 166, 0.7); background: rgba(111, 195, 166, 0.05); }
+  .vpwrap .voice { gap: 10px; }
+  .vpwrap .sec { margin: 0; font-size: 9.5px; letter-spacing: .16em; }
+  .vpwrap .row2 { gap: 8px; }
+  .vpwrap .vpanel[data-panel="fx"] .knobs { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .vpwrap .knobs .knob-cell { min-width: 0; }
+  /* the instrument is chosen in the heading, so it reads as a title you can change */
+  .card .vhead select.hdr-sel { width: auto; appearance: none; -webkit-appearance: none; font: inherit; letter-spacing: inherit; text-transform: uppercase; color: var(--ink); background: transparent url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' fill='none' stroke='%23c9bfb7' stroke-width='1.4'/%3E%3C/svg%3E") no-repeat right 2px center / 9px; border: 0; border-bottom: 1px dashed var(--line); padding: 0 16px 1px 0; cursor: pointer; max-width: 100%; }
+  .card .vhead select.hdr-sel:hover { border-bottom-color: var(--ink-dim); }
+  .card .vhead select.hdr-sel:focus-visible { outline: 1px solid var(--accent); outline-offset: 3px; }
+  .hdr-sel option { font: 13px var(--mono); text-transform: none; color: #1a1210; }
+  /* auto filter: On sits beside the two knobs, then Rate and Wave under them */
+  .vpwrap .vpanel[data-panel="auto"] { display: grid; grid-template-columns: auto minmax(0, 1fr); column-gap: 10px; row-gap: 6px; align-items: center; }
+  .vpwrap .vpanel[data-panel="auto"] > .sec { grid-column: 1 / -1; }
+  .vpwrap .vpanel[data-panel="auto"] .auto-row { display: contents; }
+  .vpwrap .vpanel[data-panel="auto"] .auto-row > .btn { grid-column: 1; grid-row: 2; align-self: center; min-width: 52px; }
+  .vpwrap .vpanel[data-panel="auto"] > .knobs { grid-column: 2; grid-row: 2; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .vpwrap .vpanel[data-panel="auto"] .auto-row > .qpick { grid-column: 1 / -1; }
+  .qlab { align-self: center; flex: none; width: 34px; font-size: 9.5px; letter-spacing: .12em; text-transform: uppercase; color: var(--ink-dim); }
   /* quick picks: delay times, styles and filter rates are one tap each */
   .qpick { display: flex; flex-wrap: wrap; gap: 4px; width: 100%; }
   .qpick[hidden] { display: none; }
@@ -676,7 +697,7 @@
 
     <div class="card voice" id="congaCard">
       <div class="vhead">
-        <h2>Conga <small>the ring's hits</small></h2>
+        <h2><select id="congaInst" class="hdr-sel" aria-label="Conga instrument" title="Change the instrument"><option value="conga" selected>Conga</option><option value="bongo">Bongo</option><option value="clave">Clave</option><option value="cowbell">Cowbell</option><option value="woodblock">Woodblock</option><option value="agogo">Agogo</option><option value="timbale">Timbale</option><option value="guiro">Guiro</option><option value="triangle">Triangle</option><option value="tambourine">Tambourine</option></select><small>the ring's hits</small></h2>
         <button id="congaMute" class="btn small" type="button" aria-pressed="false">Mute</button>
       </div>
       <div class="vtabs" role="tablist">
@@ -686,8 +707,8 @@
       </div>
       <div class="vpanel" data-panel="sound">
         <div class="row2">
-          <div class="field grow"><label class="label" for="congaInst">Instrument</label><select id="congaInst"><option value="conga" selected>Conga</option><option value="bongo">Bongo</option><option value="clave">Clave</option><option value="cowbell">Cowbell</option><option value="woodblock">Woodblock</option><option value="agogo">Agogo</option><option value="timbale">Timbale</option><option value="guiro">Guiro</option><option value="triangle">Triangle</option><option value="tambourine">Tambourine</option></select></div>
-          <div class="field grow"><label class="label" for="pitch">Pitch</label><select id="pitch"><option value="alt" selected>Alternate</option><option value="rand">Random</option></select></div>
+          <div class="field grow"><label class="label" for="pitch">Pitch</label><select id="pitch"><option value="alt" selected title="Low, then high, then low again">Alternate</option><option value="same" title="Always the low note">Same note</option><option value="rand" title="Low or high, by chance">Random</option><option value="deep" title="Random notes, one or two octaves down">Deep</option><option value="sky" title="Random notes, one or two octaves up">Sky</option><option value="climb" title="Alternates, and each time round it steps up an octave">Climb</option><option value="fall" title="Alternates, and each time round it steps down an octave">Fall</option></select></div>
+          <div class="field grow"><label class="label" for="pitchRepeat">Repeat each note</label><select id="pitchRepeat"><option value="1" selected>×1</option><option value="2">×2</option><option value="3">×3</option><option value="4">×4</option></select></div>
         </div>
         <div class="row2">
           <div class="field"><span class="label">Octave</span><div class="row-inline"><button id="octDown" class="btn small" type="button" aria-label="Octave down">-</button><output id="octOut" aria-live="polite">0</output><button id="octUp" class="btn small" type="button" aria-label="Octave up">+</button></div></div>
@@ -707,6 +728,7 @@
         </div>
         <div class="knobs" style="--n:3">
           <div class="knob-cell"><div class="head"><span class="label">Echo</span><output id="congaFbOut">35%</output></div><input id="congaFb" type="range" min="0" max="100" value="35" aria-label="Conga delay feedback"></div>
+          <div class="knob-cell"><div class="head"><span class="label">Delay level</span><output id="congaDelayLvlOut">100%</output></div><input id="congaDelayLvl" type="range" min="0" max="100" value="100" aria-label="Conga delay level"></div>
           <div class="knob-cell"><div class="head"><span class="label">Reverb</span><output id="congaRevOut">0%</output></div><input id="congaRev" type="range" min="0" max="100" value="0" aria-label="Conga reverb level"></div>
           <div class="knob-cell"><div class="head"><span class="label">Rev decay</span><output id="congaRevDecOut">1.0 s</output></div><input id="congaRevDec" type="range" min="0" max="100" value="40" aria-label="Conga reverb decay"></div>
         </div>
@@ -726,7 +748,7 @@
 
     <div class="card voice" id="shakerCard">
       <div class="vhead">
-        <h2>Shaker <small>from the genre</small></h2>
+        <h2><select id="shakerInst" class="hdr-sel" aria-label="Shaker sound" title="Change the shaker sound"><option value="shaker" selected>Shaker</option><option value="bright">Shaker, bright</option><option value="maracas">Maracas</option><option value="cabasa">Cabasa</option><option value="synth">Synth shaker</option></select><small>from the genre</small></h2>
         <button id="shakerMute" class="btn small" type="button" aria-pressed="false">Mute</button>
       </div>
       <div class="vtabs" role="tablist">
@@ -735,9 +757,6 @@
         <button type="button" role="tab" data-tab="auto" aria-selected="false">Auto filter<i class="tab-dot" aria-hidden="true"></i></button>
       </div>
       <div class="vpanel" data-panel="sound">
-        <div class="row2">
-          <div class="field grow"><label class="label" for="shakerInst">Sound</label><select id="shakerInst"><option value="shaker" selected>Shaker</option><option value="bright">Shaker, bright</option><option value="maracas">Maracas</option><option value="cabasa">Cabasa</option><option value="synth">Synth shaker</option></select></div>
-        </div>
         <div class="knobs" style="--n:5">
           <div class="knob-cell"><div class="head"><span class="label">Volume</span><output id="shakerVolOut">35</output></div><input id="shakerVol" type="range" min="0" max="100" value="35" aria-label="Shaker volume"></div>
           <div class="knob-cell"><div class="head"><span class="label">Decay</span><output id="shakerDecayOut">1.0x</output></div><input id="shakerDecay" type="range" min="0" max="100" value="50" aria-label="Shaker decay"></div>
@@ -753,6 +772,7 @@
         </div>
         <div class="knobs" style="--n:3">
           <div class="knob-cell"><div class="head"><span class="label">Echo</span><output id="shakerFbOut">35%</output></div><input id="shakerFb" type="range" min="0" max="100" value="35" aria-label="Shaker delay feedback"></div>
+          <div class="knob-cell"><div class="head"><span class="label">Delay level</span><output id="shakerDelayLvlOut">100%</output></div><input id="shakerDelayLvl" type="range" min="0" max="100" value="100" aria-label="Shaker delay level"></div>
           <div class="knob-cell"><div class="head"><span class="label">Reverb</span><output id="shakerRevOut">0%</output></div><input id="shakerRev" type="range" min="0" max="100" value="0" aria-label="Shaker reverb level"></div>
           <div class="knob-cell"><div class="head"><span class="label">Rev decay</span><output id="shakerRevDecOut">1.0 s</output></div><input id="shakerRevDec" type="range" min="0" max="100" value="40" aria-label="Shaker reverb decay"></div>
         </div>
@@ -807,6 +827,7 @@
         </div>
         <div class="knobs" style="--n:3">
           <div class="knob-cell"><div class="head"><span class="label">Echo</span><output id="sampleFbOut">35%</output></div><input id="sampleFb" type="range" min="0" max="100" value="35" aria-label="Your sound delay feedback"></div>
+          <div class="knob-cell"><div class="head"><span class="label">Delay level</span><output id="sampleDelayLvlOut">100%</output></div><input id="sampleDelayLvl" type="range" min="0" max="100" value="100" aria-label="Your sound delay level"></div>
           <div class="knob-cell"><div class="head"><span class="label">Reverb</span><output id="sampleRevOut">0%</output></div><input id="sampleRev" type="range" min="0" max="100" value="0" aria-label="Your sound reverb level"></div>
           <div class="knob-cell"><div class="head"><span class="label">Rev decay</span><output id="sampleRevDecOut">1.0 s</output></div><input id="sampleRevDec" type="range" min="0" max="100" value="40" aria-label="Your sound reverb decay"></div>
         </div>
@@ -1860,8 +1881,9 @@ function setDelay(name) {
   f.mode = $(name + 'Style').value;
   const M = DELAY_MODES[f.mode], on = f.div !== 'off';
   const fb = Number($(name + 'Fb').value) / 100 * 0.75 * M.fbScale;
-  f.wL.gain.value = on ? M.wet : 0;
-  f.wR.gain.value = on && M.pp ? M.wet : 0;
+  const lvl = Number($(name + 'DelayLvl').value) / 100;   // how loud the echoes are; Echo is how many there are
+  f.wL.gain.value = on ? M.wet * lvl : 0;
+  f.wR.gain.value = on && M.pp ? M.wet * lvl : 0;
   f.panL.pan.value = M.pp ? -1 : 0;
   f.panR.pan.value = M.pp ? 1 : 0;
   f.fbSelf.gain.value = M.pp ? 0 : fb;
@@ -2194,15 +2216,35 @@ kitSel.title = activeKit.note;
 // Ring hits play the chosen instrument. Notes alternate (or are random), shifted by the octave
 let congaCount = 0;
 let congaOct = 0;   // -2 to +2 octaves
-function congaHit(t) {
-  const hi = $('pitch').value === 'rand' ? Math.floor(Math.random() * CONGA_NOTES.length) : congaCount % CONGA_NOTES.length;
+// Which note and octave the next conga hit plays. A choice is held for as many hits as Repeat says.
+//   Alternate: low, high, low…   Same note: always low   Random: low or high by chance
+//   Deep / Sky: random notes one or two octaves down / up   Climb / Fall: alternates and steps an octave each time round
+const pitchHold = { step: -1, hi: 0, oct: 0 };
+function nextPitch() {
+  const mode = $('pitch').value, rep = Number($('pitchRepeat').value) || 1, n = CONGA_NOTES.length;
+  const step = Math.floor(congaCount / rep);
+  if (step !== pitchHold.step) {
+    const pick = () => Math.floor(Math.random() * n), far = () => 1 + Math.floor(Math.random() * 2);
+    let hi = step % n, oct = 0;
+    if (mode === 'same') hi = 0;
+    else if (mode === 'rand') hi = pick();
+    else if (mode === 'deep') { hi = pick(); oct = -far(); }
+    else if (mode === 'sky') { hi = pick(); oct = far(); }
+    else if (mode === 'climb') oct = [-1, 0, 1, 2][Math.floor(step / n) % 4];
+    else if (mode === 'fall') oct = [2, 1, 0, -1][Math.floor(step / n) % 4];
+    pitchHold.step = step; pitchHold.hi = hi; pitchHold.oct = oct;
+  }
   congaCount++;
-  const f = mtof(CONGA_NOTES[hi] + congaOct * 12) * tuneOf(bus.conga), v = 0.85 + Math.random() * 0.3;
+  return pitchHold;
+}
+function congaHit(t) {
+  const P = nextPitch(), hi = P.hi, oct = congaOct + P.oct;
+  const f = mtof(CONGA_NOTES[hi] + oct * 12) * tuneOf(bus.conga), v = 0.85 + Math.random() * 0.3;
   const name = $('congaInst').value, S = SAMP_INSTR[name], s = S && SAMPLES.get(hi && S.hi ? S.hi : S.lo);
   if (s) {
     // two samples alternate low and high; a single one alternates with a small step up in pitch
     const step = S.hi ? 1 : (hi ? Math.pow(2, 3 / 12) : 1);
-    playSample(bus.conga, t, s, v, clamp(step * Math.pow(2, congaOct) * tuneOf(bus.conga), 0.25, 4), 2, bus.conga);
+    playSample(bus.conga, t, s, v, clamp(step * Math.pow(2, oct) * tuneOf(bus.conga), 0.25, 4), 2, bus.conga);
     return;
   }
   INSTR[name](bus.conga, t, f, v);
@@ -2626,6 +2668,7 @@ for (const name of ['conga', 'shaker', 'sample']) {
   $(name + 'Delay').addEventListener('change', () => setDelay(name));
   $(name + 'Style').addEventListener('change', () => setDelay(name));
   $(name + 'Fb').addEventListener('input', () => { $(name + 'FbOut').textContent = $(name + 'Fb').value + '%'; setDelay(name); });
+  $(name + 'DelayLvl').addEventListener('input', () => { $(name + 'DelayLvlOut').textContent = $(name + 'DelayLvl').value + '%'; setDelay(name); });
   setDelay(name);
 }
 
@@ -3362,7 +3405,7 @@ for (const card of document.querySelectorAll('.voice')) {
 }
 
 // Delay times, styles, filter rates and waves: one tap each. The dropdown stays in the page, hidden, so the sound code is unchanged.
-const QUICK_PICK = /(Delay|Style|AutoRate|AutoWave)$/;
+const QUICK_PICK = /(Delay|Style|AutoRate|AutoWave)$|^pitch(Repeat)?$/;
 for (const sel of document.querySelectorAll('select')) {
   if (!QUICK_PICK.test(sel.id)) continue;
   const box = document.createElement('div');
@@ -3370,10 +3413,12 @@ for (const sel of document.querySelectorAll('select')) {
   box.setAttribute('role', 'group');
   box.setAttribute('aria-label', sel.getAttribute('aria-label') || sel.id);
   const paint = () => box.querySelectorAll('button').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.v === sel.value)));
+  const auto = /Auto(Rate|Wave)$/.exec(sel.id);
+  if (auto) { const l = document.createElement('span'); l.className = 'qlab'; l.textContent = auto[1]; box.appendChild(l); }
   for (const o of sel.options) {
     const b = document.createElement('button');
     b.type = 'button'; b.dataset.v = o.value; b.textContent = o.textContent;
-    b.title = o.textContent;
+    b.title = o.title || o.textContent;
     b.addEventListener('click', () => { sel.value = o.value; sel.dispatchEvent(new Event('change', { bubbles: true })); paint(); });
     box.appendChild(b);
   }
