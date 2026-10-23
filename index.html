@@ -3653,10 +3653,11 @@ body.perform.fit .pl-shape-btn { display: inline-block !important; }
       const src = ac.createBufferSource(); src.buffer = x.buf; src.playbackRate.value = Math.pow(2, (midi - x.midi) / 12);
       const lp = ac.createBiquadFilter(); lp.type = "lowpass"; lp.frequency.value = 2200 + vel * vel * 9000;
       src.connect(lp).connect(env);
-      const hold = P.hold * L, lvl = P.g * vel;
+      // Length scales the hold and, below 100%, the fade as well, so a short setting gives a short, crisp note
+      const hold = P.hold * L, tail = P.tail * Math.min(1, Math.max(0.2, L)), lvl = P.g * vel;
       env.gain.linearRampToValueAtTime(lvl, t + 0.002);
-      env.gain.setValueAtTime(lvl, t + hold); env.gain.setTargetAtTime(0, t + hold, P.tail);
-      src.start(t); src.stop(t + hold + P.tail * 5 + 0.2);
+      env.gain.setValueAtTime(lvl, t + hold); env.gain.setTargetAtTime(0, t + hold, tail);
+      src.start(t); src.stop(t + hold + tail * 5 + 0.2);
     } else if (c.voice === "organ") {
       const trem = ac.createGain(); trem.gain.value = 0.85;
       const lfo = ac.createOscillator(); lfo.frequency.value = 5.5 + Math.random() * 0.7;   // a slow-ish rotating speaker
