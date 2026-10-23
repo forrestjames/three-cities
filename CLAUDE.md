@@ -12,7 +12,7 @@ Three Cities is an interactive generative music project that turns live weather 
 - Do not add packages without explaining why they are needed.
 - Run relevant checks where available (Playwright against a local copy). Report anything not tested.
 - Never commit secrets, API keys or credentials. Never ask for the quiz ADMIN_KEY.
-- Ask before destructive changes. Commit locally as you go, but push to main only when Forrest says "push" (or clearly asks for it live).
+- Ask before destructive changes. Commit and push to main as you go while the app is not live (temporary, set by Forrest on 23 Oct 2026; change back to the rule below when it goes live). Once live: commit locally as you go, and push to main only when Forrest says "push" (or clearly asks for it live).
 
 ## Design principles
 - Aim for playful, musical and visually distinctive. Avoid generic AI dashboard looks.
