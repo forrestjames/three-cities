@@ -1,0 +1,450 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Rhythm Geometry: Play</title>
+<meta name="robots" content="noindex">
+<meta name="description" content="Eight congas and bongos on weather rings. Mix them like a DJ.">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Abel&family=Source+Code+Pro:wght@400;500&display=swap">
+<style>
+  :root {
+    --ground: #100806; --panel: #1a1210; --strip: #201815; --line: rgba(243,236,230,.14);
+    --ink: #f3ece6; --ink-dim: rgba(243,236,230,.62); --ink-faint: rgba(243,236,230,.34);
+    --accent: #e8744a;
+    --display: "Abel", "Arial Narrow", "Helvetica Neue", sans-serif;
+    --mono: "Source Code Pro", ui-monospace, Menlo, monospace;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; background: var(--ground); color: var(--ink); font-family: var(--mono); font-size: 13px; line-height: 1.4; letter-spacing: .02em; }
+  body { min-height: 100vh; padding: 12px 16px 24px; -webkit-user-select: none; user-select: none; }
+  button, select, input { font: inherit; color: inherit; }
+  button { cursor: pointer; touch-action: manipulation; }
+  button:focus-visible, select:focus-visible, .fader:focus-visible, input:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  .app { max-width: 1100px; margin: 0 auto; display: grid; gap: 12px; grid-template-columns: minmax(0, 1fr); }
+
+  /* top bar */
+  .top { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; }
+  h1 { font-family: var(--display); font-weight: 400; font-size: 26px; letter-spacing: .04em; margin: 0 6px 0 0; white-space: nowrap; }
+  h1 small { font-size: .5em; letter-spacing: .16em; text-transform: uppercase; color: var(--accent); margin-left: 8px; }
+  .top select { background: var(--panel); border: 1px solid var(--line); padding: 8px 10px; min-width: 0; max-width: 100%; flex: 1 1 130px; }
+  .top { min-width: 0; }
+  .bpm { flex: 1 1 200px; } .bpm input { flex: 1; min-width: 60px; }
+  .btn { background: var(--strip); border: 1px solid var(--line); padding: 8px 12px; text-transform: uppercase; letter-spacing: .08em; font-size: 11px; }
+  .btn[aria-pressed="true"] { background: var(--accent); color: #14110f; border-color: var(--accent); }
+  .alt { margin-left: auto; font-size: 10.5px; letter-spacing: .1em; text-transform: uppercase; color: var(--ink-dim); text-decoration: none; border-bottom: 1px solid var(--line); }
+  #play { background: var(--accent); color: #14110f; border: 0; font-size: 14px; font-weight: 500; padding: 10px 22px; letter-spacing: .12em; }
+  #play[aria-pressed="true"] { background: #f3ece6; }
+  .bpm { display: flex; align-items: center; gap: 8px; color: var(--ink-dim); font-size: 11px; text-transform: uppercase; letter-spacing: .08em; }
+  .bpm input { width: 110px; accent-color: var(--accent); }
+  .bpm b { color: var(--ink); font-weight: 500; min-width: 3ch; }
+
+  /* stage: rings and what the weather is doing */
+  .stage { display: grid; grid-template-columns: minmax(0, 300px) 1fr; gap: 16px; align-items: center; }
+  .ringwrap { position: relative; width: 100%; max-width: 300px; aspect-ratio: 1; margin: 0 auto; }
+  canvas { width: 100%; height: 100%; display: block; }
+  .centre { position: absolute; inset: 0; display: grid; place-content: center; text-align: center; pointer-events: none; }
+  .centre .c-name { font-family: var(--display); font-size: 20px; letter-spacing: .06em; }
+  .centre .c-wx { font-size: 10.5px; color: var(--ink-dim); }
+  .story { font-size: 14px; line-height: 1.6; color: var(--ink-dim); margin: 0; }
+  .story b { color: var(--ink); font-weight: 400; }
+
+  /* effects */
+  .fx { display: flex; flex-wrap: wrap; align-items: stretch; gap: 8px; padding: 10px; background: var(--panel); border: 1px solid var(--line); }
+  .fxgroup { display: flex; gap: 6px; align-items: stretch; }
+  .fxlab { font-size: 9.5px; letter-spacing: .1em; text-transform: uppercase; color: var(--ink-faint); align-self: center; margin-right: 2px; }
+  .fx .btn { min-width: 64px; padding: 12px 10px; }
+  .filter { display: flex; flex-direction: column; justify-content: center; gap: 2px; flex: 1 1 200px; min-width: 180px; }
+  .filter label { font-size: 9.5px; letter-spacing: .1em; text-transform: uppercase; color: var(--ink-faint); display: flex; justify-content: space-between; }
+  .filter input { width: 100%; accent-color: var(--accent); height: 28px; }
+
+  /* mixer strips */
+  .mixer { display: grid; grid-template-columns: repeat(8, minmax(0, 1fr)); gap: 8px; }
+  .strip { background: var(--strip); border: 1px solid var(--line); border-top: 3px solid var(--c); padding: 8px 6px 8px; display: grid; gap: 6px; justify-items: center; min-width: 0; }
+  .strip.muted { opacity: .5; }
+  .strip .nm { font-size: 10px; letter-spacing: .08em; text-transform: uppercase; text-align: center; line-height: 1.2; min-height: 2.4em; }
+  .strip .why { font-size: 9.5px; color: var(--ink-dim); text-align: center; min-height: 2.6em; line-height: 1.3; }
+  .strip .why b { color: var(--c); font-weight: 500; font-size: 15px; display: block; }
+  .fader { position: relative; width: 36px; height: 110px; touch-action: none; cursor: ns-resize; }
+  .fader::before { content: ""; position: absolute; left: 50%; top: 4px; bottom: 4px; width: 6px; margin-left: -3px; background: #0b0706; border-radius: 3px; box-shadow: inset 0 0 0 1px var(--line); }
+  .fader .fill { position: absolute; left: 50%; width: 6px; margin-left: -3px; bottom: 4px; background: var(--c); border-radius: 3px; opacity: .55; }
+  .fader .cap { position: absolute; left: 0; right: 0; height: 18px; margin-top: -9px; background: var(--c); border-radius: 3px; box-shadow: 0 2px 0 rgba(0,0,0,.5); }
+  .fader .cap::after { content: ""; position: absolute; left: 6px; right: 6px; top: 8px; height: 2px; background: rgba(0,0,0,.45); }
+  .row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; width: 100%; }
+  .strip .btn { padding: 8px 2px; font-size: 9.5px; letter-spacing: 0; width: 100%; min-width: 0; white-space: nowrap; overflow: hidden; }
+  .strip .btn[aria-pressed="true"] { background: var(--c); border-color: var(--c); color: #14110f; }
+  .led { display: inline-block; width: 6px; height: 6px; border-radius: 50%; background: #3a2c26; margin-right: 4px; vertical-align: middle; }
+  .strip .btn[aria-pressed="true"] .led { background: #14110f; }
+  .pad { width: 100%; height: 54px; border: 0; border-radius: 6px; background: var(--c); color: #14110f; font-size: 11px; letter-spacing: .1em; text-transform: uppercase; box-shadow: 0 4px 0 rgba(0,0,0,.5); touch-action: none; }
+  .pad:active, .pad.hit { transform: translateY(3px); box-shadow: 0 1px 0 rgba(0,0,0,.5); filter: brightness(1.25); }
+  .hint { font-size: 11px; color: var(--ink-faint); margin: 0; }
+  .status { font-size: 11px; color: var(--ink-faint); min-height: 1.4em; }
+
+  @media (max-width: 760px) {
+    .stage { grid-template-columns: 1fr; }
+    .ringwrap { max-width: 340px; }
+    .mixer { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+    .fader { height: 100px; }
+    .alt { margin-left: 0; }
+    .fx .btn { flex: 1; }
+    .fxgroup { flex: 1 1 100%; }
+  }
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="top">
+    <h1>Rhythm Geometry <small>play</small></h1>
+    <select id="city" aria-label="City"></select>
+    <select id="genre" aria-label="Genre"></select>
+    <button id="shuffle" class="btn" type="button" title="Pick a random city">Shuffle</button>
+    <button id="play" type="button" aria-pressed="false">Play</button>
+    <label class="bpm">Tempo <input id="bpm" type="range" min="60" max="180" value="110" aria-label="Tempo"><b id="bpmv">110</b></label>
+    <a class="alt" href="../">All versions</a>
+  </div>
+
+  <div class="stage">
+    <div class="ringwrap">
+      <canvas id="rings" width="840" height="840" aria-label="Eight rhythm rings, one for each drum"></canvas>
+      <div class="centre"><div class="c-name" id="cName">London</div><div class="c-wx" id="cWx">loading the weather</div></div>
+    </div>
+    <div>
+      <p class="story" id="story"></p>
+      <p class="status" id="status" aria-live="polite"></p>
+      <p class="hint" id="hint">Keys: space plays, 1 to 8 tap the drums. Tap an effect to latch it. Hold it to use it just while you press.</p>
+    </div>
+  </div>
+
+  <div class="fx" role="group" aria-label="Effects">
+    <div class="fxgroup"><span class="fxlab">Stutter</span>
+      <button class="btn" data-st="2" type="button" aria-pressed="false" title="Repeat the last hits every eighth note">1/8</button>
+      <button class="btn" data-st="1" type="button" aria-pressed="false" title="Repeat the last hits every sixteenth note">1/16</button>
+      <button class="btn" data-st="0.5" type="button" aria-pressed="false" title="A fast roll">Roll</button>
+    </div>
+    <div class="fxgroup"><span class="fxlab">Space</span>
+      <button id="fxDelay" class="btn" type="button" aria-pressed="false">Delay</button>
+      <button id="fxVerb" class="btn" type="button" aria-pressed="true">Reverb</button>
+      <button id="remix" class="btn" type="button" title="Turn every ring to a new place">Remix</button>
+    </div>
+    <div class="filter"><label for="dj"><span>Low pass</span><span>Filter</span><span>High pass</span></label>
+      <input id="dj" type="range" min="-100" max="100" value="0" aria-label="DJ filter. Left closes it, right thins it out."></div>
+  </div>
+
+  <div class="mixer" id="mixer"></div>
+</div>
+
+<script>
+const ATLAS = __ATLAS__;
+
+// ---------- eight drums ----------
+const TDM = 'https://raw.githubusercontent.com/geikha/tidal-drum-machines/6577395a4d05031728ced2ec3e5637fa89d8be48/machines/';
+const DRUMS = [
+  { name: 'conga low',   file: 'LinnDrum/linndrum-perc/Conga L-01.wav', rate: 1,    f: 150, color: '#e8744a' },
+  { name: 'conga mid',   file: 'LinnDrum/linndrum-perc/Conga M-01.wav', rate: 1,    f: 190, color: '#f2b84b' },
+  { name: 'conga high',  file: 'LinnDrum/linndrum-perc/Conga H-01.wav', rate: 1,    f: 240, color: '#7bc6a4' },
+  { name: 'conga slap',  file: 'RolandMT32/rolandmt32-perc/Conga Muted H.wav', rate: 1, f: 300, color: '#5aa9e6' },
+  { name: 'quinto',      file: 'BossDR550/bossdr550-perc/Conga S.wav',  rate: 1,    f: 340, color: '#c58ad8' },
+  { name: 'bongo low',   file: 'RolandTR727/rolandtr727-perc/Bongo L.wav', rate: 1, f: 380, color: '#e86a92' },
+  { name: 'bongo high',  file: 'RolandTR727/rolandtr727-perc/Bongo H.wav', rate: 1, f: 470, color: '#9bd35a' },
+  { name: 'bongo bright', file: 'BossDR660/bossdr660-perc/BongoH.wav',  rate: 1.12, f: 540, color: '#f0e0c8' },
+];
+const $ = id => document.getElementById(id);
+const clamp = (x, a, b) => Math.min(b, Math.max(a, x));
+
+// ---------- audio ----------
+const ctx = new (window.AudioContext || window.webkitAudioContext)();
+const masterIn = ctx.createGain();
+const djHP = ctx.createBiquadFilter(), djLP = ctx.createBiquadFilter();
+djHP.type = 'highpass'; djHP.frequency.value = 20; djLP.type = 'lowpass'; djLP.frequency.value = 20000;
+const pre = ctx.createGain(), comp = ctx.createDynamicsCompressor();
+comp.threshold.value = -14; comp.ratio.value = 4; comp.attack.value = 0.004; comp.release.value = 0.12;
+masterIn.connect(djHP).connect(djLP).connect(pre).connect(comp).connect(ctx.destination);
+// delay
+const delay = ctx.createDelay(2), fb = ctx.createGain(), delTone = ctx.createBiquadFilter(), delSend = ctx.createGain(), delOut = ctx.createGain();
+delTone.type = 'lowpass'; delTone.frequency.value = 3200; fb.gain.value = 0.42; delSend.gain.value = 0; delOut.gain.value = 0.7;
+pre.connect(delSend).connect(delay); delay.connect(delTone).connect(fb).connect(delay); delTone.connect(delOut).connect(comp);
+// reverb
+const verb = ctx.createConvolver(), verbSend = ctx.createGain(), verbOut = ctx.createGain();
+(() => { const len = Math.floor(ctx.sampleRate * 1.6), b = ctx.createBuffer(2, len, ctx.sampleRate);
+  for (let c = 0; c < 2; c++) { const d = b.getChannelData(c); for (let i = 0; i < len; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / len, 2.6); }
+  verb.buffer = b; })();
+verbSend.gain.value = 0.22; verbOut.gain.value = 1;
+pre.connect(verbSend).connect(verb).connect(verbOut).connect(comp);
+
+const SAMPLES = new Map(), failed = new Set();
+function prepSample(buf) {
+  const d = buf.getChannelData(0), sr = buf.sampleRate; let peak = 0;
+  for (let i = 0; i < d.length; i++) { const a = Math.abs(d[i]); if (a > peak) peak = a; }
+  if (!peak) return { buf, gain: 1, lead: 0, dur: buf.duration };
+  let i0 = 0; while (i0 < d.length && Math.abs(d[i0]) < peak * 0.02) i0++;
+  i0 = Math.max(0, i0 - Math.round(sr * 0.001));
+  const n = Math.min(d.length, i0 + Math.round(sr * 0.2)); let sum = 0;
+  for (let i = i0; i < n; i++) sum += d[i] * d[i];
+  const rms = Math.sqrt(sum / Math.max(1, n - i0)) || 1e-4;
+  return { buf, gain: Math.min(0.9 / peak, 0.2 / rms), lead: i0 / sr, dur: buf.duration - i0 / sr };
+}
+function loadSample(path) {
+  return fetch(TDM + path.split('/').map(encodeURIComponent).join('/'))
+    .then(r => { if (!r.ok) throw 0; return r.arrayBuffer(); })
+    .then(ab => ctx.decodeAudioData(ab))
+    .then(buf => SAMPLES.set(path, prepSample(buf)))
+    .catch(() => failed.add(path));
+}
+DRUMS.forEach(d => loadSample(d.file));
+
+// a lane's own chain: fader, a closing filter, then a place in the stereo field
+const lanes = DRUMS.map((d, i) => {
+  const g = ctx.createGain(), lp = ctx.createBiquadFilter(), pan = ctx.createStereoPanner();
+  lp.type = 'lowpass'; lp.frequency.value = 18000; lp.Q.value = 3;
+  pan.pan.value = (i - 3.5) / 9;
+  g.connect(lp).connect(pan).connect(masterIn);
+  return { i, d, g, lp, vol: 0.8, mute: false, flt: false, stut: false, bits: [], steps: 8, hits: 3, rot: 0, last: 0, flash: 0, why: '', src: '' };
+});
+const faderGain = v => v * v * 1.1;   // a gentler curve than straight volume
+lanes.forEach(l => l.g.gain.value = faderGain(l.vol));
+
+function hit(l, t, vel) {
+  const s = SAMPLES.get(l.d.file), rate = l.d.rate * tune;
+  l.flash = t;
+  if (s) {
+    const src = ctx.createBufferSource(), g = ctx.createGain();
+    src.buffer = s.buf; src.playbackRate.value = rate; g.gain.value = s.gain * vel;
+    src.connect(g).connect(l.g); src.start(t, s.lead, Math.min(s.dur, 1.4)); src.stop(t + Math.min(s.dur, 1.4) / rate + 0.05);
+    return;
+  }
+  // until the sample arrives (or if it can't), a simple skin drum
+  const o = ctx.createOscillator(), g = ctx.createGain();
+  o.frequency.setValueAtTime(l.d.f * 1.6 * rate, t); o.frequency.exponentialRampToValueAtTime(l.d.f * rate, t + 0.07);
+  g.gain.setValueAtTime(0.5 * vel, t); g.gain.exponentialRampToValueAtTime(0.001, t + 0.28);
+  o.connect(g).connect(l.g); o.start(t); o.stop(t + 0.3);
+}
+
+// ---------- weather to rhythm ----------
+let tune = 1;
+let WX = { temp: 11, wind: 14, hum: 70, cloud: 60, pres: 1008, rain: 0, hour: 12, live: false };
+function rng(seed) { let s = seed >>> 0 || 1; return () => (s = (s * 1664525 + 1013904223) >>> 0) / 4294967296; }
+function euclidBits(n, k, rot) { const b = []; for (let i = 0; i < n; i++) b.push(((((i + rot) % n) * k) % n) < k ? 1 : 0); return b; }
+
+let pattern = null;   // the genre pattern the first three drums borrow
+function buildLanes(remix) {
+  const used = new Set(), r = rng(Math.round(WX.temp * 10) * 31 + Math.round(WX.wind * 10) * 7 + Math.round(WX.pres) + (remix || 0) * 977);
+  const arrays = pattern ? pattern.p : [];
+  tune = Math.pow(2, (WX.temp - 10) / 120);   // a warm day tunes everything up a little
+  // each drum takes its step count from a different bit of weather
+  const picks = [
+    () => null, () => null, () => null,
+    () => ({ s: clamp(Math.round(Math.abs(WX.temp)), 5, 16), why: 'temperature ' + Math.round(WX.temp) + '°' }),
+    () => ({ s: clamp(Math.round(WX.wind / 2) + 4, 5, 16), why: 'wind ' + Math.round(WX.wind) + ' km/h' }),
+    () => ({ s: 5 + Math.round(WX.hum / 100 * 11), why: 'humidity ' + Math.round(WX.hum) + '%' }),
+    () => ({ s: 5 + Math.round(WX.cloud / 100 * 11), why: 'cloud ' + Math.round(WX.cloud) + '%' }),
+    () => ({ s: 5 + (Math.round(WX.pres) % 12), why: 'pressure ' + Math.round(WX.pres) }),
+    () => ({ s: 7 + Math.min(8, Math.round(WX.rain * 4)), why: WX.rain > 0 ? 'rain ' + WX.rain + ' mm' : 'dry day' }),
+    () => ({ s: 5 + (WX.hour % 12), why: 'time of day ' + WX.hour + ':00' }),
+    () => ({ s: 6 + ((Math.round(WX.wind) + Math.round(WX.cloud)) % 10), why: 'wind and cloud' }),
+  ];
+  // the first three drums play the genre's own rhythms when it has them, the rest are weather
+  lanes.forEach((l, i) => {
+    const arr = i < 3 && arrays[i] ? arrays[i] : null;
+    let steps, why, bits;
+    if (arr) { steps = arr.length; bits = arr.split('').map(Number); why = (i === 0 ? 'genre kick' : 'genre rhythm'); }
+    else {
+      const pk = picks[i < 3 ? 8 + i : i]();
+      steps = pk.s; why = pk.why;
+      while (used.has(steps)) steps = steps >= 16 ? 5 : steps + 1;   // no two the same, so they drift apart
+      const dens = [0.28, 0.32, 0.4, 0.38, 0.42, 0.36, 0.45, 0.4][i] + (r() - 0.5) * 0.18;
+      const hits = clamp(Math.round(steps * dens), 2, Math.max(2, steps - 2));
+      const rot = Math.floor(r() * steps);
+      bits = euclidBits(steps, hits, rot); l.hits = hits; l.rot = rot;
+    }
+    used.add(steps);
+    l.steps = steps; l.bits = bits; l.why = why; l.hits = bits.reduce((a, b) => a + b, 0);
+  });
+  renderWhy();
+}
+function remix() {
+  lanes.forEach(l => { const k = 1 + Math.floor(Math.random() * (l.steps - 1)); l.bits = l.bits.slice(k).concat(l.bits.slice(0, k)); });
+}
+
+// ---------- the clock ----------
+let playing = false, nextTime = 0, stepN = 0, timer = null;
+const gDivs = new Set();   // global stutter buttons held or latched
+const visQ = [];
+const stepSecs = () => 60 / (+$('bpm').value) / 4;
+function stutDiv(l) { if (gDivs.size) return Math.min(...gDivs); return l.stut ? 1 : 0; }
+function schedule(t, n) {
+  const ss = stepSecs();
+  lanes.forEach(l => {
+    if (l.mute) { return; }
+    const dv = stutDiv(l), pos = n % l.steps, pat = l.bits[pos];
+    if (!dv) {
+      if (!pat) return;
+      const vel = (pos % 4 === 0 ? 1 : 0.78) * (0.85 + Math.random() * 0.3);
+      l.last = vel; hit(l, t + (Math.random() * 0.004), vel);
+      return;
+    }
+    // stuttering: the last hit keeps coming back on the beat division
+    const v = l.last || 0.8;
+    if (dv >= 1 && n % dv === 0) hit(l, t, v * (0.9 + Math.random() * 0.2));
+    if (dv < 1) { hit(l, t, v * 0.95); hit(l, t + ss * dv, v * 0.8); }
+  });
+  visQ.push({ t, n });
+}
+function tick() {
+  while (nextTime < ctx.currentTime + 0.12) { schedule(nextTime, stepN); nextTime += stepSecs(); stepN++; }
+}
+async function start() {
+  if (ctx.state !== 'running') await ctx.resume();
+  if (playing) return;
+  playing = true; stepN = 0; nextTime = ctx.currentTime + 0.06; visQ.length = 0;
+  delay.delayTime.value = stepSecs() * 3;
+  timer = setInterval(tick, 25);
+  $('play').setAttribute('aria-pressed', 'true'); $('play').textContent = 'Stop';
+}
+function stop() {
+  playing = false; clearInterval(timer); visQ.length = 0;
+  $('play').setAttribute('aria-pressed', 'false'); $('play').textContent = 'Play';
+}
+$('play').addEventListener('click', () => playing ? stop() : start());
+$('bpm').addEventListener('input', () => { $('bpmv').textContent = $('bpm').value; delay.delayTime.setTargetAtTime(stepSecs() * 3, ctx.currentTime, 0.05); });
+
+// ---------- mixer ----------
+function makeFader(el, l) {
+  el.innerHTML = '<div class="fill"></div><div class="cap"></div>';
+  const fill = el.querySelector('.fill'), cap = el.querySelector('.cap'), H = () => el.clientHeight - 8;
+  const draw = () => { const y = 4 + (1 - l.vol) * H(); cap.style.top = y + 'px'; fill.style.height = (l.vol * H()) + 'px'; el.setAttribute('aria-valuenow', Math.round(l.vol * 100)); };
+  const set = v => { l.vol = clamp(v, 0, 1); l.g.gain.setTargetAtTime(faderGain(l.vol), ctx.currentTime, 0.015); draw(); };
+  const fromY = e => { const r = el.getBoundingClientRect(); set(1 - (e.clientY - r.top - 4) / H()); };
+  el.addEventListener('pointerdown', e => { el.setPointerCapture(e.pointerId); fromY(e); el._d = true; });
+  el.addEventListener('pointermove', e => { if (el._d) fromY(e); });
+  el.addEventListener('pointerup', () => el._d = false); el.addEventListener('pointercancel', () => el._d = false);
+  el.addEventListener('dblclick', () => set(0.8));
+  el.addEventListener('keydown', e => { const k = { ArrowUp: .05, ArrowRight: .05, ArrowDown: -.05, ArrowLeft: -.05 }[e.key]; if (k) { e.preventDefault(); set(l.vol + k); } });
+  el.tabIndex = 0; el.setAttribute('role', 'slider'); el.setAttribute('aria-valuemin', 0); el.setAttribute('aria-valuemax', 100);
+  el.setAttribute('aria-label', l.d.name + ' volume'); draw(); l.drawFader = draw;
+}
+// tap to latch, hold to use only while pressed
+function momentary(el, on, off) {
+  let down = 0, latched = false;
+  const state = v => el.setAttribute('aria-pressed', String(v));
+  el.addEventListener('pointerdown', e => { e.preventDefault(); el.setPointerCapture(e.pointerId); down = performance.now(); if (!latched) { on(); state(true); } });
+  const up = () => { if (!down) return; const held = performance.now() - down; down = 0;
+    if (latched) { latched = false; off(); state(false); } else if (held < 250) latched = true; else { off(); state(false); } };
+  el.addEventListener('pointerup', up); el.addEventListener('pointercancel', up);
+  el.addEventListener('click', e => { if (e.detail === 0) { latched = !latched; latched ? on() : off(); state(latched); } });   // keyboard
+  el.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') e.preventDefault(); if ((e.key === 'Enter' || e.key === ' ') && !e.repeat) { latched = !latched; latched ? on() : off(); state(latched); } });
+}
+function toggle(el, fn) { el.addEventListener('click', () => { const v = el.getAttribute('aria-pressed') !== 'true'; el.setAttribute('aria-pressed', String(v)); fn(v); }); }
+
+const mixer = $('mixer');
+lanes.forEach(l => {
+  const s = document.createElement('div'); s.className = 'strip'; s.style.setProperty('--c', l.d.color); s.dataset.lane = l.i;
+  s.innerHTML = `<div class="nm">${l.d.name}</div><div class="why"></div><div class="fader"></div>
+    <div class="row2"><button class="btn m" type="button" aria-pressed="false" title="Mute"><i class="led"></i>Mute</button><button class="btn f" type="button" aria-pressed="false" title="Close a filter on this drum"><i class="led"></i>Filter</button></div>
+    <button class="btn st" type="button" aria-pressed="false" title="Repeat this drum's last hit"><i class="led"></i>Stutter</button>
+    <button class="pad" type="button" aria-label="Tap ${l.d.name}">${l.i + 1}</button>`;
+  mixer.appendChild(s); l.el = s;
+  makeFader(s.querySelector('.fader'), l);
+  toggle(s.querySelector('.m'), v => { l.mute = v; s.classList.toggle('muted', v); });
+  toggle(s.querySelector('.f'), v => { l.flt = v; l.lp.frequency.setTargetAtTime(v ? 420 : 18000, ctx.currentTime, 0.04); });
+  momentary(s.querySelector('.st'), () => l.stut = true, () => l.stut = false);
+  const pad = s.querySelector('.pad');
+  pad.addEventListener('pointerdown', e => { e.preventDefault(); tap(l); });
+  l.pad = pad;
+});
+function renderWhy() { lanes.forEach(l => { l.el.querySelector('.why').innerHTML = `<b>${l.steps}</b>${l.why}`; }); }
+function tap(l) {
+  if (ctx.state !== 'running') ctx.resume();
+  hit(l, ctx.currentTime + 0.005, 1); l.pad.classList.add('hit'); setTimeout(() => l.pad.classList.remove('hit'), 90);
+}
+addEventListener('keydown', e => {
+  if (e.target.matches('select, input')) return;
+  if (e.key === ' ' && !e.target.matches('button')) { e.preventDefault(); playing ? stop() : start(); }
+  const n = '12345678'.indexOf(e.key); if (n >= 0 && !e.repeat) tap(lanes[n]);
+});
+document.querySelectorAll('[data-st]').forEach(b => { const d = +b.dataset.st; momentary(b, () => gDivs.add(d), () => gDivs.delete(d)); });
+toggle($('fxDelay'), v => delSend.gain.setTargetAtTime(v ? 0.5 : 0, ctx.currentTime, 0.03));
+toggle($('fxVerb'), v => verbSend.gain.setTargetAtTime(v ? 0.22 : 0, ctx.currentTime, 0.03));
+$('remix').addEventListener('click', () => { remix(); renderWhy(); });
+$('dj').addEventListener('input', () => {
+  const v = $('dj').value / 100, t = ctx.currentTime;
+  djLP.frequency.setTargetAtTime(v < 0 ? 200 * Math.pow(100, 1 + v) : 20000, t, 0.03);
+  djHP.frequency.setTargetAtTime(v > 0 ? 20 * Math.pow(300, v) : 20, t, 0.03);
+  const q = 0.7 + 3 * Math.abs(v); djLP.Q.value = q; djHP.Q.value = q;
+});
+$('dj').addEventListener('dblclick', () => { $('dj').value = 0; $('dj').dispatchEvent(new Event('input')); });
+
+// ---------- cities and weather ----------
+const city = $('city'), genre = $('genre');
+ATLAS.cities.forEach((c, i) => city.add(new Option(c.n, i)));
+let cur = null;
+function pickGenre() {
+  const c = ATLAS.cities[city.value]; genre.innerHTML = '';
+  c.g.forEach((g, i) => genre.add(new Option(g.n, i)));
+}
+function setPattern() {
+  const g = ATLAS.cities[city.value].g[genre.value] || ATLAS.cities[city.value].g[0];
+  const id = g.i[Math.floor(Math.random() * g.i.length)];
+  pattern = ATLAS.patterns[id] || null;
+  const bpm = g.b || clamp(Math.round(100 + WX.temp), 80, 140);
+  $('bpm').value = clamp(bpm, 60, 180); $('bpmv').textContent = $('bpm').value;
+  delay.delayTime.value = stepSecs() * 3;
+  return g;
+}
+async function loadWeather(c) {
+  $('cName').textContent = c.n; $('cWx').textContent = 'checking the weather';
+  try {
+    const j = await (await fetch('https://api.open-meteo.com/v1/forecast?latitude=' + c.a + '&longitude=' + c.o +
+      '&current=temperature_2m,relative_humidity_2m,cloud_cover,wind_speed_10m,precipitation,surface_pressure&timezone=auto')).json();
+    const w = j.current;
+    const num = (v, d) => (typeof v === 'number' && isFinite(v) ? v : d);   // a missing number never breaks the rhythm
+    WX = { temp: num(w.temperature_2m, 11), wind: num(w.wind_speed_10m, 14), hum: num(w.relative_humidity_2m, 70), cloud: num(w.cloud_cover, 60), pres: num(w.surface_pressure ?? w.pressure_msl, 1010), rain: num(w.precipitation, 0), hour: +String(w.time).slice(11, 13) || 12, live: true };
+    $('status').textContent = '';
+  } catch (e) {
+    WX = { temp: 11, wind: 14, hum: 70, cloud: 60, pres: 1008, rain: 0, hour: 12, live: false };
+    $('status').textContent = 'The weather did not load, so these are made-up numbers for now.';
+  }
+}
+async function pickCity() {
+  const c = ATLAS.cities[city.value]; cur = c;
+  await loadWeather(c);
+  const g = setPattern(); buildLanes();
+  $('cWx').textContent = Math.round(WX.temp) + '°  ·  wind ' + Math.round(WX.wind) + '  ·  ' + Math.round(WX.hum) + '% humid';
+  $('story').innerHTML = `<b>${c.n}</b> plays <b>${g.n}</b> at <b>${$('bpm').value}</b> beats a minute. Each drum is a ring with its own length, taken from the weather, so they slip against each other and the groove keeps changing.`;
+}
+city.addEventListener('change', () => { pickGenre(); pickCity(); });
+genre.addEventListener('change', () => { setPattern(); buildLanes(); $('story').innerHTML = $('story').innerHTML.replace(/plays <b>[^<]*<\/b> at <b>\d+<\/b>/, `plays <b>${genre.selectedOptions[0].text}</b> at <b>${$('bpm').value}</b>`); });
+$('shuffle').addEventListener('click', () => { city.value = Math.floor(Math.random() * ATLAS.cities.length); city.dispatchEvent(new Event('change')); });
+
+// ---------- the picture ----------
+const cv = $('rings'), g2 = cv.getContext('2d'), W = cv.width, CX = W / 2;
+function draw() {
+  g2.clearRect(0, 0, W, W);
+  const now = ctx.currentTime;
+  while (visQ.length > 1 && visQ[1].t <= now) visQ.shift();
+  const cur = visQ.length && visQ[0].t <= now ? visQ[0].n : -1;
+  lanes.forEach((l, i) => {
+    const R = 90 + i * 40, n = l.steps, dim = l.mute ? 0.25 : 1, age = now - l.flash, pulse = age >= 0 && age < 0.25 ? 1 - age / 0.25 : 0;
+    g2.globalAlpha = dim;
+    g2.strokeStyle = l.d.color; g2.lineWidth = 2 + pulse * 6; g2.globalAlpha = dim * (0.22 + pulse * 0.6);
+    g2.beginPath(); g2.arc(CX, CX, R, 0, 7); g2.stroke();
+    g2.globalAlpha = dim;
+    const pos = cur >= 0 ? cur % n : -1;
+    for (let k = 0; k < n; k++) {
+      const a = k / n * Math.PI * 2 - Math.PI / 2, x = CX + R * Math.cos(a), y = CX + R * Math.sin(a), on = l.bits[k], here = k === pos;
+      g2.fillStyle = on ? l.d.color : 'rgba(243,236,230,.28)';
+      g2.beginPath(); g2.arc(x, y, (on ? 9 : 4) + (here ? 6 : 0) * (on ? 1 : .6), 0, 7); g2.fill();
+      if (here && on) { g2.strokeStyle = '#fff'; g2.lineWidth = 3; g2.stroke(); }
+    }
+  });
+  g2.globalAlpha = 1; requestAnimationFrame(draw);
+}
+
+// ---------- start ----------
+// trim the data the page needs
+(async () => {
+  const start = ATLAS.cities.findIndex(c => c.n === 'London');
+  city.value = start >= 0 ? start : 0; pickGenre(); await pickCity(); requestAnimationFrame(draw);
+})();
+</script>
+</body>
+</html>

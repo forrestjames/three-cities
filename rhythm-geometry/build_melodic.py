@@ -18,6 +18,7 @@ rep('<title>Rhythm Geometry</title>', '<title>Rhythm Geometry: Melodic</title>')
 rep('<h1>Rhythm Geometry</h1>', '<h1>Rhythm Geometry <span class="altname">melodic</span></h1>', 2)
 rep('<a class="altlink" href="melodic/" title="The version where every ring plays notes">Melodic version</a>', '<a class="altlink" href="../" title="The version with drums">Drum version</a>')
 rep('href="duet/"', 'href="../duet/"')
+rep('href="play/"', 'href="../play/"')
 rep('  .wrap { padding:', '  .altname { font-size: .5em; letter-spacing: .14em; text-transform: uppercase; color: var(--accent); margin-left: 8px; vertical-align: middle; }\n  .kithead .kitsel, .kithead label[for="kitSel"], #kitSel { display: none !important; }\n  .wrap { padding:')
 rep('<p class="kit-credit">Drum sounds: the <a href="https://github.com/geikha/tidal-drum-machines" target="_blank" rel="noopener">Tidal drum machines</a> sample pack.</p>',
     '<p class="kit-credit">Every ring plays notes in the weather\'s scale: bass, keys, bells and marimba.</p>')

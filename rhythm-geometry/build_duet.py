@@ -17,6 +17,7 @@ rep('<title>Rhythm Geometry</title>', '<title>Rhythm Geometry: Duet</title>')
 rep('<h1>Rhythm Geometry</h1>', '<h1>Rhythm Geometry <span class="altname">duet</span></h1>', 2)
 rep('<a class="altlink" href="duet/" title="The version where only the conga and one drum play at a time">Duet version</a>', '<a class="altlink" href="../" title="The version with every drum">Drum version</a>')
 rep('href="melodic/"', 'href="../melodic/"')
+rep('href="play/"', 'href="../play/"')
 rep('  .wrap { padding:', '  .altname { font-size: .5em; letter-spacing: .14em; text-transform: uppercase; color: var(--accent); margin-left: 8px; vertical-align: middle; }\n  .wrap { padding:')
 
 # --- no sub bass, no neighbour rows (only two lanes at once)
