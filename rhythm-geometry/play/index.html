@@ -136,8 +136,6 @@
   .fader .cap { position: absolute; left: 0; right: 0; height: 18px; margin-top: -9px; background: #0a0605; border-radius: 3px; box-shadow: inset 0 0 0 1.5px var(--c), 0 0 10px -2px var(--c); }
   .fader .cap::after { content: ""; position: absolute; left: 5px; right: 5px; top: 8px; height: 2px; background: var(--c); box-shadow: 0 0 6px var(--c); }
   .row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 3px; width: 100%; }
-  .row3 { display: grid; grid-template-columns: 1fr 1fr; gap: 3px; width: 100%; }
-  .strip .tn[aria-pressed="true"] { box-shadow: 0 0 10px -3px var(--c); }
   .send { display: grid; grid-template-columns: 1.4em 1fr; align-items: center; width: 100%; font-size: 9px; color: var(--ink-faint); letter-spacing: .06em; text-transform: uppercase; }
   .send input { accent-color: var(--c); }
   .strip .btn { padding: 8px 2px; font-size: 9.5px; letter-spacing: 0; width: 100%; min-width: 0; white-space: nowrap; overflow: hidden; background: #0a0605; border-color: color-mix(in srgb, var(--c) 30%, transparent); }
@@ -426,7 +424,7 @@ const lanes = COLORS.map((color, i) => {
   g.connect(lp).connect(pan).connect(masterIn);
   const sd = ctx.createGain(), sv = ctx.createGain(); sd.gain.value = 0; sv.gain.value = 0;
   pan.connect(sd).connect(delIn); pan.connect(sv).connect(verbIn);   // each drum's own delay and reverb
-  return { i, d: KIT.lanes[i], color, g, lp, sd, sv, pn: pan, chance: 100, basePan: pan.pan.value, panNow: pan.pan.value, aF: 0, aFc: 420, aP: 0, vol: 0.8, mute: false, flt: false, stut: false, bits: [], steps: 8, hits: 3, rot: 0, last: 0, flash: 0, why: '', src: '', rate: 1, note: '', oct: OCT0[i], tone: false };
+  return { i, d: KIT.lanes[i], color, g, lp, sd, sv, pn: pan, chance: 100, basePan: pan.pan.value, panNow: pan.pan.value, aF: 0, aFc: 420, aP: 0, vol: 0.8, mute: false, flt: false, stut: false, bits: [], steps: 8, hits: 3, rot: 0, last: 0, flash: 0, why: '', src: '', rate: 1, note: '', oct: OCT0[i] };
 });
 const faderGain = v => v * v * 1.1;   // a gentler curve than straight volume
 lanes.forEach(l => l.g.gain.value = faderGain(l.vol));
@@ -471,25 +469,8 @@ function synthHit(l, t, vel) {
   else { o.type = 'square'; const f2 = 300 + Math.random() * 2400; o.frequency.setValueAtTime(f2, t); o.frequency.setValueAtTime(f2 * (0.5 + Math.random()), t + 0.012); env(g, 0.14 * vel, 0.028); }   // glitch: a different pitch every time
   o.connect(g).connect(out); o.start(t); o.stop(t + 0.2);
 }
-// the note a strip plays: its tuned note if it has one, otherwise its recorded pitch plus its octave
-function laneMidi(l) {
-  const m = /^([A-G][b#]?)(-?\d+)$/.exec(l.note || ''), pc = m ? NOTES.indexOf(m[1]) : -1;
-  return pc >= 0 ? (+m[2] + 1) * 12 + pc : l.d.m + 12 * l.oct;
-}
-// Tone: a plucked note that rings for len seconds
-function toneHit(l, t, vel, len) {
-  const f = 440 * Math.pow(2, (laneMidi(l) - 69) / 12), d = clamp(len, 0.12, 3);
-  const o = ctx.createOscillator(), g = ctx.createGain(), lp = ctx.createBiquadFilter();
-  o.type = 'triangle'; o.frequency.value = f;
-  lp.type = 'lowpass'; lp.frequency.setValueAtTime(f * 6, t); lp.frequency.exponentialRampToValueAtTime(f * 1.5, t + Math.min(d, 0.6));
-  g.gain.setValueAtTime(0.0001, t); g.gain.linearRampToValueAtTime(0.5 * vel, t + 0.004); g.gain.exponentialRampToValueAtTime(0.0008, t + d);
-  o.connect(lp).connect(g).connect(l.g); o.start(t); o.stop(t + d + 0.05);
-}
-// the gap, in seconds, until this strip's next hit
-function gapSecs(l, pos) { for (let k = 1; k <= l.steps; k++) if (l.bits[(pos + k) % l.steps]) return k * stepSecs(); return l.steps * stepSecs(); }
-function hit(l, t, vel, len) {
+function hit(l, t, vel) {
   midiHit(l, t, vel);
-  if (l.tone) { l.flash = t; toneHit(l, t, vel, len || stepSecs() * 2); return; }
   if (l.d.syn) { l.flash = t; synthHit(l, t, vel); return; }
   const s = SAMPLES.get(l.d.f), rate = l.rate;
   l.flash = t;
@@ -642,7 +623,7 @@ function schedule(t, n) {
       if (!pat) return;
       if (Math.random() * 100 >= l.chance * GCHANCE / 100) return;   // Chance: some hits are left out
       const vel = (pos % 4 === 0 ? 1 : 0.78) * (0.85 + Math.random() * 0.3);
-      l.last = vel; hit(l, t + (Math.random() * 0.004), vel, l.tone ? gapSecs(l, pos) : 0);
+      l.last = vel; hit(l, t + (Math.random() * 0.004), vel);
       return;
     }
     // stuttering: the last hit keeps coming back on the beat division
@@ -754,7 +735,6 @@ const mixer = $('mixer');
 lanes.forEach(l => {
   const s = document.createElement('div'); s.className = 'strip'; s.style.setProperty('--c', l.color); s.dataset.lane = l.i;
   s.innerHTML = `<div class="nmrow"><span class="trig" title="Lights up when this drum sounds"></span><div class="nm" data-kb="${'ZXCVBNM,'[l.i]}" title="Tap to play this drum (key ${'ZXCVBNM,'[l.i]})">${l.d.n}</div></div><div class="why"></div><div class="panbar" title="Pan: drag left or right. Double click to centre."><b></b><i></i></div><div class="panlab" aria-hidden="true"><span>L</span><span>R</span></div><div class="fader"></div>
-    <div class="row3"><button class="btn tn" type="button" data-m="hit" aria-pressed="true" title="Hit: a short drum sound">Hit</button><button class="btn tn" type="button" data-m="tone" aria-pressed="false" title="Tone: every hit plays a note from the key. How long it rings depends on the gap to the next hit.">Tone</button></div>
     <div class="row2"><button class="btn f" type="button" data-kb="${'QWERTYUI'[l.i]}" aria-pressed="false" title="Close a filter on this drum (key ${'QWERTYUI'[l.i]})"><i class="led"></i>Filter</button><button class="btn st" type="button" data-kb="${'ASDFGHJK'[l.i]}" aria-pressed="false" title="Repeat this drum's last hit. Tap to latch, hold for just a moment. Key ${'ASDFGHJK'[l.i]} stutters while held."><i class="led"></i>Stutter</button></div>
     <div class="kn3"><div class="kc"><div class="knob" data-k="chance"></div><span>Chance</span></div><div class="kc"><div class="knob" data-k="delay"></div><span>Delay</span></div><div class="kc"><div class="knob" data-k="verb"></div><span>Reverb</span></div></div>
     <div class="padrow"><button class="oct" type="button" data-d="-1" aria-label="${l.d.n} down an octave" title="Down an octave">&minus;</button><span class="octv" aria-live="polite" title="Octave">0</span><button class="oct" type="button" data-d="1" aria-label="${l.d.n} up an octave" title="Up an octave">+</button><button class="pad" type="button" aria-pressed="false" aria-label="Mute ${l.d.n}" title="Mute or unmute (key ${l.i + 1})">${l.i + 1}</button></div>`;
@@ -781,10 +761,6 @@ lanes.forEach(l => {
   pad.addEventListener('click', () => setMute(l, !l.mute));
   s.querySelector('.nm').addEventListener('pointerdown', () => tap(l));   // tap the name to play the drum
   l.pad = pad;
-  s.querySelectorAll('.tn').forEach(b => b.addEventListener('click', () => {   // Hit or Tone
-    l.tone = b.dataset.m === 'tone';
-    s.querySelectorAll('.tn').forEach(x => x.setAttribute('aria-pressed', String(x === b)));
-  }));
   s.querySelector('.octv').textContent = (l.oct > 0 ? '+' : '') + l.oct;
   l.sd.gain.value = Math.pow(DELAY0[l.i] / 100, 2) * 0.9; l.sv.gain.value = Math.pow(VERB0[l.i] / 100, 2) * 0.9;
   s.querySelectorAll('.oct').forEach(b => b.addEventListener('click', () => {   // octave up or down, and you hear the new pitch
