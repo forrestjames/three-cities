@@ -97,6 +97,7 @@
   .pedal .chips { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 10px; } .pedal .chips .btn { padding: 6px 7px; font-size: 10px; background: rgba(0,0,0,.28); border-color: rgba(255,255,255,.18); }
   .pedal .chips .btn[aria-pressed="true"] { background: #f3ece6; color: #1a1210; border-color: #f3ece6; }
   .foot { margin: auto auto 0; flex: none; width: 140px; height: 96px; padding-top: 14px; border-radius: 10px; border: 2px solid rgba(0,0,0,.6); background: linear-gradient(#bfb8ae, #7e776e); color: #1a1210; display: grid; place-items: center; position: relative; box-shadow: 0 5px 0 rgba(0,0,0,.55); font-size: 11px; letter-spacing: .14em; text-transform: uppercase; }
+  .blendfader { width: 150px; accent-color: var(--c, #ffb68a); }
   .fxbox .hint { margin-top: 22px; }
   .foot:active { transform: translateY(3px); box-shadow: 0 2px 0 rgba(0,0,0,.55); }
   .foot .lamp { position: absolute; top: 12px; left: 50%; margin-left: -6px; width: 12px; height: 12px; border-radius: 50%; background: #5a4a44; box-shadow: inset 0 0 0 2px rgba(0,0,0,.45); }
@@ -236,6 +237,10 @@
           <button id="midiOpen" class="btn" type="button" title="Send the drums to a drum machine or synth over MIDI">MIDI</button>
         </div>
         <div class="fxrow">
+          <div class="grp" title="Slide from the drum kit to a melodic sound. Every ring plays its own note of the key."><span class="fxlab">Drums</span>
+            <input id="blend" class="blendfader" type="range" min="0" max="100" value="0" aria-label="Blend between drums and melodic sound">
+            <span class="fxlab">Melodic</span>
+            <select id="blendSnd" aria-label="Melodic sound"><option value="kalimba">Kalimba</option><option value="harp">Harp</option><option value="rhodes">Electric piano</option><option value="steel">Steel pan</option></select></div>
           <div class="grp"><span class="fxlab">Convergence</span>
             <button id="convOn" class="btn" type="button" aria-pressed="true" title="When rings hit at the same angle, a line lights through them and a chord plays. The angle picks the chord from the key.">On</button>
             <div class="grp" id="kConv" title="How loud the convergence chords are"></div></div>
@@ -470,8 +475,17 @@ function synthHit(l, t, vel) {
   else { o.type = 'square'; const f2 = 300 + Math.random() * 2400; o.frequency.setValueAtTime(f2, t); o.frequency.setValueAtTime(f2 * (0.5 + Math.random()), t + 0.012); env(g, 0.14 * vel, 0.028); }   // glitch: a different pitch every time
   o.connect(g).connect(out); o.start(t); o.stop(t + 0.2);
 }
+// ---------- blend: a fader between the drum kit and a melodic sound ----------
+// Every hit can play the drum and a melodic note at once. The fader trades one for the other (equal power, so the level stays steady).
+// The melodic note is the ring's own note in the key, so the rings add texture and a tune that follows the weather.
+const BLEND = { v: 0, snd: 'kalimba' }, MELBASE = [60, 62, 64, 65, 67, 69, 71, 72];
 function hit(l, t, vel) {
   midiHit(l, t, vel);
+  const b = BLEND.v / 100, dg = Math.cos(b * Math.PI / 2), mg = Math.sin(b * Math.PI / 2);
+  if (mg > 0.02 && !(l.d.syn && MELODIC[l.d.syn])) melHit(BLEND.snd, 440 * Math.pow(2, ((l.mm || MELBASE[l.i]) - 69) / 12), t, vel * mg, l.g);
+  if (dg > 0.02) playKit(l, t, vel * dg); else l.flash = t;
+}
+function playKit(l, t, vel) {
   if (l.d.syn) { l.flash = t; synthHit(l, t, vel); return; }
   const s = SAMPLES.get(l.d.f), rate = l.rate;
   l.flash = t;
@@ -567,6 +581,10 @@ function retune() {
     const target = Math.round(m0) + shift;
     l.rate = clamp(Math.pow(2, (target - m0) / 12), 0.5, 2);
     l.note = NOTES[((target % 12) + 12) % 12] + (Math.floor(target / 12) - 1);
+  });
+  lanes.forEach(l => {   // the note the melodic layer plays for this ring
+    const b0 = MELBASE[l.i], pc = (ROOT + steps[DEGREES[l.i] % 7]) % 12; let sh = (((pc - b0) % 12) + 12) % 12; if (sh > 6) sh -= 12;
+    l.mm = b0 + (TUNE ? sh : 0) + 12 * (l.oct || 0);
   });
   lanes.forEach(l => {   // each instrument's own octave, after tuning
     if (!l.oct) return;
@@ -900,6 +918,8 @@ function convStep(t, fired) {
   if (best) convSound(best, t);
 }
 K.conv = knobCell($('kConv'), 'Level', CONV.level, v => { CONV.level = v; convApply(); }, { size: 'lg', aria: 'Convergence level', fmt: v => v + '%', reset: 50 });
+$('blend').addEventListener('input', e => { BLEND.v = +e.target.value; say(BLEND.v === 0 ? 'Drums only.' : BLEND.v === 100 ? 'Melodic only: ' + $('blendSnd').selectedOptions[0].text + '.' : 'Blend: ' + (100 - BLEND.v) + '% drums, ' + BLEND.v + '% ' + $('blendSnd').selectedOptions[0].text + '.'); });
+$('blendSnd').addEventListener('change', e => { BLEND.snd = e.target.value; });
 toggle($('convOn'), v => { CONV.on = v; convApply(); say(v ? 'Convergence on: when rings meet at one angle, they play a chord.' : 'Convergence off.'); });
 
 // ---------- MIDI out ----------
