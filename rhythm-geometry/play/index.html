@@ -16,7 +16,8 @@
     --mono: "Source Code Pro", ui-monospace, Menlo, monospace;
   }
   * { box-sizing: border-box; }
-  html, body { margin: 0; background: var(--ground); color: var(--ink); font-family: var(--mono); font-size: 13px; line-height: 1.4; letter-spacing: .02em; }
+  html { background: var(--ground); }
+  html, body { margin: 0; color: var(--ink); font-family: var(--mono); font-size: 13px; line-height: 1.4; letter-spacing: .02em; }
   body { min-height: 100vh; padding: 12px 16px 24px; -webkit-user-select: none; user-select: none; }
   button, select, input { font: inherit; color: inherit; }
   button { cursor: pointer; touch-action: manipulation; }
@@ -67,26 +68,39 @@
   .mini label { font-size: 9px; letter-spacing: .1em; text-transform: uppercase; color: var(--ink-faint); display: flex; justify-content: space-between; }
   .mini input, .send input { width: 100%; accent-color: var(--accent); height: 20px; margin: 0; }
   .mini.dj { max-width: 96px; flex: 1 1 80px; }
-  .knob { width: 34px; height: 34px; cursor: ns-resize; touch-action: none; flex: none; }
-  .knob.big { width: 38px; height: 38px; }
-  .knob svg { width: 100%; height: 100%; display: block; }
-  .knob .trk { fill: none; stroke: rgba(243,236,230,.16); stroke-width: 3.5; stroke-linecap: round; }
-  .knob .val { fill: none; stroke: var(--c, var(--accent)); stroke-width: 3.5; stroke-linecap: round; }
-  .knob .ptr { stroke: var(--ink); stroke-width: 2; stroke-linecap: round; }
-  .knv { font-weight: 400; font-size: 11px; color: var(--ink-dim); min-width: 4ch; }
-  .chance { display: grid; grid-template-columns: auto 1fr; grid-template-areas: "l k" "l v"; align-items: center; justify-items: center; width: 100%; padding: 2px 4px; }
-  .chance span { grid-area: l; font-size: 9px; letter-spacing: .1em; text-transform: uppercase; color: var(--ink-faint); writing-mode: vertical-rl; transform: rotate(180deg); }
-  .chance .knob { grid-area: k; } .chance b { grid-area: v; font-weight: 400; font-size: 10px; color: var(--ink-dim); }
-  .fxbox { width: min(94vw, 640px); max-height: 92vh; overflow: auto; background: var(--panel); border: 1px solid var(--line); padding: 14px 16px 16px; display: grid; gap: 10px; }
-  .fxbox h2 { font-family: var(--display); font-weight: 400; font-size: 18px; letter-spacing: .06em; margin: 4px 0 0; }
-  .fxcols { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
-  .ctl { display: grid; gap: 3px; font-size: 10px; letter-spacing: .1em; text-transform: uppercase; color: var(--ink-faint); margin-top: 8px; }
-  .ctl input[type=range] { width: 100%; accent-color: var(--accent); height: 22px; margin: 0; }
-  .chips { display: flex; flex-wrap: wrap; gap: 4px; } .chips .btn { padding: 6px 8px; font-size: 10px; }
-  .ovl-head, .ovl-row { display: grid; grid-template-columns: 7.5em 1fr 1fr; gap: 12px; align-items: center; font-size: 10px; letter-spacing: .1em; text-transform: uppercase; color: var(--ink-faint); }
-  .ovl-row { border-left: 3px solid var(--c); padding-left: 8px; color: var(--ink-dim); } .ovl-row label { display: flex; gap: 6px; align-items: center; } .ovl-row input { flex: 1; min-width: 0; accent-color: var(--c); height: 20px; margin: 0; }
-  .ovl-nm { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  @media (max-width: 560px) { .fxcols { grid-template-columns: 1fr; } }
+  .knob { width: 40px; height: 40px; cursor: ns-resize; touch-action: none; flex: none; border-radius: 50%; }
+  .knob svg { width: 100%; height: 100%; display: block; overflow: visible; }
+  .vk .trk { fill: none; stroke: rgba(243,236,230,.14); stroke-width: 2.6; stroke-linecap: round; }
+  .vk .val { fill: none; stroke: var(--c, var(--accent)); stroke-width: 3; stroke-linecap: round; filter: drop-shadow(0 0 3px var(--c, var(--accent))); }
+  .vk .tk { stroke: rgba(243,236,230,.35); stroke-width: 1; } .vk .tk.big { stroke: rgba(243,236,230,.6); stroke-width: 1.6; }
+  .vk:hover .rot rect { fill: #fff; }
+  .kcell { display: flex; align-items: center; gap: 6px; }
+  .kcell.lg .knob { width: 54px; height: 54px; } .kcell.xl .knob { width: 92px; height: 92px; }
+  .kcell.v { flex-direction: column; gap: 2px; text-align: center; }
+  .ktxt { display: grid; line-height: 1.2; } .kcell.v .ktxt { justify-items: center; }
+  .klab { font-size: 9.5px; letter-spacing: .1em; text-transform: uppercase; color: var(--ink-faint); }
+  .kval { font-weight: 400; font-size: 11px; color: var(--ink-dim); min-width: 3.4ch; }
+  .kn3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 2px; width: 100%; justify-items: center; }
+  .kc { display: grid; justify-items: center; gap: 0; } .kc .knob { width: 38px; height: 38px; } .kc span { font-size: 8px; letter-spacing: .08em; text-transform: uppercase; color: var(--ink-faint); margin-top: -3px; }
+  .fxbox { width: min(96vw, 820px); max-height: 94vh; overflow: auto; background: transparent; border: 0; padding: 0; display: grid; gap: 12px; }
+  .fxbox .maphead { color: var(--ink); } .fxbox .hint { text-align: center; }
+  .pedals { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
+  .pedal { position: relative; display: grid; gap: 6px; padding: 16px 14px 14px; border-radius: 10px; border: 2px solid rgba(0,0,0,.55); box-shadow: inset 0 0 0 2px rgba(255,255,255,.08), 0 10px 0 rgba(0,0,0,.45), 0 22px 30px rgba(0,0,0,.5); }
+  .pedal.delay { background: linear-gradient(160deg, #2f6b5e, #1c4238); --c: #ffd27a; }
+  .pedal.verb { background: linear-gradient(160deg, #7a3f35, #4a231d); --c: #ffb68a; }
+  .pedal .pname { font-family: var(--display); font-size: 30px; letter-spacing: .1em; text-transform: uppercase; text-align: center; color: #f3ece6; text-shadow: 0 2px 0 rgba(0,0,0,.4); }
+  .pedal .kgrid { display: flex; justify-content: space-around; flex-wrap: wrap; gap: 6px; padding: 4px 0 8px; }
+  .pedal .klab { color: rgba(255,240,225,.75); } .pedal .kval { color: #fff; }
+  .chiplab { font-size: 9px; letter-spacing: .14em; text-transform: uppercase; color: rgba(255,240,225,.6); margin-top: 2px; }
+  .pedal .chips { display: flex; flex-wrap: wrap; gap: 4px; } .pedal .chips .btn { padding: 6px 7px; font-size: 10px; background: rgba(0,0,0,.28); border-color: rgba(255,255,255,.18); }
+  .pedal .chips .btn[aria-pressed="true"] { background: #f3ece6; color: #1a1210; border-color: #f3ece6; }
+  .foot { margin: 10px auto 0; width: 120px; height: 70px; border-radius: 10px; border: 2px solid rgba(0,0,0,.6); background: linear-gradient(#bfb8ae, #7e776e); color: #1a1210; display: grid; place-items: center; position: relative; box-shadow: 0 5px 0 rgba(0,0,0,.55); font-size: 11px; letter-spacing: .14em; text-transform: uppercase; }
+  .foot:active { transform: translateY(3px); box-shadow: 0 2px 0 rgba(0,0,0,.55); }
+  .foot .lamp { position: absolute; top: -26px; left: 50%; margin-left: -7px; width: 14px; height: 14px; border-radius: 50%; background: #3a1410; box-shadow: 0 0 0 3px rgba(0,0,0,.5); }
+  .foot[aria-pressed="true"] .lamp { background: #ff5a3a; box-shadow: 0 0 0 3px rgba(0,0,0,.5), 0 0 14px 4px rgba(255,90,58,.8); }
+  .maptop { position: absolute; top: 0; left: 0; right: 0; display: flex; gap: 14px; align-items: center; padding: 12px 16px; background: linear-gradient(rgba(8,4,3,.85), rgba(8,4,3,0)); pointer-events: none; font-size: 13px; color: var(--ink); }
+  .maptop .maphelp { color: var(--ink-faint); font-size: 11px; margin-left: auto; } .maptop .btn { pointer-events: auto; }
+  @media (max-width: 700px) { .pedals { grid-template-columns: 1fr; } .kcell.xl .knob { width: 74px; height: 74px; } }
   .panbar { position: relative; width: 100%; height: 16px; cursor: ew-resize; touch-action: none; }
   .panbar::before { content: ""; position: absolute; left: 0; right: 0; top: 7px; height: 2px; background: rgba(243,236,230,.18); border-radius: 1px; }
   .panbar::after { content: ""; position: absolute; left: 50%; top: 3px; width: 1px; height: 10px; background: rgba(243,236,230,.3); }
@@ -99,10 +113,11 @@
   .strip .btn[data-auto="1"] { box-shadow: inset 0 0 0 1px var(--c); }
   .strip .btn[data-auto="1"] .led { background: var(--c); }
   .pad[aria-pressed="true"] { background: #2a211d; color: var(--ink-faint); box-shadow: inset 0 0 0 1px var(--c); text-decoration: line-through; filter: none; }
-  .mappanel { position: fixed; inset: 0; background: rgba(8,4,3,.92); display: grid; place-items: center; z-index: 10; padding: 16px; }
+  .mappanel { position: fixed; inset: 0; background: rgba(8,4,3,.94); display: grid; place-items: center; z-index: 10; }
+  #mapPanel:not([hidden]) { display: block; }
+  #mapCv { position: absolute; inset: 0; width: 100%; height: 100%; display: block; cursor: grab; touch-action: none; border: 0; background: transparent; }
+  #fxPanel { padding: 16px; }
   .mappanel[hidden] { display: none; }
-  .mapbox { width: min(96vw, 1100px); display: grid; gap: 8px; }
-  .mapbox canvas { width: 100%; height: auto; display: block; background: #0c0605; border: 1px solid var(--line); cursor: pointer; touch-action: manipulation; }
   .maphead { display: flex; justify-content: space-between; align-items: center; color: var(--ink-dim); font-size: 12px; }
 
   /* mixer strips */
@@ -142,6 +157,11 @@
 </style>
 </head>
 <body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
+  <radialGradient id="kskirt" cx=".35" cy=".28" r=".85"><stop offset="0" stop-color="#5a524c"/><stop offset=".5" stop-color="#231e1b"/><stop offset="1" stop-color="#080605"/></radialGradient>
+  <radialGradient id="kcap" cx=".34" cy=".28" r=".9"><stop offset="0" stop-color="#7a7068"/><stop offset=".45" stop-color="#2e2824"/><stop offset="1" stop-color="#110d0b"/></radialGradient>
+  <radialGradient id="kshadow"><stop offset=".6" stop-color="#000" stop-opacity=".55"/><stop offset="1" stop-color="#000" stop-opacity="0"/></radialGradient>
+</defs></svg>
 <canvas id="sky" aria-hidden="true"></canvas>
 <div class="app" id="app">
   <div class="top">
@@ -173,15 +193,15 @@
             <button class="btn" data-st="2" type="button" aria-pressed="false" title="Repeat the last hits every eighth note">1/8</button>
             <button class="btn" data-st="1" type="button" aria-pressed="false" title="Repeat the last hits every sixteenth note">1/16</button>
             <button class="btn" data-st="0.5" type="button" aria-pressed="false" title="A fast roll">Roll</button></div>
-          <div class="grp mini dj"><label for="dj">Filter</label><input id="dj" type="range" min="-100" max="100" value="0" aria-label="DJ filter. Left closes it, right thins it out. Double click to centre."></div>
-          <div class="grp"><span class="fxlab">Chance</span><div class="knob big" id="gChance"></div><b class="knv" id="gChanceV">100%</b></div>
+          <div class="grp" id="kFilter" title="DJ filter. Turn left to close it, right to thin it out. Double click to centre."></div>
+          <div class="grp" id="kChance" title="Chance for everything: lower it and hits drop out"></div>
           <button id="fxOpen" class="btn" type="button" title="Open the delay and reverb controls" aria-label="Delay and reverb">FX</button>
         </div>
         <div class="fxrow">
           <div class="grp"><span class="fxlab">Wander</span>
             <button id="autoFlt" class="btn" type="button" aria-pressed="true" title="Each drum's filter closes by itself now and then and holds for 1, 2, 4 or 8 bars. Calm weather holds longer.">Filters</button>
             <button id="autoPan" class="btn" type="button" aria-pressed="true" title="Each drum swings to one side for 1, 2, 4 or 8 bars, then comes back">Pan</button>
-            <div class="mini"><label for="wander">How often</label><input id="wander" type="range" min="0" max="100" value="40" aria-label="How often the filters and pans wander"></div></div>
+            <div class="grp" id="kWander" title="How often the filters and pans wander"></div></div>
           <div class="grp"><span class="fxlab">Key</span><select id="root" aria-label="Key"></select><button id="tuneOn" class="btn" type="button" aria-pressed="true" title="On: every drum with a clear pitch is moved to a note of the key and scale. Off: drums sound as recorded.">In key</button><button id="remix" class="btn" type="button" title="Turn every ring to a new starting point. Same step counts, new groove.">Shift rings</button></div>
         </div>
       </div>
@@ -189,27 +209,26 @@
     </div>
   </div>
 </div>
-<div class="mappanel" id="fxPanel" hidden role="dialog" aria-modal="true" aria-label="Delay and reverb">
+<div class="mappanel" id="fxPanel" hidden role="dialog" aria-modal="true" aria-label="Delay and reverb pedals">
   <div class="fxbox">
-    <div class="maphead"><b>Delay and reverb</b><button id="fxClose" class="btn" type="button">Done</button></div>
-    <div class="fxcols">
-      <section><h2>Delay</h2>
-        <label class="ctl">Level (all)<input id="fxDelay" type="range" min="0" max="100" value="0"></label>
-        <div class="ctl">Time<span class="chips"><button class="btn" data-dt="2" type="button" aria-pressed="false">1/8</button><button class="btn" data-dt="3" type="button" aria-pressed="true">dotted 1/8</button><button class="btn" data-dt="4" type="button" aria-pressed="false">1/4</button><button class="btn" data-dt="6" type="button" aria-pressed="false">dotted 1/4</button></span></div>
-        <label class="ctl">Repeats<input id="dFb" type="range" min="0" max="100" value="47"></label>
-        <label class="ctl">Tone<input id="dTone" type="range" min="0" max="100" value="55"></label></section>
-      <section><h2>Reverb</h2>
-        <label class="ctl">Level (all)<input id="fxVerb" type="range" min="0" max="100" value="30"></label>
-        <label class="ctl">Size<input id="vLen" type="range" min="0" max="100" value="29"></label>
-        <label class="ctl">Tone<input id="vTone" type="range" min="0" max="100" value="88"></label></section>
+    <div class="maphead"><b>Pedals for everything</b><button id="fxClose" class="btn" type="button">Done</button></div>
+    <div class="pedals">
+      <section class="pedal delay"><div class="pname">Delay</div>
+        <div class="kgrid" id="kDelay"></div>
+        <div class="chiplab">Time</div><div class="chips" id="dTimes"></div>
+        <div class="chiplab">Style</div><div class="chips" id="dModes"></div>
+        <button class="foot" id="dFoot" type="button" aria-pressed="false" aria-label="Delay on or off"><i class="lamp"></i><span>On</span></button></section>
+      <section class="pedal verb"><div class="pname">Reverb</div>
+        <div class="kgrid" id="kVerb"></div>
+        <div class="chiplab">Room</div><div class="chips" id="vTypes"></div>
+        <button class="foot" id="vFoot" type="button" aria-pressed="true" aria-label="Reverb on or off"><i class="lamp"></i><span>On</span></button></section>
     </div>
-    <h2>How much of each drum</h2>
-    <div class="ovl-head"><span></span><span>Delay</span><span>Reverb</span></div>
-    <div id="ovlDrums"></div>
+    <p class="hint">Each drum has its own Delay and Reverb knobs on its strip. These two pedals shape the sound they all feed.</p>
   </div>
 </div>
-<div class="mappanel" id="mapPanel" hidden>
-  <div class="mapbox"><div class="maphead"><span id="mapName">Pick a city. Every dot has its own rhythm.</span><button id="mapClose" class="btn" type="button">Close</button></div><canvas id="mapCv" width="1200" height="475" aria-label="World map of cities"></canvas></div>
+<div class="mappanel" id="mapPanel" hidden role="dialog" aria-modal="true" aria-label="World map">
+  <canvas id="mapCv" aria-label="World map of cities. Drag to move, scroll or pinch to zoom, click a city."></canvas>
+  <div class="maptop"><span id="mapName">Pick a city. Every dot has its own rhythm.</span><span class="maphelp">Drag to move. Scroll or pinch to zoom.</span><button id="mapClose" class="btn" type="button">Close</button></div>
 </div>
 
 <script>
@@ -232,23 +251,75 @@ djHP.type = 'highpass'; djHP.frequency.value = 20; djLP.type = 'lowpass'; djLP.f
 const pre = ctx.createGain(), comp = ctx.createDynamicsCompressor();
 comp.threshold.value = -14; comp.ratio.value = 4; comp.attack.value = 0.004; comp.release.value = 0.12;
 masterIn.connect(djHP).connect(djLP).connect(pre).connect(comp).connect(ctx.destination);
-// delay
-const delay = ctx.createDelay(2), fb = ctx.createGain(), delTone = ctx.createBiquadFilter(), delSend = ctx.createGain(), delOut = ctx.createGain();
-delTone.type = 'lowpass'; delTone.frequency.value = 3200; fb.gain.value = 0.42; delSend.gain.value = 0; delOut.gain.value = 0.7;
-const delIn = ctx.createGain(); pre.connect(delSend).connect(delIn); delIn.connect(delay); delay.connect(delTone).connect(fb).connect(delay); delTone.connect(delOut).connect(comp);
-// reverb
+// delay: the same five styles and nine times as Three Cities
+const DELAY_BEATS = { '16': 0.25, '16t': 1 / 6, '8t': 1 / 3, '8': 0.5, 'd8': 0.75, '4t': 2 / 3, '4': 1, 'd4': 1.5 };
+const DELAY_TIMES = { '16': '1/16', '16t': '1/16 triplet', '8t': '1/8 triplet', '8': '1/8', 'd8': 'dotted 1/8', '4t': '1/4 triplet', '4': '1/4', 'd4': 'dotted 1/4' };
+const DELAY_MODES = {
+  'mono':      { n: 'Mono', pp: false, lp: 0,    fbScale: 1,    wet: 0.6, slap: false },
+  'ping-pong': { n: 'Ping-pong', pp: true,  lp: 0,    fbScale: 1,    wet: 0.6, slap: false },   // the repeats bounce left and right
+  'tape':      { n: 'Tape', pp: false, lp: 2200, fbScale: 1,    wet: 0.6, slap: false },   // each repeat a little darker
+  'slapback':  { n: 'Slapback', pp: false, lp: 0,    fbScale: 0.15, wet: 0.7, slap: true },    // one quick echo
+  'dub':       { n: 'Dub', pp: false, lp: 900,  fbScale: 0.9,  wet: 0.7, slap: false },   // long, dark, washy
+};
+const DEL = { div: 'd8', mode: 'tape', fb: 47, tone: 55 };
+const dL = ctx.createDelay(2), dR = ctx.createDelay(2), fbSelf = ctx.createGain(), loopLp = ctx.createBiquadFilter(), xA = ctx.createGain(), fbX = ctx.createGain();
+const wL = ctx.createGain(), wR = ctx.createGain(), panL = ctx.createStereoPanner(), panR = ctx.createStereoPanner(), delSend = ctx.createGain(), delOut = ctx.createGain(), delIn = ctx.createGain();
+loopLp.type = 'lowpass'; loopLp.Q.value = 0.5; delSend.gain.value = 0; delOut.gain.value = 0.8;
+pre.connect(delSend).connect(delIn); delIn.connect(dL);
+dL.connect(fbSelf); fbSelf.connect(loopLp); loopLp.connect(dL);   // repeat loop
+dL.connect(xA); xA.connect(dR); dR.connect(fbX); fbX.connect(dL);  // ping-pong
+dL.connect(wL); wL.connect(panL); panL.connect(delOut); dR.connect(wR); wR.connect(panR); panR.connect(delOut); delOut.connect(comp);
+function applyDelay() {
+  const M = DELAY_MODES[DEL.mode], fbv = DEL.fb / 100 * 0.75 * M.fbScale, t = ctx.currentTime;
+  wL.gain.setTargetAtTime(M.wet, t, 0.02); wR.gain.setTargetAtTime(M.pp ? M.wet : 0, t, 0.02);
+  panL.pan.value = M.pp ? -1 : 0; panR.pan.value = M.pp ? 1 : 0;
+  fbSelf.gain.setTargetAtTime(M.pp ? 0 : fbv, t, 0.02); fbX.gain.setTargetAtTime(M.pp ? fbv : 0, t, 0.02); xA.gain.value = M.pp ? 1 : 0;
+  const tone = 600 * Math.pow(14, DEL.tone / 100);
+  loopLp.frequency.setTargetAtTime(M.lp ? Math.min(M.lp, tone) : tone, t, 0.03);
+  setDelayTime();
+}
+// reverb: seven rooms, each made from shaped noise
 const verb = ctx.createConvolver(), verbSend = ctx.createGain(), verbOut = ctx.createGain();
-function makeIR(sec) {   // a burst of noise that fades away: the longer it is, the bigger the room
-  const len = Math.floor(ctx.sampleRate * sec), b = ctx.createBuffer(2, len, ctx.sampleRate);
-  for (let c = 0; c < 2; c++) { const d = b.getChannelData(c); for (let i = 0; i < len; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / len, 2.6); }
+const REVERBS = {
+  room:      { n: 'Room',      sec: 0.55, pow: 3.4 },
+  plate:     { n: 'Plate',     sec: 1.6,  pow: 2.6 },
+  hall:      { n: 'Hall',      sec: 2.6,  pow: 2.0, dark: 0.35 },
+  cathedral: { n: 'Cathedral', sec: 5.0,  pow: 1.7, dark: 0.55 },
+  spring:    { n: 'Spring',    sec: 1.9,  pow: 2.2, spring: true },
+  gated:     { n: 'Gated',     sec: 0.5,  pow: 0.35, gate: true },
+  reverse:   { n: 'Reverse',   sec: 1.3,  pow: 2.0, rev: true },
+};
+const REV = { type: 'plate', size: 40, tone: 88 };
+function makeIR() {
+  const R = REVERBS[REV.type], sec = clamp(R.sec * (0.5 + 1.3 * REV.size / 100), 0.2, 8), len = Math.floor(ctx.sampleRate * sec), sr = ctx.sampleRate;
+  const b = ctx.createBuffer(2, len, sr);
+  for (let c = 0; c < 2; c++) {
+    const d = b.getChannelData(c); let lp = 0;
+    for (let i = 0; i < len; i++) {
+      const x = i / len; let env = Math.pow(1 - x, R.pow);
+      if (R.gate) env = x < 0.8 ? 1 : Math.max(0, 1 - (x - 0.8) / 0.04);
+      if (R.rev) env = Math.pow(x, 2) * (x > 0.97 ? Math.max(0, 1 - (x - 0.97) / 0.03) : 1);
+      let n = Math.random() * 2 - 1;
+      if (R.dark) { lp += (n - lp) * (1 - R.dark * Math.min(1, x * 3 + 0.2)); n = lp * 2.2; }   // the tail gets darker
+      d[i] = n * env;
+    }
+    if (R.spring) {   // little chirps that come back every 30 ms or so, like a metal spring
+      const gap = Math.floor(sr * (0.027 + 0.004 * c)), clen = Math.floor(sr * 0.012);
+      for (let k = 1; k * gap < len; k++) for (let j = 0; j < clen && k * gap + j < len; j++) {
+        const ph = j / clen, f = 3200 - 2700 * ph; d[k * gap + j] += Math.sin(2 * Math.PI * f * j / sr) * Math.pow(1 - ph, 2) * Math.pow(1 - k * gap / len, 2) * 0.9;
+      }
+    }
+  }
   verb.buffer = b;
 }
-makeIR(1.6);
+makeIR();
 const verbIn = ctx.createGain(), verbTone = ctx.createBiquadFilter(); verbSend.gain.value = 0.3 * 0.7; verbOut.gain.value = 1;
 verbTone.type = 'lowpass'; verbTone.frequency.value = 9000;
 pre.connect(verbSend).connect(verbIn); verbIn.connect(verb).connect(verbTone).connect(verbOut).connect(comp);
-let DELMULT = 3;   // delay time in sixteenth notes
-const setDelayTime = (t = ctx.currentTime) => delay.delayTime.setTargetAtTime(stepSecs() * DELMULT, t, 0.05);
+function setDelayTime(t = ctx.currentTime) {
+  const M = DELAY_MODES[DEL.mode], secs = M.slap ? 0.09 : DELAY_BEATS[DEL.div] * 60 / (+$('bpm').value);
+  dL.delayTime.setTargetAtTime(secs, t, 0.05); dR.delayTime.setTargetAtTime(secs, t, 0.05);
+}
 
 const SAMPLES = new Map(), failed = new Set();
 const noiseBuf = (() => { const b = ctx.createBuffer(1, ctx.sampleRate, ctx.sampleRate), d = b.getChannelData(0); for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1; return b; })();
@@ -423,7 +494,7 @@ async function setKit(id) {
   const k = KITS.find(x => x.id === id) || KITS[0];
   $('status').textContent = 'Loading ' + k.name + '…';
   await Promise.all(k.lanes.map(d => !d.f || SAMPLES.has(d.f) ? 0 : loadSample(d.f)));
-  KIT = k; lanes.forEach((l, i) => { l.d = k.lanes[i]; l.el.querySelector('.nm').textContent = l.d.n; l.pad.setAttribute('aria-label', 'Mute ' + l.d.n); l.ovl.querySelector('.ovl-nm').textContent = l.d.n; l.el.querySelector('.fader').setAttribute('aria-label', l.d.n + ' volume'); });
+  KIT = k; lanes.forEach((l, i) => { l.d = k.lanes[i]; l.el.querySelector('.nm').textContent = l.d.n; l.pad.setAttribute('aria-label', 'Mute ' + l.d.n); l.el.querySelector('.fader').setAttribute('aria-label', l.d.n + ' volume'); });
   $('status').textContent = ''; retune();
 }
 
@@ -439,7 +510,7 @@ function holdBars() {
 }
 function autoStep(t, n) {
   if (n % 16 !== 0) return;   // decisions are made on the bar
-  const p = $('wander').value / 100;
+  const p = K.wander.get() / 100;
   lanes.forEach(l => {
     if (l.aF > 0) { l.aF--; if (l.aF === 0) setFilter(l, t); }
     else if (AUTO.flt && Math.random() < 0.03 + 0.12 * p) { l.aF = holdBars(); l.aFc = 240 + Math.random() * 700; setFilter(l, t); }
@@ -511,17 +582,6 @@ function makeFader(el, l) {
   el.tabIndex = 0; el.setAttribute('role', 'slider'); el.setAttribute('aria-valuemin', 0); el.setAttribute('aria-valuemax', 100);
   el.setAttribute('aria-label', l.d.n + ' volume'); draw(); l.drawFader = draw;
 }
-// the overlay: delay and reverb for everything, and how much of each drum goes to them
-function buildOverlay() {
-  const host = $('ovlDrums'); host.innerHTML = '';
-  lanes.forEach(l => {
-    const r = document.createElement('div'); r.className = 'ovl-row'; r.dataset.lane = l.i; r.style.setProperty('--c', l.color);
-    r.innerHTML = `<span class="ovl-nm">${l.d.n}</span><label>D<input class="sd" type="range" min="0" max="100" value="${Math.round(Math.sqrt(l.sd.gain.value / 0.9) * 100)}" aria-label="${l.d.n} delay"></label><label>R<input class="sv" type="range" min="0" max="100" value="${Math.round(Math.sqrt(l.sv.gain.value / 0.9) * 100)}" aria-label="${l.d.n} reverb"></label>`;
-    r.querySelector('.sd').addEventListener('input', e => l.sd.gain.setTargetAtTime(Math.pow(e.target.value / 100, 2) * 0.9, ctx.currentTime, 0.02));
-    r.querySelector('.sv').addEventListener('input', e => l.sv.gain.setTargetAtTime(Math.pow(e.target.value / 100, 2) * 0.9, ctx.currentTime, 0.02));
-    host.appendChild(r); l.ovl = r;
-  });
-}
 // tap to latch, hold to use only while pressed
 function momentary(el, on, off) {
   let down = 0, latched = false;
@@ -536,23 +596,51 @@ function momentary(el, on, off) {
 }
 function toggle(el, fn) { el.addEventListener('click', () => { const v = el.getAttribute('aria-pressed') !== 'true'; el.setAttribute('aria-pressed', String(v)); fn(v); }); }
 
-// a small turning knob: drag up or down, arrow keys, double click to put it back
-function makeKnob(el, value, onChange, label, reset = 100) {
-  const A0 = 135, A1 = 405, P = (r, a) => [20 + r * Math.cos(a * Math.PI / 180), 20 + r * Math.sin(a * Math.PI / 180)];
-  const arc = (a0, a1) => { const [x0, y0] = P(15, a0), [x1, y1] = P(15, a1); return `M${x0.toFixed(2)} ${y0.toFixed(2)}A15 15 0 ${a1 - a0 > 180 ? 1 : 0} 1 ${x1.toFixed(2)} ${y1.toFixed(2)}`; };
-  el.innerHTML = '<svg viewBox="0 0 40 40" aria-hidden="true"><path class="trk" d="' + arc(A0, A1 - 0.01) + '"/><path class="val"/><line class="ptr"/></svg>';
-  const val = el.querySelector('.val'), ptr = el.querySelector('.ptr');
+// A big old-fashioned knob: ridged skirt, ivory pointer, a lit ring that shows how far it is turned.
+// Drag up or down, scroll, use the arrow keys, double click to put it back.
+const KA0 = 135, KA1 = 405;
+function makeKnob(el, value, onChange, label, reset = 100, o = {}) {
+  const min = o.min ?? 0, max = o.max ?? 100, bi = min < 0, span = max - min;
+  const P = (r, a) => [50 + r * Math.cos(a * Math.PI / 180), 50 + r * Math.sin(a * Math.PI / 180)];
+  const arc = (r, a0, a1) => { const [x0, y0] = P(r, a0), [x1, y1] = P(r, a1); return `M${x0.toFixed(2)} ${y0.toFixed(2)}A${r} ${r} 0 ${Math.abs(a1 - a0) > 180 ? 1 : 0} ${a1 >= a0 ? 1 : 0} ${x1.toFixed(2)} ${y1.toFixed(2)}`; };
+  let ticks = '';
+  for (let i = 0; i <= 10; i++) { const a = KA0 + (KA1 - KA0) * i / 10, [x0, y0] = P(37.5, a), [x1, y1] = P(i % 5 === 0 ? 42.5 : 40.5, a); ticks += `<line x1="${x0.toFixed(1)}" y1="${y0.toFixed(1)}" x2="${x1.toFixed(1)}" y2="${y1.toFixed(1)}" class="${i % 5 === 0 ? 'tk big' : 'tk'}"/>`; }
+  el.classList.add('vk');
+  el.innerHTML = `<svg viewBox="0 0 100 100" aria-hidden="true"><path class="trk" d="${arc(47, KA0, KA1 - 0.01)}"/><path class="val"/>${ticks}
+    <circle cx="50" cy="55" r="35" fill="url(#kshadow)"/><circle cx="50" cy="50" r="33" fill="url(#kskirt)" stroke="#000" stroke-opacity=".6"/>
+    <circle cx="50" cy="50" r="30.5" fill="none" stroke="#000" stroke-opacity=".7" stroke-width="4" stroke-dasharray="1.7 1.7"/>
+    <circle cx="50" cy="50" r="30.5" fill="none" stroke="#fff" stroke-opacity=".09" stroke-width="4" stroke-dasharray="1.7 1.7" stroke-dashoffset="1.7"/>
+    <circle cx="50" cy="50" r="25" fill="url(#kcap)" stroke="#000" stroke-opacity=".5"/>
+    <circle cx="50" cy="50" r="19" fill="none" stroke="#fff" stroke-opacity=".06"/><circle cx="50" cy="50" r="13" fill="none" stroke="#fff" stroke-opacity=".05"/>
+    <path d="M30 40A22 22 0 0 1 46 29" fill="none" stroke="#fff" stroke-opacity=".22" stroke-width="2" stroke-linecap="round"/>
+    <g class="rot"><rect x="48" y="26.5" width="4" height="17" rx="2" fill="#f3ece6"/></g></svg>`;
+  const val = el.querySelector('.val'), rot = el.querySelector('.rot');
   let v = value;
-  const draw = () => { const a = A0 + (A1 - A0) * v / 100, [x, y] = P(13, a), [x2, y2] = P(5, a); val.setAttribute('d', v > 0 ? arc(A0, Math.max(A0 + 0.5, a)) : ''); ptr.setAttribute('x1', x2); ptr.setAttribute('y1', y2); ptr.setAttribute('x2', x); ptr.setAttribute('y2', y); el.setAttribute('aria-valuenow', Math.round(v)); };
-  const set = n => { v = clamp(Math.round(n), 0, 100); draw(); onChange(v); };
+  const draw = () => {
+    const f = (v - min) / span, a = KA0 + (KA1 - KA0) * f, a0 = bi ? KA0 + (KA1 - KA0) * (0 - min) / span : KA0;
+    val.setAttribute('d', Math.abs(a - a0) > 0.6 ? arc(47, a0, a) : '');
+    rot.setAttribute('transform', `rotate(${(a - 270).toFixed(1)} 50 50)`);
+    el.setAttribute('aria-valuenow', Math.round(v));
+  };
+  const set = (n, quiet) => { v = clamp(Math.round(n), min, max); draw(); if (!quiet) onChange(v); };
   let y0 = 0, v0 = 0, down = false;
   el.addEventListener('pointerdown', e => { el.setPointerCapture(e.pointerId); down = true; y0 = e.clientY; v0 = v; });
-  el.addEventListener('pointermove', e => { if (down) set(v0 + (y0 - e.clientY) * 0.8); });
+  el.addEventListener('pointermove', e => { if (down) set(v0 + (y0 - e.clientY) * span / 140); });
   el.addEventListener('pointerup', () => down = false); el.addEventListener('pointercancel', () => down = false);
   el.addEventListener('dblclick', () => set(reset));
-  el.addEventListener('keydown', e => { const d = { ArrowUp: 5, ArrowRight: 5, ArrowDown: -5, ArrowLeft: -5 }[e.key]; if (d) { e.preventDefault(); set(v + d); } });
-  el.tabIndex = 0; el.setAttribute('role', 'slider'); el.setAttribute('aria-valuemin', 0); el.setAttribute('aria-valuemax', 100); el.setAttribute('aria-label', label);
-  draw(); return { set, get: () => v };
+  el.addEventListener('wheel', e => { e.preventDefault(); set(v + (e.deltaY < 0 ? 1 : -1) * span / 40); }, { passive: false });
+  el.addEventListener('keydown', e => { const d = { ArrowUp: 1, ArrowRight: 1, ArrowDown: -1, ArrowLeft: -1 }[e.key]; if (d) { e.preventDefault(); set(v + d * span / 20); } });
+  el.tabIndex = 0; el.setAttribute('role', 'slider'); el.setAttribute('aria-valuemin', min); el.setAttribute('aria-valuemax', max); el.setAttribute('aria-label', label);
+  draw(); return { set, get: () => v, el };
+}
+// a knob with its name and number beside or under it
+function knobCell(host, label, value, onChange, o = {}) {
+  const c = document.createElement('div'); c.className = 'kcell' + (o.v ? ' v' : '') + (o.size ? ' ' + o.size : '');
+  c.innerHTML = `<div class="knob"></div><div class="ktxt"><span class="klab">${label}</span><b class="kval"></b></div>`;
+  host.appendChild(c);
+  const out = c.querySelector('.kval'), fmt = o.fmt || (v => v + '%');
+  const k = makeKnob(c.querySelector('.knob'), value, v => { out.textContent = fmt(v); onChange(v); }, o.aria || label, o.reset ?? value, o);
+  out.textContent = fmt(value); k.cell = c; return k;
 }
 
 const mixer = $('mixer');
@@ -560,7 +648,7 @@ lanes.forEach(l => {
   const s = document.createElement('div'); s.className = 'strip'; s.style.setProperty('--c', l.color); s.dataset.lane = l.i;
   s.innerHTML = `<div class="nmrow"><span class="trig" title="Lights up when this drum sounds"></span><div class="nm">${l.d.n}</div></div><div class="why"></div><div class="panbar" title="Pan: drag left or right. Double click to centre."><b></b><i></i></div><div class="panlab" aria-hidden="true"><span>L</span><span>R</span></div><div class="fader"></div>
     <div class="row2"><button class="btn f" type="button" aria-pressed="false" title="Close a filter on this drum"><i class="led"></i>Filter</button><button class="btn st" type="button" aria-pressed="false" title="Repeat this drum's last hit. Tap to latch, hold for just a moment."><i class="led"></i>Stutter</button></div>
-    <div class="chance"><span>Chance</span><div class="knob"></div><b>100%</b></div>
+    <div class="kn3"><div class="kc"><div class="knob" data-k="chance"></div><span>Chance</span></div><div class="kc"><div class="knob" data-k="delay"></div><span>Delay</span></div><div class="kc"><div class="knob" data-k="verb"></div><span>Reverb</span></div></div>
     <button class="pad" type="button" aria-pressed="false" aria-label="Mute ${l.d.n}" title="Mute or unmute (key ${l.i + 1})">${l.i + 1}</button>`;
   mixer.appendChild(s); l.el = s;
   makeFader(s.querySelector('.fader'), l);
@@ -576,8 +664,9 @@ lanes.forEach(l => {
     pb.addEventListener('keydown', e => { const d = { ArrowLeft: -0.1, ArrowDown: -0.1, ArrowRight: 0.1, ArrowUp: 0.1 }[e.key]; if (d) { e.preventDefault(); setPan(l.basePan + d); } });
     pb.tabIndex = 0; pb.setAttribute('role', 'slider'); pb.setAttribute('aria-valuemin', -100); pb.setAttribute('aria-valuemax', 100); pb.setAttribute('aria-label', l.d.n + ' pan');
     showHome(); l.setPan = setPan; }
-  const kb = s.querySelector('.chance b');
-  l.knob = makeKnob(s.querySelector('.knob'), 100, v => { l.chance = v; kb.textContent = v + '%'; }, l.d.n + ' chance');
+  l.knob = makeKnob(s.querySelector('[data-k=chance]'), 100, v => { l.chance = v; s.querySelector('[data-k=chance]').title = v + '% chance'; }, l.d.n + ' chance', 100);
+  l.sdK = makeKnob(s.querySelector('[data-k=delay]'), 0, v => l.sd.gain.setTargetAtTime(Math.pow(v / 100, 2) * 0.9, ctx.currentTime, 0.02), l.d.n + ' delay', 0);
+  l.svK = makeKnob(s.querySelector('[data-k=verb]'), 0, v => l.sv.gain.setTargetAtTime(Math.pow(v / 100, 2) * 0.9, ctx.currentTime, 0.02), l.d.n + ' reverb', 0);
   toggle(s.querySelector('.f'), v => { l.flt = v; setFilter(l, ctx.currentTime); });
   momentary(s.querySelector('.st'), () => l.stut = true, () => l.stut = false);
   const pad = s.querySelector('.pad');
@@ -585,7 +674,6 @@ lanes.forEach(l => {
   s.querySelector('.nm').addEventListener('pointerdown', () => tap(l));   // tap the name to play the drum
   l.pad = pad;
 });
-buildOverlay();
 function renderWhy() { lanes.forEach(l => { l.el.querySelector('.why').innerHTML = `<b>${l.steps}</b>${l.why}${l.note ? `<i title="The note this drum plays">${l.note}</i>` : ''}`; }); }
 function setMute(l, v) { l.mute = v; l.pad.setAttribute('aria-pressed', String(v)); l.el.classList.toggle('muted', v); }
 function tap(l) {
@@ -616,20 +704,40 @@ addEventListener('keyup', e => {
   const b = lanes[i].el.querySelector('.st'); delete b.dataset.key; lanes[i].stut = !!b._latched;   // a latched button keeps going
 });
 document.querySelectorAll('[data-st]').forEach(b => { const d = +b.dataset.st; momentary(b, () => gDivs.add(d), () => gDivs.delete(d)); });
-$('fxDelay').addEventListener('input', e => delSend.gain.setTargetAtTime(Math.pow(e.target.value / 100, 2) * 0.8, ctx.currentTime, 0.03));
-$('fxVerb').addEventListener('input', e => verbSend.gain.setTargetAtTime(Math.pow(e.target.value / 100, 2) * 0.7, ctx.currentTime, 0.03));
-const sl = (id, fn) => $(id).addEventListener('input', e => fn(+e.target.value));
-sl('dFb', v => fb.gain.setTargetAtTime(v / 100 * 0.9, ctx.currentTime, 0.03));
-sl('dTone', v => delTone.frequency.setTargetAtTime(600 * Math.pow(14, v / 100), ctx.currentTime, 0.03));
-sl('vTone', v => verbTone.frequency.setTargetAtTime(1200 * Math.pow(10, v / 100), ctx.currentTime, 0.03));
-$('vLen').addEventListener('change', e => makeIR(0.4 + e.target.value / 100 * 4.1));
-document.querySelectorAll('[data-dt]').forEach(b => b.addEventListener('click', () => { DELMULT = +b.dataset.dt; document.querySelectorAll('[data-dt]').forEach(x => x.setAttribute('aria-pressed', String(x === b))); setDelayTime(); }));
+// knobs for the whole mix
+const K = {};
+K.chance = knobCell($('kChance'), 'Chance', 100, v => { GCHANCE = v; }, { size: 'lg', aria: 'Chance for everything', reset: 100 });
+K.filter = knobCell($('kFilter'), 'Filter', 0, v => {
+  const f = v / 100, t = ctx.currentTime;
+  djLP.frequency.setTargetAtTime(f < 0 ? 200 * Math.pow(100, 1 + f) : 20000, t, 0.03);
+  djHP.frequency.setTargetAtTime(f > 0 ? 20 * Math.pow(300, f) : 20, t, 0.03);
+  const q = 0.7 + 3 * Math.abs(f); djLP.Q.value = q; djHP.Q.value = q;
+}, { size: 'lg', min: -100, max: 100, fmt: v => v === 0 ? 'open' : v < 0 ? 'low ' + (-v) : 'high ' + v, aria: 'DJ filter', reset: 0 });
+K.wander = knobCell($('kWander'), 'How often', 40, () => {}, { size: 'lg', aria: 'How often the filters and pans wander', fmt: v => v + '%', reset: 40 });
+// the two pedals
+let DELAY_ON = false, VERB_ON = true;
+const dLvl = { v: 35 }, vLvl = { v: 30 };
+const applyDelayLevel = () => delSend.gain.setTargetAtTime(DELAY_ON ? Math.pow(dLvl.v / 100, 2) * 1.2 : 0, ctx.currentTime, 0.03);
+const applyVerbLevel = () => verbSend.gain.setTargetAtTime(VERB_ON ? Math.pow(vLvl.v / 100, 2) * 0.9 : 0, ctx.currentTime, 0.03);
+K.dLevel = knobCell($('kDelay'), 'Level', dLvl.v, v => { dLvl.v = v; applyDelayLevel(); }, { v: 1, size: 'xl', aria: 'Delay level', reset: 35 });
+K.dEcho = knobCell($('kDelay'), 'Echoes', DEL.fb, v => { DEL.fb = v; applyDelay(); }, { v: 1, size: 'xl', aria: 'Delay echoes', reset: 47 });
+K.dTone = knobCell($('kDelay'), 'Tone', DEL.tone, v => { DEL.tone = v; applyDelay(); }, { v: 1, size: 'xl', aria: 'Delay tone', reset: 55 });
+K.vLevel = knobCell($('kVerb'), 'Level', vLvl.v, v => { vLvl.v = v; applyVerbLevel(); }, { v: 1, size: 'xl', aria: 'Reverb level', reset: 30 });
+let irTimer = 0; const redoIR = () => { clearTimeout(irTimer); irTimer = setTimeout(makeIR, 120); };
+K.vSize = knobCell($('kVerb'), 'Size', REV.size, v => { REV.size = v; redoIR(); }, { v: 1, size: 'xl', aria: 'Reverb size', reset: 40 });
+K.vTone = knobCell($('kVerb'), 'Tone', REV.tone, v => { REV.tone = v; verbTone.frequency.setTargetAtTime(1200 * Math.pow(10, v / 100), ctx.currentTime, 0.03); }, { v: 1, size: 'xl', aria: 'Reverb tone', reset: 88 });
+const chipRow = (host, items, cur, fn) => { const h = $(host); h.innerHTML = ''; Object.entries(items).forEach(([k, label]) => { const b = document.createElement('button'); b.type = 'button'; b.className = 'btn'; b.dataset.v = k; b.textContent = label; b.setAttribute('aria-pressed', String(k === cur)); b.addEventListener('click', () => { h.querySelectorAll('button').forEach(x => x.setAttribute('aria-pressed', String(x === b))); fn(k); }); h.appendChild(b); }); };
+chipRow('dTimes', DELAY_TIMES, DEL.div, k => { DEL.div = k; setDelayTime(); });
+chipRow('dModes', Object.fromEntries(Object.entries(DELAY_MODES).map(([k, m]) => [k, m.n])), DEL.mode, k => { DEL.mode = k; applyDelay(); });
+chipRow('vTypes', Object.fromEntries(Object.entries(REVERBS).map(([k, m]) => [k, m.n])), REV.type, k => { REV.type = k; makeIR(); });
+const foot = (id, get, set, apply) => { const b = $(id); b.addEventListener('click', () => { const v = !get(); set(v); b.setAttribute('aria-pressed', String(v)); b.querySelector('span').textContent = v ? 'On' : 'Off'; apply(); }); };
+foot('dFoot', () => DELAY_ON, v => DELAY_ON = v, applyDelayLevel); foot('vFoot', () => VERB_ON, v => VERB_ON = v, applyVerbLevel);
+applyDelay(); applyDelayLevel(); applyVerbLevel();
 function openFx() { $('fxPanel').hidden = false; $('fxClose').focus(); }
 function closeFx() { $('fxPanel').hidden = true; $('fxOpen').focus(); }
 $('fxOpen').addEventListener('click', openFx); $('fxClose').addEventListener('click', closeFx);
 $('fxPanel').addEventListener('pointerdown', e => { if (e.target === $('fxPanel')) closeFx(); });
 addEventListener('keydown', e => { if (e.key === 'Escape' && !$('fxPanel').hidden) closeFx(); });
-makeKnob($('gChance'), 100, v => { GCHANCE = v; $('gChanceV').textContent = v + '%'; }, 'Chance for everything');
 NOTES.forEach((n, i) => $('root').add(new Option(n, i)));
 $('root').addEventListener('change', () => { ROOT = +$('root').value; retune(); });
 toggle($('tuneOn'), v => { TUNE = v; retune(); say(v ? 'Drums moved to notes of ' + NOTES[ROOT] + ' ' + MODES[MODE].name + '.' : 'Drums back as recorded.'); });
@@ -637,13 +745,6 @@ KITS.forEach(k => $('kit').add(new Option(k.name, k.id)));
 $('kit').addEventListener('change', () => setKit($('kit').value));
 $('remix').addEventListener('click', () => { remix(); renderWhy(); say('Every ring turned to a new starting point.'); });
 
-$('dj').addEventListener('input', () => {
-  const v = $('dj').value / 100, t = ctx.currentTime;
-  djLP.frequency.setTargetAtTime(v < 0 ? 200 * Math.pow(100, 1 + v) : 20000, t, 0.03);
-  djHP.frequency.setTargetAtTime(v > 0 ? 20 * Math.pow(300, v) : 20, t, 0.03);
-  const q = 0.7 + 3 * Math.abs(v); djLP.Q.value = q; djHP.Q.value = q;
-});
-$('dj').addEventListener('dblclick', () => { $('dj').value = 0; $('dj').dispatchEvent(new Event('input')); });
 
 // ---------- cities and weather ----------
 const city = $('city'), genre = $('genre');
@@ -724,7 +825,7 @@ function drawSky() {
   sg.clearRect(0, 0, w, h);
   const c = [Math.round(14 + 50 * day + 70 * warm), Math.round(22 + 70 * day + 24 * warm), Math.round(52 + 70 * day - 14 * warm)];
   const gr = sg.createLinearGradient(0, 0, 0, h);
-  gr.addColorStop(0, `rgba(${c[0]},${c[1]},${c[2]},0.5)`); gr.addColorStop(0.55, `rgba(${c[0]},${c[1]},${c[2]},0.12)`); gr.addColorStop(1, `rgba(${c[0]},${c[1]},${c[2]},0.02)`);
+  gr.addColorStop(0, `rgba(${c[0]},${c[1]},${c[2]},0.62)`); gr.addColorStop(0.5, `rgba(${c[0]},${c[1]},${c[2]},0.2)`); gr.addColorStop(1, `rgba(${c[0]},${c[1]},${c[2]},0.04)`);
   sg.fillStyle = gr; sg.fillRect(0, 0, w, h);
   const wind = (WX.wind || 0) * 0.00025;
   SKY.clouds.forEach(cl => {
@@ -768,42 +869,89 @@ function draw() {
   g2.globalAlpha = 1; requestAnimationFrame(draw);
 }
 
-// ---------- the world map ----------
+// ---------- the world map: the whole window, drag to move, scroll or pinch to zoom ----------
 const LAND = (() => { try { return Uint8Array.from(atob(WMAP_LAND), c => c.charCodeAt(0)); } catch (e) { return new Uint8Array(0); } })();
-const WMAP_W = 240, WMAP_H = 95, WMAP_ST = 1.5, WMAP_TOP = 82.5, MAP_TOP = 82.5, MAP_BOTTOM = -57;
+const WMAP_W = 240, WMAP_H = 95, WMAP_ST = 1.5, WMAP_TOP = 82.5;
 const mapCv = $('mapCv'), mg = mapCv.getContext('2d');
-const mx = lon => (lon + 180) / 360 * mapCv.width, my = lat => (MAP_TOP - lat) / (MAP_TOP - MAP_BOTTOM) * mapCv.height;
-let mapHover = -1, mapBase = null;
+const MV = { w: 0, h: 0, dpr: 1, s0: 1, k: 1, tx: 0, ty: 0, hover: -1 };
+const mscale = () => MV.s0 * MV.k;
+const mx = lon => MV.tx + (lon + 180) * mscale(), my = lat => MV.ty + (WMAP_TOP - lat) * mscale();
+const mapXY = c => ({ x: mx(c.o), y: my(c.a) });   // where a city sits on screen, in css pixels
+function mapClamp() {
+  const W = 360 * mscale(), H = WMAP_H * WMAP_ST * mscale();
+  MV.tx = W <= MV.w ? (MV.w - W) / 2 : clamp(MV.tx, MV.w - W, 0);
+  MV.ty = H <= MV.h ? (MV.h - H) / 2 : clamp(MV.ty, MV.h - H, 0);
+}
+function mapFit() {
+  const r = mapCv.getBoundingClientRect(); MV.w = r.width; MV.h = r.height; MV.dpr = Math.min(2, devicePixelRatio || 1);
+  mapCv.width = Math.round(MV.w * MV.dpr); mapCv.height = Math.round(MV.h * MV.dpr);
+  MV.s0 = Math.min(MV.w / 360, MV.h / (WMAP_H * WMAP_ST)); mapClamp();   // the whole world fits, then you zoom in
+}
 function mapDraw() {
-  if (!mapBase) {
-    mapBase = document.createElement('canvas'); mapBase.width = mapCv.width; mapBase.height = mapCv.height;
-    const b = mapBase.getContext('2d'); b.fillStyle = 'rgba(243,236,230,.2)';
-    for (let yi = 0; yi < WMAP_H; yi++) for (let xi = 0; xi < WMAP_W; xi++) {
+  if (!MV.w) return;
+  mg.setTransform(MV.dpr, 0, 0, MV.dpr, 0, 0); mg.clearRect(0, 0, MV.w, MV.h);
+  const cell = WMAP_ST * mscale(), rr = clamp(cell * (0.3 + 0.12 * clamp((MV.k - 1) / 6, 0, 1)), 0.9, 9);
+  mg.fillStyle = `rgba(243,236,230,${(0.24 - 0.12 * clamp((MV.k - 1) / 8, 0, 1)).toFixed(3)})`;
+  for (let yi = 0; yi < WMAP_H; yi++) {
+    const y = my(WMAP_TOP - yi * WMAP_ST); if (y < -rr * 2 || y > MV.h + rr * 2) continue;
+    for (let xi = 0; xi < WMAP_W; xi++) {
       const i = yi * WMAP_W + xi; if (!(LAND[i >> 3] >> (i & 7) & 1)) continue;
-      const lat = WMAP_TOP - yi * WMAP_ST, lon = -180 + WMAP_ST / 2 + xi * WMAP_ST;
-      if (lat < MAP_BOTTOM) continue;
-      b.beginPath(); b.arc(mx(lon), my(lat), 2.2, 0, 7); b.fill();
+      const x = mx(-180 + WMAP_ST / 2 + xi * WMAP_ST); if (x < -rr * 2 || x > MV.w + rr * 2) continue;
+      mg.beginPath(); mg.arc(x, y, rr, 0, 7); mg.fill();
     }
   }
-  mg.clearRect(0, 0, mapCv.width, mapCv.height); mg.drawImage(mapBase, 0, 0);
+  mg.font = '12px "Source Code Pro", monospace'; mg.textBaseline = 'middle';
   ATLAS.cities.forEach((c, i) => {
-    const on = i === +city.value, hv = i === mapHover;
-    mg.fillStyle = on ? '#f3ece6' : hv ? '#ffb48a' : '#e8744a'; mg.beginPath(); mg.arc(mx(c.o), my(c.a), on ? 7 : hv ? 7 : 4, 0, 7); mg.fill();
-    if (on) { mg.strokeStyle = '#f3ece6'; mg.lineWidth = 2; mg.beginPath(); mg.arc(mx(c.o), my(c.a), 13, 0, 7); mg.stroke(); }
+    const { x, y } = mapXY(c); if (x < -20 || y < -20 || x > MV.w + 20 || y > MV.h + 20) return;
+    const on = i === +city.value, hv = i === MV.hover, r = (on ? 7 : hv ? 6.5 : 4.2) * clamp(0.8 + MV.k * 0.12, 1, 1.8);
+    mg.fillStyle = on ? '#f3ece6' : hv ? '#ffb48a' : '#e8744a'; mg.beginPath(); mg.arc(x, y, r, 0, 7); mg.fill();
+    if (on) { mg.strokeStyle = '#f3ece6'; mg.lineWidth = 1.5; mg.beginPath(); mg.arc(x, y, r + 6, 0, 7); mg.stroke(); }
+    if (hv || on || MV.k >= 3.2) { mg.fillStyle = hv || on ? '#f3ece6' : 'rgba(243,236,230,.6)'; mg.fillText(c.n, x + r + 5, y); }
   });
-  if (mapHover >= 0) { const c = ATLAS.cities[mapHover]; mg.font = '26px "Source Code Pro", monospace'; mg.fillStyle = '#f3ece6'; const x = mx(c.o), tw = mg.measureText(c.n).width; mg.fillText(c.n, clamp(x - tw / 2, 6, mapCv.width - tw - 6), my(c.a) - 18); }
 }
-function mapNearest(e) {
-  const r = mapCv.getBoundingClientRect(), k = mapCv.width / r.width, x = (e.clientX - r.left) * k, y = (e.clientY - r.top) * k;
-  let best = -1, bd = 34 * 34;
-  ATLAS.cities.forEach((c, i) => { const d = (mx(c.o) - x) ** 2 + (my(c.a) - y) ** 2; if (d < bd) { bd = d; best = i; } });
+function mapNearest(x, y) {
+  let best = -1, bd = 18 * 18;
+  ATLAS.cities.forEach((c, i) => { const p = mapXY(c), d = (p.x - x) ** 2 + (p.y - y) ** 2; if (d < bd) { bd = d; best = i; } });
   return best;
 }
-mapCv.addEventListener('pointermove', e => { const h = mapNearest(e); if (h !== mapHover) { mapHover = h; $('mapName').textContent = h >= 0 ? ATLAS.cities[h].n : 'Pick a city. Every dot has its own rhythm.'; mapDraw(); } });
-mapCv.addEventListener('click', e => { const h = mapNearest(e); if (h < 0) return; city.value = h; city.dispatchEvent(new Event('change')); closeMap(); });
-function openMap() { $('mapPanel').hidden = false; mapHover = -1; mapDraw(); $('mapClose').focus(); }
+function mapZoomAt(f, x, y) {
+  const k = clamp(MV.k * f, 1, 24), r = k / MV.k;
+  MV.tx = x - (x - MV.tx) * r; MV.ty = y - (y - MV.ty) * r; MV.k = k; mapClamp(); mapDraw();
+}
+const mpt = new Map(); let mdrag = null, mpinch = 0;
+mapCv.addEventListener('pointerdown', e => {
+  mapCv.setPointerCapture(e.pointerId); mpt.set(e.pointerId, { x: e.clientX, y: e.clientY });
+  mdrag = { x: e.clientX, y: e.clientY, tx: MV.tx, ty: MV.ty, moved: 0 };
+  if (mpt.size === 2) { const [a, b] = [...mpt.values()]; mpinch = Math.hypot(a.x - b.x, a.y - b.y); }
+  mapCv.style.cursor = 'grabbing';
+});
+mapCv.addEventListener('pointermove', e => {
+  const r = mapCv.getBoundingClientRect(), x = e.clientX - r.left, y = e.clientY - r.top;
+  if (mpt.has(e.pointerId)) mpt.set(e.pointerId, { x: e.clientX, y: e.clientY });
+  if (mpt.size === 2) {
+    const [a, b] = [...mpt.values()], d = Math.hypot(a.x - b.x, a.y - b.y);
+    if (mpinch) mapZoomAt(d / mpinch, (a.x + b.x) / 2 - r.left, (a.y + b.y) / 2 - r.top); mpinch = d; if (mdrag) mdrag.moved = 99; return;
+  }
+  if (mdrag && mpt.has(e.pointerId)) {
+    const dx = e.clientX - mdrag.x, dy = e.clientY - mdrag.y; mdrag.moved = Math.max(mdrag.moved, Math.hypot(dx, dy));
+    if (mdrag.moved > 5) { MV.tx = mdrag.tx + dx; MV.ty = mdrag.ty + dy; mapClamp(); mapDraw(); }
+    return;
+  }
+  const h = mapNearest(x, y); if (h !== MV.hover) { MV.hover = h; $('mapName').textContent = h >= 0 ? ATLAS.cities[h].n : 'Pick a city. Every dot has its own rhythm.'; mapCv.style.cursor = h >= 0 ? 'pointer' : 'grab'; mapDraw(); }
+});
+const mapUp = e => {
+  const r = mapCv.getBoundingClientRect(), tap = mdrag && mdrag.moved <= 5 && mpt.size === 1;
+  mpt.delete(e.pointerId); if (mpt.size < 2) mpinch = 0; mapCv.style.cursor = 'grab';
+  if (tap) { const h = mapNearest(e.clientX - r.left, e.clientY - r.top); if (h >= 0) { city.value = h; city.dispatchEvent(new Event('change')); closeMap(); } }
+  if (!mpt.size) mdrag = null;
+};
+mapCv.addEventListener('pointerup', mapUp); mapCv.addEventListener('pointercancel', e => { mpt.delete(e.pointerId); if (!mpt.size) mdrag = null; });
+mapCv.addEventListener('wheel', e => { e.preventDefault(); const r = mapCv.getBoundingClientRect(); mapZoomAt(Math.pow(1.0018, -e.deltaY), e.clientX - r.left, e.clientY - r.top); }, { passive: false });
+mapCv.addEventListener('dblclick', e => { const r = mapCv.getBoundingClientRect(); mapZoomAt(2, e.clientX - r.left, e.clientY - r.top); });
+function openMap() { $('mapPanel').hidden = false; MV.hover = -1; MV.k = 1; mapFit(); mapDraw(); $('mapClose').focus(); }
 function closeMap() { $('mapPanel').hidden = true; $('mapBtn').focus(); }
 $('mapBtn').addEventListener('click', openMap); $('mapClose').addEventListener('click', closeMap);
+addEventListener('resize', () => { if (!$('mapPanel').hidden) { mapFit(); mapDraw(); } });
 addEventListener('keydown', e => { if (e.key === 'Escape' && !$('mapPanel').hidden) closeMap(); });
 
 // ---------- start ----------
