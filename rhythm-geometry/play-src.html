@@ -29,7 +29,7 @@
   h1 small { font-size: .5em; letter-spacing: .16em; text-transform: uppercase; color: var(--accent); margin-left: 8px; }
   .top select { background: var(--panel); border: 1px solid var(--line); padding: 8px 10px; min-width: 0; max-width: 100%; flex: 1 1 130px; }
   .top { min-width: 0; }
-  .bpm { flex: 1 1 200px; } .bpm input { flex: 1; min-width: 60px; }
+  .bpm { flex: 0 1 190px; } .bpm input { flex: 1; min-width: 50px; width: 70px; }
   .btn { background: var(--strip); border: 1px solid var(--line); padding: 8px 12px; text-transform: uppercase; letter-spacing: .08em; font-size: 11px; }
   .btn[aria-pressed="true"] { background: var(--accent); color: #14110f; border-color: var(--accent); }
   .alt { margin-left: auto; font-size: 10.5px; letter-spacing: .1em; text-transform: uppercase; color: var(--ink-dim); text-decoration: none; border-bottom: 1px solid var(--line); }
@@ -61,6 +61,18 @@
   .mini label { font-size: 9px; letter-spacing: .1em; text-transform: uppercase; color: var(--ink-faint); display: flex; justify-content: space-between; }
   .mini input, .send input { width: 100%; accent-color: var(--accent); height: 20px; margin: 0; }
   .mini.dj { max-width: 130px; }
+  .app:not(.space) .send, .app:not(.space) .mini.sp, .app:not(.space) .spacehint { display: none; }
+  .app.space .send { display: grid; } .app.space .mini.sp { display: grid; } .app.space .spacehint { display: block; }
+  .panbar { position: relative; width: 100%; height: 3px; background: rgba(243,236,230,.14); border-radius: 2px; }
+  .panbar i { position: absolute; top: -2px; width: 7px; height: 7px; margin-left: -3px; border-radius: 50%; background: var(--c); }
+  .strip .btn[data-auto="1"] { box-shadow: inset 0 0 0 1px var(--c); }
+  .strip .btn[data-auto="1"] .led { background: var(--c); }
+  .pad[aria-pressed="true"] { background: #2a211d; color: var(--ink-faint); box-shadow: inset 0 0 0 1px var(--c); text-decoration: line-through; filter: none; }
+  .mappanel { position: fixed; inset: 0; background: rgba(8,4,3,.92); display: grid; place-items: center; z-index: 10; padding: 16px; }
+  .mappanel[hidden] { display: none; }
+  .mapbox { width: min(96vw, 1100px); display: grid; gap: 8px; }
+  .mapbox canvas { width: 100%; height: auto; display: block; background: #0c0605; border: 1px solid var(--line); cursor: pointer; touch-action: manipulation; }
+  .maphead { display: flex; justify-content: space-between; align-items: center; color: var(--ink-dim); font-size: 12px; }
 
   /* mixer strips */
   .mixer { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; }
@@ -75,7 +87,7 @@
   .fader .fill { position: absolute; left: 50%; width: 6px; margin-left: -3px; bottom: 4px; background: var(--c); border-radius: 3px; opacity: .55; }
   .fader .cap { position: absolute; left: 0; right: 0; height: 18px; margin-top: -9px; background: var(--c); border-radius: 3px; box-shadow: 0 2px 0 rgba(0,0,0,.5); }
   .fader .cap::after { content: ""; position: absolute; left: 6px; right: 6px; top: 8px; height: 2px; background: rgba(0,0,0,.45); }
-  .row2 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 3px; width: 100%; }
+  .row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 3px; width: 100%; }
   .send { display: grid; grid-template-columns: 1.4em 1fr; align-items: center; width: 100%; font-size: 9px; color: var(--ink-faint); letter-spacing: .06em; text-transform: uppercase; }
   .send input { accent-color: var(--c); }
   .strip .btn { padding: 8px 2px; font-size: 9.5px; letter-spacing: 0; width: 100%; min-width: 0; white-space: nowrap; overflow: hidden; }
@@ -95,16 +107,17 @@
     .fx .btn { flex: 1; }
     .fader { height: 70px; }
   }
-  @media (max-width: 560px) { .row2 { grid-template-columns: 1fr; } .strip .btn { padding: 6px 2px; } }
+  @media (max-width: 560px) { .strip .btn { padding: 6px 2px; } }
 </style>
 </head>
 <body>
-<div class="app">
+<div class="app" id="app">
   <div class="top">
     <h1>Rhythm Geometry <small>play</small></h1>
     <select id="city" aria-label="City"></select>
     <select id="genre" aria-label="Genre"></select>
     <select id="kit" aria-label="Drum kit" title="Swap every sound at once"></select>
+    <button id="mapBtn" class="btn" type="button" title="Pick a city on the world map">Map</button>
     <button id="shuffle" class="btn" type="button" title="Pick a random city">Shuffle</button>
     <button id="play" type="button" aria-pressed="false">Play</button>
     <label class="bpm">Tempo <input id="bpm" type="range" min="60" max="180" value="110" aria-label="Tempo"><b id="bpmv">110</b></label>
@@ -115,11 +128,11 @@
     <div class="left">
       <div class="ringwrap">
         <canvas id="rings" width="1000" height="1000" aria-label="Eight rhythm rings, one for each drum"></canvas>
-        <div class="centre"><div class="c-name" id="cName">London</div><div class="c-wx" id="cWx">loading the weather</div></div>
+        <div class="centre"><div class="c-name" id="cName">London</div><div class="c-wx" id="cWx">loading the weather</div><div class="c-wx" id="cTime"></div></div>
       </div>
       <p class="story" id="story"></p>
       <p class="status" id="status" aria-live="polite"></p>
-      <p class="hint" id="hint">Keys: space plays, 1 to 8 tap the drums. Tap an effect to latch it. Hold it to use it just while you press.</p>
+      <p class="hint" id="hint"></p>
     </div>
     <div class="right">
       <div class="fx" role="group" aria-label="Effects">
@@ -128,18 +141,28 @@
           <button class="btn" data-st="1" type="button" aria-pressed="false" title="Repeat the last hits every sixteenth note">1/16</button>
           <button class="btn" data-st="0.5" type="button" aria-pressed="false" title="A fast roll">Roll</button>
         </div>
-        <div class="mini"><label for="fxDelay">Delay</label><input id="fxDelay" type="range" min="0" max="100" value="0" aria-label="Delay for everything"></div>
-        <div class="mini"><label for="fxVerb">Reverb</label><input id="fxVerb" type="range" min="0" max="100" value="30" aria-label="Reverb for everything"></div>
         <div class="mini dj"><label for="dj">Filter</label><input id="dj" type="range" min="-100" max="100" value="0" aria-label="DJ filter. Left closes it, right thins it out. Double click to centre."></div>
-        <div class="fxgroup"><select id="root" aria-label="Key"></select><button id="tuneOn" class="btn" type="button" aria-pressed="true" title="Tune every drum to the key and scale the weather picked">Tune</button><button id="remix" class="btn" type="button" title="Turn every ring to a new place">Remix</button></div>
+        <div class="fxgroup"><span class="fxlab">Wander</span>
+          <button id="autoFlt" class="btn" type="button" aria-pressed="true" title="Each drum's filter closes by itself now and then for a few beats, so drums drift in and out">Filters</button>
+          <button id="autoPan" class="btn" type="button" aria-pressed="true" title="Each drum swings to one side for a few beats, then comes back">Pan</button>
+          <div class="mini"><label for="wander">How often</label><input id="wander" type="range" min="0" max="100" value="40" aria-label="How often the filters and pans wander"></div>
+        </div>
+        <div class="fxgroup"><select id="root" aria-label="Key"></select><button id="tuneOn" class="btn" type="button" aria-pressed="true" title="On: every drum with a clear pitch is moved to a note of the key and scale. Off: drums sound as recorded.">In key</button><button id="remix" class="btn" type="button" title="Turn every ring to a new starting point. Same step counts, new groove.">Shift rings</button><button id="spaceBtn" class="btn" type="button" aria-pressed="false" title="Show the delay and reverb controls">Space</button></div>
+        <div class="mini sp"><label for="fxDelay">Delay (all)</label><input id="fxDelay" type="range" min="0" max="100" value="0" aria-label="Delay for everything"></div>
+        <div class="mini sp"><label for="fxVerb">Reverb (all)</label><input id="fxVerb" type="range" min="0" max="100" value="30" aria-label="Reverb for everything"></div>
+        <span class="spacehint fxlab">D and R on each drum send just that drum.</span>
       </div>
       <div class="mixer" id="mixer"></div>
     </div>
   </div>
 </div>
+<div class="mappanel" id="mapPanel" hidden>
+  <div class="mapbox"><div class="maphead"><span id="mapName">Pick a city. Every dot has its own rhythm.</span><button id="mapClose" class="btn" type="button">Close</button></div><canvas id="mapCv" width="1200" height="475" aria-label="World map of cities"></canvas></div>
+</div>
 
 <script>
 const ATLAS = __ATLAS__;
+const WMAP_LAND = '__LAND__';
 
 // ---------- eight drums ----------
 const TDM = 'https://raw.githubusercontent.com/geikha/tidal-drum-machines/6577395a4d05031728ced2ec3e5637fa89d8be48/machines/';
@@ -215,7 +238,7 @@ const lanes = COLORS.map((color, i) => {
   g.connect(lp).connect(pan).connect(masterIn);
   const sd = ctx.createGain(), sv = ctx.createGain(); sd.gain.value = 0; sv.gain.value = 0;
   pan.connect(sd).connect(delIn); pan.connect(sv).connect(verbIn);   // each drum's own delay and reverb
-  return { i, d: KIT.lanes[i], color, g, lp, sd, sv, vol: 0.8, mute: false, flt: false, stut: false, bits: [], steps: 8, hits: 3, rot: 0, last: 0, flash: 0, why: '', src: '', rate: 1, note: '' };
+  return { i, d: KIT.lanes[i], color, g, lp, sd, sv, pn: pan, basePan: pan.pan.value, panNow: pan.pan.value, aF: 0, aFc: 420, aP: 0, vol: 0.8, mute: false, flt: false, stut: false, bits: [], steps: 8, hits: 3, rot: 0, last: 0, flash: 0, why: '', src: '', rate: 1, note: '' };
 });
 const faderGain = v => v * v * 1.1;   // a gentler curve than straight volume
 lanes.forEach(l => l.g.gain.value = faderGain(l.vol));
@@ -257,7 +280,7 @@ function hit(l, t, vel) {
 }
 
 // ---------- weather to rhythm ----------
-let WX = { temp: 11, wind: 14, hum: 70, cloud: 60, pres: 1008, rain: 0, hour: 12, live: false };
+let WX = { temp: 11, wind: 14, hum: 70, cloud: 60, pres: 1008, rain: 0, hour: 12, off: 0, live: false };
 function rng(seed) { let s = seed >>> 0 || 1; return () => (s = (s * 1664525 + 1013904223) >>> 0) / 4294967296; }
 function euclidBits(n, k, rot) { const b = []; for (let i = 0; i < n; i++) b.push(((((i + rot) % n) * k) % n) < k ? 1 : 0); return b; }
 
@@ -336,7 +359,7 @@ function retune() {
     l.note = NOTES[((target % 12) + 12) % 12] + (Math.floor(target / 12) - 1);
   });
   renderWhy();
-  $('hint').textContent = TUNE ? `Tuned to ${NOTES[ROOT]} ${MODES[MODE].name}. Keys: space plays, 1 to 8 tap the drums. Tap an effect to latch it. Hold it to use it just while you press.` : 'Not tuned. Keys: space plays, 1 to 8 tap the drums. Tap an effect to latch it. Hold it to use it just while you press.';
+  $('hint').textContent = (TUNE ? `In key: ${NOTES[ROOT]} ${MODES[MODE].name}. ` : 'Not in key. ') + 'Keys: space plays, 1 to 8 mute the drums, Q to I play them. Tap an effect to latch it, or hold it for a moment.';
 }
 async function setKit(id) {
   const k = KITS.find(x => x.id === id) || KITS[0];
@@ -345,6 +368,23 @@ async function setKit(id) {
   KIT = k; lanes.forEach((l, i) => { l.d = k.lanes[i]; l.el.querySelector('.nm').textContent = l.d.n; l.pad.setAttribute('aria-label', 'Tap ' + l.d.n); l.el.querySelector('.fader').setAttribute('aria-label', l.d.n + ' volume'); });
   $('status').textContent = ''; retune();
 }
+
+// ---------- wandering filters and pans ----------
+// Now and then a drum's filter closes for a few beats, or it swings to one side. It keeps the mix moving by itself.
+const AUTO = { flt: true, pan: true };
+function autoStep(t, n) {
+  const p = $('wander').value / 100;
+  lanes.forEach(l => {
+    if (n % 4 !== 0) return;   // decisions are made on the beat
+    if (l.aF > 0) { l.aF--; if (l.aF === 0) setFilter(l, t); }
+    else if (AUTO.flt && Math.random() < 0.02 + 0.1 * p) { l.aF = 1 + Math.floor(Math.random() * 4); l.aFc = 240 + Math.random() * 700; setFilter(l, t); }
+    if (l.aP > 0) { l.aP--; if (l.aP === 0) { l.panNow = l.basePan; l.pn.pan.setTargetAtTime(l.basePan, t, 0.2); } }
+    else if (AUTO.pan && Math.random() < 0.02 + 0.1 * p) { l.aP = 2 + Math.floor(Math.random() * 7); l.panNow = (Math.random() < 0.5 ? -1 : 1) * (0.45 + Math.random() * 0.5); l.pn.pan.setTargetAtTime(l.panNow, t, 0.15); }
+  });
+}
+function autoRelease() { lanes.forEach(l => { l.aF = 0; l.aP = 0; l.panNow = l.basePan; l.pn.pan.setTargetAtTime(l.basePan, ctx.currentTime, 0.1); setFilter(l, ctx.currentTime); }); }
+toggle($('autoFlt'), v => { AUTO.flt = v; if (!v) lanes.forEach(l => { l.aF = 0; setFilter(l, ctx.currentTime); }); say(v ? 'Filters will close now and then.' : 'Filters stay where you put them.'); });
+toggle($('autoPan'), v => { AUTO.pan = v; if (!v) lanes.forEach(l => { l.aP = 0; l.panNow = l.basePan; l.pn.pan.setTargetAtTime(l.basePan, ctx.currentTime, 0.1); }); say(v ? 'Drums will swing to the sides now and then.' : 'Drums stay put in the stereo field.'); });
 
 // ---------- the clock ----------
 let playing = false, nextTime = 0, stepN = 0, timer = null;
@@ -368,6 +408,7 @@ function schedule(t, n) {
     if (dv >= 1 && n % dv === 0) hit(l, t, v * (0.9 + Math.random() * 0.2));
     if (dv < 1) { hit(l, t, v * 0.95); hit(l, t + ss * dv, v * 0.8); }
   });
+  autoStep(t, n);
   visQ.push({ t, n });
 }
 function tick() {
@@ -382,7 +423,7 @@ async function start() {
   $('play').setAttribute('aria-pressed', 'true'); $('play').textContent = 'Stop';
 }
 function stop() {
-  playing = false; clearInterval(timer); visQ.length = 0;
+  playing = false; clearInterval(timer); visQ.length = 0; autoRelease();
   $('play').setAttribute('aria-pressed', 'false'); $('play').textContent = 'Play';
 }
 $('play').addEventListener('click', () => playing ? stop() : start());
@@ -419,41 +460,50 @@ function toggle(el, fn) { el.addEventListener('click', () => { const v = el.getA
 const mixer = $('mixer');
 lanes.forEach(l => {
   const s = document.createElement('div'); s.className = 'strip'; s.style.setProperty('--c', l.color); s.dataset.lane = l.i;
-  s.innerHTML = `<div class="nm">${l.d.n}</div><div class="why"></div><div class="fader"></div>
-    <div class="row2"><button class="btn m" type="button" aria-pressed="false" title="Mute"><i class="led"></i>Mute</button><button class="btn f" type="button" aria-pressed="false" title="Close a filter on this drum"><i class="led"></i>Filt</button><button class="btn st" type="button" aria-pressed="false" title="Repeat this drum's last hit. Tap to latch, hold for just a moment."><i class="led"></i>Stut</button></div>
+  s.innerHTML = `<div class="nm">${l.d.n}</div><div class="why"></div><div class="panbar" aria-hidden="true"><i></i></div><div class="fader"></div>
+    <div class="row2"><button class="btn f" type="button" aria-pressed="false" title="Close a filter on this drum"><i class="led"></i>Filter</button><button class="btn st" type="button" aria-pressed="false" title="Repeat this drum's last hit. Tap to latch, hold for just a moment."><i class="led"></i>Stutter</button></div>
     <label class="send">D<input class="sd" type="range" min="0" max="100" value="0" aria-label="${l.d.n} delay"></label>
     <label class="send">R<input class="sv" type="range" min="0" max="100" value="0" aria-label="${l.d.n} reverb"></label>
-    <button class="pad" type="button" aria-label="Tap ${l.d.n}">${l.i + 1}</button>`;
+    <button class="pad" type="button" aria-pressed="false" aria-label="Mute ${l.d.n}" title="Mute or unmute (key ${l.i + 1})">${l.i + 1}</button>`;
   mixer.appendChild(s); l.el = s;
   makeFader(s.querySelector('.fader'), l);
   s.querySelector('.sd').addEventListener('input', e => l.sd.gain.setTargetAtTime(Math.pow(e.target.value / 100, 2) * 0.9, ctx.currentTime, 0.02));
   s.querySelector('.sv').addEventListener('input', e => l.sv.gain.setTargetAtTime(Math.pow(e.target.value / 100, 2) * 0.9, ctx.currentTime, 0.02));
-  toggle(s.querySelector('.m'), v => { l.mute = v; s.classList.toggle('muted', v); });
-  toggle(s.querySelector('.f'), v => { l.flt = v; l.lp.frequency.setTargetAtTime(v ? 420 : 18000, ctx.currentTime, 0.04); });
+  toggle(s.querySelector('.f'), v => { l.flt = v; setFilter(l, ctx.currentTime); });
   momentary(s.querySelector('.st'), () => l.stut = true, () => l.stut = false);
   const pad = s.querySelector('.pad');
-  pad.addEventListener('pointerdown', e => { e.preventDefault(); tap(l); });
+  pad.addEventListener('click', () => setMute(l, !l.mute));
+  s.querySelector('.nm').addEventListener('pointerdown', () => tap(l));   // tap the name to play the drum
   l.pad = pad;
 });
 function renderWhy() { lanes.forEach(l => { l.el.querySelector('.why').innerHTML = `<b>${l.steps}</b>${l.why}${l.note ? `<i title="The note this drum plays">${l.note}</i>` : ''}`; }); }
+function setMute(l, v) { l.mute = v; l.pad.setAttribute('aria-pressed', String(v)); l.el.classList.toggle('muted', v); }
 function tap(l) {
   if (ctx.state !== 'running') ctx.resume();
-  hit(l, ctx.currentTime + 0.005, 1); l.pad.classList.add('hit'); setTimeout(() => l.pad.classList.remove('hit'), 90);
+  hit(l, ctx.currentTime + 0.005, 1);
 }
+function setFilter(l, t) {
+  const on = l.flt || l.aF > 0;
+  l.lp.frequency.setTargetAtTime(on ? (l.aF > 0 ? l.aFc : 420) : 18000, t, on ? 0.05 : 0.09);
+  const b = l.el.querySelector('.f'); b.dataset.auto = l.aF > 0 && !l.flt ? '1' : '0';
+}
+const say = (() => { let tm; return m => { $('status').textContent = m; clearTimeout(tm); tm = setTimeout(() => $('status').textContent = '', 4000); }; })();
 addEventListener('keydown', e => {
   if (e.target.matches('select, input')) return;
   if (e.key === ' ' && !e.target.matches('button')) { e.preventDefault(); playing ? stop() : start(); }
-  const n = '12345678'.indexOf(e.key); if (n >= 0 && !e.repeat) tap(lanes[n]);
+  const m = '12345678'.indexOf(e.key); if (m >= 0 && !e.repeat) setMute(lanes[m], !lanes[m].mute);       // 1 to 8 mute the drums
+  const n = 'qwertyui'.indexOf(e.key.toLowerCase()); if (n >= 0 && !e.repeat && !e.metaKey && !e.ctrlKey) tap(lanes[n]);   // Q to I play them
 });
 document.querySelectorAll('[data-st]').forEach(b => { const d = +b.dataset.st; momentary(b, () => gDivs.add(d), () => gDivs.delete(d)); });
 $('fxDelay').addEventListener('input', e => delSend.gain.setTargetAtTime(Math.pow(e.target.value / 100, 2) * 0.8, ctx.currentTime, 0.03));
 $('fxVerb').addEventListener('input', e => verbSend.gain.setTargetAtTime(Math.pow(e.target.value / 100, 2) * 0.7, ctx.currentTime, 0.03));
 NOTES.forEach((n, i) => $('root').add(new Option(n, i)));
 $('root').addEventListener('change', () => { ROOT = +$('root').value; retune(); });
-toggle($('tuneOn'), v => { TUNE = v; retune(); });
+toggle($('tuneOn'), v => { TUNE = v; retune(); say(v ? 'Drums moved to notes of ' + NOTES[ROOT] + ' ' + MODES[MODE].name + '.' : 'Drums back as recorded.'); });
 KITS.forEach(k => $('kit').add(new Option(k.name, k.id)));
 $('kit').addEventListener('change', () => setKit($('kit').value));
-$('remix').addEventListener('click', () => { remix(); renderWhy(); });
+$('remix').addEventListener('click', () => { remix(); renderWhy(); say('Every ring turned to a new starting point.'); });
+$('spaceBtn').addEventListener('click', () => { const v = $('app').classList.toggle('space'); $('spaceBtn').setAttribute('aria-pressed', String(v)); });
 $('dj').addEventListener('input', () => {
   const v = $('dj').value / 100, t = ctx.currentTime;
   djLP.frequency.setTargetAtTime(v < 0 ? 200 * Math.pow(100, 1 + v) : 20000, t, 0.03);
@@ -486,16 +536,17 @@ async function loadWeather(c) {
       '&current=temperature_2m,relative_humidity_2m,cloud_cover,wind_speed_10m,precipitation,surface_pressure&timezone=auto')).json();
     const w = j.current;
     const num = (v, d) => (typeof v === 'number' && isFinite(v) ? v : d);   // a missing number never breaks the rhythm
-    WX = { temp: num(w.temperature_2m, 11), wind: num(w.wind_speed_10m, 14), hum: num(w.relative_humidity_2m, 70), cloud: num(w.cloud_cover, 60), pres: num(w.surface_pressure ?? w.pressure_msl, 1010), rain: num(w.precipitation, 0), hour: +String(w.time).slice(11, 13) || 12, live: true };
+    WX = { temp: num(w.temperature_2m, 11), wind: num(w.wind_speed_10m, 14), hum: num(w.relative_humidity_2m, 70), cloud: num(w.cloud_cover, 60), pres: num(w.surface_pressure ?? w.pressure_msl, 1010), rain: num(w.precipitation, 0), hour: +String(w.time).slice(11, 13) || 12, off: num(j.utc_offset_seconds, 0), live: true };
     $('status').textContent = '';
   } catch (e) {
-    WX = { temp: 11, wind: 14, hum: 70, cloud: 60, pres: 1008, rain: 0, hour: 12, live: false };
+    WX = { temp: 11, wind: 14, hum: 70, cloud: 60, pres: 1008, rain: 0, hour: 12, off: 0, live: false };
     $('status').textContent = 'The weather did not load, so these are made-up numbers for now.';
   }
 }
 async function pickCity() {
   const c = ATLAS.cities[city.value]; cur = c;
   await loadWeather(c);
+  skyUpdate();
   const g = setPattern(); buildLanes();
   MODE = modeFromWeather(); ROOT = [...c.n].reduce((a, ch) => (a * 31 + ch.charCodeAt(0)) >>> 0, 7) % 12; $('root').value = ROOT; retune();
   $('cWx').textContent = Math.round(WX.temp) + '°  ·  wind ' + Math.round(WX.wind) + '  ·  ' + Math.round(WX.hum) + '% humid';
@@ -505,10 +556,60 @@ city.addEventListener('change', () => { pickGenre(); pickCity(); });
 genre.addEventListener('change', () => { setPattern(); buildLanes(); $('story').innerHTML = $('story').innerHTML.replace(/plays <b>[^<]*<\/b> at <b>\d+<\/b>/, `plays <b>${genre.selectedOptions[0].text}</b> at <b>${$('bpm').value}</b>`); });
 $('shuffle').addEventListener('click', () => { city.value = Math.floor(Math.random() * ATLAS.cities.length); city.dispatchEvent(new Event('change')); });
 
+// ---------- the sky behind the rings ----------
+// What the city is doing right now: its sun or moon goes round the rim like a clock (midnight at the bottom), the sky glows with its light,
+// clouds drift as fast as its wind, and rain falls when it rains there.
+function sunAltAt(lat, lon, when) {
+  const r = Math.PI / 180, n = when / 864e5 - 10957.5;
+  const g = (357.529 + 0.98560028 * n) * r, q = 280.459 + 0.98564736 * n;
+  const L = (q + 1.915 * Math.sin(g) + 0.02 * Math.sin(2 * g)) * r, e = (23.439 - 0.00000036 * n) * r;
+  const dec = Math.asin(Math.sin(e) * Math.sin(L)), ra = Math.atan2(Math.cos(e) * Math.sin(L), Math.cos(L)) / r;
+  const gmst = (280.46061837 + 360.98564736629 * n) % 360, ha = (gmst + lon - ra) * r;
+  return Math.asin(Math.sin(lat * r) * Math.sin(dec) + Math.cos(lat * r) * Math.cos(dec) * Math.cos(ha)) / r;
+}
+const SKY = { alt: 20, hour: 12, clouds: [], drops: [] };
+function skyUpdate() {
+  if (!cur) return;
+  const now = Date.now(), d = new Date(now + (WX.off || 0) * 1000);
+  SKY.hour = d.getUTCHours() + d.getUTCMinutes() / 60; SKY.alt = sunAltAt(cur.a, cur.o, now);
+  $('cTime').textContent = String(d.getUTCHours()).padStart(2, '0') + ':' + String(d.getUTCMinutes()).padStart(2, '0') + ' local';
+  const n = Math.round(WX.cloud / 100 * 9);
+  while (SKY.clouds.length < n) SKY.clouds.push({ a: Math.random() * 6.28, r: 330 + Math.random() * 150, s: 90 + Math.random() * 120, o: 0.05 + Math.random() * 0.07 });
+  SKY.clouds.length = n;
+  const m = WX.rain > 0 ? Math.min(70, 14 + Math.round(WX.rain * 24)) : 0;
+  while (SKY.drops.length < m) SKY.drops.push({ x: Math.random() * 1000, y: Math.random() * 1000, v: 5 + Math.random() * 5 });
+  SKY.drops.length = m;
+}
+setInterval(skyUpdate, 20000);
+function drawSky(g) {
+  const a = SKY.alt, day = clamp((a + 6) / 24, 0, 1);   // 0 at night, 1 in full day
+  g.save(); g.beginPath(); g.arc(CX, CX, 498, 0, 7); g.clip();
+  const warm = clamp(1 - Math.abs(a - 2) / 9, 0, 1);   // the glow of sunrise and sunset
+  const top = [Math.round(10 + 40 * day + 60 * warm), Math.round(16 + 56 * day + 20 * warm), Math.round(40 + 52 * day - 10 * warm)];
+  const gr = g.createRadialGradient(CX, CX, 60, CX, CX, 500);
+  gr.addColorStop(0, `rgba(${top[0]},${top[1]},${top[2]},0.05)`); gr.addColorStop(1, `rgba(${top[0]},${top[1]},${top[2]},0.55)`);
+  g.fillStyle = gr; g.fillRect(0, 0, W, W);
+  const wind = (WX.wind || 0) * 0.00012;
+  SKY.clouds.forEach(c => {
+    c.a += wind * (c.s / 120); const x = CX + c.r * Math.cos(c.a), y = CX + c.r * Math.sin(c.a);
+    const cg = g.createRadialGradient(x, y, 0, x, y, c.s); cg.addColorStop(0, `rgba(243,236,230,${c.o})`); cg.addColorStop(1, 'rgba(243,236,230,0)');
+    g.fillStyle = cg; g.beginPath(); g.arc(x, y, c.s, 0, 7); g.fill();
+  });
+  g.strokeStyle = 'rgba(190,215,255,.22)'; g.lineWidth = 2; g.lineCap = 'round';
+  SKY.drops.forEach(d => { d.y += d.v; d.x -= d.v * 0.2; if (d.y > 1000) { d.y = -20; d.x = Math.random() * 1000; } g.beginPath(); g.moveTo(d.x, d.y); g.lineTo(d.x + 5, d.y + 22); g.stroke(); });
+  // the sun, or the moon, on the rim
+  const ang = SKY.hour / 24 * Math.PI * 2 + Math.PI / 2, sx = CX + 484 * Math.cos(ang), sy = CX + 484 * Math.sin(ang);
+  g.fillStyle = a > -1 ? 'rgba(255,214,140,.95)' : 'rgba(215,225,255,.85)';
+  g.shadowColor = a > -1 ? 'rgba(255,200,110,.9)' : 'rgba(180,200,255,.7)'; g.shadowBlur = 24;
+  g.beginPath(); g.arc(sx, sy, a > -1 ? 13 : 9, 0, 7); g.fill(); g.shadowBlur = 0;
+  g.restore();
+}
+
 // ---------- the picture ----------
 const cv = $('rings'), g2 = cv.getContext('2d'), W = cv.width, CX = W / 2;
 function draw() {
   g2.clearRect(0, 0, W, W);
+  drawSky(g2);
   const now = ctx.currentTime;
   while (visQ.length > 1 && visQ[1].t <= now) visQ.shift();
   const cur = visQ.length && visQ[0].t <= now ? visQ[0].n : -1;
@@ -516,7 +617,8 @@ function draw() {
     const R = 118 + i * 48, n = l.steps, dim = l.mute ? 0.25 : 1, age = now - l.flash, pulse = age >= 0 && age < 0.25 ? 1 - age / 0.25 : 0;
     g2.globalAlpha = dim;
     g2.strokeStyle = l.color; g2.lineWidth = 3 + pulse * 8; g2.globalAlpha = dim * (0.22 + pulse * 0.6);
-    g2.beginPath(); g2.arc(CX, CX, R, 0, 7); g2.stroke();
+    g2.setLineDash(l.flt || l.aF > 0 ? [10, 14] : []); g2.beginPath(); g2.arc(CX, CX, R, 0, 7); g2.stroke(); g2.setLineDash([]);
+    l.panView = (l.panView ?? l.basePan) + (l.panNow - (l.panView ?? l.basePan)) * 0.12; l.el.querySelector('.panbar i').style.left = (50 + l.panView * 50) + '%';
     g2.globalAlpha = dim;
     const pos = cur >= 0 ? cur % n : -1;
     for (let k = 0; k < n; k++) {
@@ -528,6 +630,44 @@ function draw() {
   });
   g2.globalAlpha = 1; requestAnimationFrame(draw);
 }
+
+// ---------- the world map ----------
+const LAND = (() => { try { return Uint8Array.from(atob(WMAP_LAND), c => c.charCodeAt(0)); } catch (e) { return new Uint8Array(0); } })();
+const WMAP_W = 240, WMAP_H = 95, WMAP_ST = 1.5, WMAP_TOP = 82.5, MAP_TOP = 82.5, MAP_BOTTOM = -57;
+const mapCv = $('mapCv'), mg = mapCv.getContext('2d');
+const mx = lon => (lon + 180) / 360 * mapCv.width, my = lat => (MAP_TOP - lat) / (MAP_TOP - MAP_BOTTOM) * mapCv.height;
+let mapHover = -1, mapBase = null;
+function mapDraw() {
+  if (!mapBase) {
+    mapBase = document.createElement('canvas'); mapBase.width = mapCv.width; mapBase.height = mapCv.height;
+    const b = mapBase.getContext('2d'); b.fillStyle = 'rgba(243,236,230,.2)';
+    for (let yi = 0; yi < WMAP_H; yi++) for (let xi = 0; xi < WMAP_W; xi++) {
+      const i = yi * WMAP_W + xi; if (!(LAND[i >> 3] >> (i & 7) & 1)) continue;
+      const lat = WMAP_TOP - yi * WMAP_ST, lon = -180 + WMAP_ST / 2 + xi * WMAP_ST;
+      if (lat < MAP_BOTTOM) continue;
+      b.beginPath(); b.arc(mx(lon), my(lat), 2.2, 0, 7); b.fill();
+    }
+  }
+  mg.clearRect(0, 0, mapCv.width, mapCv.height); mg.drawImage(mapBase, 0, 0);
+  ATLAS.cities.forEach((c, i) => {
+    const on = i === +city.value, hv = i === mapHover;
+    mg.fillStyle = on ? '#f3ece6' : hv ? '#ffb48a' : '#e8744a'; mg.beginPath(); mg.arc(mx(c.o), my(c.a), on ? 7 : hv ? 7 : 4, 0, 7); mg.fill();
+    if (on) { mg.strokeStyle = '#f3ece6'; mg.lineWidth = 2; mg.beginPath(); mg.arc(mx(c.o), my(c.a), 13, 0, 7); mg.stroke(); }
+  });
+  if (mapHover >= 0) { const c = ATLAS.cities[mapHover]; mg.font = '26px "Source Code Pro", monospace'; mg.fillStyle = '#f3ece6'; const x = mx(c.o), tw = mg.measureText(c.n).width; mg.fillText(c.n, clamp(x - tw / 2, 6, mapCv.width - tw - 6), my(c.a) - 18); }
+}
+function mapNearest(e) {
+  const r = mapCv.getBoundingClientRect(), k = mapCv.width / r.width, x = (e.clientX - r.left) * k, y = (e.clientY - r.top) * k;
+  let best = -1, bd = 34 * 34;
+  ATLAS.cities.forEach((c, i) => { const d = (mx(c.o) - x) ** 2 + (my(c.a) - y) ** 2; if (d < bd) { bd = d; best = i; } });
+  return best;
+}
+mapCv.addEventListener('pointermove', e => { const h = mapNearest(e); if (h !== mapHover) { mapHover = h; $('mapName').textContent = h >= 0 ? ATLAS.cities[h].n : 'Pick a city. Every dot has its own rhythm.'; mapDraw(); } });
+mapCv.addEventListener('click', e => { const h = mapNearest(e); if (h < 0) return; city.value = h; city.dispatchEvent(new Event('change')); closeMap(); });
+function openMap() { $('mapPanel').hidden = false; mapHover = -1; mapDraw(); $('mapClose').focus(); }
+function closeMap() { $('mapPanel').hidden = true; $('mapBtn').focus(); }
+$('mapBtn').addEventListener('click', openMap); $('mapClose').addEventListener('click', closeMap);
+addEventListener('keydown', e => { if (e.key === 'Escape' && !$('mapPanel').hidden) closeMap(); });
 
 // ---------- start ----------
 // trim the data the page needs
