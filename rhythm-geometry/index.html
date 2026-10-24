@@ -555,7 +555,7 @@
   /* ---- polish (23 Oct): a round ring in every browser, a tighter Rings list, long city names, a quieter header ---- */
   .sidecard { gap: 12px; }
   .sidescroll { display: flex; flex-direction: column; gap: 12px; }
-  .groove-sec, .chord-sec { padding-top: 14px; border-top: 1px solid rgba(243, 236, 230, 0.08); margin-top: 6px; }
+  .groove-sec, .around-sec, .chord-sec { padding-top: 14px; border-top: 1px solid rgba(243, 236, 230, 0.08); margin-top: 6px; }
   .ringplace { flex-wrap: wrap; align-items: baseline; gap: 0 10px; }
   .ringplace b { white-space: normal; overflow: visible; text-overflow: clip; overflow-wrap: anywhere; line-height: 1.05; font-size: clamp(22px, 2vw, 30px); }
   .brand-text .place { white-space: normal; overflow: visible; text-overflow: clip; line-height: 1.3; }
@@ -693,6 +693,15 @@
           <div class="knob-cell"><div class="head"><span class="label">Drift</span><output id="grooveDriftOut">30%</output></div><input id="grooveDrift" type="range" min="0" max="100" value="30" aria-label="Drift: how freely the pattern wanders, even the backbeat and the one"></div>
         </div>
         <p class="chord-note" id="grooveNote"></p>
+      </div>
+      <div class="sidebox around-sec" id="aroundSec">
+        <p class="label">Around here <span class="hint">the place leaks into the sound</span></p>
+        <div class="knobs groove-knobs" style="--n:3">
+          <div class="knob-cell"><div class="head"><span class="label">Bleed</span><output id="grooveBleedOut">30%</output></div><input id="grooveBleed" type="range" min="0" max="100" value="30" aria-label="Neighbour bleed: how much the nearest cities' rhythms leak in, quietly"></div>
+          <div class="knob-cell"><div class="head"><span class="label">Grit</span><output id="grooveGritOut">10%</output></div><input id="grooveGrit" type="range" min="0" max="100" value="10" aria-label="Grit: warmth, crackle and dirt from the air quality"></div>
+          <div class="knob-cell"><div class="head"><span class="label">Quakes</span><output id="grooveQuakeOut">0%</output></div><input id="grooveQuake" type="range" min="0" max="100" value="0" aria-label="Quakes: how often a low rumble from today's earthquakes plays"></div>
+        </div>
+        <p class="chord-note" id="aroundNote"></p>
       </div>
       <div class="sidebox chord-sec" id="chordSec">
         <div class="chord-head">
@@ -1956,6 +1965,8 @@ function setPlace(p) {
   const r = resolveCity(p);
   state.city = r.city;
   state.cityDist = r.dist;
+  state.air = null;
+  pickNeighbours();
   // 'genres from' only when the genres come from a different (nearest) city
   const from = !r.city ? ' · no genres yet' : r.city.name.toLowerCase() === p.name.toLowerCase() ? '' : ` · genres from ${r.city.name}`;
   $('placeLine').textContent = `${p.name}${p.country ? ', ' + p.country : ''}${from}`;
@@ -1971,6 +1982,7 @@ function setPlace(p) {
   renderGenres();
   renderTiles();
   fetchWeather();
+  fetchExtras();
 }
 
 // ---------- sound ----------
@@ -3244,16 +3256,106 @@ function grooveFill(t, n, tC, tX) {
   if (Math.random() < f * 0.5) congaHit(tC, 0.55 + 0.1 * s, n, true);
 }
 
+// ---------- Around here: the place leaks into the sound ----------
+// Bleed: the nearest cities' rhythms drift in, quietly and muffled, panned the way they sit on the map.
+// Grit: the air quality dirties the sound: a little saturation and the odd crackle.
+// Quakes: today's earthquakes, one rumble at a time, louder for bigger ones.
+const NEAR = { list: [], def: 12 };
+const QUAKE = { list: [], i: 0, def: 0, at: 0, last: '' };
+function pickNeighbours() {
+  NEAR.list = [];
+  const p = state.place;
+  if (!p || !ATLAS.cities) return;
+  const here = (state.city && state.city.name || '').toLowerCase(), me = p.name.toLowerCase();
+  ATLAS.cities.filter(c => c.genres.length && c.name.toLowerCase() !== here && c.name.toLowerCase() !== me)
+    .map(c => ({ c, d: km(p, c) })).sort((a, b) => a.d - b.d).slice(0, 2).forEach((o, i) => {
+      const g = o.c.genres.find(x => x.ids && x.ids.length && ATLAS.kicks[x.ids[0]] && ATLAS.kicks[x.ids[0]].bd);
+      if (!g) return;
+      const K = ATLAS.kicks[g.ids[0]], id = 'near' + i, pan = Math.round(clamp((o.c.lon - p.lon) / 40, -1, 1) * 75);
+      NEAR.list.push({ id, name: o.c.name, d: o.d, genre: g.name, bd: K.bd, sn: K.voices && K.voices.snare || null, n: K.steps, w: 1 / (1 + o.d / 900) });
+      XV[id] = Object.assign(XDEF(id), { pan, cut: 60, rev: 35, delay: 'off', dlvl: 0 });   // far away: muffled, wide and a little wet
+      laneVol[id] = 40;
+      if (bus[xKey(id)]) xApply(id);
+    });
+  NEAR.def = Math.round(clamp(45 * NEAR.list.reduce((a, o) => a + o.w, 0), 8, 45));
+}
+function grooveBleed(t, n, k, tK, tX) {
+  const b = GROOVE.bleed / 100;
+  if (b <= 0.02 || !playing) return;
+  const mainKick = k >= 0 && state.kick.bd[k];
+  for (const o of NEAR.list) {
+    const i = n % o.n;
+    if (o.bd[i] && !mainKick && Math.random() < b * o.w * 1.6 && roll()) kickHit(tK, laneBus(o.id), 0.3 + Math.random() * 0.1);
+    if (o.sn && o.sn[i] && Math.random() < b * o.w * 1.4 && roll()) drumHit('snare', tX, laneBus(o.id), 0.26 + Math.random() * 0.1);
+  }
+}
+// grit: a soft saturator in parallel with the master, and a crackle bus
+const sat = ctx.createWaveShaper(), satWet = ctx.createGain();
+sat.curve = Float32Array.from({ length: 1024 }, (_, i) => Math.tanh(((i / 1023) * 2 - 1) * 5));
+sat.oversample = '2x';
+satWet.gain.value = 0;
+master.connect(sat).connect(satWet).connect(comp);
+function gritApply() { satWet.gain.setTargetAtTime(GROOVE.grit / 100 * 0.4, ctx.currentTime, 0.05); }
+function grooveGrit(t) {
+  if (!playing || Math.random() > GROOVE.grit / 100 * 0.07) return;
+  if (!XV.grit) { XV.grit = Object.assign(XDEF('grit'), { rev: 0, delay: 'off', dlvl: 0 }); laneVol.grit = 35; }
+  noiseBurst(laneBus('grit'), t + Math.random() * 0.05, 'highpass', 3500 + Math.random() * 5000, 0.7, 0.012 + Math.random() * 0.02, 0.5);
+}
+// quakes: one rumble at the start of each eight bars, in the order they happened today
+function grooveQuake(t, n) {
+  if (!playing || n % (16 * 8) !== 0 || !QUAKE.list.length || Math.random() > GROOVE.quake / 100) return;
+  const q = QUAKE.list[QUAKE.i++ % QUAKE.list.length], m = clamp(q.mag, 2.5, 8);
+  if (!XV.quake) { XV.quake = Object.assign(XDEF('quake'), { rev: 40, delay: 'off', dlvl: 0, cut: 30 }); laneVol.quake = 70; }
+  XV.quake.pan = Math.round(clamp((q.lon - (state.place ? state.place.lon : 0)) / 90, -1, 1) * 70);
+  const node = laneBus('quake'); xApply('quake');
+  const D = 0.9 + (m - 2.5) * 0.55, peak = 0.35 + (m - 2.5) * 0.09;
+  const o = ctx.createOscillator(), g = ctx.createGain();
+  o.type = 'sine'; o.frequency.setValueAtTime(72, t); o.frequency.exponentialRampToValueAtTime(26, t + D);
+  g.gain.setValueAtTime(0.0001, t); g.gain.linearRampToValueAtTime(peak, t + 0.05); g.gain.exponentialRampToValueAtTime(0.0008, t + D);
+  o.connect(g).connect(node); o.start(t); o.stop(t + D + 0.1);
+  noiseBurst(node, t, 'lowpass', 140, 0.8, D * 0.7, 0.25 * peak);
+  QUAKE.last = `M${q.mag.toFixed(1)} ${q.place}`;
+  tellStory();
+}
+async function fetchExtras() {
+  const p = state.place, seq = state.seq;
+  try {
+    const j = await getJSON(`https://air-quality-api.open-meteo.com/v1/air-quality?latitude=${p.lat}&longitude=${p.lon}&current=european_aqi,pm2_5`);
+    if (seq === state.seq && j.current) { state.air = { aqi: j.current.european_aqi, pm25: j.current.pm2_5 }; }
+  } catch (e) { /* no air data: grit stays low */ }
+  if (Date.now() - QUAKE.at > 30 * 60 * 1000) {
+    try {
+      const j = await getJSON('https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/2.5_day.geojson');
+      QUAKE.list = (j.features || []).map(f => ({ mag: f.properties.mag, place: f.properties.place || 'somewhere', time: f.properties.time, lon: f.geometry.coordinates[0], lat: f.geometry.coordinates[1] }))
+        .filter(q => q.mag != null).sort((a, b) => a.time - b.time);
+      QUAKE.at = Date.now();
+      QUAKE.def = QUAKE.list.length ? Math.round(clamp(10 + QUAKE.list.length * 1.2, 0, 70)) : 0;
+    } catch (e) { /* no quake feed: the knob stays at zero */ }
+  }
+  if (seq !== state.seq) return;
+  grooveApply();
+  tellStory();
+}
+function aroundNote() {
+  const el = $('aroundNote');
+  if (!el) return;
+  const bits = [];
+  if (NEAR.list.length) bits.push(`${NEAR.list.map(o => o.name).join(' and ')} bleed${NEAR.list.length === 1 ? 's' : ''} in from ${Math.round(NEAR.list[0].d).toLocaleString('en-GB')} km away`);
+  if (state.air && state.air.aqi != null) bits.push(`air quality ${Math.round(state.air.aqi)} gives the grit`);
+  if (QUAKE.list.length) bits.push(`${QUAKE.list.length} quakes in the last day`);
+  el.textContent = bits.length ? bits.join(' · ') : 'Looking up the neighbours, the air and the ground.';
+}
+
 // ---------- Groove: the feel of the kit ----------
 // Swing: the off-beat sixteenths land late. Pocket: the rings sit ahead of the beat or behind it, each a little differently.
 // Ghosts: quiet hits between the written ones. Accent: how much louder the strong beats are.
 // The weather sets the four knobs. Move one and it is yours until you hand it back with the Weather button.
-const GROOVE = { swing: 25, pocket: 0, ghost: 30, accent: 50, fills: 35, drift: 30 };
-const grooveHand = { swing: false, pocket: false, ghost: false, accent: false, fills: false, drift: false };   // true once you have moved the knob yourself
+const GROOVE = { swing: 25, pocket: 0, ghost: 30, accent: 50, fills: 35, drift: 30, bleed: 30, grit: 10, quake: 0 };
+const grooveHand = { swing: false, pocket: false, ghost: false, accent: false, fills: false, drift: false, bleed: false, grit: false, quake: false };   // true once you have moved the knob yourself
 let grooveSetting = false;                                                          // true while the weather is moving a knob
 const POCKET_MS = 22;                                                               // the most the pocket moves a ring, in milliseconds
 const POCKET_WHO = { kick: 0.3, twin: 0.3, conga: 0.8, extra: 1, shaker: -0.5 };    // the hats push while the backbeat lays back
-const grooveKnobs = { swing: 'grooveSwing', pocket: 'groovePocket', ghost: 'grooveGhost', accent: 'grooveAccent', fills: 'grooveFills', drift: 'grooveDrift' };
+const grooveKnobs = { swing: 'grooveSwing', pocket: 'groovePocket', ghost: 'grooveGhost', accent: 'grooveAccent', fills: 'grooveFills', drift: 'grooveDrift', bleed: 'grooveBleed', grit: 'grooveGrit', quake: 'grooveQuake' };
 function grooveOut(key) {
   const v = GROOVE[key], o = $(grooveKnobs[key] + 'Out');
   o.textContent = key === 'swing' ? Math.round(50 + v * 0.17) + '%'
@@ -3272,6 +3374,9 @@ function grooveFromWeather() {
     accent: Math.round(clamp(25 + 0.6 * (100 - w.c) - (w.r > 0 ? 10 : 0), 0, 100)),         // clear skies hit harder, cloud flattens
     fills: Math.round(clamp(12 + 0.55 * (e.pop || 0) + 30 * gusty + (w.r > 0 ? 12 : 0), 0, 100)),   // the chance of rain and the gusts bring the fills
     drift: Math.round(clamp(12 + 50 * windy + 28 * gusty, 0, 100)),                          // wind lets the pattern wander
+    bleed: NEAR.def,                                                                         // nearby cities, the closer the louder
+    grit: state.air && state.air.aqi != null ? Math.round(clamp(state.air.aqi * 0.9, 0, 100)) : 8,   // dirtier air is grittier
+    quake: QUAKE.def,                                                                        // how much the ground moved today
   };
 }
 function grooveSay(g) {
@@ -3289,6 +3394,7 @@ function grooveNote() {
   const g = grooveFromWeather();
   $('grooveNote').textContent = !g ? 'The weather sets these when it arrives.'
     : mine.length ? `You set: ${mine.join(', ')}. Tap Weather to hand them back.` : 'Weather: ' + grooveSay(g);
+  aroundNote();
   const auto = !mine.length;
   $('grooveAuto').setAttribute('aria-pressed', String(auto));
   for (const k in grooveKnobs) $(grooveKnobs[k]).parentElement.classList.toggle('hand', grooveHand[k]);
@@ -3305,7 +3411,7 @@ function grooveApply() {
 }
 for (const k in grooveKnobs) {
   const el = $(grooveKnobs[k]);
-  el.addEventListener('input', () => { GROOVE[k] = Number(el.value); grooveOut(k); if (!grooveSetting) { grooveHand[k] = true; grooveNote(); } });
+  el.addEventListener('input', () => { GROOVE[k] = Number(el.value); grooveOut(k); if (k === 'grit') gritApply(); if (!grooveSetting) { grooveHand[k] = true; grooveNote(); } });
   grooveOut(k);
 }
 $('grooveAuto').addEventListener('click', () => {
@@ -3356,6 +3462,11 @@ function tellStory() {
   const room = SPACE.dec >= 50 ? (e.vis != null && e.vis < 8000 ? 'Fog makes the room bigger.' : (w.r || 0) > 0 ? 'Rain gives the echoes a longer tail.' : 'Damp air makes the room bigger.')
     : SPACE.dec <= 28 ? 'Dry, clear air keeps the room small.' : '';
   if (room) lines.push(room);
+  if (!Object.values(grooveHand).some(Boolean) || true) {
+    if (NEAR.list.length && GROOVE.bleed >= 15) lines.push(`${NEAR.list[0].name}${NEAR.list[1] ? ' and ' + NEAR.list[1].name : ''} leak${NEAR.list[1] ? '' : 's'} in, quietly, from next door.`);
+    if (state.air && state.air.aqi != null && GROOVE.grit >= 40) lines.push('The air is dirty, so the sound is a little gritty.');
+    if (GROOVE.quake >= 10 && QUAKE.list.length) lines.push(QUAKE.last ? `The low rumble is a real earthquake: ${QUAKE.last}.` : `The ground moved ${QUAKE.list.length} times in the last day, and the low rumbles replay it.`);
+  }
   const gv = grooveFromWeather();
   if (gv && !Object.values(grooveHand).some(Boolean)) {
     if (gv.fills >= 55) lines.push('Rain is about, so the ends of phrases get busy fills.');
@@ -3422,6 +3533,9 @@ function schedule(t, n) {
   }
   grooveFill(t, n, tC, tX);
   grooveGhosts(t, n, k, r, tK, tC, tS, tX, sh);
+  grooveBleed(t, n, k, tK, tX);
+  grooveGrit(tX);
+  grooveQuake(t, n);
   events.push({ t, r, k, hit: congaNow });
 }
 
@@ -4308,6 +4422,7 @@ renderLanes();
 mapLayout(); drawMapBase(); requestAnimationFrame(mapFrame);
 requestAnimationFrame(frame);
 setInterval(fetchWeather, REFRESH_MS);
+setInterval(fetchExtras, REFRESH_MS);
 </script>
 </body>
 </html>
