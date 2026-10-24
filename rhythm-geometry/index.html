@@ -76,6 +76,8 @@
   .ringplace { display: flex; align-items: baseline; gap: 10px; min-width: 0; }
   .ringplace b { font-family: var(--display); font-weight: 400; font-size: 20px; letter-spacing: .08em; text-transform: uppercase; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .ringplace span { font-family: var(--mono); font-size: 14px; color: var(--ink-dim); white-space: nowrap; }
+  .story { margin: 2px 0 0; font-size: 12px; line-height: 1.5; color: var(--ink-dim); text-wrap: pretty; }
+  .story b { color: var(--ink); font-weight: 400; }
   .wxbtn { display: flex; flex-direction: column; align-items: flex-end; gap: 1px; flex: none; background: rgba(243, 236, 230, 0.03); border: 1px solid var(--line); padding: 5px 9px; text-align: right; min-width: 92px; }
   .wxbtn span { font-size: 10.5px; letter-spacing: .08em; text-transform: uppercase; color: var(--ink-dim); white-space: nowrap; }
   .wxbtn b { font-family: var(--display); font-weight: 400; font-size: 18px; line-height: 1.1; white-space: nowrap; }
@@ -479,8 +481,8 @@
   /* the sound panel: one voice card at a time */
   .vpwrap { display: flex; flex-direction: column; gap: 8px; min-height: 0; height: 100%; overflow-y: auto; background: var(--panel); border: 1px solid var(--line); border-top: 3px solid var(--accent); padding: 12px 14px; }
   .vp-head { display: flex; justify-content: space-between; align-items: center; gap: 10px; }
-  .vp-tabs { display: flex; flex: 1; min-width: 0; border: 1px solid var(--line); }
-  .vp-tabs button { flex: 1; min-width: 0; padding: 6px 4px !important; font-size: 9.5px !important; letter-spacing: .06em !important; }
+  .vp-tabs { display: flex; flex-wrap: wrap; flex: 1; min-width: 0; border: 1px solid var(--line); }
+  .vp-tabs button { flex: 1 0 auto; min-width: 0; padding: 6px 6px !important; font-size: 9.5px !important; letter-spacing: .06em !important; border-bottom: 1px solid var(--line) !important; margin-bottom: -1px; }
   .vp-head #vpClose { flex: none; }
   .vp-tabs button { background: none; border: 0; padding: 6px 10px; font-size: 10.5px; letter-spacing: .1em; text-transform: uppercase; color: var(--ink-dim); }
   .vp-tabs button + button { border-left: 1px solid var(--line); }
@@ -642,6 +644,7 @@
 
     <section class="card sidecard" aria-label="City and hits">
       <div class="ringplace"><b id="ringCity"></b><span id="ringTemp"></span></div>
+      <p id="story" class="story" aria-live="polite"></p>
       <span id="ringSub" hidden>steps from temperature, hits from the chosen source</span>
       <div class="sidebox">
         <p class="label">Hits from</p>
@@ -713,8 +716,8 @@
   <div class="vp-head">
     <div class="vp-tabs" role="group" aria-label="Which sound to edit">
       <button type="button" data-voice="kick" aria-pressed="false">Kick</button>
-      <button type="button" data-voice="conga" aria-pressed="false" title="The weather ring">Conga</button>
       <button type="button" data-voice="shaker" aria-pressed="false">Shaker</button>
+      <button type="button" data-voice="conga" aria-pressed="false" title="The weather ring">Conga</button>
       <button type="button" data-voice="sample" aria-pressed="false">Yours</button>
     </div>
     <button id="vpClose" class="btn small" type="button">Close</button>
@@ -765,7 +768,7 @@
       </div>
       <div class="vpanel" data-panel="sound">
         <div class="row2">
-          <div class="field grow"><label class="label" for="pitch">Pitch</label><select id="pitch"><option value="alt" selected title="Low, then high, then low again">Alternate</option><option value="same" title="Always the low note">Same note</option><option value="rand" title="Low or high, by chance">Random</option><option value="deep" title="Random notes, one or two octaves down">Deep</option><option value="sky" title="Random notes, one or two octaves up">Sky</option><option value="climb" title="Alternates, and each time round it steps up an octave">Climb</option><option value="fall" title="Alternates, and each time round it steps down an octave">Fall</option></select></div>
+          <div class="field grow"><label class="label" for="pitch">Pitch</label><select id="pitch"><option value="melody" selected title="A short tune in the city's scale. It answers itself every fourth lap and changes slowly">Melody</option><option value="alt" title="Low, then high, then low again">Alternate</option><option value="same" title="Always the low note">Same note</option><option value="rand" title="Low or high, by chance">Random</option><option value="deep" title="Random notes, one or two octaves down">Deep</option><option value="sky" title="Random notes, one or two octaves up">Sky</option><option value="climb" title="Alternates, and each time round it steps up an octave">Climb</option><option value="fall" title="Alternates, and each time round it steps down an octave">Fall</option></select></div>
           <div class="field grow"><label class="label" for="pitchRepeat">Repeat each note</label><select id="pitchRepeat"><option value="1" selected>×1</option><option value="2">×2</option><option value="3">×3</option><option value="4">×4</option></select></div>
         </div>
         <div class="row2">
@@ -782,13 +785,13 @@
       </div>
       <div class="vpanel" data-panel="fx" hidden>
         <div class="row2">
-          <div class="field grow"><label class="label" for="congaDelay">Delay</label><select id="congaDelay"><option value="off" selected>Off</option><option value="32">1/32</option><option value="16">1/16</option><option value="16t">1/16 triplet</option><option value="8t">1/8 triplet</option><option value="8">1/8</option><option value="d8">Dotted 1/8</option><option value="4t">1/4 triplet</option><option value="4">1/4</option><option value="d4">Dotted 1/4</option></select></div>
+          <div class="field grow"><label class="label" for="congaDelay">Delay</label><select id="congaDelay"><option value="off">Off</option><option value="32">1/32</option><option value="16">1/16</option><option value="16t">1/16 triplet</option><option value="8t">1/8 triplet</option><option value="8">1/8</option><option value="d8" selected>Dotted 1/8</option><option value="4t">1/4 triplet</option><option value="4">1/4</option><option value="d4">Dotted 1/4</option></select></div>
           <div class="field grow"><label class="label" for="congaStyle">Style</label><select id="congaStyle"><option value="mono" selected>Mono</option><option value="ping-pong">Ping-pong</option><option value="tape">Tape (darkens)</option><option value="slapback">Slapback</option><option value="dub">Dub (dark, long)</option></select></div>
         </div>
         <div class="knobs" style="--n:3">
-          <div class="knob-cell"><div class="head"><span class="label">Echo</span><output id="congaFbOut">35%</output></div><input id="congaFb" type="range" min="0" max="100" value="35" aria-label="Conga delay feedback"></div>
-          <div class="knob-cell"><div class="head"><span class="label">Delay level</span><output id="congaDelayLvlOut">100%</output></div><input id="congaDelayLvl" type="range" min="0" max="100" value="100" aria-label="Conga delay level"></div>
-          <div class="knob-cell"><div class="head"><span class="label">Reverb</span><output id="congaRevOut">0%</output></div><input id="congaRev" type="range" min="0" max="100" value="0" aria-label="Conga reverb level"></div>
+          <div class="knob-cell"><div class="head"><span class="label">Echo</span><output id="congaFbOut">30%</output></div><input id="congaFb" type="range" min="0" max="100" value="30" aria-label="Conga delay feedback"></div>
+          <div class="knob-cell"><div class="head"><span class="label">Delay level</span><output id="congaDelayLvlOut">35%</output></div><input id="congaDelayLvl" type="range" min="0" max="100" value="35" aria-label="Conga delay level"></div>
+          <div class="knob-cell"><div class="head"><span class="label">Reverb</span><output id="congaRevOut">18%</output></div><input id="congaRev" type="range" min="0" max="100" value="18" aria-label="Conga reverb level"></div>
           <div class="knob-cell"><div class="head"><span class="label">Rev decay</span><output id="congaRevDecOut">1.0 s</output></div><input id="congaRevDec" type="range" min="0" max="100" value="40" aria-label="Conga reverb decay"></div>
         </div>
       </div>
@@ -827,13 +830,13 @@
       </div>
       <div class="vpanel" data-panel="fx" hidden>
         <div class="row2">
-          <div class="field grow"><label class="label" for="shakerDelay">Delay</label><select id="shakerDelay"><option value="off" selected>Off</option><option value="32">1/32</option><option value="16">1/16</option><option value="16t">1/16 triplet</option><option value="8t">1/8 triplet</option><option value="8">1/8</option><option value="d8">Dotted 1/8</option><option value="4t">1/4 triplet</option><option value="4">1/4</option><option value="d4">Dotted 1/4</option></select></div>
-          <div class="field grow"><label class="label" for="shakerStyle">Style</label><select id="shakerStyle"><option value="mono" selected>Mono</option><option value="ping-pong">Ping-pong</option><option value="tape">Tape (darkens)</option><option value="slapback">Slapback</option><option value="dub">Dub (dark, long)</option></select></div>
+          <div class="field grow"><label class="label" for="shakerDelay">Delay</label><select id="shakerDelay"><option value="off">Off</option><option value="32">1/32</option><option value="16">1/16</option><option value="16t">1/16 triplet</option><option value="8t">1/8 triplet</option><option value="8">1/8</option><option value="d8" selected>Dotted 1/8</option><option value="4t">1/4 triplet</option><option value="4">1/4</option><option value="d4">Dotted 1/4</option></select></div>
+          <div class="field grow"><label class="label" for="shakerStyle">Style</label><select id="shakerStyle"><option value="mono">Mono</option><option value="ping-pong" selected>Ping-pong</option><option value="tape">Tape (darkens)</option><option value="slapback">Slapback</option><option value="dub">Dub (dark, long)</option></select></div>
         </div>
         <div class="knobs" style="--n:3">
-          <div class="knob-cell"><div class="head"><span class="label">Echo</span><output id="shakerFbOut">35%</output></div><input id="shakerFb" type="range" min="0" max="100" value="35" aria-label="Shaker delay feedback"></div>
-          <div class="knob-cell"><div class="head"><span class="label">Delay level</span><output id="shakerDelayLvlOut">100%</output></div><input id="shakerDelayLvl" type="range" min="0" max="100" value="100" aria-label="Shaker delay level"></div>
-          <div class="knob-cell"><div class="head"><span class="label">Reverb</span><output id="shakerRevOut">0%</output></div><input id="shakerRev" type="range" min="0" max="100" value="0" aria-label="Shaker reverb level"></div>
+          <div class="knob-cell"><div class="head"><span class="label">Echo</span><output id="shakerFbOut">25%</output></div><input id="shakerFb" type="range" min="0" max="100" value="25" aria-label="Shaker delay feedback"></div>
+          <div class="knob-cell"><div class="head"><span class="label">Delay level</span><output id="shakerDelayLvlOut">25%</output></div><input id="shakerDelayLvl" type="range" min="0" max="100" value="25" aria-label="Shaker delay level"></div>
+          <div class="knob-cell"><div class="head"><span class="label">Reverb</span><output id="shakerRevOut">14%</output></div><input id="shakerRev" type="range" min="0" max="100" value="14" aria-label="Shaker reverb level"></div>
           <div class="knob-cell"><div class="head"><span class="label">Rev decay</span><output id="shakerRevDecOut">1.0 s</output></div><input id="shakerRevDec" type="range" min="0" max="100" value="40" aria-label="Shaker reverb decay"></div>
         </div>
       </div>
@@ -846,6 +849,39 @@
         <div class="knobs" style="--n:2">
           <div class="knob-cell"><div class="head"><span class="label">Amount</span><output id="shakerAutoAmtOut">0</output></div><input id="shakerAutoAmt" type="range" min="0" max="100" value="0" aria-label="Shaker auto filter amount"></div>
           <div class="knob-cell"><div class="head"><span class="label">Offset</span><output id="shakerAutoOffOut">Mid</output></div><input id="shakerAutoOff" type="range" min="-100" max="100" value="0" aria-label="Shaker auto filter offset"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card voice" id="drumCard">
+      <div class="vhead">
+        <h2><select id="drumWhich" class="hdr-sel" aria-label="Which drum to edit" title="Change the drum"></select><small id="drumSmall">from the genre</small></h2>
+        <button id="drumMute" class="btn small" type="button" aria-pressed="false">Mute</button>
+      </div>
+      <div class="vtabs" role="tablist">
+        <button type="button" role="tab" data-tab="sound" aria-selected="true">Sound<i class="tab-dot" aria-hidden="true"></i></button>
+        <button type="button" role="tab" data-tab="fx" aria-selected="false">Effects<i class="tab-dot" aria-hidden="true"></i></button>
+      </div>
+      <div class="vpanel" data-panel="sound">
+        <div class="knobs" style="--n:5">
+          <div class="knob-cell"><div class="head"><span class="label">Volume</span><output id="drumVolOut">80</output></div><input id="drumVol" type="range" min="0" max="100" value="80" aria-label="Drum volume"></div>
+          <div class="knob-cell"><div class="head"><span class="label">Decay</span><output id="drumDecayOut">1.00x</output></div><input id="drumDecay" type="range" min="0" max="100" value="50" aria-label="Drum decay"></div>
+          <div class="knob-cell"><div class="head"><span class="label">Tune</span><output id="drumTuneOut">0</output></div><input id="drumTune" type="range" min="-12" max="12" value="0" aria-label="Drum tune in semitones"></div>
+          <div class="knob-cell"><div class="head"><span class="label">Filter</span><output id="drumCutOut">open</output></div><input id="drumCut" type="range" min="0" max="100" value="100" aria-label="Drum filter cutoff"></div>
+          <div class="knob-cell"><div class="head"><span class="label">Res</span><output id="drumResOut">0</output></div><input id="drumRes" type="range" min="0" max="100" value="0" aria-label="Drum filter resonance"></div>
+          <div class="knob-cell"><div class="head"><span class="label">Pan</span><output id="drumPanOut">C</output></div><input id="drumPan" type="range" min="-100" max="100" value="0" aria-label="Drum pan, left to right"></div>
+        </div>
+      </div>
+      <div class="vpanel" data-panel="fx" hidden>
+        <div class="row2">
+          <div class="field grow"><label class="label" for="drumDelay">Delay</label><select id="drumDelay"><option value="off">Off</option><option value="32">1/32</option><option value="16">1/16</option><option value="16t">1/16 triplet</option><option value="8t">1/8 triplet</option><option value="8">1/8</option><option value="d8">Dotted 1/8</option><option value="4t">1/4 triplet</option><option value="4">1/4</option><option value="d4">Dotted 1/4</option></select></div>
+          <div class="field grow"><label class="label" for="drumStyle">Style</label><select id="drumStyle"><option value="mono">Mono</option><option value="ping-pong">Ping-pong</option><option value="tape">Tape (darkens)</option><option value="slapback">Slapback</option><option value="dub">Dub (dark, long)</option></select></div>
+        </div>
+        <div class="knobs" style="--n:3">
+          <div class="knob-cell"><div class="head"><span class="label">Echo</span><output id="drumFbOut">25%</output></div><input id="drumFb" type="range" min="0" max="100" value="25" aria-label="Drum delay feedback"></div>
+          <div class="knob-cell"><div class="head"><span class="label">Delay level</span><output id="drumDelayLvlOut">0%</output></div><input id="drumDelayLvl" type="range" min="0" max="100" value="0" aria-label="Drum delay level"></div>
+          <div class="knob-cell"><div class="head"><span class="label">Reverb</span><output id="drumRevOut">15%</output></div><input id="drumRev" type="range" min="0" max="100" value="15" aria-label="Drum reverb level"></div>
+          <div class="knob-cell"><div class="head"><span class="label">Rev decay</span><output id="drumRevDecOut">1.0 s</output></div><input id="drumRevDec" type="range" min="0" max="100" value="40" aria-label="Drum reverb decay"></div>
         </div>
       </div>
     </div>
@@ -889,7 +925,7 @@
         <div class="knobs" style="--n:3">
           <div class="knob-cell"><div class="head"><span class="label">Echo</span><output id="sampleFbOut">35%</output></div><input id="sampleFb" type="range" min="0" max="100" value="35" aria-label="Your sound delay feedback"></div>
           <div class="knob-cell"><div class="head"><span class="label">Delay level</span><output id="sampleDelayLvlOut">100%</output></div><input id="sampleDelayLvl" type="range" min="0" max="100" value="100" aria-label="Your sound delay level"></div>
-          <div class="knob-cell"><div class="head"><span class="label">Reverb</span><output id="sampleRevOut">0%</output></div><input id="sampleRev" type="range" min="0" max="100" value="0" aria-label="Your sound reverb level"></div>
+          <div class="knob-cell"><div class="head"><span class="label">Reverb</span><output id="sampleRevOut">15%</output></div><input id="sampleRev" type="range" min="0" max="100" value="15" aria-label="Your sound reverb level"></div>
           <div class="knob-cell"><div class="head"><span class="label">Rev decay</span><output id="sampleRevDecOut">1.0 s</output></div><input id="sampleRevDec" type="range" min="0" max="100" value="40" aria-label="Your sound reverb decay"></div>
         </div>
       </div>
@@ -1136,6 +1172,18 @@ const LONDON = { name: 'London', country: 'United Kingdom', lat: 51.5074, lon: -
 const NEAR_KM = 40;                                  // a place this close to an Atlas city uses that city's genres
 const ACCENT = '#d08a6a';
 const REFRESH_MS = 10 * 60 * 1000;
+// The scales the weather picks from (see modeFromWeather)
+const MODES = {
+  lydian:     { steps: [0, 2, 4, 6, 7, 9, 11], name: 'Lydian',     feel: 'bright and floating' },
+  major:      { steps: [0, 2, 4, 5, 7, 9, 11], name: 'major',      feel: 'sunny and open' },
+  mixolydian: { steps: [0, 2, 4, 5, 7, 9, 10], name: 'Mixolydian', feel: 'warm, with a bluesy edge' },
+  dorian:     { steps: [0, 2, 3, 5, 7, 9, 10], name: 'Dorian',     feel: 'cool but soulful' },
+  minor:      { steps: [0, 2, 3, 5, 7, 8, 10], name: 'minor',      feel: 'grey and moody' },
+  phrygian:   { steps: [0, 1, 3, 5, 7, 8, 10], name: 'Phrygian',   feel: 'dark and tense' },
+};
+let MODE = 'minor';
+const scaleSteps = () => MODES[MODE].steps;
+function scaleSemis(d) { const S = scaleSteps(), n = S.length; return S[((d % n) + n) % n] + 12 * Math.floor(d / n); }
 
 // ---------- helpers ----------
 const $ = id => document.getElementById(id);
@@ -1350,6 +1398,7 @@ function rebuild() {
   renderLanes();
   showPattern();
   renderTiles();
+  if (typeof tellStory === 'function') tellStory();
 }
 
 function setStatus(text) { $('status').textContent = text; $('status').hidden = /^Live weather/.test(text); }
@@ -1372,6 +1421,8 @@ async function fetchWeather() {
       windDir: k.wind_direction_10m, gust: k.wind_gusts_10m, day: k.is_day, pop: H('precipitation_probability'),
       dew: H('dew_point_2m'), cloudLow: H('cloud_cover_low'), cloudHigh: H('cloud_cover_high'), vis: H('visibility') };
     state.utcOffset = typeof j.utc_offset_seconds === 'number' ? j.utc_offset_seconds : null;
+    MODE = modeFromWeather();                                // the weather picks the scale
+    spaceApply();                                            // and the size of the room
     if (typeof grooveApply === 'function') grooveApply();   // the weather moves the groove knobs you have not touched
     tickClock();
     rebuild();
@@ -1518,7 +1569,7 @@ function subSetup() {
   if (sub.osc) return;
   sub.osc = ctx.createOscillator();
   sub.osc.type = 'sine';
-  sub.osc.frequency.value = mtof(SUB_NOTES[0]);
+  sub.osc.frequency.value = subFreq();
   sub.g = ctx.createGain();
   sub.g.gain.value = 0;
   sub.osc.connect(sub.g).connect(laneBus('sub'));   // the Rings list volume sits on laneBus
@@ -1538,10 +1589,20 @@ function duckSub(t) {   // a short dip on each kick, so the sub and kick do not 
   sub.g.gain.setValueAtTime(base * 0.35, t);
   sub.g.gain.linearRampToValueAtTime(base, t + 0.09);
 }
-function subMeet(t) {   // both rings land together: the sub moves to another note
+// The sub plays the root of the chord (in the city's scale), and jumps to the fifth when both kick rings land together
+sub.deg = 0; sub.fifth = false;
+function subFreq() {
+  let semis = scaleSemis(sub.deg + (sub.fifth ? 4 : 0));
+  while (semis > 7) semis -= 12;
+  while (semis < -5) semis += 12;
+  return mtof(33 + semis) * tuneOf(laneBus('sub'));   // around A1
+}
+function subChord(t, n) { sub.deg = chordRootAt(n); sub.fifth = false; if (sub.osc) sub.osc.frequency.setTargetAtTime(subFreq(), t, 0.03); }
+function subRetune() { if (sub.osc) sub.osc.frequency.setTargetAtTime(subFreq(), ctx.currentTime, 0.03); }
+function subMeet(t) {
   if (!sub.osc) return;
-  sub.note = (sub.note + 1 + Math.floor(Math.random() * (SUB_NOTES.length - 1))) % SUB_NOTES.length;
-  sub.osc.frequency.setValueAtTime(mtof(SUB_NOTES[sub.note]), t);
+  sub.fifth = !sub.fifth;
+  sub.osc.frequency.setTargetAtTime(subFreq(), t, 0.02);
 }
 
 // ---------- the drum kit: one lane per drum ----------
@@ -1549,15 +1610,67 @@ function subMeet(t) {   // both rings land together: the sub moves to another no
 // Every other drum in the pattern gets a lane with its own mute and volume.
 const SILENT = new Set(['chord', 'vocal_chop', 'fill']);   // shown in the kit, no sound yet
 let kitList = [], kitCells = {}, nowEls = [];
-const laneVol = {}, laneMuted = {}, laneOut = {};
+const laneVol = {}, laneMuted = {};
+// Every other ring (snare, hats, toms, the twin kick, the sub bass) gets a full sound of its own:
+// filter, volume, pan, decay, tune, a delay and a reverb, the same as the kick, shaker and conga.
+const XV = {};   // lane id -> its settings
+const TOM_RE = /drum|dum$|tak|surdo|conga|sabar|tabla|dhol|odaiko|shime|chudaiko|perc_high|tambora|tumbao|tom/;
+const HAT_RE = /hat|ride|tambourine|shaker|guacharaca|alegre|crash/;
+const SKIN_RE = /snare|clap|rim|palmas/;
+function XDEF(v) {
+  const hat = HAT_RE.test(v), skin = SKIN_RE.test(v), tom = TOM_RE.test(v), low = v === 'sub' || v === 'twin' || v === 'bass';
+  return { decay: 50, tune: 0, cut: 100, res: 0,
+    pan: hat ? 22 : tom ? -18 : 0,
+    delay: low ? 'off' : hat ? 'd8' : tom ? '8' : 'off', style: hat ? 'ping-pong' : 'mono', fb: 25,
+    dlvl: low ? 0 : hat ? 22 : tom ? 16 : 0,
+    rev: low ? 0 : skin ? 20 : hat ? 12 : 16, revDec: null };
+}
+const xKey = v => 'x_' + v;
+const xMuted = v => (v === 'twin' ? !kickOn || !!laneMuted.twin : !!laneMuted[v]);
 function laneBus(v) {
-  if (!laneOut[v]) {
-    const g = ctx.createGain();
-    g.gain.value = (laneVol[v] ?? 80) / 100;
-    g.connect(master);
-    laneOut[v] = g;
+  const name = xKey(v);
+  if (!bus[name]) {
+    if (!XV[v]) XV[v] = XDEF(v);
+    out[name] = ctx.createGain(); pan[name] = ctx.createStereoPanner();
+    out[name].connect(pan[name]); pan[name].connect(master);
+    flt[name] = ctx.createBiquadFilter(); flt[name].type = 'lowpass'; flt[name].frequency.value = 12000;
+    flt[name].connect(out[name]);
+    bus[name] = flt[name];
+    gate[name] = ctx.createGain(); flt[name].connect(gate[name]);
+    revSend[name] = ctx.createGain(); revSend[name].gain.value = 0;
+    gate[name].connect(revSend[name]);   // the room itself is made the first time the reverb is turned up
+    makeFx(name);
+    xApply(v);
   }
-  return laneOut[v];
+  return bus[name];
+}
+function xRevSecs(v) { const S = XV[v]; return revSecs(S && S.revDec != null ? S.revDec : SPACE.dec); }
+function xApply(v) {
+  const name = xKey(v), S = XV[v] || (XV[v] = XDEF(v));
+  if (!bus[name]) return;
+  const m = xMuted(v), now = ctx.currentTime;
+  out[name].gain.setTargetAtTime(m ? 0 : (laneVol[v] ?? 80) / 100, now, 0.01);
+  gate[name].gain.setTargetAtTime(m ? 0 : 1, now, 0.01);
+  pan[name].pan.value = S.pan / 100;
+  DECAY.set(bus[name], Math.pow(2, (S.decay - 50) / 25));
+  TUNE.set(bus[name], Math.pow(2, S.tune / 12));
+  const lo = (v === 'sub' || v === 'twin' || v === 'bass' || TOM_RE.test(v)) ? 30 : 200;
+  cutBase[name] = lo * Math.pow(12000 / lo, S.cut / 100);
+  flt[name].frequency.value = cutBase[name];
+  flt[name].Q.value = 0.5 + (S.res / 100) * 9.5;
+  applyDelay(fx[name], S.delay, S.style, S.fb, S.dlvl);
+  if (S.rev > 0 && !revConv[name]) {
+    revConv[name] = ctx.createConvolver(); revConv[name].buffer = roomImpulse(xRevSecs(v));
+    revSend[name].connect(revConv[name]).connect(out[name]);
+  }
+  revSend[name].gain.setTargetAtTime(S.rev / 100 * 0.8, now, 0.02);
+  if (v === 'sub') subRetune();
+}
+function xRoom(v) {   // a new reverb tail once the decay knob settles
+  const name = xKey(v);
+  if (!revConv[name]) return;
+  clearTimeout(revT[name]);
+  revT[name] = setTimeout(() => { revConv[name].buffer = roomImpulse(xRevSecs(v)); }, 150);
 }
 // The shaker plays the genre's shaker if it has one, otherwise a hat or ride from the kit
 const HAT_VOICES = ['closed_hat', 'open_hat', 'hat_roll', 'hi_hat_pedal', 'ride'];
@@ -1579,21 +1692,22 @@ function extrasOf(k) {
 }
 // Colours for the rings: kick orange, shaker green, the weather ring uses the accent, other drums take a colour in turn
 const RING_COLORS = ['#f3ece6', '#f0c878', '#c9bfb7', '#9db4e8', '#e6a0c4', '#b8d98a'];
-// Which sound card a lane opens (the other drums only have a mute and a volume)
+// Which sound card a lane opens: the kick, shaker and conga have their own, every other ring uses the drum card
 const LANE_VOICE = { kick: 'kick', shaker: 'shaker', ring: 'conga' };
+const laneVoice = lane => LANE_VOICE[lane.id] || 'x:' + lane.id;
 function kitLanes() {
   const k = state.kick, n = k ? k.steps : 0;
   const lanes = [{ id: 'kick', label: 'kick', idx: 'k', bits: k ? k.bd : [], n, color: '#e8845c', muted: () => !kickOn, toggle: () => $('kickOn').click() }];
   let ci = 0;
   for (const v of extrasOf(k)) {
     lanes.push({ id: v, label: v.replace(/_/g, ' '), idx: 'k', bits: k.voices[v], n, extra: true, color: RING_COLORS[ci++ % RING_COLORS.length],
-      muted: () => !!laneMuted[v], toggle: () => { laneMuted[v] = !laneMuted[v]; syncKit(); } });
+      muted: () => !!laneMuted[v], toggle: () => { laneMuted[v] = !laneMuted[v]; xApply(v); syncKit(); } });
   }
   if (twin.bits.length) lanes.push({ id: 'twin', label: 'twin: ' + twin.city.toLowerCase(), idx: 'k', bits: twin.bits, n: twin.n, extra: true, color: '#9db4e8',
-    muted: () => !kickOn || !!laneMuted.twin, toggle: () => { laneMuted.twin = !laneMuted.twin; syncKit(); } });
+    muted: () => !kickOn || !!laneMuted.twin, toggle: () => { laneMuted.twin = !laneMuted.twin; xApply('twin'); syncKit(); } });
   // the sub bass follows the kick, so its row shows the kick's pattern and it has no ring of its own
   if (k) lanes.push({ id: 'sub', label: 'sub bass', idx: 'k', bits: k.bd, n, extra: true, noRing: true, color: '#c58ad8',
-    muted: () => !!laneMuted.sub, toggle: () => { laneMuted.sub = !laneMuted.sub; subGate(subLevel()); syncKit(); } });
+    muted: () => !!laneMuted.sub, toggle: () => { laneMuted.sub = !laneMuted.sub; xApply('sub'); subGate(subLevel()); syncKit(); } });
   const sh = shakerSrc(k);
   if (sh) lanes.push({ id: 'shaker', label: sh.src ? `shaker (${sh.src.replace(/_/g, ' ')})` : 'shaker', idx: 'k', bits: sh.bits, n, color: '#6fc3a6', muted: () => muted.shaker, toggle: () => $('shakerMute').click() });
   lanes.push({ id: 'ring', label: 'conga ring', idx: 'r', bits: state.pattern, n: state.pattern.length, color: ACCENT, muted: () => muted.conga, toggle: () => $('congaMute').click() });
@@ -1648,29 +1762,50 @@ function renderLanes() {
       vs.addEventListener('input', () => setVol(VOLKEY, Number(vs.value)));
     } else {
       vs.value = String(laneVol[lane.id] ?? 80);
+      vs.dataset.lanevol = lane.id;
       vs.addEventListener('input', () => {
         laneVol[lane.id] = Number(vs.value);
-        laneBus(lane.id).gain.value = laneVol[lane.id] / 100;
+        laneBus(lane.id); xApply(lane.id);
+        if (drumCur === lane.id) { drumLoading = true; $('drumVol').value = vs.value; $('drumVol').dispatchEvent(new Event('input')); drumLoading = false; }
       });
     }
     row.append(dot, name, cells, vs);
-    if (LANE_VOICE[lane.id]) {
-      const edit = document.createElement('button');
-      edit.type = 'button';
-      edit.className = 'lane-edit';
-      edit.textContent = 'Edit';
-      edit.title = edit.ariaLabel = `Edit the ${lane.label} sound`;
-      edit.addEventListener('click', () => openVoice(LANE_VOICE[lane.id]));
-      row.appendChild(edit);
-    } else {
-      const gap = document.createElement('span');   // keeps the sliders in one column
-      gap.className = 'lane-edit'; gap.textContent = 'Edit'; gap.setAttribute('aria-hidden', 'true'); gap.style.visibility = 'hidden';
-      row.appendChild(gap);
-    }
+    const edit = document.createElement('button');
+    edit.type = 'button';
+    edit.className = 'lane-edit';
+    edit.textContent = 'Edit';
+    edit.title = edit.ariaLabel = `Edit the ${lane.label} sound`;
+    edit.addEventListener('click', () => { const v = laneVoice(lane); openVoiceName === v ? closeVoice() : openVoice(v); });
+    row.appendChild(edit);
     box.appendChild(row);
   }
+  renderVoiceTabs();
   refreshYourRhythm();
   syncKit();
+}
+// The editor's tabs follow the rings: one per ring, then Yours. Rebuilt only when the set of rings changes.
+let tabSig = '';
+const tabName = lane => lane.id === 'twin' ? 'Twin' : lane.id === 'ring' ? 'Conga' : lane.id === 'sub' ? 'Sub' : lane.id === 'shaker' ? 'Shaker' : lane.label;
+function renderVoiceTabs() {
+  const sig = kitList.map(l => l.id).join('|');
+  if (sig !== tabSig) {
+    tabSig = sig;
+    const box = document.querySelector('.vp-tabs');
+    box.innerHTML = '';
+    for (const lane of kitList.concat([{ id: 'yours' }])) {
+      const b = document.createElement('button');
+      b.type = 'button';
+      b.dataset.voice = lane.id === 'yours' ? 'sample' : laneVoice(lane);
+      b.textContent = lane.id === 'yours' ? 'Yours' : tabName(lane);
+      b.setAttribute('aria-pressed', String(b.dataset.voice === openVoiceName));
+      box.appendChild(b);
+    }
+    const sel = $('drumWhich');
+    sel.innerHTML = '';
+    for (const lane of kitList.filter(l => !LANE_VOICE[l.id])) sel.append(new Option(lane.id === 'twin' ? 'Twin kick' : lane.id === 'sub' ? 'Sub bass' : lane.label, lane.id));
+  }
+  // the drum you were editing has left with the old genre
+  if (openVoiceName && openVoiceName.startsWith('x:') && !kitList.some(l => l.id === openVoiceName.slice(2))) closeVoice();
 }
 
 // Shows which lanes are muted, using the same switches as the voice cards
@@ -1681,7 +1816,7 @@ function syncKit() {
     const m = lane.muted();
     row.querySelector('.lane-name').setAttribute('aria-pressed', String(m));
     row.classList.toggle('muted', m);
-    row.classList.toggle('sel', !!openVoiceName && LANE_VOICE[lane.id] === openVoiceName);
+    row.classList.toggle('sel', !!openVoiceName && laneVoice(lane) === openVoiceName);
   }
 }
 
@@ -1689,9 +1824,11 @@ function syncKit() {
 const VOICE_CARD = { kick: 'kickCard', conga: 'congaCard', shaker: 'shakerCard', sample: 'sampCard' };
 let openVoiceName = null;
 function openVoice(name) {
-  if (!VOICE_CARD[name]) return;
+  const drum = name.startsWith('x:'), card = drum ? 'drumCard' : VOICE_CARD[name];
+  if (!card) return;
+  if (drum) drumLoad(name.slice(2));
   openVoiceName = name;
-  for (const v in VOICE_CARD) $(VOICE_CARD[v]).classList.toggle('sel', v === name);
+  for (const id of Object.values(VOICE_CARD).concat(['drumCard'])) $(id).classList.toggle('sel', id === card);
   document.querySelectorAll('.vp-tabs button').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.voice === name)));
   $('rightcol').classList.add('editing');
   $('voicePanel').classList.add('open');
@@ -1706,7 +1843,7 @@ function closeVoice() {
   syncKit();
 }
 $('vpClose').addEventListener('click', closeVoice);
-document.querySelectorAll('.vp-tabs button').forEach(b => b.addEventListener('click', () => openVoice(b.dataset.voice)));
+document.querySelector('.vp-tabs').addEventListener('click', e => { const b = e.target.closest('button[data-voice]'); if (b) openVoice(b.dataset.voice); });
 $('openSamp').addEventListener('click', () => (openVoiceName === 'sample' ? closeVoice() : openVoice('sample')));
 // a tap on empty background closes it; taps on controls, the rings or the panel do not
 document.addEventListener('click', e => {
@@ -1953,12 +2090,14 @@ function delaySeconds(f, bpm) {
   return beats * 60 / bpm;
 }
 function setDelay(name) {
-  const f = fx[name];
-  f.div = $(name + 'Delay').value;
-  f.mode = $(name + 'Style').value;
+  applyDelay(fx[name], $(name + 'Delay').value, $(name + 'Style').value, Number($(name + 'Fb').value), Number($(name + 'DelayLvl').value));
+}
+function applyDelay(f, div, mode, fbPct, lvlPct) {
+  f.div = div;
+  f.mode = mode;
   const M = DELAY_MODES[f.mode], on = f.div !== 'off';
-  const fb = Number($(name + 'Fb').value) / 100 * 0.75 * M.fbScale;
-  const lvl = Number($(name + 'DelayLvl').value) / 100;   // how loud the echoes are; Echo is how many there are
+  const fb = fbPct / 100 * 0.75 * M.fbScale;
+  const lvl = lvlPct / 100;   // how loud the echoes are; Echo is how many there are
   f.wL.gain.value = on ? M.wet * lvl : 0;
   f.wR.gain.value = on && M.pp ? M.wet * lvl : 0;
   f.panL.pan.value = M.pp ? -1 : 0;
@@ -1971,11 +2110,12 @@ function setDelay(name) {
 const noiseBuf = ctx.createBuffer(1, Math.floor(ctx.sampleRate * 0.1), ctx.sampleRate);
 { const d = noiseBuf.getChannelData(0); for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1; }
 
+let hitRate = 1;   // set for one drum hit: its tune and the note it plays
 function pitchedHit(node, t, f0, f1, peak, d) {
   const D = dec(node, d);
   const o = ctx.createOscillator(), g = ctx.createGain();
-  o.frequency.setValueAtTime(f0, t);
-  o.frequency.exponentialRampToValueAtTime(f1, t + 0.06);
+  o.frequency.setValueAtTime(f0 * hitRate, t);
+  o.frequency.exponentialRampToValueAtTime(f1 * hitRate, t + 0.06);
   g.gain.setValueAtTime(peak, t);
   g.gain.exponentialRampToValueAtTime(0.0008, t + D);
   o.connect(g).connect(node);
@@ -2142,9 +2282,9 @@ Object.assign(INSTR, {
 function noiseBurst(out, t, type, freq, q, d, peak) {
   const n = ctx.createBufferSource(), f = ctx.createBiquadFilter(), g = ctx.createGain();
   n.buffer = noiseBuf;
-  f.type = type; f.frequency.value = freq; f.Q.value = q;
+  f.type = type; f.frequency.value = clamp(freq * hitRate, 40, 18000); f.Q.value = q;
   g.gain.setValueAtTime(peak, t);
-  g.gain.exponentialRampToValueAtTime(0.0008, t + d);
+  g.gain.exponentialRampToValueAtTime(0.0008, t + dec(out, d));
   n.connect(f).connect(g).connect(out);
   n.start(t, Math.random() * 0.05); n.stop(t + d + 0.02);
 }
@@ -2193,8 +2333,10 @@ function sampleFor(v) {
 function drumHit(v, t, out, velIn) {
   if (SILENT.has(v)) return;
   const vel = velIn != null ? velIn : 0.85 + Math.random() * 0.3, sp = sampleFor(v);
-  if (sp) { playSample(out || laneBus(v), t, sp.s, vel * sp.k, 1, sp.cap); return; }
-  ((activeKit.drums && activeKit.drums[v]) || DRUM[v] || DRUM.default)(out || laneBus(v), t, vel);
+  const node = out || laneBus(v), rate = (out ? 1 : tuneOf(node)) * drumRate(v);
+  if (sp) { playSample(node, t, sp.s, vel * sp.k, clamp(rate, 0.25, 4), sp.cap, node); return; }
+  hitRate = rate;
+  try { ((activeKit.drums && activeKit.drums[v]) || DRUM[v] || DRUM.default)(node, t, vel); } finally { hitRate = 1; }
 }
 
 // ---------- drum kits: each one sets the kick and can replace any drum's sound. Anything it leaves out uses the standard sound. ----------
@@ -2317,7 +2459,16 @@ function nextPitch() {
   congaCount++;
   return pitchHold;
 }
-function congaHit(t, vel = 1) {
+function congaHit(t, vel = 1, n = schedN, ghost = false) {
+  if ($('pitch').value === 'melody') {
+    // a note from the city's scale: semis from A, plus the octave buttons and Tune
+    const semis = scaleSemis(melodyNext(n, ghost)), oct = congaOct, tu = tuneOf(bus.conga);
+    const v = (0.85 + Math.random() * 0.3) * vel, name = $('congaInst').value, S = SAMP_INSTR[name];
+    const useHi = S && S.hi && semis >= 5, s = S && SAMPLES.get(useHi ? S.hi : S.lo);
+    if (s) { playSample(bus.conga, t, s, v, clamp(Math.pow(2, (semis - (useHi ? 7 : 0)) / 12 + oct) * tu, 0.25, 4), 2, bus.conga); return; }
+    INSTR[name](bus.conga, t, mtof(CONGA_NOTES[0] + semis + oct * 12) * tu, v);
+    return;
+  }
   const P = nextPitch(), hi = P.hi, oct = congaOct + P.oct;
   const f = mtof(CONGA_NOTES[hi] + oct * 12) * tuneOf(bus.conga), v = (0.85 + Math.random() * 0.3) * vel;
   const name = $('congaInst').value, S = SAMP_INSTR[name], s = S && SAMPLES.get(hi && S.hi ? S.hi : S.lo);
@@ -2331,11 +2482,11 @@ function congaHit(t, vel = 1) {
 }
 
 function kickHit(t, dest, vel = 1) {
-  const ks = activeKit.samples && SAMPLES.get(activeKit.samples.kick);
-  if (ks) { playSample(dest || bus.kick, t, ks, vel, tuneOf(bus.kick), 2, bus.kick); return; }
+  const node = dest || bus.kick, ks = activeKit.samples && SAMPLES.get(activeKit.samples.kick);
+  if (ks) { playSample(node, t, ks, vel, tuneOf(node), 2, node); return; }
   const K = activeKit.kick || KICK;   // the kit's kick, or the standard one
   const o = ctx.createOscillator(), g = ctx.createGain();
-  const tu = tuneOf(bus.kick), D = dec(bus.kick, K.dec);
+  const tu = tuneOf(node), D = dec(node, K.dec);
   o.frequency.setValueAtTime(K.f0 * tu, t);
   o.frequency.exponentialRampToValueAtTime(K.f1 * tu, t + 0.09);
   g.gain.setValueAtTime(K.level * vel, t);
@@ -2634,7 +2785,6 @@ document.querySelectorAll('#sampShape button').forEach(b => {
 // A new chord arrives every few bars from a short progression in the conga's minor key; each swells in and fades as the next comes.
 const CHORD = { on: false, level: 0.4, voices: [], sound: 'bowed', bars: 4, drone: false, tone: 1, auto: false, shift: 0, rev: 0.55, del: 0,
   bus: null, filt: null, revSend: null, revIn: null, delSend: null, delay: null, prog: null, sig: '', timer: null };
-const CHORD_SCALE = [0, 2, 3, 5, 7, 8, 10];   // natural minor, which holds the conga's A and E
 const CHORD_PROGS = [[0, 5, 3, 4], [0, 3, 4, 0], [0, 4, 5, 3], [5, 3, 0, 4]];   // i VI iv v, i iv v i, i v VI iv, VI iv i v
 const padOsc = (type, f, out, t, end, gain = 1, det = 0) => {
   const o = ctx.createOscillator(); o.type = type; o.frequency.value = f; o.detune.value = det;
@@ -2730,9 +2880,9 @@ function chordRootAt(n) {
 }
 function chordBed(t, root, stepDur) {
   if (!CHORD.on || CHORD.level <= 0) return;
-  const n = CHORD_SCALE.length, len = 16 * (CHORD.drone ? 1024 : CHORD.bars) * stepDur;   // a drone is held for 1024 bars, then re-armed
+  const SC = scaleSteps(), n = SC.length, len = 16 * (CHORD.drone ? 1024 : CHORD.bars) * stepDur;   // a drone is held for 1024 bars, then re-armed
   const { k, oct } = chordKey();
-  const note = d => 48 + k + CHORD_SCALE[((d % n) + n) % n] + 12 * Math.floor(d / n);
+  const note = d => 48 + k + SC[((d % n) + n) % n] + 12 * Math.floor(d / n);
   const notes = [note(root) - 12, note(root), note(root + 2), note(root + 4)].map(m => m + 12 * oct);
   CHORD.voices.forEach(v => { try { v.g.gain.cancelScheduledValues(t); v.g.gain.setTargetAtTime(0, t, 1.2); v.stop(t + 5); } catch (e) {} });
   const P = PADS[CHORD.sound] || PADS.warm;
@@ -2756,7 +2906,7 @@ function chordFade(secs = 0.8) {
 const stepSecs = () => 60 / clamp(Number($('bpm').value) || 100, 60, 200) / 4;
 // Keep the bed in the conga's key: if its Tune or octave change, the chords move to match a moment later
 function chordFollow() {
-  const { k, oct } = chordKey(), sig = k + '|' + oct;
+  const { k, oct } = chordKey(), sig = k + '|' + oct + '|' + MODE;
   if (sig === CHORD.sig) return;
   CHORD.sig = sig;
   if (!CHORD.on || !playing) return;
@@ -2793,8 +2943,153 @@ function chordFollow() {
   $('chordOctUp').addEventListener('click', () => octMove(1));
   $('chordOctDown').addEventListener('click', () => octMove(-1));
   octLabel();
-  CHORD.sig = (() => { const { k, oct } = chordKey(); return k + '|' + oct; })();
+  CHORD.sig = (() => { const { k, oct } = chordKey(); return k + '|' + oct + '|' + MODE; })();
 }
+
+// ---------- the city's scale: the weather picks it ----------
+// Warm, clear days get bright scales, grey and wet days darker ones. The conga plays a tune in it,
+// the toms and bass follow the chord, and the chords themselves use it too.
+function modeFromWeather() {
+  const w = state.w, e = state.env || {};
+  if (!w) return 'minor';
+  if ((e.snow || 0) > 0 || (w.t < 0 && w.c > 60)) return 'phrygian';
+  const wet = (w.r || 0) > 0.1;
+  const b = clamp((w.t - 4) / 22, 0, 1) * 0.55 + (1 - w.c / 100) * 0.45 - (wet ? 0.22 : 0) - (e.day === 0 ? 0.06 : 0);
+  return b > 0.78 ? 'lydian' : b > 0.62 ? 'major' : b > 0.46 ? 'mixolydian' : b > 0.3 ? 'dorian' : 'minor';
+}
+// The conga's tune: one note per hit. Strong steps take the root or the fifth, the rest walk up and down the scale.
+// It plays the tune three times, then an answer that comes home, and every eight laps one or two notes change.
+const MEL = { a: [], b: [], laps: 0, idx: 0, sig: '' };
+function melodyMake() {
+  const P = state.pattern, L = P.length, pick = a => a[Math.floor(Math.random() * a.length)];
+  const a = [];
+  let d = 0;
+  P.forEach((x, i) => {
+    if (!x) return;
+    const strong = i === 0 || (L % 4 === 0 && i % 4 === 0);
+    d = strong ? pick([0, 0, 4, -3]) : clamp(d + pick([-2, -1, 1, 1, 2, 3]), -3, 9);
+    a.push(d);
+  });
+  if (a.length) a[0] = 0;
+  if (a.length > 2) a[a.length - 1] = pick([4, 1, 6]);          // the question ends away from home
+  const b = a.slice();
+  for (let i = Math.ceil(b.length / 2); i < b.length; i++) b[i] = clamp(b[i] + [2, -2, 3, -1][i % 4], -3, 9);
+  if (b.length > 1) b[b.length - 1] = 0;                        // the answer comes home
+  MEL.a = a; MEL.b = b; MEL.idx = 0;
+  MEL.sig = state.hits + '|' + L + '|' + MODE;
+}
+function melodyLap() {   // the start of each turn of the ring
+  MEL.laps++; MEL.idx = 0;
+  if (MEL.sig !== state.hits + '|' + state.pattern.length + '|' + MODE) melodyMake();
+  else if (MEL.laps % 8 === 0 && MEL.a.length > 2) {
+    const i = 1 + Math.floor(Math.random() * (MEL.a.length - 2));
+    MEL.a[i] = clamp(MEL.a[i] + (Math.random() < 0.5 ? -1 : 2), -3, 9);
+  }
+}
+// The note for the next conga hit, in scale steps from the key, moved with the chord. A ghost takes the next note without using it up.
+function melodyNext(n, ghost) {
+  if (!MEL.a.length) melodyMake();
+  const ph = MEL.laps % 4 === 3 ? MEL.b : MEL.a, rep = Number($('pitchRepeat').value) || 1;
+  const d = ph.length ? ph[Math.floor(MEL.idx / rep) % ph.length] + (ghost ? 1 : 0) : 0;
+  if (!ghost) MEL.idx++;
+  let r = chordRootAt(n);
+  if (r > 3) r -= 7;                                            // move with the chord, staying close
+  return d + r;
+}
+// Toms and hand drums play the chord: root, third, fifth, third, as intervals from their own pitch. The bass plays the root.
+let tomCount = 0, schedN = 0;
+function drumRate(v) {
+  if (v === 'bass') { let s = scaleSemis(chordRootAt(schedN)); if (s > 6) s -= 12; return Math.pow(2, s / 12); }
+  if (!TOM_RE.test(v)) return 1;
+  const r = chordRootAt(schedN);
+  let s = scaleSemis(r + [0, 2, 4, 2][tomCount++ % 4]);
+  while (s > 7) s -= 12;
+  while (s < -7) s += 12;
+  return Math.pow(2, s / 12);
+}
+// Hats and shakers breathe: their filter opens and closes slowly over four bars, so they never sit still
+function breathe(n, t) {
+  const arc = 0.5 - 0.5 * Math.cos(2 * Math.PI * (n % 64) / 64);
+  const k = 0.42 + 0.58 * arc;
+  if (!AUTO.shaker.on && cutBase.shaker) flt.shaker.frequency.setTargetAtTime(Math.max(300, cutBase.shaker * k), t, 0.2);
+  if (state.kick) for (const v of extrasOf(state.kick)) if (HAT_RE.test(v) && bus[xKey(v)]) flt[xKey(v)].frequency.setTargetAtTime(Math.max(300, cutBase[xKey(v)] * k), t, 0.2);
+}
+
+// ---------- space: a light room and echo on everything, shaped by the weather ----------
+// Fog, rain and damp air make the room bigger. Dry, clear air keeps it small. A Rev decay you have moved stays yours.
+const SPACE = { dec: 40 };
+const spaceHand = {};
+let spaceSetting = false;
+function spaceFromWeather() {
+  const w = state.w, e = state.env || {};
+  if (!w) return 40;
+  let v = 32 + (w.h - 55) * 0.3;
+  if (e.vis != null) v += e.vis < 2000 ? 18 : e.vis < 8000 ? 8 : 0;
+  if ((w.r || 0) > 0) v += 8;
+  if ((e.snow || 0) > 0) v += 12;
+  if (w.c < 30 && w.h < 60) v -= 6;
+  return Math.round(clamp(v, 18, 72));
+}
+function spaceApply() {
+  SPACE.dec = spaceFromWeather();
+  spaceSetting = true;
+  for (const name of ['conga', 'shaker', 'sample']) if (!spaceHand[name]) { const el = $(name + 'RevDec'); el.value = String(SPACE.dec); el.dispatchEvent(new Event('input')); }
+  spaceSetting = false;
+  for (const v in XV) if (XV[v].revDec == null) xRoom(v);
+  if (drumCur && XV[drumCur] && XV[drumCur].revDec == null) drumLoad(drumCur);
+}
+for (const name of ['conga', 'shaker', 'sample']) $(name + 'RevDec').addEventListener('input', () => { if (!spaceSetting) spaceHand[name] = true; });
+
+// ---------- the drum card: one set of controls, for whichever drum you pick ----------
+let drumCur = null, drumLoading = false;
+const DRUM_CTL = { Vol: 'vol', Decay: 'decay', Tune: 'tune', Cut: 'cut', Res: 'res', Pan: 'pan', Fb: 'fb', DelayLvl: 'dlvl', Rev: 'rev', RevDec: 'revDec' };
+function drumText(key, v) {
+  if (key === 'decay') return Math.pow(2, (v - 50) / 25).toFixed(2) + 'x';
+  if (key === 'tune') return (v > 0 ? '+' : '') + v;
+  if (key === 'cut') { if (v >= 99) return 'open'; const lo = drumCur && (drumCur === 'sub' || drumCur === 'twin' || TOM_RE.test(drumCur)) ? 30 : 200; return Math.round(lo * Math.pow(12000 / lo, v / 100)) + ' Hz'; }
+  if (key === 'pan') return panText(v);
+  if (key === 'revDec') return revSecs(v).toFixed(1) + ' s';
+  if (key === 'fb' || key === 'dlvl' || key === 'rev') return v + '%';
+  return String(v);
+}
+for (const [id, key] of Object.entries(DRUM_CTL)) {
+  const el = $('drum' + id);
+  el.addEventListener('input', () => {
+    const v = Number(el.value);
+    $('drum' + id + 'Out').textContent = drumText(key, v);
+    if (drumLoading || !drumCur) return;
+    const S = XV[drumCur];
+    if (key === 'vol') {
+      laneVol[drumCur] = v;
+      document.querySelectorAll(`.lane-vol[data-lanevol="${CSS.escape(drumCur)}"]`).forEach(x => { x.value = String(v); });
+    } else S[key] = v;
+    laneBus(drumCur); xApply(drumCur);
+    if (key === 'revDec') xRoom(drumCur);
+  });
+}
+for (const [id, key] of [['Delay', 'delay'], ['Style', 'style']]) {
+  $('drum' + id).addEventListener('change', () => { if (drumLoading || !drumCur) return; XV[drumCur][key] = $('drum' + id).value; laneBus(drumCur); xApply(drumCur); });
+}
+function drumLoad(v) {
+  drumCur = v;
+  const S = XV[v] || (XV[v] = XDEF(v));
+  drumLoading = true;
+  const val = { vol: laneVol[v] ?? 80, revDec: S.revDec != null ? S.revDec : SPACE.dec };
+  for (const [id, key] of Object.entries(DRUM_CTL)) { const el = $('drum' + id); el.value = String(key in val ? val[key] : S[key]); el.dispatchEvent(new Event('input')); }
+  for (const [id, key] of [['Delay', 'delay'], ['Style', 'style']]) { const el = $('drum' + id); el.value = S[key]; el.dispatchEvent(new Event('change')); }
+  drumLoading = false;
+  $('drumWhich').value = v;
+  $('drumSmall').textContent = v === 'sub' ? 'plays the chord root' : v === 'twin' ? 'another city, drifting' : TOM_RE.test(v) ? 'tuned to the chords' : 'from the genre';
+  const m = xMuted(v);
+  $('drumMute').setAttribute('aria-pressed', String(m));
+  $('drumMute').textContent = m ? 'Muted' : 'Mute';
+  markTabs($('drumCard'));
+}
+$('drumWhich').addEventListener('change', () => openVoice('x:' + $('drumWhich').value));
+$('drumMute').addEventListener('click', () => {
+  const lane = drumCur && kitList.find(l => l.id === drumCur);
+  if (lane) { lane.toggle(); drumLoad(drumCur); }
+});
 
 // ---------- Groove: the feel of the kit ----------
 // Swing: the off-beat sixteenths land late. Pocket: the rings sit ahead of the beat or behind it, each a little differently.
@@ -2840,6 +3135,7 @@ function grooveNote() {
   const auto = !mine.length;
   $('grooveAuto').setAttribute('aria-pressed', String(auto));
   for (const k in grooveKnobs) $(grooveKnobs[k]).parentElement.classList.toggle('hand', grooveHand[k]);
+  tellStory();
 }
 function grooveApply() {
   const g = grooveFromWeather();
@@ -2883,7 +3179,26 @@ function grooveGhosts(t, n, k, r, tK, tC, tS, tX, shaker) {
   }
   if (k >= 0 && V && V.snare && V.snare.some(Boolean) && !V.snare[k] && !laneMuted.snare && (k % 4 === 1 || k % 4 === 3) && Math.random() < gp * 0.3 && roll()) drumHit('snare', tX, undefined, soft() * 1.4);
   if (k >= 0 && kickOn && state.kick.bd.some((b, i) => b && i % 4 !== 0) && !state.kick.bd[k] && (k % 4 === 3 || k % 4 === 1) && Math.random() < gp * 0.18 && roll()) kickHit(tK, undefined, 0.3 + Math.random() * 0.12);
-  if (r >= 0 && state.pattern[r] !== 1 && Math.random() < gp * 0.22 && roll()) congaHit(tC, 0.3);
+  if (r >= 0 && state.pattern[r] !== 1 && Math.random() < gp * 0.22 && roll()) congaHit(tC, 0.3, n, true);
+}
+
+// ---------- the story: what the weather is doing to the sound, in plain words ----------
+function tellStory() {
+  const el = $('story'), w = state.w, e = state.env || {};
+  if (!el) return;
+  if (!w) { el.textContent = 'Waiting for the weather.'; return; }
+  const esc = x => String(x).replace(/[&<>]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c]));
+  const T = Math.round(w.t), M = MODES[MODE];
+  const temp = w.t < 6 ? 'cold' : w.t < 14 ? 'cool' : w.t < 22 ? 'mild' : 'warm';
+  const sky = (e.snow || 0) > 0 ? 'snowy' : (w.r || 0) > 0.1 ? 'wet' : w.c < 30 ? 'clear' : w.c < 70 ? 'partly cloudy' : 'cloudy';
+  const src = (SOURCE_LABEL[state.source] || 'the weather').toLowerCase();
+  const lines = [];
+  lines.push(`${T}°C gives the ring <b>${state.steps} steps</b> and the ${esc(src)} gives it <b>${state.hits} ${state.hits === 1 ? 'hit' : 'hits'}</b>.`);
+  lines.push(`${temp[0].toUpperCase() + temp.slice(1)} and ${sky}, so everything plays in a <b>${M.name}</b> scale: ${M.feel}.`);
+  const room = SPACE.dec >= 50 ? (e.vis != null && e.vis < 8000 ? 'Fog makes the room bigger.' : (w.r || 0) > 0 ? 'Rain gives the echoes a longer tail.' : 'Damp air makes the room bigger.')
+    : SPACE.dec <= 28 ? 'Dry, clear air keeps the room small.' : '';
+  if (room) lines.push(room);
+  el.innerHTML = lines.join(' ');
 }
 
 // ---------- scheduler (sixteenth-note steps on the audio clock) ----------
@@ -2896,6 +3211,7 @@ let playRing = -1, playKick = -1, flashes = [];
 const events = [];
 
 function schedule(t, n) {
+  schedN = n;
   const vel = grooveVel(n);
   const tK = grooveAt(t, n, 'kick'), tC = grooveAt(t, n, 'conga'), tS = grooveAt(t, n, 'shaker'), tX = grooveAt(t, n, 'extra');
   if (yours.buf) yoursStep(tC, n);
@@ -2903,7 +3219,9 @@ function schedule(t, n) {
   if (n % (16 * (CHORD.drone ? 1024 : CHORD.bars)) === 0) {
     if (n > 0 && n % (16 * 64) === 0 && CHORD.prog) { const k = 1 + Math.floor(Math.random() * 2); CHORD.prog = CHORD.prog.slice(k).concat(CHORD.prog.slice(0, k)); }   // every 64 bars the progression moves on a place or two
     chordBed(t, chordRootAt(n), stepSecs());
+    subChord(t, n);
   }
+  if (n % 4 === 0) breathe(n, t);
   if (CHORD.on && CHORD.auto && CHORD.filt && n % 2 === 0) chordAutoSweep(n, t);
   const k = state.kick ? n % state.kick.steps : -1;
   const r = state.pattern.length ? n % state.pattern.length : -1;
@@ -2914,8 +3232,9 @@ function schedule(t, n) {
     renderLanes();
     showPattern();
   }
+  if (r === 0) melodyLap();
   const congaNow = r >= 0 && state.pattern[r] === 1 && roll();
-  if (congaNow) congaHit(tC, vel);
+  if (congaNow) congaHit(tC, vel, n);
   if (k === 0 && n > 0) twin.off++;   // the twin slips one step each cycle
   const kickNow = k >= 0 && kickOn && state.kick.bd[k] && roll();
   const tj = twin.n ? (k + twin.off) % twin.n : -1;
@@ -3046,7 +3365,7 @@ function drawRing(now) {
   const G = ringGeometry(), { S, cx, cy, Rmax, Rmain, sp, rings } = G;
   g.clearRect(0, 0, S, S);
   const at = (R, i, n) => { const a = -Math.PI / 2 + 2 * Math.PI * i / n; return [cx + R * Math.cos(a), cy + R * Math.sin(a)]; };
-  const sel = openVoiceName && Object.keys(LANE_VOICE).find(id => LANE_VOICE[id] === openVoiceName);
+  const selLane = openVoiceName && kitList.find(l => laneVoice(l) === openVoiceName), sel = selLane && selLane.id;
 
   // tracks
   g.lineWidth = 2;
@@ -3148,7 +3467,7 @@ function drawRing(now) {
   g.fillText(`${state.hits} ${state.hits === 1 ? 'hit' : 'hits'}`, cx, cy + 60);
 }
 
-// Tap a ring: the kick, shaker and weather ring open their sound controls, any other drum is muted or unmuted
+// Tap a ring to open its sound controls
 $('ring').addEventListener('click', e => {
   const box = $('ring').getBoundingClientRect(), G = ringGeometry();
   const x = (e.clientX - box.left) / box.width * G.S - G.cx, y = (e.clientY - box.top) / box.height * G.S - G.cy;
@@ -3157,9 +3476,8 @@ $('ring').addEventListener('click', e => {
   let best = null, bd = Infinity;
   for (const r of all) { const gap = Math.abs(d - r.R); if (r.lane && gap < bd) { bd = gap; best = r; } }
   if (!best || bd > Math.max(14, (G.sp || 40) / 2)) { if (openVoiceName) closeVoice(); return; }
-  const v = LANE_VOICE[best.lane.id];
-  if (v) (openVoiceName === v ? closeVoice() : openVoice(v));
-  else best.lane.toggle();
+  const v = laneVoice(best.lane);
+  openVoiceName === v ? closeVoice() : openVoice(v);
 });
 
 function frame() {
