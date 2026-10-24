@@ -57,15 +57,45 @@
   .fx { display: flex; flex-wrap: wrap; align-items: stretch; gap: 8px; padding: 10px; background: var(--panel); border: 1px solid var(--line); }
   .fxgroup { display: flex; gap: 6px; align-items: stretch; }
   .fxlab { font-size: 9.5px; letter-spacing: .1em; text-transform: uppercase; color: var(--ink-faint); align-self: center; margin-right: 2px; }
-  .fx { padding: 8px; gap: 8px 14px; }
+  .fx { display: grid; gap: 8px; padding: 8px 10px; }
+  .fxrow { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 12px; }
+  .grp { display: flex; align-items: center; gap: 6px; }
+  .fxrow + .fxrow { border-top: 1px solid var(--line); padding-top: 8px; }
   .fx .btn { min-width: 44px; padding: 8px 8px; font-size: 10.5px; }
   .fx select { background: var(--strip); border: 1px solid var(--line); padding: 7px 6px; font-size: 11px; }
   .mini { display: grid; gap: 1px; min-width: 70px; flex: 1 1 70px; max-width: 110px; }
   .mini label { font-size: 9px; letter-spacing: .1em; text-transform: uppercase; color: var(--ink-faint); display: flex; justify-content: space-between; }
   .mini input, .send input { width: 100%; accent-color: var(--accent); height: 20px; margin: 0; }
-  .mini.dj { max-width: 130px; }
-  .panbar { position: relative; width: 100%; height: 3px; background: rgba(243,236,230,.14); border-radius: 2px; }
-  .panbar i { position: absolute; top: -2px; width: 7px; height: 7px; margin-left: -3px; border-radius: 50%; background: var(--c); }
+  .mini.dj { max-width: 96px; flex: 1 1 80px; }
+  .knob { width: 34px; height: 34px; cursor: ns-resize; touch-action: none; flex: none; }
+  .knob.big { width: 38px; height: 38px; }
+  .knob svg { width: 100%; height: 100%; display: block; }
+  .knob .trk { fill: none; stroke: rgba(243,236,230,.16); stroke-width: 3.5; stroke-linecap: round; }
+  .knob .val { fill: none; stroke: var(--c, var(--accent)); stroke-width: 3.5; stroke-linecap: round; }
+  .knob .ptr { stroke: var(--ink); stroke-width: 2; stroke-linecap: round; }
+  .knv { font-weight: 400; font-size: 11px; color: var(--ink-dim); min-width: 4ch; }
+  .chance { display: grid; grid-template-columns: auto 1fr; grid-template-areas: "l k" "l v"; align-items: center; justify-items: center; width: 100%; padding: 2px 4px; }
+  .chance span { grid-area: l; font-size: 9px; letter-spacing: .1em; text-transform: uppercase; color: var(--ink-faint); writing-mode: vertical-rl; transform: rotate(180deg); }
+  .chance .knob { grid-area: k; } .chance b { grid-area: v; font-weight: 400; font-size: 10px; color: var(--ink-dim); }
+  .fxbox { width: min(94vw, 640px); max-height: 92vh; overflow: auto; background: var(--panel); border: 1px solid var(--line); padding: 14px 16px 16px; display: grid; gap: 10px; }
+  .fxbox h2 { font-family: var(--display); font-weight: 400; font-size: 18px; letter-spacing: .06em; margin: 4px 0 0; }
+  .fxcols { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
+  .ctl { display: grid; gap: 3px; font-size: 10px; letter-spacing: .1em; text-transform: uppercase; color: var(--ink-faint); margin-top: 8px; }
+  .ctl input[type=range] { width: 100%; accent-color: var(--accent); height: 22px; margin: 0; }
+  .chips { display: flex; flex-wrap: wrap; gap: 4px; } .chips .btn { padding: 6px 8px; font-size: 10px; }
+  .ovl-head, .ovl-row { display: grid; grid-template-columns: 7.5em 1fr 1fr; gap: 12px; align-items: center; font-size: 10px; letter-spacing: .1em; text-transform: uppercase; color: var(--ink-faint); }
+  .ovl-row { border-left: 3px solid var(--c); padding-left: 8px; color: var(--ink-dim); } .ovl-row label { display: flex; gap: 6px; align-items: center; } .ovl-row input { flex: 1; min-width: 0; accent-color: var(--c); height: 20px; margin: 0; }
+  .ovl-nm { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  @media (max-width: 560px) { .fxcols { grid-template-columns: 1fr; } }
+  .panbar { position: relative; width: 100%; height: 16px; cursor: ew-resize; touch-action: none; }
+  .panbar::before { content: ""; position: absolute; left: 0; right: 0; top: 7px; height: 2px; background: rgba(243,236,230,.18); border-radius: 1px; }
+  .panbar::after { content: ""; position: absolute; left: 50%; top: 3px; width: 1px; height: 10px; background: rgba(243,236,230,.3); }
+  .panbar i { position: absolute; top: 3px; width: 10px; height: 10px; margin-left: -5px; border-radius: 50%; background: var(--c); box-shadow: 0 1px 0 rgba(0,0,0,.5); }
+  .panbar b { position: absolute; top: 4px; width: 2px; height: 8px; margin-left: -1px; background: var(--ink-faint); }
+  .panlab { display: flex; justify-content: space-between; width: 100%; font-size: 8px; color: var(--ink-faint); letter-spacing: .1em; margin-top: -2px; }
+  .nmrow { display: flex; align-items: center; justify-content: center; gap: 6px; }
+  .trig { width: 9px; height: 9px; border-radius: 50%; flex: none; background: var(--c); opacity: calc(.16 + .84 * var(--hit, 0)); box-shadow: 0 0 calc(12px * var(--hit, 0)) calc(2px * var(--hit, 0)) var(--c); }
+  .strip.muted .trig { opacity: .1; box-shadow: none; }
   .strip .btn[data-auto="1"] { box-shadow: inset 0 0 0 1px var(--c); }
   .strip .btn[data-auto="1"] .led { background: var(--c); }
   .pad[aria-pressed="true"] { background: #2a211d; color: var(--ink-faint); box-shadow: inset 0 0 0 1px var(--c); text-decoration: line-through; filter: none; }
@@ -138,23 +168,44 @@
     </div>
     <div class="right">
       <div class="fx" role="group" aria-label="Effects">
-        <div class="fxgroup"><span class="fxlab">Stutter</span>
-          <button class="btn" data-st="2" type="button" aria-pressed="false" title="Repeat the last hits every eighth note">1/8</button>
-          <button class="btn" data-st="1" type="button" aria-pressed="false" title="Repeat the last hits every sixteenth note">1/16</button>
-          <button class="btn" data-st="0.5" type="button" aria-pressed="false" title="A fast roll">Roll</button>
+        <div class="fxrow">
+          <div class="grp"><span class="fxlab">Stutter</span>
+            <button class="btn" data-st="2" type="button" aria-pressed="false" title="Repeat the last hits every eighth note">1/8</button>
+            <button class="btn" data-st="1" type="button" aria-pressed="false" title="Repeat the last hits every sixteenth note">1/16</button>
+            <button class="btn" data-st="0.5" type="button" aria-pressed="false" title="A fast roll">Roll</button></div>
+          <div class="grp mini dj"><label for="dj">Filter</label><input id="dj" type="range" min="-100" max="100" value="0" aria-label="DJ filter. Left closes it, right thins it out. Double click to centre."></div>
+          <div class="grp"><span class="fxlab">Chance</span><div class="knob big" id="gChance"></div><b class="knv" id="gChanceV">100%</b></div>
+          <button id="fxOpen" class="btn" type="button" title="Open the delay and reverb controls" aria-label="Delay and reverb">FX</button>
         </div>
-        <div class="mini dj"><label for="dj">Filter</label><input id="dj" type="range" min="-100" max="100" value="0" aria-label="DJ filter. Left closes it, right thins it out. Double click to centre."></div>
-        <div class="fxgroup"><span class="fxlab">Wander</span>
-          <button id="autoFlt" class="btn" type="button" aria-pressed="true" title="Each drum's filter closes by itself now and then and holds for 1, 2, 4 or 8 bars, so drums drift in and out. Calm weather holds longer.">Filters</button>
-          <button id="autoPan" class="btn" type="button" aria-pressed="true" title="Each drum swings to one side for 1, 2, 4 or 8 bars, then comes back">Pan</button>
-          <div class="mini"><label for="wander">How often</label><input id="wander" type="range" min="0" max="100" value="40" aria-label="How often the filters and pans wander"></div>
+        <div class="fxrow">
+          <div class="grp"><span class="fxlab">Wander</span>
+            <button id="autoFlt" class="btn" type="button" aria-pressed="true" title="Each drum's filter closes by itself now and then and holds for 1, 2, 4 or 8 bars. Calm weather holds longer.">Filters</button>
+            <button id="autoPan" class="btn" type="button" aria-pressed="true" title="Each drum swings to one side for 1, 2, 4 or 8 bars, then comes back">Pan</button>
+            <div class="mini"><label for="wander">How often</label><input id="wander" type="range" min="0" max="100" value="40" aria-label="How often the filters and pans wander"></div></div>
+          <div class="grp"><span class="fxlab">Key</span><select id="root" aria-label="Key"></select><button id="tuneOn" class="btn" type="button" aria-pressed="true" title="On: every drum with a clear pitch is moved to a note of the key and scale. Off: drums sound as recorded.">In key</button><button id="remix" class="btn" type="button" title="Turn every ring to a new starting point. Same step counts, new groove.">Shift rings</button></div>
         </div>
-        <div class="fxgroup"><select id="root" aria-label="Key"></select><button id="tuneOn" class="btn" type="button" aria-pressed="true" title="On: every drum with a clear pitch is moved to a note of the key and scale. Off: drums sound as recorded.">In key</button><button id="remix" class="btn" type="button" title="Turn every ring to a new starting point. Same step counts, new groove.">Shift rings</button></div>
-        <div class="mini"><label for="fxDelay">Delay (all)</label><input id="fxDelay" type="range" min="0" max="100" value="0" aria-label="Delay for everything"></div>
-        <div class="mini"><label for="fxVerb">Reverb (all)</label><input id="fxVerb" type="range" min="0" max="100" value="30" aria-label="Reverb for everything"></div>
       </div>
       <div class="mixer" id="mixer"></div>
     </div>
+  </div>
+</div>
+<div class="mappanel" id="fxPanel" hidden role="dialog" aria-modal="true" aria-label="Delay and reverb">
+  <div class="fxbox">
+    <div class="maphead"><b>Delay and reverb</b><button id="fxClose" class="btn" type="button">Done</button></div>
+    <div class="fxcols">
+      <section><h2>Delay</h2>
+        <label class="ctl">Level (all)<input id="fxDelay" type="range" min="0" max="100" value="0"></label>
+        <div class="ctl">Time<span class="chips"><button class="btn" data-dt="2" type="button" aria-pressed="false">1/8</button><button class="btn" data-dt="3" type="button" aria-pressed="true">dotted 1/8</button><button class="btn" data-dt="4" type="button" aria-pressed="false">1/4</button><button class="btn" data-dt="6" type="button" aria-pressed="false">dotted 1/4</button></span></div>
+        <label class="ctl">Repeats<input id="dFb" type="range" min="0" max="100" value="47"></label>
+        <label class="ctl">Tone<input id="dTone" type="range" min="0" max="100" value="55"></label></section>
+      <section><h2>Reverb</h2>
+        <label class="ctl">Level (all)<input id="fxVerb" type="range" min="0" max="100" value="30"></label>
+        <label class="ctl">Size<input id="vLen" type="range" min="0" max="100" value="29"></label>
+        <label class="ctl">Tone<input id="vTone" type="range" min="0" max="100" value="88"></label></section>
+    </div>
+    <h2>How much of each drum</h2>
+    <div class="ovl-head"><span></span><span>Delay</span><span>Reverb</span></div>
+    <div id="ovlDrums"></div>
   </div>
 </div>
 <div class="mappanel" id="mapPanel" hidden>
@@ -187,11 +238,17 @@ delTone.type = 'lowpass'; delTone.frequency.value = 3200; fb.gain.value = 0.42; 
 const delIn = ctx.createGain(); pre.connect(delSend).connect(delIn); delIn.connect(delay); delay.connect(delTone).connect(fb).connect(delay); delTone.connect(delOut).connect(comp);
 // reverb
 const verb = ctx.createConvolver(), verbSend = ctx.createGain(), verbOut = ctx.createGain();
-(() => { const len = Math.floor(ctx.sampleRate * 1.6), b = ctx.createBuffer(2, len, ctx.sampleRate);
+function makeIR(sec) {   // a burst of noise that fades away: the longer it is, the bigger the room
+  const len = Math.floor(ctx.sampleRate * sec), b = ctx.createBuffer(2, len, ctx.sampleRate);
   for (let c = 0; c < 2; c++) { const d = b.getChannelData(c); for (let i = 0; i < len; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / len, 2.6); }
-  verb.buffer = b; })();
-const verbIn = ctx.createGain(); verbSend.gain.value = 0.3 * 0.7; verbOut.gain.value = 1;
-pre.connect(verbSend).connect(verbIn); verbIn.connect(verb).connect(verbOut).connect(comp);
+  verb.buffer = b;
+}
+makeIR(1.6);
+const verbIn = ctx.createGain(), verbTone = ctx.createBiquadFilter(); verbSend.gain.value = 0.3 * 0.7; verbOut.gain.value = 1;
+verbTone.type = 'lowpass'; verbTone.frequency.value = 9000;
+pre.connect(verbSend).connect(verbIn); verbIn.connect(verb).connect(verbTone).connect(verbOut).connect(comp);
+let DELMULT = 3;   // delay time in sixteenth notes
+const setDelayTime = (t = ctx.currentTime) => delay.delayTime.setTargetAtTime(stepSecs() * DELMULT, t, 0.05);
 
 const SAMPLES = new Map(), failed = new Set();
 const noiseBuf = (() => { const b = ctx.createBuffer(1, ctx.sampleRate, ctx.sampleRate), d = b.getChannelData(0); for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1; return b; })();
@@ -239,7 +296,7 @@ const lanes = COLORS.map((color, i) => {
   g.connect(lp).connect(pan).connect(masterIn);
   const sd = ctx.createGain(), sv = ctx.createGain(); sd.gain.value = 0; sv.gain.value = 0;
   pan.connect(sd).connect(delIn); pan.connect(sv).connect(verbIn);   // each drum's own delay and reverb
-  return { i, d: KIT.lanes[i], color, g, lp, sd, sv, pn: pan, basePan: pan.pan.value, panNow: pan.pan.value, aF: 0, aFc: 420, aP: 0, vol: 0.8, mute: false, flt: false, stut: false, bits: [], steps: 8, hits: 3, rot: 0, last: 0, flash: 0, why: '', src: '', rate: 1, note: '' };
+  return { i, d: KIT.lanes[i], color, g, lp, sd, sv, pn: pan, chance: 100, basePan: pan.pan.value, panNow: pan.pan.value, aF: 0, aFc: 420, aP: 0, vol: 0.8, mute: false, flt: false, stut: false, bits: [], steps: 8, hits: 3, rot: 0, last: 0, flash: 0, why: '', src: '', rate: 1, note: '' };
 });
 const faderGain = v => v * v * 1.1;   // a gentler curve than straight volume
 lanes.forEach(l => l.g.gain.value = faderGain(l.vol));
@@ -366,7 +423,7 @@ async function setKit(id) {
   const k = KITS.find(x => x.id === id) || KITS[0];
   $('status').textContent = 'Loading ' + k.name + '…';
   await Promise.all(k.lanes.map(d => !d.f || SAMPLES.has(d.f) ? 0 : loadSample(d.f)));
-  KIT = k; lanes.forEach((l, i) => { l.d = k.lanes[i]; l.el.querySelector('.nm').textContent = l.d.n; l.pad.setAttribute('aria-label', 'Tap ' + l.d.n); l.el.querySelector('.fader').setAttribute('aria-label', l.d.n + ' volume'); });
+  KIT = k; lanes.forEach((l, i) => { l.d = k.lanes[i]; l.el.querySelector('.nm').textContent = l.d.n; l.pad.setAttribute('aria-label', 'Mute ' + l.d.n); l.ovl.querySelector('.ovl-nm').textContent = l.d.n; l.el.querySelector('.fader').setAttribute('aria-label', l.d.n + ' volume'); });
   $('status').textContent = ''; retune();
 }
 
@@ -396,6 +453,7 @@ toggle($('autoPan'), v => { AUTO.pan = v; if (!v) lanes.forEach(l => { l.aP = 0;
 
 // ---------- the clock ----------
 let playing = false, nextTime = 0, stepN = 0, timer = null;
+let GCHANCE = 100;   // overall chance, in percent
 const gDivs = new Set();   // global stutter buttons held or latched
 const visQ = [];
 const stepSecs = () => 60 / (+$('bpm').value) / 4;
@@ -407,6 +465,7 @@ function schedule(t, n) {
     const dv = stutDiv(l), pos = n % l.steps, pat = l.bits[pos];
     if (!dv) {
       if (!pat) return;
+      if (Math.random() * 100 >= l.chance * GCHANCE / 100) return;   // Chance: some hits are left out
       const vel = (pos % 4 === 0 ? 1 : 0.78) * (0.85 + Math.random() * 0.3);
       l.last = vel; hit(l, t + (Math.random() * 0.004), vel);
       return;
@@ -426,7 +485,7 @@ async function start() {
   if (ctx.state !== 'running') await ctx.resume();
   if (playing) return;
   playing = true; stepN = 0; nextTime = ctx.currentTime + 0.06; visQ.length = 0;
-  delay.delayTime.value = stepSecs() * 3;
+  setDelayTime();
   timer = setInterval(tick, 25);
   $('play').setAttribute('aria-pressed', 'true'); $('play').textContent = 'Stop';
 }
@@ -435,7 +494,7 @@ function stop() {
   $('play').setAttribute('aria-pressed', 'false'); $('play').textContent = 'Play';
 }
 $('play').addEventListener('click', () => playing ? stop() : start());
-$('bpm').addEventListener('input', () => { $('bpmv').textContent = $('bpm').value; delay.delayTime.setTargetAtTime(stepSecs() * 3, ctx.currentTime, 0.05); });
+$('bpm').addEventListener('input', () => { $('bpmv').textContent = $('bpm').value; setDelayTime(); });
 
 // ---------- mixer ----------
 function makeFader(el, l) {
@@ -452,6 +511,17 @@ function makeFader(el, l) {
   el.tabIndex = 0; el.setAttribute('role', 'slider'); el.setAttribute('aria-valuemin', 0); el.setAttribute('aria-valuemax', 100);
   el.setAttribute('aria-label', l.d.n + ' volume'); draw(); l.drawFader = draw;
 }
+// the overlay: delay and reverb for everything, and how much of each drum goes to them
+function buildOverlay() {
+  const host = $('ovlDrums'); host.innerHTML = '';
+  lanes.forEach(l => {
+    const r = document.createElement('div'); r.className = 'ovl-row'; r.dataset.lane = l.i; r.style.setProperty('--c', l.color);
+    r.innerHTML = `<span class="ovl-nm">${l.d.n}</span><label>D<input class="sd" type="range" min="0" max="100" value="${Math.round(Math.sqrt(l.sd.gain.value / 0.9) * 100)}" aria-label="${l.d.n} delay"></label><label>R<input class="sv" type="range" min="0" max="100" value="${Math.round(Math.sqrt(l.sv.gain.value / 0.9) * 100)}" aria-label="${l.d.n} reverb"></label>`;
+    r.querySelector('.sd').addEventListener('input', e => l.sd.gain.setTargetAtTime(Math.pow(e.target.value / 100, 2) * 0.9, ctx.currentTime, 0.02));
+    r.querySelector('.sv').addEventListener('input', e => l.sv.gain.setTargetAtTime(Math.pow(e.target.value / 100, 2) * 0.9, ctx.currentTime, 0.02));
+    host.appendChild(r); l.ovl = r;
+  });
+}
 // tap to latch, hold to use only while pressed
 function momentary(el, on, off) {
   let down = 0, latched = false;
@@ -466,18 +536,48 @@ function momentary(el, on, off) {
 }
 function toggle(el, fn) { el.addEventListener('click', () => { const v = el.getAttribute('aria-pressed') !== 'true'; el.setAttribute('aria-pressed', String(v)); fn(v); }); }
 
+// a small turning knob: drag up or down, arrow keys, double click to put it back
+function makeKnob(el, value, onChange, label, reset = 100) {
+  const A0 = 135, A1 = 405, P = (r, a) => [20 + r * Math.cos(a * Math.PI / 180), 20 + r * Math.sin(a * Math.PI / 180)];
+  const arc = (a0, a1) => { const [x0, y0] = P(15, a0), [x1, y1] = P(15, a1); return `M${x0.toFixed(2)} ${y0.toFixed(2)}A15 15 0 ${a1 - a0 > 180 ? 1 : 0} 1 ${x1.toFixed(2)} ${y1.toFixed(2)}`; };
+  el.innerHTML = '<svg viewBox="0 0 40 40" aria-hidden="true"><path class="trk" d="' + arc(A0, A1 - 0.01) + '"/><path class="val"/><line class="ptr"/></svg>';
+  const val = el.querySelector('.val'), ptr = el.querySelector('.ptr');
+  let v = value;
+  const draw = () => { const a = A0 + (A1 - A0) * v / 100, [x, y] = P(13, a), [x2, y2] = P(5, a); val.setAttribute('d', v > 0 ? arc(A0, Math.max(A0 + 0.5, a)) : ''); ptr.setAttribute('x1', x2); ptr.setAttribute('y1', y2); ptr.setAttribute('x2', x); ptr.setAttribute('y2', y); el.setAttribute('aria-valuenow', Math.round(v)); };
+  const set = n => { v = clamp(Math.round(n), 0, 100); draw(); onChange(v); };
+  let y0 = 0, v0 = 0, down = false;
+  el.addEventListener('pointerdown', e => { el.setPointerCapture(e.pointerId); down = true; y0 = e.clientY; v0 = v; });
+  el.addEventListener('pointermove', e => { if (down) set(v0 + (y0 - e.clientY) * 0.8); });
+  el.addEventListener('pointerup', () => down = false); el.addEventListener('pointercancel', () => down = false);
+  el.addEventListener('dblclick', () => set(reset));
+  el.addEventListener('keydown', e => { const d = { ArrowUp: 5, ArrowRight: 5, ArrowDown: -5, ArrowLeft: -5 }[e.key]; if (d) { e.preventDefault(); set(v + d); } });
+  el.tabIndex = 0; el.setAttribute('role', 'slider'); el.setAttribute('aria-valuemin', 0); el.setAttribute('aria-valuemax', 100); el.setAttribute('aria-label', label);
+  draw(); return { set, get: () => v };
+}
+
 const mixer = $('mixer');
 lanes.forEach(l => {
   const s = document.createElement('div'); s.className = 'strip'; s.style.setProperty('--c', l.color); s.dataset.lane = l.i;
-  s.innerHTML = `<div class="nm">${l.d.n}</div><div class="why"></div><div class="panbar" aria-hidden="true"><i></i></div><div class="fader"></div>
+  s.innerHTML = `<div class="nmrow"><span class="trig" title="Lights up when this drum sounds"></span><div class="nm">${l.d.n}</div></div><div class="why"></div><div class="panbar" title="Pan: drag left or right. Double click to centre."><b></b><i></i></div><div class="panlab" aria-hidden="true"><span>L</span><span>R</span></div><div class="fader"></div>
     <div class="row2"><button class="btn f" type="button" aria-pressed="false" title="Close a filter on this drum"><i class="led"></i>Filter</button><button class="btn st" type="button" aria-pressed="false" title="Repeat this drum's last hit. Tap to latch, hold for just a moment."><i class="led"></i>Stutter</button></div>
-    <label class="send">D<input class="sd" type="range" min="0" max="100" value="0" aria-label="${l.d.n} delay"></label>
-    <label class="send">R<input class="sv" type="range" min="0" max="100" value="0" aria-label="${l.d.n} reverb"></label>
+    <div class="chance"><span>Chance</span><div class="knob"></div><b>100%</b></div>
     <button class="pad" type="button" aria-pressed="false" aria-label="Mute ${l.d.n}" title="Mute or unmute (key ${l.i + 1})">${l.i + 1}</button>`;
   mixer.appendChild(s); l.el = s;
   makeFader(s.querySelector('.fader'), l);
-  s.querySelector('.sd').addEventListener('input', e => l.sd.gain.setTargetAtTime(Math.pow(e.target.value / 100, 2) * 0.9, ctx.currentTime, 0.02));
-  s.querySelector('.sv').addEventListener('input', e => l.sv.gain.setTargetAtTime(Math.pow(e.target.value / 100, 2) * 0.9, ctx.currentTime, 0.02));
+  { const pb = s.querySelector('.panbar'), home = pb.querySelector('b');
+    const showHome = () => { home.style.left = (50 + l.basePan * 50) + '%'; pb.setAttribute('aria-valuenow', Math.round(l.basePan * 100)); };
+    const setPan = v => { v = Math.abs(v) < 0.06 ? 0 : clamp(v, -1, 1); l.basePan = v; l.aP = 0; l.panNow = v; l.pn.pan.setTargetAtTime(v, ctx.currentTime, 0.02); showHome(); };
+    const fromX = e => { const r = pb.getBoundingClientRect(); setPan(((e.clientX - r.left) / r.width - 0.5) * 2); };
+    let dn = false;
+    pb.addEventListener('pointerdown', e => { pb.setPointerCapture(e.pointerId); dn = true; fromX(e); });
+    pb.addEventListener('pointermove', e => { if (dn) fromX(e); });
+    pb.addEventListener('pointerup', () => dn = false); pb.addEventListener('pointercancel', () => dn = false);
+    pb.addEventListener('dblclick', () => setPan(0));
+    pb.addEventListener('keydown', e => { const d = { ArrowLeft: -0.1, ArrowDown: -0.1, ArrowRight: 0.1, ArrowUp: 0.1 }[e.key]; if (d) { e.preventDefault(); setPan(l.basePan + d); } });
+    pb.tabIndex = 0; pb.setAttribute('role', 'slider'); pb.setAttribute('aria-valuemin', -100); pb.setAttribute('aria-valuemax', 100); pb.setAttribute('aria-label', l.d.n + ' pan');
+    showHome(); l.setPan = setPan; }
+  const kb = s.querySelector('.chance b');
+  l.knob = makeKnob(s.querySelector('.knob'), 100, v => { l.chance = v; kb.textContent = v + '%'; }, l.d.n + ' chance');
   toggle(s.querySelector('.f'), v => { l.flt = v; setFilter(l, ctx.currentTime); });
   momentary(s.querySelector('.st'), () => l.stut = true, () => l.stut = false);
   const pad = s.querySelector('.pad');
@@ -485,6 +585,7 @@ lanes.forEach(l => {
   s.querySelector('.nm').addEventListener('pointerdown', () => tap(l));   // tap the name to play the drum
   l.pad = pad;
 });
+buildOverlay();
 function renderWhy() { lanes.forEach(l => { l.el.querySelector('.why').innerHTML = `<b>${l.steps}</b>${l.why}${l.note ? `<i title="The note this drum plays">${l.note}</i>` : ''}`; }); }
 function setMute(l, v) { l.mute = v; l.pad.setAttribute('aria-pressed', String(v)); l.el.classList.toggle('muted', v); }
 function tap(l) {
@@ -517,6 +618,18 @@ addEventListener('keyup', e => {
 document.querySelectorAll('[data-st]').forEach(b => { const d = +b.dataset.st; momentary(b, () => gDivs.add(d), () => gDivs.delete(d)); });
 $('fxDelay').addEventListener('input', e => delSend.gain.setTargetAtTime(Math.pow(e.target.value / 100, 2) * 0.8, ctx.currentTime, 0.03));
 $('fxVerb').addEventListener('input', e => verbSend.gain.setTargetAtTime(Math.pow(e.target.value / 100, 2) * 0.7, ctx.currentTime, 0.03));
+const sl = (id, fn) => $(id).addEventListener('input', e => fn(+e.target.value));
+sl('dFb', v => fb.gain.setTargetAtTime(v / 100 * 0.9, ctx.currentTime, 0.03));
+sl('dTone', v => delTone.frequency.setTargetAtTime(600 * Math.pow(14, v / 100), ctx.currentTime, 0.03));
+sl('vTone', v => verbTone.frequency.setTargetAtTime(1200 * Math.pow(10, v / 100), ctx.currentTime, 0.03));
+$('vLen').addEventListener('change', e => makeIR(0.4 + e.target.value / 100 * 4.1));
+document.querySelectorAll('[data-dt]').forEach(b => b.addEventListener('click', () => { DELMULT = +b.dataset.dt; document.querySelectorAll('[data-dt]').forEach(x => x.setAttribute('aria-pressed', String(x === b))); setDelayTime(); }));
+function openFx() { $('fxPanel').hidden = false; $('fxClose').focus(); }
+function closeFx() { $('fxPanel').hidden = true; $('fxOpen').focus(); }
+$('fxOpen').addEventListener('click', openFx); $('fxClose').addEventListener('click', closeFx);
+$('fxPanel').addEventListener('pointerdown', e => { if (e.target === $('fxPanel')) closeFx(); });
+addEventListener('keydown', e => { if (e.key === 'Escape' && !$('fxPanel').hidden) closeFx(); });
+makeKnob($('gChance'), 100, v => { GCHANCE = v; $('gChanceV').textContent = v + '%'; }, 'Chance for everything');
 NOTES.forEach((n, i) => $('root').add(new Option(n, i)));
 $('root').addEventListener('change', () => { ROOT = +$('root').value; retune(); });
 toggle($('tuneOn'), v => { TUNE = v; retune(); say(v ? 'Drums moved to notes of ' + NOTES[ROOT] + ' ' + MODES[MODE].name + '.' : 'Drums back as recorded.'); });
@@ -546,7 +659,7 @@ function setPattern() {
   pattern = ATLAS.patterns[id] || null;
   const bpm = g.b || clamp(Math.round(100 + WX.temp), 80, 140);
   $('bpm').value = clamp(bpm, 60, 180); $('bpmv').textContent = $('bpm').value;
-  delay.delayTime.value = stepSecs() * 3;
+  setDelayTime();
   return g;
 }
 async function loadWeather(c) {
@@ -641,6 +754,7 @@ function draw() {
     g2.globalAlpha = dim;
     g2.strokeStyle = l.color; g2.lineWidth = 3 + pulse * 8; g2.globalAlpha = dim * (0.22 + pulse * 0.6);
     g2.setLineDash(l.flt || l.aF > 0 ? [10, 14] : []); g2.beginPath(); g2.arc(CX, CX, R, 0, 7); g2.stroke(); g2.setLineDash([]);
+    const ag = now - l.flash; l.el.style.setProperty('--hit', ag >= 0 && ag < 0.2 && !l.mute ? (1 - ag / 0.2).toFixed(2) : '0');
     l.panView = (l.panView ?? l.basePan) + (l.panNow - (l.panView ?? l.basePan)) * 0.12; l.el.querySelector('.panbar i').style.left = (50 + l.panView * 50) + '%';
     g2.globalAlpha = dim;
     const pos = cur >= 0 ? cur % n : -1;
