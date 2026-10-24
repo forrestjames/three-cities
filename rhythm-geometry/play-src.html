@@ -31,8 +31,8 @@
   .top select { background: var(--panel); border: 1px solid var(--line); padding: 8px 10px; min-width: 0; max-width: 100%; flex: 1 1 130px; }
   .top { min-width: 0; }
   .bpm { flex: 0 1 190px; } .bpm input { flex: 1; min-width: 50px; width: 70px; }
-  .btn { background: var(--strip); border: 1px solid var(--line); padding: 8px 12px; text-transform: uppercase; letter-spacing: .08em; font-size: 11px; }
-  .btn[aria-pressed="true"] { background: var(--accent); color: #14110f; border-color: var(--accent); }
+  .btn { background: #0a0605; border: 1px solid var(--line); padding: 8px 12px; text-transform: uppercase; letter-spacing: .08em; font-size: 11px; }
+  .btn[aria-pressed="true"] { background: color-mix(in srgb, var(--accent) 16%, #0a0605); color: var(--accent); border-color: var(--accent); box-shadow: 0 0 12px -3px var(--accent); }
   .alt { margin-left: auto; font-size: 10.5px; letter-spacing: .1em; text-transform: uppercase; color: var(--ink-dim); text-decoration: none; border-bottom: 1px solid var(--line); }
   #play { background: var(--accent); color: #14110f; border: 0; font-size: 14px; font-weight: 500; padding: 10px 22px; letter-spacing: .12em; }
   #play[aria-pressed="true"] { background: #f3ece6; }
@@ -55,7 +55,8 @@
   .story b { color: var(--ink); font-weight: 400; }
 
   /* effects */
-  .fx { display: flex; flex-wrap: wrap; align-items: stretch; gap: 8px; padding: 10px; background: var(--panel); border: 1px solid var(--line); }
+  .fx { display: flex; flex-wrap: wrap; align-items: stretch; gap: 8px; padding: 10px; background: #0a0605; border: 1px solid var(--line); position: relative; }
+  .fx::before { content: ""; position: absolute; left: 0; right: 0; top: -1px; height: 2px; background: linear-gradient(90deg, #e8744a, #f2b84b, #7bc6a4, #5aa9e6, #c58ad8, #e86a92, #9bd35a, #f0e0c8); box-shadow: 0 0 10px rgba(232,116,74,.35); }
   .fxgroup { display: flex; gap: 6px; align-items: stretch; }
   .fxlab { font-size: 9.5px; letter-spacing: .1em; text-transform: uppercase; color: var(--ink-faint); align-self: center; margin-right: 2px; }
   .fx { display: grid; gap: 8px; padding: 8px 10px; }
@@ -123,7 +124,7 @@
 
   /* mixer strips */
   .mixer { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; }
-  .strip { overflow: hidden; background: var(--strip); border: 1px solid var(--line); border-top: 3px solid var(--c); padding: 6px 6px 8px; display: grid; gap: 5px; justify-items: center; min-width: 0; }
+  .strip { overflow: hidden; background: radial-gradient(120% 45% at 50% 0%, color-mix(in srgb, var(--c) 9%, transparent), transparent 75%), #0a0605; border: 1px solid color-mix(in srgb, var(--c) 34%, transparent); border-top: 2px solid var(--c); padding: 6px 6px 8px; display: grid; gap: 5px; justify-items: center; min-width: 0; }
   .strip.muted { opacity: .5; }
   .strip .nm { font-size: 10px; letter-spacing: .08em; text-transform: uppercase; text-align: center; line-height: 1.2; }
   .strip .why { font-size: 9.5px; color: var(--ink-dim); text-align: center; line-height: 1.3; }
@@ -131,17 +132,17 @@
   .strip .why i { font-style: normal; color: var(--ink); border: 1px solid var(--line); padding: 0 4px; margin-left: 6px; }
   .fader { position: relative; width: 36px; height: 62px; touch-action: none; cursor: ns-resize; }
   .fader::before { content: ""; position: absolute; left: 50%; top: 4px; bottom: 4px; width: 6px; margin-left: -3px; background: #0b0706; border-radius: 3px; box-shadow: inset 0 0 0 1px var(--line); }
-  .fader .fill { position: absolute; left: 50%; width: 6px; margin-left: -3px; bottom: 4px; background: var(--c); border-radius: 3px; opacity: .55; }
-  .fader .cap { position: absolute; left: 0; right: 0; height: 18px; margin-top: -9px; background: var(--c); border-radius: 3px; box-shadow: 0 2px 0 rgba(0,0,0,.5); }
-  .fader .cap::after { content: ""; position: absolute; left: 6px; right: 6px; top: 8px; height: 2px; background: rgba(0,0,0,.45); }
+  .fader .fill { position: absolute; left: 50%; width: 2px; margin-left: -1px; bottom: 4px; background: var(--c); box-shadow: 0 0 6px var(--c); opacity: .9; }
+  .fader .cap { position: absolute; left: 0; right: 0; height: 18px; margin-top: -9px; background: #0a0605; border-radius: 3px; box-shadow: inset 0 0 0 1.5px var(--c), 0 0 10px -2px var(--c); }
+  .fader .cap::after { content: ""; position: absolute; left: 5px; right: 5px; top: 8px; height: 2px; background: var(--c); box-shadow: 0 0 6px var(--c); }
   .row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 3px; width: 100%; }
   .send { display: grid; grid-template-columns: 1.4em 1fr; align-items: center; width: 100%; font-size: 9px; color: var(--ink-faint); letter-spacing: .06em; text-transform: uppercase; }
   .send input { accent-color: var(--c); }
-  .strip .btn { padding: 8px 2px; font-size: 9.5px; letter-spacing: 0; width: 100%; min-width: 0; white-space: nowrap; overflow: hidden; }
-  .strip .btn[aria-pressed="true"] { background: var(--c); border-color: var(--c); color: #14110f; }
+  .strip .btn { padding: 8px 2px; font-size: 9.5px; letter-spacing: 0; width: 100%; min-width: 0; white-space: nowrap; overflow: hidden; background: #0a0605; border-color: color-mix(in srgb, var(--c) 30%, transparent); }
+  .strip .btn[aria-pressed="true"] { background: color-mix(in srgb, var(--c) 16%, #0a0605); border-color: var(--c); color: var(--c); box-shadow: 0 0 12px -3px var(--c); }
   /* key hints and key feedback */
-  .strip .btn[data-kb] { position: relative; padding-right: 17px; }
-  .strip [data-kb]::after { content: attr(data-kb); position: absolute; right: 3px; top: 50%; transform: translateY(-50%); min-width: 12px; padding: 0 2px; border-radius: 3px; border: 1px solid currentColor; font-size: 8.5px; line-height: 12px; text-align: center; opacity: .6; letter-spacing: 0; }
+  .strip .btn[data-kb] { position: relative; padding-left: 3px; padding-right: 15px; }
+  .strip [data-kb]::after { content: attr(data-kb); position: absolute; right: 2px; top: 50%; transform: translateY(-50%); min-width: 10px; padding: 0 1px; border-radius: 3px; border: 1px solid currentColor; font-size: 8.5px; line-height: 12px; text-align: center; opacity: .6; letter-spacing: 0; }
   .strip .nmrow { position: relative; }
   .strip .nm[data-kb] { padding-right: 20px; white-space: nowrap; }
   .strip .keydown { outline: 2px solid #fff; outline-offset: 1px; filter: brightness(1.35); transform: translateY(2px); }
@@ -155,9 +156,13 @@
   .midibox .chips { display: flex; flex-wrap: wrap; gap: 6px; }
   .midibox .note { font-size: 12px; color: var(--ink-dim); margin: 0; }
   .led { display: inline-block; width: 6px; height: 6px; border-radius: 50%; background: #3a2c26; margin-right: 4px; vertical-align: middle; }
-  .strip .btn[aria-pressed="true"] .led { background: #14110f; }
-  .pad { width: 100%; height: 34px; border: 0; border-radius: 6px; background: var(--c); color: #14110f; font-size: 11px; letter-spacing: .1em; text-transform: uppercase; box-shadow: 0 4px 0 rgba(0,0,0,.5); touch-action: none; }
-  .pad:active, .pad.hit { transform: translateY(3px); box-shadow: 0 1px 0 rgba(0,0,0,.5); filter: brightness(1.25); }
+  .strip .btn[aria-pressed="true"] .led { background: var(--c); box-shadow: 0 0 6px var(--c); }
+  .pad { width: 100%; height: 34px; border: 0; border-radius: 6px; background: #0a0605; color: var(--c); font-size: 12px; letter-spacing: .1em; text-transform: uppercase; box-shadow: inset 0 0 0 1px var(--c), 0 0 14px -4px var(--c); touch-action: none; text-shadow: 0 0 8px var(--c); }
+  .padrow { display: grid; grid-template-columns: auto auto auto minmax(0, 1fr); gap: 3px; width: 100%; align-items: stretch; }
+  .oct { width: 20px; padding: 0; border: 1px solid color-mix(in srgb, var(--c) 45%, transparent); background: #0a0605; color: var(--c); font-size: 13px; line-height: 1; border-radius: 4px; }
+  .oct:hover, .oct:focus-visible { box-shadow: 0 0 8px -2px var(--c); }
+  .octv { min-width: 24px; display: grid; place-items: center; font-size: 10px; color: var(--ink-dim); }
+  .pad:active, .pad.hit { transform: translateY(2px); background: var(--c); color: #0a0605; text-shadow: none; box-shadow: 0 0 18px 0 var(--c); }
   .hint { font-size: 11px; color: var(--ink-faint); margin: 0; }
   .status { font-size: 11px; color: var(--ink-faint); min-height: 1.4em; }
 
@@ -411,14 +416,14 @@ const lanes = COLORS.map((color, i) => {
   g.connect(lp).connect(pan).connect(masterIn);
   const sd = ctx.createGain(), sv = ctx.createGain(); sd.gain.value = 0; sv.gain.value = 0;
   pan.connect(sd).connect(delIn); pan.connect(sv).connect(verbIn);   // each drum's own delay and reverb
-  return { i, d: KIT.lanes[i], color, g, lp, sd, sv, pn: pan, chance: 100, basePan: pan.pan.value, panNow: pan.pan.value, aF: 0, aFc: 420, aP: 0, vol: 0.8, mute: false, flt: false, stut: false, bits: [], steps: 8, hits: 3, rot: 0, last: 0, flash: 0, why: '', src: '', rate: 1, note: '' };
+  return { i, d: KIT.lanes[i], color, g, lp, sd, sv, pn: pan, chance: 100, basePan: pan.pan.value, panNow: pan.pan.value, aF: 0, aFc: 420, aP: 0, vol: 0.8, mute: false, flt: false, stut: false, bits: [], steps: 8, hits: 3, rot: 0, last: 0, flash: 0, why: '', src: '', rate: 1, note: '', oct: 0 };
 });
 const faderGain = v => v * v * 1.1;   // a gentler curve than straight volume
 lanes.forEach(l => l.g.gain.value = faderGain(l.vol));
 
 // The glitch kit has no recordings at all: each drum is a few milliseconds of synth
 // melodic voices: a few sine and triangle partials, each with its own fast decay. Attack is a few milliseconds.
-const MELODIC = { kalimba: 1, harp: 1, rhodes: 1, steel: 1, vibes: 1 };
+const MELODIC = { kalimba: 1, harp: 1, rhodes: 1, steel: 1 };
 function melPartial(out, f, t, peak, dec, type = 'sine') {
   const o = ctx.createOscillator(), g = ctx.createGain();
   o.type = type; o.frequency.value = f;
@@ -437,12 +442,6 @@ function melHit(k, f, t, vel, out) {
   }
   else if (k === 'rhodes') { melPartial(out, f, t, 0.8 * v, 1.4); melPartial(out, f * 2, t, 0.25 * v, 0.5); melPartial(out, f * 14, t, 0.05 * v, 0.06); }   // a tine with a tiny bell click
   else if (k === 'steel') { melPartial(out, f, t, 0.7 * v, 0.9); melPartial(out, f * 2, t, 0.22 * v, 0.45); melPartial(out, f * 3, t, 0.1 * v, 0.2); }
-  else if (k === 'vibes') {   // a bar with a slow wobble from the motor
-    const wob = ctx.createGain(); wob.gain.value = 0.82; wob.connect(out);
-    melPartial(wob, f, t, 0.7 * v, 2.2); melPartial(wob, f * 4, t, 0.12 * v, 0.7);
-    const lfo = ctx.createOscillator(), depth = ctx.createGain();
-    lfo.frequency.value = 5.5; depth.gain.value = 0.18; lfo.connect(depth).connect(wob.gain); lfo.start(t); lfo.stop(t + 2.3);
-  }
 }
 function synthHit(l, t, vel) {
   const k = l.d.syn, f = 440 * Math.pow(2, (l.d.m - 69) / 12) * l.rate, out = l.g;
@@ -559,6 +558,11 @@ function retune() {
     const target = Math.round(m0) + shift;
     l.rate = clamp(Math.pow(2, (target - m0) / 12), 0.5, 2);
     l.note = NOTES[((target % 12) + 12) % 12] + (Math.floor(target / 12) - 1);
+  });
+  lanes.forEach(l => {   // each instrument's own octave, after tuning
+    if (!l.oct) return;
+    l.rate *= Math.pow(2, l.oct);
+    const m = /^(.+?)(-?\d+)$/.exec(l.note || ''); if (m) l.note = m[1] + (+m[2] + l.oct);
   });
   renderWhy();
   $('hint').textContent = (TUNE ? `In key: ${NOTES[ROOT]} ${MODES[MODE].name}. ` : 'Not in key. ') + 'Keys: space plays. 1 to 8 mute. Q to I filter. A to K stutter (hold). Z to comma play the drums.';
@@ -723,7 +727,7 @@ lanes.forEach(l => {
   s.innerHTML = `<div class="nmrow"><span class="trig" title="Lights up when this drum sounds"></span><div class="nm" data-kb="${'ZXCVBNM,'[l.i]}" title="Tap to play this drum (key ${'ZXCVBNM,'[l.i]})">${l.d.n}</div></div><div class="why"></div><div class="panbar" title="Pan: drag left or right. Double click to centre."><b></b><i></i></div><div class="panlab" aria-hidden="true"><span>L</span><span>R</span></div><div class="fader"></div>
     <div class="row2"><button class="btn f" type="button" data-kb="${'QWERTYUI'[l.i]}" aria-pressed="false" title="Close a filter on this drum (key ${'QWERTYUI'[l.i]})"><i class="led"></i>Filter</button><button class="btn st" type="button" data-kb="${'ASDFGHJK'[l.i]}" aria-pressed="false" title="Repeat this drum's last hit. Tap to latch, hold for just a moment. Key ${'ASDFGHJK'[l.i]} stutters while held."><i class="led"></i>Stutter</button></div>
     <div class="kn3"><div class="kc"><div class="knob" data-k="chance"></div><span>Chance</span></div><div class="kc"><div class="knob" data-k="delay"></div><span>Delay</span></div><div class="kc"><div class="knob" data-k="verb"></div><span>Reverb</span></div></div>
-    <button class="pad" type="button" aria-pressed="false" aria-label="Mute ${l.d.n}" title="Mute or unmute (key ${l.i + 1})">${l.i + 1}</button>`;
+    <div class="padrow"><button class="oct" type="button" data-d="-1" aria-label="${l.d.n} down an octave" title="Down an octave">&minus;</button><span class="octv" aria-live="polite" title="Octave">0</span><button class="oct" type="button" data-d="1" aria-label="${l.d.n} up an octave" title="Up an octave">+</button><button class="pad" type="button" aria-pressed="false" aria-label="Mute ${l.d.n}" title="Mute or unmute (key ${l.i + 1})">${l.i + 1}</button></div>`;
   mixer.appendChild(s); l.el = s;
   makeFader(s.querySelector('.fader'), l);
   { const pb = s.querySelector('.panbar'), home = pb.querySelector('b');
@@ -747,6 +751,11 @@ lanes.forEach(l => {
   pad.addEventListener('click', () => setMute(l, !l.mute));
   s.querySelector('.nm').addEventListener('pointerdown', () => tap(l));   // tap the name to play the drum
   l.pad = pad;
+  s.querySelectorAll('.oct').forEach(b => b.addEventListener('click', () => {   // octave up or down, and you hear the new pitch
+    l.oct = clamp(l.oct + +b.dataset.d, -2, 2);
+    s.querySelector('.octv').textContent = (l.oct > 0 ? '+' : '') + l.oct;
+    retune(); tap(l);
+  }));
 });
 function renderWhy() { lanes.forEach(l => { l.el.querySelector('.why').innerHTML = `<b>${l.steps}</b>${l.why}${l.note ? `<i title="The note this drum plays">${l.note}</i>` : ''}`; }); }
 function setMute(l, v) { l.mute = v; l.pad.setAttribute('aria-pressed', String(v)); l.el.classList.toggle('muted', v); }
