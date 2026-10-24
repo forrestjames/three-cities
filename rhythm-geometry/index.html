@@ -25,6 +25,9 @@
   button, input, select { font: inherit; color: inherit; }
   button { cursor: pointer; }
   button:disabled { opacity: .4; cursor: default; }
+  .altlink { align-self: center; font-size: 10.5px; letter-spacing: .1em; text-transform: uppercase; color: var(--ink-dim); text-decoration: none; border-bottom: 1px solid var(--line); padding: 2px 0; white-space: nowrap; }
+  .altlink:hover { color: var(--ink); }
+  .titlerow { display: flex; align-items: baseline; gap: 6px 16px; flex-wrap: wrap; }
   .wrap { padding: 22px clamp(14px, 2.4vw, 40px) 40px; }
 
   .top { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 6px 20px; margin-bottom: 18px; }
@@ -626,7 +629,7 @@
   <header class="top">
     <div class="brand">
       <div class="brand-text">
-        <h1>Rhythm Geometry</h1>
+        <div class="titlerow"><h1>Rhythm Geometry</h1><a class="altlink" href="melodic/" title="The version where every ring plays notes">Melodic version</a></div>
         <p class="place"><span id="placeLine"></span><span id="clock"></span></p>
       </div>
     </div>
@@ -3480,13 +3483,10 @@ function tellStory() {
   if (room) lines.push(room);
   if (!Object.values(grooveHand).some(Boolean) || true) {
     if (NEAR.list.length && GROOVE.bleed >= 15) lines.push(`${NEAR.list[0].name}${NEAR.list[1] ? ' and ' + NEAR.list[1].name : ''} leak${NEAR.list[1] ? '' : 's'} in, quietly, from next door.`);
-    if (state.air && state.air.aqi != null && GROOVE.grit >= 40) lines.push('The air is dirty, so the sound is a little gritty.');
-    if (GROOVE.quake >= 10 && QUAKE.list.length) lines.push(QUAKE.last ? `The low rumble is a real earthquake: ${QUAKE.last}.` : `The ground moved ${QUAKE.list.length} times in the last day, and the low rumbles replay it.`);
+    if (GROOVE.quake >= 10 && QUAKE.last) lines.push(`The low rumble is a real earthquake: ${QUAKE.last}.`);
   }
   const gv = grooveFromWeather();
   if (gv && !Object.values(grooveHand).some(Boolean)) {
-    if (gv.fills >= 55) lines.push('Rain is about, so the ends of phrases get busy fills.');
-    if (gv.drift >= 55) lines.push('Wind lets the pattern wander.');
   }
   el.innerHTML = lines.join(' ');
 }
