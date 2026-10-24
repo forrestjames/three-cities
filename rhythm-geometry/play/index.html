@@ -889,27 +889,23 @@ let lfoT = 0; $('bpm').addEventListener('input', () => { clearTimeout(lfoT); lfo
 // a line lights through them, and the angle picks a chord from the key: 12 o'clock is the home chord, other angles are other steps of the scale.
 const CONV = { on: true, level: 50, verb: 40, del: 25 }, convShow = [];
 const convG = ctx.createGain(), convWet = ctx.createGain();
-convG.gain.value = Math.pow(CONV.level / 100, 1.5) * 2.2; convG.connect(masterIn); convG.connect(convWet); convWet.gain.value = CONV.verb / 100; convWet.connect(verbIn);
+convG.gain.value = Math.pow(CONV.level / 100, 2) * 0.8; convG.connect(masterIn); convG.connect(convWet); convWet.gain.value = CONV.verb / 100; convWet.connect(verbIn);
 const convDel = ctx.createGain(); convDel.gain.value = CONV.del / 100; convG.connect(convDel); convDel.connect(delIn);
 const gcd = (a, b) => b ? gcd(b, a % b) : a;
-function convApply() { convG.gain.setTargetAtTime(CONV.on ? Math.pow(CONV.level / 100, 1.5) * 2.2 : 0, ctx.currentTime, 0.03); }
+function convApply() { convG.gain.setTargetAtTime(CONV.on ? Math.pow(CONV.level / 100, 2) * 0.8 : 0, ctx.currentTime, 0.03); }
 function convMidi(d) { const st = MODES[MODE].steps; return 60 + ((ROOT + st[((d % 7) + 7) % 7]) % 12) + 12 * Math.floor(d / 7); }
-function convNote(midi, t, peak, dur, type, lpMul, atk) {
-  // two slightly detuned voices through a lowpass that opens and closes: wide and warm, not a thin beep
-  const f = 440 * Math.pow(2, (midi - 69) / 12), g = ctx.createGain(), lp = ctx.createBiquadFilter(); atk = atk || 0.015;
-  lp.type = 'lowpass'; lp.Q.value = 1.2; lp.frequency.setValueAtTime(f * lpMul * 0.6, t); lp.frequency.exponentialRampToValueAtTime(f * lpMul, t + Math.max(atk, 0.05) * 2); lp.frequency.exponentialRampToValueAtTime(f * 1.4, t + dur);
-  g.gain.setValueAtTime(0.0001, t); g.gain.linearRampToValueAtTime(peak, t + atk); g.gain.exponentialRampToValueAtTime(0.0008, t + dur);
-  [-9, 9].forEach(c => { const o = ctx.createOscillator(); o.type = type; o.frequency.value = f; o.detune.value = c; o.connect(lp); o.start(t); o.stop(t + dur + 0.05); });
-  lp.connect(g).connect(convG);
+function convNote(midi, t, peak, dur, type, lpMul) {
+  const f = 440 * Math.pow(2, (midi - 69) / 12), o = ctx.createOscillator(), g = ctx.createGain(), lp = ctx.createBiquadFilter();
+  o.type = type; o.frequency.value = f; lp.type = 'lowpass'; lp.frequency.setValueAtTime(f * lpMul, t); lp.frequency.exponentialRampToValueAtTime(f * 1.5, t + dur * 0.8);
+  g.gain.setValueAtTime(0.0001, t); g.gain.linearRampToValueAtTime(peak, t + 0.01); g.gain.exponentialRampToValueAtTime(0.0008, t + dur);
+  o.connect(lp).connect(g).connect(convG); o.start(t); o.stop(t + dur + 0.05);
 }
 function convSound(gr, t) {
   const k = gr.lanes.length, d = Math.floor(gr.frac * 7);
-  if (k === 2) { convNote(convMidi(d) + 12, t, 0.5, 0.7, 'triangle', 6); convNote(convMidi(d + 2) + 12, t + 0.02, 0.3, 0.6, 'sine', 6); return; }   // two rings meet: a bright bell
-  const long = k === 3 ? 1.6 : 2.8, atk = k === 3 ? 0.03 : 0.12;
-  [0, 2, 4, 7].forEach((o, i) => convNote(convMidi(d + o), t + i * 0.012, 0.3, long, 'sawtooth', 5, atk));   // three: a full chord
-  convNote(convMidi(d) - 12, t, 0.5, long, 'triangle', 3, atk);
-  if (k >= 4) {   // four or more: a bigger swell, with a deep root and a wash of reverb
-    convNote(convMidi(d) - 24, t, 0.55, 3.2, 'sine', 2, 0.15); convNote(convMidi(d + 4) + 12, t + 0.03, 0.2, 2.8, 'triangle', 8, 0.12);
+  if (k === 2) { convNote(convMidi(d) + 12, t, 0.3, 0.45, 'sine', 5); return; }   // two rings meet: a small bell
+  [0, 2, 4].forEach((o, i) => convNote(convMidi(d + o), t + i * 0.012, 0.22, k === 3 ? 0.9 : 1.6, 'triangle', 6));   // three: a chord
+  if (k >= 4) {   // four or more: the chord swells, with a deep root and a wash of reverb
+    convNote(convMidi(d) - 12, t, 0.45, 1.8, 'sine', 3); convNote(convMidi(d) + 12, t + 0.03, 0.18, 1.6, 'triangle', 8);
     convWet.gain.setValueAtTime(Math.min(1.5, CONV.verb / 100 * 3), t); convWet.gain.setTargetAtTime(CONV.verb / 100, t + 0.1, 0.9);
   }
 }
