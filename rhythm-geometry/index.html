@@ -84,10 +84,11 @@
   .wxbtn[aria-expanded="true"] { border-color: var(--accent); background: rgba(208, 138, 106, 0.14); }
   .ringrow { display: flex; gap: 12px; flex: 1 1 0; min-height: 0; }
   .ringrow .ringbox { flex: 1 1 0; min-width: 0; min-height: 0; }
-  .modes { flex: none; align-self: center; display: flex; flex-direction: column; width: 74px; border: 1px solid var(--line); }
+  .modes { flex: none; align-self: stretch; display: flex; flex-direction: row; width: 100%; border: 1px solid var(--line); }
+  .modes button { flex: 1; }
   .modes button { background: transparent; border: 0; padding: 5px 4px; font-size: 10px; letter-spacing: .1em; text-transform: uppercase; color: var(--ink-dim); }
-  .modes button + button { border-top: 1px solid var(--line); }
-  .modes button[aria-pressed="true"] { background: rgba(243, 236, 230, 0.14); color: var(--ink); box-shadow: inset 2px 0 0 var(--accent); }
+  .modes button + button { border-left: 1px solid var(--line); }
+  .modes button[aria-pressed="true"] { background: rgba(243, 236, 230, 0.14); color: var(--ink); box-shadow: inset 0 -2px 0 var(--accent); }
   .wxpanel { position: absolute; top: 60px; right: 22px; z-index: 6; width: min(400px, calc(100% - 44px)); background: var(--panel); border: 1px solid var(--line); padding: 14px; display: flex; flex-direction: column; gap: 10px; box-shadow: 0 16px 40px rgba(0, 0, 0, 0.6); opacity: 0; transform: translateY(-8px) scale(0.97); transform-origin: top right; pointer-events: none; transition: opacity 120ms ease-out, transform 160ms cubic-bezier(0.2, 0.8, 0.2, 1); }
   .wxpanel.open { opacity: 1; transform: none; pointer-events: auto; }
   .wxhead { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; }
@@ -437,6 +438,7 @@
   .sidecard { position: relative; gap: 16px; }
   .sidebox { display: flex; flex-direction: column; gap: 6px; }
   .sidebox .label { margin: 0; }
+  .sidebox .hint { margin-left: 6px; font-size: 9.5px; letter-spacing: .04em; text-transform: none; color: var(--ink-faint); }
   .sidecard { overflow-y: auto; }
   .chord-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
   .chord-fold { display: inline-flex; align-items: center; gap: 8px; background: none; border: 0; padding: 2px 0; cursor: pointer; color: inherit; }
@@ -449,7 +451,7 @@
   .chord-knobs .knob-cell { min-width: 0; }
   .chord-knobs .knob-cell .label { font-size: 9.5px; letter-spacing: 0.06em; }
   .chord-knobs .dial { width: 38px; height: 38px; }
-  .groove-knobs { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 2px; }
+  .groove-knobs { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px 2px; }
   .groove-knobs .knob-cell { min-width: 0; }
   .groove-knobs .knob-cell .label { font-size: 9.5px; letter-spacing: 0.06em; }
   .groove-knobs .dial { width: 38px; height: 38px; }
@@ -457,9 +459,10 @@
   .chord-row { display: flex; align-items: flex-end; justify-content: space-between; gap: 8px; flex-wrap: wrap; }
   .chord-note { margin: 0; font-size: 10.5px; line-height: 1.4; color: var(--ink-dim); }
   .ringplace b { font-size: 30px; }
-  .wxbtn { align-items: flex-start; text-align: left; width: 100%; }
-  .wxbtn b { font-size: 26px; }
-  .modes { width: 92px; align-self: flex-start; }
+  .wxbtn { flex-direction: row; align-items: center; justify-content: space-between; gap: 10px; text-align: left; width: 100%; padding: 7px 10px; }
+  .wxbtn b { font-size: 22px; margin-left: auto; }
+  .wxbtn::after { content: ""; flex: none; width: 6px; height: 6px; border-right: 1.5px solid var(--ink-dim); border-bottom: 1.5px solid var(--ink-dim); transform: rotate(45deg); margin: -3px 2px 0 2px; }
+  .wxbtn[aria-expanded="true"]::after { transform: rotate(-135deg); margin-top: 3px; }
   .sidecard .readout { text-align: left; margin: auto 0 0; font-size: 12px; }
   .sidecard .pattern-info { display: block; font-size: 11.5px; margin: 0; }
   .wxpanel { visibility: hidden; transition: opacity 120ms ease-out, transform 160ms cubic-bezier(.2, .8, .2, 1), visibility 0s linear 160ms; }
@@ -537,7 +540,7 @@
   @media (min-width: 1001px) and (min-height: 600px) {
     html, body { height: 100%; overflow: hidden; }
     .wrap { height: 100vh; grid-template-rows: auto minmax(0, 1fr); }
-    .stage { grid-template-columns: 250px minmax(0, 1fr) 300px; gap: 12px; }
+    .stage { grid-template-columns: clamp(270px, 22vw, 330px) minmax(0, 1fr) clamp(320px, 25vw, 380px); gap: 12px; }
     .grid3 > .sidecard { overflow: visible; padding: 16px; gap: 14px; }
     .grid3 > .ringcard { overflow: hidden; padding: 10px; }
     .ringcard .ringbox { position: relative; flex: 1 1 0; min-height: 0; width: 100%; }
@@ -550,6 +553,7 @@
 
   /* ---- polish (23 Oct): a round ring in every browser, a tighter Rings list, long city names, a quieter header ---- */
   .sidecard { gap: 12px; }
+  .groove-sec, .chord-sec { padding-top: 14px; border-top: 1px solid rgba(243, 236, 230, 0.08); margin-top: 6px; }
   .ringplace { flex-wrap: wrap; align-items: baseline; gap: 0 10px; }
   .ringplace b { white-space: normal; overflow: visible; text-overflow: clip; overflow-wrap: anywhere; line-height: 1.05; font-size: clamp(22px, 2vw, 30px); }
   .brand-text .place { white-space: normal; overflow: visible; text-overflow: clip; line-height: 1.3; }
@@ -560,10 +564,22 @@
   .lane-dot { width: 10px; height: 10px; }
   .lane-edit { padding: 2px 7px; font-size: 9.5px; }
   .kit .lane .lane-vol { width: 56px; }
+  .kit .lane .lane-pan { flex: none; width: 40px; }
+  .lane-pan { -webkit-appearance: none; appearance: none; flex: none; width: 40px; height: 14px; background: none; margin: 0; cursor: pointer; }
+  .lane-pan::-webkit-slider-runnable-track { height: 2px; background: linear-gradient(to right, rgba(243,236,230,0.3) 49%, #9db4e8 49%, #9db4e8 51%, rgba(243,236,230,0.3) 51%); }
+  .lane-pan::-webkit-slider-thumb { -webkit-appearance: none; width: 7px; height: 9px; margin-top: -3.5px; border-radius: 1px; background: #9db4e8; border: 0; }
+  .lane-pan::-moz-range-track { height: 2px; background: rgba(243,236,230,0.3); }
+  .lane-pan::-moz-range-thumb { width: 7px; height: 9px; border-radius: 1px; background: #9db4e8; border: 0; }
   .kit .lane .lane-name { font-size: 10px; }
   .kit-credit { margin: 0; font-size: 10px; letter-spacing: .02em; color: var(--ink-faint); line-height: 1.4; }
   .kit-credit a { color: var(--ink-dim); }
   .rightcol .kithead { flex-wrap: nowrap; align-items: center; }
+  .gbody { flex: 1 1 0 !important; min-height: 0; overflow: hidden !important; display: flex; flex-direction: column; gap: 10px; padding-right: 0 !important; -webkit-mask-image: none !important; mask-image: none !important; }
+  .gsec { flex: 1 1 0; min-height: 70px; display: flex; flex-direction: column; gap: 6px; }
+  .psec { flex: 0 1 auto; max-height: 45%; min-height: 70px; display: flex; flex-direction: column; gap: 6px; padding-top: 10px; border-top: 1px solid rgba(243, 236, 230, 0.1); }
+  .gscroll { flex: 1 1 auto; min-height: 0; overflow-y: auto; padding-right: 6px; scrollbar-width: thin; }
+  .gscroll.more { -webkit-mask-image: linear-gradient(to bottom, #000 calc(100% - 26px), transparent); mask-image: linear-gradient(to bottom, #000 calc(100% - 26px), transparent); }
+  .gbody .hint { margin-left: 6px; font-size: 9.5px; letter-spacing: .04em; text-transform: none; color: var(--ink-faint); }
   .genrehead { display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; }
   .genrehead .btn { flex: none; }
   .rightcol .legend { gap: 2px 10px; font-size: 10px; }
@@ -647,7 +663,7 @@
       <p id="story" class="story" aria-live="polite"></p>
       <span id="ringSub" hidden>steps from temperature, hits from the chosen source</span>
       <div class="sidebox">
-        <p class="label">Hits from</p>
+        <p class="label">Hits from <span class="hint">tap to change</span></p>
         <button id="wxBtn" class="wxbtn" type="button" aria-expanded="false" aria-controls="wxPanel" title="Choose where the hits come from">
           <span id="wxKey">Humidity</span><b id="wxVal">-</b>
         </button>
@@ -665,11 +681,13 @@
           <p class="label">Groove</p>
           <button id="grooveAuto" class="btn small tog" type="button" aria-pressed="true" title="The weather sets these knobs. Move one and it is yours. Tap here to hand them all back."><i class="tog-dot" aria-hidden="true"></i>Weather</button>
         </div>
-        <div class="knobs groove-knobs" style="--n:4">
+        <div class="knobs groove-knobs" style="--n:3">
           <div class="knob-cell"><div class="head"><span class="label">Swing</span><output id="grooveSwingOut">54%</output></div><input id="grooveSwing" type="range" min="0" max="100" value="25" aria-label="Swing: how late the off-beat sixteenths land"></div>
           <div class="knob-cell"><div class="head"><span class="label">Pocket</span><output id="groovePocketOut">0</output></div><input id="groovePocket" type="range" min="-100" max="100" value="0" aria-label="Pocket: pushing ahead of the beat or laid back behind it"></div>
           <div class="knob-cell"><div class="head"><span class="label">Ghosts</span><output id="grooveGhostOut">30%</output></div><input id="grooveGhost" type="range" min="0" max="100" value="30" aria-label="Ghost notes: quiet hits between the written ones"></div>
           <div class="knob-cell"><div class="head"><span class="label">Accent</span><output id="grooveAccentOut">50%</output></div><input id="grooveAccent" type="range" min="0" max="100" value="50" aria-label="Accent: how much louder the strong beats are"></div>
+          <div class="knob-cell"><div class="head"><span class="label">Fills</span><output id="grooveFillsOut">35%</output></div><input id="grooveFills" type="range" min="0" max="100" value="35" aria-label="Fills: how busy the end of every fourth and eighth bar is"></div>
+          <div class="knob-cell"><div class="head"><span class="label">Drift</span><output id="grooveDriftOut">30%</output></div><input id="grooveDrift" type="range" min="0" max="100" value="30" aria-label="Drift: how freely the pattern wanders, even the backbeat and the one"></div>
         </div>
         <p class="chord-note" id="grooveNote"></p>
       </div>
@@ -758,7 +776,7 @@
 
     <div class="card voice" id="congaCard">
       <div class="vhead">
-        <h2><select id="congaInst" class="hdr-sel" aria-label="Conga instrument" title="Change the instrument"><option value="conga" selected>Conga</option><option value="bongo">Bongo</option><option value="clave">Clave</option><option value="cowbell">Cowbell</option><option value="woodblock">Woodblock</option><option value="agogo">Agogo</option><option value="timbale">Timbale</option><option value="guiro">Guiro</option><option value="triangle">Triangle</option><option value="tambourine">Tambourine</option></select><small>the ring's hits</small></h2>
+        <h2><select id="congaInst" class="hdr-sel" aria-label="Conga instrument" title="Change the instrument"><option value="conga" selected>Conga</option><option value="bongo">Bongo</option><option value="clave">Clave</option><option value="cowbell">Cowbell</option><option value="woodblock">Woodblock</option><option value="agogo">Agogo</option><option value="timbale">Timbale</option><option value="guiro">Guiro</option><option value="triangle">Triangle</option><option value="tambourine">Tambourine</option><optgroup label="Melodic"><option value="upright">Acoustic bass</option><option value="moogbass">Synth bass</option><option value="subbass">Sub bass</option><option value="marimba">Marimba</option></optgroup></select><small>the ring's hits</small></h2>
         <button id="congaMute" class="btn small" type="button" aria-pressed="false">Mute</button>
       </div>
       <div class="vtabs" role="tablist">
@@ -780,7 +798,7 @@
           <div class="knob-cell"><div class="head"><span class="label">Tune</span><output id="congaTuneOut">0</output></div><input id="congaTune" type="range" min="-12" max="12" value="0" aria-label="Conga tune in semitones"></div>
           <div class="knob-cell"><div class="head"><span class="label">Filter</span><output id="congaCutOut">open</output></div><input id="congaCut" type="range" min="0" max="100" value="100" aria-label="Conga filter cutoff"></div>
           <div class="knob-cell"><div class="head"><span class="label">Res</span><output id="congaResOut">0</output></div><input id="congaRes" type="range" min="0" max="100" value="0" aria-label="Conga filter resonance"></div>
-          <div class="knob-cell"><div class="head"><span class="label">Pan</span><output id="congaPanOut">C</output></div><input id="congaPan" type="range" min="-100" max="100" value="0" aria-label="Conga pan, left to right"></div>
+          <div class="knob-cell"><div class="head"><span class="label">Pan</span><output id="congaPanOut">R8</output></div><input id="congaPan" type="range" min="-100" max="100" value="8" aria-label="Conga pan, left to right"></div>
         </div>
       </div>
       <div class="vpanel" data-panel="fx" hidden>
@@ -820,12 +838,12 @@
       </div>
       <div class="vpanel" data-panel="sound">
         <div class="knobs" style="--n:5">
-          <div class="knob-cell"><div class="head"><span class="label">Volume</span><output id="shakerVolOut">35</output></div><input id="shakerVol" type="range" min="0" max="100" value="35" aria-label="Shaker volume"></div>
+          <div class="knob-cell"><div class="head"><span class="label">Volume</span><output id="shakerVolOut">28</output></div><input id="shakerVol" type="range" min="0" max="100" value="28" aria-label="Shaker volume"></div>
           <div class="knob-cell"><div class="head"><span class="label">Decay</span><output id="shakerDecayOut">1.0x</output></div><input id="shakerDecay" type="range" min="0" max="100" value="50" aria-label="Shaker decay"></div>
           <div class="knob-cell"><div class="head"><span class="label">Tune</span><output id="shakerTuneOut">0</output></div><input id="shakerTune" type="range" min="-12" max="12" value="0" aria-label="Shaker tune in semitones"></div>
           <div class="knob-cell"><div class="head"><span class="label">Filter</span><output id="shakerCutOut">open</output></div><input id="shakerCut" type="range" min="0" max="100" value="100" aria-label="Shaker filter cutoff"></div>
           <div class="knob-cell"><div class="head"><span class="label">Res</span><output id="shakerResOut">0</output></div><input id="shakerRes" type="range" min="0" max="100" value="0" aria-label="Shaker filter resonance"></div>
-          <div class="knob-cell"><div class="head"><span class="label">Pan</span><output id="shakerPanOut">C</output></div><input id="shakerPan" type="range" min="-100" max="100" value="0" aria-label="Shaker pan, left to right"></div>
+          <div class="knob-cell"><div class="head"><span class="label">Pan</span><output id="shakerPanOut">L25</output></div><input id="shakerPan" type="range" min="-100" max="100" value="-25" aria-label="Shaker pan, left to right"></div>
         </div>
       </div>
       <div class="vpanel" data-panel="fx" hidden>
@@ -909,7 +927,7 @@
         </div>
         <div class="samp-key" id="sampKey" hidden></div>
         <div class="knobs" style="--n:5">
-          <div class="knob-cell"><div class="head"><span class="label">Volume</span><output id="sampleVolOut">80</output></div><input id="sampleVol" type="range" min="0" max="100" value="80" aria-label="Your sound volume"></div>
+          <div class="knob-cell"><div class="head"><span class="label">Volume</span><output id="sampleVolOut">70</output></div><input id="sampleVol" type="range" min="0" max="100" value="70" aria-label="Your sound volume"></div>
           <div class="knob-cell"><div class="head"><span class="label">Decay</span><output id="sampleDecayOut">1.0x</output></div><input id="sampleDecay" type="range" min="0" max="100" value="50" aria-label="Your sound decay"></div>
           <div class="knob-cell"><div class="head"><span class="label">Tune</span><output id="sampleTuneOut">0</output></div><input id="sampleTune" type="range" min="-12" max="12" value="0" aria-label="Your sound tune in semitones"></div>
           <div class="knob-cell"><div class="head"><span class="label">Filter</span><output id="sampleCutOut">open</output></div><input id="sampleCut" type="range" min="0" max="100" value="100" aria-label="Your sound filter cutoff"></div>
@@ -954,10 +972,14 @@
         <button id="about" class="btn small" type="button" disabled>Genre notes</button>
       </div>
       <div class="gbody">
-        <div class="label">Genres for this place</div>
-        <div id="genreChips" class="chips"></div>
-        <div class="label">Pattern</div>
-        <div id="patChips" class="chips"></div>
+        <div class="gsec">
+          <div class="label">Genres for this place <span class="hint" id="genreCount"></span></div>
+          <div class="gscroll"><div id="genreChips" class="chips"></div></div>
+        </div>
+        <div class="psec">
+          <div class="label">Pattern <span class="hint" id="patCount"></span></div>
+          <div class="gscroll"><div id="patChips" class="chips"></div></div>
+        </div>
       </div>
       <div class="legend" aria-label="Confidence key">
         <span><i class="dot sourced"></i>sourced</span>
@@ -1498,6 +1520,8 @@ function renderGenres() {
       pBox.appendChild(c);
     });
   }
+  $('genreCount').textContent = city.genres.length > 1 ? `${city.genres.length}, scroll for more` : '';
+  $('patCount').textContent = state.genre && state.genre.ids.length > 1 ? `${state.genre.ids.length} for ${state.genre.name}` : '';
   const near = state.cityDist > NEAR_KM && city ? ` · nearest Atlas city is ${city.name}, ${Math.round(state.cityDist).toLocaleString('en-GB')} km away` : '';
   $('genreSub').textContent = city ? `from ${city.name}${near}` : 'no genres for this place';
   const g = state.genre;
@@ -1617,15 +1641,16 @@ const XV = {};   // lane id -> its settings
 const TOM_RE = /drum|dum$|tak|surdo|conga|sabar|tabla|dhol|odaiko|shime|chudaiko|perc_high|tambora|tumbao|tom/;
 const HAT_RE = /hat|ride|tambourine|shaker|guacharaca|alegre|crash/;
 const SKIN_RE = /snare|clap|rim|palmas/;
-function XDEF(v) {
+function XDEF(v) {   // the default mix: hats up and to the right, snares a little right, toms left, all sitting back
   const hat = HAT_RE.test(v), skin = SKIN_RE.test(v), tom = TOM_RE.test(v), low = v === 'sub' || v === 'twin' || v === 'bass';
   return { decay: 50, tune: 0, cut: 100, res: 0,
-    pan: hat ? 22 : tom ? -18 : 0,
+    pan: hat ? 22 : skin ? 12 : tom ? -18 : 0, vol: low ? 80 : hat ? 45 : skin ? 70 : tom ? 70 : 70,
     delay: low ? 'off' : hat ? 'd8' : tom ? '8' : 'off', style: hat ? 'ping-pong' : 'mono', fb: 25,
     dlvl: low ? 0 : hat ? 22 : tom ? 16 : 0,
     rev: low ? 0 : skin ? 20 : hat ? 12 : 16, revDec: null };
 }
 const xKey = v => 'x_' + v;
+const laneVolOf = v => laneVol[v] ?? XDEF(v).vol;
 const xMuted = v => (v === 'twin' ? !kickOn || !!laneMuted.twin : !!laneMuted[v]);
 function laneBus(v) {
   const name = xKey(v);
@@ -1649,7 +1674,7 @@ function xApply(v) {
   const name = xKey(v), S = XV[v] || (XV[v] = XDEF(v));
   if (!bus[name]) return;
   const m = xMuted(v), now = ctx.currentTime;
-  out[name].gain.setTargetAtTime(m ? 0 : (laneVol[v] ?? 80) / 100, now, 0.01);
+  out[name].gain.setTargetAtTime(m ? 0 : laneVolOf(v) / 100, now, 0.01);
   gate[name].gain.setTargetAtTime(m ? 0 : 1, now, 0.01);
   pan[name].pan.value = S.pan / 100;
   DECAY.set(bus[name], Math.pow(2, (S.decay - 50) / 25));
@@ -1761,7 +1786,7 @@ function renderLanes() {
       vs.value = String(vol[VOLKEY]);
       vs.addEventListener('input', () => setVol(VOLKEY, Number(vs.value)));
     } else {
-      vs.value = String(laneVol[lane.id] ?? 80);
+      vs.value = String(laneVolOf(lane.id));
       vs.dataset.lanevol = lane.id;
       vs.addEventListener('input', () => {
         laneVol[lane.id] = Number(vs.value);
@@ -1769,7 +1794,26 @@ function renderLanes() {
         if (drumCur === lane.id) { drumLoading = true; $('drumVol').value = vs.value; $('drumVol').dispatchEvent(new Event('input')); drumLoading = false; }
       });
     }
-    row.append(dot, name, cells, vs);
+    const ps = document.createElement('input');   // pan, from left to right
+    ps.type = 'range'; ps.min = '-100'; ps.max = '100'; ps.step = '1';
+    ps.className = 'lane-pan';
+    ps.title = ps.ariaLabel = `${lane.label} pan`;
+    const PANKEY = { kick: 'kick', shaker: 'shaker', ring: 'conga' }[lane.id];
+    if (PANKEY) {
+      ps.dataset.pan = PANKEY;
+      ps.value = $(PANKEY + 'Pan').value;
+      ps.addEventListener('input', () => { $(PANKEY + 'Pan').value = ps.value; $(PANKEY + 'Pan').dispatchEvent(new Event('input')); });
+    } else {
+      if (!XV[lane.id]) XV[lane.id] = XDEF(lane.id);
+      ps.dataset.lanepan = lane.id;
+      ps.value = String(XV[lane.id].pan);
+      ps.addEventListener('input', () => {
+        XV[lane.id].pan = Number(ps.value); laneBus(lane.id); xApply(lane.id);
+        if (drumCur === lane.id) { drumLoading = true; $('drumPan').value = ps.value; $('drumPan').dispatchEvent(new Event('input')); drumLoading = false; }
+      });
+      ps.addEventListener('dblclick', () => { ps.value = String(XDEF(lane.id).pan); ps.dispatchEvent(new Event('input')); });
+    }
+    row.append(dot, name, cells, vs, ps);
     const edit = document.createElement('button');
     edit.type = 'button';
     edit.className = 'lane-edit';
@@ -2043,7 +2087,7 @@ function setVol(name, v) {
 const panText = v => (v === 0 ? 'C' : (v < 0 ? 'L' : 'R') + Math.abs(v));
 for (const name of ['kick', 'conga', 'shaker', 'sample']) {
   const el = $(name + 'Pan');
-  const set = () => { const v = Number(el.value); pan[name].pan.value = v / 100; $(name + 'PanOut').textContent = panText(v); };
+  const set = () => { const v = Number(el.value); pan[name].pan.value = v / 100; $(name + 'PanOut').textContent = panText(v); document.querySelectorAll(`.lane-pan[data-pan="${name}"]`).forEach(x => { x.value = String(v); }); };
   el.addEventListener('input', set);
   set();
 }
@@ -2121,6 +2165,14 @@ function pitchedHit(node, t, f0, f1, peak, d) {
   o.connect(g).connect(node);
   o.start(t); o.stop(t + D + 0.05);
 }
+// One note with a quick attack and a falling tail
+function tone(out, t, type, f, peak, d, lpHz) {
+  const D = dec(out, d), o = ctx.createOscillator(), g = ctx.createGain(), lp = ctx.createBiquadFilter();
+  o.type = type; o.frequency.value = f;
+  lp.type = 'lowpass'; lp.frequency.value = lpHz || 8000;
+  g.gain.setValueAtTime(0.0001, t); g.gain.linearRampToValueAtTime(peak, t + 0.005); g.gain.exponentialRampToValueAtTime(0.0008, t + D);
+  o.connect(lp).connect(g).connect(out); o.start(t); o.stop(t + D + 0.05);
+}
 function slap(out, t, peak) {
   const n = ctx.createBufferSource(), bp = ctx.createBiquadFilter(), g = ctx.createGain();
   n.buffer = noiseBuf;
@@ -2165,6 +2217,29 @@ const INSTR = {
     const g = f * 2.5;
     square(out, t, g, 0.12 * v, 0.25);
     square(out, t, g * 1.48, 0.09 * v, 0.2);
+  },
+  // melodic voices: they play the ring's notes, so the ring can be a bass line or a tune
+  upright: (out, t, f, v) => {   // acoustic bass: a plucked string with a woody thump
+    const g = f / 4;
+    tone(out, t, 'triangle', g, 0.55 * v, 0.7, 900);
+    tone(out, t, 'sine', g * 2, 0.12 * v, 0.25, 1800);
+    noiseBurst(out, t, 'lowpass', 700, 0.7, 0.025, 0.25 * v);
+  },
+  moogbass: (out, t, f, v) => {  // a saw through a filter that closes quickly
+    const g = f / 4, o = ctx.createOscillator(), lp = ctx.createBiquadFilter(), a = ctx.createGain(), D = dec(out, 0.34);
+    o.type = 'sawtooth'; o.frequency.value = g;
+    lp.type = 'lowpass'; lp.Q.value = 7; lp.frequency.setValueAtTime(2200, t); lp.frequency.exponentialRampToValueAtTime(260, t + 0.16);
+    a.gain.setValueAtTime(0.0001, t); a.gain.linearRampToValueAtTime(0.32 * v, t + 0.008); a.gain.exponentialRampToValueAtTime(0.0008, t + D);
+    o.connect(lp).connect(a).connect(out); o.start(t); o.stop(t + D + 0.05);
+  },
+  subbass: (out, t, f, v) => {   // a round sine with a small drop at the front
+    const g = f / 4;
+    pitchedHit(out, t, g * 1.15, g, 0.7 * v, 0.75);
+  },
+  marimba: (out, t, f, v) => {   // wooden bars: the note and a ringing overtone four times higher
+    const g = f * 2;
+    tone(out, t, 'sine', g, 0.45 * v, 0.42, 6000);
+    tone(out, t, 'sine', g * 4, 0.09 * v, 0.07, 9000);
   },
   woodblock: (out, t, f, v) => {
     const g = f * 3.4;
@@ -3063,6 +3138,7 @@ for (const [id, key] of Object.entries(DRUM_CTL)) {
       laneVol[drumCur] = v;
       document.querySelectorAll(`.lane-vol[data-lanevol="${CSS.escape(drumCur)}"]`).forEach(x => { x.value = String(v); });
     } else S[key] = v;
+    if (key === 'pan') document.querySelectorAll(`.lane-pan[data-lanepan="${CSS.escape(drumCur)}"]`).forEach(x => { x.value = String(v); });
     laneBus(drumCur); xApply(drumCur);
     if (key === 'revDec') xRoom(drumCur);
   });
@@ -3074,7 +3150,7 @@ function drumLoad(v) {
   drumCur = v;
   const S = XV[v] || (XV[v] = XDEF(v));
   drumLoading = true;
-  const val = { vol: laneVol[v] ?? 80, revDec: S.revDec != null ? S.revDec : SPACE.dec };
+  const val = { vol: laneVolOf(v), revDec: S.revDec != null ? S.revDec : SPACE.dec };
   for (const [id, key] of Object.entries(DRUM_CTL)) { const el = $('drum' + id); el.value = String(key in val ? val[key] : S[key]); el.dispatchEvent(new Event('input')); }
   for (const [id, key] of [['Delay', 'delay'], ['Style', 'style']]) { const el = $('drum' + id); el.value = S[key]; el.dispatchEvent(new Event('change')); }
   drumLoading = false;
@@ -3091,16 +3167,44 @@ $('drumMute').addEventListener('click', () => {
   if (lane) { lane.toggle(); drumLoad(drumCur); }
 });
 
+// The shape of the music over bars: every fourth bar leans a little, every eighth bar ends with a fill.
+// Drift: the written pattern wanders. Hits go missing, the backbeat sometimes lands a sixteenth late, even the one can slip.
+// Call and response: the conga answers where the kick is quiet, and the shaker steps back when the kick lands.
+function phraseOf(n) { const bar = Math.floor(n / 16); return { bar, bp: bar % 8, four: bar % 4 === 3, eight: bar % 8 === 7 }; }
+function driftOf(n, k, kind) {   // { skip, late } for one written hit
+  const D = GROOVE.drift / 100 * (phraseOf(n).four ? 1.7 : 1), L = state.kick ? state.kick.steps : 16;
+  const anchor = k % 4 === 0, one = k === 0, back = L % 8 === 0 && k % 8 === 4;
+  let skip = 0, late = 0;
+  if (anchor) skip = D * (one ? 0.04 : 0.1);
+  else skip = D * 0.05;
+  if (kind === 'skin' && back && Math.random() < D * 0.07) late = stepSecs();   // a backbeat that falls a sixteenth late
+  return { skip: Math.random() < skip, late };
+}
+function grooveFill(t, n, tC, tX) {
+  const P = phraseOf(n), pos = n % 16;
+  if (pos < 12 || !(P.eight || P.four)) return;
+  const f = GROOVE.fills / 100 * (P.eight ? 1 : 0.4), s = pos - 12;
+  if (f <= 0.02 || Math.random() > f * (0.45 + 0.17 * s)) return;
+  const kit = state.kick ? extrasOf(state.kick).filter(v => !laneMuted[v] && !SILENT.has(v)) : [];
+  const toms = kit.filter(v => TOM_RE.test(v)), skins = kit.filter(v => SKIN_RE.test(v)), hats = kit.filter(v => HAT_RE.test(v));
+  const vel = 0.45 + 0.17 * s + Math.random() * 0.1, pick = a => a[Math.floor(Math.random() * a.length)];
+  if (s >= 2 && toms.length) drumHit(pick(toms), tX, undefined, vel);
+  else if (skins.length) drumHit(pick(skins), tX, undefined, vel);
+  else if (hats.length) drumHit(pick(hats), tX, undefined, vel * 0.8);
+  else if (!muted.shaker) shakerHit(tX, { vel: vel * 0.9, rate: 1, cap: 0.4, len: 0.8 });
+  if (Math.random() < f * 0.5) congaHit(tC, 0.55 + 0.1 * s, n, true);
+}
+
 // ---------- Groove: the feel of the kit ----------
 // Swing: the off-beat sixteenths land late. Pocket: the rings sit ahead of the beat or behind it, each a little differently.
 // Ghosts: quiet hits between the written ones. Accent: how much louder the strong beats are.
 // The weather sets the four knobs. Move one and it is yours until you hand it back with the Weather button.
-const GROOVE = { swing: 25, pocket: 0, ghost: 30, accent: 50 };
-const grooveHand = { swing: false, pocket: false, ghost: false, accent: false };   // true once you have moved the knob yourself
+const GROOVE = { swing: 25, pocket: 0, ghost: 30, accent: 50, fills: 35, drift: 30 };
+const grooveHand = { swing: false, pocket: false, ghost: false, accent: false, fills: false, drift: false };   // true once you have moved the knob yourself
 let grooveSetting = false;                                                          // true while the weather is moving a knob
 const POCKET_MS = 22;                                                               // the most the pocket moves a ring, in milliseconds
 const POCKET_WHO = { kick: 0.3, twin: 0.3, conga: 0.8, extra: 1, shaker: -0.5 };    // the hats push while the backbeat lays back
-const grooveKnobs = { swing: 'grooveSwing', pocket: 'groovePocket', ghost: 'grooveGhost', accent: 'grooveAccent' };
+const grooveKnobs = { swing: 'grooveSwing', pocket: 'groovePocket', ghost: 'grooveGhost', accent: 'grooveAccent', fills: 'grooveFills', drift: 'grooveDrift' };
 function grooveOut(key) {
   const v = GROOVE[key], o = $(grooveKnobs[key] + 'Out');
   o.textContent = key === 'swing' ? Math.round(50 + v * 0.17) + '%'
@@ -3117,6 +3221,8 @@ function grooveFromWeather() {
     pocket: Math.round(clamp((w.h - 55) * 1.6 + (1013 - (e.pres != null ? e.pres : 1013)) * 2.5, -100, 100)),   // humid and low pressure is heavy, so laid back
     ghost: Math.round(clamp(10 + 85 * clamp((w.t + 5) / 37, 0, 1) - (e.day === 0 ? 10 : 0), 0, 100)),         // cold is sparse, warm is busy
     accent: Math.round(clamp(25 + 0.6 * (100 - w.c) - (w.r > 0 ? 10 : 0), 0, 100)),         // clear skies hit harder, cloud flattens
+    fills: Math.round(clamp(12 + 0.55 * (e.pop || 0) + 30 * gusty + (w.r > 0 ? 12 : 0), 0, 100)),   // the chance of rain and the gusts bring the fills
+    drift: Math.round(clamp(12 + 50 * windy + 28 * gusty, 0, 100)),                          // wind lets the pattern wander
   };
 }
 function grooveSay(g) {
@@ -3125,6 +3231,8 @@ function grooveSay(g) {
   if (g.pocket >= 25) bits.push('humid and heavy, laid back'); else if (g.pocket <= -25) bits.push('crisp air, pushing ahead');
   if (g.ghost >= 65) bits.push('warm, busy ghost notes'); else if (g.ghost <= 25) bits.push('cold, sparse');
   if (g.accent >= 65) bits.push('clear sky, strong accents'); else if (g.accent <= 35) bits.push('cloud, soft accents');
+  if (g.fills >= 55) bits.push('rain about, busy fills'); else if (g.fills <= 22) bits.push('dry, plain endings');
+  if (g.drift >= 55) bits.push('windy, the pattern wanders');
   return bits.length ? bits.join(' · ') : 'settled weather, an even feel';
 }
 function grooveNote() {
@@ -3179,7 +3287,8 @@ function grooveGhosts(t, n, k, r, tK, tC, tS, tX, shaker) {
   }
   if (k >= 0 && V && V.snare && V.snare.some(Boolean) && !V.snare[k] && !laneMuted.snare && (k % 4 === 1 || k % 4 === 3) && Math.random() < gp * 0.3 && roll()) drumHit('snare', tX, undefined, soft() * 1.4);
   if (k >= 0 && kickOn && state.kick.bd.some((b, i) => b && i % 4 !== 0) && !state.kick.bd[k] && (k % 4 === 3 || k % 4 === 1) && Math.random() < gp * 0.18 && roll()) kickHit(tK, undefined, 0.3 + Math.random() * 0.12);
-  if (r >= 0 && state.pattern[r] !== 1 && Math.random() < gp * 0.22 && roll()) congaHit(tC, 0.3, n, true);
+  const gap = k >= 0 && state.kick.bd[k] ? 0.3 : 1.5;   // the conga answers where the kick is quiet
+  if (r >= 0 && state.pattern[r] !== 1 && Math.random() < gp * 0.22 * gap && roll()) congaHit(tC, 0.3, n, true);
 }
 
 // ---------- the story: what the weather is doing to the sound, in plain words ----------
@@ -3198,6 +3307,11 @@ function tellStory() {
   const room = SPACE.dec >= 50 ? (e.vis != null && e.vis < 8000 ? 'Fog makes the room bigger.' : (w.r || 0) > 0 ? 'Rain gives the echoes a longer tail.' : 'Damp air makes the room bigger.')
     : SPACE.dec <= 28 ? 'Dry, clear air keeps the room small.' : '';
   if (room) lines.push(room);
+  const gv = grooveFromWeather();
+  if (gv && !Object.values(grooveHand).some(Boolean)) {
+    if (gv.fills >= 55) lines.push('Rain is about, so the ends of phrases get busy fills.');
+    if (gv.drift >= 55) lines.push('Wind lets the pattern wander.');
+  }
   el.innerHTML = lines.join(' ');
 }
 
@@ -3236,7 +3350,8 @@ function schedule(t, n) {
   const congaNow = r >= 0 && state.pattern[r] === 1 && roll();
   if (congaNow) congaHit(tC, vel, n);
   if (k === 0 && n > 0) twin.off++;   // the twin slips one step each cycle
-  const kickNow = k >= 0 && kickOn && state.kick.bd[k] && roll();
+  const kickDrift = k >= 0 && state.kick.bd[k] ? driftOf(n, k, 'kick') : { skip: false, late: 0 };
+  const kickNow = k >= 0 && kickOn && state.kick.bd[k] && !kickDrift.skip && roll();
   const tj = twin.n ? (k + twin.off) % twin.n : -1;
   const twinNow = tj >= 0 && twin.bits[tj] && kickOn && !laneMuted.twin && roll();   // Mute on the kick silences its twin too
   if (kickNow) { kickHit(tK, undefined, vel); duckSub(tK); }
@@ -3247,10 +3362,15 @@ function schedule(t, n) {
     const f = shakerFeel(t, k, state.kick.steps);
     if (f !== false) {
       const tt = f ? f.t + (tS - t) : tS;
+      if (f && kickNow) f.vel *= 0.72;   // the shaker steps back when the kick lands
       if (sh.src) drumHit(sh.src, tt, bus.shaker, f ? f.vel * 1.1 : undefined); else shakerHit(tt, f);
     }
   }
-  if (k >= 0) for (const v of extrasOf(state.kick)) if (state.kick.voices[v][k] && !laneMuted[v] && roll()) drumHit(v, tX, undefined, vel * (0.85 + Math.random() * 0.3));
+  if (k >= 0) for (const v of extrasOf(state.kick)) if (state.kick.voices[v][k] && !laneMuted[v]) {
+    const dr = driftOf(n, k, SKIN_RE.test(v) ? 'skin' : 'other');
+    if (!dr.skip && roll()) drumHit(v, tX + dr.late, undefined, vel * (0.85 + Math.random() * 0.3));
+  }
+  grooveFill(t, n, tC, tX);
   grooveGhosts(t, n, k, r, tK, tC, tS, tX, sh);
   events.push({ t, r, k, hit: congaNow });
 }
@@ -4066,10 +4186,9 @@ function applyShared(s) {
 
 // The genre list fades at the bottom while there is more to scroll
 function markMore() {
-  const g = document.querySelector('.gbody');
-  if (g) g.classList.toggle('more', g.scrollTop + g.clientHeight < g.scrollHeight - 4);
+  document.querySelectorAll('.gscroll').forEach(g => g.classList.toggle('more', g.scrollTop + g.clientHeight < g.scrollHeight - 4));
 }
-document.querySelector('.gbody') && document.querySelector('.gbody').addEventListener('scroll', markMore);
+document.querySelectorAll('.gscroll').forEach(g => g.addEventListener('scroll', markMore));
 window.addEventListener('resize', markMore);
 
 // ---------- voice tabs: Sound, Effects, Auto filter ----------
