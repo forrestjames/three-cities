@@ -80,8 +80,14 @@ function melodicHit(role, node, t, vel) {
   }
 }
 '''
-rep("function kickHit(t, dest, vel = 1) {", voices + "function kickHit(t, dest, vel = 1) {\n  if (MELODIC) { melodicHit(dest ? 'bass2' : 'bass', dest || bus.kick, t, vel); return; }")
-rep("function drumHit(v, t, out, velIn) {\n  if (SILENT.has(v)) return;", "function drumHit(v, t, out, velIn) {\n  if (SILENT.has(v)) return;\n  if (MELODIC) { melodicHit(roleOf(v), out || laneBus(v), t, velIn != null ? velIn : 0.85 + Math.random() * 0.3); return; }")
+rep("function kickHit(t, dest, vel = 1) {\n", voices + "function kickHit(t, dest, vel = 1) {\n")
+rep("  if (KICK_SOUND !== 'kick') { drumHit(KICK_SOUND, t, dest || bus.kick, vel); return; }   // the ring triggers another sound\n",
+    "  if (KICK_SOUND !== 'kick') { drumHit(KICK_SOUND, t, dest || bus.kick, vel); return; }   // the ring triggers another sound\n  if (MELODIC) { melodicHit(dest ? 'bass2' : 'bass', dest || bus.kick, t, vel); return; }\n")
+# the sound lists name notes, not drums
+m = re.search(r"const SOUND_CHOICES = \[.*?\];\n", s)
+assert m
+s = s.replace(m.group(0), "const SOUND_CHOICES = [['kick', 'Bass'], ['bass_drum', 'Deep bass'], ['snare', 'Keys'], ['closed_hat', 'Bells'], ['open_hat', 'Long bells'], ['low_drum', 'Marimba'], ['high_drum', 'High marimba']];\n")
+rep("  if (own) v = own;\n  if (SILENT.has(v)) return;", "  if (own) v = own;\n  if (SILENT.has(v)) return;\n  if (MELODIC) { melodicHit(roleOf(v), out || laneBus(lane), t, velIn != null ? velIn : 0.85 + Math.random() * 0.3); return; }")
 rep("function shakerHit(t, f) {\n  f = f || { vel: 0.8 + Math.random() * 0.4, rate: 1, cap: 1, len: 1 };", "function shakerHit(t, f) {\n  f = f || { vel: 0.8 + Math.random() * 0.4, rate: 1, cap: 1, len: 1 };\n  if (MELODIC) { melodicHit('bell', bus.shaker, t, f.vel * 0.8); return; }")
 
 # --- the story says what is going on

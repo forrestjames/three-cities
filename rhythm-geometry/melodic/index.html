@@ -764,7 +764,7 @@
 
     <div class="card voice" id="kickCard">
       <div class="vhead">
-        <h2>Kick <small>from the genre</small></h2>
+        <h2><select id="kickSound" class="hdr-sel" aria-label="Sound the kick ring plays" title="Change the sound this ring triggers"></select><small>from the genre</small></h2>
         <button id="kickOn" class="btn small" type="button" aria-pressed="false">Mute</button>
       </div>
       <div class="vtabs" role="tablist">
@@ -901,6 +901,7 @@
         <button type="button" role="tab" data-tab="fx" aria-selected="false">Effects<i class="tab-dot" aria-hidden="true"></i></button>
       </div>
       <div class="vpanel" data-panel="sound">
+        <div class="field" id="drumSoundField"><label class="label" for="drumSound">Triggers</label><select id="drumSound" title="The sound this ring triggers"></select></div>
         <div class="knobs" style="--n:5">
           <div class="knob-cell"><div class="head"><span class="label">Volume</span><output id="drumVolOut">80</output></div><input id="drumVol" type="range" min="0" max="100" value="80" aria-label="Drum volume"></div>
           <div class="knob-cell"><div class="head"><span class="label">Decay</span><output id="drumDecayOut">1.00x</output></div><input id="drumDecay" type="range" min="0" max="100" value="50" aria-label="Drum decay"></div>
@@ -1659,6 +1660,9 @@ const laneVol = {}, laneMuted = {};
 // Every other ring (snare, hats, toms, the twin kick, the sub bass) gets a full sound of its own:
 // filter, volume, pan, decay, tune, a delay and a reverb, the same as the kick, shaker and conga.
 const XV = {};   // lane id -> its settings
+// The sounds a ring can trigger. 'As the genre says' keeps the pattern's own.
+const SOUND_CHOICES = [['kick', 'Bass'], ['bass_drum', 'Deep bass'], ['snare', 'Keys'], ['closed_hat', 'Bells'], ['open_hat', 'Long bells'], ['low_drum', 'Marimba'], ['high_drum', 'High marimba']];
+let KICK_SOUND = 'kick';
 const TOM_RE = /drum|dum$|tak|surdo|conga|sabar|tabla|dhol|odaiko|shime|chudaiko|perc_high|tambora|tumbao|tom/;
 const HAT_RE = /hat|ride|tambourine|shaker|guacharaca|alegre|crash/;
 const SKIN_RE = /snare|clap|rim|palmas/;
@@ -1756,7 +1760,14 @@ function kitLanes() {
     muted: () => !!laneMuted.sub, toggle: () => { laneMuted.sub = !laneMuted.sub; xApply('sub'); subGate(subLevel()); syncKit(); } });
   const sh = shakerSrc(k);
   if (sh) lanes.push({ id: 'shaker', label: sh.src ? `shaker (${sh.src.replace(/_/g, ' ')})` : 'shaker', idx: 'k', bits: sh.bits, n, color: '#6fc3a6', muted: () => muted.shaker, toggle: () => $('shakerMute').click() });
-  lanes.push({ id: 'ring', label: 'conga ring', idx: 'r', bits: state.pattern, n: state.pattern.length, color: ACCENT, muted: () => muted.conga, toggle: () => $('congaMute').click() });
+  // the place's own sounds get rows too, so nothing plays that you cannot turn down or off
+  aroundDefaults();
+  NEAR.list.forEach(o => lanes.push({ id: o.id, label: 'near: ' + o.name.toLowerCase().split(',')[0], idx: 'k', bits: [], n: 0, extra: true, noRing: true, color: '#8f8a86',
+    muted: () => !!laneMuted[o.id], toggle: () => { laneMuted[o.id] = !laneMuted[o.id]; xApply(o.id); syncKit(); } }));
+  for (const [id, label, color] of [['grit', 'grit', '#b59a7a'], ['quake', 'quakes', '#7d6a88']])
+    lanes.push({ id, label, idx: 'k', bits: [], n: 0, extra: true, noRing: true, color, muted: () => !!laneMuted[id], toggle: () => { laneMuted[id] = !laneMuted[id]; xApply(id); syncKit(); } });
+  const ringLane = { id: 'ring', label: 'conga ring', idx: 'r', bits: state.pattern, n: state.pattern.length, color: ACCENT, muted: () => muted.conga, toggle: () => $('congaMute').click() };
+  lanes.splice(lanes.findIndex(l => l.noRing && /^(near|grit|quake)/.test(l.id)), 0, ringLane);
   return lanes;
 }
 
@@ -2431,10 +2442,12 @@ function sampleFor(v) {
   return s ? { s, k: a ? a[1] : 1, cap: SAMPLE_CAP[key] || 4 } : null;
 }
 function drumHit(v, t, out, velIn) {
+  const lane = v, own = !out && XV[v] && XV[v].voice;   // a ring can be set to trigger another sound; it keeps its own volume, pan and effects
+  if (own) v = own;
   if (SILENT.has(v)) return;
-  if (MELODIC) { melodicHit(roleOf(v), out || laneBus(v), t, velIn != null ? velIn : 0.85 + Math.random() * 0.3); return; }
+  if (MELODIC) { melodicHit(roleOf(v), out || laneBus(lane), t, velIn != null ? velIn : 0.85 + Math.random() * 0.3); return; }
   const vel = velIn != null ? velIn : 0.85 + Math.random() * 0.3, sp = sampleFor(v);
-  const node = out || laneBus(v), rate = (out ? 1 : tuneOf(node)) * drumRate(v);
+  const node = out || laneBus(lane), rate = (out ? 1 : tuneOf(node)) * drumRate(v);
   if (sp) { playSample(node, t, sp.s, vel * sp.k, clamp(rate, 0.25, 4), sp.cap, node); return; }
   hitRate = rate;
   try { ((activeKit.drums && activeKit.drums[v]) || DRUM[v] || DRUM.default)(node, t, vel); } finally { hitRate = 1; }
@@ -2616,6 +2629,7 @@ function melodicHit(role, node, t, vel) {
   }
 }
 function kickHit(t, dest, vel = 1) {
+  if (KICK_SOUND !== 'kick') { drumHit(KICK_SOUND, t, dest || bus.kick, vel); return; }   // the ring triggers another sound
   if (MELODIC) { melodicHit(dest ? 'bass2' : 'bass', dest || bus.kick, t, vel); return; }
   const node = dest || bus.kick, ks = activeKit.samples && SAMPLES.get(activeKit.samples.kick);
   if (ks) { playSample(node, t, ks, vel, tuneOf(node), 2, node); return; }
@@ -2793,7 +2807,7 @@ function refreshChordRhythm() {
   const sel = $('chordRhythm'), keep = CHORD.rhythm;
   sel.innerHTML = '';
   sel.append(new Option('Held (one long chord)', 'held'));
-  for (const l of kitList) sel.append(new Option(l.label, l.id));
+  for (const l of kitList.filter(x => x.n > 0)) sel.append(new Option(l.label, l.id));
   CHORD.rhythm = keep === 'held' || kitList.some(l => l.id === keep) ? keep : (kitList.some(l => l.id === 'ring') ? 'ring' : 'held');
   sel.value = CHORD.rhythm;
   if (window.chordNoteText) window.chordNoteText();
@@ -2801,7 +2815,7 @@ function refreshChordRhythm() {
 function refreshYourRhythm() {
   const sel = $('sampRhythm'), keep = yours.rhythm;
   sel.innerHTML = '';
-  for (const l of kitList) sel.append(new Option(l.label, l.id));
+  for (const l of kitList.filter(x => x.n > 0)) sel.append(new Option(l.label, l.id));
   yours.rhythm = kitList.some(l => l.id === keep) ? keep : (kitList[0] ? kitList[0].id : 'kick');
   sel.value = yours.rhythm;
 }
@@ -3258,6 +3272,7 @@ for (const [id, key] of Object.entries(DRUM_CTL)) {
       laneVol[drumCur] = v;
       document.querySelectorAll(`.lane-vol[data-lanevol="${CSS.escape(drumCur)}"]`).forEach(x => { x.value = String(v); });
     } else S[key] = v;
+    if (key === 'pan') S.hand = true;
     if (key === 'pan') document.querySelectorAll(`.lane-pan[data-lanepan="${CSS.escape(drumCur)}"]`).forEach(x => { x.value = String(v); });
     laneBus(drumCur); xApply(drumCur);
     if (key === 'revDec') xRoom(drumCur);
@@ -3275,12 +3290,22 @@ function drumLoad(v) {
   for (const [id, key] of [['Delay', 'delay'], ['Style', 'style']]) { const el = $('drum' + id); el.value = S[key]; el.dispatchEvent(new Event('change')); }
   drumLoading = false;
   $('drumWhich').value = v;
-  $('drumSmall').textContent = v === 'sub' ? 'plays the chord root' : v === 'twin' ? 'another city, drifting' : TOM_RE.test(v) ? 'tuned to the chords' : 'from the genre';
+  const pickable = !/^(sub|twin|grit|quake|near\d)$/.test(v);
+  $('drumSoundField').hidden = !pickable;
+  $('drumSound').value = S.voice || '';
+  $('drumSmall').textContent = /^near\d$/.test(v) ? 'a neighbouring city, quietly' : v === 'grit' ? 'crackle from the air quality' : v === 'quake' ? 'a rumble from today\'s earthquakes' : v === 'sub' ? 'plays the chord root' : v === 'twin' ? 'another city, drifting' : TOM_RE.test(v) ? 'tuned to the chords' : 'from the genre';
   const m = xMuted(v);
   $('drumMute').setAttribute('aria-pressed', String(m));
   $('drumMute').textContent = m ? 'Muted' : 'Mute';
   markTabs($('drumCard'));
 }
+for (const [sel, first] of [[$('kickSound'), null], [$('drumSound'), 'As the genre says']]) {
+  if (first) sel.append(new Option(first, ''));
+  for (const [v, label] of SOUND_CHOICES) sel.append(new Option(label, v));
+}
+$('kickSound').value = 'kick';
+$('kickSound').addEventListener('change', () => { KICK_SOUND = $('kickSound').value; preloadSamples(); });
+$('drumSound').addEventListener('change', () => { if (drumLoading || !drumCur) return; laneBus(drumCur); XV[drumCur].voice = $('drumSound').value; });
 $('drumWhich').addEventListener('change', () => openVoice('x:' + $('drumWhich').value));
 $('drumMute').addEventListener('click', () => {
   const lane = drumCur && kitList.find(l => l.id === drumCur);
@@ -3311,7 +3336,7 @@ function grooveFill(t, n, tC, tX) {
   if (s >= 2 && toms.length) drumHit(pick(toms), tX, undefined, vel);
   else if (skins.length) drumHit(pick(skins), tX, undefined, vel);
   else if (hats.length) drumHit(pick(hats), tX, undefined, vel * 0.8);
-  else if (!muted.shaker) shakerHit(tX, { vel: vel * 0.9, rate: 1, cap: 0.4, len: 0.8 });
+  else if (!muted.shaker && shakerSrc(state.kick)) shakerHit(tX, { vel: vel * 0.9, rate: 1, cap: 0.4, len: 0.8 });
   if (Math.random() < f * 0.5) congaHit(tC, 0.55 + 0.1 * s, n, true);
 }
 
@@ -3321,6 +3346,10 @@ function grooveFill(t, n, tC, tX) {
 // Quakes: today's earthquakes, one rumble at a time, louder for bigger ones.
 const NEAR = { list: [], def: 12 };
 const QUAKE = { list: [], i: 0, def: 0, at: 0, last: '' };
+function aroundDefaults() {
+  if (!XV.grit) { XV.grit = Object.assign(XDEF('grit'), { rev: 0, delay: 'off', dlvl: 0 }); laneVol.grit = 35; }
+  if (!XV.quake) { XV.quake = Object.assign(XDEF('quake'), { rev: 40, delay: 'off', dlvl: 0, cut: 30 }); laneVol.quake = 70; }
+}
 function pickNeighbours() {
   NEAR.list = [];
   const p = state.place;
@@ -3343,6 +3372,7 @@ function grooveBleed(t, n, k, tK, tX) {
   if (b <= 0.02 || !playing) return;
   const mainKick = k >= 0 && state.kick.bd[k];
   for (const o of NEAR.list) {
+    if (laneMuted[o.id]) continue;
     const i = n % o.n;
     if (o.bd[i] && !mainKick && Math.random() < b * o.w * 1.6 && roll()) kickHit(tK, laneBus(o.id), 0.3 + Math.random() * 0.1);
     if (o.sn && o.sn[i] && Math.random() < b * o.w * 1.4 && roll()) drumHit('snare', tX, laneBus(o.id), 0.26 + Math.random() * 0.1);
@@ -3356,16 +3386,16 @@ satWet.gain.value = 0;
 master.connect(sat).connect(satWet).connect(comp);
 function gritApply() { satWet.gain.setTargetAtTime(GROOVE.grit / 100 * 0.4, ctx.currentTime, 0.05); }
 function grooveGrit(t) {
-  if (!playing || Math.random() > GROOVE.grit / 100 * 0.07) return;
-  if (!XV.grit) { XV.grit = Object.assign(XDEF('grit'), { rev: 0, delay: 'off', dlvl: 0 }); laneVol.grit = 35; }
+  if (!playing || laneMuted.grit || Math.random() > GROOVE.grit / 100 * 0.07) return;
+  aroundDefaults();
   noiseBurst(laneBus('grit'), t + Math.random() * 0.05, 'highpass', 3500 + Math.random() * 5000, 0.7, 0.012 + Math.random() * 0.02, 0.5);
 }
 // quakes: one rumble at the start of each eight bars, in the order they happened today
 function grooveQuake(t, n) {
-  if (!playing || n % (16 * 8) !== 0 || !QUAKE.list.length || Math.random() > GROOVE.quake / 100) return;
+  if (!playing || laneMuted.quake || n % (16 * 8) !== 0 || !QUAKE.list.length || Math.random() > GROOVE.quake / 100) return;
   const q = QUAKE.list[QUAKE.i++ % QUAKE.list.length], m = clamp(q.mag, 2.5, 8);
-  if (!XV.quake) { XV.quake = Object.assign(XDEF('quake'), { rev: 40, delay: 'off', dlvl: 0, cut: 30 }); laneVol.quake = 70; }
-  XV.quake.pan = Math.round(clamp((q.lon - (state.place ? state.place.lon : 0)) / 90, -1, 1) * 70);
+  aroundDefaults();
+  if (!XV.quake.hand) XV.quake.pan = Math.round(clamp((q.lon - (state.place ? state.place.lon : 0)) / 90, -1, 1) * 70);
   const node = laneBus('quake'); xApply('quake');
   const D = 0.9 + (m - 2.5) * 0.55, peak = 0.35 + (m - 2.5) * 0.09;
   const o = ctx.createOscillator(), g = ctx.createGain();
