@@ -27,7 +27,9 @@
   button:disabled { opacity: .4; cursor: default; }
   .altlink { align-self: center; font-size: 10.5px; letter-spacing: .1em; text-transform: uppercase; color: var(--ink-dim); text-decoration: none; border-bottom: 1px solid var(--line); padding: 2px 0; white-space: nowrap; }
   .altlink:hover { color: var(--ink); }
-  .titlerow { display: flex; align-items: baseline; gap: 6px 16px; flex-wrap: wrap; }
+  .titlerow { display: flex; align-items: baseline; gap: 6px 12px; flex-wrap: nowrap; }
+  .titlerow h1 { white-space: nowrap; }
+  .titlerow .altlink { font-size: 9.5px; letter-spacing: .06em; }
   .altname { font-size: .5em; letter-spacing: .14em; text-transform: uppercase; color: var(--accent); margin-left: 8px; vertical-align: middle; }
   .kithead .kitsel, .kithead label[for="kitSel"], #kitSel { display: none !important; }
   .wrap { padding: 22px clamp(14px, 2.4vw, 40px) 40px; }
@@ -631,7 +633,7 @@
   <header class="top">
     <div class="brand">
       <div class="brand-text">
-        <div class="titlerow"><h1>Rhythm Geometry <span class="altname">melodic</span></h1><a class="altlink" href="../" title="The version with drums">Drum version</a></div>
+        <div class="titlerow"><h1>Rhythm Geometry <span class="altname">melodic</span></h1><a class="altlink" href="../" title="The version with drums">Drum version</a><a class="altlink" href="../duet/" title="The version where only the conga and one drum play at a time">Duet version</a></div>
         <p class="place"><span id="placeLine"></span><span id="clock"></span></p>
       </div>
     </div>
