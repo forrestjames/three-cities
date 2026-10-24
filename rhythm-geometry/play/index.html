@@ -60,7 +60,8 @@
   .fxlab { font-size: 9.5px; letter-spacing: .1em; text-transform: uppercase; color: var(--ink-faint); align-self: center; margin-right: 2px; }
   .fx { display: grid; gap: 8px; padding: 8px 10px; }
   .fxrow { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 12px; }
-  .grp { display: flex; align-items: center; gap: 6px; }
+  .grp { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; min-width: 0; }
+  .fx select { max-width: 112px; min-width: 0; }
   .fxrow + .fxrow { border-top: 1px solid var(--line); padding-top: 8px; }
   .fx .btn { min-width: 44px; padding: 8px 8px; font-size: 10.5px; }
   .fx select { background: var(--strip); border: 1px solid var(--line); padding: 7px 6px; font-size: 11px; }
@@ -138,6 +139,21 @@
   .send input { accent-color: var(--c); }
   .strip .btn { padding: 8px 2px; font-size: 9.5px; letter-spacing: 0; width: 100%; min-width: 0; white-space: nowrap; overflow: hidden; }
   .strip .btn[aria-pressed="true"] { background: var(--c); border-color: var(--c); color: #14110f; }
+  /* key hints and key feedback */
+  .strip .btn[data-kb] { position: relative; padding-right: 17px; }
+  .strip [data-kb]::after { content: attr(data-kb); position: absolute; right: 3px; top: 50%; transform: translateY(-50%); min-width: 12px; padding: 0 2px; border-radius: 3px; border: 1px solid currentColor; font-size: 8.5px; line-height: 12px; text-align: center; opacity: .6; letter-spacing: 0; }
+  .strip .nmrow { position: relative; }
+  .strip .nm[data-kb] { padding-right: 20px; white-space: nowrap; }
+  .strip .keydown { outline: 2px solid #fff; outline-offset: 1px; filter: brightness(1.35); transform: translateY(2px); }
+  .strip.keyed { box-shadow: 0 0 0 2px var(--c), 0 0 22px -2px var(--c); }
+  .keytip { position: fixed; left: 50%; bottom: 14px; transform: translateX(-50%); z-index: 9; background: #f3ece6; color: #1a1210; padding: 8px 14px; border-radius: 8px; font-size: 13px; letter-spacing: .04em; pointer-events: none; opacity: 0; transition: opacity .12s; white-space: nowrap; box-shadow: 0 6px 0 rgba(0,0,0,.4); }
+  .keytip.on { opacity: 1; }
+  .keytip kbd { display: inline-block; min-width: 20px; padding: 1px 6px; margin-right: 8px; border-radius: 4px; background: #1a1210; color: #f3ece6; font-family: inherit; font-size: 12px; text-align: center; }
+  .midibox { display: grid; gap: 10px; width: min(520px, 100%); padding: 16px; background: var(--panel); border: 1px solid var(--line); }
+  .midibox label { display: grid; gap: 4px; font-size: 11px; letter-spacing: .08em; text-transform: uppercase; color: var(--ink-dim); }
+  .midibox select { background: var(--strip); border: 1px solid var(--line); padding: 9px 8px; font-size: 13px; text-transform: none; letter-spacing: 0; }
+  .midibox .chips { display: flex; flex-wrap: wrap; gap: 6px; }
+  .midibox .note { font-size: 12px; color: var(--ink-dim); margin: 0; }
   .led { display: inline-block; width: 6px; height: 6px; border-radius: 50%; background: #3a2c26; margin-right: 4px; vertical-align: middle; }
   .strip .btn[aria-pressed="true"] .led { background: #14110f; }
   .pad { width: 100%; height: 34px; border: 0; border-radius: 6px; background: var(--c); color: #14110f; font-size: 11px; letter-spacing: .1em; text-transform: uppercase; box-shadow: 0 4px 0 rgba(0,0,0,.5); touch-action: none; }
@@ -204,6 +220,14 @@
             <div class="grp" id="kWander" title="How often the filters and pans wander"></div></div>
           <div class="grp"><span class="fxlab">Key</span><select id="root" aria-label="Key"></select><button id="tuneOn" class="btn" type="button" aria-pressed="true" title="On: every drum with a clear pitch is moved to a note of the key and scale. Off: drums sound as recorded.">In key</button><button id="remix" class="btn" type="button" title="Turn every ring to a new starting point. Same step counts, new groove.">Shift rings</button></div>
         </div>
+        <div class="fxrow">
+          <div class="grp"><span class="fxlab">Filter LFO</span>
+            <button id="lfoOn" class="btn" type="button" aria-pressed="false" title="Sweep a filter over the whole mix in time with the tempo">On</button>
+            <select id="lfoRate" aria-label="LFO rate" title="How fast it sweeps, in bars and note lengths"></select>
+            <select id="lfoShape" aria-label="LFO shape" title="The shape of the sweep"></select>
+            <div class="grp" id="kLfo" title="How deep the sweep goes"></div></div>
+          <button id="midiOpen" class="btn" type="button" title="Send the drums to a drum machine or synth over MIDI">MIDI</button>
+        </div>
       </div>
       <div class="mixer" id="mixer"></div>
     </div>
@@ -226,6 +250,23 @@
     <p class="hint">Each drum has its own Delay and Reverb knobs on its strip. These two pedals shape the sound they all feed.</p>
   </div>
 </div>
+<div class="mappanel" id="midiPanel" hidden role="dialog" aria-modal="true" aria-label="MIDI out">
+  <div class="midibox">
+    <div class="maphead"><b>MIDI out</b><button id="midiClose" class="btn" type="button">Done</button></div>
+    <p class="note" id="midiMsg"></p>
+    <label>Send to<select id="midiOut"></select></label>
+    <label>Channel<select id="midiCh"></select></label>
+    <label>Notes<select id="midiMap"></select></label>
+    <div class="chips">
+      <button id="midiOn" class="btn" type="button" aria-pressed="false">Send notes</button>
+      <button id="midiClock" class="btn" type="button" aria-pressed="false" title="Sends tempo, start and stop so your machine follows">Send clock</button>
+      <button id="midiCC" class="btn" type="button" aria-pressed="true" title="The filter, LFO and chance knobs, and the faders, go out as controllers">Send knobs</button>
+      <button id="midiTest" class="btn" type="button">Test note</button>
+    </div>
+    <p class="note">Every hit you hear goes out too, including stutters, chance and mutes. Knobs use CC 74 (filter), 75 (LFO level), 76 (chance). Faders use CC 7.</p>
+  </div>
+</div>
+<div class="keytip" id="keytip" aria-hidden="true"></div>
 <div class="mappanel" id="mapPanel" hidden role="dialog" aria-modal="true" aria-label="World map">
   <canvas id="mapCv" aria-label="World map of cities. Drag to move, scroll or pinch to zoom, click a city."></canvas>
   <div class="maptop"><span id="mapName">Pick a city. Every dot has its own rhythm.</span><span class="maphelp">Drag to move. Scroll or pinch to zoom.</span><button id="mapClose" class="btn" type="button">Close</button></div>
@@ -240,6 +281,7 @@ const TDM = 'https://raw.githubusercontent.com/geikha/tidal-drum-machines/657739
 const KITS = [{"id":"congas","name":"Congas and bongos","lanes":[{"n":"conga low","f":"LinnDrum/linndrum-perc/Conga L-01.wav","t":1,"v":1},{"n":"conga mid","f":"LinnDrum/linndrum-perc/Conga M-01.wav","t":1,"v":1},{"n":"conga high","f":"LinnDrum/linndrum-perc/Conga H-01.wav","t":1,"v":1},{"n":"conga slap","f":"RolandMT32/rolandmt32-perc/Conga Muted H.wav","t":1,"v":1},{"n":"quinto","f":"BossDR550/bossdr550-perc/Conga S.wav","t":1,"v":1},{"n":"bongo low","f":"RolandTR727/rolandtr727-perc/Bongo L.wav","t":1,"v":1},{"n":"bongo high","f":"RolandTR727/rolandtr727-perc/Bongo H.wav","t":1,"v":1},{"n":"bongo bright","f":"BossDR660/bossdr660-perc/BongoH.wav","t":1,"v":1}]},{"id":"latin","name":"Latin percussion","lanes":[{"n":"timbale","f":"RolandTR727/rolandtr727-perc/Timbale L.wav","t":1,"v":1},{"n":"agogo","f":"RolandTR727/rolandtr727-perc/Agogo L.wav","t":1,"v":1},{"n":"cowbell","f":"BossDR550/bossdr550-cb/Cowbell-02.wav","t":1,"v":1},{"n":"wood block","f":"AlesisHR16/alesishr16-perc/Wood Block L.wav","t":1,"v":1},{"n":"guiro","f":"BossDR660/bossdr660-perc/GuiroL.wav","t":0,"v":1},{"n":"clave","f":"BossDR550/bossdr550-perc/Claves.wav","t":1,"v":1},{"n":"tambourine","f":"LinnDrum/linndrum-tb/Tambourine.wav","t":0,"v":0.8},{"n":"triangle","f":"AlesisHR16/alesishr16-perc/Triangle.wav","t":1,"v":1}]},{"id":"808","name":"TR-808","lanes":[{"n":"kick","f":"RolandTR808/rolandtr808-bd/BD0050.WAV","t":1,"v":1},{"n":"low tom","f":"RolandTR808/rolandtr808-lt/LT50.WAV","t":1,"v":1},{"n":"snare","f":"RolandTR808/rolandtr808-sd/SD0050.WAV","t":0,"v":1},{"n":"mid tom","f":"RolandTR808/rolandtr808-mt/MT50.WAV","t":1,"v":1},{"n":"clap","f":"RolandTR808/rolandtr808-cp/cp1.wav","t":0,"v":1},{"n":"cowbell","f":"RolandTR808/rolandtr808-cb/Cowbell.wav","t":1,"v":1},{"n":"hat","f":"RolandTR808/rolandtr808-hh/CH.WAV","t":0,"v":0.7},{"n":"open hat","f":"RolandTR808/rolandtr808-oh/OH50.WAV","t":0,"v":0.7}]},{"id":"909","name":"TR-909","lanes":[{"n":"kick","f":"RolandTR909/rolandtr909-bd/Bassdrum-01.wav","t":1,"v":1},{"n":"low tom","f":"RolandTR909/rolandtr909-lt/Tom L.wav","t":1,"v":1},{"n":"snare","f":"RolandTR909/rolandtr909-sd/sd01.wav","t":0,"v":1},{"n":"mid tom","f":"RolandTR909/rolandtr909-mt/Tom M.wav","t":1,"v":1},{"n":"clap","f":"RolandTR909/rolandtr909-cp/Clap.wav","t":0,"v":1},{"n":"rim","f":"RolandTR909/rolandtr909-rim/Rimhot.wav","t":0,"v":1},{"n":"hat","f":"RolandTR909/rolandtr909-hh/hh01.wav","t":0,"v":0.7},{"n":"open hat","f":"RolandTR909/rolandtr909-oh/Hat Open.wav","t":0,"v":0.7}]},{"id":"linn","name":"LinnDrum","lanes":[{"n":"kick","f":"LinnDrum/linndrum-bd/Bassdrum.wav","t":1,"v":1},{"n":"low tom","f":"LinnDrum/linndrum-lt/Tom L-01.wav","t":1,"v":1},{"n":"snare","f":"LinnDrum/linndrum-sd/0Snarderum-01.wav","t":0,"v":1},{"n":"high tom","f":"LinnDrum/linndrum-ht/Tom H-01.wav","t":1,"v":1},{"n":"clap","f":"LinnDrum/linndrum-cp/Clap.wav","t":0,"v":1},{"n":"cowbell","f":"LinnDrum/linndrum-cb/Cowbell.wav","t":1,"v":1},{"n":"hat","f":"LinnDrum/linndrum-hh/Hat Closed-01.wav","t":0,"v":0.7},{"n":"tambourine","f":"LinnDrum/linndrum-tb/Tambourine.wav","t":0,"v":0.8}]},{"id":"cr78","name":"CR-78 (1978)","lanes":[{"n":"kick","f":"RolandCompurhythm78/rolandcompurhythm78-bd/Bassdrum.wav","t":1,"v":1},{"n":"conga low","f":"RolandCompurhythm78/rolandcompurhythm78-perc/Conga L.wav","t":1,"v":1},{"n":"snare","f":"RolandCompurhythm78/rolandcompurhythm78-sd/Snaredrum.wav","t":0,"v":1},{"n":"conga mid","f":"RolandCompurhythm78/rolandcompurhythm78-perc/Conga M.wav","t":1,"v":1},{"n":"wood block","f":"RolandCompurhythm78/rolandcompurhythm78-perc/Woodblock-01.wav","t":1,"v":1},{"n":"cowbell","f":"RolandCompurhythm78/rolandcompurhythm78-cb/Cowbell.wav","t":1,"v":1},{"n":"hat","f":"RolandCompurhythm78/rolandcompurhythm78-hh/Hat Closed-01.wav","t":0,"v":0.7},{"n":"tambourine","f":"RolandCompurhythm78/rolandcompurhythm78-tb/Tambourine.wav","t":0,"v":0.8}]},{"id":"simmons","name":"Simmons toms","lanes":[{"n":"kick","f":"SimmonsSDS5/simmonssds5-bd/Bassdrum-01.wav","t":1,"v":1},{"n":"low tom","f":"SimmonsSDS5/simmonssds5-lt/Tom-07.wav","t":1,"v":1},{"n":"snare","f":"SimmonsSDS5/simmonssds5-sd/Snaredrum-01.wav","t":0,"v":1},{"n":"mid tom","f":"SimmonsSDS5/simmonssds5-mt/Tom-02.wav","t":1,"v":1},{"n":"rim","f":"SimmonsSDS5/simmonssds5-rim/Rimshot-01.wav","t":0,"v":1},{"n":"high tom","f":"SimmonsSDS5/simmonssds5-ht/Tom-01.wav","t":1,"v":1},{"n":"hat","f":"SimmonsSDS5/simmonssds5-hh/Hat Closed-01.wav","t":0,"v":0.7},{"n":"open hat","f":"SimmonsSDS5/simmonssds5-oh/Hat Open-01.wav","t":0,"v":0.7}]},{"id":"dmx","name":"Oberheim DMX","lanes":[{"n":"kick","f":"OberheimDMX/oberheimdmx-bd/Bassdrum-01.wav","t":1,"v":1},{"n":"low tom","f":"OberheimDMX/oberheimdmx-lt/Tom L.wav","t":1,"v":1},{"n":"snare","f":"OberheimDMX/oberheimdmx-sd/Snaredrum-01.wav","t":0,"v":1},{"n":"mid tom","f":"OberheimDMX/oberheimdmx-mt/Tom M.wav","t":1,"v":1},{"n":"clap","f":"OberheimDMX/oberheimdmx-cp/Clap.wav","t":0,"v":1},{"n":"high tom","f":"OberheimDMX/oberheimdmx-ht/Tom H.wav","t":1,"v":1},{"n":"hat","f":"OberheimDMX/oberheimdmx-hh/Hat Closed.wav","t":0,"v":0.7},{"n":"open hat","f":"OberheimDMX/oberheimdmx-oh/Hat Open.wav","t":0,"v":0.7}]},{"id":"glitch","name":"Glitch and blips","lanes":[{"n":"sub pop","syn":"sub","m":36,"t":1,"v":1},{"n":"pop","syn":"pop","m":48,"t":1,"v":1},{"n":"bleep","syn":"bleep","m":69,"t":1,"v":1},{"n":"blip","syn":"blip","m":81,"t":1,"v":1},{"n":"zap","syn":"zap","m":60,"t":0,"v":1},{"n":"click","syn":"click","m":60,"t":0,"v":1},{"n":"tick","syn":"tick","m":60,"t":0,"v":1},{"n":"glitch","syn":"glitch","m":60,"t":0,"v":1}]}];
 const COLORS = ['#e8744a', '#f2b84b', '#7bc6a4', '#5aa9e6', '#c58ad8', '#e86a92', '#9bd35a', '#f0e0c8'];
 let KIT = KITS[0];
+const MIDI = { access: null, out: null, on: false, clock: false, cc: true, ch: 1, map: 'drum' };
 const $ = id => document.getElementById(id);
 const clamp = (x, a, b) => Math.min(b, Math.max(a, x));
 
@@ -247,10 +289,12 @@ const clamp = (x, a, b) => Math.min(b, Math.max(a, x));
 const ctx = new (window.AudioContext || window.webkitAudioContext)();
 const masterIn = ctx.createGain();
 const djHP = ctx.createBiquadFilter(), djLP = ctx.createBiquadFilter();
+const lfoLP = ctx.createBiquadFilter(), lfoAmt = ctx.createGain();   // the tempo-synced filter sweep
+lfoLP.type = 'lowpass'; lfoLP.frequency.value = 20000; lfoLP.Q.value = 0.7; lfoAmt.gain.value = 0; lfoAmt.connect(lfoLP.detune);
 djHP.type = 'highpass'; djHP.frequency.value = 20; djLP.type = 'lowpass'; djLP.frequency.value = 20000;
 const pre = ctx.createGain(), comp = ctx.createDynamicsCompressor();
 comp.threshold.value = -14; comp.ratio.value = 4; comp.attack.value = 0.004; comp.release.value = 0.12;
-masterIn.connect(djHP).connect(djLP).connect(pre).connect(comp).connect(ctx.destination);
+masterIn.connect(djHP).connect(djLP).connect(lfoLP).connect(pre).connect(comp).connect(ctx.destination);
 // delay: the same five styles and nine times as Three Cities
 const DELAY_BEATS = { '16': 0.25, '16t': 1 / 6, '8t': 1 / 3, '8': 0.5, 'd8': 0.75, '4t': 2 / 3, '4': 1, 'd4': 1.5 };
 const DELAY_TIMES = { '16': '1/16', '16t': '1/16 triplet', '8t': '1/8 triplet', '8': '1/8', 'd8': 'dotted 1/8', '4t': '1/4 triplet', '4': '1/4', 'd4': 'dotted 1/4' };
@@ -391,6 +435,7 @@ function synthHit(l, t, vel) {
   o.connect(g).connect(out); o.start(t); o.stop(t + 0.2);
 }
 function hit(l, t, vel) {
+  midiHit(l, t, vel);
   if (l.d.syn) { l.flash = t; synthHit(l, t, vel); return; }
   const s = SAMPLES.get(l.d.f), rate = l.rate;
   l.flash = t;
@@ -547,6 +592,7 @@ function schedule(t, n) {
     if (dv < 1) { hit(l, t, v * 0.95); hit(l, t + ss * dv, v * 0.8); }
   });
   autoStep(t, n);
+  midiClockStep(t, ss);
   visQ.push({ t, n });
 }
 function tick() {
@@ -556,12 +602,12 @@ async function start() {
   if (ctx.state !== 'running') await ctx.resume();
   if (playing) return;
   playing = true; stepN = 0; nextTime = ctx.currentTime + 0.06; visQ.length = 0;
-  setDelayTime();
+  setDelayTime(); lfoBuild(nextTime); midiTransport(true, nextTime);
   timer = setInterval(tick, 25);
   $('play').setAttribute('aria-pressed', 'true'); $('play').textContent = 'Stop';
 }
 function stop() {
-  playing = false; clearInterval(timer); visQ.length = 0; autoRelease();
+  playing = false; clearInterval(timer); visQ.length = 0; autoRelease(); midiTransport(false, ctx.currentTime);
   $('play').setAttribute('aria-pressed', 'false'); $('play').textContent = 'Play';
 }
 $('play').addEventListener('click', () => playing ? stop() : start());
@@ -572,7 +618,7 @@ function makeFader(el, l) {
   el.innerHTML = '<div class="fill"></div><div class="cap"></div>';
   const fill = el.querySelector('.fill'), cap = el.querySelector('.cap'), H = () => el.clientHeight - 8;
   const draw = () => { const y = 4 + (1 - l.vol) * H(); cap.style.top = y + 'px'; fill.style.height = (l.vol * H()) + 'px'; el.setAttribute('aria-valuenow', Math.round(l.vol * 100)); };
-  const set = v => { l.vol = clamp(v, 0, 1); l.g.gain.setTargetAtTime(faderGain(l.vol), ctx.currentTime, 0.015); draw(); };
+  const set = v => { l.vol = clamp(v, 0, 1); l.g.gain.setTargetAtTime(faderGain(l.vol), ctx.currentTime, 0.015); draw(); midiCC(7, l.vol * 127, l); };
   const fromY = e => { const r = el.getBoundingClientRect(); set(1 - (e.clientY - r.top - 4) / H()); };
   el.addEventListener('pointerdown', e => { el.setPointerCapture(e.pointerId); fromY(e); el._d = true; });
   el.addEventListener('pointermove', e => { if (el._d) fromY(e); });
@@ -646,8 +692,8 @@ function knobCell(host, label, value, onChange, o = {}) {
 const mixer = $('mixer');
 lanes.forEach(l => {
   const s = document.createElement('div'); s.className = 'strip'; s.style.setProperty('--c', l.color); s.dataset.lane = l.i;
-  s.innerHTML = `<div class="nmrow"><span class="trig" title="Lights up when this drum sounds"></span><div class="nm">${l.d.n}</div></div><div class="why"></div><div class="panbar" title="Pan: drag left or right. Double click to centre."><b></b><i></i></div><div class="panlab" aria-hidden="true"><span>L</span><span>R</span></div><div class="fader"></div>
-    <div class="row2"><button class="btn f" type="button" aria-pressed="false" title="Close a filter on this drum"><i class="led"></i>Filter</button><button class="btn st" type="button" aria-pressed="false" title="Repeat this drum's last hit. Tap to latch, hold for just a moment."><i class="led"></i>Stutter</button></div>
+  s.innerHTML = `<div class="nmrow"><span class="trig" title="Lights up when this drum sounds"></span><div class="nm" data-kb="${'ZXCVBNM,'[l.i]}" title="Tap to play this drum (key ${'ZXCVBNM,'[l.i]})">${l.d.n}</div></div><div class="why"></div><div class="panbar" title="Pan: drag left or right. Double click to centre."><b></b><i></i></div><div class="panlab" aria-hidden="true"><span>L</span><span>R</span></div><div class="fader"></div>
+    <div class="row2"><button class="btn f" type="button" data-kb="${'QWERTYUI'[l.i]}" aria-pressed="false" title="Close a filter on this drum (key ${'QWERTYUI'[l.i]})"><i class="led"></i>Filter</button><button class="btn st" type="button" data-kb="${'ASDFGHJK'[l.i]}" aria-pressed="false" title="Repeat this drum's last hit. Tap to latch, hold for just a moment. Key ${'ASDFGHJK'[l.i]} stutters while held."><i class="led"></i>Stutter</button></div>
     <div class="kn3"><div class="kc"><div class="knob" data-k="chance"></div><span>Chance</span></div><div class="kc"><div class="knob" data-k="delay"></div><span>Delay</span></div><div class="kc"><div class="knob" data-k="verb"></div><span>Reverb</span></div></div>
     <button class="pad" type="button" aria-pressed="false" aria-label="Mute ${l.d.n}" title="Mute or unmute (key ${l.i + 1})">${l.i + 1}</button>`;
   mixer.appendChild(s); l.el = s;
@@ -690,28 +736,35 @@ const say = (() => { let tm; return m => { $('status').textContent = m; clearTim
 // The bottom row (Z to comma) plays the drums by hand.
 const KROW = { top: ['KeyQ', 'KeyW', 'KeyE', 'KeyR', 'KeyT', 'KeyY', 'KeyU', 'KeyI'], mid: ['KeyA', 'KeyS', 'KeyD', 'KeyF', 'KeyG', 'KeyH', 'KeyJ', 'KeyK'], low: ['KeyZ', 'KeyX', 'KeyC', 'KeyV', 'KeyB', 'KeyN', 'KeyM', 'Comma'] };
 const typing = e => e.target.matches('select, input:not([type=range]), textarea');
+// show what a key is touching: a lit strip, a lit button, and a label at the bottom
+const keytip = $('keytip'); let keytipT = 0;
+function showKey(key, msg, hold) { keytip.innerHTML = `<kbd>${key}</kbd>${msg}`; keytip.classList.add('on'); clearTimeout(keytipT); if (!hold) keytipT = setTimeout(() => keytip.classList.remove('on'), 900); }
+function hideKey() { clearTimeout(keytipT); keytipT = setTimeout(() => keytip.classList.remove('on'), 150); }
+function flashEl(l, el, ms) { l.el.classList.add('keyed'); el.classList.add('keydown'); setTimeout(() => { el.classList.remove('keydown'); l.el.classList.remove('keyed'); }, ms); }
+const heldKeys = {};
 addEventListener('keydown', e => {
   if (typing(e) || e.metaKey || e.ctrlKey || e.altKey) return;
   if (e.key === ' ' && !e.target.matches('button')) { e.preventDefault(); playing ? stop() : start(); return; }
   if (e.repeat) return;
-  const m = '12345678'.indexOf(e.key); if (m >= 0) { setMute(lanes[m], !lanes[m].mute); return; }
-  let i = KROW.top.indexOf(e.code); if (i >= 0) { lanes[i].el.querySelector('.f').click(); return; }
-  i = KROW.mid.indexOf(e.code); if (i >= 0) { lanes[i].stut = true; lanes[i].el.querySelector('.st').dataset.key = '1'; return; }
-  i = KROW.low.indexOf(e.code); if (i >= 0) tap(lanes[i]);
+  const m = '12345678'.indexOf(e.key); if (m >= 0) { const l = lanes[m]; setMute(l, !l.mute); flashEl(l, l.pad, 220); showKey(e.key, (l.mute ? 'Mute: ' : 'Back in: ') + l.d.n); return; }
+  let i = KROW.top.indexOf(e.code); if (i >= 0) { const l = lanes[i], b = l.el.querySelector('.f'); b.click(); flashEl(l, b, 220); showKey('QWERTYUI'[i], l.d.n + ' filter ' + (l.flt ? 'on' : 'off')); return; }
+  i = KROW.mid.indexOf(e.code); if (i >= 0) { const l = lanes[i], b = l.el.querySelector('.st'); l.stut = true; b.dataset.key = '1'; b.setAttribute('aria-pressed', 'true'); b.classList.add('keydown'); l.el.classList.add('keyed'); heldKeys[e.code] = 1; showKey('ASDFGHJK'[i], l.d.n + ' stutter (hold)', true); return; }
+  i = KROW.low.indexOf(e.code); if (i >= 0) { const l = lanes[i]; tap(l); flashEl(l, l.el.querySelector('.nm'), 160); showKey('ZXCVBNM,'[i], 'Play ' + l.d.n); }
 });
 addEventListener('keyup', e => {
   const i = KROW.mid.indexOf(e.code); if (i < 0) return;
-  const b = lanes[i].el.querySelector('.st'); delete b.dataset.key; lanes[i].stut = !!b._latched;   // a latched button keeps going
+  const l = lanes[i], b = l.el.querySelector('.st'); delete b.dataset.key; l.stut = !!b._latched;   // a latched button keeps going
+  b.setAttribute('aria-pressed', String(!!b._latched)); b.classList.remove('keydown'); l.el.classList.remove('keyed'); delete heldKeys[e.code]; hideKey();
 });
 document.querySelectorAll('[data-st]').forEach(b => { const d = +b.dataset.st; momentary(b, () => gDivs.add(d), () => gDivs.delete(d)); });
 // knobs for the whole mix
 const K = {};
-K.chance = knobCell($('kChance'), 'Chance', 100, v => { GCHANCE = v; }, { size: 'lg', aria: 'Chance for everything', reset: 100 });
+K.chance = knobCell($('kChance'), 'Chance', 100, v => { GCHANCE = v; midiCC(76, v * 127 / 100); }, { size: 'lg', aria: 'Chance for everything', reset: 100 });
 K.filter = knobCell($('kFilter'), 'Filter', 0, v => {
   const f = v / 100, t = ctx.currentTime;
   djLP.frequency.setTargetAtTime(f < 0 ? 200 * Math.pow(100, 1 + f) : 20000, t, 0.03);
   djHP.frequency.setTargetAtTime(f > 0 ? 20 * Math.pow(300, f) : 20, t, 0.03);
-  const q = 0.7 + 3 * Math.abs(f); djLP.Q.value = q; djHP.Q.value = q;
+  const q = 0.7 + 3 * Math.abs(f); djLP.Q.value = q; djHP.Q.value = q; midiCC(74, (v + 100) * 127 / 200);
 }, { size: 'lg', min: -100, max: 100, fmt: v => v === 0 ? 'open' : v < 0 ? 'low ' + (-v) : 'high ' + v, aria: 'DJ filter', reset: 0 });
 K.wander = knobCell($('kWander'), 'How often', 40, () => {}, { size: 'lg', aria: 'How often the filters and pans wander', fmt: v => v + '%', reset: 40 });
 // the two pedals
@@ -733,6 +786,81 @@ chipRow('vTypes', Object.fromEntries(Object.entries(REVERBS).map(([k, m]) => [k,
 const foot = (id, get, set, apply) => { const b = $(id); b.addEventListener('click', () => { const v = !get(); set(v); b.setAttribute('aria-pressed', String(v)); b.querySelector('span').textContent = v ? 'On' : 'Off'; apply(); }); };
 foot('dFoot', () => DELAY_ON, v => DELAY_ON = v, applyDelayLevel); foot('vFoot', () => VERB_ON, v => VERB_ON = v, applyVerbLevel);
 applyDelay(); applyDelayLevel(); applyVerbLevel();
+
+// ---------- filter LFO on the whole mix ----------
+const LFO = { on: false, depth: 50, rate: 2, shape: 'sine', osc: null };
+const LFO_RATES = [['4 bars', 16], ['2 bars', 8], ['1 bar', 4], ['1/2 note', 2], ['1/4 note', 1], ['1/4 triplet', 2 / 3], ['1/8 note', 0.5], ['1/8 triplet', 1 / 3], ['1/16 note', 0.25]];
+const LFO_SHAPES = [['Smooth', 'sine'], ['Triangle', 'triangle'], ['Ramp', 'sawtooth'], ['Chop', 'square']];
+$('lfoRate').innerHTML = LFO_RATES.map((r, i) => `<option value="${i}">${r[0]}</option>`).join(''); $('lfoRate').value = LFO.rate;
+$('lfoShape').innerHTML = LFO_SHAPES.map((r, i) => `<option value="${r[1]}">${r[0]}</option>`).join('');
+function lfoApply() {
+  const d = LFO.on ? LFO.depth / 100 : 0, t = ctx.currentTime;
+  lfoLP.frequency.setTargetAtTime(20000 * Math.pow(2, -3 * d), t, 0.03);   // the middle of the sweep drops as it gets deeper
+  lfoAmt.gain.setTargetAtTime(1200 * 3.5 * d, t, 0.03);                    // and so does the width, up to 3 and a half octaves each way
+  lfoLP.Q.setTargetAtTime(0.7 + 4 * d, t, 0.03);
+}
+function lfoBuild(at) {
+  if (LFO.osc) { try { LFO.osc.stop(); } catch (e) {} LFO.osc.disconnect(); LFO.osc = null; }
+  if (!LFO.on) return;
+  const o = ctx.createOscillator(); o.type = LFO.shape;
+  o.frequency.value = 1 / (LFO_RATES[LFO.rate][1] * 60 / +$('bpm').value);   // one cycle per note length
+  o.connect(lfoAmt); o.start(Math.max(at || 0, ctx.currentTime)); LFO.osc = o;
+}
+K.lfo = knobCell($('kLfo'), 'Level', LFO.depth, v => { LFO.depth = v; lfoApply(); midiCC(75, v * 127 / 100); }, { size: 'lg', aria: 'Filter LFO level', fmt: v => v + '%', reset: 50 });
+toggle($('lfoOn'), v => { LFO.on = v; lfoApply(); lfoBuild(playing ? nextTime : 0); say(v ? 'Filter LFO on: ' + LFO_RATES[LFO.rate][0] : 'Filter LFO off'); });
+$('lfoRate').addEventListener('change', () => { LFO.rate = +$('lfoRate').value; lfoBuild(playing ? nextTime : 0); });
+$('lfoShape').addEventListener('change', () => { LFO.shape = $('lfoShape').value; lfoBuild(playing ? nextTime : 0); });
+let lfoT = 0; $('bpm').addEventListener('input', () => { clearTimeout(lfoT); lfoT = setTimeout(() => lfoBuild(), 200); });
+
+// ---------- MIDI out ----------
+const MIDI_MAPS = { drum: 'Drum machine pads (36, 38, 42, 46...)', perc: 'Percussion (congas, bongos, timbales)', tuned: 'The tuned notes of the key', tracks: 'One drum per channel (all on note C3)' };
+const MIDI_NOTES = { drum: [36, 38, 42, 46, 43, 50, 49, 39], perc: [64, 63, 62, 61, 60, 65, 66, 75] };
+$('midiCh').innerHTML = Array.from({ length: 16 }, (_, i) => `<option value="${i + 1}">${i + 1}${i === 9 ? ' (drums)' : ''}</option>`).join(''); $('midiCh').value = MIDI.ch;
+$('midiMap').innerHTML = Object.entries(MIDI_MAPS).map(([k, v]) => `<option value="${k}">${v}</option>`).join('');
+const midiPerf = t => { const ts = ctx.getOutputTimestamp ? ctx.getOutputTimestamp() : null; return ts && ts.performanceTime ? ts.performanceTime + (t - ts.contextTime) * 1000 : performance.now() + (t - ctx.currentTime) * 1000; };
+function midiNoteOf(l) {
+  if (MIDI.map === 'tracks') return 60;
+  if (MIDI.map === 'tuned') { const m = /^([A-G][b#]?)(-?\d+)$/.exec(l.note || ''); const pc = m ? NOTES.indexOf(m[1]) : -1; return pc >= 0 ? clamp((+m[2] + 1) * 12 + pc, 0, 127) : clamp(48 + ROOT, 0, 127); }
+  return MIDI_NOTES[MIDI.map][l.i];
+}
+const midiChOf = l => MIDI.map === 'tracks' ? ((MIDI.ch - 1 + l.i) % 16) : MIDI.ch - 1;
+function midiSend(bytes, t) { if (!MIDI.out) return; try { MIDI.out.send(bytes, t ? midiPerf(t) : undefined); } catch (e) {} }
+function midiHit(l, t, vel) {
+  if (!MIDI.on || !MIDI.out) return;
+  const n = midiNoteOf(l), c = midiChOf(l), v = clamp(Math.round(40 + 87 * Math.min(1, vel)), 1, 127);
+  midiSend([0x90 | c, n, v], t); midiSend([0x80 | c, n, 0], t + 0.09);
+}
+function midiCC(cc, v, l) { if (!MIDI.on || !MIDI.cc || !MIDI.out) return; const c = l ? midiChOf(l) : MIDI.ch - 1; midiSend([0xB0 | c, cc, clamp(Math.round(v), 0, 127)]); }
+function midiClockStep(t, ss) { if (!MIDI.on || !MIDI.clock || !MIDI.out) return; for (let k = 0; k < 6; k++) midiSend([0xF8], t + ss * k / 6); }
+function midiTransport(go, t) { if (MIDI.on && MIDI.clock && MIDI.out) midiSend([go ? 0xFA : 0xFC], t); }
+function midiMsg(m) { $('midiMsg').textContent = m; }
+function midiFillOutputs() {
+  const outs = MIDI.access ? [...MIDI.access.outputs.values()] : [];
+  const cur = MIDI.out && MIDI.out.id;
+  $('midiOut').innerHTML = '<option value="">None</option>' + outs.map(o => `<option value="${o.id}">${o.name}</option>`).join('');
+  const keep = outs.find(o => o.id === cur) || outs[0]; MIDI.out = keep || null; $('midiOut').value = keep ? keep.id : '';
+  midiMsg(outs.length ? 'Pick where the drums should go, then press Send notes.' : 'No MIDI device found. Plug one in and it will show up here.');
+}
+async function midiConnect() {
+  if (MIDI.access) return true;
+  if (!navigator.requestMIDIAccess) { midiMsg('This browser cannot send MIDI. Chrome, Edge and Firefox can. Safari cannot yet.'); return false; }
+  try { MIDI.access = await navigator.requestMIDIAccess(); MIDI.access.onstatechange = midiFillOutputs; midiFillOutputs(); if (MIDI.out && !MIDI.on) $('midiOn').click(); return true; }
+  catch (e) { midiMsg('MIDI was blocked. Allow it in the browser and try again.'); return false; }
+}
+function openMidi() { $('midiPanel').hidden = false; $('midiClose').focus(); midiConnect(); }
+function closeMidi() { $('midiPanel').hidden = true; $('midiOpen').focus(); }
+$('midiOpen').addEventListener('click', openMidi); $('midiClose').addEventListener('click', closeMidi);
+$('midiPanel').addEventListener('pointerdown', e => { if (e.target === $('midiPanel')) closeMidi(); });
+addEventListener('keydown', e => { if (e.key === 'Escape' && !$('midiPanel').hidden) closeMidi(); });
+const midiLight = () => $('midiOpen').setAttribute('aria-pressed', String(MIDI.on && !!MIDI.out));
+$('midiOut').addEventListener('change', () => { MIDI.out = MIDI.access ? MIDI.access.outputs.get($('midiOut').value) || null : null; midiLight(); });
+$('midiCh').addEventListener('change', () => MIDI.ch = +$('midiCh').value);
+$('midiMap').addEventListener('change', () => MIDI.map = $('midiMap').value);
+toggle($('midiOn'), v => { MIDI.on = v; midiLight(); if (v && playing) midiTransport(true, ctx.currentTime); });
+toggle($('midiClock'), v => { MIDI.clock = v; if (v && MIDI.on && playing) midiTransport(true, ctx.currentTime); });
+toggle($('midiCC'), v => MIDI.cc = v);
+$('midiTest').addEventListener('click', () => { const was = MIDI.on; MIDI.on = true; midiHit(lanes[0], ctx.currentTime + 0.02, 1); MIDI.on = was; });
+
 function openFx() { $('fxPanel').hidden = false; $('fxClose').focus(); }
 function closeFx() { $('fxPanel').hidden = true; $('fxOpen').focus(); }
 $('fxOpen').addEventListener('click', openFx); $('fxClose').addEventListener('click', closeFx);
