@@ -718,7 +718,7 @@
           </div>
           <div class="field"><label class="label" for="chordRhythm">Plays on</label><select id="chordRhythm" title="Held is one long chord. Pick a ring and the chord plays on every hit of it"></select></div>
           <div class="field"><label class="label" for="chordSound">Sound</label><select id="chordSound"><optgroup label="Short"><option value="stab" selected title="Two detuned saws, a bite at the front">Synth stab</option><option value="pluck" title="Soft and plucked">Pluck</option><option value="rave" title="Wide and bright">Rave stab</option><option value="organ" title="Quick and round">Organ</option></optgroup><optgroup label="Long"><option value="warm">Warm pad</option><option value="glass">Glass</option><option value="air">Air</option><option value="tape">Tape strings</option><option value="strings">Strings</option><option value="choir">Choir</option><option value="bowed">Bowed</option><option value="shimmer">Shimmer</option></optgroup></select></div>
-          <div class="field"><label class="label" for="chordMove">Change</label><select id="chordMove"><option value="4" selected>4 bars</option><option value="8">8 bars</option><option value="16">16 bars</option><option value="32">32 bars</option><option value="drone">Drone</option></select></div>
+          <div class="field"><label class="label" for="chordMove">Change</label><select id="chordMove"><option value="1">1 bar</option><option value="2" selected>2 bars</option><option value="4">4 bars</option><option value="8">8 bars</option><option value="16">16 bars</option><option value="32">32 bars</option><option value="drone">Drone</option></select></div>
           <div class="chord-row">
             <div class="field"><span class="label">Octave</span><div class="row-inline"><button id="chordOctDown" class="btn small" type="button" aria-label="Chords down an octave">-</button><output id="chordOctOut" aria-live="polite">0</output><button id="chordOctUp" class="btn small" type="button" aria-label="Chords up an octave">+</button></div></div>
             <button id="chordAuto" class="btn small tog" type="button" aria-pressed="false" title="The filter opens across each chord and closes as the next one arrives"><i class="tog-dot" aria-hidden="true"></i>Auto filter</button>
@@ -2886,9 +2886,9 @@ document.querySelectorAll('#sampShape button').forEach(b => {
 // ---------- Chords: a slow bed of chords under the rings (the same as Three Cities) ----------
 // The key follows the conga: its Tune moves the chords with it, and its octave buttons lift or drop them.
 // A new chord arrives every few bars from a short progression in the conga's minor key; each swells in and fades as the next comes.
-const CHORD = { on: false, level: 0.4, voices: [], sound: 'stab', rhythm: 'ring', len: 25, bars: 4, drone: false, tone: 1, auto: false, shift: 0, rev: 0.3, del: 0.2,
+const CHORD = { on: false, level: 0.4, voices: [], sound: 'stab', rhythm: 'ring', len: 25, bars: 2, hit: 0, drone: false, tone: 1, auto: false, shift: 0, rev: 0.3, del: 0.2,
   bus: null, filt: null, revSend: null, revIn: null, delSend: null, delay: null, prog: null, sig: '', timer: null };
-const CHORD_PROGS = [[0, 5, 3, 4], [0, 3, 4, 0], [0, 4, 5, 3], [5, 3, 0, 4]];   // i VI iv v, i iv v i, i v VI iv, VI iv i v
+const CHORD_PROGS = [[0, 5, 3, 4], [0, 3, 4, 0], [0, 4, 5, 3], [5, 3, 0, 4], [0, 2, 3, 4], [0, 4, 3, 2], [3, 4, 0, 5], [0, 6, 5, 4], [0, 2, 5, 4], [5, 6, 0, 3]];   // i VI iv v, i iv v i, i v VI iv, VI iv i v
 const padOsc = (type, f, out, t, end, gain = 1, det = 0) => {
   const o = ctx.createOscillator(); o.type = type; o.frequency.value = f; o.detune.value = det;
   const g = ctx.createGain(); g.gain.value = gain; o.connect(g).connect(out); o.start(t); o.stop(end); return o;
@@ -2988,21 +2988,37 @@ function chordRootAt(n) {
   if (CHORD.drone) return 0;
   return CHORD.prog[Math.floor(n / (16 * CHORD.bars)) % CHORD.prog.length];
 }
-function chordNotes(root) {
+// A chord is its root with the third, fifth and sometimes more. A voicing turns it round (inversions) and adds colour (sus, 7th, 9th).
+function chordNotes(root, v = {}) {
   const SC = scaleSteps(), n = SC.length, { k, oct } = chordKey();
   const note = d => 48 + k + SC[((d % n) + n) % n] + 12 * Math.floor(d / n);
-  return [note(root) - 12, note(root), note(root + 2), note(root + 4)].map(m => m + 12 * oct);
+  const D = [0, v.color === 'sus' ? 3 : 2, 4];
+  if (v.color === '7') D.push(6); else if (v.color === '9') D.push(8);
+  for (let i = 0; i < (v.inv || 0) && i < D.length; i++) D[i] += n;   // an inversion lifts the lowest notes an octave
+  D.sort((a, b) => a - b);
+  return [note(root) - 12].concat(D.map(d => note(root + d))).map(m => m + 12 * oct);
+}
+// What a hit plays: the chord now, or the next one if the change is just about to land (a push), turned and coloured by where we are in the phrase
+function chordVoicing(n) {
+  const bar = Math.floor(n / 16), c = CHORD.drone ? 1024 : CHORD.bars;
+  const push = !CHORD.drone && (n % 16) >= 13 && (bar + 1) % c === 0 && Math.random() < 0.7;
+  const color = bar % 8 === 7 ? '9' : bar % 4 === 3 ? 'sus' : (bar % 2 === 1 && Math.random() < 0.5) ? '7' : null;
+  const inv = [0, 1, 2, 1, 0, 2][CHORD.hit++ % 6];
+  return { root: chordRootAt(push ? n + 3 : n), v: { inv, color } };
 }
 const chordHeld = () => CHORD.rhythm === 'held' || !kitList.some(l => l.id === CHORD.rhythm);
 // One chord on a hit of the ring it follows: a short note with a filter that closes as it rings
 function chordHit(t, n, vel = 1) {
   if (!CHORD.on || CHORD.level <= 0) return;
-  const P = PADS[CHORD.sound] || PADS.warm, notes = chordNotes(chordRootAt(n));
-  const dur = stepSecs() * (1 + CHORD.len / 100 * 8), rel = P.short ? P.release : 0.3, end = t + dur + rel + 0.1;
+  const P = PADS[CHORD.sound] || PADS.warm, V = chordVoicing(n), notes = chordNotes(V.root, V.v);
+  // each hit is a little different: its length, loudness and brightness (the filter breathes over eight bars, and the off-beats are brighter)
+  const dur = stepSecs() * (1 + CHORD.len / 100 * 8) * (0.7 + Math.random() * 0.6), rel = P.short ? P.release : 0.3, end = t + dur + rel + 0.1;
+  const bright = (0.75 + 0.45 * (0.5 - 0.5 * Math.cos(2 * Math.PI * (n % 128) / 128))) * (n % 4 === 2 ? 1.12 : 1);
+  vel *= 0.8 + Math.random() * 0.3;
   notes.forEach((m, i) => {
     const f = 440 * Math.pow(2, (m - 69) / 12), g = ctx.createGain(), lp = ctx.createBiquadFilter();
     lp.type = 'lowpass'; lp.Q.value = 0.8;
-    const top = Math.min(16000, 1450 * P.bright * 2.2), low = Math.max(300, 1450 * P.bright * 0.4);
+    const top = Math.min(16000, 1450 * P.bright * 2.2 * bright), low = Math.max(300, 1450 * P.bright * 0.4 * bright);
     lp.frequency.setValueAtTime(top, t); lp.frequency.exponentialRampToValueAtTime(low, t + dur);
     const peak = CHORD.level * (i === 0 ? 0.03 : 0.019) * P.gain * vel * (P.short ? 1 : 0.7);
     g.gain.setValueAtTime(0.0001, t); g.gain.linearRampToValueAtTime(peak, t + 0.012);
@@ -3496,7 +3512,15 @@ function schedule(t, n) {
     subChord(t, n);
   }
   if (n % 4 === 0) breathe(n, t);
-  if (CHORD.on && !chordHeld()) { const L = kitList.find(l => l.id === CHORD.rhythm); if (L && L.n && L.bits[n % L.n] && roll()) chordHit(tX, n, vel); }
+  if (CHORD.on && !chordHeld()) {
+    const L = kitList.find(l => l.id === CHORD.rhythm);
+    if (L && L.n) {
+      const here = L.bits[n % L.n], next = L.bits[(n + 1) % L.n];
+      if (here && Math.random() > 0.1 && roll()) chordHit(tX, n, vel);                       // now and then a hit is left out
+      else if (!here && next && Math.random() < 0.12 && roll()) chordHit(tX, n, vel * 0.7);   // or one arrives a sixteenth early
+    }
+  }
+  if (n > 0 && n % (16 * 16) === 0 && Math.random() < 0.4) CHORD.prog = CHORD_PROGS[Math.floor(Math.random() * CHORD_PROGS.length)].slice();   // every sixteen bars the harmony may take a new road
   if (CHORD.on && CHORD.auto && CHORD.filt && n % 2 === 0) chordAutoSweep(n, t);
   const k = state.kick ? n % state.kick.steps : -1;
   const r = state.pattern.length ? n % state.pattern.length : -1;
