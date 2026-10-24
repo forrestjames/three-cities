@@ -87,6 +87,13 @@ KITS = [
    dict(n='bleep', syn='bleep', m=69, t=1, v=1), dict(n='blip', syn='blip', m=81, t=1, v=1),
    dict(n='zap', syn='zap', m=60, t=0, v=1), dict(n='click', syn='click', m=60, t=0, v=1),
    dict(n='tick', syn='tick', m=60, t=0, v=1), dict(n='glitch', syn='glitch', m=60, t=0, v=1)]),
+
+ # melodic kits: eight notes of one instrument, each ring plays its own note of the key
+  dict(id='kalimba', name='Kalimba', lanes=[dict(n='note 1', syn='kalimba', m=60, t=1, v=1), dict(n='note 2', syn='kalimba', m=62, t=1, v=1), dict(n='note 3', syn='kalimba', m=64, t=1, v=1), dict(n='note 4', syn='kalimba', m=65, t=1, v=1), dict(n='note 5', syn='kalimba', m=67, t=1, v=1), dict(n='note 6', syn='kalimba', m=69, t=1, v=1), dict(n='note 7', syn='kalimba', m=71, t=1, v=1), dict(n='note 8', syn='kalimba', m=72, t=1, v=1)]),
+  dict(id='harp', name='Harp pluck', lanes=[dict(n='note 1', syn='harp', m=60, t=1, v=1), dict(n='note 2', syn='harp', m=62, t=1, v=1), dict(n='note 3', syn='harp', m=64, t=1, v=1), dict(n='note 4', syn='harp', m=65, t=1, v=1), dict(n='note 5', syn='harp', m=67, t=1, v=1), dict(n='note 6', syn='harp', m=69, t=1, v=1), dict(n='note 7', syn='harp', m=71, t=1, v=1), dict(n='note 8', syn='harp', m=72, t=1, v=1)]),
+  dict(id='rhodes', name='Electric piano', lanes=[dict(n='note 1', syn='rhodes', m=60, t=1, v=1), dict(n='note 2', syn='rhodes', m=62, t=1, v=1), dict(n='note 3', syn='rhodes', m=64, t=1, v=1), dict(n='note 4', syn='rhodes', m=65, t=1, v=1), dict(n='note 5', syn='rhodes', m=67, t=1, v=1), dict(n='note 6', syn='rhodes', m=69, t=1, v=1), dict(n='note 7', syn='rhodes', m=71, t=1, v=1), dict(n='note 8', syn='rhodes', m=72, t=1, v=1)]),
+  dict(id='steel', name='Steel pan', lanes=[dict(n='note 1', syn='steel', m=60, t=1, v=1), dict(n='note 2', syn='steel', m=62, t=1, v=1), dict(n='note 3', syn='steel', m=64, t=1, v=1), dict(n='note 4', syn='steel', m=65, t=1, v=1), dict(n='note 5', syn='steel', m=67, t=1, v=1), dict(n='note 6', syn='steel', m=69, t=1, v=1), dict(n='note 7', syn='steel', m=71, t=1, v=1), dict(n='note 8', syn='steel', m=72, t=1, v=1)]),
+  dict(id='vibes', name='Vibraphone', lanes=[dict(n='note 1', syn='vibes', m=60, t=1, v=1), dict(n='note 2', syn='vibes', m=62, t=1, v=1), dict(n='note 3', syn='vibes', m=64, t=1, v=1), dict(n='note 4', syn='vibes', m=65, t=1, v=1), dict(n='note 5', syn='vibes', m=67, t=1, v=1), dict(n='note 6', syn='vibes', m=69, t=1, v=1), dict(n='note 7', syn='vibes', m=71, t=1, v=1), dict(n='note 8', syn='vibes', m=72, t=1, v=1)]),
 ]
 # check every file exists in the drum pack, if a copy is on this machine
 PACK = os.environ.get('TDM_PACK', '/home/claude/geikha/tidal-drum-machines/machines/')
