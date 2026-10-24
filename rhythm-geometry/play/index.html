@@ -44,6 +44,9 @@
   .main > * { min-width: 0; }
   .ringwrap { position: relative; width: min(100%, calc(100vh - 150px)); max-width: 640px; min-width: 280px; aspect-ratio: 1; margin: 0 auto; }
   canvas { width: 100%; height: 100%; display: block; }
+  #sky { position: fixed; inset: 0; width: 100%; height: 100%; z-index: -1; pointer-events: none; }
+  .ringwrap::before { content: ""; position: absolute; inset: 0; border-radius: 50%; background: radial-gradient(circle, rgba(6,3,2,.97) 68%, rgba(6,3,2,.75) 86%, rgba(6,3,2,0) 100%); }
+  .ringwrap canvas { position: relative; }
   .centre { position: absolute; inset: 0; display: grid; place-content: center; text-align: center; pointer-events: none; }
   .centre .c-name { font-family: var(--display); font-size: 20px; letter-spacing: .06em; }
   .centre .c-wx { font-size: 10.5px; color: var(--ink-dim); }
@@ -61,8 +64,6 @@
   .mini label { font-size: 9px; letter-spacing: .1em; text-transform: uppercase; color: var(--ink-faint); display: flex; justify-content: space-between; }
   .mini input, .send input { width: 100%; accent-color: var(--accent); height: 20px; margin: 0; }
   .mini.dj { max-width: 130px; }
-  .app:not(.space) .send, .app:not(.space) .mini.sp, .app:not(.space) .spacehint { display: none; }
-  .app.space .send { display: grid; } .app.space .mini.sp { display: grid; } .app.space .spacehint { display: block; }
   .panbar { position: relative; width: 100%; height: 3px; background: rgba(243,236,230,.14); border-radius: 2px; }
   .panbar i { position: absolute; top: -2px; width: 7px; height: 7px; margin-left: -3px; border-radius: 50%; background: var(--c); }
   .strip .btn[data-auto="1"] { box-shadow: inset 0 0 0 1px var(--c); }
@@ -82,7 +83,7 @@
   .strip .why { font-size: 9.5px; color: var(--ink-dim); text-align: center; line-height: 1.3; }
   .strip .why b { color: var(--c); font-weight: 500; font-size: 15px; margin-right: 6px; }
   .strip .why i { font-style: normal; color: var(--ink); border: 1px solid var(--line); padding: 0 4px; margin-left: 6px; }
-  .fader { position: relative; width: 36px; height: 76px; touch-action: none; cursor: ns-resize; }
+  .fader { position: relative; width: 36px; height: 62px; touch-action: none; cursor: ns-resize; }
   .fader::before { content: ""; position: absolute; left: 50%; top: 4px; bottom: 4px; width: 6px; margin-left: -3px; background: #0b0706; border-radius: 3px; box-shadow: inset 0 0 0 1px var(--line); }
   .fader .fill { position: absolute; left: 50%; width: 6px; margin-left: -3px; bottom: 4px; background: var(--c); border-radius: 3px; opacity: .55; }
   .fader .cap { position: absolute; left: 0; right: 0; height: 18px; margin-top: -9px; background: var(--c); border-radius: 3px; box-shadow: 0 2px 0 rgba(0,0,0,.5); }
@@ -94,7 +95,7 @@
   .strip .btn[aria-pressed="true"] { background: var(--c); border-color: var(--c); color: #14110f; }
   .led { display: inline-block; width: 6px; height: 6px; border-radius: 50%; background: #3a2c26; margin-right: 4px; vertical-align: middle; }
   .strip .btn[aria-pressed="true"] .led { background: #14110f; }
-  .pad { width: 100%; height: 40px; border: 0; border-radius: 6px; background: var(--c); color: #14110f; font-size: 11px; letter-spacing: .1em; text-transform: uppercase; box-shadow: 0 4px 0 rgba(0,0,0,.5); touch-action: none; }
+  .pad { width: 100%; height: 34px; border: 0; border-radius: 6px; background: var(--c); color: #14110f; font-size: 11px; letter-spacing: .1em; text-transform: uppercase; box-shadow: 0 4px 0 rgba(0,0,0,.5); touch-action: none; }
   .pad:active, .pad.hit { transform: translateY(3px); box-shadow: 0 1px 0 rgba(0,0,0,.5); filter: brightness(1.25); }
   .hint { font-size: 11px; color: var(--ink-faint); margin: 0; }
   .status { font-size: 11px; color: var(--ink-faint); min-height: 1.4em; }
@@ -111,6 +112,7 @@
 </style>
 </head>
 <body>
+<canvas id="sky" aria-hidden="true"></canvas>
 <div class="app" id="app">
   <div class="top">
     <h1>Rhythm Geometry <small>play</small></h1>
@@ -143,14 +145,13 @@
         </div>
         <div class="mini dj"><label for="dj">Filter</label><input id="dj" type="range" min="-100" max="100" value="0" aria-label="DJ filter. Left closes it, right thins it out. Double click to centre."></div>
         <div class="fxgroup"><span class="fxlab">Wander</span>
-          <button id="autoFlt" class="btn" type="button" aria-pressed="true" title="Each drum's filter closes by itself now and then for a few beats, so drums drift in and out">Filters</button>
-          <button id="autoPan" class="btn" type="button" aria-pressed="true" title="Each drum swings to one side for a few beats, then comes back">Pan</button>
+          <button id="autoFlt" class="btn" type="button" aria-pressed="true" title="Each drum's filter closes by itself now and then and holds for 1, 2, 4 or 8 bars, so drums drift in and out. Calm weather holds longer.">Filters</button>
+          <button id="autoPan" class="btn" type="button" aria-pressed="true" title="Each drum swings to one side for 1, 2, 4 or 8 bars, then comes back">Pan</button>
           <div class="mini"><label for="wander">How often</label><input id="wander" type="range" min="0" max="100" value="40" aria-label="How often the filters and pans wander"></div>
         </div>
-        <div class="fxgroup"><select id="root" aria-label="Key"></select><button id="tuneOn" class="btn" type="button" aria-pressed="true" title="On: every drum with a clear pitch is moved to a note of the key and scale. Off: drums sound as recorded.">In key</button><button id="remix" class="btn" type="button" title="Turn every ring to a new starting point. Same step counts, new groove.">Shift rings</button><button id="spaceBtn" class="btn" type="button" aria-pressed="false" title="Show the delay and reverb controls">Space</button></div>
-        <div class="mini sp"><label for="fxDelay">Delay (all)</label><input id="fxDelay" type="range" min="0" max="100" value="0" aria-label="Delay for everything"></div>
-        <div class="mini sp"><label for="fxVerb">Reverb (all)</label><input id="fxVerb" type="range" min="0" max="100" value="30" aria-label="Reverb for everything"></div>
-        <span class="spacehint fxlab">D and R on each drum send just that drum.</span>
+        <div class="fxgroup"><select id="root" aria-label="Key"></select><button id="tuneOn" class="btn" type="button" aria-pressed="true" title="On: every drum with a clear pitch is moved to a note of the key and scale. Off: drums sound as recorded.">In key</button><button id="remix" class="btn" type="button" title="Turn every ring to a new starting point. Same step counts, new groove.">Shift rings</button></div>
+        <div class="mini"><label for="fxDelay">Delay (all)</label><input id="fxDelay" type="range" min="0" max="100" value="0" aria-label="Delay for everything"></div>
+        <div class="mini"><label for="fxVerb">Reverb (all)</label><input id="fxVerb" type="range" min="0" max="100" value="30" aria-label="Reverb for everything"></div>
       </div>
       <div class="mixer" id="mixer"></div>
     </div>
@@ -359,7 +360,7 @@ function retune() {
     l.note = NOTES[((target % 12) + 12) % 12] + (Math.floor(target / 12) - 1);
   });
   renderWhy();
-  $('hint').textContent = (TUNE ? `In key: ${NOTES[ROOT]} ${MODES[MODE].name}. ` : 'Not in key. ') + 'Keys: space plays, 1 to 8 mute the drums, Q to I play them. Tap an effect to latch it, or hold it for a moment.';
+  $('hint').textContent = (TUNE ? `In key: ${NOTES[ROOT]} ${MODES[MODE].name}. ` : 'Not in key. ') + 'Keys: space plays. 1 to 8 mute. Q to I filter. A to K stutter (hold). Z to comma play the drums.';
 }
 async function setKit(id) {
   const k = KITS.find(x => x.id === id) || KITS[0];
@@ -370,16 +371,23 @@ async function setKit(id) {
 }
 
 // ---------- wandering filters and pans ----------
-// Now and then a drum's filter closes for a few beats, or it swings to one side. It keeps the mix moving by itself.
+// Now and then a drum's filter closes for a few bars, or it swings to one side. It keeps the mix moving by itself.
 const AUTO = { flt: true, pan: true };
+// How long a filter or a pan holds, in bars. Calm air holds for long stretches, a windy day changes its mind quickly.
+function holdBars() {
+  const calm = clamp(1 - WX.wind / 40, 0, 1), mu = 0.4 + 2.4 * calm, opts = [1, 2, 4, 8];
+  const w = opts.map((_, i) => Math.exp(-((i - mu) ** 2) / 0.9)), tot = w.reduce((a, b) => a + b, 0);
+  let r = Math.random() * tot; for (let i = 0; i < 4; i++) { r -= w[i]; if (r <= 0) return opts[i]; }
+  return 2;
+}
 function autoStep(t, n) {
+  if (n % 16 !== 0) return;   // decisions are made on the bar
   const p = $('wander').value / 100;
   lanes.forEach(l => {
-    if (n % 4 !== 0) return;   // decisions are made on the beat
     if (l.aF > 0) { l.aF--; if (l.aF === 0) setFilter(l, t); }
-    else if (AUTO.flt && Math.random() < 0.02 + 0.1 * p) { l.aF = 1 + Math.floor(Math.random() * 4); l.aFc = 240 + Math.random() * 700; setFilter(l, t); }
-    if (l.aP > 0) { l.aP--; if (l.aP === 0) { l.panNow = l.basePan; l.pn.pan.setTargetAtTime(l.basePan, t, 0.2); } }
-    else if (AUTO.pan && Math.random() < 0.02 + 0.1 * p) { l.aP = 2 + Math.floor(Math.random() * 7); l.panNow = (Math.random() < 0.5 ? -1 : 1) * (0.45 + Math.random() * 0.5); l.pn.pan.setTargetAtTime(l.panNow, t, 0.15); }
+    else if (AUTO.flt && Math.random() < 0.03 + 0.12 * p) { l.aF = holdBars(); l.aFc = 240 + Math.random() * 700; setFilter(l, t); }
+    if (l.aP > 0) { l.aP--; if (l.aP === 0) { l.panNow = l.basePan; l.pn.pan.setTargetAtTime(l.basePan, t, 0.25); } }
+    else if (AUTO.pan && Math.random() < 0.03 + 0.12 * p) { l.aP = holdBars(); l.panNow = (Math.random() < 0.5 ? -1 : 1) * (0.45 + Math.random() * 0.5); l.pn.pan.setTargetAtTime(l.panNow, t, 0.2); }
   });
 }
 function autoRelease() { lanes.forEach(l => { l.aF = 0; l.aP = 0; l.panNow = l.basePan; l.pn.pan.setTargetAtTime(l.basePan, ctx.currentTime, 0.1); setFilter(l, ctx.currentTime); }); }
@@ -452,6 +460,7 @@ function momentary(el, on, off) {
   const up = () => { if (!down) return; const held = performance.now() - down; down = 0;
     if (latched) { latched = false; off(); state(false); } else if (held < 250) latched = true; else { off(); state(false); } };
   el.addEventListener('pointerup', up); el.addEventListener('pointercancel', up);
+  Object.defineProperty(el, '_latched', { get: () => latched });
   el.addEventListener('click', e => { if (e.detail === 0) { latched = !latched; latched ? on() : off(); state(latched); } });   // keyboard
   el.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') e.preventDefault(); if ((e.key === 'Enter' || e.key === ' ') && !e.repeat) { latched = !latched; latched ? on() : off(); state(latched); } });
 }
@@ -488,11 +497,22 @@ function setFilter(l, t) {
   const b = l.el.querySelector('.f'); b.dataset.auto = l.aF > 0 && !l.flt ? '1' : '0';
 }
 const say = (() => { let tm; return m => { $('status').textContent = m; clearTimeout(tm); tm = setTimeout(() => $('status').textContent = '', 4000); }; })();
+// Keys: 1 to 8 mute. The top letter row (Q to I) turns each drum's filter on. The next row (A to K) stutters it while you hold it.
+// The bottom row (Z to comma) plays the drums by hand.
+const KROW = { top: ['KeyQ', 'KeyW', 'KeyE', 'KeyR', 'KeyT', 'KeyY', 'KeyU', 'KeyI'], mid: ['KeyA', 'KeyS', 'KeyD', 'KeyF', 'KeyG', 'KeyH', 'KeyJ', 'KeyK'], low: ['KeyZ', 'KeyX', 'KeyC', 'KeyV', 'KeyB', 'KeyN', 'KeyM', 'Comma'] };
+const typing = e => e.target.matches('select, input:not([type=range]), textarea');
 addEventListener('keydown', e => {
-  if (e.target.matches('select, input')) return;
-  if (e.key === ' ' && !e.target.matches('button')) { e.preventDefault(); playing ? stop() : start(); }
-  const m = '12345678'.indexOf(e.key); if (m >= 0 && !e.repeat) setMute(lanes[m], !lanes[m].mute);       // 1 to 8 mute the drums
-  const n = 'qwertyui'.indexOf(e.key.toLowerCase()); if (n >= 0 && !e.repeat && !e.metaKey && !e.ctrlKey) tap(lanes[n]);   // Q to I play them
+  if (typing(e) || e.metaKey || e.ctrlKey || e.altKey) return;
+  if (e.key === ' ' && !e.target.matches('button')) { e.preventDefault(); playing ? stop() : start(); return; }
+  if (e.repeat) return;
+  const m = '12345678'.indexOf(e.key); if (m >= 0) { setMute(lanes[m], !lanes[m].mute); return; }
+  let i = KROW.top.indexOf(e.code); if (i >= 0) { lanes[i].el.querySelector('.f').click(); return; }
+  i = KROW.mid.indexOf(e.code); if (i >= 0) { lanes[i].stut = true; lanes[i].el.querySelector('.st').dataset.key = '1'; return; }
+  i = KROW.low.indexOf(e.code); if (i >= 0) tap(lanes[i]);
+});
+addEventListener('keyup', e => {
+  const i = KROW.mid.indexOf(e.code); if (i < 0) return;
+  const b = lanes[i].el.querySelector('.st'); delete b.dataset.key; lanes[i].stut = !!b._latched;   // a latched button keeps going
 });
 document.querySelectorAll('[data-st]').forEach(b => { const d = +b.dataset.st; momentary(b, () => gDivs.add(d), () => gDivs.delete(d)); });
 $('fxDelay').addEventListener('input', e => delSend.gain.setTargetAtTime(Math.pow(e.target.value / 100, 2) * 0.8, ctx.currentTime, 0.03));
@@ -503,7 +523,7 @@ toggle($('tuneOn'), v => { TUNE = v; retune(); say(v ? 'Drums moved to notes of 
 KITS.forEach(k => $('kit').add(new Option(k.name, k.id)));
 $('kit').addEventListener('change', () => setKit($('kit').value));
 $('remix').addEventListener('click', () => { remix(); renderWhy(); say('Every ring turned to a new starting point.'); });
-$('spaceBtn').addEventListener('click', () => { const v = $('app').classList.toggle('space'); $('spaceBtn').setAttribute('aria-pressed', String(v)); });
+
 $('dj').addEventListener('input', () => {
   const v = $('dj').value / 100, t = ctx.currentTime;
   djLP.frequency.setTargetAtTime(v < 0 ? 200 * Math.pow(100, 1 + v) : 20000, t, 0.03);
@@ -550,7 +570,7 @@ async function pickCity() {
   const g = setPattern(); buildLanes();
   MODE = modeFromWeather(); ROOT = [...c.n].reduce((a, ch) => (a * 31 + ch.charCodeAt(0)) >>> 0, 7) % 12; $('root').value = ROOT; retune();
   $('cWx').textContent = Math.round(WX.temp) + '°  ·  wind ' + Math.round(WX.wind) + '  ·  ' + Math.round(WX.hum) + '% humid';
-  $('story').innerHTML = `<b>${c.n}</b> plays <b>${g.n}</b> at <b>${$('bpm').value}</b> beats a minute. The weather chose <b>${NOTES[ROOT]} ${MODES[MODE].name}</b> and tuned the drums to it. Each drum is a ring with its own length, taken from the weather, so they slip against each other and the groove keeps changing.`;
+  $('story').innerHTML = `<b>${c.n}</b> plays <b>${g.n}</b> at <b>${$('bpm').value}</b> beats a minute. The weather chose <b>${NOTES[ROOT]} ${MODES[MODE].name}</b> and tuned the drums to it. Each drum is a ring with its own length, taken from the weather, so they slip against each other and the groove keeps changing. ${WX.wind < 12 ? 'The air is calm, so filters and pans hold for long stretches.' : WX.wind > 28 ? 'It is windy, so filters and pans change their minds quickly.' : 'Filters and pans hold for a few bars at a time.'}`;
 }
 city.addEventListener('change', () => { pickGenre(); pickCity(); });
 genre.addEventListener('change', () => { setPattern(); buildLanes(); $('story').innerHTML = $('story').innerHTML.replace(/plays <b>[^<]*<\/b> at <b>\d+<\/b>/, `plays <b>${genre.selectedOptions[0].text}</b> at <b>${$('bpm').value}</b>`); });
@@ -577,39 +597,42 @@ function skyUpdate() {
   while (SKY.clouds.length < n) SKY.clouds.push({ a: Math.random() * 6.28, r: 330 + Math.random() * 150, s: 90 + Math.random() * 120, o: 0.05 + Math.random() * 0.07 });
   SKY.clouds.length = n;
   const m = WX.rain > 0 ? Math.min(70, 14 + Math.round(WX.rain * 24)) : 0;
-  while (SKY.drops.length < m) SKY.drops.push({ x: Math.random() * 1000, y: Math.random() * 1000, v: 5 + Math.random() * 5 });
+  while (SKY.drops.length < m) SKY.drops.push({ x: Math.random() * 1000, y: Math.random() * skyCv.height, v: 5 + Math.random() * 5 });
   SKY.drops.length = m;
 }
 setInterval(skyUpdate, 20000);
-function drawSky(g) {
-  const a = SKY.alt, day = clamp((a + 6) / 24, 0, 1);   // 0 at night, 1 in full day
-  g.save(); g.beginPath(); g.arc(CX, CX, 498, 0, 7); g.clip();
-  const warm = clamp(1 - Math.abs(a - 2) / 9, 0, 1);   // the glow of sunrise and sunset
-  const top = [Math.round(10 + 40 * day + 60 * warm), Math.round(16 + 56 * day + 20 * warm), Math.round(40 + 52 * day - 10 * warm)];
-  const gr = g.createRadialGradient(CX, CX, 60, CX, CX, 500);
-  gr.addColorStop(0, `rgba(${top[0]},${top[1]},${top[2]},0.05)`); gr.addColorStop(1, `rgba(${top[0]},${top[1]},${top[2]},0.55)`);
-  g.fillStyle = gr; g.fillRect(0, 0, W, W);
-  const wind = (WX.wind || 0) * 0.00012;
-  SKY.clouds.forEach(c => {
-    c.a += wind * (c.s / 120); const x = CX + c.r * Math.cos(c.a), y = CX + c.r * Math.sin(c.a);
-    const cg = g.createRadialGradient(x, y, 0, x, y, c.s); cg.addColorStop(0, `rgba(243,236,230,${c.o})`); cg.addColorStop(1, 'rgba(243,236,230,0)');
-    g.fillStyle = cg; g.beginPath(); g.arc(x, y, c.s, 0, 7); g.fill();
+const skyCv = $('sky'), sg = skyCv.getContext('2d');
+function skySize() { skyCv.width = Math.max(2, Math.round(innerWidth / 2)); skyCv.height = Math.max(2, Math.round(innerHeight / 2)); }
+addEventListener('resize', skySize); skySize();
+let skyFrame = 0;
+function drawSky() {
+  if ((skyFrame++ & 1) || !cur) return;
+  const w = skyCv.width, h = skyCv.height, a = SKY.alt, day = clamp((a + 6) / 24, 0, 1), warm = clamp(1 - Math.abs(a - 2) / 9, 0, 1);
+  sg.clearRect(0, 0, w, h);
+  const c = [Math.round(14 + 50 * day + 70 * warm), Math.round(22 + 70 * day + 24 * warm), Math.round(52 + 70 * day - 14 * warm)];
+  const gr = sg.createLinearGradient(0, 0, 0, h);
+  gr.addColorStop(0, `rgba(${c[0]},${c[1]},${c[2]},0.5)`); gr.addColorStop(0.55, `rgba(${c[0]},${c[1]},${c[2]},0.12)`); gr.addColorStop(1, `rgba(${c[0]},${c[1]},${c[2]},0.02)`);
+  sg.fillStyle = gr; sg.fillRect(0, 0, w, h);
+  const wind = (WX.wind || 0) * 0.00025;
+  SKY.clouds.forEach(cl => {
+    cl.a = (cl.a + wind * (cl.s / 120)) % 1; const x = ((cl.a * 1.3) % 1.3 - 0.15) * w, y = (0.08 + (cl.r - 330) / 150 * 0.5) * h, rr = cl.s / 1000 * Math.max(w, h) * 0.9;
+    const cg = sg.createRadialGradient(x, y, 0, x, y, rr); cg.addColorStop(0, `rgba(243,236,230,${cl.o * 0.8})`); cg.addColorStop(1, 'rgba(243,236,230,0)');
+    sg.fillStyle = cg; sg.beginPath(); sg.arc(x, y, rr, 0, 7); sg.fill();
   });
-  g.strokeStyle = 'rgba(190,215,255,.22)'; g.lineWidth = 2; g.lineCap = 'round';
-  SKY.drops.forEach(d => { d.y += d.v; d.x -= d.v * 0.2; if (d.y > 1000) { d.y = -20; d.x = Math.random() * 1000; } g.beginPath(); g.moveTo(d.x, d.y); g.lineTo(d.x + 5, d.y + 22); g.stroke(); });
-  // the sun, or the moon, on the rim
-  const ang = SKY.hour / 24 * Math.PI * 2 + Math.PI / 2, sx = CX + 484 * Math.cos(ang), sy = CX + 484 * Math.sin(ang);
-  g.fillStyle = a > -1 ? 'rgba(255,214,140,.95)' : 'rgba(215,225,255,.85)';
-  g.shadowColor = a > -1 ? 'rgba(255,200,110,.9)' : 'rgba(180,200,255,.7)'; g.shadowBlur = 24;
-  g.beginPath(); g.arc(sx, sy, a > -1 ? 13 : 9, 0, 7); g.fill(); g.shadowBlur = 0;
-  g.restore();
+  sg.strokeStyle = 'rgba(190,215,255,.14)'; sg.lineWidth = 1; sg.lineCap = 'round';
+  SKY.drops.forEach(d => { d.y += d.v * 0.6; d.x -= d.v * 0.12; if (d.y > h) { d.y = -10; d.x = Math.random() * 1000; } sg.beginPath(); sg.moveTo(d.x * w / 1000, d.y); sg.lineTo(d.x * w / 1000 + 3, d.y + 12); sg.stroke(); });
+  // the sun, or the moon, crosses the top of the page through the day
+  const t = SKY.hour / 24, sx = t * w, sy = 26 - 18 * Math.cos((SKY.hour - 12) / 12 * Math.PI);
+  const sun = a > -1;
+  sg.fillStyle = sun ? 'rgba(255,214,140,.85)' : 'rgba(215,225,255,.7)'; sg.shadowColor = sun ? 'rgba(255,200,110,.8)' : 'rgba(180,200,255,.6)'; sg.shadowBlur = 18;
+  sg.beginPath(); sg.arc(sx, sy, sun ? 7 : 5, 0, 7); sg.fill(); sg.shadowBlur = 0;
 }
 
 // ---------- the picture ----------
 const cv = $('rings'), g2 = cv.getContext('2d'), W = cv.width, CX = W / 2;
 function draw() {
   g2.clearRect(0, 0, W, W);
-  drawSky(g2);
+  drawSky();
   const now = ctx.currentTime;
   while (visQ.length > 1 && visQ[1].t <= now) visQ.shift();
   const cur = visQ.length && visQ[0].t <= now ? visQ[0].n : -1;
