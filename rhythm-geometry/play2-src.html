@@ -355,6 +355,14 @@
   .app2[data-lay="b"] .wxdial { display: none; }
   .app2[data-lay="b"] #wxVoiceRow { display: flex; }
   #wxVoice { background: rgba(10,6,12,.55); border: 1px solid var(--line2); border-radius: 999px; padding: 8px 30px 8px 12px; font-size: 12px; }
+  .mtrack::after { content: ""; position: absolute; left: 50%; top: 4px; width: 2px; height: 28px; margin-left: -1px; border-radius: 1px; background: rgba(243,236,230,.55); pointer-events: none; }
+  .mh { width: 46px; height: 30px; margin-left: -23px; border-radius: 7px; background: linear-gradient(180deg, #fbf7f3, #d9cfc7); box-shadow: 0 4px 12px rgba(0,0,0,.55), inset 0 -2px 0 rgba(0,0,0,.18); background-image: repeating-linear-gradient(90deg, transparent 0 12px, rgba(20,17,15,.35) 12px 14px, transparent 14px 20px); background-size: 100% 100%; background-repeat: no-repeat; background-position: center; }
+  .mh::before { content: ""; position: absolute; inset: 6px 17px; border-left: 2px solid rgba(20,17,15,.55); border-right: 2px solid rgba(20,17,15,.55); }
+  .mh { background: linear-gradient(180deg, #fbf7f3, #d9cfc7); }
+  .xcurve { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; margin-top: 2px; }
+  .xcurve .lab { margin-right: 4px; }
+  .xcurve button { border-radius: 999px; padding: 5px 11px; font-size: 10px; letter-spacing: .08em; text-transform: uppercase; background: transparent; border: 1px solid var(--line2); color: var(--ink-dim); }
+  .xcurve button[aria-pressed="true"] { background: var(--ink); color: #14110f; border-color: var(--ink); }
 </style>
 </head>
 <body>
@@ -434,12 +442,13 @@
     </div>
     <div class="barmix" id="barmix">
       <div class="mixctl" id="mixctl">
-        <span class="lab">Mix two sounds · drag</span>
+        <span class="lab">Crossfader · drag</span>
         <div class="mixrow">
           <label class="sp d"><span class="lab" id="mixD">Drums 100%</span><select id="kit" aria-label="Drum sound" title="The first sound. Pick any kit, even a melodic one."></select></label>
-          <div class="mtrack" id="mixTrack"><div class="mh" id="mixHandle" role="slider" tabindex="0" aria-label="Mix between the two sounds" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">&#8942;&#8942;</div></div>
+          <div class="mtrack" id="mixTrack"><div class="mh" id="mixHandle" role="slider" tabindex="0" aria-label="Mix between the two sounds" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"></div></div>
           <label class="sp m"><span class="lab" id="mixM">Melodic 0%</span><select id="blendSnd" aria-label="Melodic sound" title="The second sound"><option value="kalimba">Kalimba</option><option value="harp">Harp</option><option value="rhodes">Electric piano</option><option value="steel">Steel pan</option></select></label>
         </div>
+        <div class="xcurve" role="group" aria-label="Crossfader curve"><span class="lab">Curve</span><button type="button" data-cv="cut" aria-pressed="false" title="A hard switch, like a DJ cut">Cut</button><button type="button" data-cv="fade" aria-pressed="false" title="Equal power, the same level all the way">Fade</button><button type="button" data-cv="smooth" aria-pressed="true" title="A slow hand-over across the whole throw">Smooth</button></div>
         <input id="blend" class="sr" type="range" min="0" max="100" value="0" aria-label="Blend between the two sounds" tabindex="-1">
       </div>
     </div>
@@ -754,13 +763,22 @@ function synthHit(l, t, vel) {
 // ---------- blend: a fader between the drum kit and a melodic sound ----------
 // Every hit can play the drum and a melodic note at once. The fader trades one for the other (equal power, so the level stays steady).
 // The melodic note is the ring's own note in the key, so the rings add texture and a tune that follows the weather.
-const BLEND = { v: 0, snd: 'kalimba' }, MELBASE = [60, 62, 64, 65, 67, 69, 71, 72];
+// the crossfader. v is 0 (all drums) to 100 (all melodic). The curve decides how the two sides hand over:
+// cut: a hard switch with a short crossover at the middle, like a DJ mixer's cut
+// fade: equal power, the same level all the way through
+// smooth: the hand-over is spread over the whole throw and eases in and out, so it is hard to hear where it turns
+const BLEND = { v: 0, snd: 'kalimba', curve: 'smooth' }, MELBASE = [60, 62, 64, 65, 67, 69, 71, 72];
+function blendGains(b) {
+  if (BLEND.curve === 'cut') { const dg = clamp((0.6 - b) / 0.2, 0, 1); return [dg, 1 - dg]; }
+  if (BLEND.curve === 'smooth') { const t = b * b * (3 - 2 * b); return [Math.cos(t * Math.PI / 2), Math.sin(t * Math.PI / 2)]; }
+  return [Math.cos(b * Math.PI / 2), Math.sin(b * Math.PI / 2)];   // fade
+}
 function hit(l, t, vel) {
   if (l.wx && WXV.v !== 'kit') { const saved = l.d; l.d = voiceOf(l); try { hitVoice(l, t, vel); } finally { l.d = saved; } return; }
   hitVoice(l, t, vel);
 }
 function hitVoice(l, t, vel) {
-  const b = BLEND.v / 100, dg = Math.cos(b * Math.PI / 2), mg = Math.sin(b * Math.PI / 2);
+  const [dg, mg] = blendGains(BLEND.v / 100);
   if (l.d.syn && MELODIC[l.d.syn]) midiHit(l, t, vel); else if (dg > 0.02) midiHit(l, t, vel * dg);
   if (mg > 0.02 && !(l.d.syn && MELODIC[l.d.syn])) midiMel(l.mm || MELBASE[l.i], t, vel * mg, BLEND.snd);
   if (mg > 0.02 && !(l.d.syn && MELODIC[l.d.syn])) melHit(BLEND.snd, 440 * Math.pow(2, ((l.mm || MELBASE[l.i]) - 69) / 12), t, vel * mg, l.g);
@@ -1673,6 +1691,11 @@ lanes.forEach(l => l.el.querySelector('.sh').addEventListener('click', e => {
 
 // the two-sound mix: drag the handle between the kit on the left and the melodic sound on the right
 {
+  document.querySelectorAll('.xcurve [data-cv]').forEach(b => b.addEventListener('click', () => {
+    BLEND.curve = b.dataset.cv;
+    document.querySelectorAll('.xcurve [data-cv]').forEach(o => o.setAttribute('aria-pressed', String(o === b)));
+    say('Crossfader: ' + b.textContent.toLowerCase() + '.');
+  }));
   const track = $('mixTrack'), hnd = $('mixHandle'), inp = $('blend');
   const paint = () => {
     const v = BLEND.v; hnd.style.left = v + '%'; hnd.setAttribute('aria-valuenow', v);
