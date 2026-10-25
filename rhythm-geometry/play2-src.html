@@ -481,6 +481,7 @@
     </div>
     <div class="panel on" id="tab-mix"><div class="mixer" id="mixer"></div></div>
     <div class="panel" id="tab-perform"><div class="fx2"><div class="fxrow">
+          <div class="grp"><span class="fxlab">Drum kit</span><button id="kitAuto" class="btn" type="button" aria-pressed="true" title="On: the drum kit follows the genre, such as the TR-909 for house and the TR-808 for drum and bass. Pick a kit yourself and this turns off.">Follows genre</button></div>
           <div class="grp"><span class="fxlab">Arrangement</span>
             <select id="arr" aria-label="How the weather rings join the genre rows" title="Roles: four weather rings each get a drum job and answer the genre. Melody: two become a bass line and a motif. Original: every ring plays random hits.">
               <option value="roles">Roles and answers</option><option value="melody">Weather melody</option><option value="orig">Original, all random</option></select>
@@ -1414,6 +1415,7 @@ $('wxAmt').addEventListener('input', e => { WEATHER.level = +e.target.value; app
 $('wxVoice').addEventListener('change', e => setWxVoice(e.target.value));
 $('guest').innerHTML = '<option value="-1">None</option>' + ATLAS.cities.map((c, i) => [c.n, i]).sort((x, y) => x[0].localeCompare(y[0])).map(([n, i]) => `<option value="${i}">${n}</option>`).join('');
 $('guest').addEventListener('change', e => loadGuest(e.target.value));
+$('kitAuto').addEventListener('click', () => { setKitAuto(!KITAUTO.on); if (KITAUTO.on) autoKit(genre.selectedOptions[0] ? genre.selectedOptions[0].text : ''); say(KITAUTO.on ? 'The kit follows the genre.' : 'The kit stays where it is.'); });
 $('arr').addEventListener('change', e => { ARR.v = e.target.value; buildLanes(); say({ roles: 'Roles: the weather rings play hat, clap, shaker and ghost notes around the genre.', melody: 'Melody: two weather rings play a bass line and a motif in the key.', orig: 'Original: every weather ring plays its own random pattern.' }[ARR.v]); });
 $('guestScope').addEventListener('change', e => { GUEST.scope = e.target.value; if (GUEST.wx) buildLanes(); wxPaint(); });
 // the round dial in the middle of design A. 270 degrees of travel, from bottom left (0) to bottom right (100)
@@ -1456,7 +1458,7 @@ NOTES.forEach((n, i) => $('root').add(new Option(n, i)));
 $('root').addEventListener('change', () => { ROOT = +$('root').value; retune(); });
 toggle($('tuneOn'), v => { TUNE = v; retune(); say(v ? 'Drums moved to notes of ' + NOTES[ROOT] + ' ' + MODES[MODE].name + '.' : 'Drums back as recorded.'); });
 KITS.forEach(k => $('kit').add(new Option(k.name, k.id)));
-$('kit').addEventListener('change', () => setKit($('kit').value));
+$('kit').addEventListener('change', () => { setKitAuto(false); setKit($('kit').value); });
 $('remix').addEventListener('click', () => { remix(); renderWhy(); say('Every ring turned to a new starting point.'); });
 
 
@@ -1475,11 +1477,30 @@ function pickGenre() {
 const followTempo = { on: true };
 let genreBpm = 110;
 function setBpm(b) { let x = b; while (x < 60) x *= 2; while (x > 180) x /= 2; $('bpm').value = Math.round(x); $('bpmv').textContent = $('bpm').value; setDelayTime(); }
+// The kit follows the genre until you pick a kit yourself: 909 for house and techno, 808 for bass and hip hop,
+// LinnDrum for pop, funk and rock, CR-78 for reggae and bossa, Latin percussion for salsa and samba, congas for Cuban and Afro rhythms. Anything else keeps the congas.
+const KITAUTO = { on: true };
+const KIT_RULES = [
+  [/rumba|\bson\b|clave|guaguanc|abakua|santer|bata\b|afro-cuban|conga|yoruba/i, 'congas'],
+  [/salsa|mambo|cumbia|merengue|bachata|reggaeton|samba|forr|baiao|baião|choro|timba|cha.?cha|bomba|plena/i, 'latin'],
+  [/house|techno|trance|acid|hardcore|gabber|rave|breakbeat|big beat|electro(?!-pop)|industrial/i, '909'],
+  [/drum and bass|jungle|garage|grime|drill|dubstep|hip.?hop|trap|rap\b|amapiano|bass|funky|bruk|broken/i, '808'],
+  [/bossa|reggae|dub\b|krautrock|ska\b|rocksteady|lovers|new wave|synth/i, 'cr78'],
+  [/pop|funk|soul|disco|rock|punk|indie|britpop|shoegaze|city pop|schlager|jazz/i, 'linn'],
+];
+function kitForGenre(name) { const r = KIT_RULES.find(([re]) => re.test(name || '')); return r ? r[1] : 'congas'; }
+function setKitAuto(v) { KITAUTO.on = v; const b = $('kitAuto'); if (b) b.setAttribute('aria-pressed', String(v)); }
+function autoKit(name) {
+  if (!KITAUTO.on) return;
+  const id = kitForGenre(name); if (KIT.id === id) return;
+  $('kit').value = id; setKit(id);
+}
 function setPattern() {
   const g = ATLAS.cities[city.value].g[genre.value] || ATLAS.cities[city.value].g[0];
   const id = g.i[Math.floor(Math.random() * g.i.length)];
   pattern = ATLAS.patterns[id] || null;
   genreBpm = g.b || clamp(Math.round(100 + WX.temp), 80, 140);
+  autoKit(g.n);
   if (followTempo.on) setBpm(genreBpm);
   setDelayTime();
   return g;
