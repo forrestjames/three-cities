@@ -1,0 +1,1520 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Rhythm Geometry: Play, two designs</title>
+<meta name="robots" content="noindex">
+<meta name="description" content="Eight congas and bongos on weather rings. Mix them like a DJ.">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Abel&family=Source+Code+Pro:wght@400;500&display=swap">
+<style>
+  :root {
+    --ground: #100806; --panel: #1a1210; --strip: #201815; --line: rgba(243,236,230,.14);
+    --ink: #f3ece6; --ink-dim: rgba(243,236,230,.62); --ink-faint: rgba(243,236,230,.34);
+    --accent: #e8744a;
+    --display: "Abel", "Arial Narrow", "Helvetica Neue", sans-serif;
+    --mono: "Source Code Pro", ui-monospace, Menlo, monospace;
+  }
+  * { box-sizing: border-box; }
+  html { background: var(--ground); }
+  html, body { margin: 0; color: var(--ink); font-family: var(--mono); font-size: 13px; line-height: 1.4; letter-spacing: .02em; }
+  body { min-height: 100vh; padding: 12px 16px 24px; -webkit-user-select: none; user-select: none; }
+  button, select, input { font: inherit; color: inherit; }
+  button { cursor: pointer; touch-action: manipulation; }
+  button:focus-visible, select:focus-visible, .fader:focus-visible, input:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  .app { max-width: 1100px; margin: 0 auto; display: grid; gap: 12px; grid-template-columns: minmax(0, 1fr); }
+
+  /* top bar */
+  .top { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; }
+  h1 { font-family: var(--display); font-weight: 400; font-size: 26px; letter-spacing: .04em; margin: 0 6px 0 0; white-space: nowrap; }
+  h1 small { font-size: .5em; letter-spacing: .16em; text-transform: uppercase; color: var(--accent); margin-left: 8px; }
+  .top select { background: var(--panel); border: 1px solid var(--line); padding: 8px 10px; min-width: 0; max-width: 100%; flex: 1 1 130px; }
+  .top { min-width: 0; }
+  .bpm { flex: 0 1 190px; } .bpm input { flex: 1; min-width: 50px; width: 70px; }
+  .btn { background: #0a0605; border: 1px solid var(--line); padding: 8px 12px; text-transform: uppercase; letter-spacing: .08em; font-size: 11px; }
+  .btn[aria-pressed="true"] { background: color-mix(in srgb, var(--accent) 16%, #0a0605); color: var(--accent); border-color: var(--accent); box-shadow: 0 0 12px -3px var(--accent); }
+  .alt { margin-left: auto; font-size: 10.5px; letter-spacing: .1em; text-transform: uppercase; color: var(--ink-dim); text-decoration: none; border-bottom: 1px solid var(--line); }
+  #play { background: var(--accent); color: #14110f; border: 0; font-size: 14px; font-weight: 500; padding: 10px 22px; letter-spacing: .12em; }
+  #play[aria-pressed="true"] { background: #f3ece6; }
+  .bpm { display: flex; align-items: center; gap: 8px; color: var(--ink-dim); font-size: 11px; text-transform: uppercase; letter-spacing: .08em; }
+  .bpm input { width: 110px; accent-color: var(--accent); }
+  .bpm b { color: var(--ink); font-weight: 500; min-width: 3ch; }
+
+  /* stage: rings and what the weather is doing */
+  .main { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.12fr); gap: 16px; align-items: start; }
+  .main > * { min-width: 0; }
+  .ringwrap { position: relative; width: min(100%, calc(100vh - 150px)); max-width: 640px; min-width: 280px; aspect-ratio: 1; margin: 0 auto; }
+  canvas { width: 100%; height: 100%; display: block; }
+  #sky { position: fixed; inset: 0; width: 100%; height: 100%; z-index: -1; pointer-events: none; }
+  .ringwrap::before { content: ""; position: absolute; inset: 0; border-radius: 50%; background: radial-gradient(circle, rgba(6,3,2,.97) 68%, rgba(6,3,2,.75) 86%, rgba(6,3,2,0) 100%); }
+  .ringwrap canvas { position: relative; }
+  .centre { position: absolute; inset: 0; display: grid; place-content: center; text-align: center; pointer-events: none; }
+  .centre .c-name { font-family: var(--display); font-size: 20px; letter-spacing: .06em; }
+  .centre .c-wx { font-size: 10.5px; color: var(--ink-dim); }
+  .story { font-size: 13px; line-height: 1.6; color: var(--ink-dim); margin: 8px 0 0; }
+  .story b { color: var(--ink); font-weight: 400; }
+
+  /* effects */
+  .fx { display: flex; flex-wrap: wrap; align-items: stretch; gap: 8px; padding: 10px; background: #0a0605; border: 1px solid var(--line); position: relative; }
+  .fx::before { content: ""; position: absolute; left: 0; right: 0; top: -1px; height: 2px; background: linear-gradient(90deg, #e8744a, #f2b84b, #7bc6a4, #5aa9e6, #c58ad8, #e86a92, #9bd35a, #f0e0c8); box-shadow: 0 0 10px rgba(232,116,74,.35); }
+  .fxgroup { display: flex; gap: 6px; align-items: stretch; }
+  .fxlab { font-size: 9.5px; letter-spacing: .1em; text-transform: uppercase; color: var(--ink-faint); align-self: center; margin-right: 2px; }
+  .fx { display: grid; gap: 8px; padding: 8px 10px; }
+  .fxrow { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 12px; }
+  .grp { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; min-width: 0; }
+  .fx select { max-width: 112px; min-width: 0; }
+  .fxrow + .fxrow { border-top: 1px solid var(--line); padding-top: 8px; }
+  .fx .btn { min-width: 44px; padding: 8px 8px; font-size: 10.5px; }
+  .fx select { background: var(--strip); border: 1px solid var(--line); padding: 7px 6px; font-size: 11px; }
+  .mini { display: grid; gap: 1px; min-width: 70px; flex: 1 1 70px; max-width: 110px; }
+  .mini label { font-size: 9px; letter-spacing: .1em; text-transform: uppercase; color: var(--ink-faint); display: flex; justify-content: space-between; }
+  .mini input, .send input { width: 100%; accent-color: var(--accent); height: 20px; margin: 0; }
+  .mini.dj { max-width: 96px; flex: 1 1 80px; }
+  .knob { width: 40px; height: 40px; cursor: ns-resize; touch-action: none; flex: none; border-radius: 50%; }
+  .knob svg { width: 100%; height: 100%; display: block; overflow: visible; }
+  .vk .trk { fill: none; stroke: rgba(243,236,230,.14); stroke-width: 2.6; stroke-linecap: round; }
+  .vk .val { fill: none; stroke: var(--c, var(--accent)); stroke-width: 3; stroke-linecap: round; filter: drop-shadow(0 0 3px var(--c, var(--accent))); }
+  .vk .tk { stroke: rgba(243,236,230,.35); stroke-width: 1; } .vk .tk.big { stroke: rgba(243,236,230,.6); stroke-width: 1.6; }
+  .vk:hover .rot rect { fill: #fff; }
+  .kcell { display: flex; align-items: center; gap: 6px; }
+  .kcell.lg .knob { width: 54px; height: 54px; } .kcell.xl .knob { width: 92px; height: 92px; }
+  .kcell.v { flex-direction: column; gap: 2px; text-align: center; }
+  .ktxt { display: grid; line-height: 1.2; } .kcell.v .ktxt { justify-items: center; }
+  .klab { font-size: 9.5px; letter-spacing: .1em; text-transform: uppercase; color: var(--ink-faint); }
+  .kval { font-weight: 400; font-size: 11px; color: var(--ink-dim); min-width: 3.4ch; }
+  .kn3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 2px; width: 100%; justify-items: center; }
+  .kc { display: grid; justify-items: center; gap: 0; } .kc .knob { width: 38px; height: 38px; } .kc span { font-size: 8px; letter-spacing: .08em; text-transform: uppercase; color: var(--ink-faint); margin-top: -3px; }
+  .fxbox { width: min(96vw, 820px); max-height: 94vh; overflow: auto; background: transparent; border: 0; padding: 0; display: grid; gap: 12px; }
+  .fxbox .maphead { color: var(--ink); } .fxbox .hint { text-align: center; }
+  .pedals { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
+  .pedal { position: relative; display: flex; flex-direction: column; gap: 8px; padding: 16px 16px 24px; min-height: 500px; border-radius: 10px; border: 2px solid rgba(0,0,0,.55); box-shadow: inset 0 0 0 2px rgba(255,255,255,.08), 0 10px 0 rgba(0,0,0,.45), 0 22px 30px rgba(0,0,0,.5); }
+  .pedal.delay { background: linear-gradient(160deg, #2f6b5e, #1c4238); --c: #ffd27a; }
+  .pedal.verb { background: linear-gradient(160deg, #7a3f35, #4a231d); --c: #ffb68a; }
+  .pedal .pname { font-family: var(--display); font-size: 30px; letter-spacing: .1em; text-transform: uppercase; text-align: center; color: #f3ece6; text-shadow: 0 2px 0 rgba(0,0,0,.4); }
+  .pedal .kgrid { margin-bottom: 14px; display: flex; justify-content: space-around; flex-wrap: wrap; gap: 6px; padding: 4px 0 8px; }
+  .pedal .klab { color: rgba(255,240,225,.75); } .pedal .kval { color: #fff; }
+  .chiplab { font-size: 9px; letter-spacing: .14em; text-transform: uppercase; color: rgba(255,240,225,.6); margin-top: 2px; }
+  .pedal .chips { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 10px; } .pedal .chips .btn { padding: 6px 7px; font-size: 10px; background: rgba(0,0,0,.28); border-color: rgba(255,255,255,.18); }
+  .pedal .chips .btn[aria-pressed="true"] { background: #f3ece6; color: #1a1210; border-color: #f3ece6; }
+  .foot { margin: auto auto 0; flex: none; width: 140px; height: 96px; padding-top: 14px; border-radius: 10px; border: 2px solid rgba(0,0,0,.6); background: linear-gradient(#bfb8ae, #7e776e); color: #1a1210; display: grid; place-items: center; position: relative; box-shadow: 0 5px 0 rgba(0,0,0,.55); font-size: 11px; letter-spacing: .14em; text-transform: uppercase; }
+  .fcread { display: inline-flex; align-items: center; gap: 8px; font-size: 12px; color: var(--ink); } .fcread svg { display: block; } .fcread em { font-style: normal; color: var(--ink-faint); }
+  .blendfader { width: 150px; accent-color: var(--c, #ffb68a); }
+  .fxbox .hint { margin-top: 22px; }
+  .foot:active { transform: translateY(3px); box-shadow: 0 2px 0 rgba(0,0,0,.55); }
+  .foot .lamp { position: absolute; top: 12px; left: 50%; margin-left: -6px; width: 12px; height: 12px; border-radius: 50%; background: #5a4a44; box-shadow: inset 0 0 0 2px rgba(0,0,0,.45); }
+  .foot[aria-pressed="true"] .lamp { background: #ff5a3a; box-shadow: inset 0 0 0 2px rgba(0,0,0,.25), 0 0 10px 2px rgba(255,90,58,.7); }
+  .maptop { position: absolute; top: 0; left: 0; right: 0; display: flex; gap: 14px; align-items: center; padding: 12px 16px; background: linear-gradient(rgba(8,4,3,.85), rgba(8,4,3,0)); pointer-events: none; font-size: 13px; color: var(--ink); }
+  .maptop .maphelp { color: var(--ink-faint); font-size: 11px; margin-left: auto; } .maptop .btn { pointer-events: auto; }
+  @media (max-width: 700px) { .pedals { grid-template-columns: 1fr; } .kcell.xl .knob { width: 74px; height: 74px; } }
+  .panbar { position: relative; width: 100%; height: 16px; cursor: ew-resize; touch-action: none; }
+  .panbar::before { content: ""; position: absolute; left: 0; right: 0; top: 7px; height: 2px; background: rgba(243,236,230,.18); border-radius: 1px; }
+  .panbar::after { content: ""; position: absolute; left: 50%; top: 3px; width: 1px; height: 10px; background: rgba(243,236,230,.3); }
+  .panbar i { position: absolute; top: 3px; width: 10px; height: 10px; margin-left: -5px; border-radius: 50%; background: var(--c); box-shadow: 0 1px 0 rgba(0,0,0,.5); }
+  .panbar b { position: absolute; top: 4px; width: 2px; height: 8px; margin-left: -1px; background: var(--ink-faint); }
+  .panlab { display: flex; justify-content: space-between; width: 100%; font-size: 8px; color: var(--ink-faint); letter-spacing: .1em; margin-top: -2px; }
+  .nmrow { display: flex; align-items: center; justify-content: center; gap: 6px; }
+  .trig { width: 9px; height: 9px; border-radius: 50%; flex: none; background: var(--c); opacity: calc(.16 + .84 * var(--hit, 0)); box-shadow: 0 0 calc(12px * var(--hit, 0)) calc(2px * var(--hit, 0)) var(--c); }
+  .strip.muted .trig { opacity: .1; box-shadow: none; }
+  .strip .btn[data-auto="1"] { box-shadow: inset 0 0 0 1px var(--c); }
+  .strip .btn[data-auto="1"] .led { background: var(--c); }
+  .pad[aria-pressed="true"] { background: #2a211d; color: var(--ink-faint); box-shadow: inset 0 0 0 1px var(--c); text-decoration: line-through; filter: none; }
+  .mappanel { position: fixed; inset: 0; background: rgba(8,4,3,.94); display: grid; place-items: center; z-index: 10; }
+  #mapPanel:not([hidden]) { display: block; }
+  #mapCv { position: absolute; inset: 0; width: 100%; height: 100%; display: block; cursor: grab; touch-action: none; border: 0; background: transparent; }
+  #fxPanel { padding: 16px; }
+  .mappanel[hidden] { display: none; }
+  .maphead { display: flex; justify-content: space-between; align-items: center; color: var(--ink-dim); font-size: 12px; }
+
+  /* mixer strips */
+  .mixer { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; }
+  .strip { overflow: hidden; background: radial-gradient(120% 45% at 50% 0%, color-mix(in srgb, var(--c) 9%, transparent), transparent 75%), #0a0605; border: 1px solid color-mix(in srgb, var(--c) 34%, transparent); border-top: 2px solid var(--c); padding: 6px 6px 8px; display: grid; gap: 5px; justify-items: center; min-width: 0; }
+  .strip.muted { opacity: .5; }
+  .strip .nm { font-size: 10px; letter-spacing: .08em; text-transform: uppercase; text-align: center; line-height: 1.2; }
+  .strip .why { font-size: 9.5px; color: var(--ink-dim); text-align: center; line-height: 1.3; }
+  .strip .why b { color: var(--c); font-weight: 500; font-size: 15px; margin-right: 6px; }
+  .strip .why i { font-style: normal; color: var(--ink); border: 1px solid var(--line); padding: 0 4px; margin-left: 6px; }
+  .fader { position: relative; width: 36px; height: 62px; touch-action: none; cursor: ns-resize; }
+  .fader::before { content: ""; position: absolute; left: 50%; top: 4px; bottom: 4px; width: 6px; margin-left: -3px; background: #0b0706; border-radius: 3px; box-shadow: inset 0 0 0 1px var(--line); }
+  .fader .fill { position: absolute; left: 50%; width: 2px; margin-left: -1px; bottom: 4px; background: var(--c); box-shadow: 0 0 6px var(--c); opacity: .9; }
+  .fader .cap { position: absolute; left: 0; right: 0; height: 18px; margin-top: -9px; background: #0a0605; border-radius: 3px; box-shadow: inset 0 0 0 1.5px var(--c), 0 0 10px -2px var(--c); }
+  .fader .cap::after { content: ""; position: absolute; left: 5px; right: 5px; top: 8px; height: 2px; background: var(--c); box-shadow: 0 0 6px var(--c); }
+  .row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 3px; width: 100%; }
+  .send { display: grid; grid-template-columns: 1.4em 1fr; align-items: center; width: 100%; font-size: 9px; color: var(--ink-faint); letter-spacing: .06em; text-transform: uppercase; }
+  .send input { accent-color: var(--c); }
+  .strip .btn { padding: 8px 2px; font-size: 9.5px; letter-spacing: 0; width: 100%; min-width: 0; white-space: nowrap; overflow: hidden; background: #0a0605; border-color: color-mix(in srgb, var(--c) 30%, transparent); }
+  .strip .btn[aria-pressed="true"] { background: color-mix(in srgb, var(--c) 16%, #0a0605); border-color: var(--c); color: var(--c); box-shadow: 0 0 12px -3px var(--c); }
+  /* key hints and key feedback */
+  .strip .btn[data-kb] { position: relative; padding-left: 3px; padding-right: 15px; }
+  .strip [data-kb]::after { content: attr(data-kb); position: absolute; right: 2px; top: 50%; transform: translateY(-50%); min-width: 10px; padding: 0 1px; border-radius: 3px; border: 1px solid currentColor; font-size: 8.5px; line-height: 12px; text-align: center; opacity: .6; letter-spacing: 0; }
+  .strip .nmrow { position: relative; }
+  .strip .nm[data-kb] { padding-right: 20px; white-space: nowrap; }
+  .strip .keydown { outline: 2px solid #fff; outline-offset: 1px; filter: brightness(1.35); transform: translateY(2px); }
+  .strip.keyed { box-shadow: 0 0 0 2px var(--c), 0 0 22px -2px var(--c); }
+  .keytip { position: fixed; left: 50%; bottom: 14px; transform: translateX(-50%); z-index: 9; background: #f3ece6; color: #1a1210; padding: 8px 14px; border-radius: 8px; font-size: 13px; letter-spacing: .04em; pointer-events: none; opacity: 0; transition: opacity .12s; white-space: nowrap; box-shadow: 0 6px 0 rgba(0,0,0,.4); }
+  .keytip.on { opacity: 1; }
+  .keytip kbd { display: inline-block; min-width: 20px; padding: 1px 6px; margin-right: 8px; border-radius: 4px; background: #1a1210; color: #f3ece6; font-family: inherit; font-size: 12px; text-align: center; }
+  .midibox { display: grid; gap: 10px; width: min(520px, 100%); padding: 16px; background: var(--panel); border: 1px solid var(--line); }
+  .midibox label { display: grid; gap: 4px; font-size: 11px; letter-spacing: .08em; text-transform: uppercase; color: var(--ink-dim); }
+  .midibox select { background: var(--strip); border: 1px solid var(--line); padding: 9px 8px; font-size: 13px; text-transform: none; letter-spacing: 0; }
+  .midibox .chips { display: flex; flex-wrap: wrap; gap: 6px; }
+  .midibox .note { font-size: 12px; color: var(--ink-dim); margin: 0; }
+  .led { display: inline-block; width: 6px; height: 6px; border-radius: 50%; background: #3a2c26; margin-right: 4px; vertical-align: middle; }
+  .strip .btn[aria-pressed="true"] .led { background: var(--c); box-shadow: 0 0 6px var(--c); }
+  .pad { width: 100%; height: 34px; border: 0; border-radius: 6px; background: #0a0605; color: var(--c); font-size: 12px; letter-spacing: .1em; text-transform: uppercase; box-shadow: inset 0 0 0 1px var(--c), 0 0 14px -4px var(--c); touch-action: none; text-shadow: 0 0 8px var(--c); }
+  .padrow { display: grid; grid-template-columns: auto auto auto minmax(0, 1fr); gap: 3px; width: 100%; align-items: stretch; }
+  .oct { width: 20px; padding: 0; border: 1px solid color-mix(in srgb, var(--c) 45%, transparent); background: #0a0605; color: var(--c); font-size: 13px; line-height: 1; border-radius: 4px; }
+  .oct:hover, .oct:focus-visible { box-shadow: 0 0 8px -2px var(--c); }
+  .octv { min-width: 24px; display: grid; place-items: center; font-size: 10px; color: var(--ink-dim); }
+  .pad:active, .pad.hit { transform: translateY(2px); background: var(--c); color: #0a0605; text-shadow: none; box-shadow: 0 0 18px 0 var(--c); }
+  .hint { font-size: 11px; color: var(--ink-faint); margin: 0; }
+  .status { font-size: 11px; color: var(--ink-faint); min-height: 1.4em; }
+
+  @media (max-width: 900px) {
+    .main { grid-template-columns: 1fr; }
+    .ringwrap { width: 100%; max-width: 440px; }
+    .alt { margin-left: 0; }
+    .fxgroup { flex: 1 1 100%; }
+    .fx .btn { flex: 1; }
+    .fader { height: 70px; }
+  }
+  @media (max-width: 560px) { .strip .btn { padding: 6px 2px; } }
+</style>
+<style id="v2">
+  /* ===== play2: two designs on one engine. body[data-lay] picks A (Horizon) or B (Rail) ===== */
+  :root { --glass: rgba(12,7,16,.78); --line2: rgba(243,236,230,.26); }
+  body { padding: 0; overflow-x: hidden; }
+  .app2 { position: relative; height: 100vh; height: 100dvh; min-height: 620px; display: grid; grid-template-columns: minmax(0,1fr); grid-template-rows: minmax(0,1fr) auto auto; }
+  .hdr { position: absolute; left: 0; right: 0; top: 0; z-index: 3; display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; padding: 22px 36px; pointer-events: none; }
+  .hdr > * { pointer-events: auto; }
+  .wxb { display: grid; gap: 6px; justify-items: start; }
+  .brand { font-size: 11px; letter-spacing: .16em; text-transform: uppercase; color: var(--ink-dim); }
+  .w-city { font-family: var(--display); font-size: clamp(34px, 4.4vw, 60px); line-height: 1; letter-spacing: .01em; }
+  .w-now { display: flex; align-items: baseline; gap: 12px; }
+  #wTemp { font-family: var(--display); font-size: clamp(28px, 3vw, 44px); line-height: 1; }
+  #wCond { font-size: clamp(16px, 1.6vw, 22px); }
+  .w-meta { font-size: 11.5px; color: var(--ink-dim); letter-spacing: .04em; }
+  .pickers { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-top: 8px; }
+  .pickers select { background: rgba(10,6,12,.55); border: 1px solid var(--line2); border-radius: 999px; padding: 8px 12px; font-size: 12px; max-width: 190px; flex: none; }
+  .pickers .btn, .hdr .btn { border-radius: 999px; background: rgba(10,6,12,.55); border-color: var(--line2); }
+  .ibtn { width: 38px; height: 38px; border-radius: 50%; border: 1px solid var(--line2); background: rgba(10,6,12,.6); display: grid; place-items: center; padding: 0; flex: none; }
+  .ibtn svg { width: 18px; height: 18px; fill: none; stroke: var(--ink); stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+  .ibtn:hover { border-color: var(--ink); }
+  #editBtn { width: 46px; height: 46px; } #editBtn.on { background: var(--accent); border-color: var(--accent); } #editBtn.on svg { stroke: #14110f; }
+  .hdr-r { display: flex; gap: 10px; align-items: center; }
+  .lay { display: flex; border: 1px solid var(--line2); border-radius: 999px; overflow: hidden; background: rgba(10,6,12,.6); }
+  .lay button { border: 0; background: transparent; padding: 9px 14px; font-size: 11px; letter-spacing: .1em; text-transform: uppercase; color: var(--ink-dim); }
+  .lay button[aria-pressed="true"] { background: var(--ink); color: #14110f; }
+  .hdr .alt { margin: 0; }
+
+  .stage { position: relative; min-height: 0; display: grid; place-items: center; padding: 6px 0; }
+  .ringwrap { height: 100%; width: auto; max-width: 100%; min-width: 0; aspect-ratio: 1; margin: 0; }
+  .ringwrap::before { background: radial-gradient(circle, rgba(6,3,2,.72) 62%, rgba(6,3,2,.4) 84%, rgba(6,3,2,0) 100%); inset: -4%; }
+  .stage .centre { display: none; }
+  .stage .status { position: absolute; left: 50%; bottom: 4px; transform: translateX(-50%); margin: 0; min-height: 0; pointer-events: none; text-align: center; max-width: 90%; }
+  #story, #hint { display: none; }
+
+  .lab { font-size: 10px; letter-spacing: .12em; text-transform: uppercase; color: var(--ink-dim); }
+  .bar { z-index: 2; display: grid; grid-template-columns: minmax(270px,.9fr) minmax(260px,1.3fr) minmax(300px,1.2fr); margin: 0 36px 22px; background: var(--glass); border: 1px solid var(--line2); border-radius: 30px; backdrop-filter: blur(6px); }
+  .bar > * { padding: 14px 24px; min-width: 0; } .bar > * + * { border-left: 1px solid var(--line); }
+  .b-tempo { display: flex; align-items: center; gap: 16px; padding-left: 14px; }
+  #play { width: 68px; height: 68px; border-radius: 50%; padding: 0; flex: none; display: grid; place-items: center; font-size: 0; }
+  #play::before { content: ""; width: 0; height: 0; border-left: 20px solid #14110f; border-top: 12px solid transparent; border-bottom: 12px solid transparent; margin-left: 5px; }
+  #play[aria-pressed="true"]::before { border: 0; width: 20px; height: 22px; margin: 0; background: linear-gradient(90deg, #14110f 0 38%, transparent 38% 62%, #14110f 62%); }
+  .tp { flex: 1; min-width: 0; display: grid; gap: 4px; }
+  .tpt { display: flex; align-items: center; gap: 10px; }
+  #bpmv { font-family: var(--display); font-weight: 400; font-size: 30px; line-height: 1; min-width: 3ch; }
+  .chip { margin-left: auto; display: flex; align-items: center; gap: 7px; padding: 5px 11px; border-radius: 999px; border: 1px solid var(--line2); background: transparent; font-size: 10px; letter-spacing: .08em; text-transform: uppercase; }
+  .chip .led { margin: 0; width: 8px; height: 8px; }
+  .chip[aria-pressed="true"] { border-color: var(--accent); background: color-mix(in srgb, var(--accent) 16%, transparent); color: var(--ink); }
+  .chip[aria-pressed="true"] .led { background: var(--accent); box-shadow: 0 0 8px var(--accent); }
+  input[type=range].big { -webkit-appearance: none; appearance: none; background: transparent; width: 100%; height: 28px; margin: 0; cursor: grab; touch-action: none; }
+  input[type=range].big::-webkit-slider-runnable-track { height: 6px; border-radius: 3px; background: rgba(243,236,230,.24); }
+  input[type=range].big::-moz-range-track { height: 6px; border-radius: 3px; background: rgba(243,236,230,.24); }
+  input[type=range].big::-webkit-slider-thumb { -webkit-appearance: none; width: 24px; height: 24px; border-radius: 50%; background: #fff; margin-top: -9px; box-shadow: 0 2px 8px rgba(0,0,0,.55); }
+  input[type=range].big::-moz-range-thumb { width: 24px; height: 24px; border: 0; border-radius: 50%; background: #fff; box-shadow: 0 2px 8px rgba(0,0,0,.55); }
+  input[type=range].big:disabled { opacity: .45; }
+  .b-fc { display: grid; gap: 2px; align-content: center; }
+  .fct { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; }
+  .fcread { font-size: 12px; color: var(--ink); } .fcread b { font-weight: 500; font-size: 14px; } .fcread em { font-style: normal; color: var(--ink-dim); }
+  .fctrack { position: relative; height: 40px; }
+  .fctrack svg { position: absolute; inset: 0; width: 100%; height: 100%; }
+  .fctrack input { position: absolute; left: 0; right: 0; top: 50%; transform: translateY(-50%); height: 40px; }
+  .fctrack input::-webkit-slider-runnable-track { background: transparent; } .fctrack input::-moz-range-track { background: transparent; }
+  .fcl { display: flex; justify-content: space-between; font-size: 9.5px; color: var(--ink-dim); }
+  .mixctl { display: grid; gap: 6px; align-content: center; }
+  .mixrow { display: flex; align-items: center; gap: 12px; }
+  .sp { position: relative; flex: none; width: 136px; padding: 6px 10px 7px; border-radius: 12px; border: 1px solid var(--c); background: color-mix(in srgb, var(--c) 10%, transparent); }
+  .sp.d { --c: #e8744a; } .sp.m { --c: #f2b84b; }
+  .sp .lab { display: block; color: var(--c); font-size: 9px; }
+  .sp select { appearance: none; -webkit-appearance: none; display: block; width: 100%; background: transparent; border: 0; padding: 1px 14px 0 0; font-family: var(--display); font-size: 17px; color: var(--ink); text-overflow: ellipsis; cursor: pointer; }
+  .sp::after { content: "\25BE"; position: absolute; right: 9px; bottom: 7px; font-size: 11px; color: var(--ink-dim); pointer-events: none; }
+  .sp select option { background: #1a1210; color: var(--ink); }
+  .mtrack { position: relative; flex: 1; min-width: 80px; height: 36px; cursor: grab; touch-action: none; }
+  .mtrack::before { content: ""; position: absolute; left: 0; right: 0; top: 14px; height: 8px; border-radius: 4px; background: linear-gradient(90deg, #e8744a, #f2b84b); }
+  .mh { position: absolute; top: 2px; width: 52px; height: 32px; margin-left: -26px; border-radius: 10px; background: #f3ece6; color: #1a1210; display: grid; place-items: center; box-shadow: 0 4px 14px rgba(0,0,0,.55); font-size: 13px; letter-spacing: -1px; }
+  .mtrack:active { cursor: grabbing; } .mh:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  .sr { position: absolute; width: 1px; height: 1px; opacity: 0; pointer-events: none; }
+
+  .sheet { z-index: 4; margin: 0 36px 12px; padding: 12px 18px 16px; background: rgba(14,8,16,.98); border: 1px solid var(--line2); border-radius: 22px; max-height: 46vh; overflow: auto; }
+  .sheet[hidden] { display: none; }
+  .tabs { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 12px; }
+  .tabs button { border-radius: 999px; padding: 8px 16px; font-size: 12px; background: transparent; border: 1px solid var(--line2); }
+  .tabs button[aria-selected="true"] { background: var(--ink); color: #14110f; border-color: var(--ink); }
+  .panel { display: none; } .panel.on { display: block; }
+  .panel .fxrow { padding: 0; border: 0; gap: 10px 22px; }
+  .panel .fxrow + .fxrow { margin-top: 14px; }
+  .fx2 { display: grid; gap: 14px; }
+  .panel .btn { border-radius: 999px; padding: 9px 14px; }
+  .mixer { grid-template-columns: repeat(8, minmax(0, 1fr)); }
+
+  /* strips: header (name, mute) and the rest. A shows them as columns, B as rows that open. */
+  .strip { padding: 0; display: block; }
+  .sh { display: grid; gap: 6px; padding: 10px 8px 6px; }
+  .sh .why { text-align: center; }
+  .sx { display: grid; gap: 6px; justify-items: center; padding: 0 8px 10px; }
+  .vbar { display: none; width: 90px; height: 5px; border-radius: 3px; background: rgba(243,236,230,.16); position: relative; }
+  .vbar i { position: absolute; left: 0; top: 0; bottom: 0; border-radius: 3px; background: var(--c); }
+  .strip .pad { height: 36px; display: flex; align-items: center; justify-content: center; gap: 8px; font-size: 11px; letter-spacing: .1em; padding: 0 10px; }
+  .pad .led { margin: 0; width: 8px; height: 8px; background: #3a2c26; }
+  .pad .m1 { display: none; } .pad[aria-pressed="true"] .m0 { display: none; } .pad[aria-pressed="true"] .m1 { display: inline; }
+  .pad[aria-pressed="true"] { text-decoration: none; background: color-mix(in srgb, var(--c) 22%, #0a0605); color: var(--ink); }
+  .pad[aria-pressed="true"] .led { background: var(--c); box-shadow: 0 0 8px var(--c); }
+  .panbar { height: 26px; } .panbar::before { top: 12px; height: 4px; background: rgba(243,236,230,.28); } .panbar::after { top: 6px; height: 16px; background: rgba(243,236,230,.5); }
+  .panbar i { top: 4px; width: 18px; height: 18px; margin-left: -9px; box-shadow: 0 0 0 2px rgba(10,6,5,.9), 0 2px 6px rgba(0,0,0,.6); }
+  .panbar b { top: 8px; height: 10px; }
+  .panlab { font-size: 9px; margin-top: 0; }
+  .strip.muted { opacity: .62; }
+
+  .rail { display: none; }
+  /* ---- A: the bar below, the edit sheet above it ---- */
+  .app2[data-lay="a"] .hdr .alt { display: none; }
+  /* ---- B: the ring on the left, the rail on the right ---- */
+  .app2[data-lay="b"] { grid-template-columns: minmax(0,1fr) clamp(400px, 36vw, 560px); grid-template-rows: minmax(0,1fr) auto; }
+  .app2[data-lay="b"] .stage { grid-column: 1; grid-row: 1; padding-top: 74px; }
+  .app2[data-lay="b"] .stage .centre { display: grid; }
+  .app2[data-lay="b"] .centre .c-name { font-size: clamp(26px, 3vw, 44px); }
+  .app2[data-lay="b"] .centre .c-wx { font-size: 15px; color: var(--ink); }
+  .app2[data-lay="b"] .w-city, .app2[data-lay="b"] .w-now, .app2[data-lay="b"] .w-meta { display: none; }
+  .app2[data-lay="b"] .bar { grid-column: 1; grid-row: 2; margin: 0 16px 22px 36px; grid-template-columns: auto minmax(0, 1fr); }
+  .app2[data-lay="b"] .b-tempo { min-width: 300px; }
+  .app2[data-lay="b"] .rail { display: flex; flex-direction: column; gap: 8px; grid-column: 2; grid-row: 1 / 3; padding: 74px 36px 22px 0; min-height: 0; overflow: auto; }
+  .app2[data-lay="b"] .sheet { position: fixed; right: 12px; top: 12px; bottom: 12px; width: min(560px, 94vw); margin: 0; max-height: none; z-index: 8; }
+  .railhead { display: flex; justify-content: space-between; align-items: center; font-size: 11px; letter-spacing: .12em; text-transform: uppercase; color: var(--ink-dim); margin: 0 0 2px 4px; }
+  .app2[data-lay="b"] .mixer { grid-template-columns: minmax(0, 1fr); gap: 7px; }
+  .app2[data-lay="b"] .sh { grid-template-columns: minmax(0, 1fr) 84px auto; align-items: center; gap: 12px; padding: 9px 12px; cursor: pointer; }
+  .app2[data-lay="b"] .sh .why { text-align: left; }
+  .app2[data-lay="b"] .sh .nmrow { justify-content: flex-start; }
+  .app2[data-lay="b"] .vbar { display: block; width: 84px; }
+  .app2[data-lay="b"] .strip .pad { width: 96px; height: 32px; }
+  .app2[data-lay="b"] .sx { display: none; }
+  .app2[data-lay="b"] .strip.open .sx { display: grid; grid-template-columns: 58px minmax(0, 1fr); gap: 8px 14px; justify-items: stretch; padding: 4px 14px 14px; }
+  .app2[data-lay="b"] .strip.open { border-color: var(--c); box-shadow: 0 0 22px -8px var(--c); opacity: 1; }
+  .app2[data-lay="b"] .strip.open .panbar, .app2[data-lay="b"] .strip.open .panlab { grid-column: 1 / -1; }
+  .app2[data-lay="b"] .strip.open .fader { grid-column: 1; grid-row: 3 / 6; height: 124px; justify-self: center; }
+  .app2[data-lay="b"] .strip.open .row2, .app2[data-lay="b"] .strip.open .kn3, .app2[data-lay="b"] .strip.open .padrow { grid-column: 2; }
+  .app2[data-lay="b"] .strip.dimmed { opacity: .8; }
+  .railmix { margin-top: 6px; padding: 12px 14px; border-radius: 16px; border: 1px solid var(--line2); background: var(--glass); }
+  .railmix .mixctl { gap: 8px; }
+
+  @media (max-width: 1100px) {
+    .hdr { position: static; padding: 14px 16px; flex-wrap: wrap; }
+    .app2 { height: auto; display: flex; flex-direction: column; }
+    .stage { height: min(86vw, 520px); } .app2[data-lay="b"] .stage { padding-top: 6px; }
+    .bar, .app2[data-lay="b"] .bar { grid-template-columns: 1fr; margin: 0 12px 12px; } .bar > * + * { border-left: 0; border-top: 1px solid var(--line); }
+    .app2[data-lay="b"] { display: flex; } .app2[data-lay="b"] .rail { padding: 0 12px 20px; }
+    .sheet { margin: 0 12px 12px; } .mixer { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .w-city { font-size: 36px; }
+    .ringwrap { width: min(100%, 100vw); height: auto; max-height: 100%; } .stage { overflow: hidden; }
+    .sp { width: 92px; } .mtrack { min-width: 40px; } .mixrow { gap: 8px; } .bar > * { padding: 12px 16px; } .sr { left: 0; top: 0; }
+  }
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
+  <radialGradient id="kskirt" cx=".35" cy=".28" r=".85"><stop offset="0" stop-color="#5a524c"/><stop offset=".5" stop-color="#231e1b"/><stop offset="1" stop-color="#080605"/></radialGradient>
+  <radialGradient id="kcap" cx=".34" cy=".28" r=".9"><stop offset="0" stop-color="#7a7068"/><stop offset=".45" stop-color="#2e2824"/><stop offset="1" stop-color="#110d0b"/></radialGradient>
+  <radialGradient id="kshadow"><stop offset=".6" stop-color="#000" stop-opacity=".55"/><stop offset="1" stop-color="#000" stop-opacity="0"/></radialGradient>
+</defs></svg>
+<canvas id="sky" aria-hidden="true"></canvas>
+<div class="app2" id="app" data-lay="a">
+  <header class="hdr">
+    <div class="wxb">
+      <div class="brand">Rhythm Geometry</div>
+      <div class="w-city" id="wCity">London</div>
+      <div class="w-now"><span id="wTemp"></span><span id="wCond"></span></div>
+      <div class="w-meta" id="wMeta"></div>
+      <div class="pickers">
+        <select id="city" aria-label="City"></select>
+        <select id="genre" aria-label="Genre"></select>
+        <button id="shuffle" class="ibtn" type="button" title="Pick a random city and genre" aria-label="Shuffle"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 7h3.5c2 0 3.2 1 4.3 2.7l2.4 3.6c1.1 1.7 2.3 2.7 4.3 2.7H21M18 12l3 3-3 3M3 17h3.5c1.3 0 2.3-.5 3.1-1.3M13.4 8.6C14.2 7.6 15.2 7 16.8 7H21M18 4l3 3-3 3"/></svg></button>
+        <button id="mapBtn" class="btn" type="button" title="Pick a city on the world map">Map</button>
+      </div>
+    </div>
+    <div class="hdr-r">
+      <div class="lay" role="group" aria-label="Design"><button type="button" data-lay="a" aria-pressed="true">A</button><button type="button" data-lay="b" aria-pressed="false">B</button></div>
+      <a class="alt" href="../">All versions</a>
+      <button id="editBtn" class="ibtn" type="button" aria-expanded="false" aria-controls="sheet" title="Edit the mix and the settings" aria-label="Edit the mix"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20l4-1L19.5 7.5a2.1 2.1 0 0 0-3-3L5 16l-1 4z"/><path d="M14.5 6.5l3 3"/></svg></button>
+    </div>
+  </header>
+
+  <main class="stage">
+    <div class="ringwrap">
+      <canvas id="rings" width="1000" height="1000" aria-label="Eight rhythm rings, one for each drum"></canvas>
+      <div class="centre"><div class="c-name" id="cName">London</div><div class="c-wx" id="cWx">loading the weather</div><div class="c-wx" id="cTime"></div></div>
+    </div>
+    <p class="status" id="status" aria-live="polite"></p>
+    <p id="story"></p><p class="hint" id="hint"></p>
+  </main>
+
+  <aside class="rail" id="rail" aria-label="The eight rings">
+    <div class="railhead"><span>The eight rings</span></div>
+    <div id="railrows"></div>
+    <div class="railmix" id="railmix"></div>
+  </aside>
+
+  <footer class="bar" id="bar">
+    <div class="b-tempo">
+      <button id="play" type="button" aria-pressed="false" aria-label="Play">Play</button>
+      <div class="tp">
+        <div class="tpt"><span class="lab">Tempo</span><b id="bpmv">110</b><button id="follow" class="chip" type="button" aria-pressed="true" title="Follow the genre tempo: when on, the tempo jumps to the genre's suggested tempo when you change city or genre"><i class="led"></i>Follow genre</button></div>
+        <input id="bpm" class="big" type="range" min="60" max="180" value="110" aria-label="Tempo">
+      </div>
+    </div>
+    <div class="b-fc">
+      <div class="fct"><span class="lab">24-hour forecast</span><span class="fcread" id="scrubInfo" aria-live="polite"></span></div>
+      <div class="fctrack"><svg id="fcCurve" viewBox="0 0 640 40" preserveAspectRatio="none" aria-hidden="true"></svg><input id="scrub" class="big" type="range" min="0" max="24" value="0" disabled aria-label="Hours ahead" title="Drag to move the city forward through the next 24 hours. The weather, the sky, the key and the rhythms follow."></div>
+      <div class="fcl" id="fcLabels"></div><b id="scrubv" hidden>Now</b>
+    </div>
+    <div class="barmix" id="barmix">
+      <div class="mixctl" id="mixctl">
+        <span class="lab">Mix two sounds · drag</span>
+        <div class="mixrow">
+          <label class="sp d"><span class="lab" id="mixD">Drums 100%</span><select id="kit" aria-label="Drum sound" title="The first sound. Pick any kit, even a melodic one."></select></label>
+          <div class="mtrack" id="mixTrack"><div class="mh" id="mixHandle" role="slider" tabindex="0" aria-label="Mix between the two sounds" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">&#8942;&#8942;</div></div>
+          <label class="sp m"><span class="lab" id="mixM">Melodic 0%</span><select id="blendSnd" aria-label="Melodic sound" title="The second sound"><option value="kalimba">Kalimba</option><option value="harp">Harp</option><option value="rhodes">Electric piano</option><option value="steel">Steel pan</option></select></label>
+        </div>
+        <input id="blend" class="sr" type="range" min="0" max="100" value="0" aria-label="Blend between the two sounds" tabindex="-1">
+      </div>
+    </div>
+  </footer>
+
+  <section class="sheet" id="sheet" hidden aria-label="Edit the mix and the settings">
+    <div class="tabs" role="tablist">
+      <button type="button" role="tab" data-tab="mix" aria-selected="true">Mix</button>
+      <button type="button" role="tab" data-tab="perform" aria-selected="false">Perform</button>
+      <button type="button" role="tab" data-tab="space" aria-selected="false">Space</button>
+      <button type="button" role="tab" data-tab="wander" aria-selected="false">Wander and key</button>
+      <button type="button" role="tab" data-tab="lfo" aria-selected="false">Filter LFO</button>
+      <button type="button" role="tab" data-tab="midi" aria-selected="false">MIDI</button>
+    </div>
+    <div class="panel on" id="tab-mix"><div class="mixer" id="mixer"></div></div>
+    <div class="panel" id="tab-perform"><div class="fx2"><div class="fxrow">
+          <div class="grp"><span class="fxlab">Stutter</span>
+            <button class="btn" data-st="2" type="button" aria-pressed="false" title="Repeat the last hits every eighth note">1/8</button>
+            <button class="btn" data-st="1" type="button" aria-pressed="false" title="Repeat the last hits every sixteenth note">1/16</button>
+            <button class="btn" data-st="0.5" type="button" aria-pressed="false" title="A fast roll">Roll</button></div>
+          <div class="grp" id="kFilter" title="DJ filter. Turn left to close it, right to thin it out. Double click to centre."></div>
+          <div class="grp" id="kChance" title="Chance for everything: lower it and hits drop out"></div>
+        </div></div></div>
+    <div class="panel" id="tab-space"><div class="fx2"><div class="fxrow"><div class="grp"><span class="fxlab">Delay and reverb</span><button id="fxOpen" class="btn" type="button" title="Open the delay and reverb controls" aria-label="Delay and reverb">Open the pedals</button></div><div class="grp"><span class="fxlab">Convergence</span>
+            <button id="convOn" class="btn" type="button" aria-pressed="true" title="When rings hit at the same angle, a line lights through them and a chord plays. The angle picks the chord from the key.">On</button>
+            <div class="grp" id="kConv" title="How loud the convergence chords are"></div></div></div></div></div>
+    <div class="panel" id="tab-wander"><div class="fx2"><div class="fxrow">
+          <div class="grp"><span class="fxlab">Wander</span>
+            <button id="autoFlt" class="btn" type="button" aria-pressed="true" title="Each drum's filter closes by itself now and then and holds for 1, 2, 4 or 8 bars. Calm weather holds longer.">Filters</button>
+            <button id="autoPan" class="btn" type="button" aria-pressed="true" title="Each drum swings to one side for 1, 2, 4 or 8 bars, then comes back">Pan</button>
+            <div class="grp" id="kWander" title="How often the filters and pans wander"></div></div>
+          <div class="grp"><span class="fxlab">Key</span><select id="root" aria-label="Key"></select><button id="tuneOn" class="btn" type="button" aria-pressed="true" title="On: every drum with a clear pitch is moved to a note of the key and scale. Off: drums sound as recorded.">In key</button><button id="remix" class="btn" type="button" title="Turn every ring to a new starting point. Same step counts, new groove.">Shift rings</button></div>
+        </div></div></div>
+    <div class="panel" id="tab-lfo"><div class="fx2"><div class="fxrow">
+          <div class="grp"><span class="fxlab">Filter LFO</span>
+            <button id="lfoOn" class="btn" type="button" aria-pressed="true" title="Sweep a filter over the whole mix in time with the tempo">On</button>
+            <select id="lfoRate" aria-label="LFO rate" title="How fast it sweeps, in bars and note lengths"></select>
+            <select id="lfoShape" aria-label="LFO shape" title="The shape of the sweep"></select>
+            <div class="grp" id="kLfo" title="How deep the sweep goes"></div></div>
+        </div></div></div>
+    <div class="panel" id="tab-midi"><div class="fx2"><div class="fxrow"><div class="grp"><span class="fxlab">Send the drums out</span><button id="midiOpen" class="btn" type="button" title="Send the drums to a drum machine or synth over MIDI">MIDI settings</button></div></div></div></div>
+  </section>
+</div>
+<div class="mappanel" id="fxPanel" hidden role="dialog" aria-modal="true" aria-label="Delay and reverb pedals">
+  <div class="fxbox">
+    <div class="maphead"><b>Pedals for everything</b><button id="fxClose" class="btn" type="button">Done</button></div>
+    <div class="pedals">
+      <section class="pedal delay"><div class="pname">Delay</div>
+        <div class="kgrid" id="kDelay"></div>
+        <div class="chiplab">Time</div><div class="chips" id="dTimes"></div>
+        <div class="chiplab">Style</div><div class="chips" id="dModes"></div>
+        <button class="foot" id="dFoot" type="button" aria-pressed="false" aria-label="Delay on or off"><i class="lamp"></i><span>On</span></button></section>
+      <section class="pedal verb"><div class="pname">Reverb</div>
+        <div class="kgrid" id="kVerb"></div>
+        <div class="chiplab">Room</div><div class="chips" id="vTypes"></div>
+        <button class="foot" id="vFoot" type="button" aria-pressed="true" aria-label="Reverb on or off"><i class="lamp"></i><span>On</span></button></section>
+    </div>
+    <p class="hint">Each drum has its own Delay and Reverb knobs on its strip. These two pedals shape the sound they all feed.</p>
+  </div>
+</div>
+<div class="mappanel" id="midiPanel" hidden role="dialog" aria-modal="true" aria-label="MIDI out">
+  <div class="midibox">
+    <div class="maphead"><b>MIDI out</b><button id="midiClose" class="btn" type="button">Done</button></div>
+    <p class="note" id="midiMsg"></p>
+    <label>Send to<select id="midiOut"></select></label>
+    <label>Channel<select id="midiCh"></select></label>
+    <label>Notes<select id="midiMap"></select></label>
+    <div class="chips">
+      <button id="midiOn" class="btn" type="button" aria-pressed="false">Send notes</button>
+      <button id="midiClock" class="btn" type="button" aria-pressed="false" title="Sends tempo, start and stop so your machine follows">Send clock</button>
+      <button id="midiCC" class="btn" type="button" aria-pressed="true" title="The filter, LFO and chance knobs, and the faders, go out as controllers">Send knobs</button>
+      <button id="midiTest" class="btn" type="button">Test note</button>
+    </div>
+    <p class="note">Every hit you hear goes out too, including stutters, chance and mutes. Knobs use CC 74 (filter), 75 (LFO level), 76 (chance). Faders use CC 7.</p>
+  </div>
+</div>
+<div class="keytip" id="keytip" aria-hidden="true"></div>
+<div class="mappanel" id="mapPanel" hidden role="dialog" aria-modal="true" aria-label="World map">
+  <canvas id="mapCv" aria-label="World map of cities. Drag to move, scroll or pinch to zoom, click a city."></canvas>
+  <div class="maptop"><span id="mapName">Pick a city. Every dot has its own rhythm.</span><span class="maphelp">Drag to move. Scroll or pinch to zoom.</span><button id="mapClose" class="btn" type="button">Close</button></div>
+</div>
+
+<script>
+const ATLAS = {"cities":[{"n":"Copenhagen","a":55.6761,"o":12.5683,"g":[{"n":"fast techno","b":140,"i":["d-4x4-offbeat"]},{"n":"acid house","b":122,"i":["house-house","house-house-2","house-brit-house"]},{"n":"bass garage","b":130,"i":["drum-and-bass-drum-and-bass-1-a","drum-and-bass-drum-and-bass-1-b"]},{"n":"danish hip hop","b":90,"i":["hip-hop-hip-hop-1-a","hip-hop-hip-hop-1-b","hip-hop-hip-hop-2-a"]},{"n":"dansktop","b":110,"i":["pop-pop-1-a","pop-in-the-air-last-night-a"]},{"n":"house","b":124,"i":["house-house","house-house-2","house-brit-house","house-french-house"]}]},{"n":"Aarhus","a":56.1572,"o":10.2107,"g":[{"n":"techno","b":132,"i":["d-4x4-offbeat"]},{"n":"house","b":124,"i":["house-house","house-house-2","house-brit-house","house-french-house"]},{"n":"danish hip hop","b":90,"i":["hip-hop-hip-hop-1-a","hip-hop-hip-hop-1-b","hip-hop-hip-hop-2-a"]},{"n":"dansktop","b":110,"i":["pop-pop-1-a","pop-in-the-air-last-night-a"]}]},{"n":"Odense","a":55.4038,"o":10.4024,"g":[{"n":"techno","b":132,"i":["d-4x4-offbeat"]},{"n":"house","b":124,"i":["house-house","house-house-2","house-brit-house","house-french-house"]},{"n":"danish hip hop","b":90,"i":["hip-hop-hip-hop-1-a","hip-hop-hip-hop-1-b","hip-hop-hip-hop-2-a"]},{"n":"dansktop","b":110,"i":["pop-pop-1-a","pop-in-the-air-last-night-a"]}]},{"n":"Aalborg","a":57.0488,"o":9.9217,"g":[{"n":"house","b":124,"i":["house-house","house-house-2","house-brit-house","house-french-house"]},{"n":"danish hip hop","b":90,"i":["hip-hop-hip-hop-1-a","hip-hop-hip-hop-1-b","hip-hop-hip-hop-2-a"]},{"n":"dansktop","b":110,"i":["pop-pop-1-a","pop-in-the-air-last-night-a"]}]},{"n":"Fano (Nordby)","a":55.4636,"o":8.4086,"g":[{"n":"folk dance (fiddle)","b":null,"i":["d-polka"]}]},{"n":"Berlin","a":52.52,"o":13.405,"g":[{"n":"techno","b":132,"i":["d-4x4-offbeat"]},{"n":"techno house","b":124,"i":["d-4x4-offbeat","house-house","house-house-2"]},{"n":"hardcore","b":170,"i":["d-gabber"]},{"n":"house","b":124,"i":["house-house","house-house-2","house-brit-house","house-french-house"]},{"n":"Dub techno","b":128,"i":["a3-dub-techno"]},{"n":"Berlin minimal techno","b":128,"i":["a3-berlin-minimal-techno"]},{"n":"Hard techno / Schranz","b":145,"i":["a3-hard-techno-schranz"]},{"n":"Trance (German club)","b":145,"i":["a3-trance-german-club"]},{"n":"Krautrock / motorik","b":120,"i":["a3-krautrock-motorik"]},{"n":"Neue Deutsche Welle","b":125,"i":["a3-neue-deutsche-welle"]}]},{"n":"Hamburg","a":53.5511,"o":9.9937,"g":[{"n":"schlager","b":110,"i":["pop-pop-1-a","pop-in-the-air-last-night-a","pop-in-the-air-last-night-b"]},{"n":"german rap","b":90,"i":["hip-hop-hip-hop-1-a","hip-hop-hip-hop-1-b","hip-hop-hip-hop-2-a"]},{"n":"Neue Deutsche Welle","b":125,"i":["a3-neue-deutsche-welle"]}]},{"n":"Munich","a":48.1351,"o":11.582,"g":[{"n":"garage house","b":124,"i":["house-house","house-house-2","house-brit-house"]},{"n":"acid house","b":122,"i":["house-house","house-house-2","house-brit-house"]},{"n":"german rap","b":90,"i":["hip-hop-hip-hop-1-a","hip-hop-hip-hop-1-b","hip-hop-hip-hop-2-a"]}]},{"n":"Frankfurt","a":50.1109,"o":8.6821,"g":[{"n":"EBM","b":130,"i":["electro-electro-1-a","electro-electro-1-b"]},{"n":"trance","b":136,"i":["d-4x4-offbeat"]},{"n":"techno","b":132,"i":["d-4x4-offbeat"]},{"n":"Hard techno / Schranz","b":145,"i":["a3-hard-techno-schranz"]},{"n":"Trance (German club)","b":145,"i":["a3-trance-german-club"]}]},{"n":"Cologne","a":50.9375,"o":6.9603,"g":[{"n":"electro","b":125,"i":["electro-electro-1-a","electro-electro-1-b","electro-electro-2-a","electro-electro-2-b"]},{"n":"german rap","b":90,"i":["hip-hop-hip-hop-1-a","hip-hop-hip-hop-1-b","hip-hop-hip-hop-2-a"]},{"n":"Krautrock / motorik","b":120,"i":["a3-krautrock-motorik"]}]},{"n":"Dusseldorf","a":51.2277,"o":6.7735,"g":[{"n":"krautrock","b":120,"i":["rock-rock-1","rock-rock-2"]},{"n":"electro","b":125,"i":["electro-electro-1-a","electro-electro-1-b","electro-electro-2-a","electro-electro-2-b"]},{"n":"Krautrock / motorik","b":120,"i":["a3-krautrock-motorik"]},{"n":"Neue Deutsche Welle","b":125,"i":["a3-neue-deutsche-welle"]}]},{"n":"Stuttgart","a":48.7758,"o":9.1829,"g":[{"n":"german rap","b":90,"i":["hip-hop-hip-hop-1-a","hip-hop-hip-hop-1-b","hip-hop-hip-hop-2-a"]}]},{"n":"Nuremberg","a":49.4521,"o":11.0767,"g":[{"n":"german rap","b":90,"i":["hip-hop-hip-hop-1-a","hip-hop-hip-hop-1-b","hip-hop-hip-hop-2-a"]},{"n":"hip hop","b":90,"i":["hip-hop-hip-hop-1-a","hip-hop-hip-hop-1-b","hip-hop-hip-hop-2-a","hip-hop-hip-hop-2-b"]}]},{"n":"Heidelberg","a":49.3988,"o":8.6724,"g":[{"n":"hip hop","b":90,"i":["hip-hop-hip-hop-1-a","hip-hop-hip-hop-1-b","hip-hop-hip-hop-2-a","hip-hop-hip-hop-2-b"]}]},{"n":"Leipzig","a":51.3397,"o":12.3731,"g":[{"n":"schlager","b":110,"i":["pop-pop-1-a","pop-in-the-air-last-night-a","pop-in-the-air-last-night-b"]},{"n":"techno","b":132,"i":["d-4x4-offbeat"]}]},{"n":"Dresden","a":51.0504,"o":13.7373,"g":[{"n":"schlager","b":110,"i":["pop-pop-1-a","pop-in-the-air-last-night-a","pop-in-the-air-last-night-b"]},{"n":"techno","b":132,"i":["d-4x4-offbeat"]}]},{"n":"Vienna","a":48.2082,"o":16.3738,"g":[{"n":"schlager","b":110,"i":["pop-pop-1-a","pop-in-the-air-last-night-a","pop-in-the-air-last-night-b"]},{"n":"house","b":124,"i":["house-house","house-house-2","house-brit-house","house-french-house"]},{"n":"Viennese waltz","b":170,"i":["a3-viennese-waltz"]}]},{"n":"Zurich","a":47.3769,"o":8.5417,"g":[{"n":"techno","b":132,"i":["d-4x4-offbeat"]},{"n":"house","b":124,"i":["house-house","house-house-2","house-brit-house","house-french-house"]}]},{"n":"Amsterdam","a":52.3676,"o":4.9041,"g":[{"n":"gabber","b":170,"i":["d-gabber"]},{"n":"house","b":124,"i":["house-house","house-house-2","house-brit-house","house-french-house"]},{"n":"Gabber / hardcore techno","b":145,"i":["a3-gabber-hardcore-techno"]}]},{"n":"Rotterdam","a":51.9244,"o":4.4777,"g":[{"n":"gabber","b":170,"i":["d-gabber"]},{"n":"hardcore","b":170,"i":["d-gabber"]},{"n":"Gabber / hardcore techno","b":145,"i":["a3-gabber-hardcore-techno"]}]},{"n":"Brussels","a":50.8503,"o":4.3517,"g":[{"n":"hardcore","b":170,"i":["d-gabber"]},{"n":"house","b":124,"i":["house-house","house-house-2","house-brit-house","house-french-house"]}]},{"n":"Antwerp","a":51.2194,"o":4.4025,"g":[{"n":"hardcore","b":170,"i":["d-gabber"]},{"n":"techno","b":132,"i":["d-4x4-offbeat"]}]},{"n":"Stockholm","a":59.3293,"o":18.0686,"g":[{"n":"swedish house","b":128,"i":["edm-techno","edm-dubstep-a","edm-dubstep-b"]},{"n":"eurodance","b":130,"i":["edm-techno","edm-dubstep-a","edm-dubstep-b"]},{"n":"kuduro","b":135,"i":["d-kuduro"]}]},{"n":"Gothenburg","a":57.7089,"o":11.9746,"g":[{"n":"swedish house","b":128,"i":["edm-techno","edm-dubstep-a","edm-dubstep-b"]},{"n":"rock","b":120,"i":["rock-rock-1","rock-rock-2","rock-rock-3"]}]},{"n":"Oslo","a":59.9139,"o":10.7522,"g":[{"n":"pop","b":110,"i":["pop-pop-1-a","pop-in-the-air-last-night-a","pop-in-the-air-last-night-b","pop-nineteen-a"]},{"n":"rock","b":120,"i":["rock-rock-1","rock-rock-2","rock-rock-3"]}]},{"n":"Bergen","a":60.3913,"o":5.3221,"g":[{"n":"pop","b":110,"i":["pop-pop-1-a","pop-in-the-air-last-night-a","pop-in-the-air-last-night-b","pop-nineteen-a"]},{"n":"rock","b":120,"i":["rock-rock-1","rock-rock-2","rock-rock-3"]}]},{"n":"Helsinki","a":60.1699,"o":24.9384,"g":[{"n":"schlager","b":110,"i":["pop-pop-1-a","pop-in-the-air-last-night-a","pop-in-the-air-last-night-b"]},{"n":"tango","b":100,"i":["eu-tresillo-3-8"]}]},{"n":"Reykjavik","a":64.1466,"o":-21.9426,"g":[{"n":"pop","b":110,"i":["pop-pop-1-a","pop-in-the-air-last-night-a","pop-in-the-air-last-night-b","pop-nineteen-a"]}]},{"n":"Tallinn","a":59.437,"o":24.7536,"g":[{"n":"pop","b":110,"i":["pop-pop-1-a","pop-in-the-air-last-night-a","pop-in-the-air-last-night-b","pop-nineteen-a"]}]},{"n":"Riga","a":56.9496,"o":24.1052,"g":[{"n":"pop","b":110,"i":["pop-pop-1-a","pop-in-the-air-last-night-a","pop-in-the-air-last-night-b","pop-nineteen-a"]}]},{"n":"Warsaw","a":52.2297,"o":21.0122,"g":[{"n":"disco polo","b":120,"i":["pop-pop-1-a","pop-in-the-air-last-night-a"]},{"n":"pop","b":110,"i":["pop-pop-1-a","pop-in-the-air-last-night-a","pop-in-the-air-last-night-b","pop-nineteen-a"]}]},{"n":"Prague","a":50.0755,"o":14.4378,"g":[{"n":"polka","b":120,"i":["d-polka"]},{"n":"pop","b":110,"i":["pop-pop-1-a","pop-in-the-air-last-night-a","pop-in-the-air-last-night-b","pop-nineteen-a"]}]},{"n":"Budapest","a":47.4979,"o":19.0402,"g":[{"n":"polka","b":120,"i":["d-polka"]},{"n":"house","b":124,"i":["house-house","house-house-2","house-brit-house","house-french-house"]}]},{"n":"Bucharest","a":44.4268,"o":26.1025,"g":[{"n":"romanian folk dance","b":null,"i":["eu-romanian-folk-dance-3-5"]},{"n":"house","b":124,"i":["house-house","house-house-2","house-brit-house","house-french-house"]},{"n":"Romanian manele","b":100,"i":["a3-romanian-manele"]}]},{"n":"Belgrade","a":44.7866,"o":20.4489,"g":[{"n":"turbo-folk","b":120,"i":["pop-pop-1-a","pop-in-the-air-last-night-a"]},{"n":"pop","b":110,"i":["pop-pop-1-a","pop-in-the-air-last-night-a","pop-in-the-air-last-night-b","pop-nineteen-a"]}]},{"n":"Sofia","a":42.6977,"o":23.3219,"g":[{"n":"ruchenitza","b":120,"i":["eu-ruchenitza-3-in-7-3-7","eu-ruchenitza-4-in-7-4-7"]},{"n":"pop","b":110,"i":["pop-pop-1-a","pop-in-the-air-last-night-a","pop-in-the-air-last-night-b","pop-nineteen-a"]}]},{"n":"Athens","a":37.9838,"o":23.7275,"g":[{"n":"rebetiko","b":100,"i":["eu-aksak-4-9"]},{"n":"choreic","b":null,"i":["eu-choreic-3-4"]},{"n":"Rebetiko","b":100,"i":["a3-rebetiko"]}]},{"n":"Thessaloniki","a":40.6401,"o":22.9444,"g":[{"n":"rebetiko","b":100,"i":["eu-aksak-4-9"]},{"n":"pop","b":110,"i":["pop-pop-1-a","pop-in-the-air-last-night-a","pop-in-the-air-last-night-b","pop-nineteen-a"]}]},{"n":"Istanbul","a":41.0082,"o":28.9784,"g":[{"n":"aksak","b":120,"i":["eu-aksak-4-9"]},{"n":"arabesk","b":100,"i":["pop-pop-1-a","pop-in-the-air-last-night-a"]},{"n":"Turkish \u00e7iftetelli","b":null,"i":["a3-turkish-iftetelli"]},{"n":"Turkish Roman / 9-8","b":115,"i":["a3-turkish-roman-9-8"]},{"n":"Anatolian psych rock","b":148,"i":["a3-anatolian-psych-rock"]}]},{"n":"Izmir","a":38.4237,"o":27.1428,"g":[{"n":"rebetiko","b":100,"i":["eu-aksak-4-9"]},{"n":"arabesk","b":100,"i":["pop-pop-1-a","pop-in-the-air-last-night-a"]},{"n":"Rebetiko","b":100,"i":["a3-rebetiko"]}]},{"n":"Naples","a":40.8518,"o":14.2681,"g":[{"n":"tarantella","b":110,"i":["d-6-8"]},{"n":"pop","b":110,"i":["pop-pop-1-a","pop-in-the-air-last-night-a","pop-in-the-air-last-night-b","pop-nineteen-a"]}]},{"n":"Rome","a":41.9028,"o":12.4964,"g":[{"n":"italo disco","b":120,"i":["pop-pop-1-a","pop-in-the-air-last-night-a"]},{"n":"pop","b":110,"i":["pop-pop-1-a","pop-in-the-air-last-night-a","pop-in-the-air-last-night-b","pop-nineteen-a"]}]},{"n":"Milan","a":45.4642,"o":9.19,"g":[{"n":"house","b":124,"i":["house-house","house-house-2","house-brit-house","house-french-house"]},{"n":"italo disco","b":120,"i":["pop-pop-1-a","pop-in-the-air-last-night-a"]},{"n":"Italo disco","b":121,"i":["a3-italo-disco"]}]},{"n":"Lisbon","a":38.7223,"o":-9.1393,"g":[{"n":"fado","b":80,"i":["d-6-8"]},{"n":"kuduro","b":135,"i":["d-kuduro"]}]},{"n":"Porto","a":41.1579,"o":-8.6291,"g":[{"n":"fado","b":80,"i":["d-6-8"]},{"n":"kuduro","b":135,"i":["d-kuduro"]}]},{"n":"Madrid","a":40.4168,"o":-3.7038,"g":[{"n":"compas (flamenco)","b":null,"i":["d-compas12"]},{"n":"house","b":124,"i":["house-house","house-house-2","house-brit-house","house-french-house"]}]},{"n":"Barcelona","a":41.3874,"o":2.1686,"g":[{"n":"rumba catalana","b":110,"i":["afro-cuban-son-clave","afro-cuban-rumba","afro-cuban-bossa-nova"]},{"n":"house","b":124,"i":["house-house","house-house-2","house-brit-house","house-french-house"]}]},{"n":"Seville","a":37.3891,"o":-5.9845,"g":[{"n":"compas (flamenco)","b":null,"i":["d-compas12"]},{"n":"Flamenco buler\u00edas","b":115,"i":["a3-flamenco-buler-as"]}]},{"n":"Paris","a":48.8566,"o":2.3522,"g":[{"n":"house","b":122,"i":["house-french-house"]},{"n":"hip hop","b":90,"i":["hip-hop-hip-hop-1-a","hip-hop-hip-hop-1-b","hip-hop-hip-hop-2-a","hip-hop-hip-hop-2-b"]},{"n":"kuduro","b":135,"i":["d-kuduro"]},{"n":"Zouk","b":112,"i":["a3-zouk"]},{"n":"French house / filter house","b":124,"i":["a3-french-house-filter-house"]},{"n":"French touch / electro","b":125,"i":["a3-french-touch-electro"]}]},{"n":"Marseille","a":43.2965,"o":5.3698,"g":[{"n":"hip hop","b":90,"i":["hip-hop-hip-hop-1-a","hip-hop-hip-hop-1-b","hip-hop-hip-hop-2-a","hip-hop-hip-hop-2-b"]}]},{"n":"Dublin","a":53.3498,"o":-6.2603,"g":[{"n":"irish jig","b":110,"i":["d-6-8"]},{"n":"rock","b":120,"i":["rock-rock-1","rock-rock-2","rock-rock-3"]}]},{"n":"Glasgow","a":55.8642,"o":-4.2518,"g":[{"n":"indie","b":120,"i":["rock-rock-1","rock-rock-2"]},{"n":"house","b":124,"i":["house-house","house-house-2","house-brit-house","house-french-house"]}]},{"n":"Bristol","a":51.4545,"o":-2.5879,"g":[{"n":"trip-hop","b":90,"i":["breaks-standard-breakbeat-1","breaks-standard-breakbeat-2","breaks-standard-breakbeat-3"]},{"n":"drum and bass","b":174,"i":["drum-and-bass-drum-and-bass-1-a","drum-and-bass-drum-and-bass-1-b","drum-and-bass-drum-and-bass-2-a","drum-and-bass-drum-and-bass-2-b"]},{"n":"Trip-hop / Bristol sound","b":93,"i":["a3-trip-hop-bristol-sound"]},{"n":"Drum and bass","b":172,"i":["a3-drum-and-bass"]},{"n":"Liquid funk (DnB)","b":172,"i":["a3-liquid-funk-dnb"]},{"n":"IDM / electronica","b":124,"i":["a3-idm-electronica"]}]},{"n":"Birmingham","a":52.4862,"o":-1.8904,"g":[{"n":"bhangra","b":120,"i":["pop-pop-1-a","pop-in-the-air-last-night-a"]},{"n":"hip hop","b":90,"i":["hip-hop-hip-hop-1-a","hip-hop-hip-hop-1-b","hip-hop-hip-hop-2-a","hip-hop-hip-hop-2-b"]},{"n":"NWOBHM","b":185,"i":["a3-nwobhm"]},{"n":"Heavy metal (early)","b":148,"i":["a3-heavy-metal-early"]},{"n":"Bhangra (UK pop)","b":122,"i":["a3-bhangra-uk-pop"]}]},{"n":"Sheffield","a":53.3811,"o":-1.4701,"g":[{"n":"electro","b":125,"i":["electro-electro-1-a","electro-electro-1-b","electro-electro-2-a","electro-electro-2-b"]},{"n":"Bassline / Niche","b":135,"i":["a3-bassline-niche"]},{"n":"Industrial (early)","b":125,"i":["a3-industrial-early"]},{"n":"IDM / electronica","b":124,"i":["a3-idm-electronica"]}]},{"n":"Liverpool","a":53.4084,"o":-2.9916,"g":[{"n":"pop","b":110,"i":["pop-pop-1-a","pop-in-the-air-last-night-a","pop-in-the-air-last-night-b","pop-nineteen-a"]}]},{"n":"Mexico City","a":19.4326,"o":-99.1332,"g":[{"n":"cumbia","b":95,"i":["eu-cumbia-3-4"]},{"n":"reggaeton","b":92,"i":["reggaeton-reggaeton-1","reggaeton-reggaeton-2","reggaeton-reggaeton-3-a","reggaeton-reggaeton-3-b"]},{"n":"Cumbia sonidera","b":98,"i":["a3-cumbia-sonidera"]}]},{"n":"Bogota","a":4.711,"o":-74.0721,"g":[{"n":"cumbia","b":95,"i":["eu-cumbia-3-4"]}]},{"n":"Buenos Aires","a":-34.6037,"o":-58.3816,"g":[{"n":"tango","b":100,"i":["eu-tresillo-3-8"]},{"n":"cumbia","b":95,"i":["eu-cumbia-3-4"]},{"n":"Cumbia villera","b":98,"i":["a3-cumbia-villera"]},{"n":"Tango","b":118,"i":["a3-tango"]},{"n":"Milonga ciudadana","b":120,"i":["a3-milonga-ciudadana"]}]},{"n":"Lima","a":-12.0464,"o":-77.0428,"g":[{"n":"cumbia","b":95,"i":["eu-cumbia-3-4"]},{"n":"Chicha / Peruvian cumbia","b":98,"i":["a3-chicha-peruvian-cumbia"]},{"n":"Festejo afroperuano","b":112,"i":["a3-festejo-afroperuano"]}]},{"n":"Sao Paulo","a":-23.5505,"o":-46.6333,"g":[{"n":"samba","b":100,"i":["eu-samba-necklace-7-16"]},{"n":"bossa nova","b":100,"i":["eu-bossa-nova-necklace-5-16"]},{"n":"Funk mandel\u00e3o","b":110,"i":["a3-funk-mandel-o"]}]},{"n":"Salvador","a":-12.9777,"o":-38.5016,"g":[{"n":"samba","b":100,"i":["eu-samba-necklace-7-16"]},{"n":"Ax\u00e9","b":140,"i":["a3-ax"]},{"n":"Samba-reggae","b":110,"i":["a3-samba-reggae"]}]},{"n":"Santiago de Cuba","a":20.0247,"o":-75.8219,"g":[{"n":"son","b":100,"i":["eu-tresillo-3-8","eu-cinquillo-5-8"]},{"n":"Son cubano","b":108,"i":["a3-son-cubano"]}]},{"n":"Luanda","a":-8.839,"o":13.2894,"g":[{"n":"kuduro","b":135,"i":["d-kuduro"]},{"n":"tresillo","b":100,"i":["eu-tresillo-3-8"]},{"n":"Kuduro","b":125,"i":["a3-kuduro"]},{"n":"Semba","b":110,"i":["a3-semba"]},{"n":"Kizomba","b":112,"i":["a3-kizomba"]}]},{"n":"Port of Spain","a":10.6549,"o":-61.5019,"g":[{"n":"calypso","b":null,"i":["eu-calypso-3-4"]},{"n":"Calypso","b":108,"i":["a3-calypso"]},{"n":"Steelband / panorama calypso","b":108,"i":["a3-steelband-panorama-calypso"]}]},{"n":"Tripoli","a":32.8872,"o":13.1913,"g":[{"n":"bendir","b":null,"i":["eu-tuareg-bendir-7-8"]}]},{"n":"Beirut","a":33.8938,"o":35.5018,"g":[{"n":"arab rhythms","b":100,"i":["eu-york-samai-5-6","eu-agsag-samai-5-9","eu-nawakhat-5-7"]}]},{"n":"Seattle","a":47.6062,"o":-122.3321,"g":[{"n":"grunge","b":110,"i":["rock-rock-1","rock-rock-2"]},{"n":"hip hop","b":90,"i":["hip-hop-hip-hop-1-a","hip-hop-hip-hop-1-b","hip-hop-hip-hop-2-a","hip-hop-hip-hop-2-b"]},{"n":"Grunge","b":148,"i":["a3-grunge"]}]},{"n":"Tokyo","a":35.6762,"o":139.6503,"g":[{"n":"city pop","b":110,"i":["pop-pop-1-a","pop-in-the-air-last-night-a"]},{"n":"house","b":124,"i":["house-house","house-house-2","house-brit-house","house-french-house"]},{"n":"Japanese city pop","b":105,"i":["a3-japanese-city-pop"]},{"n":"J-pop (dance)","b":145,"i":["a3-j-pop-dance"]},{"n":"Shibuya-kei","b":110,"i":["a3-shibuya-kei"]},{"n":"Japanese enka","b":170,"i":["a3-japanese-enka"]},{"n":"Japanese taiko ensemble","b":null,"i":["a3-japanese-taiko-ensemble"]}]},{"n":"Seoul","a":37.5665,"o":126.978,"g":[{"n":"k-pop","b":110,"i":["pop-pop-1-a","pop-in-the-air-last-night-a"]},{"n":"Korean trot","b":124,"i":["a3-korean-trot"]},{"n":"K-pop (dance)","b":145,"i":["a3-k-pop-dance"]}]},{"n":"Mumbai","a":19.076,"o":72.8777,"g":[{"n":"bollywood","b":110,"i":["pop-pop-1-a","pop-in-the-air-last-night-a"]},{"n":"Bollywood filmi (song/drum hybrid)","b":null,"i":["a3-bollywood-filmi-song-drum-hybrid"]},{"n":"Indian disco","b":121,"i":["a3-indian-disco"]}]},{"n":"Chicago","a":41.8781,"o":-87.6298,"g":[{"n":"deep house","b":120,"i":["house-deep-house","house-deeper-house","house-slow-deep-house"]},{"n":"footwork","b":160,"i":["house-footwork-a","house-footwork-b"]},{"n":"house","b":124,"i":["house-house","house-house-2","house-dirty-house"]},{"n":"soul","b":104,"i":["funk-and-soul-o-o-h-child-a","funk-and-soul-o-o-h-child-b"]},{"n":"Drill (Chicago)","b":142,"i":["a3-drill-chicago"]},{"n":"Chicago footwork","b":160,"i":["a3-chicago-footwork"]},{"n":"Chicago juke","b":146,"i":["a3-chicago-juke"]},{"n":"Ghetto house","b":146,"i":["a3-ghetto-house"]},{"n":"Chicago house","b":124,"i":["a3-chicago-house"]},{"n":"Acid house","b":124,"i":["a3-acid-house"]},{"n":"Deep house","b":124,"i":["a3-deep-house"]},{"n":"Swing jazz","b":140,"i":["a3-swing-jazz"]},{"n":"Chicago electric blues","b":120,"i":["a3-chicago-electric-blues"]}]},{"n":"Detroit","a":42.3314,"o":-83.0458,"g":[{"n":"electro","b":125,"i":["electro-electro-1-a","electro-electro-1-b","electro-electro-2-a","electro-electro-2-b","electro-electro-3-a","electro-electro-3-b","electro-electro-4"]},{"n":"funk","b":100,"i":["funk-and-soul-superstition"]},{"n":"soul","b":88,"i":["funk-and-soul-knocks-me-off-my-feet-a","funk-and-soul-knocks-me-off-my-feet-b","funk-and-soul-rock-steady"]},{"n":"techno","b":130,"i":["edm-techno"]},{"n":"Ghettotech","b":125,"i":["a3-ghettotech"]},{"n":"Detroit techno","b":128,"i":["a3-detroit-techno"]},{"n":"Detroit electro","b":125,"i":["a3-detroit-electro"]},{"n":"Motown","b":99,"i":["a3-motown"]},{"n":"P-funk","b":104,"i":["a3-p-funk"]},{"n":"Dub techno","b":128,"i":["a3-dub-techno"]}]},{"n":"New York","a":40.7128,"o":-74.006,"g":[{"n":"electro-funk","b":127,"i":["hip-hop-planet-rock-a","hip-hop-planet-rock-b"]},{"n":"funk","b":96,"i":["funk-and-soul-impeach-the-president","funk-and-soul-it-s-a-new-day","funk-and-soul-synthetic-substitution-a","funk-and-soul-synthetic-substitution-b"]},{"n":"hip-hop","b":90,"i":["hip-hop-hip-hop-1-a","hip-hop-hip-hop-1-b","hip-hop-hip-hop-2-a","hip-hop-hip-hop-2-b","hip-hop-hip-hop-3-a","hip-hop-hip-hop-3-b","hip-hop-hip-hop-4-a","hip-hop-hip-hop-4-b","hip-hop-hip-hop-5","hip-hop-hip-hop-6","hip-hop-hip-hop-7","hip-hop-hip-hop-8","hip-hop-inna-club","hip-hop-boom-bap"]},{"n":"Hip-hop (early breakbeat)","b":110,"i":["a3-hip-hop-early-breakbeat"]},{"n":"Boom bap","b":93,"i":["a3-boom-bap"]},{"n":"Jazz rap","b":93,"i":["a3-jazz-rap"]},{"n":"Brooklyn drill","b":140,"i":["a3-brooklyn-drill"]},{"n":"New York garage house","b":124,"i":["a3-new-york-garage-house"]},{"n":"Deep house","b":124,"i":["a3-deep-house"]},{"n":"Vogue / ballroom house","b":124,"i":["a3-vogue-ballroom-house"]},{"n":"Disco","b":121,"i":["a3-disco"]},{"n":"Stride piano","b":140,"i":["a3-stride-piano"]},{"n":"Swing jazz","b":140,"i":["a3-swing-jazz"]},{"n":"Bebop","b":190,"i":["a3-bebop"]},{"n":"Hard bop","b":190,"i":["a3-hard-bop"]},{"n":"Cool jazz / West Coast jazz","b":140,"i":["a3-cool-jazz-west-coast-jazz"]},{"n":"Modal jazz","b":140,"i":["a3-modal-jazz"]},{"n":"Punk rock (NYC)","b":180,"i":["a3-punk-rock-nyc"]},{"n":"Salsa dura","b":106,"i":["a3-salsa-dura"]},{"n":"Mambo","b":108,"i":["a3-mambo"]},{"n":"Klezmer","b":130,"i":["a3-klezmer"]}]},{"n":"Miami","a":25.7617,"o":-80.1918,"g":[{"n":"miami bass","b":130,"i":["miami-bass-miami-bass-a","miami-bass-miami-bass-b","miami-bass-sally","miami-bass-rock-the-planet"]},{"n":"Miami bass","b":125,"i":["a3-miami-bass"]}]},{"n":"Atlanta","a":33.749,"o":-84.388,"g":[{"n":"trap","b":140,"i":["hip-hop-trap-a","hip-hop-trap-b"]},{"n":"Trap (Atlanta)","b":142,"i":["a3-trap-atlanta"]},{"n":"Crunk","b":142,"i":["a3-crunk"]}]},{"n":"Augusta","a":33.4735,"o":-82.0105,"g":[{"n":"funk","b":100,"i":["funk-and-soul-the-funky-drummer","funk-and-soul-cold-sweat-a","funk-and-soul-cold-sweat-b","funk-and-soul-i-got-you-i-feel-good-a","funk-and-soul-i-got-you-i-feel-good-b","funk-and-soul-funky-president","funk-and-soul-get-up-a","funk-and-soul-get-up-b","funk-and-soul-mother-popcorn-a","funk-and-soul-mother-popcorn-b","funk-and-soul-i-got-the-feelin-a","funk-and-soul-i-got-the-feelin-b"]}]},{"n":"Washington DC","a":38.9072,"o":-77.0369,"g":[{"n":"funk","b":136,"i":["funk-and-soul-amen-break-a","funk-and-soul-amen-break-b","funk-and-soul-amen-break-c","funk-and-soul-amen-break-d","funk-and-soul-ashley-s-roachclip"]},{"n":"Go-go","b":123,"i":["a3-go-go"]},{"n":"Hardcore punk (DC)","b":180,"i":["a3-hardcore-punk-dc"]},{"n":"Grunge","b":148,"i":["a3-grunge"]},{"n":"Emo / post-hardcore (DC)","b":148,"i":["a3-emo-post-hardcore-dc"]}]},{"n":"Dayton","a":39.7589,"o":-84.1916,"g":[{"n":"funk","b":105,"i":["funk-and-soul-more-bounce-to-the-ounce"]},{"n":"Funk (Dayton)","b":104,"i":["a3-funk-dayton"]}]},{"n":"Memphis","a":35.1495,"o":-90.049,"g":[{"n":"blues","b":90,"i":["funk-and-soul-the-thrill-is-gone"]},{"n":"soul","b":100,"i":["funk-and-soul-respect-yourself-a","funk-and-soul-respect-yourself-b"]},{"n":"Crunk","b":142,"i":["a3-crunk"]},{"n":"Memphis rap / early phonk","b":142,"i":["a3-memphis-rap-early-phonk"]},{"n":"Soul (Memphis)","b":99,"i":["a3-soul-memphis"]},{"n":"Rock and roll (Sun sound)","b":120,"i":["a3-rock-and-roll-sun-sound"]},{"n":"Rockabilly","b":120,"i":["a3-rockabilly"]}]},{"n":"New Orleans","a":29.9511,"o":-90.0715,"g":[{"n":"funk","b":92,"i":["funk-and-soul-cissy-strut-a","funk-and-soul-cissy-strut-b","funk-and-soul-cissy-strut-c","funk-and-soul-cissy-strut-d","funk-and-soul-hook-and-sling-a","funk-and-soul-hook-and-sling-b","funk-and-soul-hook-and-sling-c","funk-and-soul-hook-and-sling-d","funk-and-soul-look-ka-py-py-a","funk-and-soul-look-ka-py-py-b","funk-and-soul-lady-marmalade-a","funk-and-soul-lady-marmalade-b"]},{"n":"soul","b":100,"i":["funk-and-soul-groove-me"]},{"n":"New Orleans bounce","b":105,"i":["a3-new-orleans-bounce"]},{"n":"New Orleans jazz","b":140,"i":["a3-new-orleans-jazz"]},{"n":"Second-line brass-band groove","b":110,"i":["a3-second-line-brass-band-groove"]},{"n":"Funk (New Orleans)","b":104,"i":["a3-funk-new-orleans"]}]},{"n":"Los Angeles","a":34.0522,"o":-118.2437,"g":[{"n":"funk","b":120,"i":["funk-and-soul-the-fez-a","funk-and-soul-the-fez-b","funk-and-soul-express-yourself-a","funk-and-soul-express-yourself-b","funk-and-soul-let-a-woman-be-a-woman","funk-and-soul-let-a-man-be-a-man"]},{"n":"g-funk","b":95,"i":["hip-hop-back-to-cali-a","hip-hop-back-to-cali-b","hip-hop-snoop-styles"]},{"n":"hip-hop","b":95,"i":["hip-hop-most-wanted-a","hip-hop-most-wanted-b"]},{"n":"soul","b":96,"i":["funk-and-soul-kissing-my-love-a","funk-and-soul-kissing-my-love-b","funk-and-soul-kissing-my-love-c","funk-and-soul-kissing-my-love-d","funk-and-soul-kissing-my-love-e","funk-and-soul-use-me-a","funk-and-soul-use-me-b","funk-and-soul-use-me-c","funk-and-soul-use-me-d"]},{"n":"G-funk","b":94,"i":["a3-g-funk"]},{"n":"Cool jazz / West Coast jazz","b":140,"i":["a3-cool-jazz-west-coast-jazz"]},{"n":"Hardcore punk (LA)","b":180,"i":["a3-hardcore-punk-la"]}]},{"n":"London","a":51.5074,"o":-0.1278,"g":[{"n":"drum and bass","b":174,"i":["drum-and-bass-drum-and-bass-1-a","drum-and-bass-drum-and-bass-1-b","drum-and-bass-drum-and-bass-2-a","drum-and-bass-drum-and-bass-2-b","drum-and-bass-drum-and-bass-3","drum-and-bass-drum-and-bass-4-a","drum-and-bass-drum-and-bass-4-b"]},{"n":"dubstep","b":140,"i":["edm-dubstep-a","edm-dubstep-b","edm-dubstep-ratcheted"]},{"n":"electro-pop","b":120,"i":["pop-nineteen-a","pop-nineteen-b"]},{"n":"house","b":124,"i":["house-brit-house"]},{"n":"jungle","b":165,"i":["drum-and-bass-jungle-a","drum-and-bass-jungle-b"]},{"n":"pop","b":104,"i":["funk-and-soul-come-dancing-a","funk-and-soul-come-dancing-b","pop-in-the-air-last-night-a","pop-in-the-air-last-night-b"]},{"n":"uk garage","b":132,"i":["edm-uk-garage-a","edm-uk-garage-b"]},{"n":"UK drill","b":140,"i":["a3-uk-drill"]},{"n":"Amapiano (Nigeria / UK diaspora adaptation)","b":113,"i":["a3-amapiano-nigeria-uk-diaspora-adaptation"]},{"n":"UK punk","b":180,"i":["a3-uk-punk"]},{"n":"Britpop","b":120,"i":["a3-britpop"]},{"n":"Jungle","b":165,"i":["a3-jungle"]},{"n":"Drum and bass","b":172,"i":["a3-drum-and-bass"]},{"n":"Liquid funk (DnB)","b":172,"i":["a3-liquid-funk-dnb"]},{"n":"UK garage (4x4)","b":135,"i":["a3-uk-garage-4x4"]},{"n":"UK 2-step garage","b":134,"i":["a3-uk-2-step-garage"]},{"n":"Grime","b":140,"i":["a3-grime"]},{"n":"Dubstep (Croydon)","b":140,"i":["a3-dubstep-croydon"]},{"n":"UK funky","b":123,"i":["a3-uk-funky"]},{"n":"Speed garage","b":135,"i":["a3-speed-garage"]},{"n":"Breakbeat hardcore","b":110,"i":["a3-breakbeat-hardcore"]},{"n":"Big beat","b":110,"i":["a3-big-beat"]},{"n":"Acid jazz","b":104,"i":["a3-acid-jazz"]},{"n":"Broken beat / bruk","b":124,"i":["a3-broken-beat-bruk"]},{"n":"Shoegaze","b":120,"i":["a3-shoegaze"]},{"n":"Industrial (early)","b":125,"i":["a3-industrial-early"]},{"n":"Bhangra (UK pop)","b":122,"i":["a3-bhangra-uk-pop"]}]},{"n":"Manchester","a":53.4808,"o":-2.2426,"g":[{"n":"synth-pop","b":130,"i":["pop-bleu-monday-a","pop-bleu-monday-b"]},{"n":"Post-punk (Manchester)","b":120,"i":["a3-post-punk-manchester"]},{"n":"Madchester / baggy","b":110,"i":["a3-madchester-baggy"]},{"n":"Britpop","b":120,"i":["a3-britpop"]},{"n":"Northern soul","b":99,"i":["a3-northern-soul"]}]},{"n":"Headley, Hampshire","a":51.1186,"o":-0.8264,"g":[{"n":"rock","b":72,"i":["funk-and-soul-when-the-levee-breaks"]}]},{"n":"Kingston","a":17.9714,"o":-76.7931,"g":[{"n":"reggae","b":75,"i":["dub-half-drop","dub-one-drop","dub-two-drop","dub-steppers"]},{"n":"Ska (first wave)","b":125,"i":["a3-ska-first-wave"]},{"n":"Rocksteady","b":78,"i":["a3-rocksteady"]},{"n":"Roots reggae","b":78,"i":["a3-roots-reggae"]},{"n":"Reggae rockers","b":85,"i":["a3-reggae-rockers"]},{"n":"Dub","b":78,"i":["a3-dub"]},{"n":"Dancehall (digital)","b":98,"i":["a3-dancehall-digital"]}]},{"n":"San Juan","a":18.4655,"o":-66.1057,"g":[{"n":"reggaeton","b":92,"i":["reggaeton-reggaeton-1","reggaeton-reggaeton-2","reggaeton-reggaeton-3-a","reggaeton-reggaeton-3-b"]},{"n":"Reggaet\u00f3n","b":98,"i":["a3-reggaet-n"]}]},{"n":"Havana","a":23.1136,"o":-82.3666,"g":[{"n":"rumba","b":110,"i":["afro-cuban-rumba"]},{"n":"son","b":100,"i":["afro-cuban-son-clave"]},{"n":"tresillo","b":100,"i":["eu-tresillo-3-8"]},{"n":"cinquillo","b":100,"i":["eu-cinquillo-5-8"]},{"n":"tumbao","b":110,"i":["eu-swing-tumbao-2-3"]},{"n":"Son cubano","b":108,"i":["a3-son-cubano"]},{"n":"Guaguanc\u00f3 / Cuban rumba","b":106,"i":["a3-guaguanc-cuban-rumba"]},{"n":"Mambo","b":108,"i":["a3-mambo"]},{"n":"Cha-cha-ch\u00e1","b":108,"i":["a3-cha-cha-ch"]},{"n":"Songo","b":106,"i":["a3-songo"]},{"n":"Timba","b":106,"i":["a3-timba"]},{"n":"Habanera","b":100,"i":["a3-habanera"]}]},{"n":"Rio de Janeiro","a":-22.9068,"o":-43.1729,"g":[{"n":"bossa nova","b":120,"i":["afro-cuban-bossa-nova"]},{"n":"samba","b":100,"i":["eu-samba-necklace-7-16"]},{"n":"Brazilian samba (Rio)","b":110,"i":["a3-brazilian-samba-rio"]},{"n":"Bossa nova","b":95,"i":["a3-bossa-nova"]},{"n":"Baile funk / funk carioca","b":98,"i":["a3-baile-funk-funk-carioca"]}]},{"n":"Lagos","a":6.5244,"o":3.3792,"g":[{"n":"afrobeat","b":108,"i":["funk-and-soul-expensive-shit"]},{"n":"shiko","b":120,"i":["afro-cuban-shiko"]},{"n":"Afrobeat (Fela-era)","b":105,"i":["a3-afrobeat-fela-era"]},{"n":"Afrobeats (contemporary)","b":105,"i":["a3-afrobeats-contemporary"]},{"n":"J\u00f9j\u00fa","b":114,"i":["a3-j-j"]},{"n":"F\u00faj\u00ec","b":128,"i":["a3-f-j"]},{"n":"Amapiano (Nigeria / UK diaspora adaptation)","b":113,"i":["a3-amapiano-nigeria-uk-diaspora-adaptation"]}]},{"n":"Accra","a":5.6037,"o":-0.187,"g":[{"n":"ewe drumming","b":120,"i":["afro-cuban-gahu"]},{"n":"Highlife (Ghana)","b":114,"i":["a3-highlife-ghana"]},{"n":"Hiplife","b":105,"i":["a3-hiplife"]},{"n":"Azonto (pop/dance)","b":105,"i":["a3-azonto-pop-dance"]},{"n":"Afrobeats (contemporary)","b":105,"i":["a3-afrobeats-contemporary"]}]},{"n":"Kinshasa","a":-4.4419,"o":15.2663,"g":[{"n":"soukous","b":130,"i":["afro-cuban-soukous"]},{"n":"Soukous","b":110,"i":["a3-soukous"]},{"n":"Congolese rumba","b":106,"i":["a3-congolese-rumba"]},{"n":"Ndombolo","b":110,"i":["a3-ndombolo"]}]},{"n":"Barranquilla","a":10.9685,"o":-74.7813,"g":[{"n":"cumbia","b":95,"i":["eu-cumbia-3-4"]},{"n":"Champeta","b":110,"i":["a3-champeta"]}]},{"n":"Tehran","a":35.6892,"o":51.389,"g":[{"n":"khafif-e-ramal","b":110,"i":["eu-khafif-e-ramal-2-in-5-2-5","eu-khafif-e-ramal-3-in-5-3-5","eu-khalif-e-saghil-3-4"]}]},{"n":"Cairo","a":30.0444,"o":31.2357,"g":[{"n":"arab rhythms","b":100,"i":["eu-york-samai-5-6","eu-agsag-samai-5-9","eu-nawakhat-5-7"]},{"n":"Maqsum (Arabic iqa / pop usage)","b":100,"i":["a3-maqsum-arabic-iqa-pop-usage"]},{"n":"Baladi (Egyptian dance/song)","b":90,"i":["a3-baladi-egyptian-dance-song"]}]},{"n":"Kumasi","a":6.6885,"o":-1.6244,"g":[{"n":"mpre (ashanti bell)","b":115,"i":["eu-mpre--ashanti-bell--7-12"]},{"n":"Highlife (Ghana)","b":114,"i":["a3-highlife-ghana"]}]},{"n":"Johannesburg","a":-26.2041,"o":28.0473,"g":[{"n":"venda clapping","b":110,"i":["eu-venda-clapping-5-12"]},{"n":"Amapiano","b":113,"i":["a3-amapiano"]},{"n":"Kwaito","b":101,"i":["a3-kwaito"]},{"n":"South African house","b":124,"i":["a3-south-african-house"]},{"n":"Mbaqanga / township jive","b":118,"i":["a3-mbaqanga-township-jive"]},{"n":"Kwela","b":118,"i":["a3-kwela"]}]},{"n":"Bangui","a":4.3947,"o":18.5582,"g":[{"n":"aka","b":100,"i":["eu-aka-necklace-11-of-24-11-24","eu-aka-necklace-13-of-24-13-24"]},{"n":"central african necklace","b":100,"i":["eu-central-african-necklace-9-16"]}]}],"patterns":{"d-4x4-offbeat":{"p":["1000100010001000","0010001000100010"]},"house-house":{"p":["1000100010001000"]},"house-house-2":{"p":["1000100010001000","1111111111111111"]},"house-brit-house":{"p":["1000100010001000","1101110111011101"]},"drum-and-bass-drum-and-bass-1-a":{"p":["1001000101100001","1010101010101010"]},"drum-and-bass-drum-and-bass-1-b":{"p":["1010000111100000","1010101010101010"]},"hip-hop-hip-hop-1-a":{"p":["1000001100010010"]},"hip-hop-hip-hop-1-b":{"p":["1000000100010000"]},"hip-hop-hip-hop-2-a":{"p":["1000000111000101"]},"pop-pop-1-a":{"p":["1101000100100000","1111111111111111"]},"pop-in-the-air-last-night-a":{"p":["0000000000100000","0010001000101000"]},"house-french-house":{"p":["1000100010001000","1110101111101011"]},"d-polka":{"p":["10001000","01010101"]},"d-gabber":{"p":["1000100010001000","0101010101010101"]},"a3-dub-techno":{"p":["1000100010001000","0000100000001000","0010001000100010"]},"a3-berlin-minimal-techno":{"p":["1000100010001000","0000100000001000","0010001000100010"]},"a3-hard-techno-schranz":{"p":["1000100010001000","0000100000001000","1010101010101010"]},"a3-trance-german-club":{"p":["1000100010001000","0000100000001000","1010101010101010"]},"a3-krautrock-motorik":{"p":["1000100010001000","0000100000001000","1010101010101010"]},"a3-neue-deutsche-welle":{"p":["1000000100100000","0000100000001000","1010101010101010"]},"pop-in-the-air-last-night-b":{"p":["1010101010100010","0010001000101000"]},"electro-electro-1-a":{"p":["1000001000000000"]},"electro-electro-1-b":{"p":["1000001000100010"]},"electro-electro-2-a":{"p":["1000001000000000"]},"electro-electro-2-b":{"p":["1000000000100100"]},"rock-rock-1":{"p":["1000000110100000","1010101010101010"]},"rock-rock-2":{"p":["1000000110100000","1010101010101010"]},"hip-hop-hip-hop-2-b":{"p":["1000000110010000"]},"a3-viennese-waltz":{"p":["100","011"]},"a3-gabber-hardcore-techno":{"p":["1000100010001000","0000100000001000","1010101010101010"]},"edm-techno":{"p":["1000100010001010","0000000001000000"]},"edm-dubstep-a":{"p":["1000000000100000","0110001000010010"]},"edm-dubstep-b":{"p":["1001001000100000","0110001000010010"]},"d-kuduro":{"p":["1000100010001000","1001001010010010"]},"rock-rock-3":{"p":["1000000110100000","1010101010101010"]},"pop-nineteen-a":{"p":["1101000100100000","1001001011000000"]},"eu-tresillo-3-8":{"p":["10000000","10010010"]},"eu-romanian-folk-dance-3-5":{"p":["10000","10101"]},"a3-romanian-manele":{"p":["10001000","00110010","01000101"]},"eu-ruchenitza-3-in-7-3-7":{"p":["1000000","1001010"]},"eu-ruchenitza-4-in-7-4-7":{"p":["1000000","1010101"]},"eu-aksak-4-9":{"p":["100000000","100101010"]},"eu-choreic-3-4":{"p":["1000","1011"]},"a3-rebetiko":{"p":["101010100","010101001"]},"a3-turkish-iftetelli":{"p":["1000001010000000","0000100000001000","0010000000100010"]},"a3-turkish-roman-9-8":{"p":["101010100","010101001"]},"a3-anatolian-psych-rock":{"p":["1000001010000010","0000100000001000","1010101010101010"]},"d-6-8":{"p":["100100","101010"]},"a3-italo-disco":{"p":["1000100010001000","0000100000001000","1010101010101010"]},"d-compas12":{"p":["100100100101","010010010101"]},"afro-cuban-son-clave":{"p":["1001100110011001"]},"afro-cuban-rumba":{"p":["1001100110011001"]},"afro-cuban-bossa-nova":{"p":["1001100110011001"]},"a3-flamenco-buler-as":{"p":["001001010101","110110101010"]},"a3-zouk":{"p":["1000001010000010","0000100000001000","1010101010101010"]},"a3-french-house-filter-house":{"p":["1000100010001000","0000100000001000","1010101010101010"]},"a3-french-touch-electro":{"p":["1000000100100000","0000100000001000","1010101010101010"]},"breaks-standard-breakbeat-1":{"p":["1000000000100000"]},"breaks-standard-breakbeat-2":{"p":["1010000000100000"]},"breaks-standard-breakbeat-3":{"p":["1010001000100000"]},"drum-and-bass-drum-and-bass-2-a":{"p":["1000000101010001","1010101010101010"]},"drum-and-bass-drum-and-bass-2-b":{"p":["1000000000010000","1010101010101011"]},"a3-trip-hop-bristol-sound":{"p":["1000000100100000","0000100000001000","1010101010101010"]},"a3-drum-and-bass":{"p":["1000000000100000","0000100000001000","0001000000000010"]},"a3-liquid-funk-dnb":{"p":["1000000000100000","0000100000001000","0001000000000010"]},"a3-idm-electronica":{"p":["1000010000100010","0000100000001000","1010010101010101"]},"a3-nwobhm":{"p":["1111111111111111","0000100000001000","1010101010101010"]},"a3-heavy-metal-early":{"p":["1000001010000010","0000100000001000","1010101010101010"]},"a3-bhangra-uk-pop":{"p":["10001000","00100010","01010101"]},"a3-bassline-niche":{"p":["1000100010001000","0000100000001000","0101010101010101"]},"a3-industrial-early":{"p":["1000000100100000","0000100000001000","1010101010101010"]},"eu-cumbia-3-4":{"p":["1000","1011"]},"reggaeton-reggaeton-1":{"p":["1000100010001000","1010101010101010"]},"reggaeton-reggaeton-2":{"p":["1000000100000000","0010001000100010"]},"reggaeton-reggaeton-3-a":{"p":["1000000010000000"]},"reggaeton-reggaeton-3-b":{"p":["1000000010000000","1001001010010010"]},"a3-cumbia-sonidera":{"p":["10001000","00100011","11111111"]},"a3-cumbia-villera":{"p":["10001000","00100011","11111111"]},"a3-tango":{"p":["10101010"]},"a3-milonga-ciudadana":{"p":["10011010","00100100"]},"a3-chicha-peruvian-cumbia":{"p":["10001000","00100011","11111111"]},"a3-festejo-afroperuano":{"p":["100100","101101","001010"]},"eu-samba-necklace-7-16":{"p":["1000000000000000","1001010100101010"]},"eu-bossa-nova-necklace-5-16":{"p":["1000000000000000","1000100100100100"]},"a3-funk-mandel-o":{"p":["1000001000100000","0000100000001000","1010101010101010"]},"a3-ax":{"p":["1000100010001000","0000100000001000","1010101010101010"]},"a3-samba-reggae":{"p":["10000000","00001000","10010101"]},"eu-cinquillo-5-8":{"p":["10000000","10101101"]},"a3-son-cubano":{"p":["10000001000000001000000100000000","10000010000010000000100010000000","00010001000100010001000100010001"]},"a3-kuduro":{"p":["1000000100100000","0000100000001000","1010101010101010"]},"a3-semba":{"p":["1000000010000000","0000100000001000","1010101010101010"]},"a3-kizomba":{"p":["1000001010000010","0000100000001000","1010101010101010"]},"eu-calypso-3-4":{"p":["1000","1011"]},"a3-calypso":{"p":["10011001","00100010","11111111"]},"a3-steelband-panorama-calypso":{"p":["10011001","00100010","11111111"]},"eu-tuareg-bendir-7-8":{"p":["10000000","10111111"]},"eu-york-samai-5-6":{"p":["100000","101111"]},"eu-agsag-samai-5-9":{"p":["100000000","101010101"]},"eu-nawakhat-5-7":{"p":["1000000","1011011"]},"a3-grunge":{"p":["1000001010000010","0000100000001000","1010101010101010"]},"a3-japanese-city-pop":{"p":["1000000010100000","0000100000001000","1010101010101010"]},"a3-j-pop-dance":{"p":["1000100010001000","0000100000001000","1010101010101010"]},"a3-shibuya-kei":{"p":["1000000100100000","0000100000001000","0001000000010010"]},"a3-japanese-enka":{"p":["100","011"]},"a3-japanese-taiko-ensemble":{"p":["10001000","01010101","00100010"]},"a3-korean-trot":{"p":["10001000","01110111","11111111"]},"a3-k-pop-dance":{"p":["1000100010001000","0000100000001000","1010101010101010"]},"a3-bollywood-filmi-song-drum-hybrid":{"p":["10000000","01000000","00101001"]},"a3-indian-disco":{"p":["1000100010001000","0000100000001000","1010101010101010"]},"house-deep-house":{"p":["1000100010001000","0100000101000000"]},"house-deeper-house":{"p":["1000100010001000","0001000010000000"]},"house-slow-deep-house":{"p":["1000100010001000","1111111111111111"]},"house-footwork-a":{"p":["1001001010010010","0010000000100000"]},"house-footwork-b":{"p":["1001001010010010","0010001100100010"]},"house-dirty-house":{"p":["1010100010101001","0000000000100001"]},"funk-and-soul-o-o-h-child-a":{"p":["1010000010110000"]},"funk-and-soul-o-o-h-child-b":{"p":["1010000010110000"]},"a3-drill-chicago":{"p":["1000001000010010","0000000010000000","1010101010101010"]},"a3-chicago-footwork":{"p":["1000001000010010","0000100001001000","1010010110100101"]},"a3-chicago-juke":{"p":["1000100010001000","0000100000001000","1010101010101010"]},"a3-ghetto-house":{"p":["1000100010001000","0000100000001000","1010101010101010"]},"a3-chicago-house":{"p":["1000100010001000","0000100000001000","1010101010101010"]},"a3-acid-house":{"p":["1000100010001000","0000100000001000","1010101010101010"]},"a3-deep-house":{"p":["1000100010001000","0000100000001000","1010101010101010"]},"a3-swing-jazz":{"p":["100100100100","101101101101","000100000100"]},"a3-chicago-electric-blues":{"p":["100000100000","000100000100","101101101101"]},"electro-electro-3-a":{"p":["1000001000010000"]},"electro-electro-3-b":{"p":["1000001000010100"]},"electro-electro-4":{"p":["1000001000100100"]},"funk-and-soul-superstition":{"p":["1000100010001000","1010101111101011"]},"funk-and-soul-knocks-me-off-my-feet-a":{"p":["1010100110101001"]},"funk-and-soul-knocks-me-off-my-feet-b":{"p":["1010100110101001"]},"funk-and-soul-rock-steady":{"p":["0010100100101000"]},"a3-ghettotech":{"p":["1000000100100000","0000100000001000","1010101010101010"]},"a3-detroit-techno":{"p":["1000100010001000","0000100000001000","0010001000100010"]},"a3-detroit-electro":{"p":["1000000100100000","0000100000001000","1010101010101010"]},"a3-motown":{"p":["1000000100100000","0000100000001000","0001000000010000"]},"a3-p-funk":{"p":["1001000010100010","0000100000001000","0010001001000001"]},"hip-hop-planet-rock-a":{"p":["1000001000000000","1011101110111111"]},"hip-hop-planet-rock-b":{"p":["1000001000100100","1011101110111111"]},"funk-and-soul-impeach-the-president":{"p":["1000000110000010","1010101110001010"]},"funk-and-soul-it-s-a-new-day":{"p":["1010000000110001","1010101010101010"]},"funk-and-soul-synthetic-substitution-a":{"p":["1010000101110001"]},"funk-and-soul-synthetic-substitution-b":{"p":["1010000101110001"]},"hip-hop-hip-hop-3-a":{"p":["1010000010100000"]},"hip-hop-hip-hop-3-b":{"p":["1010000011010000"]},"hip-hop-hip-hop-4-a":{"p":["1001000101100001"]},"hip-hop-hip-hop-4-b":{"p":["1010000111100000"]},"hip-hop-hip-hop-5":{"p":["1010000110100001"]},"hip-hop-hip-hop-6":{"p":["1010000000110001","1010101010101010"]},"hip-hop-hip-hop-7":{"p":["1000000100100101","1010101010101010"]},"hip-hop-hip-hop-8":{"p":["1001000010110000","1101101111011011"]},"hip-hop-inna-club":{"p":["0010000100100001"]},"hip-hop-boom-bap":{"p":["1010010001000100","1111111111111111"]},"a3-hip-hop-early-breakbeat":{"p":["1000000100100000","0000100000001000","0001000000010010"]},"a3-boom-bap":{"p":["1000000100100000","0000100000001000","1010101010101010"]},"a3-jazz-rap":{"p":["1000000100100000","0000100000001000","1010101010101010"]},"a3-brooklyn-drill":{"p":["1000001000100001","0000000010000000","1010100101010010"]},"a3-new-york-garage-house":{"p":["1000100010001000","0000100000001000","1010101010101010"]},"a3-vogue-ballroom-house":{"p":["1000100010001000","0000100000001000","1010101010101010"]},"a3-disco":{"p":["1000100010001000","0000100000001000","1010101010101010"]},"a3-stride-piano":{"p":["100100100100","101101101101","000100000100"]},"a3-bebop":{"p":["100000100000","101101101101","000100000100"]},"a3-hard-bop":{"p":["100000100000","101101101101","000100000100"]},"a3-cool-jazz-west-coast-jazz":{"p":["100100100100","101101101101","000100000100"]},"a3-modal-jazz":{"p":["100100100100","101101101101","000100000100"]},"a3-punk-rock-nyc":{"p":["1000100010001000","0000100000001000","1000000000000000"]},"a3-salsa-dura":{"p":["10000001000000001000000100000000","10000010000010000000100010000000","00010001000100010001000100010001"]},"a3-mambo":{"p":["10000001000000001000000100000000","10000010000010000000100010000000","00010001000100010001000100010001"]},"a3-klezmer":{"p":["1010","0101","0101"]},"miami-bass-miami-bass-a":{"p":["1000001000000000","1011101110111011"]},"miami-bass-miami-bass-b":{"p":["1000001000100100","1011101110111011"]},"miami-bass-sally":{"p":["1000001000100010","1010101010101010"]},"miami-bass-rock-the-planet":{"p":["1001001000000000","1011101110111111"]},"a3-miami-bass":{"p":["1000000100100000","0000100000001000","1010101010101010"]},"hip-hop-trap-a":{"p":["1000001000001000","1010101010101010"]},"hip-hop-trap-b":{"p":["0010100000000000","0010101010100010"]},"a3-trap-atlanta":{"p":["1000001000010010","0000000010000000","1010101010101010"]},"a3-crunk":{"p":["1000001000010010","0000000010000000","1010101010101010"]},"funk-and-soul-the-funky-drummer":{"p":["1010001000100100","1111111011111011"]},"funk-and-soul-cold-sweat-a":{"p":["1000000010100000"]},"funk-and-soul-cold-sweat-b":{"p":["0010000010100010"]},"funk-and-soul-i-got-you-i-feel-good-a":{"p":["1000000000100000"]},"funk-and-soul-i-got-you-i-feel-good-b":{"p":["0010001000100010"]},"funk-and-soul-funky-president":{"p":["1001000101100000"]},"funk-and-soul-get-up-a":{"p":["1000000000100010"]},"funk-and-soul-get-up-b":{"p":["1000000000100010"]},"funk-and-soul-mother-popcorn-a":{"p":["1010000000100000"]},"funk-and-soul-mother-popcorn-b":{"p":["0010001000100010"]},"funk-and-soul-i-got-the-feelin-a":{"p":["1010000000100000"]},"funk-and-soul-i-got-the-feelin-b":{"p":["0010000010001010"]},"funk-and-soul-amen-break-a":{"p":["1010000000110000","1010101010101010"]},"funk-and-soul-amen-break-b":{"p":["1010000000110000","1010101010101010"]},"funk-and-soul-amen-break-c":{"p":["1010000000100000","1010101010101010"]},"funk-and-soul-amen-break-d":{"p":["1010000000100000","1010101010001010"]},"funk-and-soul-ashley-s-roachclip":{"p":["1010001011000000","1010101010001010"]},"a3-go-go":{"p":["1000100010001000","0000100000001000","1010101010101010"]},"a3-hardcore-punk-dc":{"p":["1000100010001000","0000100000001000","1000000000000000"]},"a3-emo-post-hardcore-dc":{"p":["1000001010000010","0000100000001000","1010101010101010"]},"funk-and-soul-more-bounce-to-the-ounce":{"p":["1000000011000000","0010101010101010"]},"a3-funk-dayton":{"p":["1001000010100010","0000100000001000","0010001001000001"]},"funk-and-soul-the-thrill-is-gone":{"p":["0000000110100000"]},"funk-and-soul-respect-yourself-a":{"p":["1000100010001000"]},"funk-and-soul-respect-yourself-b":{"p":["1000100010001000"]},"a3-memphis-rap-early-phonk":{"p":["1000001000010010","0000000010000000","1010101010101010"]},"a3-soul-memphis":{"p":["1000000100100000","0000100000001000","0001000000010000"]},"a3-rock-and-roll-sun-sound":{"p":["1000000010000000","0000100000001000","1010101010101010"]},"a3-rockabilly":{"p":["100000100000","000100000100","101101101101"]},"funk-and-soul-cissy-strut-a":{"p":["1001010001011010"]},"funk-and-soul-cissy-strut-b":{"p":["1001000101011010"]},"funk-and-soul-cissy-strut-c":{"p":["1000100101011010"]},"funk-and-soul-cissy-strut-d":{"p":["1000100101011010"]},"funk-and-soul-hook-and-sling-a":{"p":["1010000001000110"]},"funk-and-soul-hook-and-sling-b":{"p":["0000000000000010"]},"funk-and-soul-hook-and-sling-c":{"p":["1100000000001101"]},"funk-and-soul-hook-and-sling-d":{"p":["1010010000010110"]},"funk-and-soul-look-ka-py-py-a":{"p":["1001010000100110"]},"funk-and-soul-look-ka-py-py-b":{"p":["1001010110100110"]},"funk-and-soul-lady-marmalade-a":{"p":["1010001010000010"]},"funk-and-soul-lady-marmalade-b":{"p":["0000000000001000"]},"funk-and-soul-groove-me":{"p":["1001100111010101"]},"a3-new-orleans-bounce":{"p":["1001001010010010","0000100000001000","0000100000001000"]},"a3-new-orleans-jazz":{"p":["100100100100","101101101101","000100000100"]},"a3-second-line-brass-band-groove":{"p":["1000000100100000","0000100000001000","0001000000010010"]},"a3-funk-new-orleans":{"p":["1001000010100010","0000100000001000","0010001001000001"]},"funk-and-soul-the-fez-a":{"p":["1000000010000000"]},"funk-and-soul-the-fez-b":{"p":["1000000010010010"]},"funk-and-soul-express-yourself-a":{"p":["1001000010010010"]},"funk-and-soul-express-yourself-b":{"p":["1001000010010010"]},"funk-and-soul-let-a-woman-be-a-woman":{"p":["0010000010110110"]},"funk-and-soul-let-a-man-be-a-man":{"p":["0010000000100010"]},"hip-hop-back-to-cali-a":{"p":["1000001000000000","1010101010101010"]},"hip-hop-back-to-cali-b":{"p":["1000001000100100","1010101010100010"]},"hip-hop-snoop-styles":{"p":["1001001000100000"]},"hip-hop-most-wanted-a":{"p":["1000001011000001","1010101010101010"]},"hip-hop-most-wanted-b":{"p":["0010001011000000","1000101010101010"]},"funk-and-soul-kissing-my-love-a":{"p":["1101000000010010"]},"funk-and-soul-kissing-my-love-b":{"p":["1101000000010100"]},"funk-and-soul-kissing-my-love-c":{"p":["1101000000101100"]},"funk-and-soul-kissing-my-love-d":{"p":["1001000000010010"]},"funk-and-soul-kissing-my-love-e":{"p":["1000000000010100"]},"funk-and-soul-use-me-a":{"p":["1000100000001000"]},"funk-and-soul-use-me-b":{"p":["0000100100101000"]},"funk-and-soul-use-me-c":{"p":["1010010110110101"]},"funk-and-soul-use-me-d":{"p":["1010010011010101"]},"a3-g-funk":{"p":["1000001010000010","0000100000001000","1010101010101010"]},"a3-hardcore-punk-la":{"p":["1000100010001000","0000100000001000","1000000000000000"]},"drum-and-bass-drum-and-bass-3":{"p":["1000000000100000","1111111111111111"]},"drum-and-bass-drum-and-bass-4-a":{"p":["1000001000000000","1010101010101010"]},"drum-and-bass-drum-and-bass-4-b":{"p":["0000100000100000","1010101010101010"]},"edm-dubstep-ratcheted":{"p":["1001000010010000","1100011111011101"]},"pop-nineteen-b":{"p":["1101000100100000","1111111111111111"]},"drum-and-bass-jungle-a":{"p":["1010000000100000","1010101010101010"]},"drum-and-bass-jungle-b":{"p":["0110000000100000","1010101010101010"]},"funk-and-soul-come-dancing-a":{"p":["1000000110000001"]},"funk-and-soul-come-dancing-b":{"p":["1010010110000001"]},"edm-uk-garage-a":{"p":["1000000000100000","0011001000100011"]},"edm-uk-garage-b":{"p":["1000000000100000","0010001000100010"]},"a3-uk-drill":{"p":["1000001000100001","0000000010000000","1010100101010010"]},"a3-amapiano-nigeria-uk-diaspora-adaptation":{"p":["1000000010000000","0000100000001000","1010101010101010"]},"a3-uk-punk":{"p":["1000100010001000","0000100000001000","1000000000000000"]},"a3-britpop":{"p":["1000000010000000","0000100000001000","1010101010101010"]},"a3-jungle":{"p":["1000001000100000","0000100000001000","0010000100000010"]},"a3-uk-garage-4x4":{"p":["1000100010001000","0000100000001000","0101010101010101"]},"a3-uk-2-step-garage":{"p":["1000000000100000","0000100000001000","0101001001010010"]},"a3-grime":{"p":["1000000100100000","0000000010000000","1010010100101010"]},"a3-dubstep-croydon":{"p":["1000000000100000","0000000010000000","0010001000100010"]},"a3-uk-funky":{"p":["1000100010001000","0000100000001000","1010101010101010"]},"a3-speed-garage":{"p":["1000100010001000","0000100000001000","0101010101010101"]},"a3-breakbeat-hardcore":{"p":["1000000100100000","0000100000001000","0001000000010010"]},"a3-big-beat":{"p":["1000000100100000","0000100000001000","0001000000010010"]},"a3-acid-jazz":{"p":["1001000010100010","0000100000001000","0010001001000001"]},"a3-broken-beat-bruk":{"p":["1000010000100010","0000100000001000","1010010101010101"]},"a3-shoegaze":{"p":["1000000010000000","0000100000001000","1010101010101010"]},"pop-bleu-monday-a":{"p":["1000000010000000"]},"pop-bleu-monday-b":{"p":["1000000010000000","1001100110011001"]},"a3-post-punk-manchester":{"p":["1000000010000000","0000100000001000","1010101010101010"]},"a3-madchester-baggy":{"p":["1000000100100000","0000100000001000","0001000000010010"]},"a3-northern-soul":{"p":["1000000100100000","0000100000001000","0001000000010000"]},"funk-and-soul-when-the-levee-breaks":{"p":["1100000100110000","1010101010101010"]},"dub-half-drop":{"p":["1000000000000000","1010101010101010"]},"dub-one-drop":{"p":["0000000010000000","1010101010101010"]},"dub-two-drop":{"p":["1000000010000000","1010101010101010"]},"dub-steppers":{"p":["1000100010001000","1010101010101010"]},"a3-ska-first-wave":{"p":["10001000","00100010","01010101"]},"a3-rocksteady":{"p":["0000000010000000","1010101010101010","0010001000100010"]},"a3-roots-reggae":{"p":["0000000010000000","1010101010101010","0010001000100010"]},"a3-reggae-rockers":{"p":["1000100010001000","0000000010000000","1010101010101010"]},"a3-dub":{"p":["0000000010000000","1010101010101010","0010001000100010"]},"a3-dancehall-digital":{"p":["1000000100100000","0000100000001000","0010001000100010"]},"a3-reggaet-n":{"p":["1000001010000010","0000100000001000","1010101010101010"]},"eu-swing-tumbao-2-3":{"p":["100","101"]},"a3-guaguanc-cuban-rumba":{"p":["10000001000010000000100010000000","10000000001000001000000000100000","00001000100000000000100000001000"]},"a3-cha-cha-ch":{"p":["10000001000000001000000100000000","10000010000010000000100010000000","00010001000100010001000100010001"]},"a3-songo":{"p":["10000001000000001000000100000000","10000010000010000000100010000000","00010001000100010001000100010001"]},"a3-timba":{"p":["10000001000000001000000100000000","10000010000010000000100010000000","00010001000100010001000100010001"]},"a3-habanera":{"p":["10011010","00100100"]},"a3-brazilian-samba-rio":{"p":["10000000","00001000","10010101"]},"a3-bossa-nova":{"p":["10000000100000001000000010000000","10000010000010000000100000100000","10101010101010101010101010101010"]},"a3-baile-funk-funk-carioca":{"p":["1000001010000010","0000100000001000","1010101010101010"]},"funk-and-soul-expensive-shit":{"p":["0001001000000010"]},"afro-cuban-shiko":{"p":["1000101010001010"]},"a3-afrobeat-fela-era":{"p":["1000000010010000","0000100000001000","1010101010101010"]},"a3-afrobeats-contemporary":{"p":["1000001000100000","0000100000001000","1010101010101010"]},"a3-j-j":{"p":["10001000","00100010","10110110"]},"a3-f-j":{"p":["1000000010000000","0000100000001000","0010010001000010"]},"afro-cuban-gahu":{"p":["1000100010001010"]},"a3-highlife-ghana":{"p":["10001000","00100010","10110110"]},"a3-hiplife":{"p":["1000001000100000","0000100000001000","1010101010101010"]},"a3-azonto-pop-dance":{"p":["1000001000100000","0000100000001000","1010101010101010"]},"afro-cuban-soukous":{"p":["1000100010001010"]},"a3-soukous":{"p":["1000000010000000","0000100000001000","1010101010101010"]},"a3-congolese-rumba":{"p":["10000001000000001000000100000000","10000010000010000000100010000000","00010001000100010001000100010001"]},"a3-ndombolo":{"p":["1000000010000000","0000100000001000","1010101010101010"]},"a3-champeta":{"p":["1000000010000000","0000100000001000","1010101010101010"]},"eu-khafif-e-ramal-2-in-5-2-5":{"p":["10000","10010"]},"eu-khafif-e-ramal-3-in-5-3-5":{"p":["10000","10101"]},"eu-khalif-e-saghil-3-4":{"p":["1000","1011"]},"a3-maqsum-arabic-iqa-pop-usage":{"p":["10001000","00110010","01000101"]},"a3-baladi-egyptian-dance-song":{"p":["11001000","00100010","00010101"]},"eu-mpre--ashanti-bell--7-12":{"p":["100000000000","101010110101"]},"eu-venda-clapping-5-12":{"p":["100000000000","100101001010"]},"a3-amapiano":{"p":["1000000010000000","0000100000001000","1010101010101010"]},"a3-kwaito":{"p":["1000100010001000","0000100000001000","0010001000100010"]},"a3-south-african-house":{"p":["1000100010001000","0000100000001000","1010101010101010"]},"a3-mbaqanga-township-jive":{"p":["10001000","00100010","11111111"]},"a3-kwela":{"p":["10001000","00100010","11111111"]},"eu-aka-necklace-11-of-24-11-24":{"p":["100000000000000000000000","100101010101001010101010"]},"eu-aka-necklace-13-of-24-13-24":{"p":["100000000000000000000000","101010101010110101010101"]},"eu-central-african-necklace-9-16":{"p":["1000000000000000","1010101011010101"]}}};
+let SEL = -1;   // the ring opened in design B
+const WMAP_LAND = 'AAAAAAAAAPD/f7///wsAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAP////////8BACAAwPMJAOABAAAAAAAAAAAAAAAAvP///f///x8AgP8DAIYACPA/AAAAAAAAAAAAAAB8/v+//////wcAAP8AAAAAAAB8AAAAAAAAAAAAAIC///8P/////w8AAAwAAAA/AMD/DwBYAAAAAAAAAMD94/8HAP7//w8AAAAAAOADAPz/DwD4DQAAAAAAAOAfe/cfAPz//wMAAAAAAHgA1P///z/gAAAAAwAAAPD/9/P/Afj//wMAAAAAADzg/////3/9HwCAAfj/AR/+n/f/B9j//wMAANAPALjx/////////weHAf7/////z/7rD/D//wAAAPz/Y/n/////////////H/7///////+zP/D/BwAAAP//7///////////////f//////////Af/D/AX8AAP//////////////////PP7////////3H+AfAH8AwP//////////////////YPz//////48TH+AfAAgA8P//////////////////AP7//////wP0C4APAAAI+M////////////////8fAP7//////wHwMwAOAAAA+N////////////////gCAPAD8P///wP4fwAAAAAw8J////////////9/MB4AAOAHwP///z/8fwAAAAB44Nf///////////8/AB8AAHwAgP/////9/wEAAAB84MP///////////8PgE8AgAQAgP7////7/wcAAAD+8P////////////+/gA8AAAAAgP3////7/wcAAAD+/f//////////////AAMAAAAAAPz//////wcAAADy////////////////gAEAAAAAAPj/////Hw4AAACA////////////////AAAAAAAAAOD/////fx8AAADw////////////////AAAAAAAAAOD//////xwAAADA///////////////fAAAAAAAAAOD/////fwAAAACA///v/v7////////PBAAAAAAAAOD/////EwAAAAD+//8H/Pz////////nAwAAAAAAAOD/////AQAAAAD84/fn+Pn////////gAAAAAAAAAOD/////AAAAAAD8Yf7///n//////39gAAAAAAAAAOD///9/AAAAIAD8Zuz8//n//////zpgAAAAAAAAAMD///8/AAAAAAD8cMf8//P//////3s4AAAAAAAAAMD///8/AAAAAACY/4B8/////////3E/AAAAAAAAAID///8fAAAAAAD4/wDj/////////zEfAAAAAAAAAAD+//8PAAAAAAD+/+OA/////////8EDAAAAAAAAAAD8//8DAAAAAAD+/+///////////8MAAAAAAAAAAAD8//8DAAAAAAD+/////////////wMAAAAAAAAAAAD6/wEHAAAAAMD///////3//////wEAAAAAAAAAAAD4/wAGAAAAAMD///////v//////wEAAAAAAAAAAADg/wAGAAAAAMD///////f//////wMAAAAAAAAAAABgfwA4AAAAAOD//////v/w////fwcAAAAAAAAAAABAfoAfAAAAAPD//////f/A////PwEAAAAAAAAAAAAA/jh5AAAAAPD//////f/A/+P/BwAAAAAAAAABAAAA/jjwAwAAAOD/////+X8A/8N/AwAAAAAAAAAAAAAA+D/QDwAAAOD/////+z8A/8F/AwMAAAAAAAAAAAAA4H8AgAAAgOD/////9x8Af4D/AQMAAAAAAAAAAAAAAP4BAAAAAPD//////wcAPgD+AQEAAAAAAAAAAAAAAPgBAAAAAPD//////wEAPgD+AQMAAAAAAAAAAAAAAMCBAwAAAPD/////HxoAPCD2gQ8AAAAAAAAAAAAAAMDhfwAAAMD//////wMAPAD2gQ4AAAAAAAAAAAAAAID//wAAAID//////wMAeABGQB4AAAAAAAAAAAAAAAD+/wEAAID//////wMAYAAMIB4AAAAAAAAAAAAAAADw/x8AAAD//////wEAYIAc4BwAAAAAAAAAAAAAAADw/z8AAABM+P///wEAAIAb+RAAAAAAAAAAAAAAAAD4/z8AAAAA4P///wAAAAB/fAAAAAAAAAAAAAAAAAD8/38AAAAAwP//fwAAAAA+/w8AAAAAAAAAAAAAAAj8//8AAAAAwP//HwAAAAAcfycBAAAAAAAAAAAAAAj8//8HAAAAwP//DwAAAAB6vocbBgAAAAAAAAAAAAD8//8/AAAAwP//BwAAAAB4vvP/EAAAAAAAAAAAAAD8////AAAAgP//BwAAAABwgAP/MwAAAAAAAAAAAAD8////AQAAAP//AwAAAADggwPwvwAAAAAAAAAAAAD8////AQAAAP//BwAAAACAH4DwBwQAAAAAAAAAAAD4////AQAAAP//BwAAAAAA2A/gDg4AAAAAAAAAAADw////AAAAAP7/BwAAAAAAAAXAHAAAAAAAAAAAAADw//9/AAAAAP7/FwEAAAAAAMDPAAAAAAAAAAAAAADg//8/AAAAAP//BwMAAAAAANDPAAAAAAAAAAAAAADg//8/AAAAAP//jwMAAAAAAPjHAYAAAAAAAAAAAADA//8/AAAQgP//5wEAAAAAAP7fAwCAAAAAAAAAAAAA//8/AAAAgP//4QEAAAAAAP7/AwBAAAAAAAAAAAAA/v8/AAAAAP//4AEAAAAAgP//BwBBAAAAAAAAAAAA/v8fAAAAAP//4AEAAAAA4P//D4AAAAAAAAAAAAAA/v8fAAAAAP7/4AAAAAAA8P//H8AAAAAAAAAAAAAA/v8DAAAAAP7/4AAAAAAA+P//PwAAAAAAAAAAAAAA/v8AAAAAAPx/4AAAAAAA+P//PwAAAAAAAAAAAAAA//8AAAAAAPw/AAAAAAAA8P//fwAAAAAAAAAAAAAA//8AAAAAAPw/AAAAAAAA8P//fwAAAAAAAAAAAAAA/38AAAAAAPgfAAAAAAAA8P//fwAAAAAAAAAAAAAA/38AAAAAAPgfAAAAAAAA4P//PwAAAAAAAAAAAAAA/x8AAAAAAPAHAAAAAAAA4A/+PwAAAAAAAAAAAAAA/x8AAAAAAPABAAAAAAAA8AT8HwAAAAAAAAAAAACA/wcAAAAAAAAAAAAAAAAAAADgHwAYAAAAAAAAAACA/wcAAAAAAAAAAAAAAAAAAADgDwBwAAAAAAAAAACA/wEAAAAAAAAAAAAAAAAAAACAAwBwAAAAAAAAAADAfwAAAAAAAAAAAAAAAAAAAAAABwA8AAAAAAAAAADAPwAAAAAAAAAAAAAAAAAAAAAABwAcAAAAAAAAAADAHwAAAAAAAAAAAAAAAAAAAAAABgAPAAAAAAAAAADAHwAAAAAAAAAAAAAAAAAAAAAAAIAHAAAAAAAAAADADwAAAAAAAAAAAAAAAAAAAAAAAIADAAAAAAAAAADgHwAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAADgBwAAAAAAAAAAAABAAAAAAAAAAAAAAAAAAAAAAADggwEAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAADAhwEAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAADADwCAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAADQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA';
+
+// ---------- eight drums ----------
+const TDM = 'https://raw.githubusercontent.com/geikha/tidal-drum-machines/6577395a4d05031728ced2ec3e5637fa89d8be48/machines/';
+const KITS = [{"id":"congas","name":"Congas and bongos","lanes":[{"n":"conga low","f":"LinnDrum/linndrum-perc/Conga L-01.wav","t":1,"v":1},{"n":"conga mid","f":"LinnDrum/linndrum-perc/Conga M-01.wav","t":1,"v":1},{"n":"conga high","f":"LinnDrum/linndrum-perc/Conga H-01.wav","t":1,"v":1},{"n":"conga slap","f":"RolandMT32/rolandmt32-perc/Conga Muted H.wav","t":1,"v":1},{"n":"quinto","f":"BossDR550/bossdr550-perc/Conga S.wav","t":1,"v":1},{"n":"bongo low","f":"RolandTR727/rolandtr727-perc/Bongo L.wav","t":1,"v":1},{"n":"bongo high","f":"RolandTR727/rolandtr727-perc/Bongo H.wav","t":1,"v":1},{"n":"bongo bright","f":"BossDR660/bossdr660-perc/BongoH.wav","t":1,"v":1}]},{"id":"latin","name":"Latin percussion","lanes":[{"n":"timbale","f":"RolandTR727/rolandtr727-perc/Timbale L.wav","t":1,"v":1},{"n":"agogo","f":"RolandTR727/rolandtr727-perc/Agogo L.wav","t":1,"v":1},{"n":"cowbell","f":"BossDR550/bossdr550-cb/Cowbell-02.wav","t":1,"v":1},{"n":"wood block","f":"AlesisHR16/alesishr16-perc/Wood Block L.wav","t":1,"v":1},{"n":"guiro","f":"BossDR660/bossdr660-perc/GuiroL.wav","t":0,"v":1},{"n":"clave","f":"BossDR550/bossdr550-perc/Claves.wav","t":1,"v":1},{"n":"tambourine","f":"LinnDrum/linndrum-tb/Tambourine.wav","t":0,"v":0.8},{"n":"triangle","f":"AlesisHR16/alesishr16-perc/Triangle.wav","t":1,"v":1}]},{"id":"808","name":"TR-808","lanes":[{"n":"kick","f":"RolandTR808/rolandtr808-bd/BD0050.WAV","t":1,"v":1},{"n":"low tom","f":"RolandTR808/rolandtr808-lt/LT50.WAV","t":1,"v":1},{"n":"snare","f":"RolandTR808/rolandtr808-sd/SD0050.WAV","t":0,"v":1},{"n":"mid tom","f":"RolandTR808/rolandtr808-mt/MT50.WAV","t":1,"v":1},{"n":"clap","f":"RolandTR808/rolandtr808-cp/cp1.wav","t":0,"v":1},{"n":"cowbell","f":"RolandTR808/rolandtr808-cb/Cowbell.wav","t":1,"v":1},{"n":"hat","f":"RolandTR808/rolandtr808-hh/CH.WAV","t":0,"v":0.7},{"n":"open hat","f":"RolandTR808/rolandtr808-oh/OH50.WAV","t":0,"v":0.7}]},{"id":"909","name":"TR-909","lanes":[{"n":"kick","f":"RolandTR909/rolandtr909-bd/Bassdrum-01.wav","t":1,"v":1},{"n":"low tom","f":"RolandTR909/rolandtr909-lt/Tom L.wav","t":1,"v":1},{"n":"snare","f":"RolandTR909/rolandtr909-sd/sd01.wav","t":0,"v":1},{"n":"mid tom","f":"RolandTR909/rolandtr909-mt/Tom M.wav","t":1,"v":1},{"n":"clap","f":"RolandTR909/rolandtr909-cp/Clap.wav","t":0,"v":1},{"n":"rim","f":"RolandTR909/rolandtr909-rim/Rimhot.wav","t":0,"v":1},{"n":"hat","f":"RolandTR909/rolandtr909-hh/hh01.wav","t":0,"v":0.7},{"n":"open hat","f":"RolandTR909/rolandtr909-oh/Hat Open.wav","t":0,"v":0.7}]},{"id":"linn","name":"LinnDrum","lanes":[{"n":"kick","f":"LinnDrum/linndrum-bd/Bassdrum.wav","t":1,"v":1},{"n":"low tom","f":"LinnDrum/linndrum-lt/Tom L-01.wav","t":1,"v":1},{"n":"snare","f":"LinnDrum/linndrum-sd/0Snarderum-01.wav","t":0,"v":1},{"n":"high tom","f":"LinnDrum/linndrum-ht/Tom H-01.wav","t":1,"v":1},{"n":"clap","f":"LinnDrum/linndrum-cp/Clap.wav","t":0,"v":1},{"n":"cowbell","f":"LinnDrum/linndrum-cb/Cowbell.wav","t":1,"v":1},{"n":"hat","f":"LinnDrum/linndrum-hh/Hat Closed-01.wav","t":0,"v":0.7},{"n":"tambourine","f":"LinnDrum/linndrum-tb/Tambourine.wav","t":0,"v":0.8}]},{"id":"cr78","name":"CR-78 (1978)","lanes":[{"n":"kick","f":"RolandCompurhythm78/rolandcompurhythm78-bd/Bassdrum.wav","t":1,"v":1},{"n":"conga low","f":"RolandCompurhythm78/rolandcompurhythm78-perc/Conga L.wav","t":1,"v":1},{"n":"snare","f":"RolandCompurhythm78/rolandcompurhythm78-sd/Snaredrum.wav","t":0,"v":1},{"n":"conga mid","f":"RolandCompurhythm78/rolandcompurhythm78-perc/Conga M.wav","t":1,"v":1},{"n":"wood block","f":"RolandCompurhythm78/rolandcompurhythm78-perc/Woodblock-01.wav","t":1,"v":1},{"n":"cowbell","f":"RolandCompurhythm78/rolandcompurhythm78-cb/Cowbell.wav","t":1,"v":1},{"n":"hat","f":"RolandCompurhythm78/rolandcompurhythm78-hh/Hat Closed-01.wav","t":0,"v":0.7},{"n":"tambourine","f":"RolandCompurhythm78/rolandcompurhythm78-tb/Tambourine.wav","t":0,"v":0.8}]},{"id":"simmons","name":"Simmons toms","lanes":[{"n":"kick","f":"SimmonsSDS5/simmonssds5-bd/Bassdrum-01.wav","t":1,"v":1},{"n":"low tom","f":"SimmonsSDS5/simmonssds5-lt/Tom-07.wav","t":1,"v":1},{"n":"snare","f":"SimmonsSDS5/simmonssds5-sd/Snaredrum-01.wav","t":0,"v":1},{"n":"mid tom","f":"SimmonsSDS5/simmonssds5-mt/Tom-02.wav","t":1,"v":1},{"n":"rim","f":"SimmonsSDS5/simmonssds5-rim/Rimshot-01.wav","t":0,"v":1},{"n":"high tom","f":"SimmonsSDS5/simmonssds5-ht/Tom-01.wav","t":1,"v":1},{"n":"hat","f":"SimmonsSDS5/simmonssds5-hh/Hat Closed-01.wav","t":0,"v":0.7},{"n":"open hat","f":"SimmonsSDS5/simmonssds5-oh/Hat Open-01.wav","t":0,"v":0.7}]},{"id":"dmx","name":"Oberheim DMX","lanes":[{"n":"kick","f":"OberheimDMX/oberheimdmx-bd/Bassdrum-01.wav","t":1,"v":1},{"n":"low tom","f":"OberheimDMX/oberheimdmx-lt/Tom L.wav","t":1,"v":1},{"n":"snare","f":"OberheimDMX/oberheimdmx-sd/Snaredrum-01.wav","t":0,"v":1},{"n":"mid tom","f":"OberheimDMX/oberheimdmx-mt/Tom M.wav","t":1,"v":1},{"n":"clap","f":"OberheimDMX/oberheimdmx-cp/Clap.wav","t":0,"v":1},{"n":"high tom","f":"OberheimDMX/oberheimdmx-ht/Tom H.wav","t":1,"v":1},{"n":"hat","f":"OberheimDMX/oberheimdmx-hh/Hat Closed.wav","t":0,"v":0.7},{"n":"open hat","f":"OberheimDMX/oberheimdmx-oh/Hat Open.wav","t":0,"v":0.7}]},{"id":"glitch","name":"Glitch and blips","lanes":[{"n":"sub pop","syn":"sub","m":36,"t":1,"v":1},{"n":"pop","syn":"pop","m":48,"t":1,"v":1},{"n":"bleep","syn":"bleep","m":69,"t":1,"v":1},{"n":"blip","syn":"blip","m":81,"t":1,"v":1},{"n":"zap","syn":"zap","m":60,"t":0,"v":1},{"n":"click","syn":"click","m":60,"t":0,"v":1},{"n":"tick","syn":"tick","m":60,"t":0,"v":1},{"n":"glitch","syn":"glitch","m":60,"t":0,"v":1}]},{"id":"kalimba","name":"Kalimba","lanes":[{"n":"note 1","syn":"kalimba","m":60,"t":1,"v":1},{"n":"note 2","syn":"kalimba","m":62,"t":1,"v":1},{"n":"note 3","syn":"kalimba","m":64,"t":1,"v":1},{"n":"note 4","syn":"kalimba","m":65,"t":1,"v":1},{"n":"note 5","syn":"kalimba","m":67,"t":1,"v":1},{"n":"note 6","syn":"kalimba","m":69,"t":1,"v":1},{"n":"note 7","syn":"kalimba","m":71,"t":1,"v":1},{"n":"note 8","syn":"kalimba","m":72,"t":1,"v":1}]},{"id":"harp","name":"Harp pluck","lanes":[{"n":"note 1","syn":"harp","m":60,"t":1,"v":1},{"n":"note 2","syn":"harp","m":62,"t":1,"v":1},{"n":"note 3","syn":"harp","m":64,"t":1,"v":1},{"n":"note 4","syn":"harp","m":65,"t":1,"v":1},{"n":"note 5","syn":"harp","m":67,"t":1,"v":1},{"n":"note 6","syn":"harp","m":69,"t":1,"v":1},{"n":"note 7","syn":"harp","m":71,"t":1,"v":1},{"n":"note 8","syn":"harp","m":72,"t":1,"v":1}]},{"id":"rhodes","name":"Electric piano","lanes":[{"n":"note 1","syn":"rhodes","m":60,"t":1,"v":1},{"n":"note 2","syn":"rhodes","m":62,"t":1,"v":1},{"n":"note 3","syn":"rhodes","m":64,"t":1,"v":1},{"n":"note 4","syn":"rhodes","m":65,"t":1,"v":1},{"n":"note 5","syn":"rhodes","m":67,"t":1,"v":1},{"n":"note 6","syn":"rhodes","m":69,"t":1,"v":1},{"n":"note 7","syn":"rhodes","m":71,"t":1,"v":1},{"n":"note 8","syn":"rhodes","m":72,"t":1,"v":1}]},{"id":"steel","name":"Steel pan","lanes":[{"n":"note 1","syn":"steel","m":60,"t":1,"v":1},{"n":"note 2","syn":"steel","m":62,"t":1,"v":1},{"n":"note 3","syn":"steel","m":64,"t":1,"v":1},{"n":"note 4","syn":"steel","m":65,"t":1,"v":1},{"n":"note 5","syn":"steel","m":67,"t":1,"v":1},{"n":"note 6","syn":"steel","m":69,"t":1,"v":1},{"n":"note 7","syn":"steel","m":71,"t":1,"v":1},{"n":"note 8","syn":"steel","m":72,"t":1,"v":1}]}];
+const COLORS = ['#e8744a', '#f2b84b', '#7bc6a4', '#5aa9e6', '#c58ad8', '#e86a92', '#9bd35a', '#f0e0c8'];
+let KIT = KITS[0];
+const MIDI = { access: null, out: null, on: false, clock: false, cc: true, ch: 1, map: 'drum' };
+const $ = id => document.getElementById(id);
+const clamp = (x, a, b) => Math.min(b, Math.max(a, x));
+
+// ---------- audio ----------
+const ctx = new (window.AudioContext || window.webkitAudioContext)();
+const masterIn = ctx.createGain();
+const djHP = ctx.createBiquadFilter(), djLP = ctx.createBiquadFilter();
+const lfoLP = ctx.createBiquadFilter(), lfoAmt = ctx.createGain();   // the tempo-synced filter sweep
+lfoLP.type = 'lowpass'; lfoLP.frequency.value = 20000; lfoLP.Q.value = 0.7; lfoAmt.gain.value = 0; lfoAmt.connect(lfoLP.detune);
+djHP.type = 'highpass'; djHP.frequency.value = 20; djLP.type = 'lowpass'; djLP.frequency.value = 20000;
+const pre = ctx.createGain(), comp = ctx.createDynamicsCompressor();
+comp.threshold.value = -14; comp.ratio.value = 4; comp.attack.value = 0.004; comp.release.value = 0.12;
+masterIn.connect(djHP).connect(djLP).connect(lfoLP).connect(pre).connect(comp).connect(ctx.destination);
+// delay: the same five styles and nine times as Three Cities
+const DELAY_BEATS = { '16': 0.25, '16t': 1 / 6, '8t': 1 / 3, '8': 0.5, 'd8': 0.75, '4t': 2 / 3, '4': 1, 'd4': 1.5 };
+const DELAY_TIMES = { '16': '1/16', '16t': '1/16 triplet', '8t': '1/8 triplet', '8': '1/8', 'd8': 'dotted 1/8', '4t': '1/4 triplet', '4': '1/4', 'd4': 'dotted 1/4' };
+const DELAY_MODES = {
+  'mono':      { n: 'Mono', pp: false, lp: 0,    fbScale: 1,    wet: 0.6, slap: false },
+  'ping-pong': { n: 'Ping-pong', pp: true,  lp: 0,    fbScale: 1,    wet: 0.6, slap: false },   // the repeats bounce left and right
+  'tape':      { n: 'Tape', pp: false, lp: 2200, fbScale: 1,    wet: 0.6, slap: false },   // each repeat a little darker
+  'slapback':  { n: 'Slapback', pp: false, lp: 0,    fbScale: 0.15, wet: 0.7, slap: true },    // one quick echo
+  'dub':       { n: 'Dub', pp: false, lp: 900,  fbScale: 0.9,  wet: 0.7, slap: false },   // long, dark, washy
+};
+const DEL = { div: 'd8', mode: 'tape', fb: 47, tone: 55 };
+const dL = ctx.createDelay(2), dR = ctx.createDelay(2), fbSelf = ctx.createGain(), loopLp = ctx.createBiquadFilter(), xA = ctx.createGain(), fbX = ctx.createGain();
+const wL = ctx.createGain(), wR = ctx.createGain(), panL = ctx.createStereoPanner(), panR = ctx.createStereoPanner(), delSend = ctx.createGain(), delOut = ctx.createGain(), delIn = ctx.createGain();
+loopLp.type = 'lowpass'; loopLp.Q.value = 0.5; delSend.gain.value = 0; delOut.gain.value = 0.8;
+pre.connect(delSend).connect(delIn); delIn.connect(dL);
+dL.connect(fbSelf); fbSelf.connect(loopLp); loopLp.connect(dL);   // repeat loop
+dL.connect(xA); xA.connect(dR); dR.connect(fbX); fbX.connect(dL);  // ping-pong
+dL.connect(wL); wL.connect(panL); panL.connect(delOut); dR.connect(wR); wR.connect(panR); panR.connect(delOut); delOut.connect(comp);
+function applyDelay() {
+  const M = DELAY_MODES[DEL.mode], fbv = DEL.fb / 100 * 0.75 * M.fbScale, t = ctx.currentTime;
+  wL.gain.setTargetAtTime(M.wet, t, 0.02); wR.gain.setTargetAtTime(M.pp ? M.wet : 0, t, 0.02);
+  panL.pan.value = M.pp ? -1 : 0; panR.pan.value = M.pp ? 1 : 0;
+  fbSelf.gain.setTargetAtTime(M.pp ? 0 : fbv, t, 0.02); fbX.gain.setTargetAtTime(M.pp ? fbv : 0, t, 0.02); xA.gain.value = M.pp ? 1 : 0;
+  const tone = 600 * Math.pow(14, DEL.tone / 100);
+  loopLp.frequency.setTargetAtTime(M.lp ? Math.min(M.lp, tone) : tone, t, 0.03);
+  setDelayTime();
+}
+// reverb: seven rooms, each made from shaped noise
+const verb = ctx.createConvolver(), verbSend = ctx.createGain(), verbOut = ctx.createGain();
+const REVERBS = {
+  room:      { n: 'Room',      sec: 0.55, pow: 3.4 },
+  plate:     { n: 'Plate',     sec: 1.6,  pow: 2.6 },
+  hall:      { n: 'Hall',      sec: 2.6,  pow: 2.0, dark: 0.35 },
+  cathedral: { n: 'Cathedral', sec: 5.0,  pow: 1.7, dark: 0.55 },
+  spring:    { n: 'Spring',    sec: 1.9,  pow: 2.2, spring: true },
+  gated:     { n: 'Gated',     sec: 0.5,  pow: 0.35, gate: true },
+  reverse:   { n: 'Reverse',   sec: 1.3,  pow: 2.0, rev: true },
+};
+const REV = { type: 'plate', size: 40, tone: 88 };
+function makeIR() {
+  const R = REVERBS[REV.type], sec = clamp(R.sec * (0.5 + 1.3 * REV.size / 100), 0.2, 8), len = Math.floor(ctx.sampleRate * sec), sr = ctx.sampleRate;
+  const b = ctx.createBuffer(2, len, sr);
+  for (let c = 0; c < 2; c++) {
+    const d = b.getChannelData(c); let lp = 0;
+    for (let i = 0; i < len; i++) {
+      const x = i / len; let env = Math.pow(1 - x, R.pow);
+      if (R.gate) env = x < 0.8 ? 1 : Math.max(0, 1 - (x - 0.8) / 0.04);
+      if (R.rev) env = Math.pow(x, 2) * (x > 0.97 ? Math.max(0, 1 - (x - 0.97) / 0.03) : 1);
+      let n = Math.random() * 2 - 1;
+      if (R.dark) { lp += (n - lp) * (1 - R.dark * Math.min(1, x * 3 + 0.2)); n = lp * 2.2; }   // the tail gets darker
+      d[i] = n * env;
+    }
+    if (R.spring) {   // little chirps that come back every 30 ms or so, like a metal spring
+      const gap = Math.floor(sr * (0.027 + 0.004 * c)), clen = Math.floor(sr * 0.012);
+      for (let k = 1; k * gap < len; k++) for (let j = 0; j < clen && k * gap + j < len; j++) {
+        const ph = j / clen, f = 3200 - 2700 * ph; d[k * gap + j] += Math.sin(2 * Math.PI * f * j / sr) * Math.pow(1 - ph, 2) * Math.pow(1 - k * gap / len, 2) * 0.9;
+      }
+    }
+  }
+  verb.buffer = b;
+}
+makeIR();
+const verbIn = ctx.createGain(), verbTone = ctx.createBiquadFilter(); verbSend.gain.value = 0.3 * 0.7; verbOut.gain.value = 1;
+verbTone.type = 'lowpass'; verbTone.frequency.value = 9000;
+pre.connect(verbSend).connect(verbIn); verbIn.connect(verb).connect(verbTone).connect(verbOut).connect(comp);
+function setDelayTime(t = ctx.currentTime) {
+  const M = DELAY_MODES[DEL.mode], secs = M.slap ? 0.09 : DELAY_BEATS[DEL.div] * 60 / (+$('bpm').value);
+  dL.delayTime.setTargetAtTime(secs, t, 0.05); dR.delayTime.setTargetAtTime(secs, t, 0.05);
+}
+
+const SAMPLES = new Map(), failed = new Set();
+const noiseBuf = (() => { const b = ctx.createBuffer(1, ctx.sampleRate, ctx.sampleRate), d = b.getChannelData(0); for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1; return b; })();
+function prepSample(buf) {
+  const d = buf.getChannelData(0), sr = buf.sampleRate; let peak = 0;
+  for (let i = 0; i < d.length; i++) { const a = Math.abs(d[i]); if (a > peak) peak = a; }
+  if (!peak) return { buf, gain: 1, lead: 0, dur: buf.duration, f0: 0 };
+  let i0 = 0; while (i0 < d.length && Math.abs(d[i0]) < peak * 0.02) i0++;
+  i0 = Math.max(0, i0 - Math.round(sr * 0.001));
+  const n = Math.min(d.length, i0 + Math.round(sr * 0.2)); let sum = 0;
+  for (let i = i0; i < n; i++) sum += d[i] * d[i];
+  const rms = Math.sqrt(sum / Math.max(1, n - i0)) || 1e-4;
+  return { buf, gain: Math.min(0.9 / peak, 0.2 / rms), lead: i0 / sr, dur: buf.duration - i0 / sr, f0: detectPitch(d, sr, i0 / sr) };
+}
+// How high a drum sounds, found by looking for the length of time after which its wave repeats. 0 means it has no clear pitch.
+function detectPitch(d, sr, lead) {
+  const N = 2048, a = Math.round((lead + 0.03) * sr), lo = Math.floor(sr / 1000), hi = Math.floor(sr / 70);
+  if (a + N + hi + 1 > d.length) return 0;
+  let e0 = 0; for (let i = 0; i < N; i++) e0 += d[a + i] * d[a + i];
+  if (e0 < 1e-5) return 0;
+  const r = new Float32Array(hi + 2); let max = 0;
+  for (let lag = lo; lag <= hi; lag++) {
+    let sum = 0, e1 = 0;
+    for (let i = 0; i < N; i++) { const y = d[a + i + lag]; sum += d[a + i] * y; e1 += y * y; }
+    r[lag] = sum / Math.sqrt(e0 * e1 + 1e-12); if (r[lag] > max) max = r[lag];
+  }
+  if (max < 0.6) return 0;
+  for (let lag = lo + 1; lag < hi; lag++) if (r[lag] >= max * 0.9 && r[lag] >= r[lag - 1] && r[lag] >= r[lag + 1]) return sr / lag;   // the first strong peak, not a repeat of it
+  return 0;
+}
+function loadSample(path) {
+  return fetch(TDM + path.split('/').map(encodeURIComponent).join('/'))
+    .then(r => { if (!r.ok) throw 0; return r.arrayBuffer(); })
+    .then(ab => ctx.decodeAudioData(ab))
+    .then(buf => SAMPLES.set(path, prepSample(buf)))
+    .catch(() => failed.add(path));
+}
+
+
+// a lane's own chain: fader, a closing filter, then a place in the stereo field
+// the starting settings: each strip's octave and its delay and reverb sends
+const OCT0 = [-1, 0, 0, 0, -1, 0, -1, -2], DELAY0 = [30, 0, 0, 0, 0, 0, 0, 0], VERB0 = [0, 0, 50, 0, 0, 0, 60, 0];
+const lanes = COLORS.map((color, i) => {
+  const g = ctx.createGain(), lp = ctx.createBiquadFilter(), pan = ctx.createStereoPanner();
+  lp.type = 'lowpass'; lp.frequency.value = 18000; lp.Q.value = 3;
+  pan.pan.value = (i - 3.5) / 9;
+  g.connect(lp).connect(pan).connect(masterIn);
+  const sd = ctx.createGain(), sv = ctx.createGain(); sd.gain.value = 0; sv.gain.value = 0;
+  pan.connect(sd).connect(delIn); pan.connect(sv).connect(verbIn);   // each drum's own delay and reverb
+  return { i, d: KIT.lanes[i], color, g, lp, sd, sv, pn: pan, chance: 100, basePan: pan.pan.value, panNow: pan.pan.value, aF: 0, aFc: 420, aP: 0, vol: 0.8, mute: false, flt: false, stut: false, bits: [], steps: 8, hits: 3, rot: 0, last: 0, flash: 0, why: '', src: '', rate: 1, note: '', oct: OCT0[i] };
+});
+const faderGain = v => v * v * 1.1;   // a gentler curve than straight volume
+lanes.forEach(l => l.g.gain.value = faderGain(l.vol));
+
+// The glitch kit has no recordings at all: each drum is a few milliseconds of synth
+// melodic voices: a few sine and triangle partials, each with its own fast decay. Attack is a few milliseconds.
+const MELODIC = { kalimba: 1, harp: 1, rhodes: 1, steel: 1 };
+function melPartial(out, f, t, peak, dec, type = 'sine') {
+  const o = ctx.createOscillator(), g = ctx.createGain();
+  o.type = type; o.frequency.value = f;
+  g.gain.setValueAtTime(0.0001, t); g.gain.linearRampToValueAtTime(peak, t + 0.003); g.gain.exponentialRampToValueAtTime(0.0008, t + dec);
+  o.connect(g).connect(out); o.start(t); o.stop(t + dec + 0.05); return o;
+}
+function melHit(k, f, t, vel, out) {
+  const v = 0.5 * vel;
+  if (k === 'kalimba') { melPartial(out, f, t, 0.7 * v, 1.1); melPartial(out, f * 4.01, t, 0.12 * v, 0.25); }
+  else if (k === 'harp') {   // a string that starts bright and mellows as it rings
+    const o = ctx.createOscillator(), g = ctx.createGain(), lp = ctx.createBiquadFilter();
+    o.type = 'triangle'; o.frequency.value = f; lp.type = 'lowpass'; lp.Q.value = 1;
+    lp.frequency.setValueAtTime(f * 9, t); lp.frequency.exponentialRampToValueAtTime(f * 1.6, t + 0.6);
+    g.gain.setValueAtTime(0.0001, t); g.gain.linearRampToValueAtTime(0.8 * v, t + 0.002); g.gain.exponentialRampToValueAtTime(0.0008, t + 1.6);
+    o.connect(lp).connect(g).connect(out); o.start(t); o.stop(t + 1.7);
+  }
+  else if (k === 'rhodes') { melPartial(out, f, t, 0.8 * v, 1.4); melPartial(out, f * 2, t, 0.25 * v, 0.5); melPartial(out, f * 14, t, 0.05 * v, 0.06); }   // a tine with a tiny bell click
+  else if (k === 'steel') { melPartial(out, f, t, 0.7 * v, 0.9); melPartial(out, f * 2, t, 0.22 * v, 0.45); melPartial(out, f * 3, t, 0.1 * v, 0.2); }
+}
+function synthHit(l, t, vel) {
+  const k = l.d.syn, f = 440 * Math.pow(2, (l.d.m - 69) / 12) * l.rate, out = l.g;
+  if (MELODIC[k]) { melHit(k, f, t, vel, out); return; }
+  const env = (g, peak, dur) => { g.gain.setValueAtTime(peak, t); g.gain.exponentialRampToValueAtTime(0.0008, t + dur); };
+  if (k === 'click' || k === 'tick') {
+    const n = ctx.createBufferSource(), g = ctx.createGain(), bp = ctx.createBiquadFilter();
+    n.buffer = noiseBuf; bp.type = k === 'click' ? 'highpass' : 'bandpass'; bp.frequency.value = k === 'click' ? 3000 : 5200 + Math.random() * 1800; bp.Q.value = 3;
+    env(g, 0.7 * vel, k === 'click' ? 0.006 : 0.016); n.connect(bp).connect(g).connect(out); n.start(t, Math.random() * 0.5); n.stop(t + 0.03); return;
+  }
+  const o = ctx.createOscillator(), g = ctx.createGain();
+  if (k === 'pop') { o.type = 'sine'; o.frequency.setValueAtTime(f * 2.2, t); o.frequency.exponentialRampToValueAtTime(f, t + 0.035); env(g, 0.9 * vel, 0.07); }
+  else if (k === 'sub') { o.type = 'sine'; o.frequency.setValueAtTime(f * 1.8, t); o.frequency.exponentialRampToValueAtTime(f, t + 0.05); env(g, 1 * vel, 0.14); }
+  else if (k === 'bleep') { o.type = 'square'; o.frequency.setValueAtTime(f, t); o.frequency.setValueAtTime(f * 1.5, t + 0.022); env(g, 0.22 * vel, 0.05); }
+  else if (k === 'blip') { o.type = 'triangle'; o.frequency.setValueAtTime(f, t); env(g, 0.6 * vel, 0.035); }
+  else if (k === 'zap') { o.type = 'sawtooth'; o.frequency.setValueAtTime(3200, t); o.frequency.exponentialRampToValueAtTime(180, t + 0.06); env(g, 0.16 * vel, 0.07); }
+  else { o.type = 'square'; const f2 = 300 + Math.random() * 2400; o.frequency.setValueAtTime(f2, t); o.frequency.setValueAtTime(f2 * (0.5 + Math.random()), t + 0.012); env(g, 0.14 * vel, 0.028); }   // glitch: a different pitch every time
+  o.connect(g).connect(out); o.start(t); o.stop(t + 0.2);
+}
+// ---------- blend: a fader between the drum kit and a melodic sound ----------
+// Every hit can play the drum and a melodic note at once. The fader trades one for the other (equal power, so the level stays steady).
+// The melodic note is the ring's own note in the key, so the rings add texture and a tune that follows the weather.
+const BLEND = { v: 0, snd: 'kalimba' }, MELBASE = [60, 62, 64, 65, 67, 69, 71, 72];
+function hit(l, t, vel) {
+  midiHit(l, t, vel);
+  const b = BLEND.v / 100, dg = Math.cos(b * Math.PI / 2), mg = Math.sin(b * Math.PI / 2);
+  if (mg > 0.02 && !(l.d.syn && MELODIC[l.d.syn])) melHit(BLEND.snd, 440 * Math.pow(2, ((l.mm || MELBASE[l.i]) - 69) / 12), t, vel * mg, l.g);
+  if (dg > 0.02) playKit(l, t, vel * dg); else l.flash = t;
+}
+function playKit(l, t, vel) {
+  if (l.d.syn) { l.flash = t; synthHit(l, t, vel); return; }
+  const s = SAMPLES.get(l.d.f), rate = l.rate;
+  l.flash = t;
+  if (s) {
+    const src = ctx.createBufferSource(), g = ctx.createGain();
+    src.buffer = s.buf; src.playbackRate.value = rate; g.gain.value = s.gain * vel * (l.d.v || 1);
+    src.connect(g).connect(l.g); src.start(t, s.lead, Math.min(s.dur, 1.4)); src.stop(t + Math.min(s.dur, 1.4) / rate + 0.05);
+    return;
+  }
+  // until the sample arrives (or if it can't), a simple skin drum
+  const o = ctx.createOscillator(), g = ctx.createGain();
+  const f = 130 + l.i * 55;
+  o.frequency.setValueAtTime(f * 1.6 * rate, t); o.frequency.exponentialRampToValueAtTime(f * rate, t + 0.07);
+  g.gain.setValueAtTime(0.5 * vel, t); g.gain.exponentialRampToValueAtTime(0.001, t + 0.28);
+  o.connect(g).connect(l.g); o.start(t); o.stop(t + 0.3);
+}
+
+// ---------- weather to rhythm ----------
+let WX = { temp: 11, wind: 14, hum: 70, cloud: 60, pres: 1008, rain: 0, hour: 12, off: 0, live: false };
+function rng(seed) { let s = seed >>> 0 || 1; return () => (s = (s * 1664525 + 1013904223) >>> 0) / 4294967296; }
+function euclidBits(n, k, rot) { const b = []; for (let i = 0; i < n; i++) b.push(((((i + rot) % n) * k) % n) < k ? 1 : 0); return b; }
+
+let pattern = null;   // the genre pattern the first three drums borrow
+function buildLanes(remix) {
+  const used = new Set(), r = rng(Math.round(WX.temp * 10) * 31 + Math.round(WX.wind * 10) * 7 + Math.round(WX.pres) + (remix || 0) * 977);
+  const arrays = pattern ? pattern.p : [];
+  // each drum takes its step count from a different bit of weather
+  const picks = [
+    () => null, () => null, () => null,
+    () => ({ s: clamp(Math.round(Math.abs(WX.temp)), 5, 16), why: 'temperature ' + Math.round(WX.temp) + '°' }),
+    () => ({ s: clamp(Math.round(WX.wind / 2) + 4, 5, 16), why: 'wind ' + Math.round(WX.wind) + ' km/h' }),
+    () => ({ s: 5 + Math.round(WX.hum / 100 * 11), why: 'humidity ' + Math.round(WX.hum) + '%' }),
+    () => ({ s: 5 + Math.round(WX.cloud / 100 * 11), why: 'cloud ' + Math.round(WX.cloud) + '%' }),
+    () => ({ s: 5 + (Math.round(WX.pres) % 12), why: 'pressure ' + Math.round(WX.pres) }),
+    () => ({ s: 7 + Math.min(8, Math.round(WX.rain * 4)), why: WX.rain > 0 ? 'rain ' + WX.rain + ' mm' : 'dry day' }),
+    () => ({ s: 5 + (WX.hour % 12), why: 'time of day ' + WX.hour + ':00' }),
+    () => ({ s: 6 + ((Math.round(WX.wind) + Math.round(WX.cloud)) % 10), why: 'wind and cloud' }),
+  ];
+  // the first three drums play the genre's own rhythms when it has them, the rest are weather
+  lanes.forEach((l, i) => {
+    const arr = i < 3 && arrays[i] ? arrays[i] : null;
+    let steps, why, bits;
+    if (arr) { steps = arr.length; bits = arr.split('').map(Number); why = (i === 0 ? 'genre kick' : 'genre rhythm'); }
+    else {
+      const pk = picks[i < 3 ? 8 + i : i]();
+      steps = pk.s; why = pk.why;
+      while (used.has(steps)) steps = steps >= 16 ? 5 : steps + 1;   // no two the same, so they drift apart
+      const dens = [0.28, 0.32, 0.4, 0.38, 0.42, 0.36, 0.45, 0.4][i] + (r() - 0.5) * 0.18;
+      const hits = clamp(Math.round(steps * dens), 2, Math.max(2, steps - 2));
+      const rot = Math.floor(r() * steps);
+      bits = euclidBits(steps, hits, rot); l.hits = hits; l.rot = rot;
+    }
+    used.add(steps);
+    l.steps = steps; l.bits = bits; l.why = why; l.hits = bits.reduce((a, b) => a + b, 0);
+  });
+  renderWhy();
+}
+function remix() {
+  lanes.forEach(l => { const k = 1 + Math.floor(Math.random() * (l.steps - 1)); l.bits = l.bits.slice(k).concat(l.bits.slice(0, k)); });
+}
+
+// ---------- key, scale and kits ----------
+const MODES = {
+  lydian:     { steps: [0, 2, 4, 6, 7, 9, 11], name: 'Lydian' },
+  major:      { steps: [0, 2, 4, 5, 7, 9, 11], name: 'major' },
+  mixolydian: { steps: [0, 2, 4, 5, 7, 9, 10], name: 'Mixolydian' },
+  dorian:     { steps: [0, 2, 3, 5, 7, 9, 10], name: 'Dorian' },
+  minor:      { steps: [0, 2, 3, 5, 7, 8, 10], name: 'minor' },
+  phrygian:   { steps: [0, 1, 3, 5, 7, 8, 10], name: 'Phrygian' },
+};
+const NOTES = ['C', 'C#', 'D', 'Eb', 'E', 'F', 'F#', 'G', 'Ab', 'A', 'Bb', 'B'];
+const DEGREES = [0, 4, 2, 6, 1, 4, 0, 2];   // each drum takes a different note of the scale, so together they make a chord
+let ROOT = 9, MODE = 'minor', TUNE = true;
+function modeFromWeather() {
+  const wet = WX.rain > 0.1;
+  if (WX.temp < 0 && WX.cloud > 60) return 'phrygian';
+  const b = clamp((WX.temp - 4) / 22, 0, 1) * 0.55 + (1 - WX.cloud / 100) * 0.45 - (wet ? 0.22 : 0);
+  return b > 0.78 ? 'lydian' : b > 0.62 ? 'major' : b > 0.46 ? 'mixolydian' : b > 0.3 ? 'dorian' : 'minor';
+}
+// Pull each drum to a note of the scale, in the octave that moves it least. Drums with no clear pitch stay as they are.
+function retune() {
+  const steps = MODES[MODE].steps;
+  lanes.forEach(l => {
+    const s = SAMPLES.get(l.d.f); l.rate = 1; l.note = '';
+    if (TUNE && l.d.syn && l.d.t) {   // synth drums know their own pitch, so they land exactly on a note of the scale
+      const pc = (ROOT + steps[DEGREES[l.i] % 7]) % 12;
+      let shift = (((pc - l.d.m) % 12) + 12) % 12; if (shift > 6) shift -= 12;
+      l.rate = Math.pow(2, shift / 12); l.note = NOTES[pc] + (Math.floor((l.d.m + shift) / 12) - 1); return;
+    }
+    if (!TUNE || !l.d.t || !s || !s.f0) return;
+    const pc = (ROOT + steps[DEGREES[l.i] % 7]) % 12, m0 = 69 + 12 * Math.log2(s.f0 / 440);
+    let shift = (((pc - Math.round(m0)) % 12) + 12) % 12; if (shift > 6) shift -= 12;
+    const target = Math.round(m0) + shift;
+    l.rate = clamp(Math.pow(2, (target - m0) / 12), 0.5, 2);
+    l.note = NOTES[((target % 12) + 12) % 12] + (Math.floor(target / 12) - 1);
+  });
+  lanes.forEach(l => {   // the note the melodic layer plays for this ring
+    const b0 = MELBASE[l.i], pc = (ROOT + steps[DEGREES[l.i] % 7]) % 12; let sh = (((pc - b0) % 12) + 12) % 12; if (sh > 6) sh -= 12;
+    l.mm = b0 + (TUNE ? sh : 0) + 12 * (l.oct || 0);
+  });
+  lanes.forEach(l => {   // each instrument's own octave, after tuning
+    if (!l.oct) return;
+    l.rate *= Math.pow(2, l.oct);
+    const m = /^(.+?)(-?\d+)$/.exec(l.note || ''); if (m) l.note = m[1] + (+m[2] + l.oct);
+  });
+  renderWhy();
+  $('hint').textContent = (TUNE ? `In key: ${NOTES[ROOT]} ${MODES[MODE].name}. ` : 'Not in key. ') + 'Keys: space plays. 1 to 8 mute. Q to I filter. A to K stutter (hold). Z to comma play the drums.';
+}
+async function setKit(id) {
+  const k = KITS.find(x => x.id === id) || KITS[0];
+  $('status').textContent = 'Loading ' + k.name + '…';
+  await Promise.all(k.lanes.map(d => !d.f || SAMPLES.has(d.f) ? 0 : loadSample(d.f)));
+  KIT = k; lanes.forEach((l, i) => { l.d = k.lanes[i]; l.el.querySelector('.nm').textContent = l.d.n; l.pad.setAttribute('aria-label', 'Mute ' + l.d.n); l.el.querySelector('.fader').setAttribute('aria-label', l.d.n + ' volume'); });
+  $('status').textContent = ''; retune();
+}
+
+// ---------- wandering filters and pans ----------
+// Now and then a drum's filter closes for a few bars, or it swings to one side. It keeps the mix moving by itself.
+const AUTO = { flt: true, pan: true };
+// How long a filter or a pan holds, in bars. Calm air holds for long stretches, a windy day changes its mind quickly.
+function holdBars() {
+  const calm = clamp(1 - WX.wind / 40, 0, 1), mu = 0.4 + 2.4 * calm, opts = [1, 2, 4, 8];
+  const w = opts.map((_, i) => Math.exp(-((i - mu) ** 2) / 0.9)), tot = w.reduce((a, b) => a + b, 0);
+  let r = Math.random() * tot; for (let i = 0; i < 4; i++) { r -= w[i]; if (r <= 0) return opts[i]; }
+  return 2;
+}
+function autoStep(t, n) {
+  if (n % 16 !== 0) return;   // decisions are made on the bar
+  const p = K.wander.get() / 100;
+  lanes.forEach(l => {
+    if (l.aF > 0) { l.aF--; if (l.aF === 0) setFilter(l, t); }
+    else if (AUTO.flt && Math.random() < 0.03 + 0.12 * p) { l.aF = holdBars(); l.aFc = 240 + Math.random() * 700; setFilter(l, t); }
+    if (l.aP > 0) { l.aP--; if (l.aP === 0) { l.panNow = l.basePan; l.pn.pan.setTargetAtTime(l.basePan, t, 0.25); } }
+    else if (AUTO.pan && Math.random() < 0.03 + 0.12 * p) { l.aP = holdBars(); l.panNow = (Math.random() < 0.5 ? -1 : 1) * (0.45 + Math.random() * 0.5); l.pn.pan.setTargetAtTime(l.panNow, t, 0.2); }
+  });
+}
+function autoRelease() { lanes.forEach(l => { l.aF = 0; l.aP = 0; l.panNow = l.basePan; l.pn.pan.setTargetAtTime(l.basePan, ctx.currentTime, 0.1); setFilter(l, ctx.currentTime); }); }
+toggle($('autoFlt'), v => { AUTO.flt = v; if (!v) lanes.forEach(l => { l.aF = 0; setFilter(l, ctx.currentTime); }); say(v ? 'Filters will close now and then.' : 'Filters stay where you put them.'); });
+toggle($('autoPan'), v => { AUTO.pan = v; if (!v) lanes.forEach(l => { l.aP = 0; l.panNow = l.basePan; l.pn.pan.setTargetAtTime(l.basePan, ctx.currentTime, 0.1); }); say(v ? 'Drums will swing to the sides now and then.' : 'Drums stay put in the stereo field.'); });
+
+// ---------- the clock ----------
+let playing = false, nextTime = 0, stepN = 0, timer = null;
+let GCHANCE = 100;   // overall chance, in percent
+const gDivs = new Set();   // global stutter buttons held or latched
+const visQ = [];
+const stepSecs = () => 60 / (+$('bpm').value) / 4;
+function stutDiv(l) { if (gDivs.size) return Math.min(...gDivs); return l.stut ? 1 : 0; }
+function schedule(t, n) {
+  const ss = stepSecs(), fired = [];
+  lanes.forEach(l => {
+    if (l.mute) { return; }
+    const dv = stutDiv(l), pos = n % l.steps, pat = l.bits[pos];
+    if (!dv) {
+      if (!pat) return;
+      if (Math.random() * 100 >= l.chance * GCHANCE / 100) return;   // Chance: some hits are left out
+      const vel = (pos % 4 === 0 ? 1 : 0.78) * (0.85 + Math.random() * 0.3);
+      l.last = vel; hit(l, t + (Math.random() * 0.004), vel); fired.push({ l, pos });
+      return;
+    }
+    // stuttering: the last hit keeps coming back on the beat division
+    const v = l.last || 0.8;
+    if (dv >= 1 && n % dv === 0) hit(l, t, v * (0.9 + Math.random() * 0.2));
+    if (dv < 1) { hit(l, t, v * 0.95); hit(l, t + ss * dv, v * 0.8); }
+  });
+  autoStep(t, n);
+  convStep(t, fired);
+  midiClockStep(t, ss);
+  visQ.push({ t, n });
+}
+function tick() {
+  while (nextTime < ctx.currentTime + 0.12) { schedule(nextTime, stepN); nextTime += stepSecs(); stepN++; }
+}
+async function start() {
+  if (ctx.state !== 'running') await ctx.resume();
+  if (playing) return;
+  playing = true; stepN = 0; nextTime = ctx.currentTime + 0.06; visQ.length = 0;
+  setDelayTime(); lfoBuild(nextTime); midiTransport(true, nextTime);
+  timer = setInterval(tick, 25);
+  $('play').setAttribute('aria-pressed', 'true'); $('play').textContent = 'Stop';
+}
+function stop() {
+  playing = false; clearInterval(timer); visQ.length = 0; autoRelease(); midiTransport(false, ctx.currentTime);
+  $('play').setAttribute('aria-pressed', 'false'); $('play').textContent = 'Play';
+}
+$('play').addEventListener('click', () => playing ? stop() : start());
+$('bpm').addEventListener('input', () => { $('bpmv').textContent = $('bpm').value; setDelayTime(); });
+toggle($('follow'), v => { followTempo.on = v; if (v) setBpm(genreBpm); say(v ? 'Following the genre tempo.' : 'Tempo stays where you put it.'); });
+
+// ---------- mixer ----------
+function makeFader(el, l) {
+  el.innerHTML = '<div class="fill"></div><div class="cap"></div>';
+  const fill = el.querySelector('.fill'), cap = el.querySelector('.cap'), H = () => el.clientHeight - 8;
+  const draw = () => { const y = 4 + (1 - l.vol) * H(); cap.style.top = y + 'px'; fill.style.height = (l.vol * H()) + 'px'; el.setAttribute('aria-valuenow', Math.round(l.vol * 100)); const vb = l.el && l.el.querySelector('.vbar i'); if (vb) vb.style.width = (l.vol * 100) + '%'; };
+  const set = v => { l.vol = clamp(v, 0, 1); l.g.gain.setTargetAtTime(faderGain(l.vol), ctx.currentTime, 0.015); draw(); midiCC(7, l.vol * 127, l); };
+  const fromY = e => { const r = el.getBoundingClientRect(); set(1 - (e.clientY - r.top - 4) / H()); };
+  el.addEventListener('pointerdown', e => { el.setPointerCapture(e.pointerId); fromY(e); el._d = true; });
+  el.addEventListener('pointermove', e => { if (el._d) fromY(e); });
+  el.addEventListener('pointerup', () => el._d = false); el.addEventListener('pointercancel', () => el._d = false);
+  el.addEventListener('dblclick', () => set(0.8));
+  el.addEventListener('keydown', e => { const k = { ArrowUp: .05, ArrowRight: .05, ArrowDown: -.05, ArrowLeft: -.05 }[e.key]; if (k) { e.preventDefault(); set(l.vol + k); } });
+  el.tabIndex = 0; el.setAttribute('role', 'slider'); el.setAttribute('aria-valuemin', 0); el.setAttribute('aria-valuemax', 100);
+  el.setAttribute('aria-label', l.d.n + ' volume'); draw(); l.drawFader = draw;
+}
+// tap to latch, hold to use only while pressed
+function momentary(el, on, off) {
+  let down = 0, latched = false;
+  const state = v => el.setAttribute('aria-pressed', String(v));
+  el.addEventListener('pointerdown', e => { e.preventDefault(); el.setPointerCapture(e.pointerId); down = performance.now(); if (!latched) { on(); state(true); } });
+  const up = () => { if (!down) return; const held = performance.now() - down; down = 0;
+    if (latched) { latched = false; off(); state(false); } else if (held < 250) latched = true; else { off(); state(false); } };
+  el.addEventListener('pointerup', up); el.addEventListener('pointercancel', up);
+  Object.defineProperty(el, '_latched', { get: () => latched });
+  el.addEventListener('click', e => { if (e.detail === 0) { latched = !latched; latched ? on() : off(); state(latched); } });   // keyboard
+  el.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') e.preventDefault(); if ((e.key === 'Enter' || e.key === ' ') && !e.repeat) { latched = !latched; latched ? on() : off(); state(latched); } });
+}
+function toggle(el, fn) { el.addEventListener('click', () => { const v = el.getAttribute('aria-pressed') !== 'true'; el.setAttribute('aria-pressed', String(v)); fn(v); }); }
+
+// A big old-fashioned knob: ridged skirt, ivory pointer, a lit ring that shows how far it is turned.
+// Drag up or down, scroll, use the arrow keys, double click to put it back.
+const KA0 = 135, KA1 = 405;
+function makeKnob(el, value, onChange, label, reset = 100, o = {}) {
+  const min = o.min ?? 0, max = o.max ?? 100, bi = min < 0, span = max - min;
+  const P = (r, a) => [50 + r * Math.cos(a * Math.PI / 180), 50 + r * Math.sin(a * Math.PI / 180)];
+  const arc = (r, a0, a1) => { const [x0, y0] = P(r, a0), [x1, y1] = P(r, a1); return `M${x0.toFixed(2)} ${y0.toFixed(2)}A${r} ${r} 0 ${Math.abs(a1 - a0) > 180 ? 1 : 0} ${a1 >= a0 ? 1 : 0} ${x1.toFixed(2)} ${y1.toFixed(2)}`; };
+  let ticks = '';
+  for (let i = 0; i <= 10; i++) { const a = KA0 + (KA1 - KA0) * i / 10, [x0, y0] = P(37.5, a), [x1, y1] = P(i % 5 === 0 ? 42.5 : 40.5, a); ticks += `<line x1="${x0.toFixed(1)}" y1="${y0.toFixed(1)}" x2="${x1.toFixed(1)}" y2="${y1.toFixed(1)}" class="${i % 5 === 0 ? 'tk big' : 'tk'}"/>`; }
+  el.classList.add('vk');
+  el.innerHTML = `<svg viewBox="0 0 100 100" aria-hidden="true"><path class="trk" d="${arc(47, KA0, KA1 - 0.01)}"/><path class="val"/>${ticks}
+    <circle cx="50" cy="55" r="35" fill="url(#kshadow)"/><circle cx="50" cy="50" r="33" fill="url(#kskirt)" stroke="#000" stroke-opacity=".6"/>
+    <circle cx="50" cy="50" r="30.5" fill="none" stroke="#000" stroke-opacity=".7" stroke-width="4" stroke-dasharray="1.7 1.7"/>
+    <circle cx="50" cy="50" r="30.5" fill="none" stroke="#fff" stroke-opacity=".09" stroke-width="4" stroke-dasharray="1.7 1.7" stroke-dashoffset="1.7"/>
+    <circle cx="50" cy="50" r="25" fill="url(#kcap)" stroke="#000" stroke-opacity=".5"/>
+    <circle cx="50" cy="50" r="19" fill="none" stroke="#fff" stroke-opacity=".06"/><circle cx="50" cy="50" r="13" fill="none" stroke="#fff" stroke-opacity=".05"/>
+    <path d="M30 40A22 22 0 0 1 46 29" fill="none" stroke="#fff" stroke-opacity=".22" stroke-width="2" stroke-linecap="round"/>
+    <g class="rot"><rect x="48" y="26.5" width="4" height="17" rx="2" fill="#f3ece6"/></g></svg>`;
+  const val = el.querySelector('.val'), rot = el.querySelector('.rot');
+  let v = value;
+  const draw = () => {
+    const f = (v - min) / span, a = KA0 + (KA1 - KA0) * f, a0 = bi ? KA0 + (KA1 - KA0) * (0 - min) / span : KA0;
+    val.setAttribute('d', Math.abs(a - a0) > 0.6 ? arc(47, a0, a) : '');
+    rot.setAttribute('transform', `rotate(${(a - 270).toFixed(1)} 50 50)`);
+    el.setAttribute('aria-valuenow', Math.round(v));
+  };
+  const set = (n, quiet) => { v = clamp(Math.round(n), min, max); draw(); if (!quiet) onChange(v); };
+  let y0 = 0, v0 = 0, down = false;
+  el.addEventListener('pointerdown', e => { el.setPointerCapture(e.pointerId); down = true; y0 = e.clientY; v0 = v; });
+  el.addEventListener('pointermove', e => { if (down) set(v0 + (y0 - e.clientY) * span / 140); });
+  el.addEventListener('pointerup', () => down = false); el.addEventListener('pointercancel', () => down = false);
+  el.addEventListener('dblclick', () => set(reset));
+  el.addEventListener('wheel', e => { e.preventDefault(); set(v + (e.deltaY < 0 ? 1 : -1) * span / 40); }, { passive: false });
+  el.addEventListener('keydown', e => { const d = { ArrowUp: 1, ArrowRight: 1, ArrowDown: -1, ArrowLeft: -1 }[e.key]; if (d) { e.preventDefault(); set(v + d * span / 20); } });
+  el.tabIndex = 0; el.setAttribute('role', 'slider'); el.setAttribute('aria-valuemin', min); el.setAttribute('aria-valuemax', max); el.setAttribute('aria-label', label);
+  draw(); return { set, get: () => v, el };
+}
+// a knob with its name and number beside or under it
+function knobCell(host, label, value, onChange, o = {}) {
+  const c = document.createElement('div'); c.className = 'kcell' + (o.v ? ' v' : '') + (o.size ? ' ' + o.size : '');
+  c.innerHTML = `<div class="knob"></div><div class="ktxt"><span class="klab">${label}</span><b class="kval"></b></div>`;
+  host.appendChild(c);
+  const out = c.querySelector('.kval'), fmt = o.fmt || (v => v + '%');
+  const k = makeKnob(c.querySelector('.knob'), value, v => { out.textContent = fmt(v); onChange(v); }, o.aria || label, o.reset ?? value, o);
+  out.textContent = fmt(value); k.cell = c; return k;
+}
+
+const mixer = $('mixer');
+lanes.forEach(l => {
+  const s = document.createElement('div'); s.className = 'strip'; s.style.setProperty('--c', l.color); s.dataset.lane = l.i;
+  s.innerHTML = `<div class="sh"><div class="shl"><div class="nmrow"><span class="trig" title="Lights up when this drum sounds"></span><div class="nm" data-kb="${'ZXCVBNM,'[l.i]}" title="Tap to play this drum (key ${'ZXCVBNM,'[l.i]})">${l.d.n}</div></div><div class="why"></div></div><div class="vbar" aria-hidden="true"><i></i></div><button class="pad" type="button" aria-pressed="false" aria-label="Mute ${l.d.n}" title="Mute or unmute (key ${l.i + 1})"><i class="led"></i><span class="m0">Mute</span><span class="m1">Muted</span></button></div><div class="sx"><div class="panbar" title="Pan: drag left or right. Double click to centre."><b></b><i></i></div><div class="panlab" aria-hidden="true"><span>L</span><span>pan: drag</span><span>R</span></div><div class="fader"></div>
+    <div class="row2"><button class="btn f" type="button" data-kb="${'QWERTYUI'[l.i]}" aria-pressed="false" title="Close a filter on this drum (key ${'QWERTYUI'[l.i]})"><i class="led"></i>Filter</button><button class="btn st" type="button" data-kb="${'ASDFGHJK'[l.i]}" aria-pressed="false" title="Repeat this drum's last hit. Tap to latch, hold for just a moment. Key ${'ASDFGHJK'[l.i]} stutters while held."><i class="led"></i>Stutter</button></div>
+    <div class="kn3"><div class="kc"><div class="knob" data-k="chance"></div><span>Chance</span></div><div class="kc"><div class="knob" data-k="delay"></div><span>Delay</span></div><div class="kc"><div class="knob" data-k="verb"></div><span>Reverb</span></div></div>
+    <div class="padrow"><button class="oct" type="button" data-d="-1" aria-label="${l.d.n} down an octave" title="Down an octave">&minus;</button><span class="octv" aria-live="polite" title="Octave">0</span><button class="oct" type="button" data-d="1" aria-label="${l.d.n} up an octave" title="Up an octave">+</button></div></div>`;
+  mixer.appendChild(s); l.el = s;
+  makeFader(s.querySelector('.fader'), l);
+  { const pb = s.querySelector('.panbar'), home = pb.querySelector('b');
+    const showHome = () => { home.style.left = (50 + l.basePan * 50) + '%'; pb.setAttribute('aria-valuenow', Math.round(l.basePan * 100)); };
+    const setPan = v => { v = Math.abs(v) < 0.06 ? 0 : clamp(v, -1, 1); l.basePan = v; l.aP = 0; l.panNow = v; l.pn.pan.setTargetAtTime(v, ctx.currentTime, 0.02); showHome(); };
+    const fromX = e => { const r = pb.getBoundingClientRect(); setPan(((e.clientX - r.left) / r.width - 0.5) * 2); };
+    let dn = false;
+    pb.addEventListener('pointerdown', e => { pb.setPointerCapture(e.pointerId); dn = true; fromX(e); });
+    pb.addEventListener('pointermove', e => { if (dn) fromX(e); });
+    pb.addEventListener('pointerup', () => dn = false); pb.addEventListener('pointercancel', () => dn = false);
+    pb.addEventListener('dblclick', () => setPan(0));
+    pb.addEventListener('keydown', e => { const d = { ArrowLeft: -0.1, ArrowDown: -0.1, ArrowRight: 0.1, ArrowUp: 0.1 }[e.key]; if (d) { e.preventDefault(); setPan(l.basePan + d); } });
+    pb.tabIndex = 0; pb.setAttribute('role', 'slider'); pb.setAttribute('aria-valuemin', -100); pb.setAttribute('aria-valuemax', 100); pb.setAttribute('aria-label', l.d.n + ' pan');
+    showHome(); l.setPan = setPan; }
+  l.knob = makeKnob(s.querySelector('[data-k=chance]'), 100, v => { l.chance = v; s.querySelector('[data-k=chance]').title = v + '% chance'; }, l.d.n + ' chance', 100);
+  l.sdK = makeKnob(s.querySelector('[data-k=delay]'), DELAY0[l.i], v => l.sd.gain.setTargetAtTime(Math.pow(v / 100, 2) * 0.9, ctx.currentTime, 0.02), l.d.n + ' delay', 0);
+  l.svK = makeKnob(s.querySelector('[data-k=verb]'), VERB0[l.i], v => l.sv.gain.setTargetAtTime(Math.pow(v / 100, 2) * 0.9, ctx.currentTime, 0.02), l.d.n + ' reverb', 0);
+  toggle(s.querySelector('.f'), v => { l.flt = v; setFilter(l, ctx.currentTime); });
+  momentary(s.querySelector('.st'), () => l.stut = true, () => l.stut = false);
+  const pad = s.querySelector('.pad');
+  pad.addEventListener('click', () => setMute(l, !l.mute));
+  s.querySelector('.nm').addEventListener('pointerdown', () => tap(l));   // tap the name to play the drum
+  l.pad = pad;
+  s.querySelector('.octv').textContent = (l.oct > 0 ? '+' : '') + l.oct;
+  l.sd.gain.value = Math.pow(DELAY0[l.i] / 100, 2) * 0.9; l.sv.gain.value = Math.pow(VERB0[l.i] / 100, 2) * 0.9;
+  s.querySelectorAll('.oct').forEach(b => b.addEventListener('click', () => {   // octave up or down, and you hear the new pitch
+    l.oct = clamp(l.oct + +b.dataset.d, -2, 2);
+    s.querySelector('.octv').textContent = (l.oct > 0 ? '+' : '') + l.oct;
+    retune(); tap(l);
+  }));
+});
+function renderWhy() { lanes.forEach(l => { l.el.querySelector('.why').innerHTML = `<b>${l.steps}</b>${l.why}${l.note ? `<i title="The note this drum plays">${l.note}</i>` : ''}`; }); }
+function setMute(l, v) { l.mute = v; l.pad.setAttribute('aria-pressed', String(v)); l.el.classList.toggle('muted', v); }
+function tap(l) {
+  if (ctx.state !== 'running') ctx.resume();
+  hit(l, ctx.currentTime + 0.005, 1);
+}
+function setFilter(l, t) {
+  const on = l.flt || l.aF > 0;
+  l.lp.frequency.setTargetAtTime(on ? (l.aF > 0 ? l.aFc : 420) : 18000, t, on ? 0.05 : 0.09);
+  const b = l.el.querySelector('.f'); b.dataset.auto = l.aF > 0 && !l.flt ? '1' : '0';
+}
+const say = (() => { let tm; return m => { $('status').textContent = m; clearTimeout(tm); tm = setTimeout(() => $('status').textContent = '', 4000); }; })();
+// Keys: 1 to 8 mute. The top letter row (Q to I) turns each drum's filter on. The next row (A to K) stutters it while you hold it.
+// The bottom row (Z to comma) plays the drums by hand.
+const KROW = { top: ['KeyQ', 'KeyW', 'KeyE', 'KeyR', 'KeyT', 'KeyY', 'KeyU', 'KeyI'], mid: ['KeyA', 'KeyS', 'KeyD', 'KeyF', 'KeyG', 'KeyH', 'KeyJ', 'KeyK'], low: ['KeyZ', 'KeyX', 'KeyC', 'KeyV', 'KeyB', 'KeyN', 'KeyM', 'Comma'] };
+const typing = e => e.target.matches('select, input:not([type=range]), textarea');
+// show what a key is touching: a lit strip, a lit button, and a label at the bottom
+const keytip = $('keytip'); let keytipT = 0;
+function showKey(key, msg, hold) { keytip.innerHTML = `<kbd>${key}</kbd>${msg}`; keytip.classList.add('on'); clearTimeout(keytipT); if (!hold) keytipT = setTimeout(() => keytip.classList.remove('on'), 900); }
+function hideKey() { clearTimeout(keytipT); keytipT = setTimeout(() => keytip.classList.remove('on'), 150); }
+function flashEl(l, el, ms) { l.el.classList.add('keyed'); el.classList.add('keydown'); setTimeout(() => { el.classList.remove('keydown'); l.el.classList.remove('keyed'); }, ms); }
+const heldKeys = {};
+addEventListener('keydown', e => {
+  if (typing(e) || e.metaKey || e.ctrlKey || e.altKey) return;
+  if (e.key === ' ' && !e.target.matches('button')) { e.preventDefault(); playing ? stop() : start(); return; }
+  if (e.repeat) return;
+  const m = '12345678'.indexOf(e.key); if (m >= 0) { const l = lanes[m]; setMute(l, !l.mute); flashEl(l, l.pad, 220); showKey(e.key, (l.mute ? 'Mute: ' : 'Back in: ') + l.d.n); return; }
+  let i = KROW.top.indexOf(e.code); if (i >= 0) { const l = lanes[i], b = l.el.querySelector('.f'); b.click(); flashEl(l, b, 220); showKey('QWERTYUI'[i], l.d.n + ' filter ' + (l.flt ? 'on' : 'off')); return; }
+  i = KROW.mid.indexOf(e.code); if (i >= 0) { const l = lanes[i], b = l.el.querySelector('.st'); l.stut = true; b.dataset.key = '1'; b.setAttribute('aria-pressed', 'true'); b.classList.add('keydown'); l.el.classList.add('keyed'); heldKeys[e.code] = 1; showKey('ASDFGHJK'[i], l.d.n + ' stutter (hold)', true); return; }
+  i = KROW.low.indexOf(e.code); if (i >= 0) { const l = lanes[i]; tap(l); flashEl(l, l.el.querySelector('.nm'), 160); showKey('ZXCVBNM,'[i], 'Play ' + l.d.n); }
+});
+addEventListener('keyup', e => {
+  const i = KROW.mid.indexOf(e.code); if (i < 0) return;
+  const l = lanes[i], b = l.el.querySelector('.st'); delete b.dataset.key; l.stut = !!b._latched;   // a latched button keeps going
+  b.setAttribute('aria-pressed', String(!!b._latched)); b.classList.remove('keydown'); l.el.classList.remove('keyed'); delete heldKeys[e.code]; hideKey();
+});
+document.querySelectorAll('[data-st]').forEach(b => { const d = +b.dataset.st; momentary(b, () => gDivs.add(d), () => gDivs.delete(d)); });
+// knobs for the whole mix
+const K = {};
+K.chance = knobCell($('kChance'), 'Chance', 100, v => { GCHANCE = v; midiCC(76, v * 127 / 100); }, { size: 'lg', aria: 'Chance for everything', reset: 100 });
+K.filter = knobCell($('kFilter'), 'Filter', 0, v => {
+  const f = v / 100, t = ctx.currentTime;
+  djLP.frequency.setTargetAtTime(f < 0 ? 200 * Math.pow(100, 1 + f) : 20000, t, 0.03);
+  djHP.frequency.setTargetAtTime(f > 0 ? 20 * Math.pow(300, f) : 20, t, 0.03);
+  const q = 0.7 + 3 * Math.abs(f); djLP.Q.value = q; djHP.Q.value = q; midiCC(74, (v + 100) * 127 / 200);
+}, { size: 'lg', min: -100, max: 100, fmt: v => v === 0 ? 'open' : v < 0 ? 'low ' + (-v) : 'high ' + v, aria: 'DJ filter', reset: 0 });
+K.wander = knobCell($('kWander'), 'How often', 40, () => {}, { size: 'lg', aria: 'How often the filters and pans wander', fmt: v => v + '%', reset: 40 });
+// the two pedals
+let DELAY_ON = false, VERB_ON = true;
+const dLvl = { v: 35 }, vLvl = { v: 30 };
+const applyDelayLevel = () => delSend.gain.setTargetAtTime(DELAY_ON ? Math.pow(dLvl.v / 100, 2) * 1.2 : 0, ctx.currentTime, 0.03);
+const applyVerbLevel = () => verbSend.gain.setTargetAtTime(VERB_ON ? Math.pow(vLvl.v / 100, 2) * 0.9 : 0, ctx.currentTime, 0.03);
+K.dLevel = knobCell($('kDelay'), 'Level', dLvl.v, v => { dLvl.v = v; applyDelayLevel(); }, { v: 1, size: 'xl', aria: 'Delay level', reset: 35 });
+K.dEcho = knobCell($('kDelay'), 'Echoes', DEL.fb, v => { DEL.fb = v; applyDelay(); }, { v: 1, size: 'xl', aria: 'Delay echoes', reset: 47 });
+K.dTone = knobCell($('kDelay'), 'Tone', DEL.tone, v => { DEL.tone = v; applyDelay(); }, { v: 1, size: 'xl', aria: 'Delay tone', reset: 55 });
+K.vLevel = knobCell($('kVerb'), 'Level', vLvl.v, v => { vLvl.v = v; applyVerbLevel(); }, { v: 1, size: 'xl', aria: 'Reverb level', reset: 30 });
+let irTimer = 0; const redoIR = () => { clearTimeout(irTimer); irTimer = setTimeout(makeIR, 120); };
+K.vSize = knobCell($('kVerb'), 'Size', REV.size, v => { REV.size = v; redoIR(); }, { v: 1, size: 'xl', aria: 'Reverb size', reset: 40 });
+K.vTone = knobCell($('kVerb'), 'Tone', REV.tone, v => { REV.tone = v; verbTone.frequency.setTargetAtTime(1200 * Math.pow(10, v / 100), ctx.currentTime, 0.03); }, { v: 1, size: 'xl', aria: 'Reverb tone', reset: 88 });
+const chipRow = (host, items, cur, fn) => { const h = $(host); h.innerHTML = ''; Object.entries(items).forEach(([k, label]) => { const b = document.createElement('button'); b.type = 'button'; b.className = 'btn'; b.dataset.v = k; b.textContent = label; b.setAttribute('aria-pressed', String(k === cur)); b.addEventListener('click', () => { h.querySelectorAll('button').forEach(x => x.setAttribute('aria-pressed', String(x === b))); fn(k); }); h.appendChild(b); }); };
+chipRow('dTimes', DELAY_TIMES, DEL.div, k => { DEL.div = k; setDelayTime(); });
+chipRow('dModes', Object.fromEntries(Object.entries(DELAY_MODES).map(([k, m]) => [k, m.n])), DEL.mode, k => { DEL.mode = k; applyDelay(); });
+chipRow('vTypes', Object.fromEntries(Object.entries(REVERBS).map(([k, m]) => [k, m.n])), REV.type, k => { REV.type = k; makeIR(); });
+const foot = (id, get, set, apply) => { const b = $(id); b.addEventListener('click', () => { const v = !get(); set(v); b.setAttribute('aria-pressed', String(v)); b.querySelector('span').textContent = v ? 'On' : 'Off'; apply(); }); };
+foot('dFoot', () => DELAY_ON, v => DELAY_ON = v, applyDelayLevel); foot('vFoot', () => VERB_ON, v => VERB_ON = v, applyVerbLevel);
+applyDelay(); applyDelayLevel(); applyVerbLevel();
+
+// ---------- filter LFO on the whole mix ----------
+const LFO = { on: true, depth: 50, rate: 2, shape: 'sine', osc: null };
+const LFO_RATES = [['4 bars', 16], ['2 bars', 8], ['1 bar', 4], ['1/2 note', 2], ['1/4 note', 1], ['1/4 triplet', 2 / 3], ['1/8 note', 0.5], ['1/8 triplet', 1 / 3], ['1/16 note', 0.25]];
+const LFO_SHAPES = [['Smooth', 'sine'], ['Triangle', 'triangle'], ['Ramp', 'sawtooth'], ['Chop', 'square']];
+$('lfoRate').innerHTML = LFO_RATES.map((r, i) => `<option value="${i}">${r[0]}</option>`).join(''); $('lfoRate').value = LFO.rate;
+$('lfoShape').innerHTML = LFO_SHAPES.map((r, i) => `<option value="${r[1]}">${r[0]}</option>`).join('');
+function lfoApply() {
+  const d = LFO.on ? LFO.depth / 100 : 0, t = ctx.currentTime;
+  lfoLP.frequency.setTargetAtTime(20000 * Math.pow(2, -3 * d), t, 0.03);   // the middle of the sweep drops as it gets deeper
+  lfoAmt.gain.setTargetAtTime(1200 * 3.5 * d, t, 0.03);                    // and so does the width, up to 3 and a half octaves each way
+  lfoLP.Q.setTargetAtTime(0.7 + 4 * d, t, 0.03);
+}
+function lfoBuild(at) {
+  if (LFO.osc) { try { LFO.osc.stop(); } catch (e) {} LFO.osc.disconnect(); LFO.osc = null; }
+  if (!LFO.on) return;
+  const o = ctx.createOscillator(); o.type = LFO.shape;
+  o.frequency.value = 1 / (LFO_RATES[LFO.rate][1] * 60 / +$('bpm').value);   // one cycle per note length
+  o.connect(lfoAmt); o.start(Math.max(at || 0, ctx.currentTime)); LFO.osc = o;
+}
+K.lfo = knobCell($('kLfo'), 'Level', LFO.depth, v => { LFO.depth = v; lfoApply(); midiCC(75, v * 127 / 100); }, { size: 'lg', aria: 'Filter LFO level', fmt: v => v + '%', reset: 50 });
+lfoApply(); lfoBuild();
+toggle($('lfoOn'), v => { LFO.on = v; lfoApply(); lfoBuild(playing ? nextTime : 0); say(v ? 'Filter LFO on: ' + LFO_RATES[LFO.rate][0] : 'Filter LFO off'); });
+$('lfoRate').addEventListener('change', () => { LFO.rate = +$('lfoRate').value; lfoBuild(playing ? nextTime : 0); });
+$('lfoShape').addEventListener('change', () => { LFO.shape = $('lfoShape').value; lfoBuild(playing ? nextTime : 0); });
+let lfoT = 0; $('bpm').addEventListener('input', () => { clearTimeout(lfoT); lfoT = setTimeout(() => lfoBuild(), 200); });
+
+// ---------- convergence: rings that hit at the same angle ----------
+// Every ring has its own length, so their dots only line up now and then. When two or more rings hit at the same angle
+// a line lights through them, and the angle picks a chord from the key: 12 o'clock is the home chord, other angles are other steps of the scale.
+const CONV = { on: true, level: 50, verb: 40, del: 25 }, convShow = [];
+const convG = ctx.createGain(), convWet = ctx.createGain();
+convG.gain.value = Math.pow(CONV.level / 100, 2) * 0.8; convG.connect(masterIn); convG.connect(convWet); convWet.gain.value = CONV.verb / 100; convWet.connect(verbIn);
+const convDel = ctx.createGain(); convDel.gain.value = CONV.del / 100; convG.connect(convDel); convDel.connect(delIn);
+const gcd = (a, b) => b ? gcd(b, a % b) : a;
+function convApply() { convG.gain.setTargetAtTime(CONV.on ? Math.pow(CONV.level / 100, 2) * 0.8 : 0, ctx.currentTime, 0.03); }
+function convMidi(d) { const st = MODES[MODE].steps; return 60 + ((ROOT + st[((d % 7) + 7) % 7]) % 12) + 12 * Math.floor(d / 7); }
+function convNote(midi, t, peak, dur, type, lpMul) {
+  const f = 440 * Math.pow(2, (midi - 69) / 12), o = ctx.createOscillator(), g = ctx.createGain(), lp = ctx.createBiquadFilter();
+  o.type = type; o.frequency.value = f; lp.type = 'lowpass'; lp.frequency.setValueAtTime(f * lpMul, t); lp.frequency.exponentialRampToValueAtTime(f * 1.5, t + dur * 0.8);
+  g.gain.setValueAtTime(0.0001, t); g.gain.linearRampToValueAtTime(peak, t + 0.01); g.gain.exponentialRampToValueAtTime(0.0008, t + dur);
+  o.connect(lp).connect(g).connect(convG); o.start(t); o.stop(t + dur + 0.05);
+}
+function convSound(gr, t) {
+  const k = gr.lanes.length, d = Math.floor(gr.frac * 7);
+  if (k === 2) { convNote(convMidi(d) + 12, t, 0.3, 0.45, 'sine', 5); return; }   // two rings meet: a small bell
+  [0, 2, 4].forEach((o, i) => convNote(convMidi(d + o), t + i * 0.012, 0.22, k === 3 ? 0.9 : 1.6, 'triangle', 6));   // three: a chord
+  if (k >= 4) {   // four or more: the chord swells, with a deep root and a wash of reverb
+    convNote(convMidi(d) - 12, t, 0.45, 1.8, 'sine', 3); convNote(convMidi(d) + 12, t + 0.03, 0.18, 1.6, 'triangle', 8);
+    convWet.gain.setValueAtTime(Math.min(1.5, CONV.verb / 100 * 3), t); convWet.gain.setTargetAtTime(CONV.verb / 100, t + 0.1, 0.9);
+  }
+}
+function convStep(t, fired) {
+  if (!CONV.on || fired.length < 2) return;
+  const by = {};
+  fired.forEach(({ l, pos }) => { const g = gcd(pos, l.steps), key = (pos / g) + '/' + (l.steps / g); (by[key] = by[key] || { frac: pos / l.steps, lanes: [] }).lanes.push(l); });
+  let best = null;
+  Object.values(by).forEach(gr => {
+    if (gr.lanes.length < 2) return;
+    convShow.push({ t, frac: gr.frac, idx: gr.lanes.map(l => l.i) });
+    if (!best || gr.lanes.length > best.lanes.length) best = gr;
+  });
+  if (best) convSound(best, t);
+}
+K.conv = knobCell($('kConv'), 'Level', CONV.level, v => { CONV.level = v; convApply(); }, { size: 'lg', aria: 'Convergence level', fmt: v => v + '%', reset: 50 });
+$('blend').addEventListener('input', e => { BLEND.v = +e.target.value; say(BLEND.v === 0 ? 'Drums only.' : BLEND.v === 100 ? 'Melodic only: ' + $('blendSnd').selectedOptions[0].text + '.' : 'Blend: ' + (100 - BLEND.v) + '% drums, ' + BLEND.v + '% ' + $('blendSnd').selectedOptions[0].text + '.'); });
+$('blendSnd').addEventListener('change', e => { BLEND.snd = e.target.value; });
+K.convV = knobCell($('kConv'), 'Reverb', CONV.verb, v => { CONV.verb = v; convWet.gain.setTargetAtTime(v / 100, ctx.currentTime, 0.03); }, { size: 'lg', aria: 'Convergence reverb', fmt: v => v + '%', reset: 40 });
+K.convD = knobCell($('kConv'), 'Delay', CONV.del, v => { CONV.del = v; convDel.gain.setTargetAtTime(v / 100, ctx.currentTime, 0.03); }, { size: 'lg', aria: 'Convergence delay', fmt: v => v + '%', reset: 25 });
+toggle($('convOn'), v => { CONV.on = v; convApply(); say(v ? 'Convergence on: when rings meet at one angle, they play a chord.' : 'Convergence off.'); });
+
+// ---------- MIDI out ----------
+const MIDI_MAPS = { drum: 'Drum machine pads (36, 38, 42, 46...)', perc: 'Percussion (congas, bongos, timbales)', tuned: 'The tuned notes of the key', tracks: 'One drum per channel (all on note C3)' };
+const MIDI_NOTES = { drum: [36, 38, 42, 46, 43, 50, 49, 39], perc: [64, 63, 62, 61, 60, 65, 66, 75] };
+$('midiCh').innerHTML = Array.from({ length: 16 }, (_, i) => `<option value="${i + 1}">${i + 1}${i === 9 ? ' (drums)' : ''}</option>`).join(''); $('midiCh').value = MIDI.ch;
+$('midiMap').innerHTML = Object.entries(MIDI_MAPS).map(([k, v]) => `<option value="${k}">${v}</option>`).join('');
+const midiPerf = t => { const ts = ctx.getOutputTimestamp ? ctx.getOutputTimestamp() : null; return ts && ts.performanceTime ? ts.performanceTime + (t - ts.contextTime) * 1000 : performance.now() + (t - ctx.currentTime) * 1000; };
+function midiNoteOf(l) {
+  if (MIDI.map === 'tracks') return 60;
+  if (MIDI.map === 'tuned') { const m = /^([A-G][b#]?)(-?\d+)$/.exec(l.note || ''); const pc = m ? NOTES.indexOf(m[1]) : -1; return pc >= 0 ? clamp((+m[2] + 1) * 12 + pc, 0, 127) : clamp(48 + ROOT, 0, 127); }
+  return MIDI_NOTES[MIDI.map][l.i];
+}
+const midiChOf = l => MIDI.map === 'tracks' ? ((MIDI.ch - 1 + l.i) % 16) : MIDI.ch - 1;
+function midiSend(bytes, t) { if (!MIDI.out) return; try { MIDI.out.send(bytes, t ? midiPerf(t) : undefined); } catch (e) {} }
+function midiHit(l, t, vel) {
+  if (!MIDI.on || !MIDI.out) return;
+  const n = midiNoteOf(l), c = midiChOf(l), v = clamp(Math.round(40 + 87 * Math.min(1, vel)), 1, 127);
+  midiSend([0x90 | c, n, v], t); midiSend([0x80 | c, n, 0], t + 0.09);
+}
+function midiCC(cc, v, l) { if (!MIDI.on || !MIDI.cc || !MIDI.out) return; const c = l ? midiChOf(l) : MIDI.ch - 1; midiSend([0xB0 | c, cc, clamp(Math.round(v), 0, 127)]); }
+function midiClockStep(t, ss) { if (!MIDI.on || !MIDI.clock || !MIDI.out) return; for (let k = 0; k < 6; k++) midiSend([0xF8], t + ss * k / 6); }
+function midiTransport(go, t) { if (MIDI.on && MIDI.clock && MIDI.out) midiSend([go ? 0xFA : 0xFC], t); }
+function midiMsg(m) { $('midiMsg').textContent = m; }
+function midiFillOutputs() {
+  const outs = MIDI.access ? [...MIDI.access.outputs.values()] : [];
+  const cur = MIDI.out && MIDI.out.id;
+  $('midiOut').innerHTML = '<option value="">None</option>' + outs.map(o => `<option value="${o.id}">${o.name}</option>`).join('');
+  const keep = outs.find(o => o.id === cur) || outs[0]; MIDI.out = keep || null; $('midiOut').value = keep ? keep.id : '';
+  midiMsg(outs.length ? 'Pick where the drums should go, then press Send notes.' : 'No MIDI device found. Plug one in and it will show up here.');
+}
+async function midiConnect() {
+  if (MIDI.access) return true;
+  if (!navigator.requestMIDIAccess) { midiMsg('This browser cannot send MIDI. Chrome, Edge and Firefox can. Safari cannot yet.'); return false; }
+  try { MIDI.access = await navigator.requestMIDIAccess(); MIDI.access.onstatechange = midiFillOutputs; midiFillOutputs(); if (MIDI.out && !MIDI.on) $('midiOn').click(); return true; }
+  catch (e) { midiMsg('MIDI was blocked. Allow it in the browser and try again.'); return false; }
+}
+function openMidi() { $('midiPanel').hidden = false; $('midiClose').focus(); midiConnect(); }
+function closeMidi() { $('midiPanel').hidden = true; $('midiOpen').focus(); }
+$('midiOpen').addEventListener('click', openMidi); $('midiClose').addEventListener('click', closeMidi);
+$('midiPanel').addEventListener('pointerdown', e => { if (e.target === $('midiPanel')) closeMidi(); });
+addEventListener('keydown', e => { if (e.key === 'Escape' && !$('midiPanel').hidden) closeMidi(); });
+const midiLight = () => $('midiOpen').setAttribute('aria-pressed', String(MIDI.on && !!MIDI.out));
+$('midiOut').addEventListener('change', () => { MIDI.out = MIDI.access ? MIDI.access.outputs.get($('midiOut').value) || null : null; midiLight(); });
+$('midiCh').addEventListener('change', () => MIDI.ch = +$('midiCh').value);
+$('midiMap').addEventListener('change', () => MIDI.map = $('midiMap').value);
+toggle($('midiOn'), v => { MIDI.on = v; midiLight(); if (v && playing) midiTransport(true, ctx.currentTime); });
+toggle($('midiClock'), v => { MIDI.clock = v; if (v && MIDI.on && playing) midiTransport(true, ctx.currentTime); });
+toggle($('midiCC'), v => MIDI.cc = v);
+$('midiTest').addEventListener('click', () => { const was = MIDI.on; MIDI.on = true; midiHit(lanes[0], ctx.currentTime + 0.02, 1); MIDI.on = was; });
+
+function openFx() { $('fxPanel').hidden = false; $('fxClose').focus(); }
+function closeFx() { $('fxPanel').hidden = true; $('fxOpen').focus(); }
+$('fxOpen').addEventListener('click', openFx); $('fxClose').addEventListener('click', closeFx);
+$('fxPanel').addEventListener('pointerdown', e => { if (e.target === $('fxPanel')) closeFx(); });
+addEventListener('keydown', e => { if (e.key === 'Escape' && !$('fxPanel').hidden) closeFx(); });
+NOTES.forEach((n, i) => $('root').add(new Option(n, i)));
+$('root').addEventListener('change', () => { ROOT = +$('root').value; retune(); });
+toggle($('tuneOn'), v => { TUNE = v; retune(); say(v ? 'Drums moved to notes of ' + NOTES[ROOT] + ' ' + MODES[MODE].name + '.' : 'Drums back as recorded.'); });
+KITS.forEach(k => $('kit').add(new Option(k.name, k.id)));
+$('kit').addEventListener('change', () => setKit($('kit').value));
+$('remix').addEventListener('click', () => { remix(); renderWhy(); say('Every ring turned to a new starting point.'); });
+
+
+// ---------- cities and weather ----------
+const city = $('city'), genre = $('genre');
+ATLAS.cities.forEach((c, i) => city.add(new Option(c.n, i)));
+let cur = null;
+function pickGenre() {
+  const c = ATLAS.cities[city.value]; genre.innerHTML = '';
+  c.g.forEach((g, i) => genre.add(new Option(g.n, i)));
+}
+// Follow genre tempo: on, the tempo jumps to the genre's suggested tempo (doubled or halved into 60-180)
+const followTempo = { on: true };
+let genreBpm = 110;
+function setBpm(b) { let x = b; while (x < 60) x *= 2; while (x > 180) x /= 2; $('bpm').value = Math.round(x); $('bpmv').textContent = $('bpm').value; setDelayTime(); }
+function setPattern() {
+  const g = ATLAS.cities[city.value].g[genre.value] || ATLAS.cities[city.value].g[0];
+  const id = g.i[Math.floor(Math.random() * g.i.length)];
+  pattern = ATLAS.patterns[id] || null;
+  genreBpm = g.b || clamp(Math.round(100 + WX.temp), 80, 140);
+  if (followTempo.on) setBpm(genreBpm);
+  setDelayTime();
+  return g;
+}
+// ---------- the next 24 hours ----------
+// The Forecast slider moves the city forward in time: the weather, the sky and the key all follow, so London at 6am sounds different from 10pm.
+let FC = [], WX0 = null, SCRUB = 0, scrubTimer = 0;
+const fcWords = f => f.rain > 2 ? 'heavy rain' : f.rain > 0.1 ? 'rain' : f.wind > 35 ? 'very windy' : f.cloud > 85 ? 'overcast' : f.cloud > 55 ? 'cloudy' : f.cloud > 25 ? 'partly cloudy' : 'clear';
+function fcShow() {
+  const el = $('scrubInfo'), cvv = $('fcCurve'), lb = $('fcLabels');
+  if (!FC.length) { el.textContent = ''; cvv.innerHTML = ''; lb.innerHTML = ''; return; }
+  const f = SCRUB === 0 ? WX0 : FC[Math.min(SCRUB, FC.length - 1)], day = SCRUB > 0 && FC[Math.min(SCRUB, FC.length - 1)].hour < FC[0].hour ? 'tomorrow ' : '';
+  const t = FC.map(x => x.temp), lo = Math.min(...t), hi = Math.max(...t), sp = Math.max(1, hi - lo), N = Math.max(1, FC.length - 1);
+  const pts = t.map((v, k) => (k / N * 640).toFixed(1) + ',' + (34 - (v - lo) / sp * 28).toFixed(1)).join(' ');
+  cvv.innerHTML = `<path d="M${pts.split(' ').join(' L')} L640,40 L0,40 Z" fill="rgba(255,138,92,.2)"/><polyline points="${pts}" fill="none" stroke="#ffb68a" stroke-width="2" vector-effect="non-scaling-stroke"/>`;
+  el.innerHTML = `<b>${Math.round(f.temp)}°</b> ${fcWords(f)} <em>${day}${String(f.hour).padStart(2, '0')}:00</em>`;
+  lb.innerHTML = [0, 6, 12, 18, 24].map(h => { const x = h === 0 ? WX0 : FC[Math.min(h, FC.length - 1)]; return `<span>${h === 0 ? 'Now' : '+' + h + 'h'} ${Math.round(x.temp)}°</span>`; }).join('');
+}
+function scrubApply() {
+  if (!FC.length) return;
+  const f = SCRUB === 0 ? WX0 : FC[Math.min(SCRUB, FC.length - 1)];
+  WX = { ...WX, temp: f.temp, wind: f.wind, hum: f.hum, cloud: f.cloud, pres: f.pres, rain: f.rain, hour: f.hour };
+  skyUpdate(); buildLanes(); MODE = modeFromWeather(); retune();
+  if (followTempo.on) setBpm(clamp(genreBpm + clamp(Math.round((WX.temp - WX0.temp) * 1.5), -8, 8), 60, 180));   // warmer is a little faster
+  $('cWx').textContent = Math.round(WX.temp) + '°  ·  wind ' + Math.round(WX.wind) + '  ·  ' + Math.round(WX.hum) + '% humid';
+  $('scrubv').textContent = SCRUB === 0 ? 'Now' : '+' + SCRUB + 'h'; fcShow();
+  wxPaint();
+  say((SCRUB === 0 ? 'Now' : 'In ' + SCRUB + ' hours') + ': ' + String(f.hour).padStart(2, '0') + ':00, ' + Math.round(f.temp) + '°, ' + NOTES[ROOT] + ' ' + MODES[MODE].name + '.');
+}
+async function loadWeather(c) {
+  SCRUB = 0; $('scrub').value = 0; $('scrubv').textContent = 'Now';
+  $('cName').textContent = c.n; $('cWx').textContent = 'checking the weather';
+  try {
+    const j = await (await fetch('https://api.open-meteo.com/v1/forecast?latitude=' + c.a + '&longitude=' + c.o +
+      '&current=temperature_2m,relative_humidity_2m,cloud_cover,wind_speed_10m,precipitation,surface_pressure&hourly=temperature_2m,relative_humidity_2m,cloud_cover,wind_speed_10m,precipitation,surface_pressure&forecast_days=3&timezone=auto')).json();
+    const w = j.current;
+    const num = (v, d) => (typeof v === 'number' && isFinite(v) ? v : d);   // a missing number never breaks the rhythm
+    WX = { temp: num(w.temperature_2m, 11), wind: num(w.wind_speed_10m, 14), hum: num(w.relative_humidity_2m, 70), cloud: num(w.cloud_cover, 60), pres: num(w.surface_pressure ?? w.pressure_msl, 1010), rain: num(w.precipitation, 0), hour: +String(w.time).slice(11, 13) || 12, off: num(j.utc_offset_seconds, 0), live: true };
+    FC = []; WX0 = { ...WX };
+    try {   // the next 24 hours, starting this hour
+      const H = j.hourly, i0 = Math.max(0, H.time.findIndex(x => x.slice(0, 13) === String(w.time).slice(0, 13)));
+      for (let h = 0; h <= 24; h++) { const i = i0 + h; if (!H.time[i]) break; FC.push({ temp: num(H.temperature_2m[i], WX.temp), wind: num(H.wind_speed_10m[i], WX.wind), hum: num(H.relative_humidity_2m[i], WX.hum), cloud: num(H.cloud_cover[i], WX.cloud), pres: num(H.surface_pressure[i], WX.pres), rain: num(H.precipitation[i], WX.rain), hour: +H.time[i].slice(11, 13) }); }
+    } catch (e) { FC = []; }
+    $('scrub').disabled = FC.length < 25; fcShow();
+    $('status').textContent = '';
+  } catch (e) {
+    WX = { temp: 11, wind: 14, hum: 70, cloud: 60, pres: 1008, rain: 0, hour: 12, off: 0, live: false }; FC = []; WX0 = { ...WX }; $('scrub').disabled = true; $('scrubInfo').innerHTML = '';
+    $('status').textContent = 'The weather did not load, so these are made-up numbers for now.';
+  }
+}
+async function pickCity() {
+  const c = ATLAS.cities[city.value]; cur = c;
+  await loadWeather(c);
+  skyUpdate();
+  const g = setPattern(); buildLanes();
+  MODE = modeFromWeather(); ROOT = [...c.n].reduce((a, ch) => (a * 31 + ch.charCodeAt(0)) >>> 0, 7) % 12; $('root').value = ROOT; retune();
+  $('cWx').textContent = Math.round(WX.temp) + '°  ·  wind ' + Math.round(WX.wind) + '  ·  ' + Math.round(WX.hum) + '% humid';
+  wxPaint();
+  $('story').innerHTML = `<b>${c.n}</b> plays <b>${g.n}</b> at <b>${$('bpm').value}</b> beats a minute. The weather chose <b>${NOTES[ROOT]} ${MODES[MODE].name}</b> and tuned the drums to it. Each drum is a ring with its own length, taken from the weather, so they slip against each other and the groove keeps changing. ${WX.wind < 12 ? 'The air is calm, so filters and pans hold for long stretches.' : WX.wind > 28 ? 'It is windy, so filters and pans change their minds quickly.' : 'Filters and pans hold for a few bars at a time.'}`;
+}
+$('scrub').addEventListener('input', e => { SCRUB = +e.target.value; $('scrubv').textContent = SCRUB === 0 ? 'Now' : '+' + SCRUB + 'h'; fcShow(); clearTimeout(scrubTimer); scrubTimer = setTimeout(scrubApply, 60); });
+city.addEventListener('change', () => { pickGenre(); pickCity(); });
+genre.addEventListener('change', () => { setPattern(); buildLanes(); $('story').innerHTML = $('story').innerHTML.replace(/plays <b>[^<]*<\/b> at <b>\d+<\/b>/, `plays <b>${genre.selectedOptions[0].text}</b> at <b>${$('bpm').value}</b>`); });
+$('shuffle').addEventListener('click', () => { city.value = Math.floor(Math.random() * ATLAS.cities.length); city.dispatchEvent(new Event('change')); });
+
+// ---------- the sky behind the rings ----------
+// What the city is doing right now: its sun or moon goes round the rim like a clock (midnight at the bottom), the sky glows with its light,
+// clouds drift as fast as its wind, and rain falls when it rains there.
+function sunAltAt(lat, lon, when) {
+  const r = Math.PI / 180, n = when / 864e5 - 10957.5;
+  const g = (357.529 + 0.98560028 * n) * r, q = 280.459 + 0.98564736 * n;
+  const L = (q + 1.915 * Math.sin(g) + 0.02 * Math.sin(2 * g)) * r, e = (23.439 - 0.00000036 * n) * r;
+  const dec = Math.asin(Math.sin(e) * Math.sin(L)), ra = Math.atan2(Math.cos(e) * Math.sin(L), Math.cos(L)) / r;
+  const gmst = (280.46061837 + 360.98564736629 * n) % 360, ha = (gmst + lon - ra) * r;
+  return Math.asin(Math.sin(lat * r) * Math.sin(dec) + Math.cos(lat * r) * Math.cos(dec) * Math.cos(ha)) / r;
+}
+const SKY = { alt: 20, hour: 12, clouds: [], drops: [] };
+function skyUpdate() {
+  if (!cur) return;
+  const now = Date.now() + SCRUB * 3600e3, d = new Date(now + (WX.off || 0) * 1000);
+  SKY.hour = d.getUTCHours() + d.getUTCMinutes() / 60; SKY.alt = sunAltAt(cur.a, cur.o, now);
+  $('cTime').textContent = String(d.getUTCHours()).padStart(2, '0') + ':' + String(d.getUTCMinutes()).padStart(2, '0') + ' local';
+  const n = Math.round(WX.cloud / 100 * 9);
+  while (SKY.clouds.length < n) SKY.clouds.push({ a: Math.random() * 6.28, r: 330 + Math.random() * 150, s: 90 + Math.random() * 120, o: 0.05 + Math.random() * 0.07 });
+  SKY.clouds.length = n;
+  const m = WX.rain > 0 ? Math.min(70, 14 + Math.round(WX.rain * 24)) : 0;
+  while (SKY.drops.length < m) SKY.drops.push({ x: Math.random() * 1000, y: Math.random() * skyCv.height, v: 5 + Math.random() * 5 });
+  SKY.drops.length = m;
+}
+setInterval(skyUpdate, 20000);
+const skyCv = $('sky'), sg = skyCv.getContext('2d');
+function skySize() { skyCv.width = Math.max(2, Math.round(innerWidth / 2)); skyCv.height = Math.max(2, Math.round(innerHeight / 2)); }
+addEventListener('resize', skySize); skySize();
+let skyFrame = 0;
+function drawSky() {
+  if ((skyFrame++ & 1) || !cur) return;
+  const w = skyCv.width, h = skyCv.height, a = SKY.alt, day = clamp((a + 6) / 24, 0, 1), warm = clamp(1 - Math.abs(a - 2) / 9, 0, 1);
+  sg.clearRect(0, 0, w, h);
+  const c = [Math.round(14 + 50 * day + 70 * warm), Math.round(22 + 70 * day + 24 * warm), Math.round(52 + 70 * day - 14 * warm)];
+  const gr = sg.createLinearGradient(0, 0, 0, h);
+  gr.addColorStop(0, `rgba(${c[0]},${c[1]},${c[2]},0.95)`); gr.addColorStop(0.5, `rgba(${c[0]},${c[1]},${c[2]},0.6)`); gr.addColorStop(1, `rgba(${Math.min(255, c[0] + 60)},${Math.min(255, c[1] + 10)},${c[2]},0.5)`);
+  sg.fillStyle = gr; sg.fillRect(0, 0, w, h);
+  const wind = (WX.wind || 0) * 0.00025;
+  SKY.clouds.forEach(cl => {
+    cl.a = (cl.a + wind * (cl.s / 120)) % 1; const x = ((cl.a * 1.3) % 1.3 - 0.15) * w, y = (0.08 + (cl.r - 330) / 150 * 0.5) * h, rr = cl.s / 1000 * Math.max(w, h) * 0.9;
+    const cg = sg.createRadialGradient(x, y, 0, x, y, rr); cg.addColorStop(0, `rgba(243,236,230,${Math.min(0.5, cl.o * 1.5)})`); cg.addColorStop(1, 'rgba(243,236,230,0)');
+    sg.fillStyle = cg; sg.beginPath(); sg.arc(x, y, rr, 0, 7); sg.fill();
+  });
+  sg.strokeStyle = 'rgba(190,215,255,.26)'; sg.lineWidth = 1; sg.lineCap = 'round';
+  SKY.drops.forEach(d => { d.y += d.v * 0.6; d.x -= d.v * 0.12; if (d.y > h) { d.y = -10; d.x = Math.random() * 1000; } sg.beginPath(); sg.moveTo(d.x * w / 1000, d.y); sg.lineTo(d.x * w / 1000 + 3, d.y + 12); sg.stroke(); });
+  // the sun, or the moon, crosses the top of the page through the day
+  const t = SKY.hour / 24, sx = t * w, sy = 26 - 18 * Math.cos((SKY.hour - 12) / 12 * Math.PI);
+  const sun = a > -1;
+  sg.fillStyle = sun ? 'rgba(255,214,140,.85)' : 'rgba(215,225,255,.7)'; sg.shadowColor = sun ? 'rgba(255,200,110,.8)' : 'rgba(180,200,255,.6)'; sg.shadowBlur = 18;
+  sg.beginPath(); sg.arc(sx, sy, sun ? 7 : 5, 0, 7); sg.fill(); sg.shadowBlur = 0;
+}
+
+// ---------- the picture ----------
+const cv = $('rings'), g2 = cv.getContext('2d'), W = cv.width, CX = W / 2;
+function draw() {
+  g2.clearRect(0, 0, W, W);
+  drawSky();
+  const now = ctx.currentTime;
+  while (visQ.length > 1 && visQ[1].t <= now) visQ.shift();
+  const cur = visQ.length && visQ[0].t <= now ? visQ[0].n : -1;
+  lanes.forEach((l, i) => {
+    const R = 118 + i * 48, n = l.steps, dim = (l.mute ? 0.25 : 1) * (SEL >= 0 && SEL !== i ? 0.32 : 1), age = now - l.flash, pulse = age >= 0 && age < 0.25 ? 1 - age / 0.25 : 0;
+    g2.globalAlpha = dim;
+    g2.strokeStyle = l.color; g2.lineWidth = 3 + pulse * 8; g2.globalAlpha = dim * (0.22 + pulse * 0.6);
+    g2.setLineDash(l.flt || l.aF > 0 ? [10, 14] : []); g2.beginPath(); g2.arc(CX, CX, R, 0, 7); g2.stroke(); g2.setLineDash([]);
+    const ag = now - l.flash; l.el.style.setProperty('--hit', ag >= 0 && ag < 0.2 && !l.mute ? (1 - ag / 0.2).toFixed(2) : '0');
+    l.panView = (l.panView ?? l.basePan) + (l.panNow - (l.panView ?? l.basePan)) * 0.12; l.el.querySelector('.panbar i').style.left = (50 + l.panView * 50) + '%';
+    g2.globalAlpha = dim;
+    const pos = cur >= 0 ? cur % n : -1;
+    for (let k = 0; k < n; k++) {
+      const a = k / n * Math.PI * 2 - Math.PI / 2, x = CX + R * Math.cos(a), y = CX + R * Math.sin(a), on = l.bits[k], here = k === pos;
+      g2.fillStyle = on ? l.color : 'rgba(243,236,230,.28)';
+      g2.beginPath(); g2.arc(x, y, (on ? 11 : 5) + (here ? 7 : 0) * (on ? 1 : .6), 0, 7); g2.fill();
+      if (here && on) { g2.strokeStyle = '#fff'; g2.lineWidth = 4; g2.stroke(); }
+    }
+  });
+  // the rim: the sun or the moon goes round it like a clock, midnight at the bottom
+  { const th = (SKY.hour / 24) * Math.PI * 2, rr = 478, sx = CX - rr * Math.sin(th), sy = CX + rr * Math.cos(th), sun = SKY.alt > -1;
+    g2.globalAlpha = 1; g2.strokeStyle = 'rgba(243,236,230,.22)'; g2.lineWidth = 2; g2.beginPath(); g2.arc(CX, CX, rr, 0, 7); g2.stroke();
+    g2.fillStyle = sun ? 'rgba(255,190,110,.28)' : 'rgba(200,215,255,.22)'; g2.beginPath(); g2.arc(sx, sy, 34, 0, 7); g2.fill();
+    g2.fillStyle = sun ? '#ffd9a0' : '#dfe6ff'; g2.shadowColor = sun ? 'rgba(255,200,110,.9)' : 'rgba(180,200,255,.8)'; g2.shadowBlur = 20; g2.beginPath(); g2.arc(sx, sy, 17, 0, 7); g2.fill(); g2.shadowBlur = 0; }
+  // what each ring takes from the weather, written on the ring
+  g2.font = '500 17px "Source Code Pro", monospace'; g2.textAlign = 'center'; g2.textBaseline = 'middle';
+  lanes.forEach((l, i) => {
+    const R = 118 + i * 48, t = (l.why || '').toUpperCase().replace(/ KM\/H/, '') + '  ' + l.steps, w = g2.measureText(t).width + 22;
+    g2.globalAlpha = (l.mute ? 0.4 : 1) * (SEL >= 0 && SEL !== i ? 0.4 : 1);
+    g2.fillStyle = 'rgba(12,7,16,.88)'; g2.strokeStyle = l.color; g2.lineWidth = 2; g2.beginPath(); g2.roundRect(CX - w / 2, CX - R - 13, w, 26, 13); g2.fill(); g2.stroke();
+    g2.fillStyle = '#f3ece6'; g2.fillText(t, CX, CX - R + 1);
+  });
+  g2.globalAlpha = 1;
+  // rings meeting at one angle: a bright line through their dots
+  for (let i = convShow.length - 1; i >= 0; i--) {
+    const e = convShow[i], age = now - e.t;
+    if (age > 1) { convShow.splice(i, 1); continue; }
+    if (age < 0) continue;
+    const p = 1 - age / 1, a = e.frac * Math.PI * 2 - Math.PI / 2, k = e.idx.length;
+    const r0 = k >= 4 ? 0 : 118 + Math.min(...e.idx) * 48, r1 = 118 + Math.max(...e.idx) * 48;
+    g2.globalAlpha = p; g2.strokeStyle = '#fff'; g2.lineWidth = 1.5 + k; g2.lineCap = 'round'; g2.shadowColor = '#fff'; g2.shadowBlur = 16;
+    g2.beginPath(); g2.moveTo(CX + r0 * Math.cos(a), CX + r0 * Math.sin(a)); g2.lineTo(CX + r1 * Math.cos(a), CX + r1 * Math.sin(a)); g2.stroke(); g2.shadowBlur = 0;
+    e.idx.forEach(li => { const R = 118 + li * 48; g2.beginPath(); g2.arc(CX + R * Math.cos(a), CX + R * Math.sin(a), 14 + 10 * (1 - p), 0, 7); g2.lineWidth = 3; g2.stroke(); });
+    if (k >= 4) { const bg = g2.createRadialGradient(CX, CX, 0, CX, CX, 300); bg.addColorStop(0, 'rgba(255,255,255,' + (0.22 * p) + ')'); bg.addColorStop(1, 'rgba(255,255,255,0)'); g2.globalAlpha = 1; g2.fillStyle = bg; g2.beginPath(); g2.arc(CX, CX, 300, 0, 7); g2.fill(); }
+  }
+  g2.globalAlpha = 1; requestAnimationFrame(draw);
+}
+
+// ---------- the world map: the whole window, drag to move, scroll or pinch to zoom ----------
+const LAND = (() => { try { return Uint8Array.from(atob(WMAP_LAND), c => c.charCodeAt(0)); } catch (e) { return new Uint8Array(0); } })();
+const WMAP_W = 240, WMAP_H = 95, WMAP_ST = 1.5, WMAP_TOP = 82.5;
+const mapCv = $('mapCv'), mg = mapCv.getContext('2d');
+const MV = { w: 0, h: 0, dpr: 1, s0: 1, k: 1, tx: 0, ty: 0, hover: -1 };
+const mscale = () => MV.s0 * MV.k;
+const mx = lon => MV.tx + (lon + 180) * mscale(), my = lat => MV.ty + (WMAP_TOP - lat) * mscale();
+const mapXY = c => ({ x: mx(c.o), y: my(c.a) });   // where a city sits on screen, in css pixels
+function mapClamp() {
+  const W = 360 * mscale(), H = WMAP_H * WMAP_ST * mscale();
+  MV.tx = W <= MV.w ? (MV.w - W) / 2 : clamp(MV.tx, MV.w - W, 0);
+  MV.ty = H <= MV.h ? (MV.h - H) / 2 : clamp(MV.ty, MV.h - H, 0);
+}
+function mapFit() {
+  const r = mapCv.getBoundingClientRect(); MV.w = r.width; MV.h = r.height; MV.dpr = Math.min(2, devicePixelRatio || 1);
+  mapCv.width = Math.round(MV.w * MV.dpr); mapCv.height = Math.round(MV.h * MV.dpr);
+  MV.s0 = Math.min(MV.w / 360, MV.h / (WMAP_H * WMAP_ST)); mapClamp();   // the whole world fits, then you zoom in
+}
+function mapDraw() {
+  if (!MV.w) return;
+  mg.setTransform(MV.dpr, 0, 0, MV.dpr, 0, 0); mg.clearRect(0, 0, MV.w, MV.h);
+  const cell = WMAP_ST * mscale(), rr = clamp(cell * (0.3 + 0.12 * clamp((MV.k - 1) / 6, 0, 1)), 0.9, 9);
+  mg.fillStyle = `rgba(243,236,230,${(0.24 - 0.12 * clamp((MV.k - 1) / 8, 0, 1)).toFixed(3)})`;
+  for (let yi = 0; yi < WMAP_H; yi++) {
+    const y = my(WMAP_TOP - yi * WMAP_ST); if (y < -rr * 2 || y > MV.h + rr * 2) continue;
+    for (let xi = 0; xi < WMAP_W; xi++) {
+      const i = yi * WMAP_W + xi; if (!(LAND[i >> 3] >> (i & 7) & 1)) continue;
+      const x = mx(-180 + WMAP_ST / 2 + xi * WMAP_ST); if (x < -rr * 2 || x > MV.w + rr * 2) continue;
+      mg.beginPath(); mg.arc(x, y, rr, 0, 7); mg.fill();
+    }
+  }
+  mg.font = '12px "Source Code Pro", monospace'; mg.textBaseline = 'middle';
+  ATLAS.cities.forEach((c, i) => {
+    const { x, y } = mapXY(c); if (x < -20 || y < -20 || x > MV.w + 20 || y > MV.h + 20) return;
+    const on = i === +city.value, hv = i === MV.hover, r = (on ? 7 : hv ? 6.5 : 4.2) * clamp(0.8 + MV.k * 0.12, 1, 1.8);
+    mg.fillStyle = on ? '#f3ece6' : hv ? '#ffb48a' : '#e8744a'; mg.beginPath(); mg.arc(x, y, r, 0, 7); mg.fill();
+    if (on) { mg.strokeStyle = '#f3ece6'; mg.lineWidth = 1.5; mg.beginPath(); mg.arc(x, y, r + 6, 0, 7); mg.stroke(); }
+    if (hv || on || MV.k >= 3.2) { mg.fillStyle = hv || on ? '#f3ece6' : 'rgba(243,236,230,.6)'; mg.fillText(c.n, x + r + 5, y); }
+  });
+}
+function mapNearest(x, y) {
+  let best = -1, bd = 18 * 18;
+  ATLAS.cities.forEach((c, i) => { const p = mapXY(c), d = (p.x - x) ** 2 + (p.y - y) ** 2; if (d < bd) { bd = d; best = i; } });
+  return best;
+}
+function mapZoomAt(f, x, y) {
+  const k = clamp(MV.k * f, 1, 24), r = k / MV.k;
+  MV.tx = x - (x - MV.tx) * r; MV.ty = y - (y - MV.ty) * r; MV.k = k; mapClamp(); mapDraw();
+}
+const mpt = new Map(); let mdrag = null, mpinch = 0;
+mapCv.addEventListener('pointerdown', e => {
+  mapCv.setPointerCapture(e.pointerId); mpt.set(e.pointerId, { x: e.clientX, y: e.clientY });
+  mdrag = { x: e.clientX, y: e.clientY, tx: MV.tx, ty: MV.ty, moved: 0 };
+  if (mpt.size === 2) { const [a, b] = [...mpt.values()]; mpinch = Math.hypot(a.x - b.x, a.y - b.y); }
+  mapCv.style.cursor = 'grabbing';
+});
+mapCv.addEventListener('pointermove', e => {
+  const r = mapCv.getBoundingClientRect(), x = e.clientX - r.left, y = e.clientY - r.top;
+  if (mpt.has(e.pointerId)) mpt.set(e.pointerId, { x: e.clientX, y: e.clientY });
+  if (mpt.size === 2) {
+    const [a, b] = [...mpt.values()], d = Math.hypot(a.x - b.x, a.y - b.y);
+    if (mpinch) mapZoomAt(d / mpinch, (a.x + b.x) / 2 - r.left, (a.y + b.y) / 2 - r.top); mpinch = d; if (mdrag) mdrag.moved = 99; return;
+  }
+  if (mdrag && mpt.has(e.pointerId)) {
+    const dx = e.clientX - mdrag.x, dy = e.clientY - mdrag.y; mdrag.moved = Math.max(mdrag.moved, Math.hypot(dx, dy));
+    if (mdrag.moved > 5) { MV.tx = mdrag.tx + dx; MV.ty = mdrag.ty + dy; mapClamp(); mapDraw(); }
+    return;
+  }
+  const h = mapNearest(x, y); if (h !== MV.hover) { MV.hover = h; $('mapName').textContent = h >= 0 ? ATLAS.cities[h].n : 'Pick a city. Every dot has its own rhythm.'; mapCv.style.cursor = h >= 0 ? 'pointer' : 'grab'; mapDraw(); }
+});
+const mapUp = e => {
+  const r = mapCv.getBoundingClientRect(), tap = mdrag && mdrag.moved <= 5 && mpt.size === 1;
+  mpt.delete(e.pointerId); if (mpt.size < 2) mpinch = 0; mapCv.style.cursor = 'grab';
+  if (tap) { const h = mapNearest(e.clientX - r.left, e.clientY - r.top); if (h >= 0) { city.value = h; city.dispatchEvent(new Event('change')); closeMap(); } }
+  if (!mpt.size) mdrag = null;
+};
+mapCv.addEventListener('pointerup', mapUp); mapCv.addEventListener('pointercancel', e => { mpt.delete(e.pointerId); if (!mpt.size) mdrag = null; });
+mapCv.addEventListener('wheel', e => { e.preventDefault(); const r = mapCv.getBoundingClientRect(); mapZoomAt(Math.pow(1.0018, -e.deltaY), e.clientX - r.left, e.clientY - r.top); }, { passive: false });
+mapCv.addEventListener('dblclick', e => { const r = mapCv.getBoundingClientRect(); mapZoomAt(2, e.clientX - r.left, e.clientY - r.top); });
+function openMap() { $('mapPanel').hidden = false; MV.hover = -1; MV.k = 1; mapFit(); mapDraw(); $('mapClose').focus(); }
+function closeMap() { $('mapPanel').hidden = true; $('mapBtn').focus(); }
+$('mapBtn').addEventListener('click', openMap); $('mapClose').addEventListener('click', closeMap);
+addEventListener('resize', () => { if (!$('mapPanel').hidden) { mapFit(); mapDraw(); } });
+addEventListener('keydown', e => { if (e.key === 'Escape' && !$('mapPanel').hidden) closeMap(); });
+
+// ---------- start ----------
+// trim the data the page needs
+(async () => {
+  const start = ATLAS.cities.findIndex(c => c.n === 'London');
+  city.value = start >= 0 ? start : 0; pickGenre();
+  await Promise.all(KIT.lanes.map(d => d.f ? loadSample(d.f) : 0));
+  await pickCity(); requestAnimationFrame(draw);
+})();
+
+// ===== play2: weather block, two designs, edit sheet, the two-sound mix =====
+const cap1 = t => t.charAt(0).toUpperCase() + t.slice(1);
+function wxPaint() {
+  if (!cur) return;
+  const cond = cap1(fcWords(WX)), time = ($('cTime').textContent || '').replace(' local', '');
+  $('wCity').textContent = cur.n; $('wTemp').textContent = Math.round(WX.temp) + '°'; $('wCond').textContent = cond;
+  $('wMeta').textContent = [time && time + ' local', 'wind ' + Math.round(WX.wind), NOTES[ROOT] + ' ' + MODES[MODE].name].filter(Boolean).join('  ·  ');
+  $('cName').textContent = cur.n; $('cWx').textContent = Math.round(WX.temp) + '°  ·  ' + cond; $('cTime').textContent = NOTES[ROOT] + ' ' + MODES[MODE].name;
+}
+setInterval(wxPaint, 20000);
+
+const sheet = $('sheet'), editBtn = $('editBtn'), appEl = $('app');
+function showTab(t) {
+  document.querySelectorAll('.tabs button').forEach(b => b.setAttribute('aria-selected', String(b.dataset.tab === t)));
+  document.querySelectorAll('.panel').forEach(p => p.classList.toggle('on', p.id === 'tab-' + t));
+}
+function openSheet(v) { sheet.hidden = !v; editBtn.setAttribute('aria-expanded', String(v)); editBtn.classList.toggle('on', v); document.body.classList.toggle('sheet-open', v); }
+editBtn.addEventListener('click', () => openSheet(sheet.hidden));
+document.querySelectorAll('.tabs button').forEach(b => b.addEventListener('click', () => showTab(b.dataset.tab)));
+addEventListener('keydown', e => { if (e.key === 'Escape' && !sheet.hidden && $('fxPanel').hidden && $('midiPanel').hidden && $('mapPanel').hidden) openSheet(false); });
+
+function setLay(l) {
+  appEl.dataset.lay = l;
+  document.querySelectorAll('.lay button').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.lay === l)));
+  if (l === 'a') { $('tab-mix').appendChild($('mixer')); $('barmix').appendChild($('mixctl')); }
+  else { $('railrows').appendChild($('mixer')); $('railmix').appendChild($('mixctl')); }
+  document.querySelector('.tabs [data-tab="mix"]').hidden = l === 'b';
+  SEL = -1; lanes.forEach(m => m.el.classList.remove('open'));
+  if (l === 'b' && document.querySelector('.tabs [aria-selected="true"]').dataset.tab === 'mix') showTab('perform');
+  if (l === 'a' && !sheet.hidden) showTab('mix');
+  try { localStorage.setItem('rg2lay', l); } catch (e) {}
+  try { history.replaceState(null, '', '#' + l); } catch (e) {}
+}
+document.querySelectorAll('.lay button').forEach(b => b.addEventListener('click', () => setLay(b.dataset.lay)));
+lanes.forEach(l => l.el.querySelector('.sh').addEventListener('click', e => {
+  if (appEl.dataset.lay !== 'b' || e.target.closest('.pad')) return;
+  const open = !l.el.classList.contains('open');
+  lanes.forEach(m => m.el.classList.remove('open')); l.el.classList.toggle('open', open); SEL = open ? l.i : -1;
+}));
+
+// the two-sound mix: drag the handle between the kit on the left and the melodic sound on the right
+{
+  const track = $('mixTrack'), hnd = $('mixHandle'), inp = $('blend');
+  const paint = () => {
+    const v = BLEND.v; hnd.style.left = v + '%'; hnd.setAttribute('aria-valuenow', v);
+    $('mixD').textContent = 'Drums ' + (100 - v) + '%'; $('mixM').textContent = 'Melodic ' + v + '%'; inp.value = v;
+  };
+  const set = v => { v = clamp(Math.round(v), 0, 100); inp.value = v; inp.dispatchEvent(new Event('input')); paint(); };
+  const fromX = e => { const r = track.getBoundingClientRect(); set((e.clientX - r.left) / r.width * 100); };
+  let dn = false;
+  track.addEventListener('pointerdown', e => { try { track.setPointerCapture(e.pointerId); } catch (x) {} dn = true; fromX(e); });
+  track.addEventListener('pointermove', e => { if (dn) fromX(e); });
+  track.addEventListener('pointerup', () => dn = false); track.addEventListener('pointercancel', () => dn = false);
+  track.addEventListener('dblclick', () => set(0));
+  hnd.addEventListener('keydown', e => { const d = { ArrowLeft: -5, ArrowDown: -5, ArrowRight: 5, ArrowUp: 5, Home: -100, End: 100 }[e.key]; if (d) { e.preventDefault(); set(BLEND.v + d); } });
+  const kitName = () => $('kit').selectedOptions[0] ? $('kit').selectedOptions[0].text : 'Drums';
+  paint();
+}
+
+{ let l0 = 'a'; try { l0 = (location.hash === '#b' || location.hash === '#a') ? location.hash.slice(1) : (localStorage.getItem('rg2lay') || 'a'); } catch (e) {} setLay(l0 === 'b' ? 'b' : 'a'); }
+</script>
+</body>
+</html>
