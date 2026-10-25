@@ -465,6 +465,10 @@
     </div>
     <div class="panel on" id="tab-mix"><div class="mixer" id="mixer"></div></div>
     <div class="panel" id="tab-perform"><div class="fx2"><div class="fxrow">
+          <div class="grp"><span class="fxlab">Guest weather</span>
+            <select id="guest" aria-label="Guest city whose weather drives the rings" title="Let another city's weather drive the rings, so the same genre sounds different"><option value="-1">None</option></select>
+            <select id="guestScope" aria-label="What the guest supplies" title="Temperature only, or everything the rings listen to"><option value="temp">Temperature only</option><option value="all">Everything</option></select>
+          </div>
           <div class="grp"><span class="fxlab">Weather layer</span>
             <input id="wxAmt" class="big" type="range" min="0" max="100" value="30" aria-label="Weather layer level" title="How loud the weather rings are against the genre">
             <button id="wxGate" class="btn" type="button" aria-pressed="true" title="Bring each weather ring in and out in phrases, so the genre's rhythm is easy to hear">In and out</button>
@@ -803,6 +807,27 @@ function playKit(l, t, vel) {
 }
 
 // ---------- weather to rhythm ----------
+// Guest weather: another city's current weather drives the rings, so London drum and bass can sound like a cold Boston.
+// scope 'temp' takes only its temperature, 'all' takes everything the rings listen to.
+const GUEST = { i: -1, wx: null, scope: 'temp' };
+function ringWx() {
+  if (!GUEST.wx) return WX;
+  return GUEST.scope === 'all' ? GUEST.wx : { ...WX, temp: GUEST.wx.temp };
+}
+async function loadGuest(i) {
+  GUEST.i = +i;
+  if (GUEST.i < 0) { GUEST.wx = null; buildLanes(); wxPaint(); say('Guest weather off.'); return; }
+  const c = ATLAS.cities[GUEST.i];
+  say('Fetching ' + c.n + ' weather…');
+  try {
+    const j = await (await fetch('https://api.open-meteo.com/v1/forecast?latitude=' + c.a + '&longitude=' + c.o +
+      '&current=temperature_2m,relative_humidity_2m,cloud_cover,wind_speed_10m,precipitation,surface_pressure&timezone=auto')).json();
+    const w = j.current, num = (v, d) => (typeof v === 'number' && isFinite(v) ? v : d);
+    GUEST.wx = { name: c.n, temp: num(w.temperature_2m, 11), wind: num(w.wind_speed_10m, 14), hum: num(w.relative_humidity_2m, 70), cloud: num(w.cloud_cover, 60), pres: num(w.surface_pressure ?? w.pressure_msl, 1010), rain: num(w.precipitation, 0), hour: WX.hour };
+    say(c.n + ' weather: ' + Math.round(GUEST.wx.temp) + '° is driving the rings.');
+  } catch (e) { GUEST.wx = null; say('Could not load ' + c.n + ' weather.'); }
+  buildLanes(); wxPaint();
+}
 let WX = { temp: 11, wind: 14, hum: 70, cloud: 60, pres: 1008, rain: 0, hour: 12, off: 0, live: false };
 function rng(seed) { let s = seed >>> 0 || 1; return () => (s = (s * 1664525 + 1013904223) >>> 0) / 4294967296; }
 function euclidBits(n, k, rot) { const b = []; for (let i = 0; i < n; i++) b.push(((((i + rot) % n) * k) % n) < k ? 1 : 0); return b; }
@@ -812,16 +837,17 @@ function buildLanes(remix) {
   const used = new Set(), r = rng(Math.round(WX.temp * 10) * 31 + Math.round(WX.wind * 10) * 7 + Math.round(WX.pres) + (remix || 0) * 977);
   const arrays = pattern ? pattern.p : [];
   // each drum takes its step count from a different bit of weather
+  const R = ringWx();   // the weather the rings listen to: London's, or a guest city's
   const picks = [
     () => null, () => null, () => null,
-    () => ({ s: clamp(Math.round(Math.abs(WX.temp)), 5, 16), why: 'temperature ' + Math.round(WX.temp) + '°' }),
-    () => ({ s: clamp(Math.round(WX.wind / 2) + 4, 5, 16), why: 'wind ' + Math.round(WX.wind) + ' km/h' }),
-    () => ({ s: 5 + Math.round(WX.hum / 100 * 11), why: 'humidity ' + Math.round(WX.hum) + '%' }),
-    () => ({ s: 5 + Math.round(WX.cloud / 100 * 11), why: 'cloud ' + Math.round(WX.cloud) + '%' }),
-    () => ({ s: 5 + (Math.round(WX.pres) % 12), why: 'pressure ' + Math.round(WX.pres) }),
-    () => ({ s: 7 + Math.min(8, Math.round(WX.rain * 4)), why: WX.rain > 0 ? 'rain ' + WX.rain + ' mm' : 'dry day' }),
-    () => ({ s: 5 + (WX.hour % 12), why: 'time of day ' + WX.hour + ':00' }),
-    () => ({ s: 6 + ((Math.round(WX.wind) + Math.round(WX.cloud)) % 10), why: 'wind and cloud' }),
+    () => ({ s: clamp(Math.round(Math.abs(R.temp)), 5, 16), why: 'temperature ' + Math.round(R.temp) + '°' }),
+    () => ({ s: clamp(Math.round(R.wind / 2) + 4, 5, 16), why: 'wind ' + Math.round(R.wind) + ' km/h' }),
+    () => ({ s: 5 + Math.round(R.hum / 100 * 11), why: 'humidity ' + Math.round(R.hum) + '%' }),
+    () => ({ s: 5 + Math.round(R.cloud / 100 * 11), why: 'cloud ' + Math.round(R.cloud) + '%' }),
+    () => ({ s: 5 + (Math.round(R.pres) % 12), why: 'pressure ' + Math.round(R.pres) }),
+    () => ({ s: 7 + Math.min(8, Math.round(R.rain * 4)), why: R.rain > 0 ? 'rain ' + R.rain + ' mm' : 'dry day' }),
+    () => ({ s: 5 + (R.hour % 12), why: 'time of day ' + R.hour + ':00' }),
+    () => ({ s: 6 + ((Math.round(R.wind) + Math.round(R.cloud)) % 10), why: 'wind and cloud' }),
   ];
   // the first three drums play the genre's own rhythms when it has them, the rest are weather
   lanes.forEach((l, i) => {
@@ -1291,6 +1317,9 @@ $('midiMCh').addEventListener('change', () => { MIDI.mch = +$('midiMCh').value; 
 toggle($('midiMel'), v => MIDI.mel = v);
 $('wxAmt').addEventListener('input', e => { WEATHER.level = +e.target.value; applyWx(); });
 $('wxVoice').addEventListener('change', e => setWxVoice(e.target.value));
+$('guest').innerHTML = '<option value="-1">None</option>' + ATLAS.cities.map((c, i) => [c.n, i]).sort((x, y) => x[0].localeCompare(y[0])).map(([n, i]) => `<option value="${i}">${n}</option>`).join('');
+$('guest').addEventListener('change', e => loadGuest(e.target.value));
+$('guestScope').addEventListener('change', e => { GUEST.scope = e.target.value; if (GUEST.wx) buildLanes(); wxPaint(); });
 // the round dial in the middle of design A. 270 degrees of travel, from bottom left (0) to bottom right (100)
 const DIAL = { c: 500, r: 96, a0: -225, span: 270 };
 const dpt = deg => { const a = deg * Math.PI / 180; return [DIAL.c + DIAL.r * Math.cos(a), DIAL.c + DIAL.r * Math.sin(a)]; };
@@ -1642,7 +1671,7 @@ function wxPaint() {
   const cond = cap1(fcWords(WX)), time = ($('cTime').textContent || '').replace(' local', '');
   { const h = $('wCity'), cc = countryOf(cur); h.textContent = cur.n;
     if (cc) { const sp = document.createElement('span'); sp.className = 'w-ctry'; sp.textContent = cc; h.appendChild(sp); } } $('wTemp').textContent = Math.round(WX.temp) + '°'; $('wCond').textContent = cond;
-  $('wMeta').textContent = [time && time + ' local', 'wind ' + Math.round(WX.wind), NOTES[ROOT] + ' ' + MODES[MODE].name].filter(Boolean).join('  ·  ');
+  $('wMeta').textContent = [time && time + ' local', 'wind ' + Math.round(WX.wind), NOTES[ROOT] + ' ' + MODES[MODE].name, GUEST.wx ? '+ ' + GUEST.wx.name + ' ' + Math.round(GUEST.wx.temp) + '°' : ''].filter(Boolean).join('  ·  ');
   { const h = $('cName'), cc = countryOf(cur); h.textContent = cur.n; if (cc) { const sp = document.createElement('span'); sp.className = 'w-ctry'; sp.textContent = cc; h.appendChild(sp); } }
   $('cWx').textContent = Math.round(WX.temp) + '°  ·  ' + cond; $('cTime').textContent = NOTES[ROOT] + ' ' + MODES[MODE].name;
 }
