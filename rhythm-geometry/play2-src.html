@@ -293,6 +293,7 @@
   .app2[data-lay="b"] .stage { grid-column: 1; grid-row: 1; padding-top: 74px; }
   .app2[data-lay="b"] .stage .centre { display: grid; }
   .app2[data-lay="b"] .centre .c-name { font-size: clamp(26px, 3vw, 44px); }
+  .centre .w-ctry { margin-top: 4px; font-size: 10px; }
   .app2[data-lay="b"] .centre .c-wx { font-size: 15px; color: var(--ink); }
   .app2[data-lay="b"] .w-city, .app2[data-lay="b"] .w-now, .app2[data-lay="b"] .w-meta { display: none; }
   .app2[data-lay="b"] .bar { grid-column: 1; grid-row: 2; margin: 0 16px 22px 36px; grid-template-columns: auto minmax(0, 1fr); }
@@ -330,6 +331,7 @@
   .gdesc { position: absolute; left: 36px; bottom: 6px; max-width: min(340px, 34vw); font-size: 12px; line-height: 1.45; color: var(--ink); background: rgba(10,6,12,.5); border-left: 2px solid var(--accent); padding: 8px 12px; border-radius: 0 10px 10px 0; backdrop-filter: blur(4px); opacity: .9; pointer-events: none; }
   .gdesc b { font-family: var(--display); font-weight: 400; font-size: 16px; display: block; margin-bottom: 2px; } .gdesc small { display: block; margin-top: 3px; color: var(--ink-dim); font-size: 10px; letter-spacing: .04em; }
   .gdesc:empty { display: none; }
+  .w-ctry { display: block; font-family: var(--mono, 'Source Code Pro', monospace); font-size: 11px; letter-spacing: .16em; text-transform: uppercase; color: var(--ink-dim); margin-top: 8px; }
   .w-city { font-size: clamp(40px, 5.4vw, 76px); letter-spacing: .02em; text-shadow: 0 2px 24px rgba(0,0,0,.45); }
   .intro { position: fixed; inset: 0; z-index: 20; display: grid; place-items: center; padding: 20px; background: rgba(6,3,6,.82); backdrop-filter: blur(8px); }
   .intro[hidden] { display: none; }
@@ -1227,6 +1229,9 @@ $('remix').addEventListener('click', () => { remix(); renderWhy(); say('Every ri
 
 // ---------- cities and weather ----------
 const city = $('city'), genre = $('genre');
+// country names for the headline. Codes come from the Atlas; a code missing here just shows nothing.
+const COUNTRY = { AO: 'Angola', AR: 'Argentina', AT: 'Austria', BE: 'Belgium', BG: 'Bulgaria', BR: 'Brazil', CD: 'DR Congo', CF: 'Central African Rep.', CH: 'Switzerland', CI: "Côte d'Ivoire", CO: 'Colombia', CU: 'Cuba', CZ: 'Czechia', DE: 'Germany', DK: 'Denmark', EE: 'Estonia', EG: 'Egypt', ES: 'Spain', ET: 'Ethiopia', FI: 'Finland', FR: 'France', GB: 'United Kingdom', GH: 'Ghana', GR: 'Greece', HU: 'Hungary', ID: 'Indonesia', IE: 'Ireland', IN: 'India', IR: 'Iran', IS: 'Iceland', IT: 'Italy', JM: 'Jamaica', JP: 'Japan', KR: 'South Korea', LB: 'Lebanon', LV: 'Latvia', LY: 'Libya', MA: 'Morocco', ML: 'Mali', MX: 'Mexico', NG: 'Nigeria', NL: 'Netherlands', NO: 'Norway', PE: 'Peru', PK: 'Pakistan', PL: 'Poland', PR: 'Puerto Rico', PT: 'Portugal', RO: 'Romania', RS: 'Serbia', SE: 'Sweden', SN: 'Senegal', SY: 'Syria', TR: 'Türkiye', TT: 'Trinidad and Tobago', US: 'United States', ZA: 'South Africa' };
+const countryOf = c => COUNTRY[c.c] || '';
 ATLAS.cities.forEach((c, i) => city.add(new Option(c.n, i)));
 let cur = null;
 function pickGenre() {
@@ -1511,9 +1516,11 @@ const cap1 = t => t.charAt(0).toUpperCase() + t.slice(1);
 function wxPaint() {
   if (!cur) return;
   const cond = cap1(fcWords(WX)), time = ($('cTime').textContent || '').replace(' local', '');
-  $('wCity').textContent = cur.n; $('wTemp').textContent = Math.round(WX.temp) + '°'; $('wCond').textContent = cond;
+  { const h = $('wCity'), cc = countryOf(cur); h.textContent = cur.n;
+    if (cc) { const sp = document.createElement('span'); sp.className = 'w-ctry'; sp.textContent = cc; h.appendChild(sp); } } $('wTemp').textContent = Math.round(WX.temp) + '°'; $('wCond').textContent = cond;
   $('wMeta').textContent = [time && time + ' local', 'wind ' + Math.round(WX.wind), NOTES[ROOT] + ' ' + MODES[MODE].name].filter(Boolean).join('  ·  ');
-  $('cName').textContent = cur.n; $('cWx').textContent = Math.round(WX.temp) + '°  ·  ' + cond; $('cTime').textContent = NOTES[ROOT] + ' ' + MODES[MODE].name;
+  { const h = $('cName'), cc = countryOf(cur); h.textContent = cur.n; if (cc) { const sp = document.createElement('span'); sp.className = 'w-ctry'; sp.textContent = cc; h.appendChild(sp); } }
+  $('cWx').textContent = Math.round(WX.temp) + '°  ·  ' + cond; $('cTime').textContent = NOTES[ROOT] + ' ' + MODES[MODE].name;
 }
 setInterval(wxPaint, 20000);
 function gdPaint() {

@@ -36,7 +36,7 @@ for c in A['cities']:
                 if p: pats[x] = p
         ids = [x for x in ids if x in pats]
         if ids: gs.append({'n': g['name'], 'b': g.get('bpm'), 'i': ids, 'd': blurb(g['name']), 's': g.get('src', '')})
-    if gs: cities.append({'n': c['name'], 'a': c['lat'], 'o': c['lon'], 'g': gs})
+    if gs: cities.append({'n': c['name'], 'c': c['country'], 'a': c['lat'], 'o': c['lon'], 'g': gs})
 
 # ---------- kits ----------
 # each drum: (name, file, tonal, level).  Files are checked against the drum machine pack when it is available.
