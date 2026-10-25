@@ -327,6 +327,18 @@
     .ringwrap { width: min(100%, 100vw); height: auto; max-height: 100%; } .stage { overflow: hidden; }
     .sp { width: 92px; } .mtrack { min-width: 40px; } .mixrow { gap: 8px; } .bar > * { padding: 12px 16px; } .sr { left: 0; top: 0; }
   }
+  .gdesc { position: absolute; left: 36px; bottom: 6px; max-width: min(340px, 34vw); font-size: 12px; line-height: 1.45; color: var(--ink); background: rgba(10,6,12,.5); border-left: 2px solid var(--accent); padding: 8px 12px; border-radius: 0 10px 10px 0; backdrop-filter: blur(4px); opacity: .9; pointer-events: none; }
+  .gdesc b { font-family: var(--display); font-weight: 400; font-size: 16px; display: block; margin-bottom: 2px; } .gdesc small { display: block; margin-top: 3px; color: var(--ink-dim); font-size: 10px; letter-spacing: .04em; }
+  .gdesc:empty { display: none; }
+  .w-city { font-size: clamp(40px, 5.4vw, 76px); letter-spacing: .02em; text-shadow: 0 2px 24px rgba(0,0,0,.45); }
+  .intro { position: fixed; inset: 0; z-index: 20; display: grid; place-items: center; padding: 20px; background: rgba(6,3,6,.82); backdrop-filter: blur(8px); }
+  .intro[hidden] { display: none; }
+  .intro .card { max-width: 520px; padding: 30px 30px 26px; border: 1px solid var(--line2); border-radius: 26px; background: rgba(18,10,20,.96); }
+  .intro h1 { font-family: var(--display); font-weight: 400; font-size: clamp(34px, 6vw, 48px); line-height: 1.05; margin: 0 0 14px; }
+  .intro p { font-size: 15px; line-height: 1.6; margin: 0 0 12px; color: var(--ink); }
+  .intro .go { margin-top: 10px; padding: 13px 26px; border-radius: 999px; font-size: 14px; }
+  .intro .k { font-size: 11px; color: var(--ink-dim); margin-top: 14px; letter-spacing: .04em; }
+  .app2[data-lay="b"] .gdesc { left: 36px; }
 </style>
 </head>
 <body>
@@ -336,13 +348,21 @@
   <radialGradient id="kshadow"><stop offset=".6" stop-color="#000" stop-opacity=".55"/><stop offset="1" stop-color="#000" stop-opacity="0"/></radialGradient>
 </defs></svg>
 <canvas id="sky" aria-hidden="true"></canvas>
+<div class="intro" id="intro" hidden role="dialog" aria-modal="true" aria-labelledby="introH"><div class="card">
+  <h1 id="introH">Rhythm Geometry</h1>
+  <p>Every city has a sound. This page takes drum rhythms from genres around the world, from Cuban clave to Chicago house to Lagos afrobeat, and draws each one as a ring.</p>
+  <p>Then it asks the weather. Live temperature, wind, cloud and rain from the city you pick shape the other rings, so the same place sounds a little different every hour.</p>
+  <p>Pick a city and a genre, press play, and slide the forecast forward to hear tomorrow.</p>
+  <button id="introGo" class="btn go on" type="button">Start listening</button>
+  <div class="k">The info button top right brings this back.</div>
+</div></div>
 <div class="app2" id="app" data-lay="a">
   <header class="hdr">
     <div class="wxb">
       <div class="brand">Rhythm Geometry</div>
-      <div class="w-city" id="wCity">London</div>
+      <div class="w-city" id="wCity" title="The city you are hearing">London</div>
       <div class="w-now"><span id="wTemp"></span><span id="wCond"></span></div>
-      <div class="w-meta" id="wMeta"></div>
+      <div class="w-meta" id="wMeta" title="Local time, wind speed and the key the weather has picked"></div>
       <div class="pickers">
         <select id="city" aria-label="City"></select>
         <select id="genre" aria-label="Genre"></select>
@@ -351,17 +371,19 @@
       </div>
     </div>
     <div class="hdr-r">
-      <div class="lay" role="group" aria-label="Design"><button type="button" data-lay="a" aria-pressed="true">A</button><button type="button" data-lay="b" aria-pressed="false">B</button></div>
+      <div class="lay" role="group" aria-label="Design" title="Switch between design A (bar below) and design B (rail on the right)"><button type="button" data-lay="a" aria-pressed="true">A</button><button type="button" data-lay="b" aria-pressed="false">B</button></div>
       <a class="alt" href="../">All versions</a>
+      <button id="aboutBtn" class="ibtn" type="button" title="What is this?" aria-label="About this page"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 11v6M12 7.5v.5"/></svg></button>
       <button id="editBtn" class="ibtn" type="button" aria-expanded="false" aria-controls="sheet" title="Edit the mix and the settings" aria-label="Edit the mix"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20l4-1L19.5 7.5a2.1 2.1 0 0 0-3-3L5 16l-1 4z"/><path d="M14.5 6.5l3 3"/></svg></button>
     </div>
   </header>
 
   <main class="stage">
     <div class="ringwrap">
-      <canvas id="rings" width="1000" height="1000" aria-label="Eight rhythm rings, one for each drum"></canvas>
+      <canvas id="rings" width="1000" height="1000" role="img" aria-label="Eight rhythm rings, one for each drum. Each label shows what the ring takes from the weather and how many steps it has." title="Eight rings. Each one takes something from the weather and turns it into a rhythm."></canvas>
       <div class="centre"><div class="c-name" id="cName">London</div><div class="c-wx" id="cWx">loading the weather</div><div class="c-wx" id="cTime"></div></div>
     </div>
+    <div class="gdesc" id="gdesc" aria-live="polite"></div>
     <p class="status" id="status" aria-live="polite"></p>
     <p id="story"></p><p class="hint" id="hint"></p>
   </main>
@@ -1248,7 +1270,7 @@ async function pickCity() {
   const g = setPattern(); buildLanes();
   MODE = modeFromWeather(); ROOT = [...c.n].reduce((a, ch) => (a * 31 + ch.charCodeAt(0)) >>> 0, 7) % 12; $('root').value = ROOT; retune();
   $('cWx').textContent = Math.round(WX.temp) + '°  ·  wind ' + Math.round(WX.wind) + '  ·  ' + Math.round(WX.hum) + '% humid';
-  wxPaint();
+  wxPaint(); gdPaint();
   $('story').innerHTML = `<b>${c.n}</b> plays <b>${g.n}</b> at <b>${$('bpm').value}</b> beats a minute. The weather chose <b>${NOTES[ROOT]} ${MODES[MODE].name}</b> and tuned the drums to it. Each drum is a ring with its own length, taken from the weather, so they slip against each other and the groove keeps changing. ${WX.wind < 12 ? 'The air is calm, so filters and pans hold for long stretches.' : WX.wind > 28 ? 'It is windy, so filters and pans change their minds quickly.' : 'Filters and pans hold for a few bars at a time.'}`;
 }
 $('scrub').addEventListener('input', e => { SCRUB = +e.target.value; $('scrubv').textContent = SCRUB === 0 ? 'Now' : '+' + SCRUB + 'h'; fcShow(); clearTimeout(scrubTimer); scrubTimer = setTimeout(scrubApply, 60); });
@@ -1465,6 +1487,18 @@ function wxPaint() {
   $('cName').textContent = cur.n; $('cWx').textContent = Math.round(WX.temp) + '°  ·  ' + cond; $('cTime').textContent = NOTES[ROOT] + ' ' + MODES[MODE].name;
 }
 setInterval(wxPaint, 20000);
+function gdPaint() {
+  const el = $('gdesc'), c = ATLAS.cities[city.value], g = c && (c.g[genre.value] || c.g[0]);
+  if (!g) { el.innerHTML = ''; return; }
+  const d = g.d || '', src = g.s ? 'Source: ' + g.s : '';
+  el.innerHTML = '<b>' + g.n + (g.b ? '  ·  ' + g.b + ' bpm' : '') + '</b>' + (d ? d : '') + (src ? '<small>' + src + '</small>' : '');
+}
+genre.addEventListener('change', gdPaint); city.addEventListener('change', () => setTimeout(gdPaint, 0));
+const intro = $('intro');
+const showIntro = v => { intro.hidden = !v; if (v) $('introGo').focus(); else try { localStorage.setItem('rg2intro', '1'); } catch (e) {} };
+$('aboutBtn').addEventListener('click', () => showIntro(true)); $('introGo').addEventListener('click', () => showIntro(false));
+intro.addEventListener('click', e => { if (e.target === intro) showIntro(false); });
+{ let seen = false; try { seen = !!localStorage.getItem('rg2intro'); } catch (e) {} if (!seen) showIntro(true); }
 
 const sheet = $('sheet'), editBtn = $('editBtn'), appEl = $('app');
 function showTab(t) {

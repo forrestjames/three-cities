@@ -3,7 +3,9 @@
 It reads the city and genre patterns from index.html so there is one source of truth.
 Run after changing play2-src.html or the ATLAS in index.html:   python3 build_play2.py
 """
-import json, os, re
+import json, os, re, sys
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+from genre_blurbs import blurb
 here = os.path.dirname(os.path.abspath(__file__))
 s = open(os.path.join(here, 'index.html'), encoding='utf8').read()
 i = s.index('const ATLAS = '); j = s.index('\n', i)
@@ -33,7 +35,7 @@ for c in A['cities']:
                 p = pat(x)
                 if p: pats[x] = p
         ids = [x for x in ids if x in pats]
-        if ids: gs.append({'n': g['name'], 'b': g.get('bpm'), 'i': ids})
+        if ids: gs.append({'n': g['name'], 'b': g.get('bpm'), 'i': ids, 'd': blurb(g['name']), 's': g.get('src', '')})
     if gs: cities.append({'n': c['name'], 'a': c['lat'], 'o': c['lon'], 'g': gs})
 
 # ---------- kits ----------
