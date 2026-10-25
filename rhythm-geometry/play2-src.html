@@ -201,13 +201,13 @@
   .ibtn:hover { border-color: var(--ink); }
   #editBtn { width: 46px; height: 46px; } #editBtn.on { background: var(--accent); border-color: var(--accent); } #editBtn.on svg { stroke: #14110f; }
   .hdr-r { display: flex; gap: 10px; align-items: center; }
-  .lay { display: flex; border: 1px solid var(--line2); border-radius: 999px; overflow: hidden; background: rgba(10,6,12,.6); }
+  .lay { display: none; border: 1px solid var(--line2); border-radius: 999px; overflow: hidden; background: rgba(10,6,12,.6); }
   .lay button { border: 0; background: transparent; padding: 9px 14px; font-size: 11px; letter-spacing: .1em; text-transform: uppercase; color: var(--ink-dim); }
   .lay button[aria-pressed="true"] { background: var(--ink); color: #14110f; }
   .hdr .alt { margin: 0; }
 
   .stage { position: relative; min-height: 0; display: grid; place-items: center; padding: 6px 0; }
-  .ringwrap { height: 100%; width: auto; max-width: 100%; min-width: 0; aspect-ratio: 1; margin: 0; }
+  .ringwrap { height: 90%; width: auto; max-width: 100%; min-width: 0; aspect-ratio: 1; margin: 0; }
   .ringwrap::before { background: radial-gradient(circle, rgba(6,3,2,.72) 62%, rgba(6,3,2,.4) 84%, rgba(6,3,2,0) 100%); inset: -4%; }
   .stage .centre { display: none; }
   .stage .status { position: absolute; left: 50%; bottom: 4px; transform: translateX(-50%); margin: 0; min-height: 0; pointer-events: none; text-align: center; max-width: 90%; }
@@ -217,9 +217,9 @@
   .bar { z-index: 2; display: grid; grid-template-columns: minmax(270px,.9fr) minmax(260px,1.3fr) minmax(300px,1.2fr); margin: 0 36px 22px; background: var(--glass); border: 1px solid var(--line2); border-radius: 30px; backdrop-filter: blur(6px); }
   .bar > * { padding: 14px 24px; min-width: 0; } .bar > * + * { border-left: 1px solid var(--line); }
   .b-tempo { display: flex; align-items: center; gap: 16px; padding-left: 14px; }
-  #play { width: 68px; height: 68px; border-radius: 50%; padding: 0; flex: none; display: grid; place-items: center; font-size: 0; }
-  #play::before { content: ""; width: 0; height: 0; border-left: 20px solid #14110f; border-top: 12px solid transparent; border-bottom: 12px solid transparent; margin-left: 5px; }
-  #play[aria-pressed="true"]::before { border: 0; width: 20px; height: 22px; margin: 0; background: linear-gradient(90deg, #14110f 0 38%, transparent 38% 62%, #14110f 62%); }
+  #play { position: relative; width: 68px; height: 68px; border-radius: 50%; padding: 0; flex: none; font-size: 0; line-height: 0; }
+  #play::before { content: ""; position: absolute; left: 50%; top: 50%; width: 0; height: 0; border-left: 22px solid #14110f; border-top: 13px solid transparent; border-bottom: 13px solid transparent; transform: translate(-36%, -50%); }
+  #play[aria-pressed="true"]::before { border: 0; width: 22px; height: 24px; transform: translate(-50%, -50%); background: linear-gradient(90deg, #14110f 0 36%, transparent 36% 64%, #14110f 64%); }
   .tp { flex: 1; min-width: 0; display: grid; gap: 4px; }
   .tpt { display: flex; align-items: center; gap: 10px; }
   #bpmv { font-family: var(--display); font-weight: 400; font-size: 30px; line-height: 1; min-width: 3ch; }
@@ -339,6 +339,7 @@
   .intro .go { margin-top: 10px; padding: 13px 26px; border-radius: 999px; font-size: 14px; }
   .intro .k { font-size: 11px; color: var(--ink-dim); margin-top: 14px; letter-spacing: .04em; }
   .app2[data-lay="b"] .gdesc { left: 36px; }
+  .showlay .lay { display: flex; }
 </style>
 </head>
 <body>
@@ -482,12 +483,15 @@
     <label>Send to<select id="midiOut"></select></label>
     <label>Channel<select id="midiCh"></select></label>
     <label>Notes<select id="midiMap"></select></label>
+    <label>Melody channel<select id="midiMCh"></select></label>
     <div class="chips">
       <button id="midiOn" class="btn" type="button" aria-pressed="false">Send notes</button>
       <button id="midiClock" class="btn" type="button" aria-pressed="false" title="Sends tempo, start and stop so your machine follows">Send clock</button>
       <button id="midiCC" class="btn" type="button" aria-pressed="true" title="The filter, LFO and chance knobs, and the faders, go out as controllers">Send knobs</button>
+      <button id="midiMel" class="btn" type="button" aria-pressed="true" title="Melodic sounds and the melodic side of the mix go out on their own channel">Send melody</button>
       <button id="midiTest" class="btn" type="button">Test note</button>
     </div>
+    <p class="note">Drum notes follow the name on each fader (kick 36, snare 38, closed hat 42, open hat 46, clap 39, toms 43, 47, 50), so a TR-8S or similar plays the same drum you see. Melodic sounds go out on the melody channel as notes in the key, with a program change that picks the closest General MIDI sound: kalimba 109, harp 47, electric piano 5, steel drums 115 (as numbered on most synths).</p>
     <p class="note">Every hit you hear goes out too, including stutters, chance and mutes. Knobs use CC 74 (filter), 75 (LFO level), 76 (chance). Faders use CC 7.</p>
   </div>
 </div>
@@ -507,7 +511,7 @@ const TDM = 'https://raw.githubusercontent.com/geikha/tidal-drum-machines/657739
 const KITS = __KITS__;
 const COLORS = ['#e8744a', '#f2b84b', '#7bc6a4', '#5aa9e6', '#c58ad8', '#e86a92', '#9bd35a', '#f0e0c8'];
 let KIT = KITS[0];
-const MIDI = { access: null, out: null, on: false, clock: false, cc: true, ch: 1, map: 'drum' };
+const MIDI = { access: null, out: null, on: false, clock: false, cc: true, ch: 1, map: 'drum', mel: true, mch: 2, prog: null };
 const $ = id => document.getElementById(id);
 const clamp = (x, a, b) => Math.min(b, Math.max(a, x));
 
@@ -689,8 +693,9 @@ function synthHit(l, t, vel) {
 // The melodic note is the ring's own note in the key, so the rings add texture and a tune that follows the weather.
 const BLEND = { v: 0, snd: 'kalimba' }, MELBASE = [60, 62, 64, 65, 67, 69, 71, 72];
 function hit(l, t, vel) {
-  midiHit(l, t, vel);
   const b = BLEND.v / 100, dg = Math.cos(b * Math.PI / 2), mg = Math.sin(b * Math.PI / 2);
+  if (l.d.syn && MELODIC[l.d.syn]) midiHit(l, t, vel); else if (dg > 0.02) midiHit(l, t, vel * dg);
+  if (mg > 0.02 && !(l.d.syn && MELODIC[l.d.syn])) midiMel(l.mm || MELBASE[l.i], t, vel * mg, BLEND.snd);
   if (mg > 0.02 && !(l.d.syn && MELODIC[l.d.syn])) melHit(BLEND.snd, 440 * Math.pow(2, ((l.mm || MELBASE[l.i]) - 69) / 12), t, vel * mg, l.g);
   if (dg > 0.02) playKit(l, t, vel * dg); else l.flash = t;
 }
@@ -1137,18 +1142,33 @@ toggle($('convOn'), v => { CONV.on = v; convApply(); say(v ? 'Convergence on: wh
 // ---------- MIDI out ----------
 const MIDI_MAPS = { drum: 'Drum machine pads (36, 38, 42, 46...)', perc: 'Percussion (congas, bongos, timbales)', tuned: 'The tuned notes of the key', tracks: 'One drum per channel (all on note C3)' };
 const MIDI_NOTES = { drum: [36, 38, 42, 46, 43, 50, 49, 39], perc: [64, 63, 62, 61, 60, 65, 66, 75] };
+// General MIDI drum notes (what a TR-8S, a TR-8 or most drum machines listen to), by the name on the fader
+const MIDI_BY_NAME = { 'kick': 36, 'rim': 37, 'snare': 38, 'clap': 39, 'hat': 42, 'open hat': 46, 'low tom': 43, 'mid tom': 47, 'high tom': 50,
+  'cowbell': 56, 'tambourine': 54, 'wood block': 76, 'clave': 75, 'guiro': 73, 'triangle': 81, 'agogo': 67, 'timbale': 65,
+  'conga low': 64, 'conga mid': 63, 'conga high': 62, 'conga slap': 62, 'quinto': 63, 'bongo low': 61, 'bongo high': 60, 'bongo bright': 60,
+  'sub pop': 36, 'pop': 38, 'bleep': 56, 'blip': 54, 'zap': 39, 'click': 37, 'tick': 42, 'glitch': 46 };
+// the General MIDI sound that is closest to each melodic voice, sent as a program change on the melodic channel
+const MIDI_PROG = { kalimba: 108, harp: 46, rhodes: 4, steel: 114 }, MIDI_HOLD = { kalimba: 0.45, harp: 0.8, rhodes: 0.7, steel: 0.5 };
 $('midiCh').innerHTML = Array.from({ length: 16 }, (_, i) => `<option value="${i + 1}">${i + 1}${i === 9 ? ' (drums)' : ''}</option>`).join(''); $('midiCh').value = MIDI.ch;
 $('midiMap').innerHTML = Object.entries(MIDI_MAPS).map(([k, v]) => `<option value="${k}">${v}</option>`).join('');
 const midiPerf = t => { const ts = ctx.getOutputTimestamp ? ctx.getOutputTimestamp() : null; return ts && ts.performanceTime ? ts.performanceTime + (t - ts.contextTime) * 1000 : performance.now() + (t - ctx.currentTime) * 1000; };
 function midiNoteOf(l) {
   if (MIDI.map === 'tracks') return 60;
   if (MIDI.map === 'tuned') { const m = /^([A-G][b#]?)(-?\d+)$/.exec(l.note || ''); const pc = m ? NOTES.indexOf(m[1]) : -1; return pc >= 0 ? clamp((+m[2] + 1) * 12 + pc, 0, 127) : clamp(48 + ROOT, 0, 127); }
+  if (MIDI.map === 'drum' && MIDI_BY_NAME[l.d.n] != null) return MIDI_BY_NAME[l.d.n];
   return MIDI_NOTES[MIDI.map][l.i];
 }
 const midiChOf = l => MIDI.map === 'tracks' ? ((MIDI.ch - 1 + l.i) % 16) : MIDI.ch - 1;
 function midiSend(bytes, t) { if (!MIDI.out) return; try { MIDI.out.send(bytes, t ? midiPerf(t) : undefined); } catch (e) {} }
+function midiMel(n, t, vel, snd) {
+  if (!MIDI.on || !MIDI.out || !MIDI.mel) return;
+  const c = MIDI.mch - 1, v = clamp(Math.round(30 + 97 * Math.min(1, vel)), 1, 127), pr = MIDI_PROG[snd];
+  if (MIDI.prog !== snd && pr != null) { midiSend([0xC0 | c, pr], t); MIDI.prog = snd; }
+  midiSend([0x90 | c, n, v], t); midiSend([0x80 | c, n, 0], t + (MIDI_HOLD[snd] || 0.5));
+}
 function midiHit(l, t, vel) {
   if (!MIDI.on || !MIDI.out) return;
+  if (l.d.syn && MELODIC[l.d.syn]) { midiMel(clamp(Math.round(l.d.m + 12 * Math.log2(l.rate)), 0, 127), t, vel, l.d.syn); return; }
   const n = midiNoteOf(l), c = midiChOf(l), v = clamp(Math.round(40 + 87 * Math.min(1, vel)), 1, 127);
   midiSend([0x90 | c, n, v], t); midiSend([0x80 | c, n, 0], t + 0.09);
 }
@@ -1175,8 +1195,11 @@ $('midiOpen').addEventListener('click', openMidi); $('midiClose').addEventListen
 $('midiPanel').addEventListener('pointerdown', e => { if (e.target === $('midiPanel')) closeMidi(); });
 addEventListener('keydown', e => { if (e.key === 'Escape' && !$('midiPanel').hidden) closeMidi(); });
 const midiLight = () => $('midiOpen').setAttribute('aria-pressed', String(MIDI.on && !!MIDI.out));
-$('midiOut').addEventListener('change', () => { MIDI.out = MIDI.access ? MIDI.access.outputs.get($('midiOut').value) || null : null; midiLight(); });
+$('midiOut').addEventListener('change', () => { MIDI.prog = null; MIDI.out = MIDI.access ? MIDI.access.outputs.get($('midiOut').value) || null : null; midiLight(); });
 $('midiCh').addEventListener('change', () => MIDI.ch = +$('midiCh').value);
+$('midiMCh').innerHTML = Array.from({ length: 16 }, (_, i) => `<option value="${i + 1}">${i + 1}</option>`).join(''); $('midiMCh').value = MIDI.mch;
+$('midiMCh').addEventListener('change', () => { MIDI.mch = +$('midiMCh').value; MIDI.prog = null; });
+toggle($('midiMel'), v => MIDI.mel = v);
 $('midiMap').addEventListener('change', () => MIDI.map = $('midiMap').value);
 toggle($('midiOn'), v => { MIDI.on = v; midiLight(); if (v && playing) midiTransport(true, ctx.currentTime); });
 toggle($('midiClock'), v => { MIDI.clock = v; if (v && MIDI.on && playing) midiTransport(true, ctx.currentTime); });
@@ -1360,11 +1383,11 @@ function draw() {
     g2.fillStyle = sun ? 'rgba(255,190,110,.28)' : 'rgba(200,215,255,.22)'; g2.beginPath(); g2.arc(sx, sy, 34, 0, 7); g2.fill();
     g2.fillStyle = sun ? '#ffd9a0' : '#dfe6ff'; g2.shadowColor = sun ? 'rgba(255,200,110,.9)' : 'rgba(180,200,255,.8)'; g2.shadowBlur = 20; g2.beginPath(); g2.arc(sx, sy, 17, 0, 7); g2.fill(); g2.shadowBlur = 0; }
   // what each ring takes from the weather, written on the ring
-  g2.font = '500 17px "Source Code Pro", monospace'; g2.textAlign = 'center'; g2.textBaseline = 'middle';
+  g2.font = '500 13px "Source Code Pro", monospace'; g2.textAlign = 'center'; g2.textBaseline = 'middle';
   lanes.forEach((l, i) => {
-    const R = 118 + i * 48, t = (l.why || '').toUpperCase().replace(/ KM\/H/, '') + '  ' + l.steps, w = g2.measureText(t).width + 22;
-    g2.globalAlpha = (l.mute ? 0.4 : 1) * (SEL >= 0 && SEL !== i ? 0.4 : 1);
-    g2.fillStyle = 'rgba(12,7,16,.88)'; g2.strokeStyle = l.color; g2.lineWidth = 2; g2.beginPath(); g2.roundRect(CX - w / 2, CX - R - 13, w, 26, 13); g2.fill(); g2.stroke();
+    const R = 118 + i * 48, t = (l.why || '').toUpperCase().replace(/ KM\/H/, '') + '  ' + l.steps, w = g2.measureText(t).width + 16;
+    g2.globalAlpha = 0.82 * (l.mute ? 0.4 : 1) * (SEL >= 0 && SEL !== i ? 0.4 : 1);
+    g2.fillStyle = 'rgba(12,7,16,.7)'; g2.strokeStyle = l.color; g2.lineWidth = 1.5; g2.beginPath(); g2.roundRect(CX - w / 2, CX - R - 9, w, 18, 9); g2.fill(); g2.stroke();
     g2.fillStyle = '#f3ece6'; g2.fillText(t, CX, CX - R + 1);
   });
   g2.globalAlpha = 1;
@@ -1548,7 +1571,7 @@ lanes.forEach(l => l.el.querySelector('.sh').addEventListener('click', e => {
   paint();
 }
 
-{ let l0 = 'a'; try { l0 = (location.hash === '#b' || location.hash === '#a') ? location.hash.slice(1) : (localStorage.getItem('rg2lay') || 'a'); } catch (e) {} setLay(l0 === 'b' ? 'b' : 'a'); }
+{ const l0 = location.hash === '#b' ? 'b' : 'a'; document.body.classList.toggle('showlay', location.hash === '#b' || location.hash === '#a'); setLay(l0); }
 </script>
 </body>
 </html>
