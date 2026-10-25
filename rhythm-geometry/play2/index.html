@@ -439,6 +439,10 @@
     </div>
     <div class="panel on" id="tab-mix"><div class="mixer" id="mixer"></div></div>
     <div class="panel" id="tab-perform"><div class="fx2"><div class="fxrow">
+          <div class="grp"><span class="fxlab">Weather layer</span>
+            <input id="wxAmt" class="big" type="range" min="0" max="100" value="45" aria-label="Weather layer level" title="How loud the weather rings are against the genre">
+            <button id="wxGate" class="btn" type="button" aria-pressed="true" title="Bring each weather ring in and out in phrases, so the genre's rhythm is easy to hear">In and out</button>
+          </div>
           <div class="grp"><span class="fxlab">Stutter</span>
             <button class="btn" data-st="2" type="button" aria-pressed="false" title="Repeat the last hits every eighth note">1/8</button>
             <button class="btn" data-st="1" type="button" aria-pressed="false" title="Repeat the last hits every sixteenth note">1/16</button>
@@ -653,6 +657,21 @@ const lanes = COLORS.map((color, i) => {
   return { i, d: KIT.lanes[i], color, g, lp, sd, sv, pn: pan, chance: 100, basePan: pan.pan.value, panNow: pan.pan.value, aF: 0, aFc: 420, aP: 0, vol: 0.8, mute: false, flt: false, stut: false, bits: [], steps: 8, hits: 3, rot: 0, last: 0, flash: 0, why: '', src: '', rate: 1, note: '', oct: OCT0[i] };
 });
 const faderGain = v => v * v * 1.1;   // a gentler curve than straight volume
+// ---------- the weather layer ----------
+// The genre (kick and two rhythms) is the band. The weather rings are the flourishes around it: quieter, filtered, and
+// they come in and out in phrases, so the genre's own rhythm is always easy to hear.
+const WEATHER = { level: 45, lp: 2200, gate: true };   // level 0 to 100, lp = filter on weather rings when no filter is set, gate = phrase in and out
+let curStep = 0;   // the step being scheduled, read by the drawing
+const wxMul = l => l.wx ? WEATHER.level / 100 : 1;
+// each weather ring is on for a few bars of an eight-bar cycle, staggered so they never all go quiet together
+function wxActive(l, n) {
+  if (!l.wx || !WEATHER.gate) return true;
+  const bar = Math.floor(n / 16), on = 3 + (l.steps % 4), ph = (l.i * 3) % 8;
+  return ((bar + ph) % 8) < on;
+}
+function applyWx() {
+  lanes.forEach(l => { l.g.gain.setTargetAtTime(faderGain(l.vol) * wxMul(l), ctx.currentTime, 0.03); setFilter(l, ctx.currentTime); });
+}
 lanes.forEach(l => l.g.gain.value = faderGain(l.vol));
 
 // The glitch kit has no recordings at all: each drum is a few milliseconds of synth
@@ -748,6 +767,7 @@ function buildLanes(remix) {
   // the first three drums play the genre's own rhythms when it has them, the rest are weather
   lanes.forEach((l, i) => {
     const arr = i < 3 && arrays[i] ? arrays[i] : null;
+    l.wx = !arr;
     let steps, why, bits;
     if (arr) { steps = arr.length; bits = arr.split('').map(Number); why = (i === 0 ? 'genre kick' : 'genre rhythm'); }
     else {
@@ -763,6 +783,7 @@ function buildLanes(remix) {
     l.steps = steps; l.bits = bits; l.why = why; l.hits = bits.reduce((a, b) => a + b, 0);
   });
   renderWhy();
+  applyWx();
 }
 function remix() {
   lanes.forEach(l => { const k = 1 + Math.floor(Math.random() * (l.steps - 1)); l.bits = l.bits.slice(k).concat(l.bits.slice(0, k)); });
@@ -855,9 +876,9 @@ const visQ = [];
 const stepSecs = () => 60 / (+$('bpm').value) / 4;
 function stutDiv(l) { if (gDivs.size) return Math.min(...gDivs); return l.stut ? 1 : 0; }
 function schedule(t, n) {
-  const ss = stepSecs(), fired = [];
+  const ss = stepSecs(), fired = []; curStep = n;
   lanes.forEach(l => {
-    if (l.mute) { return; }
+    if (l.mute || !wxActive(l, n)) { return; }
     const dv = stutDiv(l), pos = n % l.steps, pat = l.bits[pos];
     if (!dv) {
       if (!pat) return;
@@ -900,7 +921,7 @@ function makeFader(el, l) {
   el.innerHTML = '<div class="fill"></div><div class="cap"></div>';
   const fill = el.querySelector('.fill'), cap = el.querySelector('.cap'), H = () => el.clientHeight - 8;
   const draw = () => { const y = 4 + (1 - l.vol) * H(); cap.style.top = y + 'px'; fill.style.height = (l.vol * H()) + 'px'; el.setAttribute('aria-valuenow', Math.round(l.vol * 100)); const vb = l.el && l.el.querySelector('.vbar i'); if (vb) vb.style.width = (l.vol * 100) + '%'; };
-  const set = v => { l.vol = clamp(v, 0, 1); l.g.gain.setTargetAtTime(faderGain(l.vol), ctx.currentTime, 0.015); draw(); midiCC(7, l.vol * 127, l); };
+  const set = v => { l.vol = clamp(v, 0, 1); l.g.gain.setTargetAtTime(faderGain(l.vol) * wxMul(l), ctx.currentTime, 0.015); draw(); midiCC(7, l.vol * 127, l); };
   const fromY = e => { const r = el.getBoundingClientRect(); set(1 - (e.clientY - r.top - 4) / H()); };
   el.addEventListener('pointerdown', e => { el.setPointerCapture(e.pointerId); fromY(e); el._d = true; });
   el.addEventListener('pointermove', e => { if (el._d) fromY(e); });
@@ -1017,7 +1038,7 @@ function tap(l) {
 }
 function setFilter(l, t) {
   const on = l.flt || l.aF > 0;
-  l.lp.frequency.setTargetAtTime(on ? (l.aF > 0 ? l.aFc : 420) : 18000, t, on ? 0.05 : 0.09);
+  l.lp.frequency.setTargetAtTime(on ? (l.aF > 0 ? l.aFc : 420) : (l.wx ? WEATHER.lp : 18000), t, on ? 0.05 : 0.09);
   const b = l.el.querySelector('.f'); b.dataset.auto = l.aF > 0 && !l.flt ? '1' : '0';
 }
 const say = (() => { let tm; return m => { $('status').textContent = m; clearTimeout(tm); tm = setTimeout(() => $('status').textContent = '', 4000); }; })();
@@ -1208,6 +1229,8 @@ $('midiCh').addEventListener('change', () => MIDI.ch = +$('midiCh').value);
 $('midiMCh').innerHTML = Array.from({ length: 16 }, (_, i) => `<option value="${i + 1}">${i + 1}</option>`).join(''); $('midiMCh').value = MIDI.mch;
 $('midiMCh').addEventListener('change', () => { MIDI.mch = +$('midiMCh').value; MIDI.prog = null; });
 toggle($('midiMel'), v => MIDI.mel = v);
+$('wxAmt').addEventListener('input', e => { WEATHER.level = +e.target.value; applyWx(); });
+toggle($('wxGate'), v => { WEATHER.gate = v; });
 $('midiMap').addEventListener('change', () => MIDI.map = $('midiMap').value);
 toggle($('midiOn'), v => { MIDI.on = v; midiLight(); if (v && playing) midiTransport(true, ctx.currentTime); });
 toggle($('midiClock'), v => { MIDI.clock = v; if (v && MIDI.on && playing) midiTransport(true, ctx.currentTime); });
@@ -1373,7 +1396,7 @@ function draw() {
   while (visQ.length > 1 && visQ[1].t <= now) visQ.shift();
   const cur = visQ.length && visQ[0].t <= now ? visQ[0].n : -1;
   lanes.forEach((l, i) => {
-    const R = 118 + i * 48, n = l.steps, dim = (l.mute ? 0.25 : 1) * (SEL >= 0 && SEL !== i ? 0.32 : 1), age = now - l.flash, pulse = age >= 0 && age < 0.25 ? 1 - age / 0.25 : 0;
+    const R = 118 + i * 48, n = l.steps, dim = (l.mute ? 0.25 : 1) * (SEL >= 0 && SEL !== i ? 0.32 : 1) * (wxActive(l, curStep) ? 1 : 0.4), age = now - l.flash, pulse = age >= 0 && age < 0.25 ? 1 - age / 0.25 : 0;
     g2.globalAlpha = dim;
     g2.strokeStyle = l.color; g2.lineWidth = 3 + pulse * 8; g2.globalAlpha = dim * (0.22 + pulse * 0.6);
     g2.setLineDash(l.flt || l.aF > 0 ? [10, 14] : []); g2.beginPath(); g2.arc(CX, CX, R, 0, 7); g2.stroke(); g2.setLineDash([]);
