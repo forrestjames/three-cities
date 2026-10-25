@@ -347,6 +347,14 @@
   .sp::after { content: ""; position: absolute; right: 12px; top: 50%; bottom: auto; width: 12px; height: 8px; margin-top: -1px; background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1.5l5 5 5-5' fill='none' stroke='%23d8cdc4' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") no-repeat center / 12px 8px; font-size: 0; }
   .sp select { padding-right: 20px !important; }
   .tabs button.lit::after { content: ""; display: inline-block; width: 7px; height: 7px; margin-left: 8px; border-radius: 50%; background: var(--accent); box-shadow: 0 0 8px var(--accent); }
+  .wxdial { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; overflow: visible; }
+  .wxdial .hit { pointer-events: all; fill: transparent; cursor: pointer; touch-action: none; }
+  .wxdial .mid { pointer-events: all; fill: transparent; cursor: pointer; }
+  .wxdial .val { font-family: 'Source Code Pro', monospace; font-size: 30px; fill: #f3ece6; text-anchor: middle; }
+  .wxdial .lbl { font-family: 'Source Code Pro', monospace; font-size: 11px; letter-spacing: .14em; fill: #9d918a; text-anchor: middle; text-transform: uppercase; }
+  .app2[data-lay="b"] .wxdial { display: none; }
+  .app2[data-lay="b"] #wxVoiceRow { display: flex; }
+  #wxVoice { background: rgba(10,6,12,.55); border: 1px solid var(--line2); border-radius: 999px; padding: 8px 30px 8px 12px; font-size: 12px; }
 </style>
 </head>
 <body>
@@ -389,6 +397,15 @@
   <main class="stage">
     <div class="ringwrap">
       <canvas id="rings" width="1000" height="1000" role="img" aria-label="Eight rhythm rings, one for each drum. Each label shows what the ring takes from the weather and how many steps it has." title="Eight rings. Each one takes something from the weather and turns it into a rhythm."></canvas>
+      <svg id="wxDial" class="wxdial" viewBox="0 0 1000 1000" aria-hidden="false">
+        <circle cx="500" cy="500" r="96" fill="none" stroke="rgba(243,236,230,.16)" stroke-width="6"/>
+        <path id="wxArc" d="" fill="none" stroke="#e8744a" stroke-width="6" stroke-linecap="round"/>
+        <circle id="wxKnob" cx="500" cy="404" r="11" fill="#f3ece6" stroke="#14110f" stroke-width="3"/>
+        <circle id="wxHit" class="hit" cx="500" cy="500" r="110"/>
+        <circle id="wxMid" class="mid" cx="500" cy="500" r="32"/>
+        <text id="wxVal" class="val" x="500" y="508">30</text>
+        <text id="wxLbl" class="lbl" x="500" y="532">in and out</text>
+      </svg>
       <div class="centre"><div class="c-name" id="cName">London</div><div class="c-wx" id="cWx">loading the weather</div><div class="c-wx" id="cTime"></div></div>
     </div>
     <div class="gdesc" id="gdesc" aria-live="polite"></div>
@@ -442,6 +459,7 @@
           <div class="grp"><span class="fxlab">Weather layer</span>
             <input id="wxAmt" class="big" type="range" min="0" max="100" value="30" aria-label="Weather layer level" title="How loud the weather rings are against the genre">
             <button id="wxGate" class="btn" type="button" aria-pressed="true" title="Bring each weather ring in and out in phrases, so the genre's rhythm is easy to hear">In and out</button>
+            <span id="wxVoiceRow" class="wxvoicerow" style="display:flex;align-items:center;gap:8px"><span class="lab">Voice</span><select id="wxVoice" aria-label="Weather voice" title="The sound the weather rings play"><option value="kalimba">Kalimba</option><option value="latin">Congas and bongos</option><option value="kit">The drum kit</option></select></span>
           </div>
           <div class="grp"><span class="fxlab">Stutter</span>
             <button class="btn" data-st="2" type="button" aria-pressed="false" title="Repeat the last hits every eighth note">1/8</button>
@@ -671,8 +689,22 @@ function wxActive(l, n) {
   if (!l.wx || !WEATHER.gate) return true;
   return !!wxPattern(l)[Math.floor(n / 16) % wxCycle(l)];
 }
+// the sound the weather rings play: the kit, a kalimba in the key, or the congas and bongos
+const WXV = { v: 'kalimba' };
+const LATIN = KITS.find(k => k.id === 'congas');
+function voiceOf(l) {
+  if (!l.wx || WXV.v === 'kit') return l.d;
+  if (WXV.v === 'kalimba') return { n: l.d.n, syn: 'kalimba', m: l.mm || MELBASE[l.i], t: 1, v: 1 };
+  return LATIN.lanes[l.i] || l.d;
+}
+async function setWxVoice(v) {
+  WXV.v = v;
+  if (v === 'latin') await Promise.all(LATIN.lanes.map(d => !d.f || SAMPLES.has(d.f) ? 0 : loadSample(d.f)));
+  applyWx();
+}
 function applyWx() {
   lanes.forEach(l => { l.g.gain.setTargetAtTime(faderGain(l.vol) * wxMul(l), ctx.currentTime, 0.03); setFilter(l, ctx.currentTime); });
+  if (typeof dialPaint === 'function') dialPaint();
 }
 lanes.forEach(l => l.g.gain.value = faderGain(l.vol));
 
@@ -721,6 +753,10 @@ function synthHit(l, t, vel) {
 // The melodic note is the ring's own note in the key, so the rings add texture and a tune that follows the weather.
 const BLEND = { v: 0, snd: 'kalimba' }, MELBASE = [60, 62, 64, 65, 67, 69, 71, 72];
 function hit(l, t, vel) {
+  if (l.wx && WXV.v !== 'kit') { const saved = l.d; l.d = voiceOf(l); try { hitVoice(l, t, vel); } finally { l.d = saved; } return; }
+  hitVoice(l, t, vel);
+}
+function hitVoice(l, t, vel) {
   const b = BLEND.v / 100, dg = Math.cos(b * Math.PI / 2), mg = Math.sin(b * Math.PI / 2);
   if (l.d.syn && MELODIC[l.d.syn]) midiHit(l, t, vel); else if (dg > 0.02) midiHit(l, t, vel * dg);
   if (mg > 0.02 && !(l.d.syn && MELODIC[l.d.syn])) midiMel(l.mm || MELBASE[l.i], t, vel * mg, BLEND.snd);
@@ -1232,6 +1268,31 @@ $('midiMCh').innerHTML = Array.from({ length: 16 }, (_, i) => `<option value="${
 $('midiMCh').addEventListener('change', () => { MIDI.mch = +$('midiMCh').value; MIDI.prog = null; });
 toggle($('midiMel'), v => MIDI.mel = v);
 $('wxAmt').addEventListener('input', e => { WEATHER.level = +e.target.value; applyWx(); });
+$('wxVoice').addEventListener('change', e => setWxVoice(e.target.value));
+// the round dial in the middle of design A. 270 degrees of travel, from bottom left (0) to bottom right (100)
+const DIAL = { c: 500, r: 96, a0: -225, span: 270 };
+const dpt = deg => { const a = deg * Math.PI / 180; return [DIAL.c + DIAL.r * Math.cos(a), DIAL.c + DIAL.r * Math.sin(a)]; };
+function dialPaint() {
+  const v = WEATHER.level / 100, [x0, y0] = dpt(DIAL.a0), [x1, y1] = dpt(DIAL.a0 + DIAL.span * v), [kx, ky] = dpt(DIAL.a0 + DIAL.span * v);
+  $('wxArc').setAttribute('d', v <= 0.001 ? '' : `M${x0.toFixed(1)},${y0.toFixed(1)} A${DIAL.r},${DIAL.r} 0 ${v * DIAL.span > 180 ? 1 : 0} 1 ${x1.toFixed(1)},${y1.toFixed(1)}`);
+  $('wxKnob').setAttribute('cx', kx.toFixed(1)); $('wxKnob').setAttribute('cy', ky.toFixed(1));
+  $('wxVal').textContent = Math.round(WEATHER.level);
+  $('wxLbl').textContent = WEATHER.gate ? 'in and out' : 'always on';
+}
+function dialSet(e) {
+  const svg = $('wxDial'), r = svg.getBoundingClientRect(), x = (e.clientX - r.left) / r.width * 1000 - DIAL.c, y = (e.clientY - r.top) / r.height * 1000 - DIAL.c;
+  let rel = Math.atan2(y, x) * 180 / Math.PI - DIAL.a0; rel = ((rel % 360) + 360) % 360;
+  const v = rel <= DIAL.span ? rel / DIAL.span : (rel - DIAL.span < 360 - rel ? 1 : 0);
+  WEATHER.level = Math.round(v * 100); $('wxAmt').value = WEATHER.level; applyWx();
+}
+{ const hit = $('wxHit'); let dn = false;
+  hit.addEventListener('pointerdown', e => { hit.setPointerCapture(e.pointerId); dn = true; dialSet(e); });
+  hit.addEventListener('pointermove', e => { if (dn) dialSet(e); });
+  hit.addEventListener('pointerup', () => dn = false); hit.addEventListener('pointercancel', () => dn = false);
+  $('wxMid').addEventListener('click', () => $('wxGate').click());
+  $('wxGate').addEventListener('click', () => setTimeout(dialPaint, 0));
+  hit.addEventListener('keydown', () => {});
+}
 toggle($('wxGate'), v => { WEATHER.gate = v; });
 $('midiMap').addEventListener('change', () => MIDI.map = $('midiMap').value);
 toggle($('midiOn'), v => { MIDI.on = v; midiLight(); if (v && playing) midiTransport(true, ctx.currentTime); });
