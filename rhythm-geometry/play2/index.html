@@ -363,6 +363,22 @@
   .xcurve .lab { margin-right: 4px; }
   .xcurve button { border-radius: 999px; padding: 5px 11px; font-size: 10px; letter-spacing: .08em; text-transform: uppercase; background: transparent; border: 1px solid var(--line2); color: var(--ink-dim); }
   .xcurve button[aria-pressed="true"] { background: var(--ink); color: #14110f; border-color: var(--ink); }
+
+  /* every drop-down in the control panels: dark, readable text (the native light box made the text vanish) */
+  .fx2 select, .grp select, .midibox select, .wxvoicerow select { background-color: var(--strip); color: var(--ink); border: 1px solid var(--line2); border-radius: 0; padding: 9px 12px; font-size: 13px; letter-spacing: .02em; min-height: 38px; max-width: 100%; color-scheme: dark; }
+  .fx2 select option, .grp select option, .midibox select option { background: #1a1210; color: var(--ink); }
+  .fx2 select:hover, .grp select:hover { border-color: var(--ink-dim); }
+
+  /* crossfader: a DJ fader. Black slot, hairline ticks, chrome cap with notches */
+  .wxvoicerow select { border-radius: 0 !important; padding: 9px 32px 9px 12px !important; }
+  .mtrack { height: 46px; }
+  .mtrack::before { top: 17px; height: 12px; border-radius: 1px; background: #050303; box-shadow: inset 0 0 0 1px rgba(243,236,230,.28), inset 0 2px 3px rgba(0,0,0,.9); }
+  .mtrack::after { top: 0; left: 50%; width: 1px; height: 46px; margin-left: 0; border-radius: 0; background: rgba(243,236,230,.75); }
+  .mtrack .tk { position: absolute; top: 0; width: 1px; height: 46px; background: rgba(243,236,230,.75); pointer-events: none; }
+  .mtrack .tk.l { left: 0; } .mtrack .tk.r { right: 0; }
+  .mh { top: 3px; width: 20px; height: 40px; margin-left: -10px; border-radius: 3px; background: linear-gradient(90deg, #1b1b1b 0%, #6d6d6d 18%, #f4f4f4 46%, #9a9a9a 62%, #3b3b3b 88%, #101010 100%); box-shadow: 0 0 0 1px #000, 0 5px 10px rgba(0,0,0,.7); }
+  .mh::before { content: ""; position: absolute; inset: auto; left: 50%; top: -3px; width: 2px; height: 9px; margin-left: -1px; border: 0; background: #fff; }
+  .mh::after { content: ""; position: absolute; left: 50%; bottom: 2px; width: 2px; height: 9px; margin-left: -1px; background: #fff; }
 </style>
 </head>
 <body>
@@ -445,7 +461,7 @@
         <span class="lab">Crossfader · drag</span>
         <div class="mixrow">
           <label class="sp d"><span class="lab" id="mixD">Drums 100%</span><select id="kit" aria-label="Drum sound" title="The first sound. Pick any kit, even a melodic one."></select></label>
-          <div class="mtrack" id="mixTrack"><div class="mh" id="mixHandle" role="slider" tabindex="0" aria-label="Mix between the two sounds" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"></div></div>
+          <div class="mtrack" id="mixTrack"><i class="tk l"></i><i class="tk r"></i><div class="mh" id="mixHandle" role="slider" tabindex="0" aria-label="Mix between the two sounds" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"></div></div>
           <label class="sp m"><span class="lab" id="mixM">Melodic 0%</span><select id="blendSnd" aria-label="Melodic sound" title="The second sound"><option value="kalimba">Kalimba</option><option value="harp">Harp</option><option value="rhodes">Electric piano</option><option value="steel">Steel pan</option></select></label>
         </div>
         <div class="xcurve" role="group" aria-label="Crossfader curve"><span class="lab">Curve</span><button type="button" data-cv="cut" aria-pressed="false" title="A hard switch, like a DJ cut">Cut</button><button type="button" data-cv="fade" aria-pressed="false" title="Equal power, the same level all the way">Fade</button><button type="button" data-cv="smooth" aria-pressed="true" title="A slow hand-over across the whole throw">Smooth</button></div>
@@ -472,7 +488,7 @@
           <div class="grp"><span class="fxlab">Weather layer</span>
             <input id="wxAmt" class="big" type="range" min="0" max="100" value="30" aria-label="Weather layer level" title="How loud the weather rings are against the genre">
             <button id="wxGate" class="btn" type="button" aria-pressed="true" title="Bring each weather ring in and out in phrases, so the genre's rhythm is easy to hear">In and out</button>
-            <span id="wxVoiceRow" class="wxvoicerow" style="display:flex;align-items:center;gap:8px"><span class="lab">Voice</span><select id="wxVoice" aria-label="Weather voice" title="The sound the weather rings play"><option value="kalimba">Kalimba</option><option value="latin">Congas and bongos</option><option value="kit">The drum kit</option></select></span>
+            <span id="wxVoiceRow" class="wxvoicerow" style="display:flex;align-items:center;gap:8px"><span class="lab">Voice</span><select id="wxVoice" aria-label="Weather voice" title="The sound the weather rings play"><option value="kalimba">Kalimba</option><option value="harp">Harp</option><option value="rhodes">Electric piano</option><option value="steel">Steel pan</option><option value="latin">Congas and bongos</option><option value="kit">The drum kit</option></select></span>
           </div>
           <div class="grp"><span class="fxlab">Stutter</span>
             <button class="btn" data-st="2" type="button" aria-pressed="false" title="Repeat the last hits every eighth note">1/8</button>
@@ -710,7 +726,7 @@ const WXV = { v: 'kalimba' };
 const LATIN = KITS.find(k => k.id === 'congas');
 function voiceOf(l) {
   if (!l.wx || WXV.v === 'kit') return l.d;
-  if (WXV.v === 'kalimba') return { n: l.d.n, syn: 'kalimba', m: l.mm || MELBASE[l.i], t: 1, v: 1 };
+  if (MELODIC[WXV.v]) return { n: l.d.n, syn: WXV.v, m: l.mm || MELBASE[l.i], t: 1, v: 1 };
   return LATIN.lanes[l.i] || l.d;
 }
 async function setWxVoice(v) {
