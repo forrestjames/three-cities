@@ -491,7 +491,7 @@
       <button id="midiMel" class="btn" type="button" aria-pressed="true" title="Melodic sounds and the melodic side of the mix go out on their own channel">Send melody</button>
       <button id="midiTest" class="btn" type="button">Test note</button>
     </div>
-    <p class="note">Drum notes follow the name on each fader (kick 36, snare 38, closed hat 42, open hat 46, clap 39, toms 43, 47, 50), so a TR-8S or similar plays the same drum you see. Melodic sounds go out on the melody channel as notes in the key, with a program change that picks the closest General MIDI sound: kalimba 109, harp 47, electric piano 5, steel drums 115 (as numbered on most synths).</p>
+    <p class="note">Drum notes follow the name on each fader (kick 36, snare 38, closed hat 42, open hat 46, clap 39, toms 43, 47, 50, rim 37, cymbals 49 and 51), so a TR-8S or similar plays the same drum you see in every kit. Percussion with no match goes to the nearest drum. Melodic sounds go out on the melody channel as notes in the key, with a program change that picks the closest General MIDI sound: kalimba 109, harp 47, electric piano 5, steel drums 115 (as numbered on most synths).</p>
     <p class="note">Every hit you hear goes out too, including stutters, chance and mutes. Knobs use CC 74 (filter), 75 (LFO level), 76 (chance). Faders use CC 7.</p>
   </div>
 </div>
@@ -1140,13 +1140,14 @@ K.convD = knobCell($('kConv'), 'Delay', CONV.del, v => { CONV.del = v; convDel.g
 toggle($('convOn'), v => { CONV.on = v; convApply(); say(v ? 'Convergence on: when rings meet at one angle, they play a chord.' : 'Convergence off.'); });
 
 // ---------- MIDI out ----------
-const MIDI_MAPS = { drum: 'Drum machine pads (36, 38, 42, 46...)', perc: 'Percussion (congas, bongos, timbales)', tuned: 'The tuned notes of the key', tracks: 'One drum per channel (all on note C3)' };
+const MIDI_MAPS = { drum: 'Drum machine (TR-8S style, by drum name)', perc: 'Percussion (congas, bongos, timbales)', tuned: 'The tuned notes of the key', tracks: 'One drum per channel (all on note C3)' };
 const MIDI_NOTES = { drum: [36, 38, 42, 46, 43, 50, 49, 39], perc: [64, 63, 62, 61, 60, 65, 66, 75] };
-// General MIDI drum notes (what a TR-8S, a TR-8 or most drum machines listen to), by the name on the fader
+// Drum notes by the name on the fader. They only use the eleven sounds a TR-8S, TR-8 or most drum machines have (BD 36, RS 37, SD 38, CP 39, CH 42, LT 43, OH 46, MT 47, CC 49, HT 50, RC 51),
+// so every kit lands on a real drum. Percussion with no match goes to the nearest drum, so congas, bongos and timbales play the toms.
 const MIDI_BY_NAME = { 'kick': 36, 'rim': 37, 'snare': 38, 'clap': 39, 'hat': 42, 'open hat': 46, 'low tom': 43, 'mid tom': 47, 'high tom': 50,
-  'cowbell': 56, 'tambourine': 54, 'wood block': 76, 'clave': 75, 'guiro': 73, 'triangle': 81, 'agogo': 67, 'timbale': 65,
-  'conga low': 64, 'conga mid': 63, 'conga high': 62, 'conga slap': 62, 'quinto': 63, 'bongo low': 61, 'bongo high': 60, 'bongo bright': 60,
-  'sub pop': 36, 'pop': 38, 'bleep': 56, 'blip': 54, 'zap': 39, 'click': 37, 'tick': 42, 'glitch': 46 };
+  'cowbell': 51, 'agogo': 51, 'tambourine': 49, 'triangle': 49, 'wood block': 37, 'clave': 37, 'guiro': 42, 'timbale': 50,
+  'conga low': 43, 'conga mid': 47, 'conga high': 50, 'conga slap': 37, 'quinto': 50, 'bongo low': 47, 'bongo high': 50, 'bongo bright': 50,
+  'sub pop': 36, 'pop': 38, 'bleep': 51, 'blip': 49, 'zap': 39, 'click': 37, 'tick': 42, 'glitch': 46 };
 // the General MIDI sound that is closest to each melodic voice, sent as a program change on the melodic channel
 const MIDI_PROG = { kalimba: 108, harp: 46, rhodes: 4, steel: 114 }, MIDI_HOLD = { kalimba: 0.45, harp: 0.8, rhodes: 0.7, steel: 0.5 };
 $('midiCh').innerHTML = Array.from({ length: 16 }, (_, i) => `<option value="${i + 1}">${i + 1}${i === 9 ? ' (drums)' : ''}</option>`).join(''); $('midiCh').value = MIDI.ch;
