@@ -141,6 +141,19 @@ BLURBS = {
  'hard bop': 'Soulful, driving jazz with a blues heart.',
  'cool jazz / west coast jazz': 'Relaxed, light and spacious jazz from California.',
  'stride piano': 'Early jazz piano, with the left hand striding along. Harlem in the 1920s.',
+ 'hindustani teental': 'The sixteen-beat cycle of North Indian classical music. Claps on 1, 5 and 13 and a wave on 9.',
+ 'dadra (light classical)': 'A six-beat cycle, counted three and three. It turns up in light classical song and old film music.',
+ 'carnatic adi talam': 'The eight-beat cycle of South Indian classical music. A clap, three finger counts, then two claps with waves.',
+ 'carnatic misra chapu': 'A seven-beat South Indian cycle, felt as three, two and two.',
+ 'rajasthani folk (dholak)': 'Desert folk songs on the dholak drum. A simple, rolling eight-beat feel.',
+ 'qawwali': 'Sufi devotional music. Hand claps and a dholak build the song up into a trance.',
+ 'sabar and mbalax': 'Senegal\'s talking drums. Fast, layered patterns around a steady bell.',
+ 'mande djembe': 'Djembe and bass drums from Mali and Guinea. Many drummers, one rolling cycle.',
+ 'coupé-décalé': 'Dance music from Abidjan. A steady kick and a skipping rhythm over the top.',
+ 'eskista and ethio-jazz': 'Ethiopian shoulder dance and the jazz it inspired. A rolling six-eight feel.',
+ 'gnawa': 'Moroccan trance music. Iron castanets roll over a deep bass lute.',
+ 'javanese gamelan (lancaran)': 'A bronze orchestra from Java. Gongs mark the cycle, and the smaller gongs fill in between.',
+ 'balinese kecak': 'Dozens of voices chanting in interlocking patterns. Together they make one long pulse.',
 }
 def blurb(name):
     k = name.lower().strip()
