@@ -680,6 +680,9 @@ const faderGain = v => v * v * 1.1;   // a gentler curve than straight volume
 // they come in and out in phrases, so the genre's own rhythm is always easy to hear.
 const WEATHER = { level: 30, lp: 2200, gate: true };   // level 0 to 100, lp = filter on weather rings when no filter is set, gate = phrase in and out
 let curStep = 0;   // the step being scheduled, read by the drawing
+// where the weather rings are in their cycles. It moves with the level: full level moves a bar at a time,
+// half level takes twice as long, and zero holds still, so the change slows and then stops.
+let wxPhase = 0;
 const wxMul = l => l.wx ? WEATHER.level / 100 : 1;
 // each weather ring has its own cycle, from 5 to 12 bars, and its own Euclidean pattern of bars in and out.
 // Both come from the ring's own step count, so they change when the weather changes.
@@ -687,7 +690,7 @@ function wxCycle(l) { return [5, 6, 7, 8, 10, 12][(l.steps + l.i) % 6]; }
 function wxPattern(l) { const c = wxCycle(l), on = clamp(Math.round(c * (0.3 + (l.steps % 3) * 0.1)), 2, c - 1); return euclidBits(c, on, (l.i * 2) % c); }
 function wxActive(l, n) {
   if (!l.wx || !WEATHER.gate) return true;
-  return !!wxPattern(l)[Math.floor(n / 16) % wxCycle(l)];
+  return !!wxPattern(l)[Math.floor(wxPhase) % wxCycle(l)];
 }
 // the sound the weather rings play: the kit, a kalimba in the key, or the congas and bongos
 const WXV = { v: 'kalimba' };
@@ -915,6 +918,7 @@ const stepSecs = () => 60 / (+$('bpm').value) / 4;
 function stutDiv(l) { if (gDivs.size) return Math.min(...gDivs); return l.stut ? 1 : 0; }
 function schedule(t, n) {
   const ss = stepSecs(), fired = []; curStep = n;
+  if (n % 16 === 0) wxPhase += WEATHER.level / 100;
   lanes.forEach(l => {
     if (l.mute || !wxActive(l, n)) { return; }
     const dv = stutDiv(l), pos = n % l.steps, pat = l.bits[pos];
@@ -1476,13 +1480,13 @@ function draw() {
   });
   // the centre: one clock face per weather ring. Its own cycle, its own bars in, and a dot for where we are now
   // shown in design A only: in B the city name sits in the middle, and the two would overlap
-  if (document.getElementById('app').dataset.lay !== 'b') { const bar = Math.floor(curStep / 16); let k = 0;
+  if (document.getElementById('app').dataset.lay !== 'b') { const bar = Math.floor(wxPhase), fade = 0.12 + 0.88 * WEATHER.level / 100; let k = 0;
     lanes.forEach(l => {
       if (!l.wx) return;
       const R = 40 + k * 7, c = wxCycle(l), pat = wxPattern(l), gap = 0.06, live = WEATHER.gate;
       for (let b = 0; b < c; b++) {
         const a0 = -Math.PI / 2 + b / c * Math.PI * 2 + gap, a1 = -Math.PI / 2 + (b + 1) / c * Math.PI * 2 - gap;
-        g2.globalAlpha = (l.mute ? 0.25 : 1) * (live ? (pat[b] ? 0.9 : 0.12) : 0.5);
+        g2.globalAlpha = fade * (l.mute ? 0.25 : 1) * (live ? (pat[b] ? 0.9 : 0.12) : 0.5);
         g2.strokeStyle = l.color; g2.lineWidth = 3.5; g2.beginPath(); g2.arc(CX, CX, R, a0, a1); g2.stroke();
       }
       const a = -Math.PI / 2 + (bar % c) / c * Math.PI * 2 + Math.PI / c;
