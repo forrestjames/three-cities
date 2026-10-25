@@ -53,6 +53,31 @@ KITS = [
    ('cowbell', 'BossDR550/bossdr550-cb/Cowbell-02.wav', 1, 1), ('wood block', 'AlesisHR16/alesishr16-perc/Wood Block L.wav', 1, 1),
    ('guiro', 'BossDR660/bossdr660-perc/GuiroL.wav', 0, 1), ('clave', 'BossDR550/bossdr550-perc/Claves.wav', 1, 1),
    ('tambourine', 'LinnDrum/linndrum-tb/Tambourine.wav', 0, 0.8), ('triangle', 'AlesisHR16/alesishr16-perc/Triangle.wav', 1, 1)])),
+ dict(id='samba', name='Samba bateria', lanes=L([
+   ('surdo', 'RolandMC303/rolandmc303-perc/Opensurd.wav', 1, 1), ('surdo muted', 'RolandMC303/rolandmc303-perc/Mutesurd.wav', 1, 1),
+   ('pandeiro', 'RolandMC303/rolandmc303-perc/Openpand.wav', 0, 1), ('pandeiro muted', 'RolandMC303/rolandmc303-perc/Mutepand.wav', 0, 1),
+   ('agogo', 'RolandMC303/rolandmc303-perc/Loagogo.wav', 1, 1), ('cuica', 'RolandMC303/rolandmc303-misc/Opencuic.wav', 0, 1),
+   ('guiro', 'RolandMC303/rolandmc303-perc/Shortgui.wav', 0, 0.9), ('whistle', 'RolandMC303/rolandmc303-perc/Shortwhi.wav', 0, 0.8)])),
+ dict(id='westafrica', name='West Africa', lanes=L([
+   ('udu', 'RolandMC303/rolandmc303-perc/Udo.wav', 1, 1), ('conga low', 'RolandMC303/rolandmc303-perc/Locongao.wav', 1, 1),
+   ('conga high', 'RolandMC303/rolandmc303-perc/Hicongao.wav', 1, 1), ('slap', 'RolandMC303/rolandmc303-misc/Slap.wav', 0, 1),
+   ('agogo', 'RolandMC303/rolandmc303-perc/Hiagogo.wav', 1, 1), ('claves', 'RolandMC303/rolandmc303-perc/Claves.wav', 1, 1),
+   ('shaker', 'BossDR660/bossdr660-perc/Marcas.wav', 0, 0.9), ('bongo low', 'RolandMC303/rolandmc303-perc/Lobongoo.wav', 1, 1)])),
+ dict(id='eastasia', name='East Asia', lanes=L([
+   ('gong', 'RolandS50/rolands50-misc/Gong.wav', 1, 0.9), ('hyoshi low', 'RolandMC303/rolandmc303-perc/Lohyoshi.wav', 0, 1),
+   ('hyoshi high', 'RolandMC303/rolandmc303-perc/Hihyoshi.wav', 0, 1), ('bamboo low', 'RolandMC303/rolandmc303-perc/Lobamboo.wav', 1, 1),
+   ('bamboo high', 'RolandMC303/rolandmc303-perc/Hibamboo.wav', 1, 1), ('asian gong', 'RolandMC303/rolandmc303-misc/Asiangon.wav', 1, 0.7),
+   ('wood block low', 'RolandMC303/rolandmc303-perc/Lowoodbl.wav', 1, 1), ('wood block high', 'RolandMC303/rolandmc303-perc/Hiwoodbl.wav', 1, 1)])),
+ dict(id='gamelan', name='Gamelan and mallets', lanes=L([
+   ('gamelan', 'RolandJD990/rolandjd990-misc/Gamelan.wav', 1, 1), ('kalimba', 'RolandJD990/rolandjd990-misc/Kalimba.wav', 1, 1),
+   ('marimba', 'RolandJD990/rolandjd990-misc/Marimwav.wav', 1, 1), ('xylophone', 'RolandJD990/rolandjd990-misc/Xylo.wav', 1, 1),
+   ('vibes', 'RolandJD990/rolandjd990-misc/Vibes.wav', 1, 1), ('digital bells', 'RolandJD990/rolandjd990-misc/Digibels.wav', 1, 0.9),
+   ('crystal', 'RolandJD990/rolandjd990-misc/Crystal.wav', 1, 0.9), ('finger bell', 'RolandJD990/rolandjd990-misc/Fingbell.wav', 1, 0.9)])),
+ dict(id='tabla', name='Tabla sketch', lanes=L([
+   ('tabla bayan', 'RolandMC303/rolandmc303-perc/Tablabay.wav', 1, 1), ('bongo high', 'RolandMC303/rolandmc303-perc/Hibongoo.wav', 1, 1),
+   ('pandeiro', 'RolandMC303/rolandmc303-perc/Openpand.wav', 0, 0.9), ('tambourine', 'RolandMC303/rolandmc303-tb/Tambouri.wav', 0, 0.8),
+   ('udu', 'RolandMC303/rolandmc303-perc/Udo.wav', 1, 1), ('finger snap', 'RolandMC303/rolandmc303-perc/Fingersn.wav', 0, 1),
+   ('triangle', 'RolandMC303/rolandmc303-perc/Opentria.wav', 1, 0.8), ('shaker', 'BossDR660/bossdr660-perc/Marcas.wav', 0, 0.9)])),
  dict(id='808', name='TR-808', lanes=L([
    ('kick', M('RolandTR808', 'bd', 'BD0050.WAV'), 1, 1), ('low tom', M('RolandTR808', 'lt', 'LT50.WAV'), 1, 1),
    ('snare', M('RolandTR808', 'sd', 'SD0050.WAV'), 0, 1), ('mid tom', M('RolandTR808', 'mt', 'MT50.WAV'), 1, 1),

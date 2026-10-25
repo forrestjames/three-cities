@@ -118,7 +118,7 @@
   .strip .btn[data-auto="1"] { box-shadow: inset 0 0 0 1px var(--c); }
   .strip .btn[data-auto="1"] .led { background: var(--c); }
   .pad[aria-pressed="true"] { background: #2a211d; color: var(--ink-faint); box-shadow: inset 0 0 0 1px var(--c); text-decoration: line-through; filter: none; }
-  .mappanel { position: fixed; inset: 0; background: rgba(8,4,3,.94); display: grid; place-items: center; z-index: 10; }
+  .mappanel { position: fixed; inset: 0; background: rgba(8,4,3,.985); display: grid; place-items: center; z-index: 10; }
   #mapPanel:not([hidden]) { display: block; }
   #mapCv { position: absolute; inset: 0; width: 100%; height: 100%; display: block; cursor: grab; touch-action: none; border: 0; background: transparent; }
   #fxPanel { padding: 16px; }
@@ -379,6 +379,10 @@
   .mh { top: 3px; width: 20px; height: 40px; margin-left: -10px; border-radius: 3px; background: linear-gradient(90deg, #1b1b1b 0%, #6d6d6d 18%, #f4f4f4 46%, #9a9a9a 62%, #3b3b3b 88%, #101010 100%); box-shadow: 0 0 0 1px #000, 0 5px 10px rgba(0,0,0,.7); }
   .mh::before { content: ""; position: absolute; inset: auto; left: 50%; top: -3px; width: 2px; height: 9px; margin-left: -1px; border: 0; background: #fff; }
   .mh::after { content: ""; position: absolute; left: 50%; bottom: 2px; width: 2px; height: 9px; margin-left: -1px; background: #fff; }
+  .maplegend { display: inline-flex; align-items: center; gap: 6px; font-size: 10px; letter-spacing: .08em; text-transform: uppercase; color: var(--ink-faint); }
+  .maplegend b { width: 70px; height: 6px; border-radius: 3px; background: linear-gradient(90deg, rgb(74,123,216), rgb(110,170,230), rgb(150,205,190), rgb(245,200,110), rgb(240,120,60), rgb(220,50,50)); }
+  .maplegend i { font-style: normal; }
+  @media (max-width: 640px) { .maptop .maphelp { display: none; } .maptop .maplegend { margin-left: auto; } }
 </style>
 </head>
 <body>
@@ -561,7 +565,7 @@
 <div class="keytip" id="keytip" aria-hidden="true"></div>
 <div class="mappanel" id="mapPanel" hidden role="dialog" aria-modal="true" aria-label="World map">
   <canvas id="mapCv" aria-label="World map of cities. Drag to move, scroll or pinch to zoom, click a city."></canvas>
-  <div class="maptop"><span id="mapName">Pick a city. Every dot has its own rhythm.</span><span class="maphelp">Drag to move. Scroll or pinch to zoom.</span><button id="mapClose" class="btn" type="button">Close</button></div>
+  <div class="maptop"><span id="mapName">Pick a city. Every dot has its own rhythm.</span><span class="maphelp">Drag to move. Scroll or pinch to zoom.</span><span class="maplegend" title="Colour shows each city's temperature right now. Pale land is in daylight, blue land is in night."><i>cold</i><b></b><i>hot</i></span><button id="mapClose" class="btn" type="button">Close</button></div>
 </div>
 
 <script>
@@ -576,7 +580,7 @@ const COLORS = ['#e8744a', '#f2b84b', '#7bc6a4', '#5aa9e6', '#c58ad8', '#e86a92'
 let KIT = KITS[0];
 // Which drum a genre row is, so the row plays the right sound whatever the kit: a hat row plays the hat, a snare row the snare.
 const ROLE_OF = { kick: 'kick', bass_drum: 'kick', snare: 'snare', snare_comp: 'snare', rim_snare: 'snare', ghost_snare: 'ghost', clap: 'clap', closed_hat: 'hat', hi_hat_pedal: 'hat', hat_roll: 'hat', shaker: 'shaker', open_hat: 'open hat', ride: 'open hat', crash: 'open hat', rim: 'rim', clave: 'rim', tak: 'rim', cowbell: 'cowbell', bell: 'cowbell', conga_tumbao: 'conga', conga_low: 'conga', conga_high: 'conga', low_drum: 'tom', dum: 'tom' };
-const ROLE_PREF = { kick: [/^kick$/], snare: [/^snare$/, /^clap$/, /^rim$/], ghost: [/^snare$/, /^rim$/, /wood|clave/], clap: [/^clap$/, /^rim$/, /wood/], hat: [/^hat$/, /tambourine|guiro|shaker/], shaker: [/shaker|maraca|guiro/, /^hat$/, /tambourine/], 'open hat': [/open hat/, /^hat$/, /triangle|agogo/], rim: [/^rim$/, /wood|clave/, /^clap$/], cowbell: [/cowbell|agogo/, /triangle|bell/], conga: [/conga|bongo/, /tom/], tom: [/low tom|conga low/, /tom/] };
+const ROLE_PREF = { kick: [/^kick$/, /^surdo$|^udu$|bayan|^gong$/], snare: [/^snare$/, /^clap$/, /^rim$/, /^pandeiro$|slap|hyoshi high|bamboo high|bongo high/], ghost: [/^snare$/, /^rim$/, /wood|clave/, /pandeiro muted|finger|bamboo high/], clap: [/^clap$/, /^rim$/, /wood/, /slap|finger|hyoshi/], hat: [/^hat$/, /tambourine|guiro|shaker|pandeiro muted|bamboo high|finger/], shaker: [/shaker|maraca|guiro/, /^hat$/, /tambourine|pandeiro muted|finger/], 'open hat': [/open hat/, /^hat$/, /triangle|agogo/], rim: [/^rim$/, /wood|clave/, /^clap$/], cowbell: [/cowbell|agogo/, /triangle|bell/], conga: [/conga|bongo/, /tom/], tom: [/low tom|conga low/, /tom/] };
 function kitVoice(kit, role) {
   for (const re of ROLE_PREF[role] || []) { const d = kit.lanes.find(x => re.test(x.n)); if (d) return d; }
   return null;
@@ -1481,12 +1485,20 @@ function setBpm(b) { let x = b; while (x < 60) x *= 2; while (x > 180) x /= 2; $
 // LinnDrum for pop, funk and rock, CR-78 for reggae and bossa, Latin percussion for salsa and samba, congas for Cuban and Afro rhythms. Anything else keeps the congas.
 const KITAUTO = { on: true };
 const KIT_RULES = [
-  [/rumba|\bson\b|clave|guaguanc|abakua|santer|bata\b|afro-cuban|conga|yoruba/i, 'congas'],
-  [/salsa|mambo|cumbia|merengue|bachata|reggaeton|samba|forr|baiao|baião|choro|timba|cha.?cha|bomba|plena/i, 'latin'],
-  [/house|techno|trance|acid|hardcore|gabber|rave|breakbeat|big beat|electro(?!-pop)|industrial/i, '909'],
-  [/drum and bass|jungle|garage|grime|drill|dubstep|hip.?hop|trap|rap\b|amapiano|bass|funky|bruk|broken/i, '808'],
+  [/rumba|\bson\b|clave|guaguanc|abakua|santer|bata\b|afro-cuban|conga|yoruba|iqa|maqsum|baladi|ayyub|saidi|malfuf|masmoudi|arabic|turkish|gnawa|flamenco|rebetiko|klezmer/i, 'congas'],
+  [/samba|bossa|forr|baiao|baião|choro|pagode|axe|axé|capoeira|carnaval|maracatu|frevo|brazil/i, 'samba'],
+  [/baile funk|funk carioca|mandel/i, '808'],
+  [/afrobeat|afropop|afro-pop|afro pop|highlife|juju|jùjú|f[uú]j[iì]|makossa|soukous|mbalax|sabar|hiplife|azonto|gqom|kwaito|kwela|bikutsi|amapiano|mbaqanga|township|ndombolo|coup[eé]|kuduro|kizomba|semba|djembe|mande|african|south african house|\bewe\b|ashanti|mpre|venda|shiko|\baka\b|necklace|kpanlogo|agbadza|bembe/i, 'westafrica'],
+  [/city pop/i, 'linn'],
+  [/japan|chinese|china\b|korea|thai|vietnam|enka|gagaku|taiko|min'yo|minyo|c-pop|mandopop|cantopop|luk thung|mor lam|gugak|pansori|samulnori|gutgeori|pungmul|noh|kabuki|hyoshi/i, 'eastasia'],
+  [/gamelan|dangdut|keroncong|bali|javanese|sundanese|jaipong|campursari|indonesia|kecak/i, 'gamelan'],
+  [/bollywood|hindustani|carnatic|bhangra|qawwali|indian|filmi|ghazal|tabla|raga|bhajan|kirtan|punjabi|dhol|bengali|baul|rajasthani|dadra|talam|chapu|teental/i, 'tabla'],
+  [/salsa|mambo|cumbia|merengue|bachata|reggaet[oó]n|timba|cha.?cha|bomba|plena|chicha/i, 'latin'],
+  [/hip.?hop|boom bap|trap|rap\b|crunk|g-funk|bounce|ghettotech|footwork|juke|dancehall|miami bass|phonk/i, '808'],
+  [/acid house|house|techno|trance|gabber|hardcore techno|breakbeat hardcore|rave|big beat|electro(?!-pop)|industrial|idm|schranz|^hardcore$|\bebm\b|eurodance/i, '909'],
+  [/drum and bass|dnb|liquid|jungle|garage|grime|drill|dubstep|bass|funky|bruk|broken/i, '808'],
   [/bossa|reggae|dub\b|krautrock|ska\b|rocksteady|lovers|new wave|synth/i, 'cr78'],
-  [/pop|funk|soul|disco|rock|punk|indie|britpop|shoegaze|city pop|schlager|jazz/i, 'linn'],
+  [/pop|funk|soul|disco|rock|punk|indie|britpop|shoegaze|schlager|jazz|bop|swing|motown|blues/i, 'linn'],
 ];
 function kitForGenre(name) { const r = KIT_RULES.find(([re]) => re.test(name || '')); return r ? r[1] : 'congas'; }
 function setKitAuto(v) { KITAUTO.on = v; const b = $('kitAuto'); if (b) b.setAttribute('aria-pressed', String(v)); }
@@ -1705,24 +1717,75 @@ function mapFit() {
   mapCv.width = Math.round(MV.w * MV.dpr); mapCv.height = Math.round(MV.h * MV.dpr);
   MV.s0 = Math.min(MV.w / 360, MV.h / (WMAP_H * WMAP_ST)); mapClamp();   // the whole world fits, then you zoom in
 }
+// The weather of every city, fetched once (a few requests) and kept for half an hour. It colours the map: warmth as a glow around each dot,
+// clouds as soft white, rain as short streaks, and the sun decides which land is in daylight, dusk or night.
+const MAPWX = { d: [], t: 0, busy: false };
+const TEMP_RAMP = [[-10, [74, 123, 216]], [0, [110, 170, 230]], [10, [150, 205, 190]], [20, [245, 200, 110]], [30, [240, 120, 60]], [38, [220, 50, 50]]];
+function tempRgb(t) {
+  const r = TEMP_RAMP; if (t <= r[0][0]) return r[0][1]; if (t >= r[r.length - 1][0]) return r[r.length - 1][1];
+  for (let i = 1; i < r.length; i++) if (t <= r[i][0]) { const f = (t - r[i - 1][0]) / (r[i][0] - r[i - 1][0]), a = r[i - 1][1], b = r[i][1]; return a.map((v, k) => Math.round(v + (b[k] - v) * f)); }
+}
+async function mapWeatherLoad() {
+  if (MAPWX.busy) return; if (MAPWX.t && Date.now() - MAPWX.t < 30 * 60e3) return;
+  try { const c = JSON.parse(localStorage.getItem('rg2mapwx') || 'null'); if (c && Date.now() - c.t < 30 * 60e3 && c.d.length === ATLAS.cities.length) { MAPWX.d = c.d; MAPWX.t = c.t; mapDraw(); return; } } catch (e) {}
+  MAPWX.busy = true; const n = ATLAS.cities.length, step = 50, d = new Array(n).fill(null);
+  try {
+    for (let a = 0; a < n; a += step) {
+      const cs = ATLAS.cities.slice(a, a + step);
+      const j = await (await fetch('https://api.open-meteo.com/v1/forecast?latitude=' + cs.map(c => c.a).join(',') + '&longitude=' + cs.map(c => c.o).join(',') + '&current=temperature_2m,cloud_cover,precipitation&timezone=UTC')).json();
+      (Array.isArray(j) ? j : [j]).forEach((r, k) => { if (r && r.current) d[a + k] = { t: r.current.temperature_2m, c: r.current.cloud_cover, r: r.current.precipitation }; });
+      MAPWX.d = d.slice(); if (!$('mapPanel').hidden) mapDraw();
+    }
+    MAPWX.t = Date.now(); try { localStorage.setItem('rg2mapwx', JSON.stringify({ t: MAPWX.t, d })); } catch (e) {}
+  } catch (e) {}
+  MAPWX.busy = false;
+}
+// where the sun is: the declination and the Greenwich angle once per draw, then one cosine per land dot
+function sunNow() {
+  const r = Math.PI / 180, n = Date.now() / 864e5 - 10957.5, g = (357.529 + 0.98560028 * n) * r, q = 280.459 + 0.98564736 * n;
+  const L = (q + 1.915 * Math.sin(g) + 0.02 * Math.sin(2 * g)) * r, e = (23.439 - 0.00000036 * n) * r;
+  return { dec: Math.asin(Math.sin(e) * Math.sin(L)), ra: Math.atan2(Math.cos(e) * Math.sin(L), Math.cos(L)) / r, gmst: (280.46061837 + 360.98564736629 * n) % 360 };
+}
+const SUN_BUCKETS = [[-14, 'rgba(110,130,200,.30)'], [-8, 'rgba(120,135,205,.40)'], [-3, 'rgba(190,150,180,.52)'], [3, 'rgba(250,175,150,.62)'], [12, 'rgba(250,225,200,.70)'], [99, 'rgba(255,243,225,.78)']];
 function mapDraw() {
   if (!MV.w) return;
   mg.setTransform(MV.dpr, 0, 0, MV.dpr, 0, 0); mg.clearRect(0, 0, MV.w, MV.h);
-  const cell = WMAP_ST * mscale(), rr = clamp(cell * (0.3 + 0.12 * clamp((MV.k - 1) / 6, 0, 1)), 0.9, 9);
-  mg.fillStyle = `rgba(243,236,230,${(0.24 - 0.12 * clamp((MV.k - 1) / 8, 0, 1)).toFixed(3)})`;
+  const cell = WMAP_ST * mscale(), rr = clamp(cell * (0.3 + 0.12 * clamp((MV.k - 1) / 6, 0, 1)), 0.9, 9), zf = 1 - 0.5 * clamp((MV.k - 1) / 8, 0, 1);
+  const pr = clamp(cell * 8, 20, 120), haveWx = MAPWX.d.some(Boolean);
+  // 1. warmth: a soft glow around every city, blue where it is cold and orange where it is hot, overlapping into one wash
+  if (haveWx) ATLAS.cities.forEach((c, i) => {
+    const w = MAPWX.d[i]; if (!w) return; const { x, y } = mapXY(c); if (x < -pr || y < -pr || x > MV.w + pr || y > MV.h + pr) return;
+    const [r, g, b] = tempRgb(w.t), gr = mg.createRadialGradient(x, y, 0, x, y, pr);
+    gr.addColorStop(0, `rgba(${r},${g},${b},${(0.34 * zf).toFixed(3)})`); gr.addColorStop(1, `rgba(${r},${g},${b},0)`); mg.fillStyle = gr; mg.fillRect(x - pr, y - pr, pr * 2, pr * 2);
+  });
+  // 2. the land, in the sun's light: bright by day, pink at dusk and dawn, blue and dim at night
+  const sun = sunNow(), rad = Math.PI / 180, sd = Math.sin(sun.dec), cd = Math.cos(sun.dec), buckets = SUN_BUCKETS.map(() => []);
   for (let yi = 0; yi < WMAP_H; yi++) {
     const y = my(WMAP_TOP - yi * WMAP_ST); if (y < -rr * 2 || y > MV.h + rr * 2) continue;
+    const lat = (WMAP_TOP - yi * WMAP_ST) * rad, sl = Math.sin(lat) * sd, cl = Math.cos(lat) * cd;
     for (let xi = 0; xi < WMAP_W; xi++) {
       const i = yi * WMAP_W + xi; if (!(LAND[i >> 3] >> (i & 7) & 1)) continue;
-      const x = mx(-180 + WMAP_ST / 2 + xi * WMAP_ST); if (x < -rr * 2 || x > MV.w + rr * 2) continue;
-      mg.beginPath(); mg.arc(x, y, rr, 0, 7); mg.fill();
+      const lon = -180 + WMAP_ST / 2 + xi * WMAP_ST, x = mx(lon); if (x < -rr * 2 || x > MV.w + rr * 2) continue;
+      const alt = Math.asin(clamp(sl + cl * Math.cos((sun.gmst + lon - sun.ra) * rad), -1, 1)) / rad;
+      let b = 0; while (SUN_BUCKETS[b][0] < alt) b++; buckets[b].push(x, y);
     }
   }
+  const landA = 0.55 + 0.45 * zf;
+  buckets.forEach((pts, b) => { if (!pts.length) return; mg.globalAlpha = landA; mg.fillStyle = SUN_BUCKETS[b][1]; mg.beginPath(); for (let k = 0; k < pts.length; k += 2) { mg.moveTo(pts[k] + rr, pts[k + 1]); mg.arc(pts[k], pts[k + 1], rr, 0, 7); } mg.fill(); });
+  mg.globalAlpha = 1;
+  // 3. clouds and rain over the cities that have them
+  if (haveWx) ATLAS.cities.forEach((c, i) => {
+    const w = MAPWX.d[i]; if (!w) return; const { x, y } = mapXY(c); if (x < -pr || y < -pr || x > MV.w + pr || y > MV.h + pr) return;
+    if (w.c > 30) { const cr = pr * 0.9, gr = mg.createRadialGradient(x, y, 0, x, y, cr); gr.addColorStop(0, `rgba(235,240,250,${(w.c / 100 * 0.2).toFixed(3)})`); gr.addColorStop(1, 'rgba(235,240,250,0)'); mg.fillStyle = gr; mg.fillRect(x - cr, y - cr, cr * 2, cr * 2); }
+    if (w.r > 0.1) { mg.strokeStyle = 'rgba(160,200,255,.8)'; mg.lineWidth = 1.2; mg.beginPath(); for (let k = -1; k <= 1; k++) { mg.moveTo(x + k * 5, y + 8); mg.lineTo(x + k * 5 - 2, y + 15); } mg.stroke(); }
+  });
   mg.font = '12px "Source Code Pro", monospace'; mg.textBaseline = 'middle';
   ATLAS.cities.forEach((c, i) => {
     const { x, y } = mapXY(c); if (x < -20 || y < -20 || x > MV.w + 20 || y > MV.h + 20) return;
     const on = i === +city.value, hv = i === MV.hover, r = (on ? 7 : hv ? 6.5 : 4.2) * clamp(0.8 + MV.k * 0.12, 1, 1.8);
-    mg.fillStyle = on ? '#f3ece6' : hv ? '#ffb48a' : '#e8744a'; mg.beginPath(); mg.arc(x, y, r, 0, 7); mg.fill();
+    const w = MAPWX.d[i], tc = w ? tempRgb(w.t) : [232, 116, 74];
+    mg.fillStyle = on ? '#f3ece6' : hv ? '#fff1e4' : `rgb(${tc[0]},${tc[1]},${tc[2]})`; mg.beginPath(); mg.arc(x, y, r, 0, 7); mg.fill();
+    if (!on) { mg.strokeStyle = 'rgba(10,6,12,.55)'; mg.lineWidth = 1; mg.stroke(); }
     if (on) { mg.strokeStyle = '#f3ece6'; mg.lineWidth = 1.5; mg.beginPath(); mg.arc(x, y, r + 6, 0, 7); mg.stroke(); }
     if (hv || on || MV.k >= 3.2) { mg.fillStyle = hv || on ? '#f3ece6' : 'rgba(243,236,230,.6)'; mg.fillText(c.n, x + r + 5, y); }
   });
@@ -1755,7 +1818,7 @@ mapCv.addEventListener('pointermove', e => {
     if (mdrag.moved > 5) { MV.tx = mdrag.tx + dx; MV.ty = mdrag.ty + dy; mapClamp(); mapDraw(); }
     return;
   }
-  const h = mapNearest(x, y); if (h !== MV.hover) { MV.hover = h; $('mapName').textContent = h >= 0 ? ATLAS.cities[h].n : 'Pick a city. Every dot has its own rhythm.'; mapCv.style.cursor = h >= 0 ? 'pointer' : 'grab'; mapDraw(); }
+  const h = mapNearest(x, y); if (h !== MV.hover) { MV.hover = h; $('mapName').textContent = h >= 0 ? ATLAS.cities[h].n + (MAPWX.d[h] ? '  ·  ' + Math.round(MAPWX.d[h].t) + '°  ·  cloud ' + Math.round(MAPWX.d[h].c) + '%' + (MAPWX.d[h].r > 0.1 ? '  ·  rain' : '') : '') : 'Pick a city. Every dot has its own rhythm.'; mapCv.style.cursor = h >= 0 ? 'pointer' : 'grab'; mapDraw(); }
 });
 const mapUp = e => {
   const r = mapCv.getBoundingClientRect(), tap = mdrag && mdrag.moved <= 5 && mpt.size === 1;
@@ -1766,7 +1829,7 @@ const mapUp = e => {
 mapCv.addEventListener('pointerup', mapUp); mapCv.addEventListener('pointercancel', e => { mpt.delete(e.pointerId); if (!mpt.size) mdrag = null; });
 mapCv.addEventListener('wheel', e => { e.preventDefault(); const r = mapCv.getBoundingClientRect(); mapZoomAt(Math.pow(1.0018, -e.deltaY), e.clientX - r.left, e.clientY - r.top); }, { passive: false });
 mapCv.addEventListener('dblclick', e => { const r = mapCv.getBoundingClientRect(); mapZoomAt(2, e.clientX - r.left, e.clientY - r.top); });
-function openMap() { $('mapPanel').hidden = false; MV.hover = -1; MV.k = 1; mapFit(); mapDraw(); $('mapClose').focus(); }
+function openMap() { $('mapPanel').hidden = false; MV.hover = -1; MV.k = 1; mapFit(); mapDraw(); $('mapClose').focus(); mapWeatherLoad(); }
 function closeMap() { $('mapPanel').hidden = true; $('mapBtn').focus(); }
 $('mapBtn').addEventListener('click', openMap); $('mapClose').addEventListener('click', closeMap);
 addEventListener('resize', () => { if (!$('mapPanel').hidden) { mapFit(); mapDraw(); } });
