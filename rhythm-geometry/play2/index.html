@@ -440,7 +440,7 @@
     <div class="panel on" id="tab-mix"><div class="mixer" id="mixer"></div></div>
     <div class="panel" id="tab-perform"><div class="fx2"><div class="fxrow">
           <div class="grp"><span class="fxlab">Weather layer</span>
-            <input id="wxAmt" class="big" type="range" min="0" max="100" value="45" aria-label="Weather layer level" title="How loud the weather rings are against the genre">
+            <input id="wxAmt" class="big" type="range" min="0" max="100" value="30" aria-label="Weather layer level" title="How loud the weather rings are against the genre">
             <button id="wxGate" class="btn" type="button" aria-pressed="true" title="Bring each weather ring in and out in phrases, so the genre's rhythm is easy to hear">In and out</button>
           </div>
           <div class="grp"><span class="fxlab">Stutter</span>
@@ -660,14 +660,16 @@ const faderGain = v => v * v * 1.1;   // a gentler curve than straight volume
 // ---------- the weather layer ----------
 // The genre (kick and two rhythms) is the band. The weather rings are the flourishes around it: quieter, filtered, and
 // they come in and out in phrases, so the genre's own rhythm is always easy to hear.
-const WEATHER = { level: 45, lp: 2200, gate: true };   // level 0 to 100, lp = filter on weather rings when no filter is set, gate = phrase in and out
+const WEATHER = { level: 30, lp: 2200, gate: true };   // level 0 to 100, lp = filter on weather rings when no filter is set, gate = phrase in and out
 let curStep = 0;   // the step being scheduled, read by the drawing
 const wxMul = l => l.wx ? WEATHER.level / 100 : 1;
-// each weather ring is on for a few bars of an eight-bar cycle, staggered so they never all go quiet together
+// each weather ring has its own cycle, from 5 to 12 bars, and its own Euclidean pattern of bars in and out.
+// Both come from the ring's own step count, so they change when the weather changes.
+function wxCycle(l) { return [5, 6, 7, 8, 10, 12][(l.steps + l.i) % 6]; }
+function wxPattern(l) { const c = wxCycle(l), on = clamp(Math.round(c * (0.3 + (l.steps % 3) * 0.1)), 2, c - 1); return euclidBits(c, on, (l.i * 2) % c); }
 function wxActive(l, n) {
   if (!l.wx || !WEATHER.gate) return true;
-  const bar = Math.floor(n / 16), on = 3 + (l.steps % 4), ph = (l.i * 3) % 8;
-  return ((bar + ph) % 8) < on;
+  return !!wxPattern(l)[Math.floor(n / 16) % wxCycle(l)];
 }
 function applyWx() {
   lanes.forEach(l => { l.g.gain.setTargetAtTime(faderGain(l.vol) * wxMul(l), ctx.currentTime, 0.03); setFilter(l, ctx.currentTime); });
@@ -1411,6 +1413,22 @@ function draw() {
       if (here && on) { g2.strokeStyle = '#fff'; g2.lineWidth = 4; g2.stroke(); }
     }
   });
+  // the centre: one clock face per weather ring. Its own cycle, its own bars in, and a dot for where we are now
+  // shown in design A only: in B the city name sits in the middle, and the two would overlap
+  if (document.getElementById('app').dataset.lay !== 'b') { const bar = Math.floor(curStep / 16); let k = 0;
+    lanes.forEach(l => {
+      if (!l.wx) return;
+      const R = 40 + k * 7, c = wxCycle(l), pat = wxPattern(l), gap = 0.06, live = WEATHER.gate;
+      for (let b = 0; b < c; b++) {
+        const a0 = -Math.PI / 2 + b / c * Math.PI * 2 + gap, a1 = -Math.PI / 2 + (b + 1) / c * Math.PI * 2 - gap;
+        g2.globalAlpha = (l.mute ? 0.25 : 1) * (live ? (pat[b] ? 0.9 : 0.12) : 0.5);
+        g2.strokeStyle = l.color; g2.lineWidth = 3.5; g2.beginPath(); g2.arc(CX, CX, R, a0, a1); g2.stroke();
+      }
+      const a = -Math.PI / 2 + (bar % c) / c * Math.PI * 2 + Math.PI / c;
+      g2.globalAlpha = 1; g2.fillStyle = '#f3ece6'; g2.beginPath(); g2.arc(CX + R * Math.cos(a), CX + R * Math.sin(a), 3.5, 0, 7); g2.fill();
+      k++;
+    });
+    g2.globalAlpha = 1; }
   // the rim: the sun or the moon goes round it like a clock, midnight at the bottom
   { const th = (SKY.hour / 24) * Math.PI * 2, rr = 478, sx = CX - rr * Math.sin(th), sy = CX + rr * Math.cos(th), sun = SKY.alt > -1;
     g2.globalAlpha = 1; g2.strokeStyle = 'rgba(243,236,230,.22)'; g2.lineWidth = 2; g2.beginPath(); g2.arc(CX, CX, rr, 0, 7); g2.stroke();
