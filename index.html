@@ -6626,21 +6626,30 @@ body.perform.fit .pl-shape-btn { display: inline-block !important; }
     async function photosFor(c, tag, flav) {
       const k = cities.indexOf(c), kind = weatherOf(c, k), words = THEME_WORDS[kind] || THEME_WORDS.cloud;
       const first = (flav || FLAVOUR[(tag || "").toLowerCase()] || words[0]).toLowerCase();
-      const queries = [`${c.name} ${first}`, `${c.name} ${words.find(w => w !== first) || words[1]}`, `${c.name} skyline`, `${c.name} street`];
-      const themeRx = new RegExp("\\b(" + [first, ...words].map(w => w.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")).join("|") + ")", "i");
+      // the state or country keeps "London" in England, not Ontario, and "Boston" in Massachusetts
+      const where = (c.place || "").split(",")[0].trim();
+      const queries = [`${c.name} ${where} ${first}`, `${c.name} ${where} ${words.find(w => w !== first) || words[1]}`, `${c.name} ${where} skyline`, `${c.name} ${where} street`];
+      const esc = w => w.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+      const themeRx = new RegExp("\\b(" + [first, ...words].map(esc).join("|") + ")", "i");
+      const nameRx = new RegExp("\\b" + esc(c.name) + "\\b", "i");
       const out = [], used = new Set();
-      for (const q of queries) {
+      // photos geotagged within 8 km of the city's centre come first: they are in the right place by definition
+      const geo = `https://commons.wikimedia.org/w/api.php?action=query&format=json&origin=*&generator=geosearch&ggscoord=${c.lat}|${c.lon}&ggsradius=8000&ggsnamespace=6&ggslimit=30&prop=imageinfo&iiprop=url|size|mime&iiurlwidth=1080`;
+      const sources = [{ url: geo, needName: false }, ...queries.map(q => ({
+        url: "https://commons.wikimedia.org/w/api.php?action=query&format=json&origin=*&generator=search&gsrnamespace=6&gsrlimit=12" +
+          "&gsrsearch=" + encodeURIComponent(q + " filetype:bitmap") + "&prop=imageinfo&iiprop=url|size|mime&iiurlwidth=1080", needName: true }))];
+      for (const src of sources) {
         if (out.length >= 3) break;
         try {
-          const u = "https://commons.wikimedia.org/w/api.php?action=query&format=json&origin=*&generator=search&gsrnamespace=6&gsrlimit=12" +
-            "&gsrsearch=" + encodeURIComponent(q + " filetype:bitmap") + "&prop=imageinfo&iiprop=url|size|mime&iiurlwidth=1080";
-          const j = await getJSON(u);
+          const j = await getJSON(src.url);
           const pages = Object.values((j.query && j.query.pages) || {});
           const scored = pages.map(pg => {
             const i = pg.imageinfo && pg.imageinfo[0], t = (pg.title || "").replace(/^File:/, "");
+            // a search for the name alone also turns up other places with the same name: keep only photos whose title names this city
             if (!i || i.mime !== "image/jpeg" || used.has(i.thumburl) || BAD.test(t) || (i.width && i.width < 900)) return null;
+            if (src.needName && !nameRx.test(t)) return null;
             const ar = i.width && i.height ? i.width / i.height : 1.5;
-            const score = (themeRx.test(t) ? 5 : 0) + (t.toLowerCase().includes(c.name.toLowerCase()) ? 2 : 0) - (ar > 2.2 ? 3 : 0) - pg.index * 0.15;
+            const score = (themeRx.test(t) ? 5 : 0) + (nameRx.test(t) ? 2 : 0) - (ar > 2.2 ? 3 : 0) - pg.index * 0.15;
             return { i, score };
           }).filter(Boolean).sort((x, y) => y.score - x.score);
           for (const { i } of scored.slice(0, 2)) {
