@@ -502,9 +502,7 @@
           <div class="grp" id="kFilter" title="DJ filter. Turn left to close it, right to thin it out. Double click to centre."></div>
           <div class="grp" id="kChance" title="Chance for everything: lower it and hits drop out"></div>
         </div></div></div>
-    <div class="panel" id="tab-space"><div class="fx2"><div class="fxrow"><div class="grp"><span class="fxlab">Delay and reverb</span><button id="fxOpen" class="btn" type="button" title="Open the delay and reverb controls" aria-label="Delay and reverb">Open the pedals</button></div><div class="grp"><span class="fxlab">Convergence</span>
-            <button id="convOn" class="btn" type="button" aria-pressed="true" title="When rings hit at the same angle, a line lights through them and a chord plays. The angle picks the chord from the key.">On</button>
-            <div class="grp" id="kConv" title="How loud the convergence chords are"></div></div></div></div></div>
+    <div class="panel" id="tab-space"><div class="fx2"><div class="fxrow"><div class="grp"><span class="fxlab">Delay and reverb</span><button id="fxOpen" class="btn" type="button" title="Open the delay and reverb controls" aria-label="Delay and reverb">Open the pedals</button></div></div></div></div>
     <div class="panel" id="tab-wander"><div class="fx2"><div class="fxrow">
           <div class="grp"><span class="fxlab">Wander</span>
             <button id="autoFlt" class="btn" type="button" aria-pressed="true" title="Each drum's filter closes by itself now and then and holds for 1, 2, 4 or 8 bars. Calm weather holds longer.">Filters</button>
@@ -1048,7 +1046,7 @@ const visQ = [];
 const stepSecs = () => 60 / (+$('bpm').value) / 4;
 function stutDiv(l) { if (gDivs.size) return Math.min(...gDivs); return l.stut ? 1 : 0; }
 function schedule(t, n) {
-  const ss = stepSecs(), fired = []; curStep = n;
+  const ss = stepSecs(); curStep = n;
   if (n % 16 === 0) wxPhase += WEATHER.level / 100;
   lanes.forEach(l => {
     if (l.mute || !wxActive(l, n)) { return; }
@@ -1058,7 +1056,7 @@ function schedule(t, n) {
       if (l.arr && !arrGate(l, n)) return;
       if (Math.random() * 100 >= l.chance * GCHANCE / 100) return;   // Chance: some hits are left out
       const vel = (pos % 4 === 0 ? 1 : 0.78) * (0.85 + Math.random() * 0.3);
-      l.last = vel; hit(l, t + (Math.random() * 0.004), vel); fired.push({ l, pos });
+      l.last = vel; hit(l, t + (Math.random() * 0.004), vel);
       return;
     }
     // stuttering: the last hit keeps coming back on the beat division
@@ -1067,7 +1065,6 @@ function schedule(t, n) {
     if (dv < 1) { hit(l, t, v * 0.95); hit(l, t + ss * dv, v * 0.8); }
   });
   autoStep(t, n);
-  convStep(t, fired);
   midiClockStep(t, ss);
   visQ.push({ t, n });
 }
@@ -1297,57 +1294,8 @@ $('lfoRate').addEventListener('change', () => { LFO.rate = +$('lfoRate').value; 
 $('lfoShape').addEventListener('change', () => { LFO.shape = $('lfoShape').value; lfoBuild(playing ? nextTime : 0); });
 let lfoT = 0; $('bpm').addEventListener('input', () => { clearTimeout(lfoT); lfoT = setTimeout(() => lfoBuild(), 200); });
 
-// ---------- convergence: rings that hit at the same angle ----------
-// Every ring has its own length, so their dots only line up now and then. When two or more rings hit at the same angle
-// a line lights through them, and the angle picks a chord from the key: 12 o'clock is the home chord, other angles are other steps of the scale.
-const CONV = { on: true, level: 50, verb: 40, del: 25 }, convShow = [];
-const convG = ctx.createGain(), convWet = ctx.createGain();
-convG.gain.value = Math.pow(CONV.level / 100, 2) * 0.8; convG.connect(masterIn); convG.connect(convWet); convWet.gain.value = CONV.verb / 100; convWet.connect(verbIn);
-const convDel = ctx.createGain(); convDel.gain.value = CONV.del / 100; convG.connect(convDel); convDel.connect(delIn);
-const gcd = (a, b) => b ? gcd(b, a % b) : a;
-function convApply() { convG.gain.setTargetAtTime(CONV.on ? Math.pow(CONV.level / 100, 2) * 0.8 : 0, ctx.currentTime, 0.03); }
-function convMidi(d) { const st = MODES[MODE].steps; return 60 + ((ROOT + st[((d % 7) + 7) % 7]) % 12) + 12 * Math.floor(d / 7); }
-function convNote(midi, t, peak, dur, type, lpMul) {
-  const f = 440 * Math.pow(2, (midi - 69) / 12), o = ctx.createOscillator(), g = ctx.createGain(), lp = ctx.createBiquadFilter();
-  o.type = type; o.frequency.value = f; lp.type = 'lowpass'; lp.frequency.setValueAtTime(f * lpMul, t); lp.frequency.exponentialRampToValueAtTime(f * 1.5, t + dur * 0.8);
-  g.gain.setValueAtTime(0.0001, t); g.gain.linearRampToValueAtTime(peak, t + 0.01); g.gain.exponentialRampToValueAtTime(0.0008, t + dur);
-  o.connect(lp).connect(g).connect(convG); o.start(t); o.stop(t + dur + 0.05);
-}
-function convStyle() { const g = ($('genre').selectedOptions[0] || {}).text || ''; return /house|garage|techno|disco|funk|pop|dance|trance|electro|grime|drill/i.test(g) ? 'stab' : /bass|jungle|dub|trip|ambient|chill|down|liquid/i.test(g) ? 'pad' : 'plain'; }
-let convBar = -1;
-function convSound(gr, t) {
-  const k = gr.lanes.length, d = Math.floor(gr.frac * 7);
-  if (ARR.v !== 'orig') {   // once a bar at most, and voiced like the genre: a short stab for dance music, a long pad for bass music
-    const bar = Math.floor(curStep / 16); if (bar === convBar) return; convBar = bar;
-    const sty = convStyle();
-    if (sty === 'stab') { [0, 2, 4, 6].forEach((o, i) => convNote(convMidi(d + o), t + i * 0.008, 0.16, 0.24, 'sawtooth', 3)); return; }
-    if (sty === 'pad') { [0, 2, 4, 6].forEach((o, i) => convNote(convMidi(d + o), t + i * 0.02, 0.13, 2.2, 'triangle', 4)); return; }
-  }
-  if (k === 2) { convNote(convMidi(d) + 12, t, 0.3, 0.45, 'sine', 5); return; }   // two rings meet: a small bell
-  [0, 2, 4].forEach((o, i) => convNote(convMidi(d + o), t + i * 0.012, 0.22, k === 3 ? 0.9 : 1.6, 'triangle', 6));   // three: a chord
-  if (k >= 4) {   // four or more: the chord swells, with a deep root and a wash of reverb
-    convNote(convMidi(d) - 12, t, 0.45, 1.8, 'sine', 3); convNote(convMidi(d) + 12, t + 0.03, 0.18, 1.6, 'triangle', 8);
-    convWet.gain.setValueAtTime(Math.min(1.5, CONV.verb / 100 * 3), t); convWet.gain.setTargetAtTime(CONV.verb / 100, t + 0.1, 0.9);
-  }
-}
-function convStep(t, fired) {
-  if (!CONV.on || fired.length < 2) return;
-  const by = {};
-  fired.forEach(({ l, pos }) => { const g = gcd(pos, l.steps), key = (pos / g) + '/' + (l.steps / g); (by[key] = by[key] || { frac: pos / l.steps, lanes: [] }).lanes.push(l); });
-  let best = null;
-  Object.values(by).forEach(gr => {
-    if (gr.lanes.length < 2) return;
-    convShow.push({ t, frac: gr.frac, idx: gr.lanes.map(l => l.i) });
-    if (!best || gr.lanes.length > best.lanes.length) best = gr;
-  });
-  if (best) convSound(best, t);
-}
-K.conv = knobCell($('kConv'), 'Level', CONV.level, v => { CONV.level = v; convApply(); }, { size: 'lg', aria: 'Convergence level', fmt: v => v + '%', reset: 50 });
 $('blend').addEventListener('input', e => { BLEND.v = +e.target.value; say(BLEND.v === 0 ? 'Drums only.' : BLEND.v === 100 ? 'Melodic only: ' + $('blendSnd').selectedOptions[0].text + '.' : 'Blend: ' + (100 - BLEND.v) + '% drums, ' + BLEND.v + '% ' + $('blendSnd').selectedOptions[0].text + '.'); });
 $('blendSnd').addEventListener('change', e => { BLEND.snd = e.target.value; });
-K.convV = knobCell($('kConv'), 'Reverb', CONV.verb, v => { CONV.verb = v; convWet.gain.setTargetAtTime(v / 100, ctx.currentTime, 0.03); }, { size: 'lg', aria: 'Convergence reverb', fmt: v => v + '%', reset: 40 });
-K.convD = knobCell($('kConv'), 'Delay', CONV.del, v => { CONV.del = v; convDel.gain.setTargetAtTime(v / 100, ctx.currentTime, 0.03); }, { size: 'lg', aria: 'Convergence delay', fmt: v => v + '%', reset: 25 });
-toggle($('convOn'), v => { CONV.on = v; convApply(); say(v ? 'Convergence on: when rings meet at one angle, they play a chord.' : 'Convergence off.'); });
 
 // ---------- MIDI out ----------
 const MIDI_MAPS = { drum: 'Drum machine (TR-8S style, by drum name)', perc: 'Percussion (congas, bongos, timbales)', tuned: 'The tuned notes of the key', tracks: 'One drum per channel (all on note C3)' };
@@ -1680,18 +1628,6 @@ function draw() {
     g2.fillStyle = '#f3ece6'; g2.fillText(t, CX, CX - R + 1);
   });
   g2.globalAlpha = 1;
-  // rings meeting at one angle: a bright line through their dots
-  for (let i = convShow.length - 1; i >= 0; i--) {
-    const e = convShow[i], age = now - e.t;
-    if (age > 1) { convShow.splice(i, 1); continue; }
-    if (age < 0) continue;
-    const p = 1 - age / 1, a = e.frac * Math.PI * 2 - Math.PI / 2, k = e.idx.length;
-    const r0 = k >= 4 ? 0 : 118 + Math.min(...e.idx) * 48, r1 = 118 + Math.max(...e.idx) * 48;
-    g2.globalAlpha = p; g2.strokeStyle = '#fff'; g2.lineWidth = 1.5 + k; g2.lineCap = 'round'; g2.shadowColor = '#fff'; g2.shadowBlur = 16;
-    g2.beginPath(); g2.moveTo(CX + r0 * Math.cos(a), CX + r0 * Math.sin(a)); g2.lineTo(CX + r1 * Math.cos(a), CX + r1 * Math.sin(a)); g2.stroke(); g2.shadowBlur = 0;
-    e.idx.forEach(li => { const R = 118 + li * 48; g2.beginPath(); g2.arc(CX + R * Math.cos(a), CX + R * Math.sin(a), 14 + 10 * (1 - p), 0, 7); g2.lineWidth = 3; g2.stroke(); });
-    if (k >= 4) { const bg = g2.createRadialGradient(CX, CX, 0, CX, CX, 300); bg.addColorStop(0, 'rgba(255,255,255,' + (0.22 * p) + ')'); bg.addColorStop(1, 'rgba(255,255,255,0)'); g2.globalAlpha = 1; g2.fillStyle = bg; g2.beginPath(); g2.arc(CX, CX, 300, 0, 7); g2.fill(); }
-  }
   g2.globalAlpha = 1; requestAnimationFrame(draw);
 }
 
