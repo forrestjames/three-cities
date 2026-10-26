@@ -390,6 +390,12 @@
   #tab-effects .pedal .foot { margin: 0; width: 96px; height: 66px; padding-top: 8px; justify-self: end; }
   #tab-effects .hint { margin: 2px 0 0; text-align: left; }
   @media (max-width: 900px) { #tab-effects .pedal { grid-template-columns: 1fr auto; } #tab-effects .pedal .pname { grid-column: 1; } #tab-effects .pedal .foot { grid-column: 2; grid-row: 1; width: 80px; height: 56px; } #tab-effects .pedal .kgrid, #tab-effects .pedal .pctl { grid-column: 1 / -1; } #tab-effects .pedal .kgrid { justify-content: space-around; } }
+  /* a handle on the top edge of the bottom bar opens the controls, so they are one thumb away */
+  .bar { position: relative; }
+  .bar > .handle { position: absolute; right: 30px; top: -18px; height: 36px; padding: 0 16px 0 13px; border: 1px solid var(--line2); border-left: 1px solid var(--line2); border-radius: 999px; background: rgba(14,8,16,.97); display: flex; align-items: center; gap: 8px; font-size: 11px; letter-spacing: .12em; text-transform: uppercase; color: var(--ink); z-index: 3; }
+  .bar > .handle svg { width: 15px; height: 15px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+  .bar > .handle:hover { border-color: var(--ink); }
+  .bar > .handle.on { background: var(--accent); border-color: var(--accent); color: #14110f; }
 </style>
 </head>
 <body>
@@ -455,6 +461,7 @@
   </aside>
 
   <footer class="bar" id="bar">
+    <button id="editBtn2" class="handle" type="button" aria-expanded="false" aria-controls="sheet" title="Open the controls: effects, perform, wander, MIDI"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20l4-1L19.5 7.5a2.1 2.1 0 0 0-3-3L5 16l-1 4z"/><path d="M14.5 6.5l3 3"/></svg><span>Controls</span></button>
     <div class="b-tempo">
       <button id="play" type="button" aria-pressed="false" aria-label="Play">Play</button>
       <div class="tp">
@@ -1765,8 +1772,8 @@ function showTab(t) {
   document.querySelectorAll('.tabs button').forEach(b => b.setAttribute('aria-selected', String(b.dataset.tab === t)));
   document.querySelectorAll('.panel').forEach(p => p.classList.toggle('on', p.id === 'tab-' + t));
 }
-function openSheet(v) { sheet.hidden = !v; editBtn.setAttribute('aria-expanded', String(v)); editBtn.classList.toggle('on', v); document.body.classList.toggle('sheet-open', v); }
-editBtn.addEventListener('click', () => openSheet(sheet.hidden));
+function openSheet(v) { sheet.hidden = !v; [editBtn, $('editBtn2')].forEach(b => { b.setAttribute('aria-expanded', String(v)); b.classList.toggle('on', v); }); $('editBtn2').lastElementChild.textContent = v ? 'Close' : 'Controls'; document.body.classList.toggle('sheet-open', v); }
+editBtn.addEventListener('click', () => openSheet(sheet.hidden)); $('editBtn2').addEventListener('click', () => openSheet(sheet.hidden));
 document.querySelectorAll('.tabs button').forEach(b => b.addEventListener('click', () => { if (b.dataset.tab === 'midi') { openMidi(); return; } showTab(b.dataset.tab); }));
 addEventListener('keydown', e => { if (e.key === 'Escape' && !sheet.hidden && $('midiPanel').hidden && $('mapPanel').hidden) openSheet(false); });
 
