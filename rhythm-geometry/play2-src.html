@@ -396,6 +396,77 @@
   .bar > .handle svg { width: 15px; height: 15px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
   .bar > .handle:hover { border-color: var(--ink); }
   .bar > .handle.on { background: var(--accent); border-color: var(--accent); color: #14110f; }
+
+  /* ---- phones: one calm screen, ring first, controls under the thumb ---- */
+  .scrim { position: fixed; inset: 0; z-index: 8; background: rgba(6,3,6,.55); backdrop-filter: blur(2px); animation: fadeIn .25s ease; }
+  .scrim[hidden] { display: none; }
+  .sheetx { display: none; }
+  @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+  @keyframes sheetUp { from { transform: translateY(40px); opacity: 0; } to { transform: none; opacity: 1; } }
+  @media (max-width: 700px) and (min-height: 560px) {
+    html, body { overflow: hidden; overscroll-behavior: none; -webkit-tap-highlight-color: transparent; }
+    body { height: 100dvh; }
+    button, select, .mtrack, input[type=range] { touch-action: manipulation; }
+    .app2 { height: 100dvh; min-height: 0; display: grid; grid-template-rows: auto minmax(0,1fr) auto; overflow: hidden; }
+    .hdr { position: relative; padding: calc(env(safe-area-inset-top, 0px) + 10px) 14px 2px; flex-wrap: nowrap; }
+    .wxb { flex: 1; min-width: 0; grid-template-columns: auto minmax(0,1fr); column-gap: 10px; row-gap: 0; align-items: baseline; }
+    .brand, .lay, .showlay .lay, .hdr .alt, #editBtn { display: none; }
+    .w-city { grid-column: 1 / -1; font-size: 38px; padding-right: 48px; }
+    .w-ctry { display: inline-block; margin-left: 10px; font-size: 10px; vertical-align: middle; }
+    .w-now { gap: 8px; } #wTemp { font-size: 24px; } #wCond { font-size: 14px; }
+    .w-meta { font-size: 10.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .pickers { grid-column: 1 / -1; display: grid; grid-template-columns: minmax(0,1fr) minmax(0,1fr) 44px auto; gap: 8px; margin-top: 10px; }
+    .pickers select { max-width: none; width: 100%; height: 44px; padding: 0 30px 0 14px; font-size: 14px; }
+    .pickers .ibtn { width: 44px; height: 44px; } .pickers .btn { height: 44px; padding: 0 16px; font-size: 13px; }
+    .hdr-r { position: absolute; right: 14px; top: calc(env(safe-area-inset-top, 0px) + 12px); }
+    .stage { padding: 4px 8px 16px; grid-template-rows: minmax(0,1fr) 72px; place-items: center; overflow: visible; height: auto; }
+    .ringwrap { grid-row: 1; height: 100%; width: auto; max-width: 100%; max-height: 100%; }
+    .ringwrap::before { inset: -2%; }
+    .gdesc { position: static; grid-row: 2; width: 100%; max-width: none; margin-top: 6px; padding: 7px 12px; font-size: 12px; pointer-events: auto; cursor: pointer; border-radius: 0 12px 12px 0; transition: background .2s; }
+    .gdesc b { font-size: 15px; display: flex; justify-content: space-between; align-items: center; }
+    .gdesc b::after { content: "\25BE"; font-size: 11px; color: var(--ink-dim); transition: transform .25s; }
+    .gdesc.open b::after { transform: rotate(180deg); }
+    .gdesc:not(.open) { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 3; overflow: hidden; }
+    .gdesc:not(.open) b { display: flex; }
+    .gdesc:not(.open) small { display: none; }
+    .gdesc:not(.open) { max-height: 66px; }
+    .gdesc.open { width: auto; position: absolute; left: 8px; right: 8px; bottom: 16px; z-index: 5; background: rgba(14,8,16,.97); border: 1px solid var(--line2); border-left: 2px solid var(--accent); border-radius: 0 14px 14px 0; box-shadow: 0 10px 30px rgba(0,0,0,.5); animation: sheetUp .25s ease; }
+    .stage .status { position: absolute; top: 2px; bottom: auto; font-size: 11px; }
+    .bar, .app2[data-lay="b"] .bar { grid-template-columns: 1fr; margin: 0 8px calc(env(safe-area-inset-bottom, 0px) + 8px); border-radius: 24px; background: rgba(14,8,16,.88); }
+    .bar > * { padding: 8px 14px; } .bar > * + * { border-top: 1px solid var(--line); }
+    .bar > .handle { right: 16px; top: -17px; height: 34px; } .bar > .b-tempo { border-top: 0; }
+    .b-tempo { gap: 12px; padding-top: 22px; }
+    #play { width: 56px; height: 56px; } #play::before { border-left-width: 18px; border-top-width: 11px; border-bottom-width: 11px; }
+    #bpmv { font-size: 26px; }
+    input[type=range].big { height: 34px; }
+    .b-fc { gap: 0; } .fcl { display: none; } .fctrack, .fctrack input { height: 32px; }
+    .mixctl { grid-template-columns: auto minmax(0,1fr); gap: 4px 8px; align-items: center; }
+    .mixctl > .lab { grid-column: 1; grid-row: 1; }
+    .xcurve { grid-column: 2; grid-row: 1; justify-self: end; margin: 0; } .xcurve .lab { display: none; }
+    .xcurve button { padding: 5px 10px; min-height: 28px; }
+    .mixrow { grid-column: 1 / -1; grid-row: 2; gap: 4px; }
+    .sp { width: 98px; padding: 5px 8px 6px; } .sp select { font-size: 15px; } .sp .lab { font-size: 8.5px; }
+    .mtrack { margin: 0 18px; min-width: 30px; height: 44px; } .mtrack::before { top: 18px; } .mh { top: 6px; }
+    /* the controls come up from the bottom edge */
+    .sheet, .app2[data-lay="b"] .sheet { position: fixed; left: 0; right: 0; bottom: 0; top: auto; width: auto; margin: 0; max-height: 78dvh; z-index: 9; border-radius: 24px 24px 0 0; border-width: 1px 0 0; padding: 0 14px calc(env(safe-area-inset-bottom, 0px) + 16px); overscroll-behavior: contain; -webkit-overflow-scrolling: touch; }
+    .sheet:not([hidden]) { animation: sheetUp .3s cubic-bezier(.2,.8,.2,1); }
+    .tabs { position: sticky; top: 0; z-index: 2; flex-wrap: nowrap; overflow-x: auto; margin: 0 -14px 12px; padding: 12px 14px 10px; background: rgba(14,8,16,.98); scrollbar-width: none; }
+    .tabs::-webkit-scrollbar { display: none; }
+    .tabs button { flex: none; min-height: 40px; padding: 0 16px; }
+    .tabs button.sheetx { z-index: 5; display: grid; place-items: center; position: sticky; right: 0; margin-left: auto; flex: none; width: 40px; height: 40px; border-radius: 50%; border: 1px solid var(--line2); background: #0e0810 !important; color: var(--ink); font-size: 20px; line-height: 1; padding: 0; box-shadow: -10px 0 12px rgba(14,8,16,.98); }
+    .mixer { grid-template-columns: repeat(2, minmax(0,1fr)); }
+    .panel .btn, .panel select { min-height: 40px; }
+    .mappanel { background: rgba(6,3,6,.94); }
+  }
+  @media (max-width: 700px) and (min-height: 560px) and (max-height: 740px) {
+    .w-city { font-size: 32px; } .pickers { margin-top: 6px; } .w-meta { display: none; }
+    .pickers select, .pickers .ibtn, .pickers .btn { height: 40px; } .pickers .ibtn { width: 40px; }
+    .pickers { grid-template-columns: minmax(0,1fr) minmax(0,1fr) 40px auto; }
+    .gdesc:not(.open) { display: block; font-size: 0; padding: 6px 12px; } .gdesc:not(.open) b { margin-bottom: 0; }
+    .stage { grid-template-rows: minmax(0,1fr) 42px; } .gdesc:not(.open) { max-height: 38px; }
+    .bar > .b-tempo { padding-top: 22px; } .bar > * { padding-top: 5px; padding-bottom: 5px; } .fctrack, .fctrack input { height: 26px; } .mtrack { height: 38px; } .mtrack::before { top: 15px; } .mh { top: 3px; }
+    #play { width: 48px; height: 48px; } .b-fc .fct + .fctrack { margin-top: -2px; }
+  }
 </style>
 </head>
 <body>
@@ -488,6 +559,7 @@
     </div>
   </footer>
 
+  <div class="scrim" id="scrim" hidden></div>
   <section class="sheet" id="sheet" hidden aria-label="Edit the mix and the settings">
     <div class="tabs" role="tablist">
       <button type="button" role="tab" data-tab="mix" aria-selected="true">Mix</button>
@@ -495,6 +567,7 @@
       <button type="button" role="tab" data-tab="effects" aria-selected="false">Effects</button>
       <button type="button" role="tab" data-tab="wander" aria-selected="false">Wander and key</button>
       <button type="button" role="tab" data-tab="midi" aria-selected="false">MIDI</button>
+      <button type="button" class="sheetx" id="sheetX" aria-label="Close the controls">×</button>
     </div>
     <div class="panel on" id="tab-mix"><div class="mixer" id="mixer"></div></div>
     <div class="panel" id="tab-perform"><div class="fx2"><div class="fxrow">
@@ -1637,11 +1710,12 @@ function draw() {
     g2.fillStyle = sun ? 'rgba(255,190,110,.28)' : 'rgba(200,215,255,.22)'; g2.beginPath(); g2.arc(sx, sy, 34, 0, 7); g2.fill();
     g2.fillStyle = sun ? '#ffd9a0' : '#dfe6ff'; g2.shadowColor = sun ? 'rgba(255,200,110,.9)' : 'rgba(180,200,255,.8)'; g2.shadowBlur = 20; g2.beginPath(); g2.arc(sx, sy, 17, 0, 7); g2.fill(); g2.shadowBlur = 0; }
   // what each ring takes from the weather, written on the ring
-  g2.font = '500 13px "Source Code Pro", monospace'; g2.textAlign = 'center'; g2.textBaseline = 'middle';
+  const PH = innerWidth <= 700, FS = PH ? 25 : 13, PHH = PH ? 32 : 18;
+  g2.font = '500 ' + FS + 'px "Source Code Pro", monospace'; g2.textAlign = 'center'; g2.textBaseline = 'middle';
   lanes.forEach((l, i) => {
-    const R = 118 + i * 48, t = (l.why || '').toUpperCase().replace(/ KM\/H/, '') + '  ' + l.steps, w = g2.measureText(t).width + 16;
+    const R = 118 + i * 48, t = (l.why || '').toUpperCase().replace(/ KM\/H/, '') + '  ' + l.steps, w = g2.measureText(t).width + (PH ? 26 : 16);
     g2.globalAlpha = 0.82 * (l.mute ? 0.4 : 1) * (SEL >= 0 && SEL !== i ? 0.4 : 1);
-    g2.fillStyle = 'rgba(12,7,16,.7)'; g2.strokeStyle = l.color; g2.lineWidth = 1.5; g2.beginPath(); g2.roundRect(CX - w / 2, CX - R - 9, w, 18, 9); g2.fill(); g2.stroke();
+    g2.fillStyle = 'rgba(12,7,16,.7)'; g2.strokeStyle = l.color; g2.lineWidth = 1.5; g2.beginPath(); g2.roundRect(CX - w / 2, CX - R - PHH / 2, w, PHH, PHH / 2); g2.fill(); g2.stroke();
     g2.fillStyle = '#f3ece6'; g2.fillText(t, CX, CX - R + 1);
   });
   g2.globalAlpha = 1;
@@ -1727,7 +1801,9 @@ const mapUp = e => {
 mapCv.addEventListener('pointerup', mapUp); mapCv.addEventListener('pointercancel', e => { mpt.delete(e.pointerId); if (!mpt.size) mdrag = null; });
 mapCv.addEventListener('wheel', e => { e.preventDefault(); const r = mapCv.getBoundingClientRect(); mapZoomAt(Math.pow(1.0018, -e.deltaY), e.clientX - r.left, e.clientY - r.top); }, { passive: false });
 mapCv.addEventListener('dblclick', e => { const r = mapCv.getBoundingClientRect(); mapZoomAt(2, e.clientX - r.left, e.clientY - r.top); });
-function openMap() { $('mapPanel').hidden = false; MV.hover = -1; MV.k = 1; mapFit(); mapDraw(); $('mapClose').focus(); }
+function openMap() { $('mapPanel').hidden = false; MV.hover = -1; MV.k = 1; mapFit();
+  if (matchMedia('(max-width: 700px)').matches) { const c = ATLAS.cities[city.value]; if (c) { MV.k = 2.8; MV.tx = MV.w / 2 - (c.o + 180) * mscale(); MV.ty = MV.h / 2 - (WMAP_TOP - c.a) * mscale(); mapClamp(); } }
+  mapDraw(); $('mapClose').focus(); }
 function closeMap() { $('mapPanel').hidden = true; $('mapBtn').focus(); }
 $('mapBtn').addEventListener('click', openMap); $('mapClose').addEventListener('click', closeMap);
 addEventListener('resize', () => { if (!$('mapPanel').hidden) { mapFit(); mapDraw(); } });
@@ -1772,8 +1848,9 @@ function showTab(t) {
   document.querySelectorAll('.tabs button').forEach(b => b.setAttribute('aria-selected', String(b.dataset.tab === t)));
   document.querySelectorAll('.panel').forEach(p => p.classList.toggle('on', p.id === 'tab-' + t));
 }
-function openSheet(v) { sheet.hidden = !v; [editBtn, $('editBtn2')].forEach(b => { b.setAttribute('aria-expanded', String(v)); b.classList.toggle('on', v); }); $('editBtn2').lastElementChild.textContent = v ? 'Close' : 'Controls'; document.body.classList.toggle('sheet-open', v); }
-editBtn.addEventListener('click', () => openSheet(sheet.hidden)); $('editBtn2').addEventListener('click', () => openSheet(sheet.hidden));
+function openSheet(v) { sheet.hidden = !v; [editBtn, $('editBtn2')].forEach(b => { b.setAttribute('aria-expanded', String(v)); b.classList.toggle('on', v); }); $('editBtn2').lastElementChild.textContent = v ? 'Close' : 'Controls'; document.body.classList.toggle('sheet-open', v); $('scrim').hidden = !(v && matchMedia('(max-width: 700px) and (min-height: 560px)').matches); }
+editBtn.addEventListener('click', () => openSheet(sheet.hidden)); $('sheetX').addEventListener('click', () => openSheet(false)); $('scrim').addEventListener('click', () => openSheet(false));
+$('gdesc').addEventListener('click', e => e.currentTarget.classList.toggle('open')); document.addEventListener('click', e => { const g = $('gdesc'); if (g.classList.contains('open') && !g.contains(e.target)) g.classList.remove('open'); }); $('editBtn2').addEventListener('click', () => openSheet(sheet.hidden));
 document.querySelectorAll('.tabs button').forEach(b => b.addEventListener('click', () => { if (b.dataset.tab === 'midi') { openMidi(); return; } showTab(b.dataset.tab); }));
 addEventListener('keydown', e => { if (e.key === 'Escape' && !sheet.hidden && $('midiPanel').hidden && $('mapPanel').hidden) openSheet(false); });
 
