@@ -461,7 +461,7 @@
         <span class="lab">Crossfader · drag</span>
         <div class="mixrow">
           <label class="sp d"><span class="lab" id="mixD">Drums 100%</span><select id="kit" aria-label="Drum sound" title="The first sound. Pick any kit, even a melodic one."></select></label>
-          <div class="mtrack" id="mixTrack"><i class="tk l"></i><i class="tk r"></i><div class="mh" id="mixHandle" role="slider" tabindex="0" aria-label="Mix between the two sounds" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"></div></div>
+          <div class="mtrack" id="mixTrack" title="Slide right: the weather rings turn melodic first while the genre drums keep playing. Further right the genre rows join the melodic side one by one. All the way right, the melodic side plays exactly what the drums played."><i class="tk l"></i><i class="tk r"></i><div class="mh" id="mixHandle" role="slider" tabindex="0" aria-label="Mix between the two sounds" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"></div></div>
           <label class="sp m"><span class="lab" id="mixM">Melodic 0%</span><select id="blendSnd" aria-label="Melodic sound" title="The second sound"><option value="kalimba">Kalimba</option><option value="harp">Harp</option><option value="rhodes">Electric piano</option><option value="steel">Steel pan</option></select></label>
         </div>
         <div class="xcurve" role="group" aria-label="Crossfader curve"><span class="lab">Curve</span><button type="button" data-cv="cut" aria-pressed="false" title="A hard switch, like a DJ cut">Cut</button><button type="button" data-cv="fade" aria-pressed="false" title="Equal power, the same level all the way">Fade</button><button type="button" data-cv="smooth" aria-pressed="true" title="A slow hand-over across the whole throw">Smooth</button></div>
@@ -856,19 +856,32 @@ function blendGains(b) {
   if (BLEND.curve === 'smooth') { const t = b * b * (3 - 2 * b); return [Math.cos(t * Math.PI / 2), Math.sin(t * Math.PI / 2)]; }
   return [Math.cos(b * Math.PI / 2), Math.sin(b * Math.PI / 2)];   // fade
 }
+// How far along the fader we are, shaped by the curve (0 to 1).
+function blendPos(b) { return BLEND.curve === 'cut' ? clamp((b - 0.4) / 0.2, 0, 1) : BLEND.curve === 'smooth' ? b * b * (3 - 2 * b) : b; }
+// Sliding from drums to melodic, ring by ring:
+//   the weather rings (the ones that are not the genre) turn melodic first, over the first half of the fader;
+//   the genre drums keep playing until about a third of the way, then fade out;
+//   the genre rows join the melodic side one at a time (kick, then the second row, then the third) until, at the far right,
+//   the melodic side plays exactly what the drums played.
+// Returns [drum gain, melodic gain] for this ring.
+function laneBlend(l) {
+  const b = blendPos(BLEND.v / 100), q = x => Math.sin(clamp(x, 0, 1) * Math.PI / 2);
+  if (l.wx) { const m = clamp((b - 0.05) / 0.45, 0, 1), e = m * m * (3 - 2 * m); return [Math.cos(e * Math.PI / 2), Math.sin(e * Math.PI / 2)]; }
+  return [b <= 0.3 ? 1 : Math.cos(clamp((b - 0.3) / 0.7, 0, 1) * Math.PI / 2), q((b - (0.35 + 0.2 * Math.min(l.i, 2))) / 0.25)];
+}
 function hit(l, t, vel) {
   const a = l.arr;
-  if (a && a.mel) { melodyHit(l, t, vel); return; }
+  if (a && a.mel) { const mg = laneBlend(l)[1]; if (mg > 0.02) melodyHit(l, t, vel * mg); return; }
   if (a && a.vr) { const sd = l.d, sr = l.rate; l.d = kitVoice(KIT, a.vr === 'ghost' ? 'ghost' : a.vr) || sd; l.rate = 1; try { hitVoice(l, t, vel * (a.vel || 1)); } finally { l.d = sd; l.rate = sr; } return; }
   if (l.wx && WXV.v !== 'kit') { const saved = l.d; l.d = voiceOf(l); try { hitVoice(l, t, vel); } finally { l.d = saved; } return; }
   hitVoice(l, t, vel);
 }
 function hitVoice(l, t, vel) {
-  const [dg, mg] = blendGains(BLEND.v / 100);
-  if (l.d.syn && MELODIC[l.d.syn]) midiHit(l, t, vel); else if (dg > 0.02) midiHit(l, t, vel * dg);
-  if (mg > 0.02 && !(l.d.syn && MELODIC[l.d.syn])) midiMel(l.mm || MELBASE[l.i], t, vel * mg, BLEND.snd);
+  const [dg, mg] = laneBlend(l), isMel = l.d.syn && MELODIC[l.d.syn], own = isMel && l.wx ? mg : dg;   // a weather ring that already plays a melodic voice follows the melodic side
+  if (own > 0.02) midiHit(l, t, vel * own);
+  if (mg > 0.02 && !isMel) midiMel(l.mm || MELBASE[l.i], t, vel * mg, BLEND.snd);
   if (mg > 0.02 && !(l.d.syn && MELODIC[l.d.syn])) melHit(BLEND.snd, 440 * Math.pow(2, ((l.mm || MELBASE[l.i]) - 69) / 12), t, vel * mg, l.g);
-  if (dg > 0.02) playKit(l, t, vel * dg); else l.flash = t;
+  if (own > 0.02) playKit(l, t, vel * own); else l.flash = t;
 }
 function playKit(l, t, vel) {
   if (l.d.syn) { l.flash = t; synthHit(l, t, vel); return; }
