@@ -9,6 +9,8 @@ SETS = [  # key, heading, blurb, png dir, ext, svg dir, mp4 dir
     ('square', 'Instagram squares', '1080 × 1080. Big screens from the phone layout, for the feed. Slides with b in the name pair with the one before.', lg / 'social' / 'square', 'png', lg / 'figma' / 'square', lg / 'animated' / 'square'),
     ('social', 'Social: feature details', 'Posts (4:5), stories (9:16) and banners (3:1) that show real interface detail for music nerds.', lg / 'social' / 'png', 'png', lg / 'figma' / 'social', lg / 'animated' / 'social'),
     ('launch', 'Launch graphics', 'The 14 launch designs: squares, stories, a banner, a link card and a portrait. The final lighter, warmer set.', lg / 'png', 'png', lg / 'figma' / 'launch', lg / 'animated' / 'launch'),
+    ('brand', 'Brand marks', 'The Three Cities mark: rings and skyline with no wordmark. Use it as the profile picture and anywhere the name appears. SVG for print and web, PNG for the rest.', lg / 'brand' / 'marks', 'png', lg / 'brand' / 'marks', lg / 'animated' / 'brand'),
+    ('cards', 'It\'s Nice That cards', 'The five cards sent to It\'s Nice That: cover, each city plays its own loop, where were you happiest, a small studio, and the full feature set. Landscape, 2400 × 1600.', lg / 'brand' / 'cards', 'jpg', lg / 'brand' / 'cards', lg / 'animated' / 'brand'),
 ]
 EARLIER = [
     ('launch/v1', 'Launch, version 1', 'The first set. Dark backgrounds.', 'launch-earlier/v1'),
