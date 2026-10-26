@@ -712,7 +712,7 @@ function loadSample(path) {
 
 // a lane's own chain: fader, a closing filter, then a place in the stereo field
 // the starting settings: each strip's octave and its delay and reverb sends
-const OCT0 = [-1, 0, 0, 0, -1, 0, -1, -2], DELAY0 = [30, 0, 0, 0, 0, 0, 0, 0], VERB0 = [0, 0, 50, 0, 0, 0, 60, 0];
+const OCT0 = [0, 0, 0, 0, 0, 0, 0, 0], DELAY0 = [30, 0, 0, 0, 0, 0, 0, 0], VERB0 = [0, 0, 50, 0, 0, 0, 60, 0];
 const lanes = COLORS.map((color, i) => {
   const g = ctx.createGain(), lp = ctx.createBiquadFilter(), pan = ctx.createStereoPanner();
   lp.type = 'lowpass'; lp.frequency.value = 18000; lp.Q.value = 3;
