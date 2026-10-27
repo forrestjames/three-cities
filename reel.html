@@ -66,7 +66,7 @@ textarea { width: 100%; min-height: 170px; background: var(--panel); color: var(
   <p class="theme-why" id="themeWhy"></p>
   <div class="picks" id="picks"></div>
   <div class="opts">
-    <label>Look <select id="look"><option value="auto">Auto (by theme)</option><option value="postcard">Postcards</option><option value="weather">Weather you can see</option><option value="split">Split screen</option><option value="classic">Classic collage</option></select></label>
+    <label>Look <select id="look"><option value="auto">Auto (by theme)</option><option value="postcard">Postcards</option><option value="weather">Weather you can see</option><option value="split">Split screen</option><option value="classic">Classic collage</option><option value="score">The Score</option></select></label>
     <label>Sound <select id="sound"><option value="theme">The theme's sound</option><option value="mine">Keep my sound</option></select></label>
     <label>Episode no. <input id="ep" type="number" min="1" max="999" inputmode="numeric"></label>
   </div>
@@ -566,7 +566,7 @@ const WEEK = { 1: "Travel", 2: "Mood", 3: "Time", 4: "Contrast", 5: "Playful", 6
 const GROUPS = ["Extremes", "Travel", "Mood", "Time", "Contrast", "Playful"];
 // each group has its own look in the reel; the Look menu can override it
 const LOOKS = { Extremes: "split", Travel: "postcard", Mood: "weather", Time: "weather", Contrast: "split", Playful: "postcard" };
-const LOOK_NAMES = { postcard: "Postcards", weather: "Weather you can see", split: "Split screen", classic: "Classic collage" };
+const LOOK_NAMES = { postcard: "Postcards", weather: "Weather you can see", split: "Split screen", classic: "Classic collage", score: "The Score" };
 
 // ---------- data ----------
 const sleep = ms => new Promise(r => setTimeout(r, ms));

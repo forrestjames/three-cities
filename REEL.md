@@ -20,3 +20,7 @@ Internal notes for the social reel tools. No manual coverage needed.
 - photosFor() picks themed photo queries, scores them, filters BAD results and needs at least 900px wide.
 - tintOf(c) blends THEME_TINT 60/40 with the city colour.
 - weatherOf(c, k) feeds the reel's weather lines.
+
+## Looks
+`rl` picks the look: `classic`, `postcard`, `weather`, `split`, or `score`. Auto (by theme) never picks `score`; choose it in the Reel Studio's Look menu.
+- **The Score** (`score`): cream manuscript paper. Each city gets a staff, its Euclidean pattern is drawn as notes (hits) and rests (gaps), and a coloured playhead sweeps the live step. The temperature is the tempo mark. The closing section shows all three staves as one system.

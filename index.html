@@ -6907,6 +6907,46 @@ body.perform.fit .pl-shape-btn { display: inline-block !important; }
       // where they are: the map fades in, each city lands on it in turn, then the flight paths draw between them
       reelMap(SAFE.l, 1100, SAFE.rLow - SAFE.l, 400, { alpha: a * ease((s - 0.5) / 0.5), city: i => (s - 0.9 - i * 0.4) / 0.45, arcs: (s - 2.0) / 0.6, labels: true });
     }
+    // ---------- the Score look: cream manuscript paper, each city on its own staff ----------
+    const INK = "#2a1d18", PAPER = "#efe6d6";
+    function paper(c, k, s, wash) {
+      g.fillStyle = PAPER; g.fillRect(0, 0, W, H);
+      if (c) cover((photos.get(c) || [])[0], 0, 0, W, H, (s / 12) % 1, tintOf(c), wash || 0.16);
+      g.fillStyle = "rgba(239,230,214,0.35)"; g.fillRect(0, 0, W, H);
+    }
+    // one quarter note, drawn by hand so it never depends on a font
+    function quarter(x, y, sz, color) {
+      g.save(); g.fillStyle = color; g.strokeStyle = color; g.lineWidth = sz * 0.09;
+      g.beginPath(); g.ellipse(x, y, sz * 0.36, sz * 0.26, -0.4, 0, 7); g.fill();
+      g.beginPath(); g.moveTo(x + sz * 0.32, y - sz * 0.05); g.lineTo(x + sz * 0.32, y - sz * 1.05); g.stroke(); g.restore();
+    }
+    // a staff with the city's pattern on it: hits are notes, gaps are small rests, the playhead sweeps across
+    function staff(c, k, x0, x1, y, sp, ls) {
+      const n = (c.pattern && c.pattern.length) || 8, p = c._reelPulse || 0, tint = col(c), step = (x1 - x0 - 90) / n, nx = i => x0 + 90 + step * (i + 0.5);
+      g.save(); g.strokeStyle = INK; g.fillStyle = INK;
+      g.globalAlpha = 0.75; g.lineWidth = 2;
+      for (let i = 0; i < 5; i++) { g.beginPath(); g.moveTo(x0, y + i * sp); g.lineTo(x1, y + i * sp); g.stroke(); }
+      g.lineWidth = 4; g.beginPath(); g.moveTo(x0, y); g.lineTo(x0, y + 4 * sp); g.stroke(); g.beginPath(); g.moveTo(x1, y); g.lineTo(x1, y + 4 * sp); g.stroke();
+      // a simple clef-like curl
+      g.lineWidth = 3; g.beginPath(); g.arc(x0 + 40, y + 2.2 * sp, sp * 0.9, 0.5, 5.6); g.stroke();
+      g.globalAlpha = 1;
+      const head = c.playhead;
+      for (let i = 0; i < n; i++) {
+        const x = nx(i), on = i === head, hit = c.pattern[i];
+        if (hit) {
+          const pos = Math.floor(seeded(i * 3 + k * 17 + 1) * 8), ny = y + 4 * sp - pos * sp / 2;
+          if (pos <= -1 || pos >= 9) continue;
+          if (pos === 0 || pos === 8 || pos % 2 === 0 && (pos < 0 || pos > 8)) { g.globalAlpha = 0.75; g.lineWidth = 2; g.beginPath(); g.moveTo(x - sp * 0.7, ny); g.lineTo(x + sp * 0.7, ny); g.stroke(); }
+          g.globalAlpha = 1;
+          quarter(x, ny, sp * (on ? 1.5 + 0.8 * p : 1.5), on ? tint : INK);
+        } else {   // an eighth rest's little slash
+          g.globalAlpha = on ? 0.9 : 0.45; g.lineWidth = 3; g.beginPath(); g.moveTo(x - 6, y + 2.8 * sp); g.lineTo(x + 6, y + 1.4 * sp); g.stroke(); g.globalAlpha = 1;
+        }
+      }
+      // the playhead
+      if (head >= 0) { const hx = nx(head) - 4; g.fillStyle = tint; g.globalAlpha = 0.22 + 0.2 * p; g.fillRect(hx - step * 0.45, y - sp * 1.6, step * 0.9, sp * 7.2); }
+      g.restore();
+    }
     // the timeline
     let t0 = 0, run = false, rec = null, chunks = [], lastCut = 0, cutSeed = 0, idleAt = rQ ? 2.3 : 1.6;   // idle shows the whole question
     function scene(now) {
@@ -6925,6 +6965,21 @@ body.perform.fit .pl-shape-btn { display: inline-block !important; }
           label(new Date().toLocaleDateString("en-GB", { weekday: "long", day: "numeric", month: "long" }), W / 2, 1090, 30, { align: "center", alpha: a * 0.7, mono: true });
           reelMap(SAFE.l, 1130, SAFE.rLow - SAFE.l, 400, { alpha: a * ease((s - 0.4) / 0.5), city: i => (s - 0.8 - i * 0.4) / 0.45, arcs: (s - 1.9) / 0.6, labels: true });
         }
+      } else if (s < 18 && rLook === "score") {   // one staff at a time: the city's rhythm, written out
+        const k = Math.min(2, Math.floor((s - 3) / 5)), ls = (s - 3) - k * 5, c = cs[k], fade = ease(ls / 0.5);
+        paper(c, k, s, 0.2);
+        const ta = ease((ls - 0.3) / 0.6), L = SAFE.l, R = SAFE.r;
+        label("THE SCORE", L, 400, 26, { mono: true, spacing: 10, color: INK, shadow: 0, alpha: ta * 0.7 });
+        // tempo marking: the temperature is the tempo
+        quarter(L + 24, 520, 46, INK); label(`= ${Math.abs(Math.round(c.w ? c.w.t : 0))}°`, L + 70, 536, 50, { color: INK, shadow: 0, alpha: ta, mono: true });
+        label(((tags[k] || "")).toUpperCase(), L, 600, 34, { mono: true, spacing: 8, color: col(c), shadow: 0, alpha: ta, max: R - L });
+        staff(c, k, L, R, 700, 44, ls);
+        label(c.name.toUpperCase(), L, 1070, c.name.length > 11 ? 100 : 136, { spacing: 8, color: INK, shadow: 0, alpha: ta, max: SAFE.rLow - L });
+        label(c.place || "", L + 4, 1130, 34, { mono: true, color: INK, shadow: 0, alpha: ta * 0.8, max: SAFE.rLow - L });
+        label(bigOf(c, k), L, 1350, 200, { color: INK, shadow: 0, alpha: ease((ls - 0.8) / 0.6), max: SAFE.rLow - L });
+        label(statOnly(k) || statLine(c, tags[k]), L + 4, 1430, 30, { mono: true, color: INK, shadow: 0, alpha: ease((ls - 1.1) / 0.6), max: SAFE.rLow - L });
+        label(c.w ? `${Math.abs(Math.round(c.w.t))}° makes a ${c.pattern.length}-step bar` : "", L + 4, 1490, 28, { mono: true, color: col(c), shadow: 0, alpha: ease((ls - 1.4) / 0.6), max: SAFE.rLow - L });
+        if (ls < 0.5) { g.fillStyle = `rgba(16,8,6,${1 - fade})`; g.fillRect(0, 0, W, H); }
       } else if (s < 18 && rLook === "postcard") {   // postcards dropping onto a pile
         const k = Math.min(2, Math.floor((s - 3) / 5)), ls = (s - 3) - k * 5;
         const desk = g.createRadialGradient(W / 2, H * 0.45, 100, W / 2, H * 0.45, H * 0.8); desk.addColorStop(0, "#2a1d18"); desk.addColorStop(1, "#0c0605"); g.fillStyle = desk; g.fillRect(0, 0, W, H);
@@ -6980,6 +7035,16 @@ body.perform.fit .pl-shape-btn { display: inline-block !important; }
         label(rStats[k] ? rStats[k] : `${localTime(c)} local · ${statLine(c, tags[k])}`, SAFE.l + 4, 1470, rStats[k] && rStats[k].length > 44 ? 26 : 30, { alpha: ease((ls - 1.1) / 0.6), mono: true, max: SAFE.rLow - SAFE.l });
         label(c.w ? `${Math.abs(Math.round(c.w.t))}° makes ${/^(8|11|18)$/.test(String(c.pattern.length)) || String(c.pattern.length).startsWith("8") ? "an" : "a"} ${c.pattern.length}-step loop` : "", SAFE.l + 4, 1525, 30, { alpha: ease((ls - 1.4) / 0.6), mono: true, color: col(c), max: SAFE.rLow - SAFE.l });
         ring(c, 290, 640, 170 + 20 * (c._reelPulse || 0), ease((ls - 0.6) / 0.6) * 0.95);
+      } else if (s < 23 && rLook === "score") {   // all three staves as one system, playing together
+        const ls = s - 18, e = ease(ls / 0.8);
+        paper(null, 0, s);
+        label("PLAYING TOGETHER, LIVE", SAFE.l, 410, 34, { mono: true, spacing: 8, color: INK, shadow: 0, alpha: e });
+        cs.forEach((c, i) => {
+          const y = [600, 990, 1380][i], R = y > SAFE.low - 200 ? SAFE.rLow : SAFE.r;
+          g.save(); g.globalAlpha = e; staff(c, i, SAFE.l, R, y, 28, ls); g.restore();
+          label(c.name.toUpperCase(), SAFE.l, y - 40, 40, { spacing: 6, color: INK, shadow: 0, alpha: e, max: 340 });
+          label(`${bigOf(c, i)}  ${(tags[i] || "").toUpperCase()}`, SAFE.l + 360, y - 40, 24, { mono: true, color: col(c), shadow: 0, alpha: e, max: R - SAFE.l - 360 });
+        });
       } else if (s < 23 && rLook === "postcard") {   // the three postcards fanned out, nodding to their beats
         const ls = s - 18, e = ease(ls / 0.8);
         const desk = g.createRadialGradient(W / 2, H * 0.45, 100, W / 2, H * 0.45, H * 0.8); desk.addColorStop(0, "#2a1d18"); desk.addColorStop(1, "#0c0605"); g.fillStyle = desk; g.fillRect(0, 0, W, H);
