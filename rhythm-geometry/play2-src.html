@@ -467,6 +467,18 @@
     .bar > .b-tempo { padding-top: 22px; } .bar > * { padding-top: 5px; padding-bottom: 5px; } .fctrack, .fctrack input { height: 26px; } .mtrack { height: 38px; } .mtrack::before { top: 15px; } .mh { top: 3px; }
     #play { width: 48px; height: 48px; } .b-fc .fct + .fctrack { margin-top: -2px; }
   }
+  .citycard { --c: #fff4d6; margin: 0 0 14px; padding: 12px 14px 12px; border: 1px solid var(--line2); border-top: 2px solid var(--c); border-radius: 18px; background: color-mix(in srgb, var(--c) 5%, transparent); box-shadow: 0 0 calc(var(--hit, 0) * 26px) -8px var(--c); }
+  .citycard.muted { opacity: .62; }
+  .cc-top { display: flex; align-items: center; gap: 12px; margin-bottom: 10px; }
+  .cc-top .trig { width: 10px; height: 10px; border-radius: 50%; background: var(--c); opacity: calc(.25 + var(--hit, 0) * .75); box-shadow: 0 0 calc(var(--hit, 0) * 12px) var(--c); flex: none; }
+  .cc-name { flex: 1; min-width: 0; display: grid; gap: 1px; } .cc-name b { font-family: var(--display); font-weight: 400; font-size: 20px; line-height: 1.1; } .cc-name i { font-style: normal; font-size: 11px; color: var(--ink-dim); }
+  .cc-top .pad { flex: none; width: auto; min-width: 0; height: 34px; padding: 0 14px; display: flex; align-items: center; gap: 8px; font-size: 11px; letter-spacing: .1em; }
+  .cc-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 10px 14px; align-items: end; }
+  .cc-f { display: grid; gap: 4px; min-width: 0; align-content: end; } .cc-f select { width: 100%; }
+  .cc-f .padrow { justify-content: flex-start; }
+  .cc-sub { margin: 12px 0 8px; padding-top: 10px; border-top: 1px solid var(--line); }
+  .cc-note { margin: 8px 0 0; font-size: 11px; line-height: 1.5; color: var(--ink-dim); }
+  .citycard select { background-color: var(--strip); color: var(--ink); border: 1px solid var(--line2); border-radius: 10px; padding: 8px 10px; color-scheme: dark; }
 </style>
 </head>
 <body>
@@ -569,7 +581,33 @@
       <button type="button" role="tab" data-tab="midi" aria-selected="false">MIDI</button>
       <button type="button" class="sheetx" id="sheetX" aria-label="Close the controls">×</button>
     </div>
-    <div class="panel on" id="tab-mix"><div class="mixer" id="mixer"></div></div>
+    <div class="panel on" id="tab-mix">
+      <section class="citycard" id="cityCard" aria-label="The city voice">
+        <div class="cc-top"><span class="trig" aria-hidden="true"></span><div class="cc-name"><b id="cityName">The city voice</b><i id="cityWhy"></i></div>
+          <button class="btn pad" id="cityMute" type="button" aria-pressed="false" title="Mute the city voice and its chords"><i class="led"></i><span class="m0">Mute</span><span class="m1">Muted</span></button></div>
+        <div class="cc-grid">
+          <label class="cc-f"><span class="lab">Sound</span><select id="citySnd"></select></label>
+          <label class="cc-f"><span class="lab">Notes come from</span><select id="citySrc"><option value="hum">Humidity</option><option value="wind">Wind</option><option value="cloud">Cloud</option><option value="rain">Rain</option></select></label>
+          <label class="cc-f"><span class="lab">Pace</span><select id="cityPace"><option value="auto">Auto</option><option value="1">1/16</option><option value="2">1/8</option></select></label>
+          <div class="cc-f"><span class="lab">Octave</span><span class="padrow"><button class="oct" id="cityOctD" type="button" aria-label="City voice down an octave">&minus;</button><span class="octv" id="cityOctV">0</span><button class="oct" id="cityOctU" type="button" aria-label="City voice up an octave">+</button></span></div>
+          <label class="cc-f"><span class="lab">Level</span><input class="big" id="cityVol" type="range" min="0" max="100" value="70"></label>
+          <label class="cc-f"><span class="lab">Density</span><input class="big" id="cityDens" type="range" min="0" max="100" value="50" title="How many of the steps get a note"></label>
+          <label class="cc-f"><span class="lab">Chance</span><input class="big" id="cityChance" type="range" min="0" max="100" value="100"></label>
+          <label class="cc-f"><span class="lab">Delay</span><input class="big" id="cityDel" type="range" min="0" max="100" value="20"></label>
+          <label class="cc-f"><span class="lab">Reverb</span><input class="big" id="cityVerb" type="range" min="0" max="100" value="30"></label>
+        </div>
+        <div class="cc-sub"><span class="lab">Chords</span></div>
+        <div class="cc-grid">
+          <label class="cc-f"><span class="lab">Style</span><select id="chordStyle"><option value="auto">Auto</option><option value="pump">Pumped stabs</option><option value="offbeat">Off-beat stabs</option><option value="held">Held chords</option><option value="none">Off</option></select></label>
+          <label class="cc-f"><span class="lab">Sound</span><select id="chordSnd"><option value="vibes">Soft mallets</option><option value="piano">Grand piano</option><option value="harp">Harp</option><option value="marimbarec">Marimba</option></select></label>
+          <label class="cc-f"><span class="lab">Level</span><input class="big" id="chordLvl" type="range" min="0" max="100" value="50"></label>
+          <label class="cc-f"><span class="lab">Pump</span><input class="big" id="chordPump" type="range" min="0" max="100" value="75" title="How far each genre kick pushes the chords down"></label>
+          <div class="cc-f"><span class="lab">Octave</span><span class="padrow"><button class="oct" id="chordOctD" type="button" aria-label="Chords down an octave">&minus;</button><span class="octv" id="chordOctV">0</span><button class="oct" id="chordOctU" type="button" aria-label="Chords up an octave">+</button></span></div>
+        </div>
+        <p class="cc-note" id="chordNote"></p>
+        <p class="cc-note">Recorded sounds come from the Three Cities set: Salamander Grand Piano (CC BY 3.0), VSCO 2 harp (CC0), Versilian marimba, xylophone and mallets (CC0).</p>
+      </section>
+      <div class="mixer" id="mixer"></div></div>
     <div class="panel" id="tab-perform"><div class="fx2"><div class="fxrow">
           <div class="grp"><span class="fxlab">Drum kit</span><button id="kitAuto" class="btn" type="button" aria-pressed="true" title="On: the drum kit follows the genre, such as the TR-909 for house and the TR-808 for drum and bass. Pick a kit yourself and this turns off.">Follows genre</button></div>
           <div class="grp"><span class="fxlab">Arrangement</span>
@@ -885,6 +923,122 @@ function applyWx() {
 }
 lanes.forEach(l => l.g.gain.value = faderGain(l.vol));
 
+// ---------- the city voice ----------
+// One more line, the way Three Cities plays a city: a Euclidean pattern with steps from the temperature and hits from humidity
+// (or wind, cloud or rain), walking a small set of notes in the key. Only a sub bass and the recorded instruments play it.
+// Under it, short chords from the key that duck on every genre kick, like a sidechain, unless the genre wants them held.
+const CNAMES = { sub: 'Sub bass', marimbarec: 'Marimba', xylophone: 'Xylophone', vibes: 'Soft mallets', harp: 'Harp', piano: 'Grand piano' };
+const CSETS = {
+  marimbarec: ['marimba/', 'F1 C2 G2 B2 F3 C4 G4 B4 F5 C6'], xylophone: ['xylophone/', 'G3 C4 G4 C5 G5 C6 G6 C7'],
+  vibes: ['vibes/', 'F2 A2 C3 E3 G3 B3 D4 F4 A4 C5 E5'],
+  piano: ['piano/', 'C1 Ds1 Fs1 A1 C2 Ds2 Fs2 A2 C3 Ds3 Fs3 A3 C4 Ds4 Fs4 A4 C5 Ds5 Fs5 A5 C6 Ds6 Fs6 A6 C7'],
+  harp: ['harp/', 'E1 G1 B1 D2 F2 A2 C3 E3 G3 B3 D4 F4 A4 C5 E5 G5 B5 D6 F6 A6 D7 F7'],
+};
+const CSRC = { hum: ['humidity', w => w.hum / 100], wind: ['wind', w => Math.min(w.wind, 50) / 50], cloud: ['cloud', w => w.cloud / 100], rain: ['rain', w => Math.min(w.rain, 5) / 5] };
+const CPROF = { Boston: { deg: [0, -2, 1, -1, -3], snd: 'marimbarec' }, Copenhagen: { deg: [0, 1, 2, 3, 4], snd: 'vibes' }, London: { deg: [-2, -1, 0, 1, 2], snd: 'sub' } };   // the three cities, as in Three Cities
+const CSHAPES = [[0, 1, 2, 3, 4], [0, -2, 1, -1, -3], [-2, -1, 0, 1, 2], [0, 2, 1, 3, 2], [0, -1, 2, 1, -2], [0, 3, 1, 4, 2]];
+const CPROGS = [[0, 5, 3, 4], [0, 3, 4, 3], [0, 4, 5, 3], [0, 2, 5, 4]];   // chord roots as scale degrees; the weather picks one
+const CITY = { snd: 'sub', hand: false, oct: 0, src: 'hum', dens: 50, pace: 'auto', rate: 1, chance: 100, vol: 0.7, mute: false, deg: [0, 1, 2], di: 0,
+  steps: 8, hits: 3, bits: [], pos: -1, flash: 0, why: '', color: '#fff4d6', d: { n: 'City' } };
+const CH = { style: 'auto', auto: 'pump', mode: 'pump', snd: 'vibes', level: 0.5, pump: 0.75, oct: 0 };
+const CA = { g: ctx.createGain(), md: ctx.createGain(), pan: ctx.createStereoPanner(), sd: ctx.createGain(), sv: ctx.createGain(),
+  cd: ctx.createGain(), cg: ctx.createGain(), cv: ctx.createGain() };
+CA.md.connect(CA.g).connect(CA.pan).connect(masterIn); CA.pan.connect(CA.sd).connect(delIn); CA.pan.connect(CA.sv).connect(verbIn);
+CA.cd.connect(CA.cg).connect(masterIn); CA.cg.connect(CA.cv).connect(verbIn);
+CA.g.gain.value = faderGain(CITY.vol); CA.sd.gain.value = Math.pow(0.2, 2) * 0.9; CA.sv.gain.value = Math.pow(0.3, 2) * 0.9;
+CA.cg.gain.value = CH.level; CA.cv.gain.value = 0.3; CITY.g = CA.g;
+const CBANK = {};
+const noteMidi = n => { const m = n.match(/^([A-G])(s?)(\d)$/); return 12 * (+m[3] + 1) + { C: 0, D: 2, E: 4, F: 5, G: 7, A: 9, B: 11 }[m[1]] + (m[2] ? 1 : 0); };
+function cityLoad(name) {   // the recorded notes come from the Three Cities sample folder, when a ring first needs them
+  if (!CSETS[name] || CBANK[name]) return;
+  const [dir, notes] = CSETS[name], bank = CBANK[name] = { list: [], ready: false };
+  Promise.all(notes.split(' ').map(n => fetch('../../samples/' + dir + n + '.mp3')
+    .then(r => { if (!r.ok) throw 0; return r.arrayBuffer(); }).then(a => ctx.decodeAudioData(a)).then(buf => ({ midi: noteMidi(n), buf })).catch(() => null)))
+    .then(list => { bank.list = list.filter(Boolean).sort((a, b) => a.midi - b.midi); bank.ready = bank.list.length > 0; });
+}
+function cityNearest(name, midi) {
+  const b = CBANK[name]; if (!b) { cityLoad(name); return null; } if (!b.ready) return null;
+  let best = b.list[0]; for (const x of b.list) if (Math.abs(x.midi - midi) < Math.abs(best.midi - midi)) best = x; return best;
+}
+function citySamp(name, midi, t, vel, out, dur) {
+  const s = cityNearest(name, midi);
+  if (!s) { melHit(name === 'harp' ? 'harp' : 'kalimba', 440 * Math.pow(2, (midi - 69) / 12), t, vel, out); return; }   // until the recording arrives
+  const src = ctx.createBufferSource(), g = ctx.createGain(), rate = Math.pow(2, (midi - s.midi) / 12);
+  src.buffer = s.buf; src.playbackRate.value = rate;
+  g.gain.setValueAtTime(0.0001, t); g.gain.linearRampToValueAtTime(0.8 * vel, t + 0.004);
+  let end = t + s.buf.duration / rate + 0.05;
+  if (dur && t + dur < end) { g.gain.setValueAtTime(0.8 * vel, t + dur); g.gain.setTargetAtTime(0, t + dur, 0.05); end = t + dur + 0.4; }
+  src.connect(g).connect(out); src.start(t); src.stop(end);
+}
+function citySub(midi, t, vel, out, dur) {   // a sine with a soft octave above it, so small speakers can still find the note
+  const f = 440 * Math.pow(2, (midi - 69) / 12), o = ctx.createOscillator(), o2 = ctx.createOscillator(), g = ctx.createGain(), g2 = ctx.createGain();
+  o.type = 'sine'; o.frequency.value = f; o2.type = 'triangle'; o2.frequency.value = f * 2; g2.gain.value = 0.2;
+  g.gain.setValueAtTime(0.0001, t); g.gain.linearRampToValueAtTime(0.95 * vel, t + 0.012); g.gain.setTargetAtTime(0, t + dur * 0.55, dur * 0.3);
+  o.connect(g); o2.connect(g2).connect(g); g.connect(out); o.start(t); o2.start(t); o.stop(t + dur + 0.4); o2.stop(t + dur + 0.4);
+}
+const cityReg = snd => snd === 'sub' ? 36 : snd === 'marimbarec' ? 48 : 60;
+function cityMidi(deg, base, oct) {
+  const st = MODES[MODE].steps; return base + ROOT + 12 * Math.floor(deg / 7) + st[((deg % 7) + 7) % 7] + 12 * oct;
+}
+function cityProfile(name) {
+  if (CPROF[name]) return CPROF[name];
+  let h = 7; for (const ch of name || '') h = (h * 31 + ch.charCodeAt(0)) >>> 0;
+  return { deg: CSHAPES[h % 6], snd: ['marimbarec', 'xylophone', 'vibes', 'harp', 'piano', 'sub'][(h >> 3) % 6] };
+}
+function chordAuto() {
+  const c = ATLAS.cities[city.value], g = c && (c.g[genre.value] || c.g[0]), nm = ((g && g.n) || '').toLowerCase();
+  if (/ambient|\bdub\b|drone|chill|lo-?fi|downtempo|trip|dream|shoegaze|new age|bolero/.test(nm)) return 'held';
+  if (/house|techno|garage|trance|disco|reggae|\bska\b|dancehall|funk|amapiano|kuduro|baile|afro/.test(nm)) return 'offbeat';
+  return 'pump';
+}
+const CHSTYLE = { pump: 'pumped stabs on the beat', offbeat: 'pumped stabs on the off-beat', held: 'held chords', none: 'off' };
+function cityBuild() {
+  const c = ATLAS.cities[city.value]; if (!c) return;
+  const pr = cityProfile(c.n); CITY.deg = pr.deg; CITY.di = 0;
+  if (!CITY.hand) { CITY.snd = pr.snd; if ($('citySnd')) $('citySnd').value = CITY.snd; }
+  const w = WX, amt = clamp(CSRC[CITY.src][1](w), 0, 1);
+  CITY.steps = clamp(Math.max(2, Math.abs(Math.round(w.temp))), 2, 32);
+  CITY.hits = clamp(Math.round(CITY.steps * amt * CITY.dens / 100), 1, CITY.steps);
+  CITY.bits = euclidBits(CITY.steps, CITY.hits, 0);
+  CITY.rate = CITY.pace === 'auto' ? (w.pres > 1020 ? 2 : 1) : +CITY.pace;
+  CITY.why = CSRC[CITY.src][0]; CITY.name = c.n;
+  CH.auto = chordAuto(); CH.mode = CH.style === 'auto' ? CH.auto : CH.style;
+  cityLoad(CITY.snd); if (CH.mode !== 'none') cityLoad(CH.snd);
+  if ($('cityName')) {
+    $('cityName').textContent = c.n + ' plays ' + CNAMES[CITY.snd];
+    $('cityWhy').textContent = CITY.hits + ' hits in ' + CITY.steps + ' steps from ' + CITY.why + (CITY.rate > 1 ? ', slow pace' : '');
+    $('chordNote').textContent = 'Chords: ' + CHSTYLE[CH.mode] + (CH.style === 'auto' ? ', chosen for ' + ((c.g[genre.value] || {}).n || 'this genre') : '') + '.';
+  }
+}
+function cityDuck(t) {   // the sidechain: every genre kick pushes the chords (and a sub line, a little) down, and they swell back
+  const f = Math.max(0.04, 1 - CH.pump), m = CITY.snd === 'sub' ? 1 - CH.pump * 0.4 : 1;
+  CA.cd.gain.cancelScheduledValues(t); CA.cd.gain.setValueAtTime(f, t); CA.cd.gain.setTargetAtTime(1, t + 0.025, 0.11);
+  CA.md.gain.cancelScheduledValues(t); CA.md.gain.setValueAtTime(m, t); CA.md.gain.setTargetAtTime(1, t + 0.025, 0.09);
+}
+function cityPlay(snd, midi, t, vel, out, dur) { if (snd === 'sub') citySub(midi, t, vel, out, dur); else citySamp(snd, midi, t, vel, out, dur); }
+function cityStep(t, n) {
+  const ss = stepSecs();
+  if (!CITY.mute && CITY.bits.length && n % CITY.rate === 0) {
+    const pos = (n / CITY.rate) % CITY.steps;
+    if (CITY.bits[pos] && Math.random() * 100 < CITY.chance && Math.random() >= Math.min(0.35, (WX.rain || 0) * 0.2)) {   // rain thins the line
+      const deg = CITY.deg[CITY.di++ % CITY.deg.length], midi = cityMidi(deg, cityReg(CITY.snd), CITY.oct), vel = (pos % 4 === 0 ? 1 : 0.8) * (0.85 + Math.random() * 0.3);
+      CITY.flash = t; cityPlay(CITY.snd, midi, t, vel, CA.md, ss * CITY.rate * 1.8); midiMel(midi, t, vel, 'city');
+    }
+  }
+  const M = CH.mode, s = n % 16, bar = Math.floor(n / 16);
+  if (!CITY.mute && M && M !== 'none') {
+    const held = M === 'held', now = held ? (s === 0 && bar % 2 === 0) : M === 'offbeat' ? s % 4 === 2 : s % 4 === 0;
+    if (now) {
+      const root = CPROGS[Math.abs(Math.round(WX.pres)) % 4][Math.floor(bar / (held ? 2 : 1)) % 4], v = (s === 0 || s === 2 ? 1 : 0.78), len = held ? ss * 30 : ss * (M === 'offbeat' ? 2.4 : 3);
+      [0, 2, 4].forEach((k, j) => {
+        let m = cityMidi(root + k, 48, CH.oct); if (m > 72 + ROOT) m -= 12;
+        citySamp(CH.snd, m, t + j * (held ? 0.012 : 0.004), 0.55 * v, CA.cd, len);
+      });
+      midiMel(cityMidi(root, 48, CH.oct), t, 0.6 * v, 'city');
+    }
+  }
+}
+
 // The glitch kit has no recordings at all: each drum is a few milliseconds of synth
 // melodic voices: a few sine and triangle partials, each with its own fast decay. Attack is a few milliseconds.
 const MELODIC = { kalimba: 1, harp: 1, rhodes: 1, steel: 1 };
@@ -952,6 +1106,7 @@ function laneBlend(l) {
   return [b <= 0.3 ? 1 : Math.cos(clamp((b - 0.3) / 0.7, 0, 1) * Math.PI / 2), q((b - (0.35 + 0.2 * Math.min(l.i, 2))) / 0.25)];
 }
 function hit(l, t, vel) {
+  if (l.i === 0 && !l.wx) cityDuck(t);
   const a = l.arr;
   if (a && a.mel) { const mg = laneBlend(l)[1]; if (mg > 0.02) melodyHit(l, t, vel * mg); return; }
   if (a && a.vr) { const sd = l.d, sr = l.rate; l.d = kitVoice(KIT, a.vr === 'ghost' ? 'ghost' : a.vr) || sd; l.rate = 1; try { hitVoice(l, t, vel * (a.vel || 1)); } finally { l.d = sd; l.rate = sr; } return; }
@@ -1049,6 +1204,7 @@ function buildLanes(remix) {
   applyRoles(); retune();
   renderWhy();
   applyWx();
+  cityBuild();
 }
 function remix() {
   lanes.forEach(l => { const k = 1 + Math.floor(Math.random() * (l.steps - 1)); l.bits = l.bits.slice(k).concat(l.bits.slice(0, k)); });
@@ -1159,6 +1315,7 @@ function schedule(t, n) {
     if (dv >= 1 && n % dv === 0) hit(l, t, v * (0.9 + Math.random() * 0.2));
     if (dv < 1) { hit(l, t, v * 0.95); hit(l, t + ss * dv, v * 0.8); }
   });
+  cityStep(t, n);
   autoStep(t, n);
   midiClockStep(t, ss);
   visQ.push({ t, n });
@@ -1298,6 +1455,24 @@ lanes.forEach(l => {
 });
 function renderWhy() { lanes.forEach(l => { l.el.querySelector('.why').innerHTML = `<b>${l.steps}</b>${l.why}${l.note ? `<i title="The note this drum plays">${l.note}</i>` : ''}`; }); }
 function setMute(l, v) { l.mute = v; l.pad.setAttribute('aria-pressed', String(v)); l.el.classList.toggle('muted', v); }
+{ const el = id => $(id), val = id => +el(id).value;
+  el('citySnd').innerHTML = Object.entries(CNAMES).map(([k, v]) => `<option value="${k}">${v}</option>`).join('');
+  el('citySnd').addEventListener('change', e => { CITY.snd = e.target.value; CITY.hand = true; cityBuild(); });
+  el('citySrc').addEventListener('change', e => { CITY.src = e.target.value; cityBuild(); });
+  el('cityPace').addEventListener('change', e => { CITY.pace = e.target.value; cityBuild(); });
+  el('cityVol').addEventListener('input', () => { CITY.vol = val('cityVol') / 100; CA.g.gain.setTargetAtTime(faderGain(CITY.vol), ctx.currentTime, 0.02); });
+  el('cityDens').addEventListener('input', () => { CITY.dens = val('cityDens'); cityBuild(); });
+  el('cityChance').addEventListener('input', () => { CITY.chance = val('cityChance'); });
+  el('cityDel').addEventListener('input', () => CA.sd.gain.setTargetAtTime(Math.pow(val('cityDel') / 100, 2) * 0.9, ctx.currentTime, 0.02));
+  el('cityVerb').addEventListener('input', () => CA.sv.gain.setTargetAtTime(Math.pow(val('cityVerb') / 100, 2) * 0.9, ctx.currentTime, 0.02));
+  const oct = (id, o, d) => { o.oct = clamp(o.oct + d, -2, 2); el(id).textContent = (o.oct > 0 ? '+' : '') + o.oct; };
+  el('cityOctD').addEventListener('click', () => oct('cityOctV', CITY, -1)); el('cityOctU').addEventListener('click', () => oct('cityOctV', CITY, 1));
+  el('chordOctD').addEventListener('click', () => oct('chordOctV', CH, -1)); el('chordOctU').addEventListener('click', () => oct('chordOctV', CH, 1));
+  el('chordStyle').addEventListener('change', e => { CH.style = e.target.value; cityBuild(); });
+  el('chordSnd').addEventListener('change', e => { CH.snd = e.target.value; cityBuild(); });
+  el('chordLvl').addEventListener('input', () => { CH.level = val('chordLvl') / 100; CA.cg.gain.setTargetAtTime(CH.level, ctx.currentTime, 0.02); });
+  el('chordPump').addEventListener('input', () => { CH.pump = val('chordPump') / 100; });
+  el('cityMute').addEventListener('click', () => { CITY.mute = !CITY.mute; el('cityMute').setAttribute('aria-pressed', String(CITY.mute)); el('cityCard').classList.toggle('muted', CITY.mute); }); }
 function tap(l) {
   if (ctx.state !== 'running') ctx.resume();
   hit(l, ctx.currentTime + 0.005, 1);
@@ -1672,8 +1847,18 @@ function draw() {
   const now = ctx.currentTime;
   while (visQ.length > 1 && visQ[1].t <= now) visQ.shift();
   const cur = visQ.length && visQ[0].t <= now ? visQ[0].n : -1;
+  { const c = CITY, R = 118, n = c.steps, dim = (c.mute ? 0.25 : 1) * (SEL >= 0 ? 0.32 : 1), age = now - c.flash, pulse = age >= 0 && age < 0.25 ? 1 - age / 0.25 : 0;
+    g2.strokeStyle = c.color; g2.lineWidth = 3 + pulse * 8; g2.globalAlpha = dim * (0.22 + pulse * 0.6); g2.beginPath(); g2.arc(CX, CX, R, 0, 7); g2.stroke();
+    const ca = $('cityCard'); if (ca) ca.style.setProperty('--hit', age >= 0 && age < 0.2 && !c.mute ? (1 - age / 0.2).toFixed(2) : '0');
+    g2.globalAlpha = dim; const pos = cur >= 0 ? Math.floor(cur / c.rate) % n : -1;
+    for (let k = 0; k < n; k++) {
+      const a = k / n * Math.PI * 2 - Math.PI / 2, on = c.bits[k], here = k === pos;
+      g2.fillStyle = on ? c.color : 'rgba(243,236,230,.28)'; g2.beginPath(); g2.arc(CX + R * Math.cos(a), CX + R * Math.sin(a), (on ? 9 : 4.5) + (here ? 6 : 0) * (on ? 1 : .6), 0, 7); g2.fill();
+      if (here && on) { g2.strokeStyle = '#fff'; g2.lineWidth = 3; g2.stroke(); }
+    }
+    g2.globalAlpha = 1; }
   lanes.forEach((l, i) => {
-    const R = 118 + i * 48, n = l.steps, dim = (l.mute ? 0.25 : 1) * (SEL >= 0 && SEL !== i ? 0.32 : 1) * (wxActive(l, curStep) ? 1 : 0.4), age = now - l.flash, pulse = age >= 0 && age < 0.25 ? 1 - age / 0.25 : 0;
+    const R = 118 + (i + 1) * 43, n = l.steps, dim = (l.mute ? 0.25 : 1) * (SEL >= 0 && SEL !== i ? 0.32 : 1) * (wxActive(l, curStep) ? 1 : 0.4), age = now - l.flash, pulse = age >= 0 && age < 0.25 ? 1 - age / 0.25 : 0;
     g2.globalAlpha = dim;
     g2.strokeStyle = l.color; g2.lineWidth = 3 + pulse * 8; g2.globalAlpha = dim * (0.22 + pulse * 0.6);
     g2.setLineDash(l.flt || l.aF > 0 ? [10, 14] : []); g2.beginPath(); g2.arc(CX, CX, R, 0, 7); g2.stroke(); g2.setLineDash([]);
@@ -1712,8 +1897,12 @@ function draw() {
   // what each ring takes from the weather, written on the ring
   const PH = innerWidth <= 700, FS = PH ? 25 : 13, PHH = PH ? 32 : 18;
   g2.font = '500 ' + FS + 'px "Source Code Pro", monospace'; g2.textAlign = 'center'; g2.textBaseline = 'middle';
+  { const c = CITY, R = 118, t = (c.name || 'city').toUpperCase() + ' ' + (c.why || '').toUpperCase() + '  ' + c.steps, w = g2.measureText(t).width + (PH ? 26 : 16);
+    g2.globalAlpha = 0.9 * (c.mute ? 0.4 : 1) * (SEL >= 0 ? 0.4 : 1);
+    g2.fillStyle = 'rgba(12,7,16,.78)'; g2.strokeStyle = c.color; g2.lineWidth = 1.5; g2.beginPath(); g2.roundRect(CX - w / 2, CX - R - PHH / 2, w, PHH, PHH / 2); g2.fill(); g2.stroke();
+    g2.fillStyle = '#f3ece6'; g2.fillText(t, CX, CX - R + 1); }
   lanes.forEach((l, i) => {
-    const R = 118 + i * 48, t = (l.why || '').toUpperCase().replace(/ KM\/H/, '') + '  ' + l.steps, w = g2.measureText(t).width + (PH ? 26 : 16);
+    const R = 118 + (i + 1) * 43, t = (l.why || '').toUpperCase().replace(/ KM\/H/, '') + '  ' + l.steps, w = g2.measureText(t).width + (PH ? 26 : 16);
     g2.globalAlpha = 0.82 * (l.mute ? 0.4 : 1) * (SEL >= 0 && SEL !== i ? 0.4 : 1);
     g2.fillStyle = 'rgba(12,7,16,.7)'; g2.strokeStyle = l.color; g2.lineWidth = 1.5; g2.beginPath(); g2.roundRect(CX - w / 2, CX - R - PHH / 2, w, PHH, PHH / 2); g2.fill(); g2.stroke();
     g2.fillStyle = '#f3ece6'; g2.fillText(t, CX, CX - R + 1);
