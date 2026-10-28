@@ -646,7 +646,7 @@
         <div class="cc-sub"><span class="lab">Chords</span></div>
         <div class="cc-grid">
           <label class="cc-f"><span class="lab">Style</span><select id="chordStyle"><option value="none">Off</option><option value="auto">Auto, from the genre</option><option value="pump">Pumped stabs</option><option value="offbeat">Off-beat stabs</option><option value="held">Held chords</option></select></label>
-          <label class="cc-f"><span class="lab">Sound</span><select id="chordSnd"><option value="vibes">Soft mallets</option><option value="piano">Grand piano</option><option value="harp">Harp</option><option value="marimbarec">Marimba (recorded)</option><option value="felt">Felt piano</option><option value="flute">Flute</option><option value="mallet">Yarn mallets</option><option value="bowed">Bowed</option><option value="pluck">Pluck</option><option value="bell">Bell</option><option value="pad">Pad</option><option value="marimba">Synth marimba</option><option value="string">Plucked string</option><option value="epiano">Electric piano</option><option value="kalimba">Kalimba</option><option value="organ">Organ</option><option value="junopad">Juno pad</option><option value="junostrings">Juno strings</option><option value="junokeys">Juno keys</option><option value="soft">Soft synth</option><option value="breath">Breath</option><option value="choir">Choir</option></select></label>
+          <label class="cc-f"><span class="lab">Sound</span><select id="chordSnd"><option value="warm">Warm pad</option><option value="glass">Glass</option><option value="air">Air</option><option value="tape">Tape strings</option><option value="strings">Strings</option><option value="choir">Choir</option><option value="organ">Soft organ</option><option value="bowed">Bowed</option><option value="shimmer">Shimmer</option><option value="vibes">Soft mallets</option><option value="piano">Grand piano</option><option value="harp">Harp</option><option value="marimbarec">Marimba</option></select></label>
           <label class="cc-f"><span class="lab">Level</span><input class="big" id="chordLvl" type="range" min="0" max="100" value="50"></label>
           <label class="cc-f"><span class="lab">Delay</span><input class="big" id="chordDel" type="range" min="0" max="100" value="0"></label>
           <label class="cc-f"><span class="lab">Reverb</span><input class="big" id="chordVerb" type="range" min="0" max="100" value="35"></label>
@@ -1019,7 +1019,7 @@ const CSHAPES = [[0, 1, 2, 3, 4], [0, -2, 1, -1, -3], [-2, -1, 0, 1, 2], [0, 2, 
 const CPROGS = [[0, 5, 3, 4], [0, 3, 4, 3], [0, 4, 5, 3], [0, 2, 5, 4]];   // chord roots as scale degrees; the weather picks one
 const CITY = { snd: 'sub', hand: false, oct: 0, src: 'hum', dens: 50, pace: 'auto', rate: 1, chance: 100, vol: 0.7, mute: false, deg: [0, 1, 2], di: 0,
   steps: 8, hits: 3, bits: [], pos: -1, flash: 0, why: '', color: '#fff4d6', d: { n: 'City' } };
-const CH = { style: 'none', auto: 'pump', mode: 'pump', snd: 'vibes', level: 0.5, pump: 0.75, oct: 0 };
+const CH = { style: 'none', auto: 'pump', mode: 'pump', snd: 'warm', level: 0.5, pump: 0.75, oct: 0 };
 const CA = { g: ctx.createGain(), md: ctx.createGain(), pan: ctx.createStereoPanner(), sd: ctx.createGain(), sv: ctx.createGain(),
   cd: ctx.createGain(), cg: ctx.createGain(), cv: ctx.createGain() };
 CA.md.connect(CA.g).connect(CA.pan).connect(masterIn); CA.pan.connect(CA.sd).connect(delIn); CA.pan.connect(CA.sv).connect(verbIn);
@@ -1055,103 +1055,49 @@ function citySub(midi, t, vel, out, dur) {   // a sine with a soft octave above 
   g.gain.setValueAtTime(0.0001, t); g.gain.linearRampToValueAtTime(0.95 * vel, t + 0.012); g.gain.setTargetAtTime(0, t + dur * 0.55, dur * 0.3);
   o.connect(g); o2.connect(g2).connect(g); g.connect(out); o.start(t); o2.start(t); o.stop(t + dur + 0.4); o2.stop(t + dur + 0.4);
 }
-// Chord sounds from Three Cities: the same synth recipes, played through play2's own audio context.
-const TCV_G = { felt: 1.97, flute: 2.32, mallet: 2.17, bowed: 3.74, pluck: 1.02, bell: 1.75, pad: 1.52, marimba: 0.97, epiano: 1.23, kalimba: 0.94, string: 0.79, organ: 1.7, junopad: 1.93, junostrings: 1.61, junokeys: 1.69, soft: 1.28, breath: 4.14, choir: 1.19 };
-function tcString(f) {   // a plucked string, the same way Three Cities makes it
-  const n = Math.max(2, Math.round(ctx.sampleRate / f)), len = Math.floor(ctx.sampleRate * 2.4), b = ctx.createBuffer(1, len, ctx.sampleRate), d = b.getChannelData(0);
-  for (let i = 0; i < n; i++) d[i] = Math.random() * 2 - 1;
-  for (let i = n; i < len; i++) d[i] = 0.4985 * (d[i - n] + d[i - n + 1 > i ? i - n : i - n + 1]);
-  return b;
+// Chord sounds: the nine pads from the Three Cities chord menu, same recipes. Stabs get a quick attack and short release; held chords keep the slow bloom.
+const padOsc = (type, f, out, t, end, gain = 1, det = 0) => { const o = ctx.createOscillator(); o.type = type; o.frequency.value = f; o.detune.value = det; const g = ctx.createGain(); g.gain.value = gain; o.connect(g).connect(out); o.start(t); o.stop(end); return o; };
+const padLfo = (rate, depth, param, t, end) => { const l = ctx.createOscillator(); l.frequency.value = rate; const d = ctx.createGain(); d.gain.value = depth; l.connect(d).connect(param); l.start(t); l.stop(end); return l; };
+const PADS = {
+  warm: { name: 'Warm pad', bright: 1, gain: 1, attack: 2.4, release: 1.4, make: (f, out, t, end) => [padOsc('sawtooth', f, out, t, end, 0.35, -6), padOsc('sawtooth', f, out, t, end, 0.35, 6), padOsc('sine', f, out, t, end, 0.9)] },
+  glass: { name: 'Glass', bright: 5, gain: 1.15, attack: 3, release: 2, make: (f, out, t, end) => {
+    const a = padOsc('sine', f, out, t, end, 0.9), b = padOsc('sine', f * 2, out, t, end, 0.28), c = padOsc('sine', f * 3, out, t, end, 0.08);
+    return [a, b, c, padLfo(0.18 + Math.random() * 0.08, 4, a.detune, t, end), padLfo(0.23, 6, b.detune, t, end)]; } },
+  air: { name: 'Air', bright: 4, gain: 4, attack: 3.5, release: 2.2, make: (f, out, t, end) => {
+    const n = ctx.createBufferSource(); n.buffer = noiseBuf; n.loop = true;
+    const bp = ctx.createBiquadFilter(); bp.type = 'bandpass'; bp.frequency.value = f * 2; bp.Q.value = 28;
+    const bp2 = ctx.createBiquadFilter(); bp2.type = 'bandpass'; bp2.frequency.value = f * 4; bp2.Q.value = 34;
+    const ng = ctx.createGain(); ng.gain.value = 1.6; n.connect(bp).connect(ng).connect(out); n.connect(bp2).connect(ng);
+    n.start(t, Math.random() * 0.5); n.stop(end); return [n, padOsc('sine', f, out, t, end, 0.25)]; } },
+  tape: { name: 'Tape strings', bright: 1.5, gain: 2.8, attack: 2.2, release: 1.6, make: (f, out, t, end) => {
+    const os = [-11, -3, 4, 12].map(d => padOsc('sawtooth', f, out, t, end, 0.26, d + Math.random() * 3));
+    return os.concat(os.map(o => padLfo(0.32 + Math.random() * 0.1, 7, o.detune, t, end))); } },
+  strings: { name: 'Strings', bright: 2.4, gain: 3.6, attack: 1.8, release: 1.4, make: (f, out, t, end) => [padOsc('sawtooth', f, out, t, end, 0.3, -7), padOsc('sawtooth', f, out, t, end, 0.3, 7), padOsc('triangle', f * 2, out, t, end, 0.12)] },
+  choir: { name: 'Choir', bright: 3.5, gain: 10, attack: 2.6, release: 1.8, make: (f, out, t, end) => {
+    const mix = ctx.createGain(), vib = [];
+    [[700, 6, 1], [1220, 8, 0.5], [2600, 10, 0.25]].forEach(([fr, q, g]) => { const bp = ctx.createBiquadFilter(); bp.type = 'bandpass'; bp.frequency.value = fr; bp.Q.value = q; const gg = ctx.createGain(); gg.gain.value = g; mix.connect(bp).connect(gg).connect(out); });
+    const os = [-5, 5].map(d => padOsc('sawtooth', f, mix, t, end, 0.5, d)); os.forEach(o => vib.push(padLfo(4.6 + Math.random() * 0.6, 9, o.detune, t, end))); return os.concat(vib); } },
+  organ: { name: 'Soft organ', bright: 2.6, gain: 0.9, attack: 1.2, release: 1, make: (f, out, t, end) => {
+    const trem = ctx.createGain(); trem.gain.value = 0.85; trem.connect(out);
+    const os = [[0.5, 0.45], [1, 0.8], [2, 0.3], [3, 0.12]].map(([m, g]) => padOsc('sine', f * m, trem, t, end, g)); return os.concat([padLfo(0.9, 0.12, trem.gain, t, end)]); } },
+  bowed: { name: 'Bowed', bright: 1.8, gain: 2.2, attack: 3.2, release: 2, make: (f, out, t, end) => {
+    const lp = ctx.createBiquadFilter(); lp.type = 'lowpass'; lp.Q.value = 1.2; lp.connect(out);
+    lp.frequency.setValueAtTime(f * 1.2, t); lp.frequency.linearRampToValueAtTime(f * 4, t + 3.5);
+    return [padOsc('sawtooth', f, lp, t, end, 0.45, -3), padOsc('triangle', f, lp, t, end, 0.6, 3), padLfo(5, 6, lp.detune, t, end)]; } },
+  shimmer: { name: 'Shimmer', bright: 8, gain: 0.9, attack: 4, release: 2.6, make: (f, out, t, end) => {
+    const fl = ctx.createGain(); fl.gain.value = 0.6; fl.connect(out);
+    return [padOsc('sine', f * 2, fl, t, end, 0.7), padOsc('sine', f * 4, fl, t, end, 0.3, 5), padOsc('sine', f, out, t, end, 0.3), padLfo(0.4 + Math.random() * 0.4, 0.35, fl.gain, t, end)]; } }
+};
+const PAD_TRIM = { warm: 4.2, glass: 4.2, air: 4.11, tape: 2.96, strings: 3.75, choir: 2.58, organ: 4.96, bowed: 2.48, shimmer: 5.77 };
+function padVoice(kind, midi, vel, t, len, held, out) {
+  const P = PADS[kind], f = 440 * Math.pow(2, (midi - 69) / 12), g = ctx.createGain(), lp = ctx.createBiquadFilter();
+  lp.type = 'lowpass'; lp.Q.value = 0.4; lp.frequency.value = Math.min(16000, (held ? 900 : 1500) * P.bright);
+  const peak = 0.05 * vel * P.gain * (PAD_TRIM[kind] || 1), atk = held ? Math.min(P.attack * 0.5, 1.2) : 0.03, rel = held ? P.release * 0.6 : 0.14;
+  g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(peak, t + atk); g.gain.setValueAtTime(peak, t + Math.max(atk, len)); g.gain.setTargetAtTime(0, t + Math.max(atk, len), rel);
+  const end = t + Math.max(atk, len) + rel * 6 + 0.5;
+  P.make(f, lp, t, end); lp.connect(g).connect(out);
+  if (P.wet) { const ws = ctx.createGain(); ws.gain.value = P.wet; g.connect(ws).connect(verbIn); }
 }
-function tcVoice(name, midi, vel, t, L, out) {
-  const ac = ctx, f = 440 * Math.pow(2, (midi - 69) / 12), env = ac.createGain(), trim = ac.createGain();
-  trim.gain.value = TCV_G[name] || 2; env.connect(trim).connect(out); env.gain.setValueAtTime(0, t);
-  const osc = (type, fr) => { const o = ac.createOscillator(); if (type) o.type = type; o.frequency.value = fr; return o; };
-  const G = (v) => { const g = ac.createGain(); g.gain.value = v; return g; };
-  const lpf = (fr, q) => { const x = ac.createBiquadFilter(); x.type = 'lowpass'; x.frequency.value = fr; if (q) x.Q.value = q; return x; };
-  const life = [];
-  const go = (o, end) => { o.start(t); o.stop(end); };
-  if (name === 'felt') {
-    const lp = lpf(0, 0.4); lp.frequency.setValueAtTime(Math.min(4000, f * 3.2), t); lp.frequency.setTargetAtTime(Math.min(2400, f * 1.4), t, 0.12 * L); lp.connect(env);
-    const o = osc('triangle', f); o.connect(lp); const o2 = osc(0, f * 2.003), g2 = ac.createGain();
-    g2.gain.setValueAtTime(0.22, t); g2.gain.exponentialRampToValueAtTime(0.01, t + 0.5 * L); o2.connect(g2).connect(lp);
-    const k = ac.createBufferSource(); k.buffer = noiseBuf; const kb = lpf(900), kg = ac.createGain();
-    kg.gain.setValueAtTime(0.06, t); kg.gain.exponentialRampToValueAtTime(0.0001, t + 0.03); k.connect(kb).connect(kg).connect(env);
-    env.gain.linearRampToValueAtTime(0.13 * vel, t + 0.012); env.gain.setTargetAtTime(0.13 * vel * 0.35, t + 0.012, 0.35 * L); env.gain.setTargetAtTime(0, t + 1.2 * L, 0.35);
-    go(o, t + 1.2 * L + 2); go(o2, t + 1.2 * L + 2); k.start(t, Math.random() * 0.5); k.stop(t + 0.05);
-  } else if (name === 'flute') {
-    const o = osc(0, f); o.connect(env); const o2 = osc(0, f * 2); o2.connect(G(0.1)).connect(env);
-    const n = ac.createBufferSource(); n.buffer = noiseBuf; n.loop = true; const bp = ac.createBiquadFilter(); bp.type = 'bandpass'; bp.frequency.value = Math.min(5000, f * 2); bp.Q.value = 1.2;
-    const ng = ac.createGain(); ng.gain.setValueAtTime(0.5, t); ng.gain.setTargetAtTime(0.12, t + 0.06, 0.15); n.connect(bp).connect(ng).connect(env);
-    env.gain.linearRampToValueAtTime(0.105 * vel, t + 0.07 + 0.08 * L); env.gain.setTargetAtTime(0.105 * vel * 0.7, t + 0.15 + 0.08 * L, 0.3 * L); env.gain.setTargetAtTime(0, t + 0.7 * L, 0.18 + 0.1 * L);
-    const end = t + 0.7 * L + 1.4; go(o, end); go(o2, end); n.start(t, Math.random() * 0.5); n.stop(end);
-  } else if (name === 'mallet') {
-    const o = osc(0, f), o2 = osc(0, f * 4), g2 = ac.createGain(); g2.gain.setValueAtTime(0.025, t); g2.gain.exponentialRampToValueAtTime(0.0005, t + 0.05 * L);
-    const trem = G(0.85), lfo = osc(0, 4.2 + Math.random() * 0.6), lg = G(0.15); lfo.connect(lg).connect(trem.gain);
-    o.connect(trem); o2.connect(g2).connect(trem); trem.connect(env);
-    env.gain.linearRampToValueAtTime(0.13 * vel, t + 0.022); env.gain.exponentialRampToValueAtTime(0.0006, t + 1.6 * L);
-    [o, o2, lfo].forEach(x => go(x, t + 1.7 * L));
-  } else if (name === 'bowed') {
-    const lp = lpf(Math.min(3000, f * 1.8), 0.6); lp.connect(env);
-    const os = [-5, 5].map(d => { const x = osc('sawtooth', f); x.detune.value = d; x.connect(lp); return x; });
-    const s1 = osc(0, f); s1.connect(G(1.4)).connect(lp); os.push(s1);
-    env.gain.linearRampToValueAtTime(0.042 * vel, t + 0.3 + 0.3 * L); env.gain.setValueAtTime(0.042 * vel, t + 0.3 + 0.6 * L); env.gain.setTargetAtTime(0, t + 0.3 + 0.6 * L, 0.5 + 0.3 * L);
-    os.forEach(x => go(x, t + 0.3 + 0.6 * L + 4));
-  } else if (name === 'pluck') {
-    const o = osc('sawtooth', f), lp = lpf(0, 4); lp.frequency.setValueAtTime(f * 8, t); lp.frequency.exponentialRampToValueAtTime(f * 1.2, t + 0.35 * L);
-    o.connect(lp).connect(env); env.gain.linearRampToValueAtTime(0.32 * vel, t + 0.005); env.gain.exponentialRampToValueAtTime(0.0008, t + 0.7 * L); go(o, t + 0.75 * L);
-  } else if (name === 'bell') {
-    const car = osc(0, f), mod = osc(0, f * 3.5), mg = ac.createGain(); mg.gain.setValueAtTime(f * 2.2, t); mg.gain.exponentialRampToValueAtTime(f * 0.05, t + 1.4 * L);
-    mod.connect(mg).connect(car.frequency); car.connect(env); env.gain.linearRampToValueAtTime(0.16 * vel, t + 0.004); env.gain.exponentialRampToValueAtTime(0.0006, t + 2.2 * L); go(car, t + 2.3 * L); go(mod, t + 2.3 * L);
-  } else if (name === 'pad') {
-    const lp = lpf(f * 3, 0.5); lp.connect(env);
-    [-9, 0, 9].forEach(d => { const o = osc('sawtooth', f); o.detune.value = d; o.connect(lp); go(o, t + 3.2 * L); });
-    env.gain.linearRampToValueAtTime(0.1 * vel, t + 0.35 * L); env.gain.setTargetAtTime(0, t + 0.6 * L, 0.7);
-  } else if (name === 'marimba') {
-    const o = osc(0, f), o2 = osc(0, f * 4), g2 = ac.createGain(); g2.gain.setValueAtTime(0.5, t); g2.gain.exponentialRampToValueAtTime(0.001, t + 0.08 * L);
-    o.connect(env); o2.connect(g2).connect(env); env.gain.linearRampToValueAtTime(0.3 * vel, t + 0.002); env.gain.exponentialRampToValueAtTime(0.0006, t + 0.55 * L); go(o, t + 0.6 * L); go(o2, t + 0.6 * L);
-  } else if (name === 'string') {
-    const src = ac.createBufferSource(); src.buffer = tcString(f); const lp = lpf(Math.min(9000, f * 10)); src.connect(lp).connect(env);
-    env.gain.linearRampToValueAtTime(0.75 * vel, t + 0.003); env.gain.exponentialRampToValueAtTime(0.0006, t + 2.3 * L); src.start(t); src.stop(t + 2.4 * L);
-  } else if (name === 'epiano') {
-    const car = osc(0, f), mod = osc(0, f), mg = ac.createGain(); mg.gain.setValueAtTime(f * 1.15 * vel, t); mg.gain.exponentialRampToValueAtTime(f * 0.12, t + 0.6 * L); mod.connect(mg).connect(car.frequency);
-    const tine = osc(0, f * 14), tg = ac.createGain(); tg.gain.setValueAtTime(0.018 * vel, t); tg.gain.exponentialRampToValueAtTime(0.0001, t + 0.12 * L);
-    car.connect(env); tine.connect(tg).connect(env); env.gain.linearRampToValueAtTime(0.24 * vel, t + 0.004); env.gain.exponentialRampToValueAtTime(0.0006, t + 1.8 * L);
-    [car, mod, tine].forEach(x => go(x, t + 1.9 * L));
-  } else if (name === 'kalimba') {
-    const o = osc(0, f), o2 = osc(0, f * 5.95), g2 = ac.createGain(); g2.gain.setValueAtTime(0.35, t); g2.gain.exponentialRampToValueAtTime(0.0001, t + 0.15 * L);
-    o.connect(env); o2.connect(g2).connect(env); env.gain.linearRampToValueAtTime(0.28 * vel, t + 0.002); env.gain.exponentialRampToValueAtTime(0.0006, t + 0.9 * L); go(o, t + L); go(o2, t + L);
-  } else if (name === 'organ') {
-    const trem = G(0.85), lfo = osc(0, 5.5 + Math.random() * 0.7), ld = G(0.15); lfo.connect(ld).connect(trem.gain); trem.connect(env);
-    const off = t + 0.9 * L, end = off + 0.15;
-    [[0.5, 0.5], [1, 1], [2, 0.55], [3, 0.3], [4, 0.25], [6, 0.1]].forEach(([r, g]) => { if (f * r > 9000) return; const o = osc(0, f * r); o.connect(G(g)).connect(trem); go(o, end); });
-    const lvl = 0.085 * (0.6 + 0.4 * vel); env.gain.linearRampToValueAtTime(lvl, t + 0.012); env.gain.setValueAtTime(lvl, off); env.gain.linearRampToValueAtTime(0, off + 0.12); go(lfo, end);
-  } else if (name === 'junopad' || name === 'junostrings' || name === 'junokeys') {
-    const kind = name.slice(4), lp = lpf(0, kind === 'keys' ? 2.5 : kind === 'pad' ? 1.6 : 0.7), hp = ac.createBiquadFilter(); hp.type = 'highpass'; hp.frequency.value = 90;
-    const mix = ac.createGain(); mix.connect(lp).connect(hp).connect(env); const saw = osc('sawtooth', f); saw.connect(mix); const os = [saw];
-    if (kind !== 'strings') { const p = osc('square', f); p.detune.value = 3; p.connect(G(0.4)).connect(mix); os.push(p); const s = osc('square', f / 2); s.connect(G(0.3)).connect(mix); os.push(s); }
-    let end;
-    if (kind === 'pad') { lp.frequency.setValueAtTime(f * 1.2, t); lp.frequency.linearRampToValueAtTime(Math.min(9000, f * 4), t + 0.9 * L); lp.frequency.setTargetAtTime(Math.min(9000, f * 2.5), t + 0.9 * L, 1);
-      env.gain.linearRampToValueAtTime(0.1 * vel, t + 0.5 * L); env.gain.setValueAtTime(0.1 * vel, t + 1.3 * L); env.gain.setTargetAtTime(0, t + 1.3 * L, 0.9); end = t + 1.3 * L + 4;
-    } else if (kind === 'strings') { lp.frequency.value = Math.min(9000, f * 5); env.gain.linearRampToValueAtTime(0.13 * vel, t + 0.22 * L); env.gain.setValueAtTime(0.13 * vel, t + 1.2 * L); env.gain.setTargetAtTime(0, t + 1.2 * L, 0.6); end = t + 1.2 * L + 3;
-    } else { lp.frequency.setValueAtTime(Math.min(9000, f * (3 + 6 * vel)), t); lp.frequency.setTargetAtTime(f * 1.4, t, 0.18 * L);
-      env.gain.linearRampToValueAtTime(0.11 * vel, t + 0.005); env.gain.setValueAtTime(0.11 * vel, t + 0.01); env.gain.setTargetAtTime(0.11 * vel * 0.4, t + 0.01, 0.25 * L); env.gain.setTargetAtTime(0, t + 0.8 * L, 0.3); end = t + 0.8 * L + 2; }
-    os.forEach(x => go(x, end));
-  } else if (name === 'breath') {
-    const n = ac.createBufferSource(); n.buffer = noiseBuf; n.loop = true; const bp = ac.createBiquadFilter(); bp.type = 'bandpass'; bp.frequency.value = f; bp.Q.value = 18;
-    const ng = G(0.4 * 2.2 + 0.5); const o = osc(0, f); n.connect(bp).connect(ng).connect(env); o.connect(G(0.35)).connect(env);
-    env.gain.linearRampToValueAtTime(0.16 * vel, t + 0.09 * L); env.gain.setTargetAtTime(0, t + 0.35 * L, 0.25); n.start(t); n.stop(t + 1.6 * L); go(o, t + 1.6 * L);
-  } else if (name === 'choir') {
-    const mix = G(1), body = lpf(2400); mix.connect(body).connect(G(0.18)).connect(env);
-    [[300, 1], [870, 0.5], [2240, 0.25]].forEach(([fr, g]) => { const bp = ac.createBiquadFilter(); bp.type = 'bandpass'; bp.frequency.value = fr; bp.Q.value = 2.5; mix.connect(bp).connect(G(g)).connect(env); });
-    [-8, 0, 8].forEach(d => { const o = osc('sawtooth', f); o.detune.value = d; o.connect(mix); go(o, t + 3.2 * L); });
-    env.gain.linearRampToValueAtTime(0.17 * vel, t + 0.4 * L); env.gain.setTargetAtTime(0, t + 0.9 * L, 0.6);
-  } else {   // soft
-    const o1 = osc('triangle', f), o2 = osc('square', f); o2.detune.value = 7; o1.connect(env); o2.connect(G(0.18)).connect(env);
-    env.gain.linearRampToValueAtTime(0.2 * vel, t + 0.03); env.gain.exponentialRampToValueAtTime(0.0008, t + 1.1 * L); go(o1, t + 1.2 * L); go(o2, t + 1.2 * L);
-  }
-}
-const TCV_NAMES = { felt: 'Felt piano', flute: 'Flute', mallet: 'Yarn mallets', bowed: 'Bowed', pluck: 'Pluck', bell: 'Bell', pad: 'Pad', marimba: 'Synth marimba', string: 'Plucked string', epiano: 'Electric piano', kalimba: 'Kalimba', organ: 'Organ', junopad: 'Juno pad', junostrings: 'Juno strings', junokeys: 'Juno keys', soft: 'Soft synth', breath: 'Breath', choir: 'Choir' };
 
 const cityReg = snd => snd === 'sub' ? 36 : snd === 'marimbarec' ? 48 : 60;
 function cityMidi(deg, base, oct) {
@@ -1210,7 +1156,7 @@ function cityStep(t, n) {
       const root = CPROGS[(Math.abs(Math.round(WX.pres)) + JOURNEY.shift) % 4][Math.floor(bar / (held ? 2 : 1)) % 4], v = (s === 0 || s === 2 ? 1 : 0.78), len = held ? ss * 30 : ss * (M === 'offbeat' ? 2.4 : 3);
       [0, 2, 4].forEach((k, j) => {
         let m = cityMidi(root + k, 48, CH.oct); if (m > 72 + ROOT) m -= 12;
-        if (TCV_NAMES[CH.snd]) tcVoice(CH.snd, m, v, t + j * (held ? 0.012 : 0.004), Math.max(0.3, Math.min(3, len / 1.2)), CA.cd);
+        if (PADS[CH.snd]) padVoice(CH.snd, m, v, t + j * (held ? 0.012 : 0.004), len, held, CA.cd);
         else citySamp(CH.snd, m, t + j * (held ? 0.012 : 0.004), 0.55 * v, CA.cd, len);
       });
       midiMel(cityMidi(root, 48, CH.oct), t, 0.6 * v, 'city');
