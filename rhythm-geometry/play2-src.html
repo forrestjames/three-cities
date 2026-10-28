@@ -423,11 +423,11 @@
     .ringwrap { grid-row: 1; height: 100%; width: auto; max-width: 100%; max-height: 100%; }
     .ringwrap::before { inset: -2%; }
     .gdesc { position: static; grid-row: 2; width: 100%; max-width: none; margin-top: 6px; padding: 7px 12px; font-size: 12px; pointer-events: auto; cursor: pointer; border-radius: 0 12px 12px 0; transition: background .2s; }
-    .gdesc b { font-size: 15px; display: flex; justify-content: space-between; align-items: center; }
-    .gdesc b::after { content: "\25BE"; font-size: 11px; color: var(--ink-dim); transition: transform .25s; }
+    .gdesc { position: relative; }
+    .gdesc b { font-size: 15px; display: block; padding-right: 22px; }
+    .gdesc b::after { content: "\25BE"; position: absolute; right: 12px; top: 9px; font-size: 11px; color: var(--ink-dim); transition: transform .25s; }
     .gdesc.open b::after { transform: rotate(180deg); }
     .gdesc:not(.open) { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 3; overflow: hidden; }
-    .gdesc:not(.open) b { display: flex; }
     .gdesc:not(.open) small { display: none; }
     .gdesc:not(.open) { max-height: 66px; }
     .gdesc.open { width: auto; position: absolute; left: 8px; right: 8px; bottom: 16px; z-index: 5; background: rgba(14,8,16,.97); border: 1px solid var(--line2); border-left: 2px solid var(--accent); border-radius: 0 14px 14px 0; box-shadow: 0 10px 30px rgba(0,0,0,.5); animation: sheetUp .25s ease; }
@@ -447,6 +447,13 @@
     .mixrow { grid-column: 1 / -1; grid-row: 2; gap: 4px; }
     .sp { width: 98px; padding: 5px 8px 6px; } .sp select { font-size: 15px; } .sp .lab { font-size: 8.5px; }
     .mtrack { margin: 0 18px; min-width: 30px; height: 44px; } .mtrack::before { top: 18px; } .mh { top: 6px; }
+
+    .app2 .bar > .b-quick { display: grid; grid-template-columns: minmax(0,1fr) minmax(0,1fr) auto; gap: 2px 12px; padding: 6px 14px 8px; align-items: end; }
+    .app2 .b-quick .q { display: grid; grid-template-columns: 1fr auto; gap: 0 6px; align-items: center; }
+    .app2 .b-quick .q .lab { grid-column: 1; grid-row: 1; } .app2 .b-quick .q b { grid-column: 2; grid-row: 1; font-size: 11px; }
+    .app2 .b-quick .q input.big { grid-column: 1 / -1; grid-row: 2; height: 30px; }
+    .app2 .b-quick .qkit { display: none; } .app2 .b-quick .qgate { align-self: end; height: 36px; padding: 0 12px; }
+    .app2 .stage { grid-template-rows: minmax(0,1fr) 56px; } .gdesc:not(.open) { max-height: none; -webkit-line-clamp: 2; }
     /* the controls come up from the bottom edge */
     .sheet, .app2[data-lay="b"] .sheet { position: fixed; left: 0; right: 0; bottom: 0; top: auto; width: auto; margin: 0; max-height: 78dvh; z-index: 9; border-radius: 24px 24px 0 0; border-width: 1px 0 0; padding: 0 14px calc(env(safe-area-inset-bottom, 0px) + 16px); overscroll-behavior: contain; -webkit-overflow-scrolling: touch; }
     .sheet:not([hidden]) { animation: sheetUp .3s cubic-bezier(.2,.8,.2,1); }
@@ -464,6 +471,7 @@
     .pickers { grid-template-columns: minmax(0,1fr) minmax(0,1fr) 40px auto; }
     .gdesc:not(.open) { display: block; font-size: 0; padding: 6px 12px; } .gdesc:not(.open) b { margin-bottom: 0; }
     .stage { grid-template-rows: minmax(0,1fr) 42px; } .gdesc:not(.open) { max-height: 38px; }
+    .app2 .mixctl > .lab, .app2 .xcurve { display: none; } .app2 .mixctl { grid-template-columns: 1fr; } .app2 .mixrow { grid-row: 1; }
     .bar > .b-tempo { padding-top: 22px; } .bar > * { padding-top: 5px; padding-bottom: 5px; } .fctrack, .fctrack input { height: 26px; } .mtrack { height: 38px; } .mtrack::before { top: 15px; } .mh { top: 3px; }
     #play { width: 48px; height: 48px; } .b-fc .fct + .fctrack { margin-top: -2px; }
   }
@@ -479,6 +487,17 @@
   .cc-sub { margin: 12px 0 8px; padding-top: 10px; border-top: 1px solid var(--line); }
   .cc-note { margin: 8px 0 0; font-size: 11px; line-height: 1.5; color: var(--ink-dim); }
   .citycard select { background-color: var(--strip); color: var(--ink); border: 1px solid var(--line2); border-radius: 10px; padding: 8px 10px; color-scheme: dark; }
+
+  .b-quick { grid-column: 1 / -1; display: flex; align-items: center; gap: 10px 26px; padding: 8px 24px 10px; border-top: 1px solid var(--line); border-left: 0 !important; }
+  .bar > .b-quick { padding: 8px 24px 10px; }
+  .b-quick .q { display: flex; align-items: center; gap: 10px; flex: 1 1 200px; min-width: 0; }
+  .b-quick .q b { min-width: 3.5ch; font-weight: 500; font-size: 12px; text-align: right; }
+  .b-quick input.big { flex: 1; min-width: 60px; }
+  .b-quick .qkit, .b-quick .qgate { flex: none; } .b-quick .btn { border-radius: 999px; padding: 7px 14px; font-size: 11px; letter-spacing: .06em; }
+  .qkit { display: flex; align-items: center; }
+  .tabnote { margin: 0 0 12px; font-size: 12px; color: var(--ink-dim); line-height: 1.5; }
+  .hint b { font-weight: 500; color: var(--ink); }
+  #tab-sound .fxrow, #tab-feel .fxrow { margin-bottom: 4px; }
 </style>
 </head>
 <body>
@@ -569,19 +588,42 @@
         <input id="blend" class="sr" type="range" min="0" max="100" value="0" aria-label="Blend between the two sounds" tabindex="-1">
       </div>
     </div>
-  </footer>
+    <div class="b-quick" id="bQuick">
+      <label class="q" title="Chance for everything: lower it and hits drop out"><span class="lab">Chance</span><input id="qChance" class="big" type="range" min="0" max="100" value="100" aria-label="Chance for everything"><b id="qChanceV">100%</b></label>
+      <div class="q" title="How loud the weather rings are against the genre"><span class="lab">Weather</span><input id="wxAmt" class="big" type="range" min="0" max="100" value="30" aria-label="Weather layer level" title="How loud the weather rings are against the genre"><b id="wxAmtV">30%</b></div>
+      <button id="wxGate" class="btn qgate" type="button" aria-pressed="true" title="Bring each weather ring in and out in phrases, so the genre's rhythm is easy to hear">In and out</button>
+      <div class="q qkit"><button id="kitAuto2" class="btn" type="button" aria-pressed="true" title="Same switch as the chip on the bar">Kit follows genre</button></div>
+    </div>
+    </footer>
 
   <div class="scrim" id="scrim" hidden></div>
   <section class="sheet" id="sheet" hidden aria-label="Edit the mix and the settings">
     <div class="tabs" role="tablist">
-      <button type="button" role="tab" data-tab="mix" aria-selected="true">Mix</button>
-      <button type="button" role="tab" data-tab="perform" aria-selected="false">Perform</button>
+      <button type="button" role="tab" data-tab="sound" aria-selected="true">Sound</button>
+      <button type="button" role="tab" data-tab="city" aria-selected="false">City</button>
+      <button type="button" role="tab" data-tab="mix" aria-selected="false">Mix</button>
+      <button type="button" role="tab" data-tab="feel" aria-selected="false">Feel</button>
       <button type="button" role="tab" data-tab="effects" aria-selected="false">Effects</button>
-      <button type="button" role="tab" data-tab="wander" aria-selected="false">Wander and key</button>
       <button type="button" role="tab" data-tab="midi" aria-selected="false">MIDI</button>
       <button type="button" class="sheetx" id="sheetX" aria-label="Close the controls">×</button>
     </div>
-    <div class="panel on" id="tab-mix">
+    <div class="panel on" id="tab-sound"><div class="fx2">
+      <p class="tabnote">What the drums and the weather rings sound like. The kit itself is picked in the bar.</p>
+      <div class="fxrow">
+        <div class="grp"><span class="fxlab">Drum kit</span><button id="kitAuto" class="btn" type="button" aria-pressed="true" title="On: the drum kit follows the genre, such as the TR-909 for house and the TR-808 for drum and bass. Pick a kit yourself and this turns off.">Follows genre</button></div>
+      </div>
+      <p class="hint">Follows genre: the kit changes when you change genre, for example the TR-909 for house and the TR-808 for drum and bass. Pick a kit in the bar yourself and it stops following.</p>
+      <div class="fxrow">
+        <div class="grp"><span class="fxlab">Arrangement</span>
+            <select id="arr" aria-label="How the weather rings join the genre rows" title="Roles: four weather rings each get a drum job and answer the genre. Melody: two become a bass line and a motif. Original: every ring plays random hits.">
+              <option value="roles">Roles and answers</option><option value="melody">Weather melody</option><option value="orig">Original, all random</option></select>
+          </div>
+      </div>
+      <p class="hint"><b>Roles and answers</b>: four weather rings each get a drum job (off-beat hat, backbeat, shaker, ghost note) and leave room for the genre. <b>Weather melody</b>: two rings become a bass line and a motif. <b>Original, all random</b>: every ring plays its own random pattern, at full level, the way the page first sounded.</p>
+      <div class="fxrow"><div class="grp"><span class="fxlab">Weather rings play</span><span id="wxVoiceRow" class="wxvoicerow" style="display:flex;align-items:center;gap:8px"><span class="lab">Voice</span><select id="wxVoice" aria-label="Weather voice" title="The sound the weather rings play"><option value="kalimba">Kalimba</option><option value="harp">Harp</option><option value="rhodes">Electric piano</option><option value="steel">Steel pan</option><option value="latin">Congas and bongos</option><option value="kit">The drum kit</option></select></span></div></div>
+      <p class="hint">The sound the weather rings use. Kit means the drum kit itself.</p>
+    </div></div>
+    <div class="panel" id="tab-city"><div class="fx2">
       <section class="citycard" id="cityCard" aria-label="The city voice">
         <div class="cc-top"><span class="trig" aria-hidden="true"></span><div class="cc-name"><b id="cityName">The city voice</b><i id="cityWhy"></i></div>
           <button class="btn pad" id="cityMute" type="button" aria-pressed="false" title="Mute the city voice and its chords"><i class="led"></i><span class="m0">Mute</span><span class="m1">Muted</span></button></div>
@@ -609,29 +651,8 @@
         <p class="cc-note" id="chordNote"></p>
         <p class="cc-note">Recorded sounds come from the Three Cities set: Salamander Grand Piano (CC BY 3.0), VSCO 2 harp (CC0), Versilian marimba, xylophone and mallets (CC0).</p>
       </section>
-      <div class="mixer" id="mixer"></div></div>
-    <div class="panel" id="tab-perform"><div class="fx2"><div class="fxrow">
-          <div class="grp"><span class="fxlab">Drum kit</span><button id="kitAuto" class="btn" type="button" aria-pressed="true" title="On: the drum kit follows the genre, such as the TR-909 for house and the TR-808 for drum and bass. Pick a kit yourself and this turns off.">Follows genre</button></div>
-          <div class="grp"><span class="fxlab">Arrangement</span>
-            <select id="arr" aria-label="How the weather rings join the genre rows" title="Roles: four weather rings each get a drum job and answer the genre. Melody: two become a bass line and a motif. Original: every ring plays random hits.">
-              <option value="roles">Roles and answers</option><option value="melody">Weather melody</option><option value="orig">Original, all random</option></select>
-          </div>
-          <div class="grp"><span class="fxlab">Guest weather</span>
-            <select id="guest" aria-label="Guest city whose weather drives the rings" title="Let another city's weather drive the rings, so the same genre sounds different"><option value="-1">None</option></select>
-            <select id="guestScope" aria-label="What the guest supplies" title="Temperature only, or everything the rings listen to"><option value="temp">Temperature only</option><option value="all">Everything</option></select>
-          </div>
-          <div class="grp"><span class="fxlab">Weather layer</span>
-            <input id="wxAmt" class="big" type="range" min="0" max="100" value="30" aria-label="Weather layer level" title="How loud the weather rings are against the genre">
-            <button id="wxGate" class="btn" type="button" aria-pressed="true" title="Bring each weather ring in and out in phrases, so the genre's rhythm is easy to hear">In and out</button>
-            <span id="wxVoiceRow" class="wxvoicerow" style="display:flex;align-items:center;gap:8px"><span class="lab">Voice</span><select id="wxVoice" aria-label="Weather voice" title="The sound the weather rings play"><option value="kalimba">Kalimba</option><option value="harp">Harp</option><option value="rhodes">Electric piano</option><option value="steel">Steel pan</option><option value="latin">Congas and bongos</option><option value="kit">The drum kit</option></select></span>
-          </div>
-          <div class="grp"><span class="fxlab">Stutter</span>
-            <button class="btn" data-st="2" type="button" aria-pressed="false" title="Repeat the last hits every eighth note">1/8</button>
-            <button class="btn" data-st="1" type="button" aria-pressed="false" title="Repeat the last hits every sixteenth note">1/16</button>
-            <button class="btn" data-st="0.5" type="button" aria-pressed="false" title="A fast roll">Roll</button></div>
-          <div class="grp" id="kFilter" title="DJ filter. Turn left to close it, right to thin it out. Double click to centre."></div>
-          <div class="grp" id="kChance" title="Chance for everything: lower it and hits drop out"></div>
-        </div></div></div>
+    </div></div>
+    <div class="panel" id="tab-mix"><p class="tabnote">One strip for each ring. Tap a name to hear it. Fader, pan, filter, stutter and mute for each.</p><div class="mixer" id="mixer"></div></div>
     <div class="panel" id="tab-effects"><div class="fx2"><div class="pedals">
       <section class="pedal delay"><div class="pname">Delay</div>
         <div class="kgrid" id="kDelay"></div>
@@ -649,13 +670,29 @@
             <select id="lfoRate" aria-label="LFO rate" title="How fast it sweeps, in bars and note lengths"></select>
             <select id="lfoShape" aria-label="LFO shape" title="The shape of the sweep"></select>
             <div class="grp" id="kLfo" title="How deep the sweep goes"></div></div></div></div></div>
-    <div class="panel" id="tab-wander"><div class="fx2"><div class="fxrow">
-          <div class="grp"><span class="fxlab">Wander</span>
+    <div class="panel" id="tab-feel"><div class="fx2">
+      <p class="tabnote">How the whole mix moves. Chance and the weather layer are on the bar.</p>
+      <div class="fxrow">
+        <div class="grp"><span class="fxlab">Wander</span>
             <button id="autoFlt" class="btn" type="button" aria-pressed="true" title="Each drum's filter closes by itself now and then and holds for 1, 2, 4 or 8 bars. Calm weather holds longer.">Filters</button>
             <button id="autoPan" class="btn" type="button" aria-pressed="true" title="Each drum swings to one side for 1, 2, 4 or 8 bars, then comes back">Pan</button>
             <div class="grp" id="kWander" title="How often the filters and pans wander"></div></div>
-          <div class="grp"><span class="fxlab">Key</span><select id="root" aria-label="Key"></select><button id="tuneOn" class="btn" type="button" aria-pressed="true" title="On: every drum with a clear pitch is moved to a note of the key and scale. Off: drums sound as recorded.">In key</button><button id="remix" class="btn" type="button" title="Turn every ring to a new starting point. Same step counts, new groove.">Shift rings</button></div>
-        </div></div></div>
+        <div class="grp"><span class="fxlab">Key</span><select id="root" aria-label="Key"></select><button id="tuneOn" class="btn" type="button" aria-pressed="true" title="On: every drum with a clear pitch is moved to a note of the key and scale. Off: drums sound as recorded.">In key</button><button id="remix" class="btn" type="button" title="Turn every ring to a new starting point. Same step counts, new groove.">Shift rings</button></div>
+      </div>
+      <p class="hint">Wander: filters and pans drift by themselves and hold for 1, 2, 4 or 8 bars. Key: the weather picks it, and In key moves every drum with a clear pitch onto it. Shift rings gives the same step counts a new groove.</p>
+      <div class="fxrow">
+        <div class="grp"><span class="fxlab">Stutter</span>
+            <button class="btn" data-st="2" type="button" aria-pressed="false" title="Repeat the last hits every eighth note">1/8</button>
+            <button class="btn" data-st="1" type="button" aria-pressed="false" title="Repeat the last hits every sixteenth note">1/16</button>
+            <button class="btn" data-st="0.5" type="button" aria-pressed="false" title="A fast roll">Roll</button></div>
+        <div class="grp" id="kFilter" title="DJ filter. Turn left to close it, right to thin it out. Double click to centre."></div>
+        <div class="grp"><span class="fxlab">Guest weather</span>
+            <select id="guest" aria-label="Guest city whose weather drives the rings" title="Let another city's weather drive the rings, so the same genre sounds different"><option value="-1">None</option></select>
+            <select id="guestScope" aria-label="What the guest supplies" title="Temperature only, or everything the rings listen to"><option value="temp">Temperature only</option><option value="all">Everything</option></select>
+          </div>
+      </div>
+      <p class="hint">Stutter repeats the last hits while you hold it. The filter closes or thins the whole mix. Guest weather lets another city's weather drive the rings.</p>
+    </div></div>
     <div class="panel" id="tab-midi"><div class="fx2"><div class="fxrow"><div class="grp"><span class="fxlab">Send the drums out</span><button id="midiOpen" class="btn" type="button" title="Send the drums to a drum machine or synth over MIDI">MIDI settings</button></div></div></div></div>
   </section>
 </div>
@@ -1514,7 +1551,9 @@ addEventListener('keyup', e => {
 document.querySelectorAll('[data-st]').forEach(b => { const d = +b.dataset.st; momentary(b, () => gDivs.add(d), () => gDivs.delete(d)); });
 // knobs for the whole mix
 const K = {};
-K.chance = knobCell($('kChance'), 'Chance', 100, v => { GCHANCE = v; midiCC(76, v * 127 / 100); }, { size: 'lg', aria: 'Chance for everything', reset: 100 });
+{ const k1 = $('kitAuto'), k2 = $('kitAuto2'), sync = () => k2.setAttribute('aria-pressed', k1.getAttribute('aria-pressed')); k2.addEventListener('click', () => k1.click()); new MutationObserver(sync).observe(k1, { attributes: true, attributeFilter: ['aria-pressed'] }); sync(); }
+$('qChance').addEventListener('input', e => { GCHANCE = +e.target.value; $('qChanceV').textContent = GCHANCE + '%'; midiCC(76, GCHANCE * 127 / 100); });
+$('qChance').addEventListener('dblclick', () => { $('qChance').value = 100; $('qChance').dispatchEvent(new Event('input')); });
 K.filter = knobCell($('kFilter'), 'Filter', 0, v => {
   const f = v / 100, t = ctx.currentTime;
   djLP.frequency.setTargetAtTime(f < 0 ? 200 * Math.pow(100, 1 + f) : 20000, t, 0.03);
@@ -1634,11 +1673,15 @@ $('midiMCh').innerHTML = Array.from({ length: 16 }, (_, i) => `<option value="${
 $('midiMCh').addEventListener('change', () => { MIDI.mch = +$('midiMCh').value; MIDI.prog = null; });
 toggle($('midiMel'), v => MIDI.mel = v);
 $('wxAmt').addEventListener('input', e => { WEATHER.level = +e.target.value; applyWx(); });
+const wxAmtShow = () => { $('wxAmtV').textContent = WEATHER.level + '%'; }; $('wxAmt').addEventListener('input', wxAmtShow);
 $('wxVoice').addEventListener('change', e => setWxVoice(e.target.value));
 $('guest').innerHTML = '<option value="-1">None</option>' + ATLAS.cities.map((c, i) => [c.n, i]).sort((x, y) => x[0].localeCompare(y[0])).map(([n, i]) => `<option value="${i}">${n}</option>`).join('');
 $('guest').addEventListener('change', e => loadGuest(e.target.value));
 $('kitAuto').addEventListener('click', () => { setKitAuto(!KITAUTO.on); if (KITAUTO.on) autoKit(genre.selectedOptions[0] ? genre.selectedOptions[0].text : ''); say(KITAUTO.on ? 'The kit follows the genre.' : 'The kit stays where it is.'); });
-$('arr').addEventListener('change', e => { ARR.v = e.target.value; buildLanes(); say({ roles: 'Roles: the weather rings play hat, clap, shaker and ghost notes around the genre.', melody: 'Melody: two weather rings play a bass line and a motif in the key.', orig: 'Original: every weather ring plays its own random pattern.' }[ARR.v]); });
+$('arr').addEventListener('change', async e => { ARR.v = e.target.value;
+  // Original: every ring at full level, always on, playing the kit
+  if (ARR.v === 'orig') { $('wxAmt').value = 100; WEATHER.level = 100; wxAmtShow(); applyWx(); if ($('wxGate').getAttribute('aria-pressed') === 'true') $('wxGate').click(); try { await setWxVoice('kit'); } catch (err) {} }
+  buildLanes(); say({ roles: 'Roles: the weather rings play hat, clap, shaker and ghost notes around the genre.', melody: 'Melody: two weather rings play a bass line and a motif in the key.', orig: 'Original: every weather ring plays its own random pattern.' }[ARR.v]); });
 $('guestScope').addEventListener('change', e => { GUEST.scope = e.target.value; if (GUEST.wx) buildLanes(); wxPaint(); });
 // the round dial in the middle of design A. 270 degrees of travel, from bottom left (0) to bottom right (100)
 const DIAL = { c: 500, r: 96, a0: -225, span: 270 };
@@ -1654,7 +1697,7 @@ function dialSet(e) {
   const svg = $('wxDial'), r = svg.getBoundingClientRect(), x = (e.clientX - r.left) / r.width * 1000 - DIAL.c, y = (e.clientY - r.top) / r.height * 1000 - DIAL.c;
   let rel = Math.atan2(y, x) * 180 / Math.PI - DIAL.a0; rel = ((rel % 360) + 360) % 360;
   const v = rel <= DIAL.span ? rel / DIAL.span : (rel - DIAL.span < 360 - rel ? 1 : 0);
-  WEATHER.level = Math.round(v * 100); $('wxAmt').value = WEATHER.level; applyWx();
+  WEATHER.level = Math.round(v * 100); $('wxAmt').value = WEATHER.level; wxAmtShow(); applyWx();
 }
 { const hit = $('wxHit'); let dn = false;
   hit.addEventListener('pointerdown', e => { hit.setPointerCapture(e.pointerId); dn = true; dialSet(e); });
@@ -1845,6 +1888,17 @@ function drawSky() {
 
 // ---------- the picture ----------
 const cv = $('rings'), g2 = cv.getContext('2d'), W = cv.width, CX = W / 2;
+// on a phone the ring is sized by script, so it can never run under the genre note
+function fitRing() {
+  const w = document.querySelector('.ringwrap'), st = document.querySelector('.stage');
+  if (!matchMedia('(max-width: 700px) and (min-height: 560px)').matches) { w.style.width = w.style.height = ''; return; }
+  const cs = getComputedStyle(st), note = parseFloat(cs.gridTemplateRows.split(' ')[1]) || 56;
+  const pad = (a, b) => parseFloat(cs[a]) + parseFloat(cs[b]);
+  const side = Math.floor(Math.min(st.clientHeight - pad('paddingTop', 'paddingBottom') - note - 8, st.clientWidth - pad('paddingLeft', 'paddingRight')));
+  w.style.width = w.style.height = Math.max(120, side) + 'px';
+}
+addEventListener('resize', fitRing); addEventListener('orientationchange', fitRing);
+if (window.ResizeObserver) new ResizeObserver(fitRing).observe(document.querySelector('.stage')); fitRing();
 function draw() {
   g2.clearRect(0, 0, W, W);
   drawSky();
@@ -2054,8 +2108,8 @@ function setLay(l) {
   else { $('railrows').appendChild($('mixer')); $('railmix').appendChild($('mixctl')); }
   document.querySelector('.tabs [data-tab="mix"]').hidden = l === 'b';
   SEL = -1; lanes.forEach(m => m.el.classList.remove('open'));
-  if (l === 'b' && document.querySelector('.tabs [aria-selected="true"]').dataset.tab === 'mix') showTab('perform');
-  if (l === 'a' && !sheet.hidden) showTab('mix');
+  if (l === 'b' && document.querySelector('.tabs [aria-selected="true"]').dataset.tab === 'mix') showTab('sound');
+  if (l === 'a' && !sheet.hidden) showTab('sound');
   try { localStorage.setItem('rg2lay', l); } catch (e) {}
   try { history.replaceState(null, '', '#' + l); } catch (e) {}
 }
