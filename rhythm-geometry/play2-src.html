@@ -608,6 +608,7 @@
       <button type="button" role="tab" data-tab="city" aria-selected="false">City</button>
       <button type="button" role="tab" data-tab="mix" aria-selected="false">Mix</button>
       <button type="button" role="tab" data-tab="feel" aria-selected="false">Feel</button>
+      <button type="button" role="tab" data-tab="journey" aria-selected="false">Journey</button>
       <button type="button" role="tab" data-tab="effects" aria-selected="false">Effects</button>
       <button type="button" role="tab" data-tab="midi" aria-selected="false">MIDI</button>
       <button type="button" class="sheetx" id="sheetX" aria-label="Close the controls">×</button>
@@ -615,6 +616,7 @@
     <div class="panel on" id="tab-sound"><div class="fx2">
       <p class="tabnote">What the drums and the weather rings sound like. The kit itself is picked in the bar.</p>
       <div class="fxrow">
+        <div class="grp"><span class="fxlab">Genre change</span><button id="keepSet" class="btn" type="button" aria-pressed="true" title="On: picking a new genre in the same city swaps the rhythms and keeps your drum kit, tempo and settings. Off: the genre sets the kit and tempo, as before.">Keep my settings</button></div>
         <div class="grp"><span class="fxlab">Drum kit</span><button id="kitAuto" class="btn" type="button" aria-pressed="true" title="On: the drum kit follows the genre, such as the TR-909 for house and the TR-808 for drum and bass. Pick a kit yourself and this turns off.">Follows genre</button></div>
       </div>
       <p class="hint">Follows genre: the kit changes when you change genre, for example the TR-909 for house and the TR-808 for drum and bass. Pick a kit in the bar yourself and it stops following.</p>
@@ -646,7 +648,7 @@
         <div class="cc-sub"><span class="lab">Chords</span></div>
         <div class="cc-grid">
           <label class="cc-f"><span class="lab">Style</span><select id="chordStyle"><option value="none">Off</option><option value="auto">Auto, from the genre</option><option value="pump">Pumped stabs</option><option value="offbeat">Off-beat stabs</option><option value="held">Held chords</option></select></label>
-          <label class="cc-f"><span class="lab">Sound</span><select id="chordSnd"><option value="warm">Warm pad</option><option value="glass">Glass</option><option value="air">Air</option><option value="tape">Tape strings</option><option value="strings">Strings</option><option value="choir">Choir</option><option value="organ">Soft organ</option><option value="bowed">Bowed</option><option value="shimmer">Shimmer</option><option value="vibes">Soft mallets</option><option value="piano">Grand piano</option><option value="harp">Harp</option><option value="marimbarec">Marimba</option></select></label>
+          <label class="cc-f"><span class="lab">Sound</span><select id="chordSnd"><option value="warm">Warm pad</option><option value="glass">Glass</option><option value="air">Air</option><option value="tape">Tape strings</option><option value="strings">Strings</option><option value="choir">Choir</option><option value="organ">Soft organ</option><option value="bowed">Bowed</option><option value="shimmer">Shimmer</option><option value="junopad">Juno pad</option><option value="junostrings">Juno strings</option><option value="junokeys">Juno keys</option><option value="vibes">Soft mallets</option><option value="piano">Grand piano</option><option value="harp">Harp</option><option value="marimbarec">Marimba</option></select></label>
           <label class="cc-f"><span class="lab">Level</span><input class="big" id="chordLvl" type="range" min="0" max="100" value="50"></label>
           <label class="cc-f"><span class="lab">Delay</span><input class="big" id="chordDel" type="range" min="0" max="100" value="0"></label>
           <label class="cc-f"><span class="lab">Reverb</span><input class="big" id="chordVerb" type="range" min="0" max="100" value="35"></label>
@@ -658,6 +660,16 @@
       </section>
     </div></div>
     <div class="panel" id="tab-mix"><p class="tabnote">One strip for each ring. Tap a name to hear it. Fader, pan, filter, stutter and mute for each.</p><div class="mixer" id="mixer"></div></div>
+    <div class="panel" id="tab-journey"><div class="fx2">
+      <p class="tabnote">The piece builds and breathes over a set number of bars. Tap a section to jump to it on the next bar. Hold keeps you there until you let go, like a DJ keeping the drop.</p>
+      <div class="fxrow">
+        <div class="grp"><span class="fxlab">Journey</span><button id="jOn" class="btn" type="button" aria-pressed="true">On</button></div>
+        <div class="grp"><span class="fxlab">Length</span><span id="jLen"><button class="btn" type="button" data-len="16" aria-pressed="false">16 bars</button> <button class="btn" type="button" data-len="32" aria-pressed="true">32 bars</button> <button class="btn" type="button" data-len="64" aria-pressed="false">64 bars</button></span></div>
+      </div>
+      <div class="fxrow"><div class="grp"><span class="fxlab">Sections</span><span id="jSecs"><button class="btn" type="button" data-sec="intro" aria-pressed="false" title="Kick and one ring">Intro</button> <button class="btn" type="button" data-sec="groove" aria-pressed="false" title="Three genre rows and three rings">Groove</button> <button class="btn" type="button" data-sec="build" aria-pressed="false" title="More rings and chords, with a fill">Build</button> <button class="btn" type="button" data-sec="full" aria-pressed="false" title="Everything at once">Full</button> <button class="btn" type="button" data-sec="break" aria-pressed="false" title="The kick drops out, the chords carry on">Break</button> <button class="btn" type="button" data-sec="return" aria-pressed="false" title="Everything comes back">Return</button></span></div>
+        <div class="grp"><span class="fxlab">Stay</span><button id="jHold" class="btn" type="button" aria-pressed="false" title="Stay on the section you last tapped until you turn this off">Hold</button></div></div>
+      <p class="tabnote">The DJ filter and crossfader are on the Feel tab and the bar.</p>
+    </div></div>
     <div class="panel" id="tab-effects"><div class="fx2"><div class="pedals">
       <section class="pedal delay"><div class="pname">Delay</div>
         <div class="kgrid" id="kDelay"></div>
@@ -906,12 +918,12 @@ function wxPattern(l) { const c = wxCycle(l), on = clamp(Math.round(c * (0.3 + (
 // A slow arrangement over 16, 32 or 64 bars, so the piece builds and breathes instead of looping:
 // intro (kick and one ring) > groove > build (with a fill) > full > break (the kick drops out) > return.
 // At every eighth bar one weather ring turns to a new starting point, and every sixteenth the chords move to a new progression.
-const JOURNEY = { on: true, len: 32, rot: 0, shift: 0, bar: -1, last: '' };
+const JOURNEY = { on: true, len: 32, rot: 0, shift: 0, bar: -1, last: '', off: 0, hold: '' };
 const JSECT = [[0.125, 'intro', { wx: 1, rows: 1, kick: 1, city: 0, chords: 0 }], [0.375, 'groove', { wx: 3, rows: 3, kick: 1, city: 1, chords: 0 }], [0.5, 'build', { wx: 5, rows: 3, kick: 1, city: 1, chords: 1, fill: 1 }],
   [0.75, 'full', { wx: 8, rows: 3, kick: 1, city: 1, chords: 1 }], [0.875, 'break', { wx: 2, rows: 1, kick: 0, city: 1, chords: 1, fill: 1 }], [1.01, 'return', { wx: 8, rows: 3, kick: 1, city: 1, chords: 1 }]];
 function jScene(bar) {
-  const u = (bar % JOURNEY.len) / JOURNEY.len, e = JSECT.find(x => u < x[0]);
-  const lastBar = (bar % JOURNEY.len) + 1 >= e[0] * JOURNEY.len - 1e-6 && e[2].fill;   // the final bar of a build or a break gets a fill
+  const bb = bar + JOURNEY.off, u = (((bb % JOURNEY.len) + JOURNEY.len) % JOURNEY.len) / JOURNEY.len, e = (JOURNEY.hold && JSECT.find(x => x[1] === JOURNEY.hold)) || JSECT.find(x => u < x[0]);
+  const lastBar = !JOURNEY.hold && (((bb % JOURNEY.len) + JOURNEY.len) % JOURNEY.len) + 1 >= e[0] * JOURNEY.len - 1e-6 && e[2].fill;   // the final bar of a build or a break gets a fill
   return { name: e[1], ...e[2], fillNow: !!lastBar };
 }
 function jAllow(l, bar) {
@@ -925,11 +937,21 @@ function jStep(t, n) {   // once a bar: move the piece along
   const bar = n / 16; JOURNEY.bar = bar; const sc = jScene(bar);
   if (bar && bar % 8 === 0) { const ws = lanes.filter(x => x.wx); if (ws.length) { const l = ws[Math.floor(Math.random() * ws.length)], k = 1 + Math.floor(Math.random() * Math.max(1, l.steps - 1)); l.bits = l.bits.slice(k).concat(l.bits.slice(0, k)); JOURNEY.rot = (JOURNEY.rot + 1) % Math.max(1, ws.length); } }
   if (bar && bar % 16 === 0) JOURNEY.shift = (JOURNEY.shift + 1) % 4;
-  JOURNEY.last = sc.name; setTimeout(jPaint, Math.max(0, (t - ctx.currentTime) * 1000));
+  JOURNEY.last = sc.name; setTimeout(() => { jPaint(); jTabPaint(); }, Math.max(0, (t - ctx.currentTime) * 1000));
 }
 function jFill(t, n) {   // four quick hits on the second genre row before the section changes
   if (!JOURNEY.on || n % 16 < 12) return; const sc = jScene(Math.floor(n / 16)); if (!sc.fillNow) return;
   const l = lanes[1]; if (l && !l.mute) hit(l, t, 0.55 + 0.12 * (n % 4));
+}
+function jJump(name) {   // go to the start of a section on the next bar, then carry on from there
+  JOURNEY.hold = ''; const k = JSECT.findIndex(x => x[1] === name), from = k ? JSECT[k - 1][0] : 0, startBar = Math.round(from * JOURNEY.len);
+  JOURNEY.off = startBar - (JOURNEY.bar + 1); if (!JOURNEY.on) { JOURNEY.on = true; } jPaint(); jTabPaint();
+}
+function jTabPaint() {
+  document.querySelectorAll('#jSecs [data-sec]').forEach(b => b.setAttribute('aria-pressed', String(!!playing && JOURNEY.on && (JOURNEY.hold || JOURNEY.last || 'intro') === b.dataset.sec)));
+  const h = $('jHold'); if (h) h.setAttribute('aria-pressed', String(!!JOURNEY.hold));
+  const o = $('jOn'); if (o) o.setAttribute('aria-pressed', String(JOURNEY.on));
+  document.querySelectorAll('#jLen [data-len]').forEach(b => b.setAttribute('aria-pressed', String(+b.dataset.len === JOURNEY.len)));
 }
 function jPaint() { const el = document.getElementById('jTag'); if (!el) return; el.setAttribute('aria-pressed', String(JOURNEY.on)); el.textContent = JOURNEY.on ? 'Journey · ' + (playing ? JOURNEY.last || 'intro' : 'on') : 'Journey off'; }
 function wxActive(l, n) {
@@ -1023,7 +1045,7 @@ const CH = { style: 'none', auto: 'pump', mode: 'pump', snd: 'warm', level: 0.5,
 const CA = { g: ctx.createGain(), md: ctx.createGain(), pan: ctx.createStereoPanner(), sd: ctx.createGain(), sv: ctx.createGain(),
   cd: ctx.createGain(), cg: ctx.createGain(), cv: ctx.createGain() };
 CA.md.connect(CA.g).connect(CA.pan).connect(masterIn); CA.pan.connect(CA.sd).connect(delIn); CA.pan.connect(CA.sv).connect(verbIn);
-CA.cds = ctx.createGain(); CA.cd.connect(CA.cg).connect(masterIn); CA.cg.connect(CA.cv).connect(verbIn); CA.cg.connect(CA.cds).connect(delIn);
+CA.cds = ctx.createGain(); CA.chp = ctx.createBiquadFilter(); CA.chp.type = 'highpass'; CA.chp.frequency.value = 230; CA.cd.connect(CA.chp).connect(CA.cg).connect(masterIn); CA.cg.connect(CA.cv).connect(verbIn); CA.cg.connect(CA.cds).connect(delIn);
 CA.g.gain.value = faderGain(CITY.vol); CA.sd.gain.value = Math.pow(0.2, 2) * 0.9; CA.sv.gain.value = Math.pow(0.3, 2) * 0.9;
 CA.cg.gain.value = CH.level; CA.cv.gain.value = Math.pow(0.35, 2) * 0.9; CA.cds.gain.value = 0; CITY.g = CA.g;
 const CBANK = {};
@@ -1058,7 +1080,19 @@ function citySub(midi, t, vel, out, dur) {   // a sine with a soft octave above 
 // Chord sounds: the nine pads from the Three Cities chord menu, same recipes. Stabs get a quick attack and short release; held chords keep the slow bloom.
 const padOsc = (type, f, out, t, end, gain = 1, det = 0) => { const o = ctx.createOscillator(); o.type = type; o.frequency.value = f; o.detune.value = det; const g = ctx.createGain(); g.gain.value = gain; o.connect(g).connect(out); o.start(t); o.stop(end); return o; };
 const padLfo = (rate, depth, param, t, end) => { const l = ctx.createOscillator(); l.frequency.value = rate; const d = ctx.createGain(); d.gain.value = depth; l.connect(d).connect(param); l.start(t); l.stop(end); return l; };
+function junoMake(kind, f, out, t, end) {   // saw, pulse and sub through a resonant lowpass, as in Three Cities
+  const lp = ctx.createBiquadFilter(); lp.type = 'lowpass'; lp.Q.value = kind === 'keys' ? 2.5 : kind === 'pad' ? 1.6 : 0.7;
+  const hp = ctx.createBiquadFilter(); hp.type = 'highpass'; hp.frequency.value = 90; const mix = ctx.createGain(); mix.connect(lp).connect(hp).connect(out);
+  const oscs = [padOsc('sawtooth', f, mix, t, end, 1)];
+  if (kind !== 'strings') { oscs.push(padOsc('square', f, mix, t, end, 0.4, 3)); oscs.push(padOsc('square', f / 2, mix, t, end, 0.3)); }
+  lp.frequency.setValueAtTime(Math.min(9000, f * (kind === 'keys' ? 7 : kind === 'pad' ? 2.5 : 5)), t);
+  if (kind === 'keys') lp.frequency.setTargetAtTime(f * 1.6, t, 0.18);
+  return oscs;
+}
 const PADS = {
+  junopad: { name: 'Juno pad', bright: 3, gain: 1.4, attack: 1.4, release: 1.6, make: (f, out, t, end) => junoMake('pad', f, out, t, end) },
+  junostrings: { name: 'Juno strings', bright: 3, gain: 1.6, attack: 0.8, release: 1.2, make: (f, out, t, end) => junoMake('strings', f, out, t, end) },
+  junokeys: { name: 'Juno keys', bright: 2.5, gain: 1.5, attack: 0.02, release: 0.8, make: (f, out, t, end) => junoMake('keys', f, out, t, end) },
   warm: { name: 'Warm pad', bright: 1, gain: 1, attack: 2.4, release: 1.4, make: (f, out, t, end) => [padOsc('sawtooth', f, out, t, end, 0.35, -6), padOsc('sawtooth', f, out, t, end, 0.35, 6), padOsc('sine', f, out, t, end, 0.9)] },
   glass: { name: 'Glass', bright: 5, gain: 1.15, attack: 3, release: 2, make: (f, out, t, end) => {
     const a = padOsc('sine', f, out, t, end, 0.9), b = padOsc('sine', f * 2, out, t, end, 0.28), c = padOsc('sine', f * 3, out, t, end, 0.08);
@@ -1088,7 +1122,7 @@ const PADS = {
     const fl = ctx.createGain(); fl.gain.value = 0.6; fl.connect(out);
     return [padOsc('sine', f * 2, fl, t, end, 0.7), padOsc('sine', f * 4, fl, t, end, 0.3, 5), padOsc('sine', f, out, t, end, 0.3), padLfo(0.4 + Math.random() * 0.4, 0.35, fl.gain, t, end)]; } }
 };
-const PAD_TRIM = { warm: 4.2, glass: 4.2, air: 4.11, tape: 2.96, strings: 3.75, choir: 2.58, organ: 4.96, bowed: 2.48, shimmer: 5.77 };
+const PAD_TRIM = { junopad: 2.52, junostrings: 3.23, junokeys: 2.26, warm: 4.2, glass: 4.2, air: 4.11, tape: 2.96, strings: 3.75, choir: 2.58, organ: 4.96, bowed: 2.48, shimmer: 5.77 };
 function padVoice(kind, midi, vel, t, len, held, out) {
   const P = PADS[kind], f = 440 * Math.pow(2, (midi - 69) / 12), g = ctx.createGain(), lp = ctx.createBiquadFilter();
   lp.type = 'lowpass'; lp.Q.value = 0.4; lp.frequency.value = Math.min(16000, (held ? 900 : 1500) * P.bright);
@@ -1154,12 +1188,12 @@ function cityStep(t, n) {
     const held = M === 'held', now = held ? (s === 0 && bar % 2 === 0) : M === 'offbeat' ? s % 4 === 2 : s % 4 === 0;
     if (now) {
       const root = CPROGS[(Math.abs(Math.round(WX.pres)) + JOURNEY.shift) % 4][Math.floor(bar / (held ? 2 : 1)) % 4], v = (s === 0 || s === 2 ? 1 : 0.78), len = held ? ss * 30 : ss * (M === 'offbeat' ? 2.4 : 3);
-      [0, 2, 4].forEach((k, j) => {
-        let m = cityMidi(root + k, 48, CH.oct); if (m > 72 + ROOT) m -= 12;
+      [2, 4, 7].forEach((k, j) => {   // the third, fifth and octave: the root is left to the bass, and the chord sits an octave or more above it
+        let m = cityMidi(root + k, 55, CH.oct); if (m > 84 + ROOT) m -= 12;
         if (PADS[CH.snd]) padVoice(CH.snd, m, v, t + j * (held ? 0.012 : 0.004), len, held, CA.cd);
         else citySamp(CH.snd, m, t + j * (held ? 0.012 : 0.004), 0.55 * v, CA.cd, len);
       });
-      midiMel(cityMidi(root, 48, CH.oct), t, 0.6 * v, 'city');
+      midiMel(cityMidi(root + 2, 55, CH.oct), t, 0.6 * v, 'city');
     }
   }
 }
@@ -1466,6 +1500,7 @@ function stop() {
 }
 $('play').addEventListener('click', () => playing ? stop() : start());
 $('bpm').addEventListener('input', () => { $('bpmv').textContent = $('bpm').value; setDelayTime(); });
+toggle($('keepSet'), v => { KEEP.on = v; say(v ? 'Changing genre keeps your settings.' : 'Changing genre also sets the kit and tempo.'); });
 toggle($('follow'), v => { followTempo.on = v; if (v) setBpm(genreBpm); say(v ? 'Following the genre tempo.' : 'Tempo stays where you put it.'); });
 
 // ---------- mixer ----------
@@ -1642,6 +1677,13 @@ document.querySelectorAll('[data-st]').forEach(b => { const d = +b.dataset.st; m
 // knobs for the whole mix
 const K = {};
 { const k1 = $('kitAuto'), k2 = $('kitAuto2'), sync = () => k2.setAttribute('aria-pressed', k1.getAttribute('aria-pressed')); k2.addEventListener('click', () => k1.click()); new MutationObserver(sync).observe(k1, { attributes: true, attributeFilter: ['aria-pressed'] }); sync(); }
+$('jOn').addEventListener('click', () => { JOURNEY.on = !JOURNEY.on; jPaint(); jTabPaint(); say(JOURNEY.on ? 'Journey on.' : 'Journey off: every ring plays all the time.'); });
+document.querySelectorAll('#jLen [data-len]').forEach(b => b.addEventListener('click', () => { JOURNEY.len = +b.dataset.len; JOURNEY.off = 0; jTabPaint(); say('The journey now takes ' + JOURNEY.len + ' bars.'); }));
+document.querySelectorAll('#jSecs [data-sec]').forEach(b => b.addEventListener('click', () => {
+  if ($('jHold').getAttribute('aria-pressed') === 'true' || JOURNEY.hold) { JOURNEY.hold = b.dataset.sec; JOURNEY.on = true; JOURNEY.last = b.dataset.sec; jPaint(); jTabPaint(); say('Holding ' + b.dataset.sec + '.'); }
+  else { jJump(b.dataset.sec); say('Jumping to ' + b.dataset.sec + ' on the next bar.'); }
+}));
+$('jHold').addEventListener('click', () => { if (JOURNEY.hold) JOURNEY.hold = ''; else { JOURNEY.hold = JOURNEY.last || 'groove'; JOURNEY.on = true; } jPaint(); jTabPaint(); say(JOURNEY.hold ? 'Holding ' + JOURNEY.hold + '.' : 'Journey moves on again.'); });
 $('jTag').addEventListener('click', () => { JOURNEY.on = !JOURNEY.on; jPaint(); say(JOURNEY.on ? 'Journey on: it builds from the intro.' : 'Journey off: every ring plays all the time.'); });
 $('qChance').addEventListener('input', e => { GCHANCE = +e.target.value; $('qChanceV').textContent = GCHANCE + '%'; midiCC(76, GCHANCE * 127 / 100); });
 $('qChance').addEventListener('dblclick', () => { $('qChance').value = 100; $('qChance').dispatchEvent(new Event('input')); });
@@ -1831,6 +1873,7 @@ function setBpm(b) { let x = b; while (x < 60) x *= 2; while (x > 180) x /= 2; $
 // The kit follows the genre until you pick a kit yourself: 909 for house and techno, 808 for bass and hip hop,
 // LinnDrum for pop, funk and rock, CR-78 for reggae and bossa, Latin percussion for salsa and samba, congas for Cuban and Afro rhythms. Anything else keeps the congas.
 const KITAUTO = { on: true };
+const KEEP = { on: true };   // changing genre swaps the rhythms only: kit, tempo and every setting stay where you put them
 const KIT_RULES = [
   [/rumba|\bson\b|clave|guaguanc|abakua|santer|bata\b|afro-cuban|conga|yoruba|iqa|maqsum|baladi|ayyub|saidi|malfuf|masmoudi|arabic|turkish|gnawa|flamenco|rebetiko|klezmer/i, 'congas'],
   [/samba|bossa|forr|baiao|baião|choro|pagode|axe|axé|capoeira|carnaval|maracatu|frevo|brazil/i, 'samba'],
@@ -1922,7 +1965,7 @@ async function pickCity() {
 }
 $('scrub').addEventListener('input', e => { SCRUB = +e.target.value; $('scrubv').textContent = SCRUB === 0 ? 'Now' : '+' + SCRUB + 'h'; fcShow(); clearTimeout(scrubTimer); scrubTimer = setTimeout(scrubApply, 60); });
 city.addEventListener('change', () => { pickGenre(); pickCity(); });
-genre.addEventListener('change', () => { setPattern(); buildLanes(); $('story').innerHTML = $('story').innerHTML.replace(/plays <b>[^<]*<\/b> at <b>\d+<\/b>/, `plays <b>${genre.selectedOptions[0].text}</b> at <b>${$('bpm').value}</b>`); });
+genre.addEventListener('change', () => { const ka = KITAUTO.on, ft = followTempo.on; if (KEEP.on) { KITAUTO.on = false; followTempo.on = false; } try { setPattern(); } finally { KITAUTO.on = ka; followTempo.on = ft; } buildLanes(); $('story').innerHTML = $('story').innerHTML.replace(/plays <b>[^<]*<\/b> at <b>\d+<\/b>/, `plays <b>${genre.selectedOptions[0].text}</b> at <b>${$('bpm').value}</b>`); });
 $('shuffle').addEventListener('click', () => { city.value = Math.floor(Math.random() * ATLAS.cities.length); city.dispatchEvent(new Event('change')); });
 
 // ---------- the sky behind the rings ----------
