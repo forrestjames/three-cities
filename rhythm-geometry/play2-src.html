@@ -419,11 +419,12 @@
     .pickers select { max-width: none; width: 100%; height: 44px; padding: 0 30px 0 14px; font-size: 14px; }
     .pickers .ibtn { width: 44px; height: 44px; } .pickers .btn { height: 44px; padding: 0 16px; font-size: 13px; }
     .hdr-r { position: absolute; right: 14px; top: calc(env(safe-area-inset-top, 0px) + 12px); }
+    .app2 .jtag { top: 6px; left: auto; right: 14px; width: auto; }
     .stage { padding: 4px 8px 16px; grid-template-rows: minmax(0,1fr) 72px; place-items: center; overflow: visible; height: auto; }
     .ringwrap { grid-row: 1; height: 100%; width: auto; max-width: 100%; max-height: 100%; }
     .ringwrap::before { inset: -2%; }
     .gdesc { position: static; grid-row: 2; width: 100%; max-width: none; margin-top: 6px; padding: 7px 12px; font-size: 12px; pointer-events: auto; cursor: pointer; border-radius: 0 12px 12px 0; transition: background .2s; }
-    .gdesc { position: relative; }
+    .gdesc { position: relative; left: auto; bottom: auto; padding-bottom: 0; }
     .gdesc b { font-size: 15px; display: block; padding-right: 22px; }
     .gdesc b::after { content: "\25BE"; position: absolute; right: 12px; top: 9px; font-size: 11px; color: var(--ink-dim); transition: transform .25s; }
     .gdesc.open b::after { transform: rotate(180deg); }
@@ -498,6 +499,9 @@
   .tabnote { margin: 0 0 12px; font-size: 12px; color: var(--ink-dim); line-height: 1.5; }
   .hint b { font-weight: 500; color: var(--ink); }
   #tab-sound .fxrow, #tab-feel .fxrow { margin-bottom: 4px; }
+
+  .jtag { position: absolute; top: 262px; left: 36px; z-index: 3; padding: 5px 12px; border-radius: 999px; border: 1px solid var(--line2); background: rgba(10,6,12,.6); color: var(--ink-dim); font-size: 10px; letter-spacing: .14em; text-transform: uppercase; }
+  .jtag[aria-pressed="true"] { color: var(--ink); border-color: var(--accent); }
 </style>
 </head>
 <body>
@@ -552,6 +556,7 @@
       <div class="centre"><div class="c-name" id="cName">London</div><div class="c-wx" id="cWx">loading the weather</div><div class="c-wx" id="cTime"></div></div>
     </div>
     <div class="gdesc" id="gdesc" aria-live="polite"></div>
+    <button class="jtag" id="jTag" type="button" aria-pressed="true" title="The journey: the piece builds from a spare intro to the full mix, drops to a break and returns, over 32 bars. Tap to switch it off and hear everything at once.">Journey · on</button>
     <p class="status" id="status" aria-live="polite"></p>
     <p id="story"></p><p class="hint" id="hint"></p>
   </main>
@@ -758,7 +763,8 @@ lfoLP.type = 'lowpass'; lfoLP.frequency.value = 20000; lfoLP.Q.value = 0.7; lfoA
 djHP.type = 'highpass'; djHP.frequency.value = 20; djLP.type = 'lowpass'; djLP.frequency.value = 20000;
 const pre = ctx.createGain(), comp = ctx.createDynamicsCompressor();
 comp.threshold.value = -14; comp.ratio.value = 4; comp.attack.value = 0.004; comp.release.value = 0.12;
-masterIn.connect(djHP).connect(djLP).connect(lfoLP).connect(pre).connect(comp).connect(ctx.destination);
+const lim = ctx.createDynamicsCompressor(); lim.threshold.value = -2; lim.knee.value = 0; lim.ratio.value = 20; lim.attack.value = 0.001; lim.release.value = 0.08;   // catches the loud moments so nothing clips
+masterIn.connect(djHP).connect(djLP).connect(lfoLP).connect(pre).connect(comp).connect(lim).connect(ctx.destination);
 // delay: the same five styles and nine times as Three Cities
 const DELAY_BEATS = { '16': 0.25, '16t': 1 / 6, '8t': 1 / 3, '8': 0.5, 'd8': 0.75, '4t': 2 / 3, '4': 1, 'd4': 1.5 };
 const DELAY_TIMES = { '16': '1/16', '16t': '1/16 triplet', '8t': '1/8 triplet', '8': '1/8', 'd8': 'dotted 1/8', '4t': '1/4 triplet', '4': '1/4', 'd4': 'dotted 1/4' };
@@ -840,7 +846,10 @@ function prepSample(buf) {
   const n = Math.min(d.length, i0 + Math.round(sr * 0.2)); let sum = 0;
   for (let i = i0; i < n; i++) sum += d[i] * d[i];
   const rms = Math.sqrt(sum / Math.max(1, n - i0)) || 1e-4;
-  return { buf, gain: Math.min(0.9 / peak, 0.2 / rms), lead: i0 / sr, dur: buf.duration - i0 / sr, f0: detectPitch(d, sr, i0 / sr) };
+  // bright sounds (hats, shakers) feel louder than their level says, so they come down a little; dark ones (kicks) come up a touch
+  let zc = 0; for (let i = i0 + 1; i < n; i++) if ((d[i] >= 0) !== (d[i - 1] >= 0)) zc++;
+  const bright = clamp(Math.pow(0.1 / Math.max(zc / Math.max(1, n - i0), 0.02), 0.25), 0.6, 1.12);
+  return { buf, gain: Math.min(0.95 / peak, 0.2 / rms * bright), lead: i0 / sr, dur: buf.duration - i0 / sr, f0: detectPitch(d, sr, i0 / sr) };
 }
 // How high a drum sounds, found by looking for the length of time after which its wave repeats. 0 means it has no clear pitch.
 function detectPitch(d, sr, lead) {
@@ -893,8 +902,39 @@ const wxMul = l => l.wx ? WEATHER.level / 100 : 1;
 // Both come from the ring's own step count, so they change when the weather changes.
 function wxCycle(l) { return [5, 6, 7, 8, 10, 12][(l.steps + l.i) % 6]; }
 function wxPattern(l) { const c = wxCycle(l), on = clamp(Math.round(c * (0.3 + (l.steps % 3) * 0.1)), 2, c - 1); return euclidBits(c, on, (l.i * 2) % c); }
+// ---------- the journey ----------
+// A slow arrangement over 16, 32 or 64 bars, so the piece builds and breathes instead of looping:
+// intro (kick and one ring) > groove > build (with a fill) > full > break (the kick drops out) > return.
+// At every eighth bar one weather ring turns to a new starting point, and every sixteenth the chords move to a new progression.
+const JOURNEY = { on: true, len: 32, rot: 0, shift: 0, bar: -1, last: '' };
+const JSECT = [[0.125, 'intro', { wx: 1, rows: 1, kick: 1, city: 0, chords: 0 }], [0.375, 'groove', { wx: 3, rows: 3, kick: 1, city: 1, chords: 0 }], [0.5, 'build', { wx: 5, rows: 3, kick: 1, city: 1, chords: 1, fill: 1 }],
+  [0.75, 'full', { wx: 8, rows: 3, kick: 1, city: 1, chords: 1 }], [0.875, 'break', { wx: 2, rows: 1, kick: 0, city: 1, chords: 1, fill: 1 }], [1.01, 'return', { wx: 8, rows: 3, kick: 1, city: 1, chords: 1 }]];
+function jScene(bar) {
+  const u = (bar % JOURNEY.len) / JOURNEY.len, e = JSECT.find(x => u < x[0]);
+  const lastBar = (bar % JOURNEY.len) + 1 >= e[0] * JOURNEY.len - 1e-6 && e[2].fill;   // the final bar of a build or a break gets a fill
+  return { name: e[1], ...e[2], fillNow: !!lastBar };
+}
+function jAllow(l, bar) {
+  const sc = jScene(bar);
+  if (l.wx) { const ws = lanes.filter(x => x.wx), k = (ws.indexOf(l) + JOURNEY.rot) % ws.length; return k < sc.wx; }
+  if (l.i === 0) return !!sc.kick;
+  return l.i < sc.rows;
+}
+function jStep(t, n) {   // once a bar: move the piece along
+  if (!JOURNEY.on || n % 16) return;
+  const bar = n / 16; JOURNEY.bar = bar; const sc = jScene(bar);
+  if (bar && bar % 8 === 0) { const ws = lanes.filter(x => x.wx); if (ws.length) { const l = ws[Math.floor(Math.random() * ws.length)], k = 1 + Math.floor(Math.random() * Math.max(1, l.steps - 1)); l.bits = l.bits.slice(k).concat(l.bits.slice(0, k)); JOURNEY.rot = (JOURNEY.rot + 1) % Math.max(1, ws.length); } }
+  if (bar && bar % 16 === 0) JOURNEY.shift = (JOURNEY.shift + 1) % 4;
+  JOURNEY.last = sc.name; setTimeout(jPaint, Math.max(0, (t - ctx.currentTime) * 1000));
+}
+function jFill(t, n) {   // four quick hits on the second genre row before the section changes
+  if (!JOURNEY.on || n % 16 < 12) return; const sc = jScene(Math.floor(n / 16)); if (!sc.fillNow) return;
+  const l = lanes[1]; if (l && !l.mute) hit(l, t, 0.55 + 0.12 * (n % 4));
+}
+function jPaint() { const el = document.getElementById('jTag'); if (!el) return; el.setAttribute('aria-pressed', String(JOURNEY.on)); el.textContent = JOURNEY.on ? 'Journey · ' + (playing ? JOURNEY.last || 'intro' : 'on') : 'Journey off'; }
 function wxActive(l, n) {
   if (l.arrOff) return false;
+  if (JOURNEY.on && playing) return jAllow(l, Math.floor(n / 16));
   if (!l.wx || !WEATHER.gate) return true;
   return !!wxPattern(l)[Math.floor(wxPhase) % wxCycle(l)];
 }
@@ -1057,7 +1097,8 @@ function cityDuck(t) {   // the sidechain: every genre kick pushes the chords (a
 function cityPlay(snd, midi, t, vel, out, dur) { if (snd === 'sub') citySub(midi, t, vel, out, dur); else citySamp(snd, midi, t, vel, out, dur); }
 function cityStep(t, n) {
   const ss = stepSecs();
-  if (!CITY.mute && CITY.bits.length && n % CITY.rate === 0) {
+  const sc = JOURNEY.on ? jScene(Math.floor(n / 16)) : { city: 1, chords: 1 };
+  if (!CITY.mute && sc.city && CITY.bits.length && n % CITY.rate === 0) {
     const pos = (n / CITY.rate) % CITY.steps;
     if (CITY.bits[pos] && Math.random() * 100 < CITY.chance && Math.random() >= Math.min(0.35, (WX.rain || 0) * 0.2)) {   // rain thins the line
       const deg = CITY.deg[CITY.di++ % CITY.deg.length], midi = cityMidi(deg, cityReg(CITY.snd), CITY.oct), vel = (pos % 4 === 0 ? 1 : 0.8) * (0.85 + Math.random() * 0.3);
@@ -1065,10 +1106,10 @@ function cityStep(t, n) {
     }
   }
   const M = CH.mode, s = n % 16, bar = Math.floor(n / 16);
-  if (!CITY.mute && M && M !== 'none') {
+  if (!CITY.mute && sc.chords && M && M !== 'none') {
     const held = M === 'held', now = held ? (s === 0 && bar % 2 === 0) : M === 'offbeat' ? s % 4 === 2 : s % 4 === 0;
     if (now) {
-      const root = CPROGS[Math.abs(Math.round(WX.pres)) % 4][Math.floor(bar / (held ? 2 : 1)) % 4], v = (s === 0 || s === 2 ? 1 : 0.78), len = held ? ss * 30 : ss * (M === 'offbeat' ? 2.4 : 3);
+      const root = CPROGS[(Math.abs(Math.round(WX.pres)) + JOURNEY.shift) % 4][Math.floor(bar / (held ? 2 : 1)) % 4], v = (s === 0 || s === 2 ? 1 : 0.78), len = held ? ss * 30 : ss * (M === 'offbeat' ? 2.4 : 3);
       [0, 2, 4].forEach((k, j) => {
         let m = cityMidi(root + k, 48, CH.oct); if (m > 72 + ROOT) m -= 12;
         citySamp(CH.snd, m, t + j * (held ? 0.012 : 0.004), 0.55 * v, CA.cd, len);
@@ -1159,13 +1200,16 @@ function hitVoice(l, t, vel) {
   if (mg > 0.02 && !(l.d.syn && MELODIC[l.d.syn])) melHit(BLEND.snd, 440 * Math.pow(2, ((l.mm || MELBASE[l.i]) - 69) / 12), t, vel * mg, l.g);
   if (own > 0.02) playKit(l, t, vel * own); else l.flash = t;
 }
+// how far each kind of drum sits back in the mix, so a hat never fights the kick and snare
+const TRIMS = [[/hat|ride|crash|cymbal|splash|sizzle/, 0.62], [/shaker|maraca|tambourine|guiro|cabasa|triangle|finger|whistle|rattle/, 0.6], [/clave|wood|block|stick|tak|click|rim\b/, 0.72], [/cowbell|bell|agogo|gong|chime/, 0.66], [/clap|snap/, 0.85], [/snare/, 0.92]];
+const voiceTrim = d => d.trim ?? (d.trim = (TRIMS.find(([re]) => re.test(String(d.n).toLowerCase())) || [0, 1])[1]);
 function playKit(l, t, vel) {
   if (l.d.syn) { l.flash = t; synthHit(l, t, vel); return; }
   const s = SAMPLES.get(l.d.f), rate = l.rate;
   l.flash = t;
   if (s) {
     const src = ctx.createBufferSource(), g = ctx.createGain();
-    src.buffer = s.buf; src.playbackRate.value = rate; g.gain.value = s.gain * vel * (l.d.v || 1);
+    src.buffer = s.buf; src.playbackRate.value = rate; g.gain.value = s.gain * vel * (l.d.v || 1) * voiceTrim(l.d);
     src.connect(g).connect(l.g); src.start(t, s.lead, Math.min(s.dur, 1.4)); src.stop(t + Math.min(s.dur, 1.4) / rate + 0.05);
     return;
   }
@@ -1354,6 +1398,7 @@ function schedule(t, n) {
     if (dv >= 1 && n % dv === 0) hit(l, t, v * (0.9 + Math.random() * 0.2));
     if (dv < 1) { hit(l, t, v * 0.95); hit(l, t + ss * dv, v * 0.8); }
   });
+  jStep(t, n); jFill(t, n);
   cityStep(t, n);
   autoStep(t, n);
   midiClockStep(t, ss);
@@ -1365,13 +1410,13 @@ function tick() {
 async function start() {
   if (ctx.state !== 'running') await ctx.resume();
   if (playing) return;
-  playing = true; stepN = 0; nextTime = ctx.currentTime + 0.06; visQ.length = 0;
+  playing = true; stepN = 0; JOURNEY.rot = 0; JOURNEY.shift = 0; JOURNEY.last = 'intro'; jPaint(); nextTime = ctx.currentTime + 0.06; visQ.length = 0;
   setDelayTime(); lfoBuild(nextTime); midiTransport(true, nextTime);
   timer = setInterval(tick, 25);
   $('play').setAttribute('aria-pressed', 'true'); $('play').textContent = 'Stop';
 }
 function stop() {
-  playing = false; clearInterval(timer); visQ.length = 0; autoRelease(); midiTransport(false, ctx.currentTime);
+  playing = false; clearInterval(timer); jPaint(); visQ.length = 0; autoRelease(); midiTransport(false, ctx.currentTime);
   $('play').setAttribute('aria-pressed', 'false'); $('play').textContent = 'Play';
 }
 $('play').addEventListener('click', () => playing ? stop() : start());
@@ -1552,6 +1597,7 @@ document.querySelectorAll('[data-st]').forEach(b => { const d = +b.dataset.st; m
 // knobs for the whole mix
 const K = {};
 { const k1 = $('kitAuto'), k2 = $('kitAuto2'), sync = () => k2.setAttribute('aria-pressed', k1.getAttribute('aria-pressed')); k2.addEventListener('click', () => k1.click()); new MutationObserver(sync).observe(k1, { attributes: true, attributeFilter: ['aria-pressed'] }); sync(); }
+$('jTag').addEventListener('click', () => { JOURNEY.on = !JOURNEY.on; jPaint(); say(JOURNEY.on ? 'Journey on: it builds from the intro.' : 'Journey off: every ring plays all the time.'); });
 $('qChance').addEventListener('input', e => { GCHANCE = +e.target.value; $('qChanceV').textContent = GCHANCE + '%'; midiCC(76, GCHANCE * 127 / 100); });
 $('qChance').addEventListener('dblclick', () => { $('qChance').value = 100; $('qChance').dispatchEvent(new Event('input')); });
 K.filter = knobCell($('kFilter'), 'Filter', 0, v => {
