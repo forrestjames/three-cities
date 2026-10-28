@@ -598,9 +598,11 @@
         </div>
         <div class="cc-sub"><span class="lab">Chords</span></div>
         <div class="cc-grid">
-          <label class="cc-f"><span class="lab">Style</span><select id="chordStyle"><option value="auto">Auto</option><option value="pump">Pumped stabs</option><option value="offbeat">Off-beat stabs</option><option value="held">Held chords</option><option value="none">Off</option></select></label>
+          <label class="cc-f"><span class="lab">Style</span><select id="chordStyle"><option value="none">Off</option><option value="auto">Auto, from the genre</option><option value="pump">Pumped stabs</option><option value="offbeat">Off-beat stabs</option><option value="held">Held chords</option></select></label>
           <label class="cc-f"><span class="lab">Sound</span><select id="chordSnd"><option value="vibes">Soft mallets</option><option value="piano">Grand piano</option><option value="harp">Harp</option><option value="marimbarec">Marimba</option></select></label>
           <label class="cc-f"><span class="lab">Level</span><input class="big" id="chordLvl" type="range" min="0" max="100" value="50"></label>
+          <label class="cc-f"><span class="lab">Delay</span><input class="big" id="chordDel" type="range" min="0" max="100" value="0"></label>
+          <label class="cc-f"><span class="lab">Reverb</span><input class="big" id="chordVerb" type="range" min="0" max="100" value="35"></label>
           <label class="cc-f"><span class="lab">Pump</span><input class="big" id="chordPump" type="range" min="0" max="100" value="75" title="How far each genre kick pushes the chords down"></label>
           <div class="cc-f"><span class="lab">Octave</span><span class="padrow"><button class="oct" id="chordOctD" type="button" aria-label="Chords down an octave">&minus;</button><span class="octv" id="chordOctV">0</span><button class="oct" id="chordOctU" type="button" aria-label="Chords up an octave">+</button></span></div>
         </div>
@@ -940,13 +942,13 @@ const CSHAPES = [[0, 1, 2, 3, 4], [0, -2, 1, -1, -3], [-2, -1, 0, 1, 2], [0, 2, 
 const CPROGS = [[0, 5, 3, 4], [0, 3, 4, 3], [0, 4, 5, 3], [0, 2, 5, 4]];   // chord roots as scale degrees; the weather picks one
 const CITY = { snd: 'sub', hand: false, oct: 0, src: 'hum', dens: 50, pace: 'auto', rate: 1, chance: 100, vol: 0.7, mute: false, deg: [0, 1, 2], di: 0,
   steps: 8, hits: 3, bits: [], pos: -1, flash: 0, why: '', color: '#fff4d6', d: { n: 'City' } };
-const CH = { style: 'auto', auto: 'pump', mode: 'pump', snd: 'vibes', level: 0.5, pump: 0.75, oct: 0 };
+const CH = { style: 'none', auto: 'pump', mode: 'pump', snd: 'vibes', level: 0.5, pump: 0.75, oct: 0 };
 const CA = { g: ctx.createGain(), md: ctx.createGain(), pan: ctx.createStereoPanner(), sd: ctx.createGain(), sv: ctx.createGain(),
   cd: ctx.createGain(), cg: ctx.createGain(), cv: ctx.createGain() };
 CA.md.connect(CA.g).connect(CA.pan).connect(masterIn); CA.pan.connect(CA.sd).connect(delIn); CA.pan.connect(CA.sv).connect(verbIn);
-CA.cd.connect(CA.cg).connect(masterIn); CA.cg.connect(CA.cv).connect(verbIn);
+CA.cds = ctx.createGain(); CA.cd.connect(CA.cg).connect(masterIn); CA.cg.connect(CA.cv).connect(verbIn); CA.cg.connect(CA.cds).connect(delIn);
 CA.g.gain.value = faderGain(CITY.vol); CA.sd.gain.value = Math.pow(0.2, 2) * 0.9; CA.sv.gain.value = Math.pow(0.3, 2) * 0.9;
-CA.cg.gain.value = CH.level; CA.cv.gain.value = 0.3; CITY.g = CA.g;
+CA.cg.gain.value = CH.level; CA.cv.gain.value = Math.pow(0.35, 2) * 0.9; CA.cds.gain.value = 0; CITY.g = CA.g;
 const CBANK = {};
 const noteMidi = n => { const m = n.match(/^([A-G])(s?)(\d)$/); return 12 * (+m[3] + 1) + { C: 0, D: 2, E: 4, F: 5, G: 7, A: 9, B: 11 }[m[1]] + (m[2] ? 1 : 0); };
 function cityLoad(name) {   // the recorded notes come from the Three Cities sample folder, when a ring first needs them
@@ -1471,6 +1473,8 @@ function setMute(l, v) { l.mute = v; l.pad.setAttribute('aria-pressed', String(v
   el('chordStyle').addEventListener('change', e => { CH.style = e.target.value; cityBuild(); });
   el('chordSnd').addEventListener('change', e => { CH.snd = e.target.value; cityBuild(); });
   el('chordLvl').addEventListener('input', () => { CH.level = val('chordLvl') / 100; CA.cg.gain.setTargetAtTime(CH.level, ctx.currentTime, 0.02); });
+  el('chordDel').addEventListener('input', () => CA.cds.gain.setTargetAtTime(Math.pow(val('chordDel') / 100, 2) * 0.9, ctx.currentTime, 0.02));
+  el('chordVerb').addEventListener('input', () => CA.cv.gain.setTargetAtTime(Math.pow(val('chordVerb') / 100, 2) * 0.9, ctx.currentTime, 0.02));
   el('chordPump').addEventListener('input', () => { CH.pump = val('chordPump') / 100; });
   el('cityMute').addEventListener('click', () => { CITY.mute = !CITY.mute; el('cityMute').setAttribute('aria-pressed', String(CITY.mute)); el('cityCard').classList.toggle('muted', CITY.mute); }); }
 function tap(l) {
