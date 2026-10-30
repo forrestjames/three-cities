@@ -649,7 +649,7 @@ body.loop .stat rect { fill-opacity: .96; }
     c.panel = p; c.svg = p.querySelector("svg"); c.qg = p.querySelector(".qg");
     c.glows = Array.prototype.slice.call(p.querySelectorAll(".gl")); c.glowT = c.glows.map(function () { return -1e9; });
     c.stride = [5, 7, 11, 13, 17].filter(function (s) { var a = c.glows.length, b = s; while (b) { var t = a % b; a = b; b = t; } return a === 1; })[0] || 1;
-    c.pg = c.glows; c.tabEl = tabsEl.children[ci]; c.tabEl.textContent = c.name;
+    c.pg = c.glows; c.bldEl = p.querySelector(".bld"); c.tabEl = tabsEl.children[ci]; c.tabEl.textContent = c.name;
 
     var sg = p.querySelector(".stat");
     el("rect", { x: 70, y: 546, width: 260, height: 96, rx: 5, fill: c.bg, "fill-opacity": .78 }, sg);
@@ -742,7 +742,7 @@ body.loop .stat rect { fill-opacity: .96; }
     var ticks = ""; for (var a = 0; a < 360; a += 3) { var ar = a * DEG; ticks += "M" + f(CX + (Rg - 7) * Math.cos(ar)) + " " + f(CY + (Rg - 7) * Math.sin(ar)) + "L" + f(CX + (Rg - 14) * Math.cos(ar)) + " " + f(CY + (Rg - 14) * Math.sin(ar)); }
     el("path", { d: ticks, class: "l3" }, out);
     CITIES.forEach(function (c) {
-      var th0 = centres[c.slot] - SPAN / 2, thc = centres[c.slot], buckets = {}, wg = [];
+      var th0 = centres[c.slot] - SPAN / 2, thc = centres[c.slot], buckets = {}, wg = [], cgp = el("g", {}, out);
       EXT = 860; var html = STYLES[c.style](); EXT = 0;
       tmp.innerHTML = html;
       var nodes = tmp.querySelectorAll("path,rect,circle"), sp = document.createElementNS("http://www.w3.org/2000/svg", "path");
@@ -763,7 +763,7 @@ body.loop .stat rect { fill-opacity: .96; }
           var phi = Math.abs(sumT / (np + 1) - thc), fade = Math.max(0, Math.min(1, (60 * DEG + OV - phi) / (2 * OV)));
           if (fade <= .02) continue;
           var dd = "M" + pts.join("L") + (/Z/i.test(subs[si]) ? "Z" : "");
-          if (cls === "gl") { var gp = el("path", { d: dd, class: "gl", "fill-opacity": f(fade) }, out); wg.push(gp); continue; }
+          if (cls === "gl") { var gp = el("path", { d: dd, class: "gl", "fill-opacity": f(fade) }, cgp); wg.push(gp); continue; }
           var key = cls + "|" + Math.round(fade * 8); buckets[key] = (buckets[key] || "") + dd;
         }
       }
@@ -771,9 +771,9 @@ body.loop .stat rect { fill-opacity: .96; }
       Object.keys(buckets).forEach(function (key) {
         var parts = key.split("|"), fl = +parts[1] / 8, at = { d: buckets[key], class: parts[0] };
         at[parts[0] === "gf" ? "fill-opacity" : "stroke-opacity"] = f(fl);
-        out.insertBefore(el("path", at), out.firstChild.nextSibling);
+        cgp.insertBefore(el("path", at), cgp.firstChild);
       });
-      c.wg = wg;
+      c.wg = wg; c.wgrp = cgp;
     });
     loopEl.removeChild(tmp);
   }
@@ -1106,7 +1106,7 @@ body.loop .stat rect { fill-opacity: .96; }
   function frame() {
     var now = ctx ? ctx.currentTime : 0, wall = Date.now(), nowP = performance.now();
     while (events.length && events[0].t <= now) {
-      var ev = events.shift(); if (ev.c.dead) continue;
+      var ev = events.shift(); if (ev.c.dead) continue; ev.c.pt = ev.t;
       for (var n = 0; n < ev.c.nodes.length; n++) if (ev.c.nodes[n].i === ev.i) ev.c.nodes[n].t = ev.t;
       launch(ev.c, ev.i, nowP);
     }
@@ -1126,6 +1126,11 @@ body.loop .stat rect { fill-opacity: .96; }
       var deg = spin(c, wall) * 360;
       c.ringg.setAttribute("transform", "rotate(" + deg.toFixed(3) + " " + CX + " " + CY + ")");
       c.tick.setAttribute("transform", "rotate(" + (phase * 360).toFixed(2) + " " + CX + " " + CY + ")");
+      /* the buildings breathe with each hit */
+      var pls = RM || !c.pt ? 0 : Math.exp(-(now - c.pt) * 2.2); if (pls < .004) pls = 0;
+      var amp = (.03 + .003 * c.k) * pls;
+      if (c.bldEl) c.bldEl.setAttribute("transform", pls ? "translate(200 " + GROUND + ") scale(" + (1 + amp).toFixed(4) + ") translate(-200 " + -GROUND + ")" : "");
+      if (c.wgrp) c.wgrp.setAttribute("transform", pls ? "translate(" + CX + " " + CY + ") scale(" + (1 + amp * .8).toFixed(4) + ") translate(" + -CX + " " + -CY + ")" : "");
       /* nodes */
       c.nodes.forEach(function (nd) {
         var g = Math.exp(-(now - nd.t) * 2.2); if (g < .005) g = 0;
