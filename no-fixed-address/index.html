@@ -116,6 +116,20 @@ body.loop .stat rect { fill-opacity: .96; }
 .about p { margin: 0 0 9px; }
 .about p:last-child { margin: 0; }
 
+/* data panel */
+.datap { position: absolute; z-index: 8; bottom: calc(62px + env(safe-area-inset-bottom, 0px)); left: 12px; right: 12px; max-height: 52%; overflow: auto; background: var(--paper); border: 2px solid var(--ink); padding: 12px 14px; font: 400 12px/1.4 var(--font); }
+.datap h3 { margin: 0 0 6px; font: 700 12px var(--font); letter-spacing: .12em; text-transform: uppercase; display: flex; gap: 6px; align-items: center; }
+.datap h3 i { width: 10px; height: 10px; border-radius: 50%; border: 1.5px solid var(--ink); display: inline-block; }
+.datap h4 { margin: 8px 0 3px; font: 700 10px var(--font); letter-spacing: .1em; text-transform: uppercase; color: #555; }
+.datap .bar { display: flex; height: 12px; border: 1.5px solid var(--ink); }
+.datap .bar span { background: var(--ink); }
+.datap ul { list-style: none; margin: 4px 0 0; padding: 0; font-size: 11px; }
+.datap li { display: flex; gap: 6px; align-items: center; }
+.datap li b { width: 9px; height: 9px; background: var(--ink); display: inline-block; flex: none; }
+.datap p { margin: 3px 0 0; font-size: 11px; color: #333; }
+.datap section { padding-bottom: 10px; margin-bottom: 10px; border-bottom: 1px solid #0b0b0d33; }
+.datap section:last-child { border: 0; margin: 0; padding: 0; }
+body.dwhere .q[data-g="1"] { opacity: .6; } body.dwhere .q[data-g="2"] { opacity: .4; } body.dwhere .q[data-g="3"] { opacity: .26; }
 /* dock */
 .dock { position: absolute; z-index: 7; bottom: calc(12px + env(safe-area-inset-bottom, 0px)); left: 50%; transform: translateX(-50%); display: flex; gap: 12px; align-items: flex-end; }
 .sbtn { appearance: none; border-radius: 0; height: 40px; min-width: 80px; padding: 0 16px; cursor: pointer; font: 700 13px var(--font); letter-spacing: .08em; text-transform: uppercase; border: 2px solid var(--ink); background: var(--paper); color: var(--ink); }
@@ -127,7 +141,8 @@ body.loop .stat rect { fill-opacity: .96; }
 @media (min-width: 900px) {
   .dock { top: calc(50px + env(safe-area-inset-top, 0px)); right: max(12px, env(safe-area-inset-right, 0px)); bottom: auto; left: auto; transform: none; flex-direction: column; align-items: stretch; width: 166px; gap: 10px; }
   .dock .play { order: -1; }
-  .mix { top: 210px; right: max(12px, env(safe-area-inset-right, 0px)); bottom: auto; left: auto; transform: none; flex-direction: column; gap: 10px; }
+  .datap { top: 260px; right: max(12px, env(safe-area-inset-right, 0px)); bottom: auto; left: auto; width: 300px; max-height: calc(100% - 330px); }
+  .mix { top: 260px; right: max(12px, env(safe-area-inset-right, 0px)); bottom: auto; left: auto; transform: none; flex-direction: column; gap: 10px; }
   .mix input[type=range] { width: 138px; }
 }
 .pad { border-radius: 50%; position: absolute; z-index: 5; left: 50%; top: 50%; width: 96px; height: 96px; border: 2px solid var(--ink); background: var(--paper); touch-action: none; cursor: grab; -webkit-user-select: none; user-select: none;
@@ -163,6 +178,7 @@ body.loop .stat rect { fill-opacity: .96; }
     <p><b>Paris:</b> 3,857 people with no shelter solution counted in the Nuit de la Solidarité, night of 22 to 23 January 2026 (City of Paris).</p>
     <p><b>New York:</b> 4,991 people sleeping unsheltered, HOPE survey, 10 March 2026 (NYC Department of Social Services). It does not include people in shelters.</p>
     <p><b>Percent of residents:</b> the count divided by the city's population. London uses Greater London, 9,089,736 (ONS, 2024). Boston 672,973 (US Census Bureau, July 2025). Copenhagen 673,575 (1 March 2026). Paris 2,103,778 (INSEE, 1 January 2023). New York 8,584,629 (US Census Bureau, July 2025). It's a rough guide, because each count covers a slightly different area and way of counting.</p>
+    <p><b>Data button:</b> opens "Where they end up" and "Who they are" for each city, using published breakdowns only. While it is open, people in the queue fade by group, darkest for the most exposed. Cities without a published breakdown say so. Shares are of the people who answered, as noted, so they are not always the full count.</p>
     <p><b>More cities:</b> Madrid 1,015 sleeping rough, 2025 average from street teams (City of Madrid; population 3,497,277, padrón 1 January 2026). Barcelona 1,982 sleeping on the street, volunteer count by Fundació Arrels, December 2025 (population 1,702,547, INE, November 2024). Los Angeles 45,194 people, city count by LAHSA, January 2026 (population 3,869,089, US Census Bureau, July 2025). San Francisco 7,973 people, point in time count, January 2026. Toronto 12,196 people on 22 October 2025, Street Needs Assessment (population 3,271,830, Statistics Canada, January 2025). Dublin 136 people sleeping rough in the Dublin region, 13 to 19 April 2026. Philadelphia 5,163 people, point in time count on 25 February 2026 (Office of Homeless Services; population 1,603,797, 2020 Census). Seattle shows King County: 18,365 people, point in time count, January 2026 (population 2,269,675, 2020 Census). San Diego shows San Diego County: 9,803 people, January 2026 (population 3,298,634, 2020 Census). Vancouver 2,715 people, Metro Vancouver Homeless Count, 10 and 11 March 2025 (population 662,248, 2021 Census). Sydney 296 people sleeping rough in the City of Sydney area, street count, February 2026. Helsinki 786 single people without a home, 15 November 2024 (Y-Foundation survey; includes people staying with friends, in hostels or institutions, so it is not rough sleeping only). Berlin 57,575 people housed in emergency accommodation on 31 January 2026 (Berlin Senate; people sleeping outside are counted separately and not yet published for 2026; population 3,596,999, 2022 Census). Lisbon 3,122 people sleeping rough or in temporary accommodation, 31 December 2024 (NPISA report; population 545,796, 2021 Census). Montreal 4,690 people in visible homelessness, one night count in April 2022 (CIUSSS; 83 percent were in shelters and similar places, 17 percent outside; population 1,762,949, 2021 Census; the 2025 count total is not yet published). Portland shows the Clackamas, Multnomah and Washington county area: 12,034 people on 22 January 2025 (Portland State University tri-county count).</p>
     <p><b>Your own city:</b> type a name. With no count, the city shows a "?" and an example rhythm, not a real number. Time zone and population come from a free place lookup.</p>
     <p>These measure different things, so please don't read them as a ranking. Each figure stands for a rounded number of people, shown under each city. The figures are not real people and the houses are drawn, not photographed. The more people counted, the more hits in the ring. The sound is a soft placeholder, with a low drone under each city that gets stronger as the count rises.</p>
@@ -206,9 +222,11 @@ body.loop .stat rect { fill-opacity: .96; }
     <label>Pulse<input type="range" id="pulsevol" min="0" max="100" value="45" aria-label="Pulse volume"></label>
     <label>Voice<input type="range" id="voicevol" min="0" max="100" value="60" aria-label="Voice volume"></label>
   </div>
+  <div class="datap" id="data" role="region" aria-label="Who they are and where they end up" hidden></div>
   <div class="dock">
     <button class="sbtn" id="view" aria-pressed="false" title="Switch between the three columns and the wrap-around view">Wrap</button>
     <button class="sbtn" id="mixbtn" aria-expanded="false" aria-controls="mix">Mix</button>
+    <button class="sbtn" id="databtn" aria-expanded="false" aria-controls="data">Data</button>
     <button class="sbtn play" id="play" aria-pressed="false">Play</button>
   </div>
 </div>
@@ -614,6 +632,16 @@ body.loop .stat rect { fill-opacity: .96; }
     { id: "montreal", name: "Montreal", tz: "America/Toronto", count: 4690, l1: "people in visible homelessness", l2: "one night count, April 2022", style: "tenement", pop: 1762949 },
     { id: "portland", name: "Portland", tz: "America/Los_Angeles", count: 12034, l1: "people experiencing homelessness in the tri-county area", l2: "point in time count, January 2025", style: "terrace", pop: 0 }
   ];
+  /* published breakdowns, by preset id. Items are most exposed first. v is a count or a share. */
+  var BREAKDOWN = {
+    boston: { who: { items: [["Single adults", 2001], ["People in families, in shelter", 1673]], note: "Census night, 22 January 2026. No families were found living on the street." } },
+    helsinki: { where: { items: [["Outside, stairwells, emergency shelter", 200], ["Hostels", 185], ["Institutions, service housing", 157], ["With friends or relatives", 244]], note: "Single people only, 15 November 2024. Another 10 families (23 children) were also counted." } },
+    montreal: { where: { items: [["Outside: streets, parks, camps", 17], ["Shelters, hospitals, transitional housing", 83]], note: "Shares of the 4,690 counted, April 2022." } },
+    philly: { where: { items: [["Unsheltered", 711], ["In shelter or transitional housing", 4452]], note: "25 February 2026. Unsheltered fell 39 percent from 1,178 in 2025." } },
+    vancouver: { where: { items: [["Unsheltered", 763], ["Sheltered", 1952]], note: "10 and 11 March 2025." }, who: { items: [["Under 25", 65], ["25 to 54", 1181], ["55 and over", 279]], note: "Of 1,525 who answered the age question. 42 percent of 1,582 who answered identified as Indigenous. 79 percent of 1,397 who answered had been homeless for a year or more." } },
+    seattle: { where: { items: [["Unsheltered", 11829], ["Sheltered", 6536]], note: "King County, January 2026." }, who: { note: "People in families who were unsheltered: 2,224 in 647 households, up from 1,253 in 415 households in 2024." } },
+    sandiego: { where: { items: [["Unsheltered", 5108], ["In shelter or transitional housing", 4695]], note: "San Diego County, January 2026. Unsheltered fell from 5,714 in 2025." } }
+  };
   var SLOTS = [
     { col: "#ff6a1f", bg: "#9a8fe2", bg2: "#aaa4ec", bg3: "#8a82d8", pan: .05, vel: .19, P: 241, dir: -1, notes: [220.0, 246.94, 293.66, 329.63, 369.99], seq: [0, 1, 3, 2, 4] },
     { col: "#f3ee2e", bg: "#7f9fe2", bg2: "#98b2ee", bg3: "#7090d6", pan: .4, vel: .16, P: 307, dir: 1, notes: [293.66, 369.99, 440.0, 493.88, 587.33], seq: [2, 0, 3, 1] },
@@ -727,6 +755,14 @@ body.loop .stat rect { fill-opacity: .96; }
     el("circle", { cx: 0, cy: -11.6, r: 2.1 }, b);
     place(g, x, y, (sc || 1) * 1.3); return g;
   }
+  function whereGroup(c, ln, q) {
+    var bd = BREAKDOWN[c.id], w = bd && bd.where, tot = 0, acc = 0, i, fr;
+    if (!w || !c.dots) return -1;
+    w.items.forEach(function (it) { tot += it[1]; });
+    fr = (q * 2 + ln + .5) / c.dots;
+    for (i = 0; i < w.items.length; i++) { acc += w.items[i][1] / tot; if (fr <= acc + 1e-9) return Math.min(i, 3); }
+    return Math.min(w.items.length - 1, 3);
+  }
   function setClock(c, ms) { var s = Math.floor(localSec(c, ms || Date.now())); if (c.timeEl) { var tx = "  " + two(Math.floor(s / 3600)) + ":" + two(Math.floor(s / 60) % 60); if (c.timeEl.textContent !== tx) { var first = !c.timeEl.textContent; c.timeEl.textContent = tx; if (first) placeChip(c); } } }
   function buildPanel(c, ci) {
     var p = document.createElement("section"); p.className = "panel"; p.id = "p-" + ci;
@@ -769,7 +805,7 @@ body.loop .stat rect { fill-opacity: .96; }
     [0, 1].forEach(function (ln) {
       for (var q = 0; q < half[ln]; q++) {
         var s0 = c.slots[ln][q];
-        var e = person(c.qg, s0.x, s0.y, 1);
+        var e = person(c.qg, s0.x, s0.y, 1), gi = whereGroup(c, ln, q); if (gi >= 0) e.setAttribute("data-g", gi);
         c.lanes[ln].push({ el: e, x: s0.x, y: s0.y });
       }
     });
@@ -927,8 +963,35 @@ body.loop .stat rect { fill-opacity: .96; }
     CITIES.forEach(layoutStat); relayoutAll(); introDirty = true;
     layoutPad();
   }
+  var dataBtn = document.getElementById("databtn"), dataEl = document.getElementById("data");
+  function layer(title, L, total) {
+    var h = "<h4>" + title + "</h4>";
+    if (!L) return h + "<p>No breakdown published for this count.</p>";
+    if (L.items) {
+      var tot = 0, i; L.items.forEach(function (it) { tot += it[1]; });
+      h += '<div class="bar" role="img" aria-label="' + esc(title) + '">';
+      L.items.forEach(function (it, i) { h += '<span style="width:' + (it[1] / tot * 100).toFixed(2) + "%;opacity:" + [1, .6, .4, .26][Math.min(i, 3)] + '"></span>'; });
+      h += "</div><ul>";
+      L.items.forEach(function (it, i) { h += '<li><b style="opacity:' + [1, .6, .4, .26][Math.min(i, 3)] + '"></b>' + esc(it[0]) + " " + Math.round(it[1] / tot * 100) + "%</li>"; });
+      h += "</ul>";
+    }
+    return h + (L.note ? "<p>" + esc(L.note) + "</p>" : "");
+  }
+  function renderData() {
+    var h = "";
+    CITIES.forEach(function (c) {
+      var bd = BREAKDOWN[c.id] || {};
+      h += "<section><h3><i style=\"background:" + c.col + "\"></i>" + esc(c.name) + "</h3>" + layer("Where they end up", bd.where) + layer("Who they are", bd.who) + "</section>";
+    });
+    dataEl.innerHTML = h;
+  }
+  dataBtn.addEventListener("click", function () {
+    dataEl.hidden = !dataEl.hidden; dataBtn.setAttribute("aria-expanded", dataEl.hidden ? "false" : "true");
+    document.body.classList.toggle("dwhere", !dataEl.hidden);
+    if (!dataEl.hidden) { renderData(); if (!mixEl.hidden) mixBtn.click(); }
+  });
   var mixBtn = document.getElementById("mixbtn"), mixEl = document.getElementById("mix");
-  mixBtn.addEventListener("click", function () { mixEl.hidden = !mixEl.hidden; mixBtn.setAttribute("aria-expanded", mixEl.hidden ? "false" : "true"); });
+  mixBtn.addEventListener("click", function () { if (!dataEl.hidden) dataBtn.click(); mixEl.hidden = !mixEl.hidden; mixBtn.setAttribute("aria-expanded", mixEl.hidden ? "false" : "true"); });
   [["vol", "nfa-vol", function (v) { volMaster = v; if (masterG && ctx) masterG.gain.setTargetAtTime(v, ctx.currentTime, .05); }, .8],
    ["pulsevol", "nfa-pulse", function (v) { volPulse = v; }, .45],
    ["voicevol", "nfa-voice-vol", function (v) { volVoice = v; }, .6]].forEach(function (m) {
@@ -1058,6 +1121,7 @@ body.loop .stat rect { fill-opacity: .96; }
     if (playing && ctx) startDrone(c);
     skyUpdate(c, Date.now()); var sec = Math.floor(localSec(c, Date.now())); setClock(c);
     saveCities(); markTab(); if (mode === "wrap") applyMode();
+    if (typeof dataEl !== "undefined" && !dataEl.hidden) renderData();
   }
 
   /* ---------- sound ---------- */
