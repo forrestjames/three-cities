@@ -241,7 +241,7 @@ body.loop .stat rect { fill-opacity: .96; }
   window.addEventListener("resize", fitTitle);
 
   /* ---------- line drawing helpers ---------- */
-  var GROUND = 688, STREET = 568, BS = 1.4;
+  var GROUND = 688, STREET = 568, BS = 1;
   function L(d, c) { return '<path class="' + (c || "ln") + '" d="' + d + '"/>'; }
   function R(x, y, w, h, c) { return '<rect class="' + (c || "ln") + '" x="' + f(x) + '" y="' + f(y) + '" width="' + f(w) + '" height="' + f(h) + '"/>'; }
   function win(x, y, w, h, rows, cols, o) {
@@ -713,8 +713,8 @@ body.loop .stat rect { fill-opacity: .96; }
     var sg = p.querySelector(".stat");
     el("rect", { x: 20, y: 636, width: 360, height: 108, fill: "transparent" }, sg);
     c.dotNote = c.ex ? "example rhythm" : "each figure = " + c.per.toLocaleString("en-GB") + " people";
-    var jn = jumble(sg, c.name, 200, 672, 35, 350, c.col, "#0b0b0d"); c.nameEl = jn.g; jn.g.style.cursor = "pointer";
-    jumble(sg, c.ex ? "?" : c.count.toLocaleString("en-GB"), 200, 720, 44, 350, "#0b0b0d", null);
+    var nm = el("text", { class: "cname", x: 200, y: 668, "text-anchor": "middle" }, sg); nm.textContent = c.name; c.nameEl = nm;
+    var t1 = el("text", { class: "num", transform: "translate(200 710) scale(1.16 .92)", "text-anchor": "middle" }, sg); t1.textContent = c.ex ? "?" : c.count.toLocaleString("en-GB");
     var t2 = el("text", { class: "sub2", x: 200, y: 735, "text-anchor": "middle" }, sg); t2.textContent = c.l1 + " \u00b7 " + c.l2; fitCap(t2, 360);
     var t3 = el("text", { class: "sub2 b", x: 200, y: 745, "text-anchor": "middle" }, sg); t3.textContent = (c.share ? c.share + " \u00b7 " : "") + c.dotNote; fitCap(t3, 360);
 
