@@ -121,6 +121,13 @@ body.loop .stat rect { fill-opacity: .96; }
 .sbtn.play { background: var(--ink); color: var(--paper); }
 @media (max-width: 480px) { .dock { gap: 7px; } .sbtn { min-width: 0; padding: 0 11px; font-size: 12px; } }
 .sbtn.hold[aria-pressed="true"] { background: var(--ink); color: var(--paper); }
+.sbtn.padhold { position: absolute; left: 50%; bottom: 25%; transform: translateX(-50%); height: 26px; min-width: 0; padding: 0 12px; font-size: 10px; z-index: 2; }
+@media (min-width: 900px) {
+  .dock { top: calc(50px + env(safe-area-inset-top, 0px)); right: max(12px, env(safe-area-inset-right, 0px)); bottom: auto; left: auto; transform: none; flex-direction: column; align-items: stretch; width: 166px; gap: 10px; }
+  .dock .play { order: -1; }
+  .mix { top: 210px; right: max(12px, env(safe-area-inset-right, 0px)); bottom: auto; left: auto; transform: none; flex-direction: column; gap: 10px; }
+  .mix input[type=range] { width: 138px; }
+}
 .pad { border-radius: 50%; position: absolute; z-index: 5; left: 50%; top: 50%; width: 96px; height: 96px; border: 2px solid var(--ink); background: var(--paper); touch-action: none; cursor: grab; -webkit-user-select: none; user-select: none;
   background-image: radial-gradient(circle, rgba(31,45,143,.35) 1px, transparent 1.4px); background-size: 9px 9px; }
 .pad:active { cursor: grabbing; }
@@ -192,6 +199,7 @@ body.loop .stat rect { fill-opacity: .96; }
   <div class="pad" id="pad" tabindex="0" role="application" aria-label="Effects pad. Drag to blend filter, delay, stutter and flanger.">
       <span class="pf" data-fx="filter">FILTER</span><span class="ps" data-fx="stutter">STUTTER</span><span class="pd" data-fx="delay">DELAY</span><span class="pfl" data-fx="flange">FLANGE</span>
       <div class="puck" id="puck"></div>
+      <button class="sbtn hold padhold" id="hold" aria-pressed="false">Hold</button>
     </div>
 
   <div class="mix" id="mix" role="group" aria-label="Mix" hidden>
@@ -200,7 +208,6 @@ body.loop .stat rect { fill-opacity: .96; }
     <label>Voice<input type="range" id="voicevol" min="0" max="100" value="60" aria-label="Voice volume"></label>
   </div>
   <div class="dock">
-    <button class="sbtn hold" id="hold" aria-pressed="false">Hold</button>
     <button class="sbtn" id="view" aria-pressed="false" title="Switch between the three columns and the wrap-around view">Wrap</button>
     <button class="sbtn" id="mixbtn" aria-expanded="false" aria-controls="mix">Mix</button>
     <button class="sbtn play" id="play" aria-pressed="false">Play</button>
@@ -251,7 +258,7 @@ body.loop .stat rect { fill-opacity: .96; }
   window.addEventListener("resize", fitTitle);
 
   /* ---------- line drawing helpers ---------- */
-  var GROUND = 688, STREET = 568, BS = 0.6;
+  var GROUND = 688, STREET = 640, BS = 0.52;
   function L(d, c) { return '<path class="' + (c || "ln") + '" d="' + d + '"/>'; }
   function R(x, y, w, h, c) { return '<rect class="' + (c || "ln") + '" x="' + f(x) + '" y="' + f(y) + '" width="' + f(w) + '" height="' + f(h) + '"/>'; }
   function win(x, y, w, h, rows, cols, o) {
@@ -724,15 +731,15 @@ body.loop .stat rect { fill-opacity: .96; }
     c.pg = c.glows; c.bldEl = p.querySelector(".bld"); c.bldEl.setAttribute("data-b", "1"); c.tabEl = tabsEl.children[ci]; c.tabEl.textContent = c.name;
 
     var sg = p.querySelector(".stat");
-    el("rect", { x: 20, y: 636, width: 360, height: 108, fill: "transparent" }, sg);
+    el("rect", { x: 20, y: 668, width: 360, height: 84, fill: "transparent" }, sg);
     c.dotNote = c.ex ? "example rhythm" : "each figure = " + c.per.toLocaleString("en-GB") + " people";
-    var nm = el("text", { class: "cname", x: 200, y: 668, "text-anchor": "middle" }, sg); nm.textContent = c.name; c.nameEl = nm;
-    var t1 = el("text", { class: "num", transform: "translate(200 710) scale(1.16 .92)", "text-anchor": "middle" }, sg); t1.textContent = c.ex ? "?" : c.count.toLocaleString("en-GB");
-    var t2 = el("text", { class: "sub2", x: 200, y: 735, "text-anchor": "middle" }, sg); t2.textContent = c.l1 + " \u00b7 " + c.l2; fitCap(t2, 360); c.cap1 = t2; c.stG = sg;
-    var t3 = el("text", { class: "sub2 b", x: 200, y: 745, "text-anchor": "middle" }, sg); t3.textContent = (c.share ? c.share + " \u00b7 " : "") + c.dotNote; fitCap(t3, 360); c.cap2 = t3; c.cap1s = t2.textContent; c.cap2s = t3.textContent;
+    var nm = el("text", { class: "cname", x: 200, y: 684, "text-anchor": "middle" }, sg); nm.textContent = c.name; c.nameEl = nm;
+    var t1 = el("text", { class: "num", transform: "translate(200 718) scale(1.16 .92)", "text-anchor": "middle" }, sg); c.numEl = t1; t1.textContent = c.ex ? "?" : c.count.toLocaleString("en-GB");
+    var t2 = el("text", { class: "sub2", x: 200, y: 733, "text-anchor": "middle" }, sg); t2.textContent = c.l1 + " \u00b7 " + c.l2; fitCap(t2, 360); c.cap1 = t2; c.stG = sg;
+    var t3 = el("text", { class: "sub2 b", x: 200, y: 744, "text-anchor": "middle" }, sg); t3.textContent = (c.share ? c.share + " \u00b7 " : "") + c.dotNote; fitCap(t3, 360); c.cap2 = t3; c.cap1s = t2.textContent; c.cap2s = t3.textContent;
 
     function makeSlots(sign, count) {
-      var arr = [], C = 26, rows = Math.ceil(count / C) + 1, r, k, QY = 596;
+      var arr = [], C = 26, rows = Math.ceil(count / C) + 1, r, k, QY = 650;
       for (r = 0; r < rows; r++) for (k = 0; k < C; k++) {
         var x = 200 + sign * (9 + k * 7 + (r % 2) * 3.5), y = QY + r * 15;
         arr.push({ x: x, y: y, d: Math.hypot(x - 200, (y - QY) * 1.6) });
@@ -845,7 +852,7 @@ body.loop .stat rect { fill-opacity: .96; }
     });
     loopEl.removeChild(tmp);
   }
-  var SINK = 60, bldDY = 0, introT0 = -1, introDone = false, introDirty = true;
+  var SINK = 25, bldDY = 0, introT0 = -1, introDone = false, introDirty = true;
   function ease(x) { x = Math.max(0, Math.min(1, x)); return x * x * (3 - 2 * x); }
   function introStart() { if (introT0 < 0) { introT0 = performance.now(); if (RM) introT0 -= 5000; } }
   function introStep(nowP) {
@@ -857,13 +864,13 @@ body.loop .stat rect { fill-opacity: .96; }
     cluster.style.transform = "";
     var m = cluster.getScreenCTM(); if (!m) return;
     var s = m.a, H = window.innerHeight, W = window.innerWidth, R = RADII_BASE[0] * s;
-    var k = W < 900 ? 1 : Math.max(1, Math.min(1.15, W * .46 / R)), cyp = m.f + CY * s, cxp = m.e + CX * s;
-    var target = W < 900 ? cyp : Math.max(H * .29, R * k + H * .05), kk = 1 + (k - 1) * rp, dy = (target - cyp) * rp;
+    var k = W < 900 ? 1 : Math.max(1, Math.min(1.05, W * .46 / R)), cyp = m.f + CY * s, cxp = m.e + CX * s;
+    var target = W < 900 ? cyp : Math.max(H * .26, R * k + H * .04), kk = 1 + (k - 1) * rp, dy = (target - cyp) * rp;
     cluster.style.transformOrigin = cxp + "px " + cyp + "px";
     cluster.style.transform = "translate(0px," + dy.toFixed(1) + "px) scale(" + kk.toFixed(4) + ")";
     layoutPad();
   }
-  var SOFF = [[-91, -260], [339, -16], [100, -353]], QOFF = [[-91, -239], [338, 9], [100, -331]];
+  var SOFF = [[-91, -260], [339, -16], [100, -353]], QOFF = [[-91, -293], [338, -45], [100, -385]];
   var lastWide = false;
   function wideWrap() { return mode === "wrap" && window.innerWidth >= 900; }
   function wrapText(t, str, maxW, y0, step) {
@@ -883,6 +890,7 @@ body.loop .stat rect { fill-opacity: .96; }
     c.stG.setAttribute("transform", w ? "translate(" + SOFF[ci % 3][0] + " " + SOFF[ci % 3][1] + ")" : "");
     c.qg.setAttribute("transform", w ? "translate(" + QOFF[ci % 3][0] + " " + QOFF[ci % 3][1] + ")" : "");
     c.qoff = w ? QOFF[ci % 3] : [0, 0];
+    c.nameEl.setAttribute("y", w ? 668 : 684); c.numEl.setAttribute("transform", w ? "translate(200 710) scale(1.16 .92)" : "translate(200 718) scale(1.16 .92)");
     if (w) {
       c.cap1.setAttribute("data-w", "1"); c.cap2.setAttribute("data-w", "1"); c.cap1.removeAttribute("textLength"); c.cap2.removeAttribute("textLength");
       c.cap2.style.fontSize = "14px"; c.cap1.style.fontSize = "9.5px";
@@ -891,7 +899,7 @@ body.loop .stat rect { fill-opacity: .96; }
     } else {
       c.cap1.removeAttribute("data-w"); c.cap2.removeAttribute("data-w"); c.cap2.style.fontSize = ""; c.cap1.style.fontSize = "";
       c.cap1.textContent = c.cap1s; c.cap2.textContent = c.cap2s;
-      c.cap1.setAttribute("y", 735); c.cap2.setAttribute("y", 745); c.cap1.removeAttribute("x"); c.cap1.setAttribute("x", 200);
+      c.cap1.setAttribute("y", 733); c.cap2.setAttribute("y", 744); c.cap1.removeAttribute("x"); c.cap1.setAttribute("x", 200);
       c.cap2.setAttribute("x", 200);
     }
   }
@@ -1243,6 +1251,7 @@ body.loop .stat rect { fill-opacity: .96; }
     pad.x = clamp(pad.x + m[0], -1, 1); pad.y = clamp(pad.y + m[1], -1, 1); padRound();
     pad.hold = true; holdBtn.setAttribute("aria-pressed", "true"); applyFx();
   });
+  holdBtn.addEventListener("pointerdown", function (e) { e.stopPropagation(); });
   holdBtn.addEventListener("click", function () { pad.hold = !pad.hold; holdBtn.setAttribute("aria-pressed", pad.hold ? "true" : "false"); });
   applyFx();
 
