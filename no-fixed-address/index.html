@@ -53,7 +53,7 @@ body.loop .panel::before { display: none; }
 .gl { fill: var(--glow); opacity: 0; }
 .dk { fill: var(--bg); stroke: var(--line); stroke-width: 1.15; vector-effect: non-scaling-stroke; }
 .q { fill: var(--ink); }
-.lad { fill: none; stroke: var(--line); stroke-width: 1.3; stroke-linecap: round; vector-effect: non-scaling-stroke; opacity: .85; }
+.lad { fill: none; stroke: var(--paper); stroke-width: .9; stroke-linecap: round; vector-effect: non-scaling-stroke; opacity: .7; }
 .trk { fill: none; stroke: var(--line); stroke-width: 1; opacity: .75; vector-effect: non-scaling-stroke; }
 .more summary { font-weight: 700; font-size: 12px; letter-spacing: .1em; text-transform: uppercase; cursor: pointer; }
 .hint { margin: 0; font-size: 12px; opacity: .75; }
@@ -79,7 +79,8 @@ body.loop .stat rect { fill-opacity: .96; }
 .sub { font-size: 9.5px; fill: var(--ink); letter-spacing: .02em; }
 .cluster { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; z-index: 4; pointer-events: none; display: block; }
 .tag { font-weight: 700; font-size: 11px; letter-spacing: .14em; fill: var(--ink); text-transform: uppercase; cursor: pointer; pointer-events: all; paint-order: stroke; stroke: #8e9be0; stroke-width: 3px; stroke-linejoin: round; text-decoration: underline dotted; text-underline-offset: 3px; }
-.tag:focus-visible, .cname:focus-visible { outline: 2px solid var(--ink); }
+.ntime { text-decoration: none; font-weight: 400; letter-spacing: .08em; }
+.cname:focus-visible { outline: 2px solid var(--ink); }
 
 /* city picker */
 .picker { position: absolute; inset: 0; z-index: 20; background: rgba(11,11,13,.5); display: flex; align-items: center; justify-content: center; padding: 16px; }
@@ -150,7 +151,7 @@ body.loop .stat rect { fill-opacity: .96; }
 
   <div class="head">
     <div class="titlewrap">
-      <p class="lede">Each figure is a group of people at home, waiting. Every few hits, one climbs a ladder into the ring. When the last one is in, the piece ends.</p>
+      <p class="lede">Every few hits, someone climbs into a ring. When the last one is in, it ends.</p>
       <h1 class="title" id="title"><span class="fit">No fixed</span><span class="fit">Address</span></h1>
     </div>
     <div class="tabs" id="tabs"></div>
@@ -702,15 +703,21 @@ body.loop .stat rect { fill-opacity: .96; }
     }
   }
   function fitCap(t, maxW) { CAP.push({ t: t, w: maxW }); }
+  function placeChip(c) { try { if (!c.nmChip || !c.nameEl.isConnected) return; var bb = c.nameEl.getBBox(); if (bb.width) { c.nmChip.setAttribute("cx", f(bb.x - 11)); c.nmChip.setAttribute("cy", f(bb.y + bb.height * .55)); } } catch (e) {} }
   function relayoutAll() {
+    CITIES.forEach(placeChip);
     JB = JB.filter(function (j) { return j.g.isConnected; }); JB.forEach(layoutJ);
     CAP = CAP.filter(function (c) { return c.t.isConnected; });
     CAP.forEach(function (c) { if (c.t.getAttribute("data-w")) return; c.t.removeAttribute("textLength"); try { if (c.t.getComputedTextLength() > c.w) { c.t.setAttribute("textLength", c.w); c.t.setAttribute("lengthAdjust", "spacingAndGlyphs"); } } catch (e) {} });
   }
   function place(g, x, y, sc) { g.setAttribute("transform", "translate(" + x.toFixed(2) + " " + y.toFixed(2) + ") scale(" + (sc || 1).toFixed(2) + ")"); }
+  var PID = 0;
   function person(parent, x, y, sc) {
-    var g = el("g", { class: "q" }, parent);
-    el("rect", { x: -2.3, y: -9, width: 4.6, height: 9, rx: 2.1 }, g); el("circle", { cx: 0, cy: -11.7, r: 2.25 }, g);
+    var g = el("g", { class: "q" }, parent), k = PID++, h = .94 + (k * 37 % 11) / 70;
+    var b = el("g", { transform: "scale(" + h.toFixed(3) + ")" }, g);
+    if (k % 3 === 0) el("rect", { x: -4.3, y: -9, width: 1.9, height: 4.6, rx: .9 }, b);
+    el("path", { d: "M-2.7 -8.4Q-2.7 -9.6-1.5-9.6H1.5Q2.7 -9.6 2.7 -8.4V-3.9H1.3V0H.35V-3.7H-.35V0H-1.3V-3.9H-2.7Z" }, b);
+    el("circle", { cx: 0, cy: -11.6, r: 2.1 }, b);
     place(g, x, y, (sc || 1) * 1.3); return g;
   }
   function setClock(c, ms) { var s = Math.floor(localSec(c, ms || Date.now())); if (c.timeEl) c.timeEl.textContent = "  " + two(Math.floor(s / 3600)) + ":" + two(Math.floor(s / 60) % 60); }
@@ -735,7 +742,7 @@ body.loop .stat rect { fill-opacity: .96; }
     var sg = p.querySelector(".stat");
     el("rect", { x: 20, y: 668, width: 360, height: 84, fill: "transparent" }, sg);
     c.dotNote = c.ex ? "example rhythm" : "each figure = " + c.per.toLocaleString("en-GB") + " people";
-    var nm = el("text", { class: "cname", x: 200, y: 684, "text-anchor": "middle" }, sg); nm.textContent = c.name; c.nameEl = nm;
+    var nm = el("text", { class: "cname", x: 200, y: 684, "text-anchor": "middle" }, sg); nm.textContent = c.name; c.nameEl = nm; c.timeEl = el("tspan", { class: "ntime" }, nm); c.nmChip = el("circle", { r: 4.5, fill: c.col, stroke: "#0b0b0d", "stroke-width": 1.2 }, sg);
     var t1 = el("text", { class: "num", transform: "translate(200 718) scale(1.16 .92)", "text-anchor": "middle" }, sg); c.numEl = t1; t1.textContent = c.ex ? "?" : c.count.toLocaleString("en-GB");
     var t2 = el("text", { class: "sub2", x: 200, y: 733, "text-anchor": "middle" }, sg); t2.textContent = c.l1 + " \u00b7 " + c.l2; fitCap(t2, 360); c.cap1 = t2; c.stG = sg;
     var t3 = el("text", { class: "sub2 b", x: 200, y: 744, "text-anchor": "middle" }, sg); t3.textContent = (c.share ? c.share + " \u00b7 " : "") + c.dotNote; fitCap(t3, 360); c.cap2 = t3; c.cap1s = t2.textContent; c.cap2s = t3.textContent;
@@ -783,13 +790,6 @@ body.loop .stat rect { fill-opacity: .96; }
     c.tick = el("path", { d: "M" + CX + " " + (CY - R - 5) + "V" + (CY - R - 12), stroke: "#0b0b0d", "stroke-width": 2, "stroke-linecap": "round", fill: "none" }, cg);
     el("path", { d: "M191 " + (CY + R + 12) + "V" + (CY + R - 3) + "A9 9 0 0 1 209 " + (CY + R - 3) + "V" + (CY + R + 12) + "Z", fill: "#8e9be0", stroke: "#fbf7ee", "stroke-width": 1.15, "vector-effect": "non-scaling-stroke" }, cg);
     el("path", { class: "ln", d: "M200 " + (CY + R - 12) + "V" + (CY + R + 12) }, cg);
-    var tg = el("text", { class: "tag", x: 200, y: CY - R - 14, "text-anchor": "middle", tabindex: 0, role: "button", "aria-label": "Change city, now " + c.name }, cg);
-    tg.textContent = c.name; c.timeEl = el("tspan", {}, tg);
-    tg.addEventListener("click", function () { pickerOpen(ci); });
-    tg.addEventListener("keydown", function (e) { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); pickerOpen(ci); } });
-    var chip = el("circle", { cx: 160, cy: CY - R - 17.5, r: 4.5, fill: c.col, stroke: "#0b0b0d", "stroke-width": 1.2 }, cg);
-    c.chipEl = chip; c.tagEl = tg;
-    setTimeout(function () { try { var bb = tg.getBBox(); if (bb.width) chip.setAttribute("cx", f(bb.x - 10)); } catch (e) {} }, 0);
     return cg;
   }
   CITIES.forEach(function (c, ci) { scene.appendChild(buildPanel(c, ci)); ringLayer.appendChild(buildRing(c, ci)); }); relayoutAll(); if (document.fonts && document.fonts.ready) document.fonts.ready.then(function () { relayoutAll(); if (typeof layoutStat === "function") CITIES.forEach(layoutStat); });
@@ -892,7 +892,7 @@ body.loop .stat rect { fill-opacity: .96; }
     c.stG.setAttribute("transform", w ? "translate(" + SOFF[ci % 3][0] + " " + SOFF[ci % 3][1] + ")" : "");
     c.qg.setAttribute("transform", w ? "translate(" + QOFF[ci % 3][0] + " " + QOFF[ci % 3][1] + ")" : "");
     c.qoff = w ? QOFF[ci % 3] : [0, 0];
-    c.nameEl.setAttribute("y", w ? 668 : 684); c.numEl.setAttribute("transform", w ? "translate(200 710) scale(1.16 .92)" : "translate(200 718) scale(1.16 .92)");
+    c.nameEl.setAttribute("y", w ? 668 : 684); placeChip(c); c.numEl.setAttribute("transform", w ? "translate(200 710) scale(1.16 .92)" : "translate(200 718) scale(1.16 .92)");
     if (w) {
       c.cap1.setAttribute("data-w", "1"); c.cap2.setAttribute("data-w", "1"); c.cap1.removeAttribute("textLength"); c.cap2.removeAttribute("textLength");
       c.cap2.style.fontSize = "14px"; c.cap1.style.fontSize = "9.5px";
@@ -1288,15 +1288,22 @@ body.loop .stat rect { fill-opacity: .96; }
   }
   function updateLadders() {
     CITIES.forEach(function (c, ci) {
-      var f0 = toOverlay(c, 200, STREET + 2), x1 = CX, y1 = CY + c.R + 8, dx = x1 - f0[0], dy = y1 - f0[1], len = Math.hypot(dx, dy) || 1, nx = -dy / len * 5, ny = dx / len * 5, d = "", n = Math.max(3, Math.floor(len / 13)), i, t;
+      var f0 = toOverlay(c, 200, STREET + 2), x1 = CX, y1 = CY + c.R + 8, dx = x1 - f0[0], dy = y1 - f0[1], len = Math.hypot(dx, dy) || 1, ux = dx / len, uy = dy / len, nx = -uy * 3.6, ny = ux * 3.6, d = "", n = Math.max(3, Math.round(len / 17)), i, t, a, b;
       c.lad = f0;
-      d += "M" + (f0[0] + nx).toFixed(1) + " " + (f0[1] + ny).toFixed(1) + "L" + (x1 + nx).toFixed(1) + " " + (y1 + ny).toFixed(1) + "M" + (f0[0] - nx).toFixed(1) + " " + (f0[1] - ny).toFixed(1) + "L" + (x1 - nx).toFixed(1) + " " + (y1 - ny).toFixed(1);
-      for (i = 1; i < n; i++) { t = i / n; d += "M" + (f0[0] + dx * t + nx).toFixed(1) + " " + (f0[1] + dy * t + ny).toFixed(1) + "L" + (f0[0] + dx * t - nx).toFixed(1) + " " + (f0[1] + dy * t - ny).toFixed(1); }
+      /* two slim rails, little feet, evenly spaced rungs and a hook over the door */
+      d += "M" + f1(f0[0] + nx) + " " + f1(f0[1] + ny) + "L" + f1(x1 + nx - ux * 5) + " " + f1(y1 + ny - uy * 5) + "M" + f1(f0[0] - nx) + " " + f1(f0[1] - ny) + "L" + f1(x1 - nx - ux * 5) + " " + f1(y1 - ny - uy * 5);
+      d += "M" + f1(f0[0] + nx - 2) + " " + f1(f0[1] + ny + 1.5) + "h4M" + f1(f0[0] - nx - 2) + " " + f1(f0[1] - ny + 1.5) + "h4";
+      for (i = 1; i < n; i++) { t = i / n; a = f0[0] + dx * t; b = f0[1] + dy * t; d += "M" + f1(a + nx) + " " + f1(b + ny) + "L" + f1(a - nx) + " " + f1(b - ny); }
       if (!c.ladEl || !c.ladEl.isConnected) c.ladEl = el("path", { class: "lad" }, ladderLayer);
       c.ladEl.setAttribute("d", d);
       var phone = window.innerWidth < 900, cur = Math.round(scene.scrollLeft / (scene.clientWidth || 1));
       c.ladEl.style.display = phone && (mode === "wrap" || cur !== ci) ? "none" : "";
     });
+  }
+  function f1(v) { return v.toFixed(1); }
+  function flickerSome(c, nowP) {
+    var N = c.glows.length; if (!N) return; if (!c.gf) c.gf = []; if (!c.gs) { c.gs = []; c.gv = []; c.dark = 0; c.gdir = 0; }
+    for (var k = 0; k < 3; k++) { var i = Math.floor(Math.random() * N); if (c.gs[i] !== 0) c.gf[i] = nowP; }
   }
   function lightWindow(c, nowP) {
     var N = c.glows.length; if (!N) return;
@@ -1304,7 +1311,8 @@ body.loop .stat rect { fill-opacity: .96; }
     c.dep = (c.dep || 0) + 1;
     /* people leave: windows go dark in step, so every window is dark when the last person has gone */
     var tgt = Math.min(N, Math.round(N * c.dep / Math.max(1, c.dots))), guard = 0, i;
-    while (c.dark < tgt && guard++ < N * 2) { i = (c.lit * c.stride + 3) % N; c.lit++; if (c.gs[i] === 0) continue; c.gs[i] = 0; c.dark++; }
+    if (!c.gf) c.gf = [];
+    while (c.dark < tgt && guard++ < N * 2) { i = (c.lit * c.stride + 3) % N; c.lit++; if (c.gs[i] === 0) continue; c.gs[i] = 0; c.dark++; c.gf[i] = nowP; }
   }
   function skyUpdate(c, ms) {
     var h = localSec(c, ms) / 3600, day = h >= 6 && h < 18, fr = day ? (h - 6) / 12 : (((h - 18) + 24) % 24) / 12;
@@ -1325,7 +1333,7 @@ body.loop .stat rect { fill-opacity: .96; }
     while (events.length && events[0].t <= now) {
       var ev = events.shift(); if (ev.c.dead) continue; ev.c.pt = ev.t;
       for (var n = 0; n < ev.c.nodes.length; n++) if (ev.c.nodes[n].i === ev.i) ev.c.nodes[n].t = ev.t;
-      ev.c.hn = (ev.c.hn || 0) + 1; if (ev.c.hn % 5 === 1 && !ev.c.done) launch(ev.c, ev.i, nowP);
+      ev.c.hn = (ev.c.hn || 0) + 1; if (ev.c.hn % 2 === 0) flickerSome(ev.c, nowP); if (ev.c.hn % 5 === 1 && !ev.c.done) launch(ev.c, ev.i, nowP);
     }
     if (nowP - lastSky > 1000) {
       lastSky = nowP;
@@ -1345,7 +1353,7 @@ body.loop .stat rect { fill-opacity: .96; }
       c.tick.setAttribute("transform", "rotate(" + (phase * 360).toFixed(2) + " " + CX + " " + CY + ")");
       /* the buildings breathe with each hit */
       var pls = RM || !c.pt ? 0 : Math.exp(-(now - c.pt) * 2.2); if (pls < .004) pls = 0;
-      var amp = (.03 + .003 * c.k) * pls;
+      var amp = 0;
       if (c.bldEl) c.bldEl.setAttribute("transform", "translate(200 " + (STREET + bldDY).toFixed(1) + ") scale(" + (BS * (1 + amp)).toFixed(4) + ") translate(-200 " + -GROUND + ")");
       if (c.wgrp) c.wgrp.setAttribute("transform", pls ? "translate(" + CX + " " + CY + ") scale(" + (1 + amp * .8).toFixed(4) + ") translate(" + -CX + " " + -CY + ")" : "");
       /* nodes */
@@ -1396,7 +1404,9 @@ body.loop .stat rect { fill-opacity: .96; }
         if (!c.gs) { c.gs = []; c.gv = []; c.dark = 0; c.gdir = 0; }
         var tg = c.gs[gi] === undefined ? 1 : c.gs[gi], gv = c.gv[gi] === undefined ? 1 : c.gv[gi];
         gv += (tg - gv) * .012; if (Math.abs(tg - gv) < .004) gv = tg; c.gv[gi] = gv;
-        c.glows[gi].style.opacity = (gv * .92).toFixed(3);
+        var fl = 1;
+        if (c.gf && c.gf[gi] !== undefined) { var fa = nowP - c.gf[gi]; if (fa < 900) fl = (Math.floor(fa / 65) % 3 === 1 || fa > 420 && Math.floor(fa / 65) % 4 === 2) ? .12 : 1; }
+        c.glows[gi].style.opacity = (gv * .92 * fl).toFixed(3);
       }
     });
     requestAnimationFrame(frame);
