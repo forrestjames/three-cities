@@ -116,6 +116,12 @@ body.loop .stat rect { fill-opacity: .96; }
 .about p { margin: 0 0 9px; }
 .about p:last-child { margin: 0; }
 
+/* finale */
+.cta { position: absolute; z-index: 6; left: 50%; top: 50%; transform: translate(-50%, -50%); text-align: center; font: 700 20px/1.25 var(--font); letter-spacing: .02em; opacity: 0; pointer-events: none; transition: opacity 2.4s ease; margin: 0; }
+.cta span { display: block; }
+.cta span + span { margin-top: .5em; }
+body.ended2 .cta { opacity: 1; }
+body.ended .pad, body.ended .tabs, body.ended .panel .stat, body.ended .panel .qg, body.ended .panel .st, body.ended .datap { opacity: 0 !important; pointer-events: none !important; transition: opacity 1.6s ease; }
 /* data panel */
 .datap { position: absolute; z-index: 8; bottom: calc(62px + env(safe-area-inset-bottom, 0px)); left: 12px; right: 12px; max-height: 52%; overflow: auto; background: var(--paper); border: 2px solid var(--ink); padding: 12px 14px; font: 400 12px/1.4 var(--font); }
 .datap h3 { margin: 0 0 6px; font: 700 12px var(--font); letter-spacing: .12em; text-transform: uppercase; display: flex; gap: 6px; align-items: center; }
@@ -212,6 +218,7 @@ body.dwhere .q[data-g="1"] { opacity: .6; } body.dwhere .q[data-g="2"] { opacity
     </div>
   </div>
 
+  <p class="cta" id="cta" aria-live="polite"><span>Everyone is in the ring.</span><span>No one should be.</span><span>Homes end homelessness.</span><span>Ask your city for more of them.</span></p>
   <div class="pad" id="pad" tabindex="0" role="application" aria-label="Effects pad. Drag to blend filter, delay, hall reverb and flanger.">
       <span class="pf" data-fx="filter">FILTER</span><span class="ps" data-fx="hall">HALL</span><span class="pd" data-fx="delay">DELAY</span><span class="pfl" data-fx="flange">FLANGE</span>
       <div class="puck" id="puck"></div>
@@ -945,12 +952,12 @@ body.dwhere .q[data-g="1"] { opacity: .6; } body.dwhere .q[data-g="2"] { opacity
     });
     loopEl.removeChild(tmp);
   }
-  var SINK = 25, bldDY = 0, introT0 = -1, introDone = false, introDirty = true;
+  var SINK = 25, bldDY = 0, introT0 = -1, introDone = false, introDirty = true, endT0 = -1, endLad = 0, endBld = 0, endRing = 0;
   function ease(x) { x = Math.max(0, Math.min(1, x)); return x * x * (3 - 2 * x); }
   function introStart() { if (introT0 < 0) { introT0 = performance.now(); if (RM) introT0 -= 5000; } }
   function introStep(nowP) {
     var t = introT0 < 0 ? 0 : (nowP - introT0) / 1000, rp = ease(t / 3), bp = ease((t - .5) / 7);
-    bldDY = (window.innerWidth >= 900 ? SINK : 0) * bp;
+    bldDY = (window.innerWidth >= 900 ? SINK : 0) * bp + 700 * endBld;
     if ((introDone || introT0 < 0) && !introDirty) return;
     introDirty = false; if (t > 8) introDone = true;
     if (mode === "wrap") { cluster.style.transform = ""; layoutPad(); return; }
@@ -959,6 +966,12 @@ body.dwhere .q[data-g="1"] { opacity: .6; } body.dwhere .q[data-g="2"] { opacity
     var s = m.a, H = window.innerHeight, W = window.innerWidth, R = RADII_BASE[0] * s;
     var k = W < 900 ? 1 : Math.max(1, Math.min(1.05, W * .46 / R)), cyp = m.f + CY * s, cxp = m.e + CX * s;
     var target = W < 900 ? cyp : Math.max(H * .26, R * k + H * .04), kk = 1 + (k - 1) * rp, dy = (target - cyp) * rp;
+    if (endRing > 0) {
+      var Rt = Math.min(W, H) * .375, kE = Rt / R, dE = H / 2 - cyp;
+      kk = kk + (kE - kk) * endRing; dy = dy + (dE - dy) * endRing;
+      if (W < 900) { ctaEl.style.top = (H / 2 + Rt + 28).toFixed(0) + "px"; ctaEl.style.transform = "translate(-50%, 0)"; ctaEl.style.width = (W - 48) + "px"; ctaEl.style.fontSize = "18px"; }
+      else { ctaEl.style.top = ""; ctaEl.style.transform = ""; ctaEl.style.fontSize = Math.max(14, Math.min(30, Rt * .068)).toFixed(1) + "px"; ctaEl.style.width = (Rt * 0.9).toFixed(0) + "px"; }
+    }
     cluster.style.transformOrigin = cxp + "px " + cyp + "px";
     cluster.style.transform = "translate(0px," + dy.toFixed(1) + "px) scale(" + kk.toFixed(4) + ")";
     layoutPad();
@@ -1053,7 +1066,7 @@ body.dwhere .q[data-g="1"] { opacity: .6; } body.dwhere .q[data-g="2"] { opacity
     try { localStorage.setItem("nfa-view", mode); } catch (e) {}
     applyMode();
   });
-  var appEl = document.querySelector(".app");
+  var appEl = document.querySelector(".app"), ctaEl = document.getElementById("cta");
   function layoutPad() {
     var m = cluster.getScreenCTM(); if (!m) return;
     var ar = appEl.getBoundingClientRect(), s = m.a, size = Math.max(70, 2 * RADII[2] * s - 16);
@@ -1327,6 +1340,8 @@ body.dwhere .q[data-g="1"] { opacity: .6; } body.dwhere .q[data-g="2"] { opacity
   function checkEnd() {
     if (finished || !CITIES.every(function (c) { return c.done; })) return;
     finished = true;
+    if (mode === "wrap") { mode = "columns"; applyMode(); }
+    endT0 = performance.now(); document.body.classList.add("ended"); dataEl.hidden = true; dataBtn.setAttribute("aria-expanded", "false"); document.body.classList.remove("dwhere");
     setTimeout(function () { clearInterval(timer); playing = false; events = []; playBtn.setAttribute("aria-pressed", "false"); playBtn.textContent = "Start over"; }, 5000);
   }
   function toggle() {
@@ -1410,6 +1425,7 @@ body.dwhere .q[data-g="1"] { opacity: .6; } body.dwhere .q[data-g="2"] { opacity
     CITIES.forEach(function (c, ci) {
       var f0 = toOverlay(c, 200, STREET + 2), x1 = CX, y1 = CY + c.R + 8, dx = x1 - f0[0], dy = y1 - f0[1], len = Math.hypot(dx, dy) || 1, ux = dx / len, uy = dy / len, nx = -uy * 3.6, ny = ux * 3.6, d = "", n = Math.max(3, Math.round(len / 17)), i, t, a, b;
       c.lad = f0;
+      if (endLad > 0) { f0 = [f0[0] + (x1 - f0[0]) * endLad, f0[1] + (y1 - f0[1]) * endLad]; dx = x1 - f0[0]; dy = y1 - f0[1]; len = Math.hypot(dx, dy) || 1; ux = dx / len; uy = dy / len; nx = -uy * 3.6; ny = ux * 3.6; n = Math.max(2, Math.round(len / 17)); }
       /* two slim rails, little feet, evenly spaced rungs and a hook over the door */
       d += "M" + f1(f0[0] + nx) + " " + f1(f0[1] + ny) + "L" + f1(x1 + nx - ux * 5) + " " + f1(y1 + ny - uy * 5) + "M" + f1(f0[0] - nx) + " " + f1(f0[1] - ny) + "L" + f1(x1 - nx - ux * 5) + " " + f1(y1 - ny - uy * 5);
       d += "M" + f1(f0[0] + nx - 2) + " " + f1(f0[1] + ny + 1.5) + "h4M" + f1(f0[0] - nx - 2) + " " + f1(f0[1] - ny + 1.5) + "h4";
@@ -1417,7 +1433,7 @@ body.dwhere .q[data-g="1"] { opacity: .6; } body.dwhere .q[data-g="2"] { opacity
       if (!c.ladEl || !c.ladEl.isConnected) c.ladEl = el("path", { class: "lad" }, ladderLayer);
       c.ladEl.setAttribute("d", d);
       var phone = window.innerWidth < 900, cur = Math.round(scene.scrollLeft / (scene.clientWidth || 1));
-      c.ladEl.style.display = phone && (mode === "wrap" || cur !== ci) ? "none" : "";
+      c.ladEl.style.display = (phone && (mode === "wrap" || cur !== ci)) || endLad >= 1 ? "none" : "";
     });
   }
   function f1(v) { return v.toFixed(1); }
@@ -1449,7 +1465,13 @@ body.dwhere .q[data-g="1"] { opacity: .6; } body.dwhere .q[data-g="2"] { opacity
   var lastSky = 0;
   function frame() {
     var now = ctx ? ctx.currentTime : 0, wall = Date.now(), nowP = performance.now();
-    if (!introDone || introDirty) { introStep(nowP); updateLadders(); }
+    if (endT0 >= 0) {
+      var et = RM ? 99 : (nowP - endT0) / 1000;
+      endLad = ease(et / 2.5); endBld = ease((et - 1.5) / 4.5); endRing = ease((et - 4) / 5); if (et < 10.6) introDirty = true;
+      if (et > 8.5) document.body.classList.add("ended2");
+      if (et > 10) { endLad = 1; endBld = 1; endRing = 1; }
+    }
+    if (!introDone || introDirty) { introStep(nowP); updateLadders(); if (endT0 >= 0 && endRing >= 1) introDirty = false; }
     while (events.length && events[0].t <= now) {
       var ev = events.shift(); if (ev.c.dead) continue; ev.c.pt = ev.t;
       for (var n = 0; n < ev.c.nodes.length; n++) if (ev.c.nodes[n].i === ev.i) ev.c.nodes[n].t = ev.t;
