@@ -48,6 +48,14 @@ body::after {
 .more summary { font-weight: 700; font-size: 12px; letter-spacing: .1em; text-transform: uppercase; cursor: pointer; }
 .hint { margin: 0; font-size: 12px; opacity: .75; }
 .cname { font-weight: 700; font-size: 13px; letter-spacing: .14em; fill: var(--ink); cursor: pointer; text-transform: uppercase; text-decoration: underline dotted; text-underline-offset: 3px; }
+.cluster.loopsvg { z-index: 0; pointer-events: none; }
+body.loop .sky, body.loop .bld, body.loop .st { display: none; }
+body.loop .panel { background: none; box-shadow: none; }
+body.loop .app { background: linear-gradient(180deg, #aaa4ec 0%, #8e9be0 55%, #8a82d8 100%); }
+.loopsvg path.gf { fill: rgba(22, 30, 120, .26); }
+.lede, .title { filter: drop-shadow(0 0 3px var(--hal, #8e9be0)) drop-shadow(0 0 5px var(--hal, #8e9be0)); }
+body.loop .scene { z-index: 1; }
+body.loop .stat rect { fill-opacity: .96; }
 [hidden] { display: none !important; }
 .cname:focus-visible { outline: 2px solid var(--ink); }
 .num { font-weight: 700; font-size: 34px; letter-spacing: -.045em; fill: var(--ink); }
@@ -109,6 +117,7 @@ body::after {
 <body>
 
 <div class="app">
+  <svg class="cluster loopsvg" id="loop" viewBox="0 0 400 800" preserveAspectRatio="xMidYMax meet" aria-hidden="true"></svg>
   <div class="scene" id="scene"></div>
   <svg class="cluster" id="cluster" viewBox="0 0 400 800" preserveAspectRatio="xMidYMax meet" aria-label="Three rings of rhythm, one per city, nested together. A pad in the middle bends the sound."></svg>
 
@@ -167,6 +176,7 @@ body::after {
 
   <div class="dock">
     <button class="sbtn hold" id="hold" aria-pressed="false">Hold</button>
+    <button class="sbtn" id="view" aria-pressed="false" title="Switch between the three columns and the wrap-around view">Wrap</button>
     <button class="sbtn play" id="play" aria-pressed="false">Play</button>
   </div>
 </div>
@@ -242,7 +252,7 @@ body::after {
   /* London: stucco terrace */
   function bLondon() {
     var s = "", W = 160, i, m, x0, y, x, d, hatch, rus;
-    for (i = -1; i <= 3; i++) {
+    for (i = -1; i <= 3 + Math.ceil(EXT / 160); i++) {
       x0 = i * W - 40; m = ((i % 2) + 2) % 2;
       hatch = ""; rus = "";
       for (y = 246; y < 590; y += 6.5) hatch += "M" + x0 + " " + f(y) + "H" + (x0 + W);
@@ -281,7 +291,7 @@ body::after {
   /* Boston: brownstone row with stoops and bay fronts */
   function bBoston() {
     var s = "", W = 180, i, x0, y, x, k, d, hatch, xl, xr;
-    for (i = -1; i <= 3; i++) {
+    for (i = -1; i <= 3 + Math.ceil(EXT / 180); i++) {
       x0 = i * W - 70;
       hatch = "";
       for (y = 204; y < 604; y += 7) hatch += "M" + x0 + " " + y + "H" + (x0 + W);
@@ -375,7 +385,7 @@ body::after {
       }
       return o;
     }
-    while (x < 640) { k = n % 5; s += house(x, widths[k], floors[k], types[k]); x += widths[k]; n++; }
+    while (x < 640 + EXT) { k = n % 5; s += house(x, widths[k], floors[k], types[k]); x += widths[k]; n++; }
     return s;
   }
   function street() {
@@ -388,11 +398,11 @@ body::after {
   }
 
   /* ---------- cities ---------- */
-  var BAR = 6, CX = 200, CY = 374, RADII = [160, 124, 88];
+  var BAR = 6, CX = 200, CY = 374, RADII = [160, 124, 88], EXT = 0;
   /* Tower: glass and concrete high-rises */
   function bTower() {
     var ws = [84, 70, 96, 76, 90], hs = [470, 330, 520, 400, 280], s = "", x = -230, n = 0, k, w, top, y, d, i, j, g;
-    while (x < 640) {
+    while (x < 640 + EXT) {
       k = n % 5; w = ws[k]; top = GROUND - hs[k];
       s += L("M" + x + " " + GROUND + "V" + top + "H" + (x + w) + "V" + GROUND);
       s += R(x + 8, top - 10, w - 16, 10) + R(x + 18, top - 18, w - 36, 8, "l2");
@@ -413,7 +423,7 @@ body::after {
   /* Tiled: low timber townhouses with sweeping tiled roofs */
   function bTiled() {
     var W = 150, s = "", i, x0, d, y, x;
-    for (i = -2; i <= 4; i++) {
+    for (i = -2; i <= 4 + Math.ceil(EXT / 150); i++) {
       x0 = i * W - 40;
       s += L("M" + x0 + " " + GROUND + "V400M" + (x0 + W) + " " + GROUND + "V400");
       /* upper roof */
@@ -442,7 +452,7 @@ body::after {
   /* Mediterranean: flat-roofed stucco with arched, shuttered windows */
   function bMed() {
     var ws = [118, 104, 130, 110], fls = [4, 3, 4, 3], s = "", x = -230, n = 0, k, w, fl, top, f2, yb, cx, d, i, wx;
-    while (x < 640) {
+    while (x < 640 + EXT) {
       k = n % 4; w = ws[k]; fl = fls[k]; top = 640 - fl * 82;
       s += L("M" + x + " " + GROUND + "V" + top + "M" + (x + w) + " " + GROUND + "V" + top);
       s += R(x - 3, top - 8, w + 6, 8) + L("M" + x + " " + (top - 8) + "V" + (top - 16) + "H" + (x + w) + "V" + (top - 8), "l2");
@@ -469,7 +479,7 @@ body::after {
   /* Colonial: low arcaded fronts, iron balconies, tiled hips */
   function bColonial() {
     var W = 156, s = "", i, x0, d, x, a;
-    for (i = -2; i <= 4; i++) {
+    for (i = -2; i <= 4 + Math.ceil(EXT / 156); i++) {
       x0 = i * W - 40;
       s += L("M" + x0 + " " + GROUND + "V450M" + (x0 + W) + " " + GROUND + "V450");
       d = "M" + (x0 - 6) + " 450L" + (x0 + 22) + " 410H" + (x0 + W - 22) + "L" + (x0 + W + 6) + " 450Z";
@@ -496,7 +506,7 @@ body::after {
   /* Tenement: tall flat fronts with fire escapes */
   function bTenement() {
     var ws = [112, 100, 124, 108], s = "", x = -230, n = 0, k, w, top, fi, yb, i, wx, d, cols;
-    while (x < 640) {
+    while (x < 640 + EXT) {
       k = n % 4; w = ws[k]; top = 236 + (k % 2) * 28;
       s += L("M" + x + " " + GROUND + "V" + top + "M" + (x + w) + " " + GROUND + "V" + top);
       s += R(x - 4, top - 14, w + 8, 14) + R(x - 2, top - 20, w + 4, 6, "l2");
@@ -622,7 +632,7 @@ body::after {
   });
   function esc(t) { return String(t).replace(/[&<>"]/g, function (m) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[m]; }); }
   var cluster = document.getElementById("cluster");
-  el("circle", { cx: CX, cy: CY, r: RADII[0] + 12, fill: "#8e9be0", opacity: .6 }, cluster);
+  var backingEl = el("circle", { cx: CX, cy: CY, r: RADII[0] + 12, fill: "#8e9be0", opacity: .6 }, cluster);
   var ringLayer = el("g", {}, cluster), travelLayer = el("g", {}, cluster);
   function buildPanel(c, ci) {
     var p = document.createElement("section"); p.className = "panel"; p.id = "p-" + ci;
@@ -635,10 +645,10 @@ body::after {
     c.panel = p; c.svg = p.querySelector("svg"); c.qg = p.querySelector(".qg");
     c.glows = Array.prototype.slice.call(p.querySelectorAll(".gl")); c.glowT = c.glows.map(function () { return -1e9; });
     c.stride = [5, 7, 11, 13, 17].filter(function (s) { var a = c.glows.length, b = s; while (b) { var t = a % b; a = b; b = t; } return a === 1; })[0] || 1;
-    c.tabEl = tabsEl.children[ci]; c.tabEl.textContent = c.name;
+    c.pg = c.glows; c.tabEl = tabsEl.children[ci]; c.tabEl.textContent = c.name;
 
     var sg = p.querySelector(".stat");
-    el("rect", { x: 70, y: 546, width: 260, height: 96, fill: "transparent" }, sg);
+    el("rect", { x: 70, y: 546, width: 260, height: 96, rx: 5, fill: c.bg, "fill-opacity": .78 }, sg);
     var chip = el("circle", { cx: 200, cy: 559, r: 4.5, fill: c.col, stroke: "#0b0b0d", "stroke-width": 1.2 }, sg);
     var nm = el("text", { class: "cname", x: 200, y: 564, "text-anchor": "middle" }, sg); nm.textContent = c.name; c.nameEl = nm;
     var bb = nm.getBBox ? nm.getBBox() : null; if (bb && bb.width) { chip.setAttribute("cx", f(bb.x - 10)); }
@@ -702,10 +712,90 @@ body::after {
     return cg;
   }
   CITIES.forEach(function (c, ci) { scene.appendChild(buildPanel(c, ci)); ringLayer.appendChild(buildRing(c, ci)); });
+  /* ---------- wrap view: the facades bend round the rings, clockwise ---------- */
+  var loopEl = document.getElementById("loop"), viewBtn = document.getElementById("view");
+  var RADII_BASE = [160, 124, 88], ringScale = 1, mode = "columns", backing = backingEl;
+  try { if (localStorage.getItem("nfa-view") === "wrap") mode = "wrap"; } catch (e) {}
+  function setGlows(c, arr) {
+    c.glows = arr; c.glowT = arr.map(function () { return -1e9; });
+    c.stride = [5, 7, 11, 13, 17].filter(function (s) { var a = arr.length, b = s; while (b) { var t = a % b; a = b; b = t; } return a === 1; })[0] || 1;
+  }
+  function pathOf(node) {
+    var t = node.tagName.toLowerCase();
+    if (t === "path") return node.getAttribute("d");
+    if (t === "rect") { var x = +node.getAttribute("x"), y = +node.getAttribute("y"), w = +node.getAttribute("width"), h = +node.getAttribute("height"); return "M" + x + " " + y + "h" + w + "v" + h + "h" + -w + "Z"; }
+    if (t === "circle") { var cx = +node.getAttribute("cx"), cy = +node.getAttribute("cy"), r = +node.getAttribute("r"); return "M" + (cx - r) + " " + cy + "a" + r + " " + r + " 0 1 0 " + 2 * r + " 0a" + r + " " + r + " 0 1 0 " + -2 * r + " 0Z"; }
+    return "";
+  }
+  function buildWrap() {
+    while (loopEl.firstChild) loopEl.removeChild(loopEl.firstChild);
+    if (mode !== "wrap") return;
+    var Rg = RADII[0] + 30 * ringScale, DEG = Math.PI / 180, OV = 10 * DEG, SPAN = 120 * DEG + 2 * OV, W = 1500, XA = -200;
+    var k = SPAN * Rg / W, centres = [-150 * DEG, 90 * DEG, -30 * DEG];
+    var tmp = el("g", { visibility: "hidden" }, loopEl), out = el("g", {}, loopEl);
+    el("circle", { cx: CX, cy: CY, r: Rg, class: "ln" }, out);
+    el("circle", { cx: CX, cy: CY, r: Rg - 7, class: "l2" }, out);
+    var ticks = ""; for (var a = 0; a < 360; a += 3) { var ar = a * DEG; ticks += "M" + f(CX + (Rg - 7) * Math.cos(ar)) + " " + f(CY + (Rg - 7) * Math.sin(ar)) + "L" + f(CX + (Rg - 14) * Math.cos(ar)) + " " + f(CY + (Rg - 14) * Math.sin(ar)); }
+    el("path", { d: ticks, class: "l3" }, out);
+    CITIES.forEach(function (c) {
+      var th0 = centres[c.slot] - SPAN / 2, thc = centres[c.slot], buckets = {}, wg = [];
+      EXT = 860; var html = STYLES[c.style](); EXT = 0;
+      tmp.innerHTML = html;
+      var nodes = tmp.querySelectorAll("path,rect,circle"), sp = document.createElementNS("http://www.w3.org/2000/svg", "path");
+      tmp.appendChild(sp);
+      for (var ni = 0; ni < nodes.length; ni++) {
+        var nd = nodes[ni], cls = nd.getAttribute("class") || "ln", d = pathOf(nd); if (!d) continue;
+        var subs = d.split(/(?=M)/);
+        for (var si = 0; si < subs.length; si++) {
+          if (!subs[si]) continue;
+          sp.setAttribute("d", subs[si]);
+          var len = 0; try { len = sp.getTotalLength(); } catch (e) {} if (!(len > 0)) continue;
+          var np = Math.max(2, Math.ceil(len / 5)), pts = [], sumT = 0, q, pt, t, th, r;
+          for (q = 0; q <= np; q++) {
+            pt = sp.getPointAtLength(len * q / np);
+            t = (pt.x - XA) / W; th = th0 + t * SPAN; r = Math.max(Rg - 14, Rg + (GROUND - pt.y) * k);
+            pts.push(f(CX + r * Math.cos(th)) + " " + f(CY + r * Math.sin(th))); sumT += th;
+          }
+          var phi = Math.abs(sumT / (np + 1) - thc), fade = Math.max(0, Math.min(1, (60 * DEG + OV - phi) / (2 * OV)));
+          if (fade <= .02) continue;
+          var dd = "M" + pts.join("L") + (/Z/i.test(subs[si]) ? "Z" : "");
+          if (cls === "gl") { var gp = el("path", { d: dd, class: "gl", "fill-opacity": f(fade) }, out); wg.push(gp); continue; }
+          var key = cls + "|" + Math.round(fade * 8); buckets[key] = (buckets[key] || "") + dd;
+        }
+      }
+      loopEl.removeChild(tmp); tmp.innerHTML = ""; loopEl.appendChild(tmp);
+      Object.keys(buckets).forEach(function (key) {
+        var parts = key.split("|"), fl = +parts[1] / 8, at = { d: buckets[key], class: parts[0] };
+        at[parts[0] === "gf" ? "fill-opacity" : "stroke-opacity"] = f(fl);
+        out.insertBefore(el("path", at), out.firstChild.nextSibling);
+      });
+      c.wg = wg;
+    });
+    loopEl.removeChild(tmp);
+  }
+  function applyMode() {
+    var loop = mode === "wrap";
+    document.body.classList.toggle("loop", loop);
+    var sc = loop && window.innerWidth / window.innerHeight < .9 ? .66 : 1, changed = Math.abs(sc - ringScale) > .001;
+    ringScale = sc; RADII = RADII_BASE.map(function (r) { return r * sc; });
+    if (backing) backing.setAttribute("r", RADII[0] + 12 * sc);
+    CITIES.forEach(function (c, ci) {
+      if (changed) { var oldg = c.cg; c.travelers.forEach(function (t) { t.dot.el.remove(); }); c.travelers = []; ringLayer.replaceChild(buildRing(c, ci), oldg); }
+    });
+    buildWrap();
+    CITIES.forEach(function (c) { setGlows(c, loop && c.wg ? c.wg : c.pg); });
+    viewBtn.textContent = loop ? "Columns" : "Wrap"; viewBtn.setAttribute("aria-pressed", loop ? "true" : "false");
+    layoutPad();
+  }
+  viewBtn.addEventListener("click", function () {
+    mode = mode === "wrap" ? "columns" : "wrap";
+    try { localStorage.setItem("nfa-view", mode); } catch (e) {}
+    applyMode();
+  });
   var appEl = document.querySelector(".app");
   function layoutPad() {
     var m = cluster.getScreenCTM(); if (!m) return;
-    var ar = appEl.getBoundingClientRect(), s = m.a, size = clamp(98 * s, 78, 150);
+    var ar = appEl.getBoundingClientRect(), s = m.a, size = clamp(98 * s * ringScale, 56, 150);
     var px = m.e + CX * s - ar.left, py = m.f + CY * s - ar.top;
     padEl.style.left = (px - size / 2) + "px"; padEl.style.top = (py - size / 2) + "px"; padEl.style.width = size + "px"; padEl.style.height = size + "px";
     padEl.style.transform = "none"; padScale = size / 2 - 12;
@@ -808,7 +898,7 @@ body::after {
     if (playing && ctx) { var dur = BAR / c.n, n = Math.ceil((ctx.currentTime - t0) / dur); c.step = ((n % c.n) + c.n) % c.n; c.next = t0 + n * dur; }
     if (playing && ctx) startDrone(c);
     skyUpdate(c, Date.now()); var sec = Math.floor(localSec(c, Date.now())); c.clockEl.textContent = two(Math.floor(sec / 3600)) + ":" + two(Math.floor(sec / 60) % 60) + "  ·  " + c.dotNote;
-    saveCities(); markTab();
+    saveCities(); markTab(); if (mode === "wrap") applyMode();
   }
 
   /* ---------- sound ---------- */
@@ -1052,7 +1142,7 @@ body::after {
     requestAnimationFrame(frame);
   }
   CITIES.forEach(function (c) { skyUpdate(c, Date.now()); var s = Math.floor(localSec(c, Date.now())); c.clockEl.textContent = two(Math.floor(s / 3600)) + ":" + two(Math.floor(s / 60) % 60) + "  ·  " + c.dotNote; });
-  layoutPad(); window.addEventListener("resize", layoutPad); if (document.fonts && document.fonts.ready) document.fonts.ready.then(layoutPad); scene.addEventListener("scroll", layoutPad, { passive: true });
+  applyMode(); window.addEventListener("resize", function () { var nsc = mode === "wrap" && window.innerWidth / window.innerHeight < .9 ? .66 : 1; if (Math.abs(nsc - ringScale) > .001) applyMode(); else layoutPad(); }); if (document.fonts && document.fonts.ready) document.fonts.ready.then(layoutPad); scene.addEventListener("scroll", layoutPad, { passive: true });
   requestAnimationFrame(frame);
 })();
 </script>
