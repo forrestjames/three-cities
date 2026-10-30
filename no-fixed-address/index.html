@@ -48,8 +48,11 @@ body::after {
 .cname { font-weight: 700; font-size: 13px; letter-spacing: .14em; fill: var(--ink); cursor: pointer; text-transform: uppercase; text-decoration: underline dotted; text-underline-offset: 3px; }
 [hidden] { display: none !important; }
 .cname:focus-visible { outline: 2px solid var(--ink); }
-.num { font-weight: 700; font-size: 46px; letter-spacing: -.045em; fill: var(--ink); }
+.num { font-weight: 700; font-size: 34px; letter-spacing: -.045em; fill: var(--ink); }
 .sub { font-size: 9.5px; fill: var(--ink); letter-spacing: .02em; }
+.cluster { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; z-index: 4; pointer-events: none; display: block; }
+.tag { font-weight: 700; font-size: 11px; letter-spacing: .14em; fill: var(--ink); text-transform: uppercase; cursor: pointer; pointer-events: all; paint-order: stroke; stroke: #8e9be0; stroke-width: 3px; stroke-linejoin: round; text-decoration: underline dotted; text-underline-offset: 3px; }
+.tag:focus-visible, .cname:focus-visible { outline: 2px solid var(--ink); }
 
 /* city picker */
 .picker { position: absolute; inset: 0; z-index: 20; background: rgba(11,11,13,.5); display: flex; align-items: center; justify-content: center; padding: 16px; }
@@ -90,7 +93,7 @@ body::after {
 .sbtn:focus-visible, .pad:focus-visible, .aboutbtn:focus-visible, .tab:focus-visible { outline: 2px solid var(--ink); outline-offset: 3px; }
 .sbtn.play { background: var(--ink); color: var(--paper); }
 .sbtn.hold[aria-pressed="true"] { background: var(--ink); color: var(--paper); }
-.pad { position: relative; width: 92px; height: 92px; border: 2px solid var(--ink); background: var(--paper); touch-action: none; cursor: grab; -webkit-user-select: none; user-select: none;
+.pad { position: absolute; z-index: 5; left: 50%; top: 50%; width: 96px; height: 96px; border: 2px solid var(--ink); background: var(--paper); touch-action: none; cursor: grab; -webkit-user-select: none; user-select: none;
   background-image: radial-gradient(circle, rgba(31,45,143,.35) 1px, transparent 1.4px); background-size: 9px 9px; }
 .pad:active { cursor: grabbing; }
 .pad > span { position: absolute; font: 700 8px var(--font); letter-spacing: .1em; color: var(--ink); opacity: .5; pointer-events: none; }
@@ -105,6 +108,7 @@ body::after {
 
 <div class="app">
   <div class="scene" id="scene"></div>
+  <svg class="cluster" id="cluster" viewBox="0 0 400 800" preserveAspectRatio="xMidYMax meet" aria-label="Three rings of rhythm, one per city, nested together. A pad in the middle bends the sound."></svg>
 
   <div class="head">
     <div class="titlewrap">
@@ -123,7 +127,7 @@ body::after {
     <p><b>Paris:</b> 3,857 people with no shelter solution counted in the Nuit de la Solidarité, night of 22 to 23 January 2026 (City of Paris).</p>
     <p><b>New York:</b> 4,991 people sleeping unsheltered, HOPE survey, 10 March 2026 (NYC Department of Social Services). It does not include people in shelters.</p>
     <p>These measure different things, so please don't read them as a ranking. Dot values are rounded and shown in each ring. The dots are not real people and the houses are drawn, not photographed. The more people counted, the more hits in the ring. The sound is a soft placeholder, with a low drone under each city that gets stronger as the count rises.</p>
-    <p>Tap a city name to change it. Tap the number to mute that city.</p>
+    <p>Tap a city name on a ring to change it. Tap a number to mute that city. The pad in the middle bends the sound.</p>
   </div>
 
   <div class="picker" id="picker" hidden>
@@ -147,12 +151,13 @@ body::after {
     </div>
   </div>
 
-  <div class="dock">
-    <button class="sbtn hold" id="hold" aria-pressed="false">Hold</button>
-    <div class="pad" id="pad" tabindex="0" role="application" aria-label="Effects pad. Drag to blend filter, delay, stutter and flanger.">
+  <div class="pad" id="pad" tabindex="0" role="application" aria-label="Effects pad. Drag to blend filter, delay, stutter and flanger.">
       <span class="pf" data-fx="filter">FILTER</span><span class="ps" data-fx="stutter">STUTTER</span><span class="pd" data-fx="delay">DELAY</span><span class="pfl" data-fx="flange">FLANGE</span>
       <div class="puck" id="puck"></div>
     </div>
+
+  <div class="dock">
+    <button class="sbtn hold" id="hold" aria-pressed="false">Hold</button>
     <button class="sbtn play" id="play" aria-pressed="false">Play</button>
   </div>
 </div>
@@ -374,7 +379,7 @@ body::after {
   }
 
   /* ---------- cities ---------- */
-  var BAR = 6, CX = 200, CY = 372, RR = 122, DOORY = CY + RR + 8;
+  var BAR = 6, CX = 200, CY = 374, RADII = [160, 124, 88];
   var STYLES = { terrace: bLondon, brownstone: bBoston, gabled: bCph };
   var STYLE_NAMES = { terrace: "Terrace", brownstone: "Brownstone", gabled: "Gabled townhouse" };
   var PRESETS = [
@@ -444,49 +449,38 @@ body::after {
     tabsEl.appendChild(tb);
   });
   function esc(t) { return String(t).replace(/[&<>"]/g, function (m) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[m]; }); }
+  var cluster = document.getElementById("cluster");
+  el("circle", { cx: CX, cy: CY, r: RADII[0] + 12, fill: "#8e9be0", opacity: .6 }, cluster);
+  var ringLayer = el("g", {}, cluster), travelLayer = el("g", {}, cluster);
   function buildPanel(c, ci) {
     var p = document.createElement("section"); p.className = "panel"; p.id = "p-" + ci;
     p.style.setProperty("--bg", c.bg); p.style.setProperty("--bg2", c.bg2); p.style.setProperty("--bg3", c.bg3);
-    var svg = '<svg class="sc" viewBox="0 0 400 800" preserveAspectRatio="xMidYMax meet" aria-label="' + esc(c.name) + ": " + c.count.toLocaleString("en-GB") + " " + esc(c.l1) + ", " + esc(c.l2) + ". A line of " + c.dots + ' dots waits to enter the ring.">';
+    var svg = '<svg class="sc" viewBox="0 0 400 800" preserveAspectRatio="xMidYMax meet" aria-label="' + esc(c.name) + ": " + c.count.toLocaleString("en-GB") + " " + esc(c.l1) + ", " + esc(c.l2) + ". A line of " + c.dots + ' dots waits to enter its ring.">';
     svg += '<g class="sky"><g class="sun"></g><g class="moon"></g>' + cloud(40, 214, 1) + cloud(300, 176, .8) + cloud(150, 118, .7) + "</g>";
     svg += '<g class="bld">' + STYLES[c.style]() + "</g><g class='st'>" + street() + "</g>";
-    svg += '<g class="fg"><circle cx="200" cy="' + CY + '" r="' + (RR - 1) + '" style="fill:var(--bg);opacity:.74"/>';
-    svg += '<text class="cname" x="200" y="236" text-anchor="middle" tabindex="0" role="button" aria-label="Change city, now ' + esc(c.name) + '">' + esc(c.name) + "</text>";
-    svg += '<g class="ringg"></g><g class="door"></g><g class="center" tabindex="0" role="button" aria-pressed="false" aria-label="Mute ' + esc(c.name) + '" style="cursor:pointer"></g><g class="qg"></g><g class="tg"></g></g></svg>';
+    svg += '<g class="fg"><g class="stat" tabindex="0" role="button" aria-pressed="false" aria-label="Mute ' + esc(c.name) + '" style="cursor:pointer"></g><g class="qg"></g></g></svg>';
     p.innerHTML = svg;
-    c.panel = p; c.svg = p.querySelector("svg");
-    c.ringg = p.querySelector(".ringg"); c.qg = p.querySelector(".qg"); c.tg = p.querySelector(".tg");
+    c.panel = p; c.svg = p.querySelector("svg"); c.qg = p.querySelector(".qg");
     c.glows = Array.prototype.slice.call(p.querySelectorAll(".gl")); c.glowT = c.glows.map(function () { return -1e9; });
     c.stride = [5, 7, 11, 13, 17].filter(function (s) { var a = c.glows.length, b = s; while (b) { var t = a % b; a = b; b = t; } return a === 1; })[0] || 1;
-    c.nameEl = p.querySelector(".cname"); c.tabEl = tabsEl.children[ci]; c.tabEl.textContent = c.name;
+    c.tabEl = tabsEl.children[ci]; c.tabEl.textContent = c.name;
 
-    var g = c.ringg;
-    el("circle", { cx: CX, cy: CY, r: RR, class: "trk" }, g);
-    for (var j = 0; j < c.n; j++) {
-      var ang = -Math.PI / 2 + j / c.n * Math.PI * 2, px = CX + RR * Math.cos(ang), py = CY + RR * Math.sin(ang);
-      if (!c.pat[j]) { el("circle", { cx: f(px), cy: f(py), r: 2.4, fill: "none", stroke: "#fbf7ee", "stroke-width": 1, opacity: .8 }, g); continue; }
-      var rip = el("circle", { cx: f(px), cy: f(py), r: 8, fill: "none", stroke: "#fbf7ee", "stroke-width": 1.2, opacity: 0 }, g);
-      var dot = el("circle", { cx: f(px), cy: f(py), r: 6.8, fill: c.col, stroke: "#0b0b0d", "stroke-width": 1.4 }, g);
-      var occ = el("circle", { cx: f(px), cy: f(py), r: 2.6, fill: "#0b0b0d", opacity: 0 }, g);
-      c.nodes.push({ i: j, dot: dot, rip: rip, occ: occ, t: -1e9, arrive: -1e9 });
-    }
-    c.tick = el("path", { d: "M" + CX + " " + (CY - RR - 9) + "V" + (CY - RR - 19), stroke: "#0b0b0d", "stroke-width": 2, "stroke-linecap": "round", fill: "none" }, p.querySelector(".fg"));
-    var dg = p.querySelector(".door");
-    el("path", { class: "dk", d: "M191 " + (CY + RR + 12) + "V" + (CY + RR - 3) + "A9 9 0 0 1 209 " + (CY + RR - 3) + "V" + (CY + RR + 12) + "Z" }, dg);
-    el("path", { class: "ln", d: "M200 " + (CY + RR - 12) + "V" + (CY + RR + 12) }, dg);
-    var cg = p.querySelector(".center");
-    el("rect", { x: 100, y: CY - 44, width: 200, height: 112, fill: "transparent" }, cg);
-    var t1 = el("text", { class: "num", transform: "translate(200 " + (CY + 6) + ") scale(1.16 .92)", "text-anchor": "middle" }, cg); t1.textContent = c.count.toLocaleString("en-GB");
-    var t2 = el("text", { class: "sub", x: 200, y: CY + 26, "text-anchor": "middle" }, cg); t2.textContent = c.l1;
-    var t3 = el("text", { class: "sub", x: 200, y: CY + 39, "text-anchor": "middle" }, cg); t3.textContent = c.l2;
-    var t4 = el("text", { class: "sub", x: 200, y: CY + 56, "text-anchor": "middle", "font-weight": 700 }, cg); t4.textContent = "1 dot = " + c.per.toLocaleString("en-GB") + " people";
-    c.clockEl = el("text", { class: "sub", x: 200, y: CY - 36, "text-anchor": "middle", "font-weight": 700, "letter-spacing": ".1em" }, cg);
+    var sg = p.querySelector(".stat");
+    el("rect", { x: 70, y: 546, width: 260, height: 84, fill: "transparent" }, sg);
+    var chip = el("circle", { cx: 200, cy: 559, r: 4.5, fill: c.col, stroke: "#0b0b0d", "stroke-width": 1.2 }, sg);
+    var nm = el("text", { class: "cname", x: 200, y: 564, "text-anchor": "middle" }, sg); nm.textContent = c.name; c.nameEl = nm;
+    var bb = nm.getBBox ? nm.getBBox() : null; if (bb && bb.width) { chip.setAttribute("cx", f(bb.x - 10)); }
+    var t1 = el("text", { class: "num", transform: "translate(200 593) scale(1.16 .92)", "text-anchor": "middle" }, sg); t1.textContent = c.count.toLocaleString("en-GB");
+    var t2 = el("text", { class: "sub", x: 200, y: 605, "text-anchor": "middle" }, sg); t2.textContent = c.l1;
+    var t3 = el("text", { class: "sub", x: 200, y: 615, "text-anchor": "middle" }, sg); t3.textContent = c.l2;
+    c.clockEl = el("text", { class: "sub", x: 200, y: 625, "text-anchor": "middle", "font-weight": 700 }, sg);
+    c.dotNote = "1 dot = " + c.per.toLocaleString("en-GB") + " people";
 
     function makeSlots(sign, count) {
       var arr = [], C = 19, rows = Math.ceil(count / C) + 1, r, k;
       for (r = 0; r < rows; r++) for (k = 0; k < C; k++) {
-        var x = 200 + sign * (8 + k * 9 + (r % 2) * 4.5), y = GROUND - 12 - r * 14;
-        arr.push({ x: x, y: y, d: Math.hypot(x - 200, (y - (GROUND - 12)) * 1.1) });
+        var x = 200 + sign * (8 + k * 9 + (r % 2) * 4.5), y = GROUND - 10 - r * 10;
+        arr.push({ x: x, y: y, d: Math.hypot(x - 200, (y - (GROUND - 10)) * 2.4) });
       }
       arr.sort(function (a, b) { return a.d - b.d; });
       return arr.slice(0, count + 3);
@@ -496,23 +490,59 @@ body::after {
     c.lanes = [[], []];
     [0, 1].forEach(function (ln) {
       for (var q = 0; q < half[ln]; q++) {
-        var s = c.slots[ln][q];
-        var e = el("circle", { class: "q", cx: f(s.x), cy: f(s.y), r: 3.1 }, c.qg);
-        c.lanes[ln].push({ el: e, x: s.x, y: s.y });
+        var s0 = c.slots[ln][q];
+        var e = el("circle", { class: "q", cx: f(s0.x), cy: f(s0.y), r: 3.1 }, c.qg);
+        c.lanes[ln].push({ el: e, x: s0.x, y: s0.y });
       }
     });
-
     function toggleMute() {
-      c.muted = !c.muted; cg.setAttribute("aria-pressed", c.muted ? "true" : "false");
-      c.ringg.style.opacity = c.muted ? .3 : 1; c.qg.style.opacity = c.muted ? .45 : 1; cg.style.opacity = c.muted ? .55 : 1; droneMute(c);
+      c.muted = !c.muted; sg.setAttribute("aria-pressed", c.muted ? "true" : "false");
+      c.cg.style.opacity = c.muted ? .3 : 1; c.qg.style.opacity = c.muted ? .45 : 1; sg.style.opacity = c.muted ? .55 : 1; droneMute(c);
     }
-    cg.addEventListener("click", toggleMute);
-    cg.addEventListener("keydown", function (e) { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); toggleMute(); } });
-    c.nameEl.addEventListener("click", function () { pickerOpen(ci); });
-    c.nameEl.addEventListener("keydown", function (e) { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); pickerOpen(ci); } });
+    sg.addEventListener("click", function (e) { if (e.target === nm) { pickerOpen(ci); } else toggleMute(); });
+    sg.addEventListener("keydown", function (e) { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); toggleMute(); } });
     return p;
   }
-  CITIES.forEach(function (c, ci) { scene.appendChild(buildPanel(c, ci)); });
+  /* each city's ring, nested in the middle of the screen */
+  function buildRing(c, ci) {
+    var R = RADII[ci], cg = el("g", {}), g = el("g", {}, cg);
+    c.R = R; c.cg = cg; c.ringg = g; c.nodes = [];
+    el("circle", { cx: CX, cy: CY, r: R, class: "trk" }, g);
+    for (var j = 0; j < c.n; j++) {
+      var ang = -Math.PI / 2 + j / c.n * Math.PI * 2, px = CX + R * Math.cos(ang), py = CY + R * Math.sin(ang);
+      if (!c.pat[j]) { el("circle", { cx: f(px), cy: f(py), r: 2.2, fill: "none", stroke: "#fbf7ee", "stroke-width": 1, opacity: .8 }, g); continue; }
+      var rip = el("circle", { cx: f(px), cy: f(py), r: 8, fill: "none", stroke: "#fbf7ee", "stroke-width": 1.2, opacity: 0 }, g);
+      var dot = el("circle", { cx: f(px), cy: f(py), r: 6.2, fill: c.col, stroke: "#0b0b0d", "stroke-width": 1.4 }, g);
+      var occ = el("circle", { cx: f(px), cy: f(py), r: 2.4, fill: "#0b0b0d", opacity: 0 }, g);
+      c.nodes.push({ i: j, dot: dot, rip: rip, occ: occ, t: -1e9, arrive: -1e9 });
+    }
+    c.tick = el("path", { d: "M" + CX + " " + (CY - R - 5) + "V" + (CY - R - 12), stroke: "#0b0b0d", "stroke-width": 2, "stroke-linecap": "round", fill: "none" }, cg);
+    el("path", { d: "M191 " + (CY + R + 12) + "V" + (CY + R - 3) + "A9 9 0 0 1 209 " + (CY + R - 3) + "V" + (CY + R + 12) + "Z", fill: "#8e9be0", stroke: "#fbf7ee", "stroke-width": 1.15, "vector-effect": "non-scaling-stroke" }, cg);
+    el("path", { class: "ln", d: "M200 " + (CY + R - 12) + "V" + (CY + R + 12) }, cg);
+    var tg = el("text", { class: "tag", x: 200, y: CY - R - 14, "text-anchor": "middle", tabindex: 0, role: "button", "aria-label": "Change city, now " + c.name }, cg);
+    tg.textContent = c.name;
+    tg.addEventListener("click", function () { pickerOpen(ci); });
+    tg.addEventListener("keydown", function (e) { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); pickerOpen(ci); } });
+    var chip = el("circle", { cx: 160, cy: CY - R - 17.5, r: 4.5, fill: c.col, stroke: "#0b0b0d", "stroke-width": 1.2 }, cg);
+    c.chipEl = chip; c.tagEl = tg;
+    setTimeout(function () { try { var bb = tg.getBBox(); if (bb.width) chip.setAttribute("cx", f(bb.x - 10)); } catch (e) {} }, 0);
+    return cg;
+  }
+  CITIES.forEach(function (c, ci) { scene.appendChild(buildPanel(c, ci)); ringLayer.appendChild(buildRing(c, ci)); });
+  var appEl = document.querySelector(".app");
+  function layoutPad() {
+    var m = cluster.getScreenCTM(); if (!m) return;
+    var ar = appEl.getBoundingClientRect(), s = m.a, size = clamp(98 * s, 78, 150);
+    var px = m.e + CX * s - ar.left, py = m.f + CY * s - ar.top;
+    padEl.style.left = (px - size / 2) + "px"; padEl.style.top = (py - size / 2) + "px"; padEl.style.width = size + "px"; padEl.style.height = size + "px";
+    padEl.style.transform = "none"; padScale = size / 2 - 12;
+  }
+  var padScale = 36;
+  function toOverlay(c, x, y) {
+    var m1 = c.svg.getScreenCTM(), m2 = cluster.getScreenCTM(); if (!m1 || !m2) return [x, y];
+    var pt = cluster.createSVGPoint(); pt.x = x; pt.y = y;
+    var q = pt.matrixTransform(m2.inverse().multiply(m1)); return [q.x, q.y];
+  }
 
   function markTab() {
     var w = scene.clientWidth || 1, idx = Math.round(scene.scrollLeft / w);
@@ -566,10 +596,12 @@ body::after {
   function swapCity(ci, data) {
     var old = CITIES[ci]; old.dead = true; stopDrone(old);
     var c = makeCity(ci, data); CITIES[ci] = c;
+    old.travelers.forEach(function (t) { t.dot.el.remove(); });
     var p = buildPanel(c, ci); scene.replaceChild(p, old.panel);
+    ringLayer.replaceChild(buildRing(c, ci), old.cg);
     if (playing && ctx) { var dur = BAR / c.n, n = Math.ceil((ctx.currentTime - t0) / dur); c.step = ((n % c.n) + c.n) % c.n; c.next = t0 + n * dur; }
     if (playing && ctx) startDrone(c);
-    skyUpdate(c, Date.now()); var sec = Math.floor(localSec(c, Date.now())); c.clockEl.textContent = two(Math.floor(sec / 3600)) + ":" + two(Math.floor(sec / 60) % 60);
+    skyUpdate(c, Date.now()); var sec = Math.floor(localSec(c, Date.now())); c.clockEl.textContent = two(Math.floor(sec / 3600)) + ":" + two(Math.floor(sec / 60) % 60) + "  ·  " + c.dotNote;
     saveCities(); markTab();
   }
 
@@ -679,7 +711,7 @@ body::after {
   function applyFx() {
     var w = weights();
     for (var k in padLabels) padLabels[k].style.opacity = (.5 + .5 * Math.min(1, w[k] * 1.3)).toFixed(2);
-    puck.style.transform = "translate(" + (pad.x * 36).toFixed(1) + "px," + (pad.y * 36).toFixed(1) + "px) scale(" + (pad.active ? 1.15 : 1) + ")";
+    puck.style.transform = "translate(" + (pad.x * padScale).toFixed(1) + "px," + (pad.y * padScale).toFixed(1) + "px) scale(" + (pad.active ? 1.15 : 1) + ")";
     if (!ctx) return;
     var t = ctx.currentTime;
     filt.frequency.setTargetAtTime(16000 * Math.pow(260 / 16000, w.filter), t, .04);
@@ -712,17 +744,19 @@ body::after {
   applyFx();
 
   /* ---------- the story: a hit lets one dot in ---------- */
-  var TRAVEL = 1100;
+  var TRAVEL = 1300;
   function nodePos(c, idx, deg) {
     var a = (-90 + idx * 360 / c.n + deg) * Math.PI / 180;
-    return [CX + RR * Math.cos(a), CY + RR * Math.sin(a)];
+    return [CX + c.R * Math.cos(a), CY + c.R * Math.sin(a)];
   }
   function launch(c, idx, nowP) {
     var lane = c.nl; c.nl ^= 1;
     var arr = c.lanes[lane]; if (!arr.length) return;
     var head = arr.shift();
     arr.forEach(function (d, i) { d.tx = c.slots[lane][i].x; d.ty = c.slots[lane][i].y; });
-    c.travelers.push({ dot: head, idx: idx, t0: nowP, x0: head.x, y0: head.y });
+    var st = toOverlay(c, head.x, head.y);
+    travelLayer.appendChild(head.el);
+    c.travelers.push({ dot: head, idx: idx, t0: nowP, x0: st[0], y0: st[1] });
     c.pending.push({ at: nowP + 1500, lane: lane });
   }
   function lightWindow(c, nowP) {
@@ -754,7 +788,7 @@ body::after {
       CITIES.forEach(function (c) {
         skyUpdate(c, wall);
         var s = Math.floor(localSec(c, wall));
-        c.clockEl.textContent = two(Math.floor(s / 3600)) + ":" + two(Math.floor(s / 60) % 60);
+        c.clockEl.textContent = two(Math.floor(s / 3600)) + ":" + two(Math.floor(s / 60) % 60) + "  ·  " + c.dotNote;
       });
     }
     if (!pad.active && !pad.hold && (Math.abs(pad.x) + Math.abs(pad.y) > .003)) {
@@ -799,10 +833,9 @@ body::after {
           for (var q = 0; q < c.nodes.length; q++) if (c.nodes[q].i === tr.idx) c.nodes[q].arrive = nowP;
           lightWindow(c, nowP); continue;
         }
-        if (u < .5) { var s1 = smooth(u / .5); px = tr.x0 + (200 - tr.x0) * s1; py = tr.y0 + (DOORY - tr.y0) * s1; rr = 3.1 + 1.1 * s1; }
-        else { var s2 = smooth((u - .5) / .5), np = nodePos(c, tr.idx, deg); px = 200 + (np[0] - 200) * s2; py = DOORY + (np[1] - DOORY) * s2; rr = 4.2 - 1.2 * s2; }
+        if (u < .5) { var s1 = smooth(u / .5); px = tr.x0 + (200 - tr.x0) * s1; py = tr.y0 + ((CY + c.R + 8) - tr.y0) * s1; rr = 3.1 + 1.1 * s1; }
+        else { var s2 = smooth((u - .5) / .5), np = nodePos(c, tr.idx, deg); px = 200 + (np[0] - 200) * s2; py = (CY + c.R + 8) + (np[1] - (CY + c.R + 8)) * s2; rr = 4.2 - 1.2 * s2; }
         tr.dot.el.setAttribute("cx", px.toFixed(2)); tr.dot.el.setAttribute("cy", py.toFixed(2)); tr.dot.el.setAttribute("r", rr.toFixed(2));
-        c.tg.appendChild(tr.dot.el);
       }
       /* windows glow */
       for (var gi = 0; gi < c.glows.length; gi++) {
@@ -812,7 +845,8 @@ body::after {
     });
     requestAnimationFrame(frame);
   }
-  CITIES.forEach(function (c) { skyUpdate(c, Date.now()); var s = Math.floor(localSec(c, Date.now())); c.clockEl.textContent = two(Math.floor(s / 3600)) + ":" + two(Math.floor(s / 60) % 60); });
+  CITIES.forEach(function (c) { skyUpdate(c, Date.now()); var s = Math.floor(localSec(c, Date.now())); c.clockEl.textContent = two(Math.floor(s / 3600)) + ":" + two(Math.floor(s / 60) % 60) + "  ·  " + c.dotNote; });
+  layoutPad(); window.addEventListener("resize", layoutPad); if (document.fonts && document.fonts.ready) document.fonts.ready.then(layoutPad); scene.addEventListener("scroll", layoutPad, { passive: true });
   requestAnimationFrame(frame);
 })();
 </script>
