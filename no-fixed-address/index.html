@@ -45,6 +45,8 @@ body::after {
 .dk { fill: var(--bg); stroke: var(--line); stroke-width: 1.15; vector-effect: non-scaling-stroke; }
 .q { fill: var(--ink); }
 .trk { fill: none; stroke: var(--line); stroke-width: 1; opacity: .75; vector-effect: non-scaling-stroke; }
+.more summary { font-weight: 700; font-size: 12px; letter-spacing: .1em; text-transform: uppercase; cursor: pointer; }
+.hint { margin: 0; font-size: 12px; opacity: .75; }
 .cname { font-weight: 700; font-size: 13px; letter-spacing: .14em; fill: var(--ink); cursor: pointer; text-transform: uppercase; text-decoration: underline dotted; text-underline-offset: 3px; }
 [hidden] { display: none !important; }
 .cname:focus-visible { outline: 2px solid var(--ink); }
@@ -126,6 +128,7 @@ body::after {
     <p><b>Copenhagen:</b> 1,572 people experiencing homelessness in a counting week, February 2026 (VIVE).</p>
     <p><b>Paris:</b> 3,857 people with no shelter solution counted in the Nuit de la Solidarité, night of 22 to 23 January 2026 (City of Paris).</p>
     <p><b>New York:</b> 4,991 people sleeping unsheltered, HOPE survey, 10 March 2026 (NYC Department of Social Services). It does not include people in shelters.</p>
+    <p><b>Percent of residents:</b> the count divided by the city's population. London uses Greater London, 9,089,736 (ONS, 2024). Boston 672,973 (US Census Bureau, July 2025). Copenhagen 673,575 (1 March 2026). Paris 2,103,778 (INSEE, 1 January 2023). New York 8,584,629 (US Census Bureau, July 2025). It's a rough guide, because each count covers a slightly different area and way of counting.</p>
     <p>These measure different things, so please don't read them as a ranking. Dot values are rounded and shown in each ring. The dots are not real people and the houses are drawn, not photographed. The more people counted, the more hits in the ring. The sound is a soft placeholder, with a low drone under each city that gets stronger as the count rises.</p>
     <p>Tap a city name on a ring to change it. Tap a number to mute that city. The pad in the middle bends the sound.</p>
   </div>
@@ -136,17 +139,22 @@ body::after {
       <div id="plist" style="display:flex;flex-direction:column;gap:6px"></div>
       <h3>Or add your own</h3>
       <form id="pform" novalidate style="display:flex;flex-direction:column;gap:8px">
-        <div class="row2">
-          <label class="fld" for="f-name">City<input id="f-name" type="text" maxlength="28" autocomplete="off" placeholder="Glasgow" list="citylist"><datalist id="citylist"></datalist></label>
-          <label class="fld" for="f-count">People counted<input id="f-count" type="number" min="1" max="10000000" inputmode="numeric" placeholder="1200"></label>
-        </div>
-        <label class="fld" for="f-desc">What was counted, and when<input id="f-desc" type="text" maxlength="40" autocomplete="off" placeholder="one night count, May 2026"></label>
-        <div class="row2">
-          <label class="fld" for="f-style">Houses<select id="f-style"></select></label>
-          <label class="fld" for="f-tz">Time zone<select id="f-tz"></select></label>
-        </div>
+        <label class="fld" for="f-name">City<input id="f-name" type="text" maxlength="28" autocomplete="off" placeholder="Glasgow" list="citylist"><datalist id="citylist"></datalist></label>
+        <details class="more">
+          <summary>I know the count (optional)</summary>
+          <div style="display:flex;flex-direction:column;gap:8px;margin-top:8px">
+            <label class="fld" for="f-count">People counted<input id="f-count" type="number" min="1" max="10000000" inputmode="numeric" placeholder="1200"></label>
+            <label class="fld" for="f-desc">What was counted, and when<input id="f-desc" type="text" maxlength="40" autocomplete="off" placeholder="one night count, May 2026"></label>
+            <label class="fld" for="f-pop">City population<input id="f-pop" type="number" min="1" max="100000000" inputmode="numeric" placeholder="620000"></label>
+            <div class="row2">
+              <label class="fld" for="f-style">Houses<select id="f-style"></select></label>
+              <label class="fld" for="f-tz">Time zone<select id="f-tz"></select></label>
+            </div>
+          </div>
+        </details>
+        <p class="hint" id="phint">No count yet? No problem. We'll show an example rhythm and say so.</p>
         <p class="err" id="perr" role="alert"></p>
-        <div class="row2"><button type="submit" class="sbtn play">Use this city</button><button type="button" class="sbtn" id="pcancel">Cancel</button></div>
+        <div class="row2"><button type="submit" class="sbtn play" id="pgo">Use this city</button><button type="button" class="sbtn" id="pcancel">Cancel</button></div>
       </form>
     </div>
   </div>
@@ -541,11 +549,11 @@ body::after {
     return "terrace";
   }
   var PRESETS = [
-    { id: "boston", name: "Boston", tz: "America/New_York", count: 3674, l1: "people experiencing homelessness", l2: "one night count, January 2026", style: "brownstone" },
-    { id: "cph", name: "Copenhagen", tz: "Europe/Copenhagen", count: 1572, l1: "people experiencing homelessness", l2: "counting week, February 2026", style: "gabled" },
-    { id: "london", name: "London", tz: "Europe/London", count: 12938, l1: "people seen sleeping rough", l2: "during 2025/26", style: "terrace" },
-    { id: "paris", name: "Paris", tz: "Europe/Paris", count: 3857, l1: "people with no shelter solution", l2: "night count, January 2026", style: "terrace" },
-    { id: "nyc", name: "New York", tz: "America/New_York", count: 4991, l1: "people sleeping unsheltered", l2: "one night survey, March 2026", style: "brownstone" }
+    { id: "boston", name: "Boston", tz: "America/New_York", count: 3674, l1: "people experiencing homelessness", l2: "one night count, January 2026", style: "brownstone", pop: 672973 },
+    { id: "cph", name: "Copenhagen", tz: "Europe/Copenhagen", count: 1572, l1: "people experiencing homelessness", l2: "counting week, February 2026", style: "gabled", pop: 673575 },
+    { id: "london", name: "London", tz: "Europe/London", count: 12938, l1: "people seen sleeping rough", l2: "during 2025/26", style: "terrace", pop: 9089736 },
+    { id: "paris", name: "Paris", tz: "Europe/Paris", count: 3857, l1: "people with no shelter solution", l2: "night count, January 2026", style: "terrace", pop: 2103778 },
+    { id: "nyc", name: "New York", tz: "America/New_York", count: 4991, l1: "people sleeping unsheltered", l2: "one night survey, March 2026", style: "brownstone", pop: 8584629 }
   ];
   var SLOTS = [
     { col: "#ff6a1f", bg: "#9a8fe2", bg2: "#aaa4ec", bg3: "#8a82d8", pan: .05, vel: .19, P: 241, dir: -1, notes: [220.0, 246.94, 293.66, 329.63, 369.99], seq: [0, 1, 3, 2, 4] },
@@ -574,6 +582,11 @@ body::after {
     for (k in SLOTS[slotIdx]) c[k] = SLOTS[slotIdx][k];
     for (k in data) c[k] = data[k];
     c.slot = slotIdx;
+    if (!(c.pop > 0)) { PRESETS.forEach(function (pr) { if (pr.id === c.id && pr.pop) c.pop = pr.pop; }); }
+    if (c.pop > 0 && !c.ex) {
+      var pc = c.count / c.pop * 100, one = Math.round(c.pop / c.count);
+      c.share = (pc >= 1 ? pc.toFixed(1) : pc >= .1 ? pc.toFixed(2) : pc.toFixed(3)) + "% of residents, about 1 in " + one.toLocaleString("en-GB");
+    } else c.share = "";
     try { c.fmt = new Intl.DateTimeFormat("en-GB", { timeZone: c.tz, hour: "numeric", minute: "numeric", second: "numeric", hourCycle: "h23" }); refreshOffset(c); } catch (e) { c.off = 0; c.fmt = null; }
     c.n = 16;
     c.k = clamp(Math.round(3.65 * Math.log(c.count) / Math.LN10 - 8), 2, 12);
@@ -582,7 +595,7 @@ body::after {
     c.per = dotValue(c.count); c.dots = Math.max(1, Math.round(c.count / c.per));
     return c;
   }
-  function cityData(c) { return { id: c.id, name: c.name, tz: c.tz, count: c.count, l1: c.l1, l2: c.l2, style: c.style }; }
+  function cityData(c) { return { id: c.id, name: c.name, tz: c.tz, count: c.count, l1: c.l1, l2: c.l2, style: c.style, pop: c.pop || 0, ex: !!c.ex }; }
   function validCity(d) {
     if (!d || typeof d.name !== "string" || !d.name || d.name.length > 28 || typeof d.count !== "number" || !(d.count >= 1 && d.count <= 1e7) || !STYLES[d.style]) return false;
     try { new Intl.DateTimeFormat("en-GB", { timeZone: d.tz }); } catch (e) { return false; }
@@ -613,7 +626,7 @@ body::after {
   function buildPanel(c, ci) {
     var p = document.createElement("section"); p.className = "panel"; p.id = "p-" + ci;
     p.style.setProperty("--bg", c.bg); p.style.setProperty("--bg2", c.bg2); p.style.setProperty("--bg3", c.bg3);
-    var svg = '<svg class="sc" viewBox="0 0 400 800" preserveAspectRatio="xMidYMax meet" aria-label="' + esc(c.name) + ": " + c.count.toLocaleString("en-GB") + " " + esc(c.l1) + ", " + esc(c.l2) + ". A line of " + c.dots + ' dots waits to enter its ring.">';
+    var svg = '<svg class="sc" viewBox="0 0 400 800" preserveAspectRatio="xMidYMax meet" aria-label="' + esc(c.name) + ": " + (c.ex ? "no count yet" : c.count.toLocaleString("en-GB")) + " " + esc(c.l1) + ", " + esc(c.l2) + ". A line of " + c.dots + ' dots waits to enter its ring.">';
     svg += '<g class="sky"><g class="sun"></g><g class="moon"></g>' + cloud(40, 214, 1) + cloud(300, 176, .8) + cloud(150, 118, .7) + "</g>";
     svg += '<g class="bld">' + STYLES[c.style]() + "</g><g class='st'>" + street() + "</g>";
     svg += '<g class="fg"><g class="stat" tabindex="0" role="button" aria-pressed="false" aria-label="Mute ' + esc(c.name) + '" style="cursor:pointer"></g><g class="qg"></g></g></svg>';
@@ -624,20 +637,21 @@ body::after {
     c.tabEl = tabsEl.children[ci]; c.tabEl.textContent = c.name;
 
     var sg = p.querySelector(".stat");
-    el("rect", { x: 70, y: 546, width: 260, height: 84, fill: "transparent" }, sg);
+    el("rect", { x: 70, y: 546, width: 260, height: 96, fill: "transparent" }, sg);
     var chip = el("circle", { cx: 200, cy: 559, r: 4.5, fill: c.col, stroke: "#0b0b0d", "stroke-width": 1.2 }, sg);
     var nm = el("text", { class: "cname", x: 200, y: 564, "text-anchor": "middle" }, sg); nm.textContent = c.name; c.nameEl = nm;
     var bb = nm.getBBox ? nm.getBBox() : null; if (bb && bb.width) { chip.setAttribute("cx", f(bb.x - 10)); }
-    var t1 = el("text", { class: "num", transform: "translate(200 593) scale(1.16 .92)", "text-anchor": "middle" }, sg); t1.textContent = c.count.toLocaleString("en-GB");
+    var t1 = el("text", { class: "num", transform: "translate(200 593) scale(1.16 .92)", "text-anchor": "middle" }, sg); t1.textContent = c.ex ? "?" : c.count.toLocaleString("en-GB");
     var t2 = el("text", { class: "sub", x: 200, y: 605, "text-anchor": "middle" }, sg); t2.textContent = c.l1;
     var t3 = el("text", { class: "sub", x: 200, y: 615, "text-anchor": "middle" }, sg); t3.textContent = c.l2;
-    c.clockEl = el("text", { class: "sub", x: 200, y: 625, "text-anchor": "middle", "font-weight": 700 }, sg);
-    c.dotNote = "1 dot = " + c.per.toLocaleString("en-GB") + " people";
+    if (c.share) { var t4 = el("text", { class: "sub", x: 200, y: 626, "text-anchor": "middle", "font-weight": 700, fill: c.col === "#ffe14a" ? "#0b0b0d" : "#0b0b0d" }, sg); t4.textContent = c.share; }
+    c.clockEl = el("text", { class: "sub", x: 200, y: 636, "text-anchor": "middle", "font-weight": 700 }, sg);
+    c.dotNote = c.ex ? "example dots" : "1 dot = " + c.per.toLocaleString("en-GB") + " people";
 
     function makeSlots(sign, count) {
-      var arr = [], C = 19, rows = Math.ceil(count / C) + 1, r, k;
+      var arr = [], C = 24, rows = Math.ceil(count / C) + 1, r, k;
       for (r = 0; r < rows; r++) for (k = 0; k < C; k++) {
-        var x = 200 + sign * (8 + k * 9 + (r % 2) * 4.5), y = GROUND - 10 - r * 10;
+        var x = 200 + sign * (8 + k * 7.5 + (r % 2) * 3.75), y = GROUND - 10 - r * 10;
         arr.push({ x: x, y: y, d: Math.hypot(x - 200, (y - (GROUND - 10)) * 2.4) });
       }
       arr.sort(function (a, b) { return a.d - b.d; });
@@ -749,14 +763,40 @@ body::after {
   pickerEl.addEventListener("click", function (e) { if (e.target === pickerEl) closePicker(); });
   document.getElementById("pcancel").addEventListener("click", closePicker);
   document.addEventListener("keydown", function (e) { if (e.key === "Escape" && !pickerEl.hidden) closePicker(); });
+  var details = pform.querySelector("details");
+  var tzTouched = false; fTz.addEventListener("change", function () { tzTouched = true; });
+  function lookup(name) {
+    return new Promise(function (res) {
+      var done = false, to = setTimeout(function () { if (!done) { done = true; res(null); } }, 4000);
+      try {
+        fetch("https://geocoding-api.open-meteo.com/v1/search?count=1&language=en&format=json&name=" + encodeURIComponent(name))
+          .then(function (r) { return r.json(); })
+          .then(function (j) { if (done) return; done = true; clearTimeout(to); res(j && j.results && j.results[0] ? j.results[0] : null); })
+          .catch(function () { if (!done) { done = true; clearTimeout(to); res(null); } });
+      } catch (e) { clearTimeout(to); res(null); }
+    });
+  }
   pform.addEventListener("submit", function (e) {
     e.preventDefault();
-    var name = document.getElementById("f-name").value.trim(), count = Math.round(Number(document.getElementById("f-count").value)), desc = document.getElementById("f-desc").value.trim();
+    var name = document.getElementById("f-name").value.trim(), countRaw = document.getElementById("f-count").value, desc = document.getElementById("f-desc").value.trim();
+    var count = Math.round(Number(countRaw)) || 0, pop = Math.round(Number(document.getElementById("f-pop").value)) || 0;
     if (!name) { perr.textContent = "Add a city name."; return; }
-    if (!(count >= 1 && count <= 1e7)) { perr.textContent = "Add the number of people counted."; return; }
-    if (!desc) { perr.textContent = "Say what was counted and when, so the number is honest."; return; }
-    swapCity(pickSlot, { id: "custom-" + Date.now(), name: name, tz: fTz.value, count: count, l1: "people counted", l2: desc, style: fStyle.value });
-    pform.reset(); closePicker();
+    if (count && !(count >= 1 && count <= 1e7)) { perr.textContent = "That count looks off."; return; }
+    if (count && !desc) { perr.textContent = "Say what was counted and when, so the number is honest."; return; }
+    var go = document.getElementById("pgo"); go.disabled = true; go.textContent = "Looking up\u2026"; perr.textContent = "";
+    var known = CITY_INDEX[name.toLowerCase()];
+    lookup(name).then(function (g) {
+      var tz = tzTouched ? fTz.value : (known ? known[0] : (g && g.timezone) || fTz.value);
+      try { new Intl.DateTimeFormat("en-GB", { timeZone: tz }); } catch (x) { tz = fTz.value; }
+      var style = known ? known[1] : guessStyle(tz);
+      if (details.open) style = fStyle.value;
+      if (!pop && g && g.population) pop = g.population;
+      var data = { id: "custom-" + Date.now(), name: g && g.name && g.name.length <= 28 && g.name.toLowerCase() === name.toLowerCase() ? g.name : name, tz: tz, style: style, pop: pop };
+      if (count) { data.count = count; data.l1 = "people counted"; data.l2 = desc; }
+      else { data.count = 1000; data.ex = true; data.l1 = "no count entered yet"; data.l2 = "showing an example rhythm"; }
+      swapCity(pickSlot, data);
+      go.disabled = false; go.textContent = "Use this city"; pform.reset(); tzTouched = false; closePicker();
+    });
   });
   function swapCity(ci, data) {
     var old = CITIES[ci]; old.dead = true; stopDrone(old);
