@@ -34,7 +34,16 @@ body::after {
 .scene { position: absolute; inset: 0; display: flex; overflow-x: auto; overflow-y: hidden; scroll-snap-type: x mandatory; scrollbar-width: none; overscroll-behavior-x: contain; }
 .scene::-webkit-scrollbar { display: none; }
 .panel { flex: 0 0 100%; scroll-snap-align: center; position: relative; overflow: hidden; background: linear-gradient(180deg, var(--bg2) 0%, var(--bg) 55%, var(--bg3) 100%); }
-.panel + .panel { box-shadow: -1.5px 0 0 rgba(251,247,238,.75); }
+.panel + .panel { box-shadow: none; }
+@media (min-width: 900px) {
+  .panel { overflow: visible; background: none; }
+  .panel::before { content: ""; position: absolute; top: 0; bottom: 0; left: -14%; right: -14%; z-index: 0; background: linear-gradient(180deg, var(--bg2) 0%, var(--bg) 55%, var(--bg3) 100%); -webkit-mask-image: linear-gradient(90deg, transparent 0, #000 24%, #000 76%, transparent 100%); mask-image: linear-gradient(90deg, transparent 0, #000 24%, #000 76%, transparent 100%); }
+  .panel:first-child::before { left: 0; -webkit-mask-image: linear-gradient(90deg, #000 0, #000 76%, transparent 100%); mask-image: linear-gradient(90deg, #000 0, #000 76%, transparent 100%); }
+  .panel:last-child::before { right: 0; -webkit-mask-image: linear-gradient(90deg, transparent 0, #000 24%, #000 100%); mask-image: linear-gradient(90deg, transparent 0, #000 24%, #000 100%); }
+  .sc { z-index: 1; }
+  .bw0 { mask: url(#bm0); } .bw1 { mask: url(#bm1); } .bw2 { mask: url(#bm2); }
+}
+body.loop .panel::before { display: none; }
 @media (min-width: 900px) { .scene { overflow: hidden; } .panel { flex: 1 1 0; } .tabs { display: none !important; } }
 .sc { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; display: block; }
 .ln { fill: none; stroke: var(--line); stroke-width: 1.15; stroke-linecap: round; stroke-linejoin: round; vector-effect: non-scaling-stroke; opacity: .9; }
@@ -702,8 +711,11 @@ body.loop .stat rect { fill-opacity: .96; }
     p.style.setProperty("--bg", c.bg); p.style.setProperty("--bg2", c.bg2); p.style.setProperty("--bg3", c.bg3);
     var svg = '<svg class="sc" viewBox="0 0 400 800" preserveAspectRatio="xMidYMax meet" aria-label="' + esc(c.name) + ": " + (c.ex ? "no count yet" : c.count.toLocaleString("en-GB")) + " " + esc(c.l1) + ", " + esc(c.l2) + ". A line of " + c.dots + ' dots waits to enter its ring.">';
     svg += '<g class="sky"><g class="sun"></g><g class="moon"></g>' + cloud(40, 214, 1) + cloud(300, 176, .8) + cloud(150, 118, .7) + "</g>";
-    var baseT = "translate(200 " + STREET + ") scale(" + BS + ") translate(-200 " + -GROUND + ")";
-    svg += '<g class="bld" transform="' + baseT + '">' + STYLES[c.style]() + "</g><g class='st' transform='" + baseT + "'>" + street() + "</g>";
+    var baseT = "translate(200 " + (STREET + (typeof bldDY === "number" ? bldDY : -988)) + ") scale(" + BS + ") translate(-200 " + -GROUND + ")";
+    var mx0 = ci === 0 ? -400 : -70, mx1 = ci === 2 ? 800 : 480;
+    svg += '<defs><linearGradient id="bg' + ci + '" gradientUnits="userSpaceOnUse" x1="' + mx0 + '" x2="' + mx1 + '" y1="0" y2="0"><stop offset="0" stop-color="#000"/><stop offset="' + (ci === 0 ? 0 : (140 / (mx1 - mx0)).toFixed(4)) + '" stop-color="#fff"/><stop offset="' + (ci === 2 ? 1 : (1 - 140 / (mx1 - mx0)).toFixed(4)) + '" stop-color="#fff"/><stop offset="1" stop-color="#000"/></linearGradient><mask id="bm' + ci + '" maskUnits="userSpaceOnUse" x="-400" y="-1400" width="1200" height="2800"><rect x="-400" y="-1400" width="1200" height="2800" fill="url(#bg' + ci + ')"/></mask></defs>';
+    svg += '<defs><clipPath id="bc' + ci + '"><rect x="-400" y="-1500" width="1200" height="' + (1500 + STREET) + '"/></clipPath></defs>';
+    svg += '<g class="bw bw' + ci + '"><g clip-path="url(#bc' + ci + ')"><g class="bld" transform="' + baseT + '">' + STYLES[c.style]() + "</g></g><g class='st' transform='" + baseT.replace(/translate\(200 [-\d.]+\)/, "translate(200 " + STREET + ")") + "'>" + street() + "</g></g>";
     svg += '<g class="fg"><g class="stat" tabindex="0" role="button" aria-pressed="false" aria-label="Mute ' + esc(c.name) + '" style="cursor:pointer"></g><g class="qg"></g></g></svg>';
     p.innerHTML = svg;
     c.panel = p; c.svg = p.querySelector("svg"); c.qg = p.querySelector(".qg");
@@ -833,6 +845,24 @@ body.loop .stat rect { fill-opacity: .96; }
     });
     loopEl.removeChild(tmp);
   }
+  var SINK = 170, bldDY = -(568 + 420), introT0 = -1, introDone = false, introDirty = true;
+  function ease(x) { x = Math.max(0, Math.min(1, x)); return x * x * (3 - 2 * x); }
+  function introStart() { if (introT0 < 0) { introT0 = performance.now(); if (RM) introT0 -= 5000; } }
+  function introStep(nowP) {
+    var t = introT0 < 0 ? 0 : (nowP - introT0) / 1000, rp = ease(t / 1.6), bp = ease((t - .8) / 2.6);
+    var sk = window.innerWidth >= 900 ? SINK : 0; bldDY = sk - (568 + 420 + sk) * (1 - bp);
+    if ((introDone || introT0 < 0) && !introDirty) return;
+    introDirty = false; if (t > 4.5) introDone = true;
+    if (mode === "wrap") { cluster.style.transform = ""; layoutPad(); return; }
+    cluster.style.transform = "";
+    var m = cluster.getScreenCTM(); if (!m) return;
+    var s = m.a, H = window.innerHeight, W = window.innerWidth, R = RADII_BASE[0] * s;
+    var k = W < 900 ? 1 : Math.max(1, Math.min(1.15, W * .46 / R)), cyp = m.f + CY * s, cxp = m.e + CX * s;
+    var target = W < 900 ? cyp : Math.max(H * .29, R * k + H * .05), kk = 1 + (k - 1) * rp, dy = (target - cyp) * rp;
+    cluster.style.transformOrigin = cxp + "px " + cyp + "px";
+    cluster.style.transform = "translate(0px," + dy.toFixed(1) + "px) scale(" + kk.toFixed(4) + ")";
+    layoutPad();
+  }
   var SOFF = [[-91, -260], [339, -16], [100, -353]], QOFF = [[-91, -239], [338, 9], [100, -331]];
   var lastWide = false;
   function wideWrap() { return mode === "wrap" && window.innerWidth >= 900; }
@@ -877,7 +907,7 @@ body.loop .stat rect { fill-opacity: .96; }
     buildWrap();
     CITIES.forEach(function (c) { setGlows(c, loop && c.wg ? c.wg : c.pg); });
     viewBtn.textContent = loop ? "Columns" : "Wrap"; viewBtn.setAttribute("aria-pressed", loop ? "true" : "false");
-    CITIES.forEach(layoutStat); relayoutAll();
+    CITIES.forEach(layoutStat); relayoutAll(); introDirty = true;
     layoutPad();
   }
   var mixBtn = document.getElementById("mixbtn"), mixEl = document.getElementById("mix");
@@ -1161,7 +1191,7 @@ body.loop .stat rect { fill-opacity: .96; }
       initAudio(); if (ctx.state === "suspended") ctx.resume();
       t0 = ctx.currentTime + .15;
       CITIES.forEach(function (c) { c.step = 0; c.next = t0; }); resetEngine(t0);
-      events = []; timer = setInterval(sched, 25); playing = true;
+      events = []; timer = setInterval(sched, 25); playing = true; introStart();
       CITIES.forEach(startDrone);
     } else { clearInterval(timer); playing = false; events = []; CITIES.forEach(stopDrone); }
     playBtn.setAttribute("aria-pressed", playing ? "true" : "false"); playBtn.textContent = playing ? "Pause" : "Play";
@@ -1251,6 +1281,7 @@ body.loop .stat rect { fill-opacity: .96; }
   var lastSky = 0;
   function frame() {
     var now = ctx ? ctx.currentTime : 0, wall = Date.now(), nowP = performance.now();
+    if (!introDone || introDirty) introStep(nowP);
     while (events.length && events[0].t <= now) {
       var ev = events.shift(); if (ev.c.dead) continue; ev.c.pt = ev.t;
       for (var n = 0; n < ev.c.nodes.length; n++) if (ev.c.nodes[n].i === ev.i) ev.c.nodes[n].t = ev.t;
@@ -1275,7 +1306,7 @@ body.loop .stat rect { fill-opacity: .96; }
       /* the buildings breathe with each hit */
       var pls = RM || !c.pt ? 0 : Math.exp(-(now - c.pt) * 2.2); if (pls < .004) pls = 0;
       var amp = (.03 + .003 * c.k) * pls;
-      if (c.bldEl) c.bldEl.setAttribute("transform", "translate(200 " + STREET + ") scale(" + (BS * (1 + amp)).toFixed(4) + ") translate(-200 " + -GROUND + ")");
+      if (c.bldEl) c.bldEl.setAttribute("transform", "translate(200 " + (STREET + bldDY).toFixed(1) + ") scale(" + (BS * (1 + amp)).toFixed(4) + ") translate(-200 " + -GROUND + ")");
       if (c.wgrp) c.wgrp.setAttribute("transform", pls ? "translate(" + CX + " " + CY + ") scale(" + (1 + amp * .8).toFixed(4) + ") translate(" + -CX + " " + -CY + ")" : "");
       /* nodes */
       c.nodes.forEach(function (nd) {
@@ -1324,7 +1355,7 @@ body.loop .stat rect { fill-opacity: .96; }
     requestAnimationFrame(frame);
   }
   CITIES.forEach(function (c) { skyUpdate(c, Date.now()); setClock(c); });
-  applyMode(); window.addEventListener("resize", function () { var nsc = mode === "wrap" && window.innerWidth / window.innerHeight < .9 ? .66 : 1; if (Math.abs(nsc - ringScale) > .001 || wideWrap() !== lastWide) { lastWide = wideWrap(); applyMode(); } else layoutPad(); }); if (document.fonts && document.fonts.ready) document.fonts.ready.then(layoutPad); scene.addEventListener("scroll", layoutPad, { passive: true });
+  applyMode(); window.addEventListener("resize", function () { var nsc = mode === "wrap" && window.innerWidth / window.innerHeight < .9 ? .66 : 1; introDirty = true; if (Math.abs(nsc - ringScale) > .001 || wideWrap() !== lastWide) { lastWide = wideWrap(); applyMode(); } else layoutPad(); }); if (document.fonts && document.fonts.ready) document.fonts.ready.then(layoutPad); scene.addEventListener("scroll", layoutPad, { passive: true });
   requestAnimationFrame(frame);
 })();
 </script>
