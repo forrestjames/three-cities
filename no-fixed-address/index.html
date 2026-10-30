@@ -104,14 +104,14 @@ body.loop .stat rect { fill-opacity: .96; }
 .sbtn:focus-visible, .pad:focus-visible, .aboutbtn:focus-visible, .tab:focus-visible { outline: 2px solid var(--ink); outline-offset: 3px; }
 .sbtn.play { background: var(--ink); color: var(--paper); }
 .sbtn.hold[aria-pressed="true"] { background: var(--ink); color: var(--paper); }
-.pad { position: absolute; z-index: 5; left: 50%; top: 50%; width: 96px; height: 96px; border: 2px solid var(--ink); background: var(--paper); touch-action: none; cursor: grab; -webkit-user-select: none; user-select: none;
+.pad { border-radius: 50%; position: absolute; z-index: 5; left: 50%; top: 50%; width: 96px; height: 96px; border: 2px solid var(--ink); background: var(--paper); touch-action: none; cursor: grab; -webkit-user-select: none; user-select: none;
   background-image: radial-gradient(circle, rgba(31,45,143,.35) 1px, transparent 1.4px); background-size: 9px 9px; }
 .pad:active { cursor: grabbing; }
-.pad > span { position: absolute; font: 700 8px var(--font); letter-spacing: .1em; color: var(--ink); opacity: .5; pointer-events: none; }
-.pf { top: 4px; left: 50%; transform: translateX(-50%); }
-.ps { bottom: 4px; left: 50%; transform: translateX(-50%); }
-.pd { right: 3px; top: 50%; writing-mode: vertical-rl; transform: translateY(-50%); }
-.pfl { left: 3px; top: 50%; writing-mode: vertical-rl; transform: translateY(-50%) rotate(180deg); }
+.pad > span { position: absolute; font: 700 11px var(--font); letter-spacing: .1em; color: var(--ink); opacity: .8; pointer-events: none; }
+.pf { top: 11%; left: 50%; transform: translateX(-50%); }
+.ps { bottom: 11%; left: 50%; transform: translateX(-50%); }
+.pd { right: 9%; top: 50%; writing-mode: vertical-rl; transform: translateY(-50%); }
+.pfl { left: 9%; top: 50%; writing-mode: vertical-rl; transform: translateY(-50%) rotate(180deg); }
 .puck { position: absolute; width: 20px; height: 20px; border-radius: 50%; background: var(--pink); border: 2px solid var(--ink); left: 50%; top: 50%; margin: -10px 0 0 -10px; pointer-events: none; }
 </style>
 </head>
@@ -796,10 +796,10 @@ body.loop .stat rect { fill-opacity: .96; }
   var appEl = document.querySelector(".app");
   function layoutPad() {
     var m = cluster.getScreenCTM(); if (!m) return;
-    var ar = appEl.getBoundingClientRect(), s = m.a, size = clamp(98 * s * ringScale, 56, 150);
+    var ar = appEl.getBoundingClientRect(), s = m.a, size = Math.max(70, 2 * RADII[2] * s - 16);
     var px = m.e + CX * s - ar.left, py = m.f + CY * s - ar.top;
     padEl.style.left = (px - size / 2) + "px"; padEl.style.top = (py - size / 2) + "px"; padEl.style.width = size + "px"; padEl.style.height = size + "px";
-    padEl.style.transform = "none"; padScale = size / 2 - 12;
+    padEl.style.transform = "none"; padScale = size / 2 - 14;
   }
   var padScale = 36;
   function toOverlay(c, x, y) {
@@ -995,6 +995,7 @@ body.loop .stat rect { fill-opacity: .96; }
   document.addEventListener("keydown", function (e) { if (e.code === "Space" && e.target.tagName !== "BUTTON" && e.target.id !== "pad" && e.target.getAttribute("role") !== "button") { e.preventDefault(); toggle(); } });
 
   /* ---------- the pad ---------- */
+  function padRound() { var m = Math.hypot(pad.x, pad.y); if (m > 1) { pad.x /= m; pad.y /= m; } }
   var padEl = document.getElementById("pad"), puck = document.getElementById("puck"), holdBtn = document.getElementById("hold");
   var pad = { x: 0, y: 0, active: false, hold: false };
   var DIRS = { filter: -Math.PI / 2, delay: 0, stutter: Math.PI / 2, flange: Math.PI };
@@ -1024,7 +1025,7 @@ body.loop .stat rect { fill-opacity: .96; }
   }
   function padPos(e) {
     var r = padEl.getBoundingClientRect();
-    pad.x = clamp(((e.clientX - r.left) / r.width) * 2 - 1, -1, 1); pad.y = clamp(((e.clientY - r.top) / r.height) * 2 - 1, -1, 1);
+    pad.x = clamp(((e.clientX - r.left) / r.width) * 2 - 1, -1, 1); pad.y = clamp(((e.clientY - r.top) / r.height) * 2 - 1, -1, 1); padRound();
   }
   padEl.addEventListener("pointerdown", function (e) { padEl.setPointerCapture(e.pointerId); pad.active = true; padPos(e); applyFx(); e.preventDefault(); });
   padEl.addEventListener("pointermove", function (e) { if (pad.active) { padPos(e); applyFx(); } });
@@ -1034,7 +1035,7 @@ body.loop .stat rect { fill-opacity: .96; }
     var st = .12, m = { ArrowLeft: [-st, 0], ArrowRight: [st, 0], ArrowUp: [0, -st], ArrowDown: [0, st] }[e.key];
     if (e.key === "Escape") { pad.x = 0; pad.y = 0; applyFx(); return; }
     if (!m) return; e.preventDefault();
-    pad.x = clamp(pad.x + m[0], -1, 1); pad.y = clamp(pad.y + m[1], -1, 1);
+    pad.x = clamp(pad.x + m[0], -1, 1); pad.y = clamp(pad.y + m[1], -1, 1); padRound();
     pad.hold = true; holdBtn.setAttribute("aria-pressed", "true"); applyFx();
   });
   holdBtn.addEventListener("click", function () { pad.hold = !pad.hold; holdBtn.setAttribute("aria-pressed", pad.hold ? "true" : "false"); });
