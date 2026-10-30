@@ -241,7 +241,7 @@ body.loop .stat rect { fill-opacity: .96; }
   window.addEventListener("resize", fitTitle);
 
   /* ---------- line drawing helpers ---------- */
-  var GROUND = 688, STREET = 568, BS = 1;
+  var GROUND = 688, STREET = 568, BS = 0.6;
   function L(d, c) { return '<path class="' + (c || "ln") + '" d="' + d + '"/>'; }
   function R(x, y, w, h, c) { return '<rect class="' + (c || "ln") + '" x="' + f(x) + '" y="' + f(y) + '" width="' + f(w) + '" height="' + f(h) + '"/>'; }
   function win(x, y, w, h, rows, cols, o) {
