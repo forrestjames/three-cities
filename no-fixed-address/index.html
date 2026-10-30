@@ -137,7 +137,7 @@ body::after {
       <h3>Or add your own</h3>
       <form id="pform" novalidate style="display:flex;flex-direction:column;gap:8px">
         <div class="row2">
-          <label class="fld" for="f-name">City<input id="f-name" type="text" maxlength="28" autocomplete="off" placeholder="Glasgow"></label>
+          <label class="fld" for="f-name">City<input id="f-name" type="text" maxlength="28" autocomplete="off" placeholder="Glasgow" list="citylist"><datalist id="citylist"></datalist></label>
           <label class="fld" for="f-count">People counted<input id="f-count" type="number" min="1" max="10000000" inputmode="numeric" placeholder="1200"></label>
         </div>
         <label class="fld" for="f-desc">What was counted, and when<input id="f-desc" type="text" maxlength="40" autocomplete="off" placeholder="one night count, May 2026"></label>
@@ -380,8 +380,166 @@ body::after {
 
   /* ---------- cities ---------- */
   var BAR = 6, CX = 200, CY = 374, RADII = [160, 124, 88];
-  var STYLES = { terrace: bLondon, brownstone: bBoston, gabled: bCph };
-  var STYLE_NAMES = { terrace: "Terrace", brownstone: "Brownstone", gabled: "Gabled townhouse" };
+  /* Tower: glass and concrete high-rises */
+  function bTower() {
+    var ws = [84, 70, 96, 76, 90], hs = [470, 330, 520, 400, 280], s = "", x = -230, n = 0, k, w, top, y, d, i, j, g;
+    while (x < 640) {
+      k = n % 5; w = ws[k]; top = GROUND - hs[k];
+      s += L("M" + x + " " + GROUND + "V" + top + "H" + (x + w) + "V" + GROUND);
+      s += R(x + 8, top - 10, w - 16, 10) + R(x + 18, top - 18, w - 36, 8, "l2");
+      if (k % 2 === 0) s += L("M" + (x + w / 2) + " " + (top - 18) + "V" + (top - 48) + "M" + (x + w / 2 - 4) + " " + (top - 30) + "H" + (x + w / 2 + 4), "l2");
+      d = ""; for (y = top + 12; y < GROUND - 50; y += 14) d += "M" + x + " " + y + "H" + (x + w);
+      for (i = x + 12; i < x + w - 4; i += 12) d += "M" + i + " " + (top + 12) + "V" + (GROUND - 50);
+      s += L(d, "l3");
+      g = 0;
+      for (y = top + 14; y < GROUND - 64; y += 14) for (j = x + 12; j < x + w - 12; j += 12) {
+        g++; if ((g * 7 + n * 3) % 9 === 0) s += '<rect class="gf" x="' + (j + 1) + '" y="' + (y + 1) + '" width="10" height="12"/><rect class="gl" x="' + (j + 1) + '" y="' + (y + 1) + '" width="10" height="12"/>' + R(j + 1, y + 1, 10, 12, "l2");
+      }
+      s += L("M" + x + " " + (GROUND - 50) + "H" + (x + w) + "M" + x + " " + (GROUND - 46) + "H" + (x + w), "l2");
+      s += win(x + 10, GROUND - 40, w / 2 - 14, 36, 1, 3) + win(x + w / 2 + 4, GROUND - 40, w / 2 - 14, 36, 1, 3);
+      x += w + 10; n++;
+    }
+    return s;
+  }
+  /* Tiled: low timber townhouses with sweeping tiled roofs */
+  function bTiled() {
+    var W = 150, s = "", i, x0, d, y, x;
+    for (i = -2; i <= 4; i++) {
+      x0 = i * W - 40;
+      s += L("M" + x0 + " " + GROUND + "V400M" + (x0 + W) + " " + GROUND + "V400");
+      /* upper roof */
+      d = "M" + (x0 - 14) + " 410Q" + (x0 + 6) + " 404 " + (x0 + 24) + " 380L" + (x0 + W / 2) + " 320L" + (x0 + W - 24) + " 380Q" + (x0 + W - 6) + " 404 " + (x0 + W + 14) + " 410Z";
+      s += L(d);
+      d = ""; for (x = x0 + 10; x < x0 + W - 6; x += 8) d += "M" + x + " 408L" + f(x0 + W / 2 + (x - x0 - W / 2) * .55) + " 330";
+      s += L(d, "l3") + L("M" + (x0 - 8) + " 414H" + (x0 + W + 8), "l2");
+      /* upper floor: lattice windows */
+      s += win(x0 + 22, 432, 38, 56, 4, 5) + win(x0 + W - 60, 432, 38, 56, 4, 5);
+      s += L("M" + (x0 + 66) + " 440V490M" + (x0 + 84) + " 440V490", "l2");
+      /* lower eaves */
+      d = "M" + (x0 - 18) + " 560Q" + (x0 + 4) + " 556 " + (x0 + 20) + " 534H" + (x0 + W - 20) + "Q" + (x0 + W - 4) + " 556 " + (x0 + W + 18) + " 560Z";
+      s += L(d) + L("M" + (x0 - 12) + " 566H" + (x0 + W + 12), "l2");
+      d = ""; for (x = x0 + 22; x < x0 + W - 20; x += 7) d += "M" + x + " 536V556";
+      s += L(d, "l3");
+      /* ground floor: sliding doors and a lantern */
+      s += '<rect class="gf" x="' + (x0 + 20) + '" y="580" width="110" height="' + (GROUND - 580) + '"/>' + R(x0 + 20, 580, 110, GROUND - 580);
+      d = ""; for (x = x0 + 20 + 22; x < x0 + 130; x += 22) d += "M" + x + " 580V" + GROUND;
+      for (y = 596; y < GROUND; y += 14) d += "M" + (x0 + 20) + " " + y + "H" + (x0 + 130);
+      s += L(d, "l2");
+      s += '<rect class="gl" x="' + (x0 + 42) + '" y="582" width="22" height="' + (GROUND - 584) + '"/>';
+      s += '<circle class="ln" cx="' + (x0 + 142) + '" cy="606" r="7"/>' + L("M" + (x0 + 142) + " 590V599M" + (x0 + 136) + " 606H" + (x0 + 148), "l2");
+    }
+    return s;
+  }
+  /* Mediterranean: flat-roofed stucco with arched, shuttered windows */
+  function bMed() {
+    var ws = [118, 104, 130, 110], fls = [4, 3, 4, 3], s = "", x = -230, n = 0, k, w, fl, top, f2, yb, cx, d, i, wx;
+    while (x < 640) {
+      k = n % 4; w = ws[k]; fl = fls[k]; top = 640 - fl * 82;
+      s += L("M" + x + " " + GROUND + "V" + top + "M" + (x + w) + " " + GROUND + "V" + top);
+      s += R(x - 3, top - 8, w + 6, 8) + L("M" + x + " " + (top - 8) + "V" + (top - 16) + "H" + (x + w) + "V" + (top - 8), "l2");
+      if (k % 2 === 0) s += R(x + w - 36, top - 40, 22, 24) + L("M" + (x + w - 40) + " " + (top - 40) + "H" + (x + w - 10), "l2");
+      d = ""; for (yb = top + 6; yb < 620; yb += 8) d += "M" + x + " " + yb + "H" + (x + w);
+      s += L(d, "l3");
+      for (f2 = 0; f2 < fl; f2++) {
+        yb = 640 - f2 * 82 - 12;
+        for (i = 0; i < 2; i++) {
+          wx = x + 16 + i * (w - 52) + (k === 1 ? 6 : 0);
+          s += '<rect class="gf" x="' + wx + '" y="' + (yb - 52) + '" width="20" height="52"/><path class="gl" d="M' + wx + " " + yb + "V" + (yb - 42) + "A10 10 0 0 1 " + (wx + 20) + " " + (yb - 42) + "V" + yb + 'Z"/>';
+          s += arch(wx, 20, yb, yb - 52, true) + L("M" + (wx - 3) + " " + (yb + 2) + "H" + (wx + 23), "ln");
+          s += R(wx - 12, yb - 50, 9, 50, "l2") + R(wx + 23, yb - 50, 9, 50, "l2") + L("M" + (wx - 12) + " " + (yb - 40) + "H" + (wx - 3) + "M" + (wx + 23) + " " + (yb - 40) + "H" + (wx + 32), "l3");
+        }
+        if (f2 === 1) s += L("M" + (x + 8) + " " + (yb - 58) + "H" + (x + w - 8) + "M" + (x + 8) + " " + (yb - 62) + "H" + (x + w - 8), "l2");
+      }
+      cx = x + w / 2;
+      s += '<rect class="gf" x="' + (cx - 14) + '" y="648" width="28" height="40"/>' + arch(cx - 14, 28, GROUND, 636, true);
+      s += L("M" + x + " 640H" + (x + w), "l2");
+      x += w; n++;
+    }
+    return s;
+  }
+  /* Colonial: low arcaded fronts, iron balconies, tiled hips */
+  function bColonial() {
+    var W = 156, s = "", i, x0, d, x, a;
+    for (i = -2; i <= 4; i++) {
+      x0 = i * W - 40;
+      s += L("M" + x0 + " " + GROUND + "V450M" + (x0 + W) + " " + GROUND + "V450");
+      d = "M" + (x0 - 6) + " 450L" + (x0 + 22) + " 410H" + (x0 + W - 22) + "L" + (x0 + W + 6) + " 450Z";
+      s += L(d); d = ""; for (x = x0 + 26; x < x0 + W - 22; x += 8) d += "M" + x + " 410V450";
+      s += L(d, "l3") + R(x0 - 4, 450, W + 8, 10);
+      d = ""; for (a = 462; a < 612; a += 8) d += "M" + x0 + " " + a + "H" + (x0 + W);
+      s += L(d, "l3");
+      /* upper floor: tall doors onto an iron balcony */
+      [x0 + 18, x0 + 62, x0 + 106].forEach(function (wx) {
+        s += '<rect class="gf" x="' + wx + '" y="476" width="30" height="96"/><rect class="gl" x="' + wx + '" y="476" width="30" height="96"/>' + R(wx, 476, 30, 96) + R(wx + 3, 480, 11, 88, "l2") + R(wx + 16, 480, 11, 88, "l2") + L("M" + (wx - 3) + " 472H" + (wx + 33), "ln");
+      });
+      d = "M" + (x0 + 6) + " 544H" + (x0 + W - 6) + "M" + (x0 + 6) + " 576H" + (x0 + W - 6) + "M" + (x0 + 6) + " 544V576M" + (x0 + W - 6) + " 544V576";
+      for (x = x0 + 12; x < x0 + W - 8; x += 7) d += "M" + x + " 544V576";
+      s += L(d, "l2") + R(x0, 576, W, 8);
+      /* ground floor arcade */
+      for (a = 0; a < 3; a++) {
+        x = x0 + 12 + a * 48;
+        s += '<rect class="gf" x="' + x + '" y="640" width="30" height="48"/>' + arch(x, 30, GROUND, 612, false) + L("M" + (x + 15) + " 640V" + GROUND + "M" + x + " 660H" + (x + 30), "l2");
+      }
+      s += '<path class="gl" d="M' + (x0 + 60) + " " + GROUND + "V630A15 15 0 0 1 " + (x0 + 90) + " 630V" + GROUND + 'Z"/>';
+    }
+    return s;
+  }
+  /* Tenement: tall flat fronts with fire escapes */
+  function bTenement() {
+    var ws = [112, 100, 124, 108], s = "", x = -230, n = 0, k, w, top, fi, yb, i, wx, d, cols;
+    while (x < 640) {
+      k = n % 4; w = ws[k]; top = 236 + (k % 2) * 28;
+      s += L("M" + x + " " + GROUND + "V" + top + "M" + (x + w) + " " + GROUND + "V" + top);
+      s += R(x - 4, top - 14, w + 8, 14) + R(x - 2, top - 20, w + 4, 6, "l2");
+      d = ""; for (i = x + 6; i < x + w - 2; i += 8) d += "M" + i + " " + (top - 12) + "V" + (top - 2);
+      s += L(d, "l2");
+      cols = w >= 120 ? 3 : 2;
+      for (fi = 0; fi < 5; fi++) {
+        yb = 624 - fi * 74;
+        s += L("M" + x + " " + (yb - 66) + "H" + (x + w), "l3");
+        for (i = 0; i < cols; i++) {
+          wx = x + (w - cols * 24) / (cols + 1) * (i + 1) + i * 24;
+          s += win(wx, yb - 58, 24, 46, 3, 2, { lintel: fi % 2 ? "flat" : "seg" });
+        }
+        if (k % 2 === 0 && fi > 0) {
+          var ex = x + w - 52;
+          s += L("M" + (ex - 4) + " " + (yb - 10) + "H" + (ex + 52) + "M" + (ex - 4) + " " + (yb - 24) + "H" + (ex + 52) + "M" + (ex - 4) + " " + (yb - 24) + "V" + (yb - 10) + "M" + (ex + 52) + " " + (yb - 24) + "V" + (yb - 10) + "M" + (ex + 4) + " " + (yb - 10) + "L" + (ex + 44) + " " + (yb + 64) + "M" + (ex + 12) + " " + (yb - 10) + "L" + (ex + 52) + " " + (yb + 64), "l2");
+        }
+      }
+      s += L("M" + x + " 630H" + (x + w) + "M" + x + " 634H" + (x + w), "l2");
+      s += '<rect class="gf" x="' + (x + 14) + '" y="646" width="26" height="42"/>' + R(x + 14, 646, 26, 42) + R(x + 18, 652, 18, 20, "l2");
+      s += win(x + w - 46, 650, 30, 30, 2, 2, { lintel: "flat" });
+      x += w; n++;
+    }
+    return s;
+  }
+  var STYLES = { terrace: bLondon, brownstone: bBoston, gabled: bCph, tower: bTower, tiled: bTiled, mediterranean: bMed, colonial: bColonial, tenement: bTenement };
+  var STYLE_NAMES = { terrace: "Terrace", brownstone: "Brownstone", gabled: "Gabled townhouse", tower: "High-rise", tiled: "Tiled roofs", mediterranean: "Mediterranean", colonial: "Colonial arcade", tenement: "Tenement" };
+  /* typical house style and time zone for well-known cities. Counts are never guessed. */
+  var CITY_INDEX = {
+    "glasgow": ["Europe/London", "tenement"], "edinburgh": ["Europe/London", "tenement"], "manchester": ["Europe/London", "terrace"], "dublin": ["Europe/Dublin", "terrace"],
+    "amsterdam": ["Europe/Amsterdam", "gabled"], "stockholm": ["Europe/Stockholm", "gabled"], "oslo": ["Europe/Oslo", "gabled"], "helsinki": ["Europe/Helsinki", "gabled"], "hamburg": ["Europe/Berlin", "gabled"],
+    "berlin": ["Europe/Berlin", "tenement"], "vienna": ["Europe/Vienna", "tenement"], "prague": ["Europe/Prague", "tenement"], "warsaw": ["Europe/Warsaw", "tenement"], "budapest": ["Europe/Budapest", "tenement"],
+    "madrid": ["Europe/Madrid", "mediterranean"], "barcelona": ["Europe/Madrid", "mediterranean"], "lisbon": ["Europe/Lisbon", "mediterranean"], "rome": ["Europe/Rome", "mediterranean"], "athens": ["Europe/Athens", "mediterranean"],
+    "istanbul": ["Europe/Istanbul", "mediterranean"], "marrakech": ["Africa/Casablanca", "mediterranean"], "cairo": ["Africa/Cairo", "mediterranean"], "tel aviv": ["Asia/Jerusalem", "mediterranean"],
+    "new york": ["America/New_York", "brownstone"], "philadelphia": ["America/New_York", "brownstone"], "baltimore": ["America/New_York", "brownstone"], "washington": ["America/New_York", "brownstone"],
+    "chicago": ["America/Chicago", "tenement"], "san francisco": ["America/Los_Angeles", "terrace"], "los angeles": ["America/Los_Angeles", "mediterranean"], "seattle": ["America/Los_Angeles", "tower"],
+    "toronto": ["America/Toronto", "terrace"], "vancouver": ["America/Vancouver", "tower"], "montreal": ["America/Toronto", "tenement"],
+    "mexico city": ["America/Mexico_City", "colonial"], "havana": ["America/Havana", "colonial"], "bogota": ["America/Bogota", "colonial"], "lima": ["America/Lima", "colonial"], "buenos aires": ["America/Argentina/Buenos_Aires", "colonial"], "santiago": ["America/Santiago", "colonial"], "sao paulo": ["America/Sao_Paulo", "tower"], "rio de janeiro": ["America/Sao_Paulo", "colonial"],
+    "tokyo": ["Asia/Tokyo", "tiled"], "kyoto": ["Asia/Tokyo", "tiled"], "osaka": ["Asia/Tokyo", "tiled"], "seoul": ["Asia/Seoul", "tiled"], "beijing": ["Asia/Shanghai", "tiled"], "shanghai": ["Asia/Shanghai", "tower"], "hong kong": ["Asia/Hong_Kong", "tower"], "singapore": ["Asia/Singapore", "tower"], "taipei": ["Asia/Taipei", "tiled"],
+    "mumbai": ["Asia/Kolkata", "tower"], "delhi": ["Asia/Kolkata", "colonial"], "dubai": ["Asia/Dubai", "tower"], "bangkok": ["Asia/Bangkok", "tower"],
+    "sydney": ["Australia/Sydney", "terrace"], "melbourne": ["Australia/Melbourne", "terrace"], "auckland": ["Pacific/Auckland", "terrace"],
+    "johannesburg": ["Africa/Johannesburg", "tower"], "cape town": ["Africa/Johannesburg", "colonial"], "nairobi": ["Africa/Nairobi", "tower"], "lagos": ["Africa/Lagos", "tower"]
+  };
+  function guessStyle(tz) {
+    if (/^Asia\/(Tokyo|Seoul|Shanghai|Taipei)/.test(tz)) return "tiled";
+    if (/^Asia\//.test(tz) || /^Pacific\/(Honolulu)/.test(tz)) return "tower";
+    if (/^Africa\//.test(tz)) return "mediterranean";
+    if (/^America\/(Mexico|Bogota|Lima|Argentina|Santiago|Havana|Caracas|La_Paz|Montevideo|Guatemala|Panama|Sao_Paulo)/.test(tz)) return "colonial";
+    if (/^America\//.test(tz)) return "tenement";
+    if (/^Europe\/(Madrid|Lisbon|Rome|Athens|Istanbul|Malta)/.test(tz)) return "mediterranean";
+    return "terrace";
+  }
   var PRESETS = [
     { id: "boston", name: "Boston", tz: "America/New_York", count: 3674, l1: "people experiencing homelessness", l2: "one night count, January 2026", style: "brownstone" },
     { id: "cph", name: "Copenhagen", tz: "Europe/Copenhagen", count: 1572, l1: "people experiencing homelessness", l2: "counting week, February 2026", style: "gabled" },
@@ -567,6 +725,13 @@ body::after {
   if (zones.indexOf("Europe/London") < 0) zones.unshift("Europe/London");
   zones.forEach(function (z) { var o = document.createElement("option"); o.value = z; o.textContent = z.replace(/_/g, " "); fTz.appendChild(o); });
   try { var mine = Intl.DateTimeFormat().resolvedOptions().timeZone; if (mine) fTz.value = mine; } catch (e) {}
+  var citylist = document.getElementById("citylist");
+  Object.keys(CITY_INDEX).forEach(function (k) { var o = document.createElement("option"); o.value = k.replace(/\b\w/g, function (m) { return m.toUpperCase(); }); citylist.appendChild(o); });
+  document.getElementById("f-name").addEventListener("input", function () {
+    var hit = CITY_INDEX[this.value.trim().toLowerCase()];
+    if (hit) { fStyle.value = hit[1]; if (fTz.querySelector('option[value="' + hit[0] + '"]')) fTz.value = hit[0]; }
+  });
+  fTz.addEventListener("change", function () { if (!CITY_INDEX[document.getElementById("f-name").value.trim().toLowerCase()]) fStyle.value = guessStyle(fTz.value); });
   function closePicker() { pickerEl.hidden = true; if (lastFocus && lastFocus.focus) lastFocus.focus(); }
   pickerOpen = function (ci) {
     pickSlot = ci; lastFocus = document.activeElement; perr.textContent = "";
