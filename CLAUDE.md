@@ -15,6 +15,8 @@ Three Cities is an interactive generative music project that turns live weather 
 - Ask before destructive changes. Commit and push to main as you go while the app is not live (temporary, set by Forrest on 23 Oct 2026; change back to the rule below when it goes live). Once live: commit locally as you go, and push to main only when Forrest says "push" (or clearly asks for it live).
 
 ## Design principles
+- Read @DESIGN.md before any visual or copy change. Specs are in design-assets/spec/. Use tokens, never typed hex values.
+- Run `node checks/check-hardcoded.mjs`, `check-spacing.mjs` and `check-copy.mjs` on pages you touch, and walk checks/review-checklist.md.
 - Aim for playful, musical and visually distinctive. Avoid generic AI dashboard looks.
 - Keep layouts responsive and controls accessible.
 - Treat the musical result as importantly as the visual interface.
