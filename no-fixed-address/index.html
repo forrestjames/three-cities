@@ -116,6 +116,11 @@ body.loop .stat rect { fill-opacity: .96; }
 .about p { margin: 0 0 9px; }
 .about p:last-child { margin: 0; }
 
+@media (max-width: 899px) { .dock { gap: 8px; } .dock .sbtn { min-width: 0; padding: 0 11px; font-size: 12px; } }
+.midip label { display: flex; flex-direction: column; gap: 3px; margin-top: 8px; font: 700 10px var(--font); letter-spacing: .1em; text-transform: uppercase; color: #555; }
+.midip select { font: 400 13px var(--font); padding: 6px; border: 2px solid var(--ink); background: var(--paper); border-radius: 0; color: var(--ink); text-transform: none; letter-spacing: 0; }
+.midip .chk { flex-direction: row; align-items: center; gap: 8px; color: var(--ink); font-size: 12px; }
+.midip .chk input { width: 18px; height: 18px; accent-color: var(--ink); }
 /* finale */
 .cta { position: absolute; z-index: 6; left: 50%; top: 50%; transform: translate(-50%, -50%); text-align: center; font: 700 20px/1.25 var(--font); letter-spacing: .02em; opacity: 0; pointer-events: none; transition: opacity 2.4s ease; margin: 0; }
 .cta span { display: block; }
@@ -147,8 +152,8 @@ body.dwhere .q[data-g="1"] { opacity: .6; } body.dwhere .q[data-g="2"] { opacity
 @media (min-width: 900px) {
   .dock { top: calc(50px + env(safe-area-inset-top, 0px)); right: max(12px, env(safe-area-inset-right, 0px)); bottom: auto; left: auto; transform: none; flex-direction: column; align-items: stretch; width: 166px; gap: 10px; }
   .dock .play { order: -1; }
-  .datap { top: 260px; right: max(12px, env(safe-area-inset-right, 0px)); bottom: auto; left: auto; width: 300px; max-height: calc(100% - 330px); }
-  .mix { top: 260px; right: max(12px, env(safe-area-inset-right, 0px)); bottom: auto; left: auto; transform: none; flex-direction: column; gap: 10px; }
+  .datap { top: 310px; right: max(12px, env(safe-area-inset-right, 0px)); bottom: auto; left: auto; width: 300px; max-height: calc(100% - 380px); }
+  .mix { top: 310px; right: max(12px, env(safe-area-inset-right, 0px)); bottom: auto; left: auto; transform: none; flex-direction: column; gap: 10px; }
   .mix input[type=range] { width: 138px; }
 }
 .pad { border-radius: 50%; position: absolute; z-index: 5; left: 50%; top: 50%; width: 96px; height: 96px; border: 2px solid var(--ink); background: var(--paper); touch-action: none; cursor: grab; -webkit-user-select: none; user-select: none;
@@ -185,6 +190,7 @@ body.dwhere .q[data-g="1"] { opacity: .6; } body.dwhere .q[data-g="2"] { opacity
     <p><b>New York:</b> 4,991 people sleeping unsheltered, HOPE survey, 10 March 2026 (NYC Department of Social Services). It does not include people in shelters.</p>
     <p><b>Percent of residents:</b> the count divided by the city's population. London uses Greater London, 9,089,736 (ONS, 2024). Boston 672,973 (US Census Bureau, July 2025). Copenhagen 673,575 (1 March 2026). Paris 2,103,778 (INSEE, 1 January 2023). New York 8,584,629 (US Census Bureau, July 2025). It's a rough guide, because each count covers a slightly different area and way of counting.</p>
     <p><b>Temperature:</b> the number next to each city's clock is the live outdoor temperature there, from Open-Meteo, refreshed every 15 minutes. In the columns view it adds what it feels like when that is three degrees or more different. The Data button shows the full line: feels like, conditions and wind.</p>
+    <p><b>MIDI button:</b> sends the rings on one MIDI channel (default 1) and the chord on another (default 2) to any MIDI output, for your synths and DAW. Every ring hit is a note. The chord is held and changes every four bars. It uses Web MIDI, so it works in Chrome and Edge on a computer, not Safari. Turn the Volume slider down to hear only your studio.</p>
     <p><b>Data button:</b> opens "Where they end up" and "Who they are" for each city, using published breakdowns only. While it is open, people in the queue fade by group, darkest for the most exposed. Cities without a published breakdown say so. Shares are of the people who answered, as noted, so they are not always the full count.</p>
     <p><b>More cities:</b> Madrid 1,015 sleeping rough, 2025 average from street teams (City of Madrid; population 3,497,277, padrón 1 January 2026). Barcelona 1,982 sleeping on the street, volunteer count by Fundació Arrels, December 2025 (population 1,702,547, INE, November 2024). Los Angeles 45,194 people, city count by LAHSA, January 2026 (population 3,869,089, US Census Bureau, July 2025). San Francisco 7,973 people, point in time count, January 2026. Toronto 12,196 people on 22 October 2025, Street Needs Assessment (population 3,271,830, Statistics Canada, January 2025). Dublin 136 people sleeping rough in the Dublin region, 13 to 19 April 2026. Philadelphia 5,163 people, point in time count on 25 February 2026 (Office of Homeless Services; population 1,603,797, 2020 Census). Seattle shows King County: 18,365 people, point in time count, January 2026 (population 2,269,675, 2020 Census). San Diego shows San Diego County: 9,803 people, January 2026 (population 3,298,634, 2020 Census). Vancouver 2,715 people, Metro Vancouver Homeless Count, 10 and 11 March 2025 (population 662,248, 2021 Census). Sydney 296 people sleeping rough in the City of Sydney area, street count, February 2026. Helsinki 786 single people without a home, 15 November 2024 (Y-Foundation survey; includes people staying with friends, in hostels or institutions, so it is not rough sleeping only). Berlin 57,575 people housed in emergency accommodation on 31 January 2026 (Berlin Senate; people sleeping outside are counted separately and not yet published for 2026; population 3,596,999, 2022 Census). Lisbon 3,122 people sleeping rough or in temporary accommodation, 31 December 2024 (NPISA report; population 545,796, 2021 Census). Montreal 4,690 people in visible homelessness, one night count in April 2022 (CIUSSS; 83 percent were in shelters and similar places, 17 percent outside; population 1,762,949, 2021 Census; the 2025 count total is not yet published). Portland shows the Clackamas, Multnomah and Washington county area: 12,034 people on 22 January 2025 (Portland State University tri-county count).</p>
     <p><b>Your own city:</b> type a name. With no count, the city shows a "?" and an example rhythm, not a real number. Time zone and population come from a free place lookup.</p>
@@ -230,10 +236,20 @@ body.dwhere .q[data-g="1"] { opacity: .6; } body.dwhere .q[data-g="2"] { opacity
     <label>Pulse<input type="range" id="pulsevol" min="0" max="100" value="45" aria-label="Pulse volume"></label>
     <label>Voice<input type="range" id="voicevol" min="0" max="100" value="60" aria-label="Voice volume"></label>
   </div>
+  <div class="datap midip" id="midi" role="region" aria-label="MIDI out" hidden>
+    <h3>MIDI out</h3>
+    <p id="midist">Send the rings and the chord to your studio. Needs Chrome or Edge.</p>
+    <label class="chk"><input type="checkbox" id="midion"> Send MIDI</label>
+    <label>Output<select id="midiout" aria-label="MIDI output"></select></label>
+    <label>Rings channel<select id="midich1" aria-label="Rings MIDI channel"></select></label>
+    <label>Chord channel<select id="midich2" aria-label="Chord MIDI channel"></select></label>
+    <p>Rings: every hit sends a note, from all three cities. Chord: the chord changes every four bars and is held until the next one. Turn the Volume slider down to hear only your studio.</p>
+  </div>
   <div class="datap" id="data" role="region" aria-label="Who they are and where they end up" hidden></div>
   <div class="dock">
     <button class="sbtn" id="view" aria-pressed="false" title="Switch between the three columns and the wrap-around view">Wrap</button>
     <button class="sbtn" id="mixbtn" aria-expanded="false" aria-controls="mix">Mix</button>
+    <button class="sbtn" id="midibtn" aria-expanded="false" aria-controls="midi">MIDI</button>
     <button class="sbtn" id="databtn" aria-expanded="false" aria-controls="data">Data</button>
     <button class="sbtn play" id="play" aria-pressed="false">Play</button>
   </div>
@@ -1024,6 +1040,61 @@ body.dwhere .q[data-g="1"] { opacity: .6; } body.dwhere .q[data-g="2"] { opacity
     CITIES.forEach(layoutStat); relayoutAll(); introDirty = true;
     layoutPad();
   }
+  /* ---------- MIDI out: rings on one channel, the chord on another ---------- */
+  var MIDI = { acc: null, out: null, on: false, c1: 0, c2: 1, held: [], last: -1 };
+  var midiBtn = document.getElementById("midibtn"), midiEl = document.getElementById("midi"), midiSt = document.getElementById("midist"), midiOn = document.getElementById("midion"), midiOut = document.getElementById("midiout"), midiC1 = document.getElementById("midich1"), midiC2 = document.getElementById("midich2");
+  function lsGet(k, d) { try { var v = localStorage.getItem(k); return v === null ? d : v; } catch (e) { return d; } }
+  function lsSet(k, v) { try { localStorage.setItem(k, v); } catch (e) {} }
+  for (var mi = 1; mi <= 16; mi++) { midiC1.add(new Option("Channel " + mi, mi - 1)); midiC2.add(new Option("Channel " + mi, mi - 1)); }
+  MIDI.c1 = Math.max(0, Math.min(15, +lsGet("nfa-midi-c1", 0) || 0)); MIDI.c2 = Math.max(0, Math.min(15, +lsGet("nfa-midi-c2", 1) || 0));
+  midiC1.value = MIDI.c1; midiC2.value = MIDI.c2;
+  function midiSend(bytes, whenAudio) {
+    if (!MIDI.on || !MIDI.out) return;
+    try { MIDI.out.send(bytes, performance.now() + (whenAudio && ctx ? Math.max(0, (whenAudio - ctx.currentTime) * 1000) : 0)); } catch (e) {}
+  }
+  function midiAllOff() {
+    if (MIDI.out) { try { [MIDI.c1, MIDI.c2].forEach(function (ch) { MIDI.out.send([0xB0 | ch, 123, 0]); MIDI.out.send([0xB0 | ch, 64, 0]); }); MIDI.held.forEach(function (n) { MIDI.out.send([0x80 | MIDI.c2, n, 0]); }); } catch (e) {} }
+    MIDI.held = []; MIDI.last = -1;
+  }
+  function midiRing(c, fr, when) {
+    if (!MIDI.on || !MIDI.out) return;
+    var n = Math.max(0, Math.min(127, Math.round(69 + 12 * Math.log2(fr / 440)))), v = Math.max(40, Math.min(115, Math.round(c.vel * 520)));
+    midiSend([0x90 | MIDI.c1, n, v], when); midiSend([0x80 | MIDI.c1, n, 0], when + .45);
+  }
+  function midiChord(t) {
+    if (!MIDI.on || !MIDI.out || eng.chord === MIDI.last) return;
+    MIDI.held.forEach(function (n) { midiSend([0x80 | MIDI.c2, n, 0], t); });
+    var pcs = CHORDS[eng.chord].slice(), notes;
+    /* spread from F (53) upward so the chord sits in one tidy octave and a bit */
+    notes = pcs.map(function (pc) { return 53 + ((pc - 5 + 12) % 12); });
+    notes.forEach(function (n) { midiSend([0x90 | MIDI.c2, n, 72], t); });
+    MIDI.held = notes; MIDI.last = eng.chord;
+  }
+  function midiFill() {
+    var cur = lsGet("nfa-midi-out", ""), found = false;
+    midiOut.innerHTML = "";
+    if (MIDI.acc) MIDI.acc.outputs.forEach(function (o) { midiOut.add(new Option(o.name, o.id)); if (o.id === cur) found = true; });
+    if (!midiOut.options.length) { midiOut.add(new Option("No outputs found", "")); MIDI.out = null; return; }
+    midiOut.value = found ? cur : midiOut.options[0].value;
+    MIDI.out = MIDI.acc.outputs.get(midiOut.value) || null;
+  }
+  function midiStatus() {
+    midiSt.textContent = !MIDI.acc ? "Allow MIDI access when the browser asks." : !MIDI.out ? "No MIDI output found. Connect a device or turn on a virtual port (IAC on Mac, loopMIDI on Windows)." : MIDI.on ? "Sending to " + MIDI.out.name + ". Rings on channel " + (MIDI.c1 + 1) + ", chord on channel " + (MIDI.c2 + 1) + "." : "Ready. Tick Send MIDI to start.";
+  }
+  function midiConnect() {
+    if (MIDI.acc) { midiFill(); midiStatus(); return; }
+    if (!navigator.requestMIDIAccess) { midiSt.textContent = "This browser has no Web MIDI. Use Chrome or Edge on a computer."; midiOn.disabled = true; return; }
+    navigator.requestMIDIAccess().then(function (a) { MIDI.acc = a; a.onstatechange = function () { midiFill(); midiStatus(); }; midiFill(); midiStatus(); }, function () { midiSt.textContent = "MIDI access was blocked. Allow it in the browser's site settings, then try again."; });
+  }
+  midiOn.addEventListener("change", function () { MIDI.on = midiOn.checked; lsSet("nfa-midi-on", MIDI.on ? "1" : "0"); if (!MIDI.on) midiAllOff(); midiStatus(); });
+  midiOut.addEventListener("change", function () { midiAllOff(); lsSet("nfa-midi-out", midiOut.value); MIDI.out = MIDI.acc ? MIDI.acc.outputs.get(midiOut.value) || null : null; midiStatus(); });
+  midiC1.addEventListener("change", function () { midiAllOff(); MIDI.c1 = +midiC1.value; lsSet("nfa-midi-c1", MIDI.c1); midiStatus(); });
+  midiC2.addEventListener("change", function () { midiAllOff(); MIDI.c2 = +midiC2.value; lsSet("nfa-midi-c2", MIDI.c2); midiStatus(); });
+  midiBtn.addEventListener("click", function () {
+    midiEl.hidden = !midiEl.hidden; midiBtn.setAttribute("aria-expanded", midiEl.hidden ? "false" : "true");
+    if (!midiEl.hidden) { if (!mixEl.hidden) mixBtn.click(); if (!dataEl.hidden) dataBtn.click(); midiConnect(); }
+  });
+  if (lsGet("nfa-midi-on", "0") === "1") { midiOn.checked = true; MIDI.on = true; midiConnect(); }
   var dataBtn = document.getElementById("databtn"), dataEl = document.getElementById("data");
   function layer(title, L, total) {
     var h = "<h4>" + title + "</h4>";
@@ -1049,10 +1120,10 @@ body.dwhere .q[data-g="1"] { opacity: .6; } body.dwhere .q[data-g="2"] { opacity
   dataBtn.addEventListener("click", function () {
     dataEl.hidden = !dataEl.hidden; dataBtn.setAttribute("aria-expanded", dataEl.hidden ? "false" : "true");
     document.body.classList.toggle("dwhere", !dataEl.hidden);
-    if (!dataEl.hidden) { renderData(); if (!mixEl.hidden) mixBtn.click(); }
+    if (!dataEl.hidden) { renderData(); if (!mixEl.hidden) mixBtn.click(); if (!midiEl.hidden) midiBtn.click(); }
   });
   var mixBtn = document.getElementById("mixbtn"), mixEl = document.getElementById("mix");
-  mixBtn.addEventListener("click", function () { if (!dataEl.hidden) dataBtn.click(); mixEl.hidden = !mixEl.hidden; mixBtn.setAttribute("aria-expanded", mixEl.hidden ? "false" : "true"); });
+  mixBtn.addEventListener("click", function () { if (!dataEl.hidden) dataBtn.click(); if (mixEl.hidden && !midiEl.hidden) midiBtn.click(); mixEl.hidden = !mixEl.hidden; mixBtn.setAttribute("aria-expanded", mixEl.hidden ? "false" : "true"); });
   [["vol", "nfa-vol", function (v) { volMaster = v; if (masterG && ctx) masterG.gain.setTargetAtTime(v, ctx.currentTime, .05); }, .8],
    ["pulsevol", "nfa-pulse", function (v) { volPulse = v; }, .45],
    ["voicevol", "nfa-voice-vol", function (v) { volVoice = v; }, .6]].forEach(function (m) {
@@ -1251,6 +1322,7 @@ body.dwhere .q[data-g="1"] { opacity: .6; } body.dwhere .q[data-g="2"] { opacity
   }
   function barTick(t) {
     eng.bar++; if (eng.bar > 0 && eng.bar % 4 === 0) evolve();
+    midiChord(t);
     if (volVoice < .02) return;
     var vp = tonesIn(CHORDS[eng.chord], 196, 520), ct = VCONT[eng.section % VCONT.length], vi = eng.chord % 3;
     if (vp.length < 3) return;
@@ -1289,6 +1361,7 @@ body.dwhere .q[data-g="1"] { opacity: .6; } body.dwhere .q[data-g="2"] { opacity
   }
   function note(c, when) {
     var fr = c.pool[c.base[c.hitCount % c.L] % c.pool.length];
+    midiRing(c, fr, when);
     var out = ctx.createGain(), lp = ctx.createBiquadFilter(); lp.type = "lowpass"; lp.frequency.value = 1500; lp.Q.value = .3;
     var pan = ctx.createStereoPanner ? ctx.createStereoPanner() : null; if (pan) pan.pan.value = c.pan;
     out.gain.setValueAtTime(.0001, when); out.gain.linearRampToValueAtTime(c.vel, when + .03); out.gain.exponentialRampToValueAtTime(.0001, when + 2.2);
@@ -1342,7 +1415,7 @@ body.dwhere .q[data-g="1"] { opacity: .6; } body.dwhere .q[data-g="2"] { opacity
     finished = true;
     if (mode === "wrap") { mode = "columns"; applyMode(); }
     endT0 = performance.now(); document.body.classList.add("ended"); dataEl.hidden = true; dataBtn.setAttribute("aria-expanded", "false"); document.body.classList.remove("dwhere");
-    setTimeout(function () { clearInterval(timer); playing = false; events = []; playBtn.setAttribute("aria-pressed", "false"); playBtn.textContent = "Start over"; }, 5000);
+    setTimeout(function () { midiAllOff(); clearInterval(timer); playing = false; events = []; playBtn.setAttribute("aria-pressed", "false"); playBtn.textContent = "Start over"; }, 5000);
   }
   function toggle() {
     if (finished) { location.reload(); return; }
@@ -1352,7 +1425,7 @@ body.dwhere .q[data-g="1"] { opacity: .6; } body.dwhere .q[data-g="2"] { opacity
       CITIES.forEach(function (c) { c.step = 0; c.next = t0; }); resetEngine(t0);
       events = []; timer = setInterval(sched, 25); playing = true; introStart();
       CITIES.forEach(startDrone);
-    } else { clearInterval(timer); playing = false; events = []; CITIES.forEach(stopDrone); }
+    } else { clearInterval(timer); playing = false; events = []; CITIES.forEach(stopDrone); midiAllOff(); }
     playBtn.setAttribute("aria-pressed", playing ? "true" : "false"); playBtn.textContent = playing ? "Pause" : "Play";
   }
   playBtn.addEventListener("click", toggle);
