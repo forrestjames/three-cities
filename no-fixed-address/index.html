@@ -195,7 +195,7 @@ body.dwhere .q[data-g="1"] { opacity: .6; } body.dwhere .q[data-g="2"] { opacity
     <p><b>Temperature:</b> the number next to each city's clock is the live outdoor temperature there, from Open-Meteo, refreshed every 15 minutes. In the columns view it adds what it feels like when that is three degrees or more different. The Data button shows the full line: feels like, conditions and wind.</p>
     <p><b>Key and Scale:</b> in the Mix panel, as in Three Cities. 12 keys and 28 scales. The default is D major, which is how the piece has always sounded. The chord cycle is written in D major and each chord note moves to the nearest note of the scale you pick, then into your key, so the melody, voices, drone and MIDI all stay in key. Your choice is remembered.</p>
     <p><b>Mix panel:</b> tick Endless and new people keep joining the back of every queue, so the piece never ends and the windows stay lit. Shift key moves the whole piece up a tone every 8, 16 or 32 bars, melody, chord, drone and MIDI together, and comes round again after six moves.</p>
-    <p><b>MIDI button:</b> sends the rings on one MIDI channel (default 1) and the chord on another (default 2) to any MIDI output, for your synths and DAW. Every ring hit is a note. The chord is held and changes every four bars. It uses Web MIDI, so it works in Chrome and Edge on a computer, not Safari. The effects pad goes out as four controllers (Filter CC 74, Delay CC 12, Hall CC 91, Flange CC 93) on a third channel, so you can map them to Ableton knobs. Tick Mute browser sound to hear only your studio.</p>
+    <p><b>MIDI button:</b> sends the rings on one MIDI channel (default 1) and the chord on another (default 2) to any MIDI output, for your synths and DAW. Every ring hit is a note. The chord is held and changes every four bars. It uses Web MIDI, so it works in Chrome and Edge on a computer, not Safari. The effects pad goes out as four controllers (Filter CC 74, Delay CC 12, Hall CC 91, Flange CC 93) on a third channel, so you can map them to Ableton knobs. Tempo goes out as MIDI clock at 80 BPM, with start and stop, which Ableton follows when Sync is on for the port and Ext is pressed. Tick Mute browser sound to hear only your studio.</p>
     <p><b>Data button:</b> opens "Where they end up" and "Who they are" for each city, using published breakdowns only. While it is open, people in the queue fade by group, darkest for the most exposed. Cities without a published breakdown say so. Shares are of the people who answered, as noted, so they are not always the full count.</p>
     <p><b>More cities:</b> Madrid 1,015 sleeping rough, 2025 average from street teams (City of Madrid; population 3,497,277, padrón 1 January 2026). Barcelona 1,982 sleeping on the street, volunteer count by Fundació Arrels, December 2025 (population 1,702,547, INE, November 2024). Los Angeles 45,194 people, city count by LAHSA, January 2026 (population 3,869,089, US Census Bureau, July 2025). San Francisco 7,973 people, point in time count, January 2026. Toronto 12,196 people on 22 October 2025, Street Needs Assessment (population 3,271,830, Statistics Canada, January 2025). Dublin 136 people sleeping rough in the Dublin region, 13 to 19 April 2026. Philadelphia 5,163 people, point in time count on 25 February 2026 (Office of Homeless Services; population 1,603,797, 2020 Census). Seattle shows King County: 18,365 people, point in time count, January 2026 (population 2,269,675, 2020 Census). San Diego shows San Diego County: 9,803 people, January 2026 (population 3,298,634, 2020 Census). Vancouver 2,715 people, Metro Vancouver Homeless Count, 10 and 11 March 2025 (population 662,248, 2021 Census). Sydney 296 people sleeping rough in the City of Sydney area, street count, February 2026. Helsinki 786 single people without a home, 15 November 2024 (Y-Foundation survey; includes people staying with friends, in hostels or institutions, so it is not rough sleeping only). Berlin 57,575 people housed in emergency accommodation on 31 January 2026 (Berlin Senate; people sleeping outside are counted separately and not yet published for 2026; population 3,596,999, 2022 Census). Lisbon 3,122 people sleeping rough or in temporary accommodation, 31 December 2024 (NPISA report; population 545,796, 2021 Census). Montreal 4,690 people in visible homelessness, one night count in April 2022 (CIUSSS; 83 percent were in shelters and similar places, 17 percent outside; population 1,762,949, 2021 Census; the 2025 count total is not yet published). Portland shows the Clackamas, Multnomah and Washington county area: 12,034 people on 22 January 2025 (Portland State University tri-county count).</p>
     <p><b>Your own city:</b> type a name. With no count, the city shows a "?" and an example rhythm, not a real number. Time zone and population come from a free place lookup.</p>
@@ -254,9 +254,10 @@ body.dwhere .q[data-g="1"] { opacity: .6; } body.dwhere .q[data-g="2"] { opacity
     <label>Rings channel<select id="midich1" aria-label="Rings MIDI channel"></select></label>
     <label>Chord channel<select id="midich2" aria-label="Chord MIDI channel"></select></label>
     <label>Pad channel<select id="midich3" aria-label="Effects pad MIDI channel"></select></label>
+    <label class="chk"><input type="checkbox" id="midiclock" checked> Send tempo, 80 BPM</label>
     <label class="chk"><input type="checkbox" id="midimute"> Mute browser sound</label>
     <button class="sbtn" id="miditest" type="button" style="margin-top:10px;width:100%">Test pad CCs</button>
-    <p>Rings: every hit sends a note, from all three cities. Chord: the chord changes every four bars and is held until the next one. Pad: four controllers, Filter CC 74, Delay CC 12, Hall CC 91, Flange CC 93, each 0 to 127. Tick Mute browser sound to hear only your studio.</p>
+    <p>Rings: every hit sends a note, from all three cities. Chord: the chord changes every four bars and is held until the next one. Pad: four controllers, Filter CC 74, Delay CC 12, Hall CC 91, Flange CC 93, each 0 to 127. Tempo goes out as MIDI clock at 80 BPM with start and stop: in Ableton, switch on Sync for the port and press Ext beside the tempo. Tick Mute browser sound to hear only your studio.</p>
   </div>
   <div class="datap" id="data" role="region" aria-label="Who they are and where they end up" hidden></div>
   <div class="dock">
@@ -1054,7 +1055,7 @@ body.dwhere .q[data-g="1"] { opacity: .6; } body.dwhere .q[data-g="2"] { opacity
     layoutPad();
   }
   /* ---------- MIDI out: rings on one channel, the chord on another ---------- */
-  var MIDI = { acc: null, out: null, on: false, c1: 0, c2: 1, c3: 2, held: [], last: -1, cc: {}, mute: false };
+  var MIDI = { clock: true, acc: null, out: null, on: false, c1: 0, c2: 1, c3: 2, held: [], last: -1, cc: {}, mute: false };
   var MCC = { filter: 74, delay: 12, hall: 91, flange: 93 };
   var midiBtn = document.getElementById("midibtn"), midiEl = document.getElementById("midi"), midiSt = document.getElementById("midist"), midiOn = document.getElementById("midion"), midiOut = document.getElementById("midiout"), midiC1 = document.getElementById("midich1"), midiC2 = document.getElementById("midich2"), midiC3 = document.getElementById("midich3"), midiMute = document.getElementById("midimute");
   function lsGet(k, d) { try { var v = localStorage.getItem(k); return v === null ? d : v; } catch (e) { return d; } }
@@ -1074,6 +1075,8 @@ body.dwhere .q[data-g="1"] { opacity: .6; } body.dwhere .q[data-g="2"] { opacity
   }
   /* mute the browser's own sound while MIDI is going out */
   function applyMaster() { if (masterG && ctx) masterG.gain.setTargetAtTime(MIDI.mute ? 0 : volMaster, ctx.currentTime, .05); }
+  /* tempo: MIDI clock, 24 pulses per quarter note. One bar is 6 seconds, so eight beats a bar is 80 BPM */
+  function midiRT(b, when) { if (MIDI.on && MIDI.out && MIDI.clock) midiSend([b], when); }
   function midiAllOff() {
     if (MIDI.out) { try { [MIDI.c1, MIDI.c2].forEach(function (ch) { MIDI.out.send([0xB0 | ch, 123, 0]); MIDI.out.send([0xB0 | ch, 64, 0]); }); MIDI.held.forEach(function (n) { MIDI.out.send([0x80 | MIDI.c2, n, 0]); }); } catch (e) {} }
     MIDI.held = []; MIDI.last = -1;
@@ -1121,6 +1124,8 @@ body.dwhere .q[data-g="1"] { opacity: .6; } body.dwhere .q[data-g="2"] { opacity
       midiSend([0xB0 | MIDI.c3, MCC[k], v]); step++; if (step >= 40 * keys.length) { clearInterval(tm); MIDI.cc = {}; applyFx(); }
     }, 50);
   });
+  var midiClk = document.getElementById("midiclock"); MIDI.clock = lsGet("nfa-midi-clock", "1") === "1"; midiClk.checked = MIDI.clock;
+  midiClk.addEventListener("change", function () { if (MIDI.clock && playing) midiRT(0xFC); MIDI.clock = midiClk.checked; lsSet("nfa-midi-clock", MIDI.clock ? "1" : "0"); });
   midiMute.addEventListener("change", function () { MIDI.mute = midiMute.checked; lsSet("nfa-midi-mute", MIDI.mute ? "1" : "0"); applyMaster(); });
   midiC2.addEventListener("change", function () { midiAllOff(); MIDI.c2 = +midiC2.value; lsSet("nfa-midi-c2", MIDI.c2); midiStatus(); });
   midiBtn.addEventListener("click", function () {
@@ -1343,7 +1348,7 @@ body.dwhere .q[data-g="1"] { opacity: .6; } body.dwhere .q[data-g="2"] { opacity
   var VCONT = [[0, 1, 2, 1], [0, 2, 1, 3], [2, 1, 0, 1, 2, 3], [0, 0, 1, 2], [3, 2, 1, 2]];
   var PPAT = [[0, 1, 2, 3, 2, 1], [0, 2, 1, 3], [0, 0, 1, 0, 2, 1], [3, 2, 1, 0], [0, 1, 0, 2, 1, 3, 2, 4]];
   var VOWELS = [[300, 870, 2240], [450, 830, 2830], [730, 1090, 2440]];
-  var eng = { bar: -1, chord: 0, section: 0, nextBar: 0, nextPulse: 0, pn: 0, shift: 0 };
+  var eng = { bar: -1, chord: 0, section: 0, nextBar: 0, nextPulse: 0, nextClk: 0, pn: 0, shift: 0 };
   var ENDLESS, SHIFTEVERY;
   var volMaster = .8, volPulse = .45, volVoice = .6, noiseBuf = null, masterG = null;
   /* key and scale, as in Three Cities. The chords are written in D major; each note snaps to the nearest note of the chosen scale, then moves to the chosen key. */
@@ -1368,7 +1373,7 @@ body.dwhere .q[data-g="1"] { opacity: .6; } body.dwhere .q[data-g="2"] { opacity
   function tonesIn(chord, lo, hi) { var out = [], m, fq; for (m = 24; m <= 108; m++) if (chord.indexOf(((m - eng.shift) % 12 + 12) % 12) >= 0) { fq = 440 * Math.pow(2, (m - 69) / 12); if (fq >= lo && fq <= hi) out.push(fq); } return out; }
   function setPool(c) { if (!RANGES || !CHORDS) return; c.pool = tonesIn(CHORDS[eng ? eng.chord : 0], RANGES[c.slot % 3][0], RANGES[c.slot % 3][1]); if (c.pool.length < 3) c.pool = c.notes.slice(); }
   function resetEngine(t) {
-    eng.bar = -1; eng.chord = 0; eng.section = 0; eng.shift = 0; eng.nextBar = t; eng.nextPulse = t; eng.pn = 0;
+    eng.bar = -1; eng.chord = 0; eng.section = 0; eng.shift = 0; eng.nextBar = t; eng.nextPulse = t; eng.nextClk = t; eng.pn = 0;
     CITIES.forEach(initCell);
   }
   function initCell(c) { c.base = [[0, 1, 3, 2, 4, 2, 3, 1], [2, 0, 3, 1, 4, 2, 0, 3], [0, 2, 3, 1, 4, 2, 3, 1]][c.slot % 3].slice(); c.L = [4, 3, 5][c.slot % 3]; c.Ldir = 1; setPool(c); }
@@ -1459,6 +1464,7 @@ body.dwhere .q[data-g="1"] { opacity: .6; } body.dwhere .q[data-g="2"] { opacity
     var horizon = ctx.currentTime + .2;
     while (eng.nextBar < horizon) { barTick(eng.nextBar); eng.nextBar += BAR; }
     while (eng.nextPulse < horizon) { pulseTick(eng.nextPulse); eng.nextPulse += BAR / 12; }
+    while (eng.nextClk < horizon) { midiRT(0xF8, eng.nextClk); eng.nextClk += BAR / 192; }
     CITIES.forEach(function (c) {
       var dur = BAR / c.n;
       while (c.next < horizon) {
@@ -1480,7 +1486,7 @@ body.dwhere .q[data-g="1"] { opacity: .6; } body.dwhere .q[data-g="2"] { opacity
     finished = true;
     if (mode === "wrap") { mode = "columns"; applyMode(); }
     endT0 = performance.now(); document.body.classList.add("ended"); dataEl.hidden = true; dataBtn.setAttribute("aria-expanded", "false"); document.body.classList.remove("dwhere");
-    setTimeout(function () { midiAllOff(); clearInterval(timer); playing = false; events = []; playBtn.setAttribute("aria-pressed", "false"); playBtn.textContent = "Start over"; }, 5000);
+    setTimeout(function () { midiRT(0xFC); midiAllOff(); clearInterval(timer); playing = false; events = []; playBtn.setAttribute("aria-pressed", "false"); playBtn.textContent = "Start over"; }, 5000);
   }
   function toggle() {
     if (finished) { location.reload(); return; }
@@ -1488,9 +1494,9 @@ body.dwhere .q[data-g="1"] { opacity: .6; } body.dwhere .q[data-g="2"] { opacity
       initAudio(); if (ctx.state === "suspended") ctx.resume();
       t0 = ctx.currentTime + .15;
       CITIES.forEach(function (c) { c.step = 0; c.next = t0; }); resetEngine(t0);
-      events = []; timer = setInterval(sched, 25); playing = true; introStart();
+      events = []; midiRT(0xFA, t0); timer = setInterval(sched, 25); playing = true; introStart();
       CITIES.forEach(startDrone);
-    } else { clearInterval(timer); playing = false; events = []; CITIES.forEach(stopDrone); midiAllOff(); }
+    } else { clearInterval(timer); playing = false; events = []; CITIES.forEach(stopDrone); midiRT(0xFC); midiAllOff(); }
     playBtn.setAttribute("aria-pressed", playing ? "true" : "false"); playBtn.textContent = playing ? "Pause" : "Play";
   }
   playBtn.addEventListener("click", toggle);
