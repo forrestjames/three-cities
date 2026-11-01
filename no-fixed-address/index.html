@@ -193,6 +193,7 @@ body.dwhere .q[data-g="1"] { opacity: .6; } body.dwhere .q[data-g="2"] { opacity
     <p><b>New York:</b> 4,991 people sleeping unsheltered, HOPE survey, 10 March 2026 (NYC Department of Social Services). It does not include people in shelters.</p>
     <p><b>Percent of residents:</b> the count divided by the city's population. London uses Greater London, 9,089,736 (ONS, 2024). Boston 672,973 (US Census Bureau, July 2025). Copenhagen 673,575 (1 March 2026). Paris 2,103,778 (INSEE, 1 January 2023). New York 8,584,629 (US Census Bureau, July 2025). It's a rough guide, because each count covers a slightly different area and way of counting.</p>
     <p><b>Temperature:</b> the number next to each city's clock is the live outdoor temperature there, from Open-Meteo, refreshed every 15 minutes. In the columns view it adds what it feels like when that is three degrees or more different. The Data button shows the full line: feels like, conditions and wind.</p>
+    <p><b>Key and Scale:</b> in the Mix panel, as in Three Cities. 12 keys and 28 scales. The default is D major, which is how the piece has always sounded. The chord cycle is written in D major and each chord note moves to the nearest note of the scale you pick, then into your key, so the melody, voices, drone and MIDI all stay in key. Your choice is remembered.</p>
     <p><b>Mix panel:</b> tick Endless and new people keep joining the back of every queue, so the piece never ends and the windows stay lit. Shift key moves the whole piece up a tone every 8, 16 or 32 bars, melody, chord, drone and MIDI together, and comes round again after six moves.</p>
     <p><b>MIDI button:</b> sends the rings on one MIDI channel (default 1) and the chord on another (default 2) to any MIDI output, for your synths and DAW. Every ring hit is a note. The chord is held and changes every four bars. It uses Web MIDI, so it works in Chrome and Edge on a computer, not Safari. The effects pad goes out as four controllers (Filter CC 74, Delay CC 12, Hall CC 91, Flange CC 93) on a third channel, so you can map them to Ableton knobs. Tick Mute browser sound to hear only your studio.</p>
     <p><b>Data button:</b> opens "Where they end up" and "Who they are" for each city, using published breakdowns only. While it is open, people in the queue fade by group, darkest for the most exposed. Cities without a published breakdown say so. Shares are of the people who answered, as noted, so they are not always the full count.</p>
@@ -238,6 +239,9 @@ body.dwhere .q[data-g="1"] { opacity: .6; } body.dwhere .q[data-g="2"] { opacity
   <div class="mix" id="mix" role="group" aria-label="Mix" hidden>
     <label>Volume<input type="range" id="vol" min="0" max="100" value="80" aria-label="Master volume"></label>
     <label>Pulse<input type="range" id="pulsevol" min="0" max="100" value="45" aria-label="Pulse volume"></label>
+    <label>Key<select id="keysel" aria-label="Key"></select></label>
+    <label>Scale<select id="scalesel" aria-label="Scale"></select></label>
+    <p id="scaleline" style="margin:0;font:400 11px/1.3 var(--font);max-width:150px"></p>
     <label class="chk"><input type="checkbox" id="endless"> Endless</label>
     <label>Shift key<select id="shiftsel" aria-label="Shift the key"><option value="0">Off</option><option value="8">Every 8 bars</option><option value="16">Every 16 bars</option><option value="32">Every 32 bars</option></select></label>
     <label>Voice<input type="range" id="voicevol" min="0" max="100" value="60" aria-label="Voice volume"></label>
@@ -1333,7 +1337,8 @@ body.dwhere .q[data-g="1"] { opacity: .6; } body.dwhere .q[data-g="2"] { opacity
   }
   /* ---------- evolving harmony, after Reich's Music for 18 Musicians ---------- */
   /* eight chords in D / B minor, each held for four bars; cells grow and shrink, one note changes at a time */
-  var CHORDS = [[2, 6, 9, 11, 4], [11, 2, 6, 9, 1], [7, 11, 2, 6, 9], [4, 7, 11, 2, 6], [9, 11, 2, 4, 7], [6, 9, 1, 4, 11], [11, 2, 4, 6, 9], [7, 9, 11, 2, 4]];
+  var CHORDS0 = [[2, 6, 9, 11, 4], [11, 2, 6, 9, 1], [7, 11, 2, 6, 9], [4, 7, 11, 2, 6], [9, 11, 2, 4, 7], [6, 9, 1, 4, 11], [11, 2, 4, 6, 9], [7, 9, 11, 2, 4]];
+  var CHORDS = CHORDS0.slice();
   var RANGES = [[196, 400], [262, 660], [110, 262]];
   var VCONT = [[0, 1, 2, 1], [0, 2, 1, 3], [2, 1, 0, 1, 2, 3], [0, 0, 1, 2], [3, 2, 1, 2]];
   var PPAT = [[0, 1, 2, 3, 2, 1], [0, 2, 1, 3], [0, 0, 1, 0, 2, 1], [3, 2, 1, 0], [0, 1, 0, 2, 1, 3, 2, 4]];
@@ -1341,6 +1346,25 @@ body.dwhere .q[data-g="1"] { opacity: .6; } body.dwhere .q[data-g="2"] { opacity
   var eng = { bar: -1, chord: 0, section: 0, nextBar: 0, nextPulse: 0, pn: 0, shift: 0 };
   var ENDLESS, SHIFTEVERY;
   var volMaster = .8, volPulse = .45, volVoice = .6, noiseBuf = null, masterG = null;
+  /* key and scale, as in Three Cities. The chords are written in D major; each note snaps to the nearest note of the chosen scale, then moves to the chosen key. */
+  var KEYS = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"];
+  var SCALES = [["minor pentatonic", [0, 3, 5, 7, 10]], ["major pentatonic", [0, 2, 4, 7, 9]], ["dorian", [0, 2, 3, 5, 7, 9, 10]], ["natural minor", [0, 2, 3, 5, 7, 8, 10]], ["major", [0, 2, 4, 5, 7, 9, 11]], ["lydian", [0, 2, 4, 6, 7, 9, 11]], ["phrygian", [0, 1, 3, 5, 7, 8, 10]], ["whole tone", [0, 2, 4, 6, 8, 10]], ["mixolydian", [0, 2, 4, 5, 7, 9, 10]], ["harmonic minor", [0, 2, 3, 5, 7, 8, 11]], ["blues", [0, 3, 5, 6, 7, 10]], ["suspended pentatonic", [0, 2, 5, 7, 10]], ["yo (Japanese folk)", [0, 2, 5, 7, 9]], ["kumoi", [0, 2, 3, 7, 9]], ["major hexatonic", [0, 2, 4, 7, 9, 11]], ["minor hexatonic", [0, 2, 3, 5, 7, 10]], ["ryukyu (Okinawan)", [0, 4, 5, 7, 11]], ["harmonic major", [0, 2, 4, 5, 7, 8, 11]], ["melodic minor", [0, 2, 3, 5, 7, 9, 11]], ["dorian #4", [0, 2, 3, 6, 7, 9, 10]], ["phrygian dominant", [0, 1, 4, 5, 7, 8, 10]], ["lydian dominant", [0, 2, 4, 6, 7, 9, 10]], ["hirajoshi", [0, 2, 3, 7, 8]], ["in-sen", [0, 1, 5, 7, 10]], ["iwato", [0, 1, 5, 6, 10]], ["pelog selisir", [0, 1, 3, 7, 8]], ["pelog tembung", [0, 1, 5, 7, 8]], ["bhairav", [0, 1, 4, 5, 7, 8, 11]]];
+  var KEYROOT = 2, SCALEI = 4;
+  var keySel = document.getElementById("keysel"), scaleSel = document.getElementById("scalesel"), scaleLine = document.getElementById("scaleline");
+  keySel.innerHTML = KEYS.map(function (k, i) { return '<option value="' + i + '">' + k + "</option>"; }).join("");
+  scaleSel.innerHTML = SCALES.map(function (x, i) { return '<option value="' + i + '">' + x[0] + "</option>"; }).join("");
+  function driftSemis() { return eng.shift + (KEYROOT - 2); }
+  function applyKeyScale() {
+    var sc = SCALES[SCALEI][1];
+    function snap(r) { if (sc.indexOf(r) >= 0) return r; for (var d = 1; d <= 6; d++) { if (sc.indexOf((r - d + 12) % 12) >= 0) return (r - d + 12) % 12; if (sc.indexOf((r + d) % 12) >= 0) return (r + d) % 12; } return r; }
+    CHORDS = CHORDS0.map(function (ch) { var out = []; ch.forEach(function (pc) { var m = (KEYROOT + snap((pc - 2 + 12) % 12)) % 12; if (out.indexOf(m) < 0) out.push(m); }); return out; });
+    scaleLine.textContent = KEYS[KEYROOT] + " " + SCALES[SCALEI][0] + ": " + sc.map(function (iv) { return KEYS[(KEYROOT + iv) % 12]; }).join(" ");
+    if (typeof CITIES !== "undefined") { CITIES.forEach(setPool); shiftDrones(); MIDI.last = -1; }
+  }
+  try { var sk = localStorage.getItem("nfa-key"), ss = localStorage.getItem("nfa-scale"); if (sk !== null && +sk >= 0 && +sk < 12) KEYROOT = +sk; if (ss !== null && +ss >= 0 && +ss < SCALES.length) SCALEI = +ss; } catch (e) {}
+  keySel.value = KEYROOT; scaleSel.value = SCALEI; applyKeyScale();
+  keySel.addEventListener("change", function () { KEYROOT = +keySel.value; try { localStorage.setItem("nfa-key", KEYROOT); } catch (e) {} applyKeyScale(); });
+  scaleSel.addEventListener("change", function () { SCALEI = +scaleSel.value; try { localStorage.setItem("nfa-scale", SCALEI); } catch (e) {} applyKeyScale(); });
   function tonesIn(chord, lo, hi) { var out = [], m, fq; for (m = 24; m <= 108; m++) if (chord.indexOf(((m - eng.shift) % 12 + 12) % 12) >= 0) { fq = 440 * Math.pow(2, (m - 69) / 12); if (fq >= lo && fq <= hi) out.push(fq); } return out; }
   function setPool(c) { if (!RANGES || !CHORDS) return; c.pool = tonesIn(CHORDS[eng ? eng.chord : 0], RANGES[c.slot % 3][0], RANGES[c.slot % 3][1]); if (c.pool.length < 3) c.pool = c.notes.slice(); }
   function resetEngine(t) {
@@ -1419,11 +1443,11 @@ body.dwhere .q[data-g="1"] { opacity: .6; } body.dwhere .q[data-g="2"] { opacity
     });
     var pan = ctx.createStereoPanner ? ctx.createStereoPanner() : null; if (pan) pan.pan.value = c.pan * .6;
     lp.connect(out); if (pan) { out.connect(pan); pan.connect(bus); } else out.connect(bus);
-    c.drone = { out: out, oscs: oscs, base: [root, root * 1.5, root * 1.0595 * 2] }; if (eng.shift) oscs.forEach(function (o, i) { o.frequency.value = c.drone.base[i] * Math.pow(2, eng.shift / 12); });
+    c.drone = { out: out, oscs: oscs, base: [root, root * 1.5, root * 1.0595 * 2] }; if (driftSemis()) oscs.forEach(function (o, i) { o.frequency.value = c.drone.base[i] * Math.pow(2, driftSemis() / 12); });
   }
   function shiftDrones() {
     if (!ctx) return;
-    CITIES.forEach(function (c) { if (c.drone && c.drone.base) c.drone.oscs.forEach(function (o, i) { o.frequency.setTargetAtTime(c.drone.base[i] * Math.pow(2, eng.shift / 12), ctx.currentTime, 1.5); }); });
+    CITIES.forEach(function (c) { if (c.drone && c.drone.base) c.drone.oscs.forEach(function (o, i) { o.frequency.setTargetAtTime(c.drone.base[i] * Math.pow(2, driftSemis() / 12), ctx.currentTime, 1.5); }); });
   }
   function stopDrone(c) {
     if (!c.drone || !ctx) return;
