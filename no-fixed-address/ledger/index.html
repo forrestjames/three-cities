@@ -1,0 +1,1047 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>No Fixed Address Ledger</title>
+<meta name="description" content="Rings of rhythm for the numbers behind the DOGE cuts and the people forced from their homes. Mute a program and see what goes quiet.">
+<meta property="og:title" content="No Fixed Address Ledger">
+<meta property="og:description" content="Rings of rhythm for the numbers behind the DOGE cuts and the people forced from their homes. Mute a program and see what goes quiet.">
+<meta property="og:image" content="https://threecities.forrestjamesmusic.com/og.jpg">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@800;900&family=DM+Mono:wght@400;500&family=Instrument+Sans:wght@400;500;600;700&display=swap">
+<style>
+/* Layout: big headline, a plain how-it-works block, one square of concentric rings, a big caption for the ring that just joined, sound controls, the ring list. Muting a program throws a full-screen poster. Two tones only: ink and paper, swapped in dark. */
+html { color-scheme: light; padding-top: env(safe-area-inset-top, 0px); padding-bottom: env(safe-area-inset-bottom, 0px); }
+body { margin: 0; }
+img { max-width: 100%; }
+[hidden] { display: none !important; }
+:root {
+  --paper: #E8EAEC;
+  --ink: #14181C;
+  --bg: var(--paper);
+  --fg: var(--ink);
+  --soft: color-mix(in srgb, var(--fg) 62%, var(--bg));
+  --faint: color-mix(in srgb, var(--fg) 16%, var(--bg));
+  --font-display: "Instrument Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-body: "Instrument Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-data: "DM Mono", ui-monospace, "SF Mono", Menlo, monospace;
+  --font-poster: Archivo, "Helvetica Neue", Helvetica, Arial, sans-serif;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) { --bg: var(--ink); --fg: var(--paper); color-scheme: dark; }
+}
+:root[data-theme="dark"] { --bg: var(--ink); --fg: var(--paper); color-scheme: dark; }
+
+* { box-sizing: border-box; }
+html, body { background: var(--bg); }
+body {
+  color: var(--fg);
+  font-family: var(--font-body);
+  font-size: 18px;
+  line-height: 1.45;
+  padding-block: 22px 56px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+}
+main { max-width: 600px; margin: 0 auto; display: flex; flex-direction: column; gap: 24px; }
+.eyebrow { font-family: var(--font-data); font-size: 14px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--soft); }
+.sec-title { font: 500 14px/1 var(--font-data); letter-spacing: 0.14em; text-transform: uppercase; color: var(--soft); }
+
+.tabs { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+@media (min-width: 520px) { .tabs { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
+.chip, .tabs button {
+  font: 500 15px/1.15 var(--font-data);
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--fg);
+  background: var(--bg);
+  border: 2px solid var(--fg);
+  padding: 12px 8px;
+  min-height: 52px;
+  cursor: pointer;
+}
+.chip[aria-pressed="true"], .tabs button[aria-pressed="true"] { background: var(--fg); color: var(--bg); }
+button:focus-visible, input:focus-visible { outline: 3px solid var(--fg); outline-offset: 3px; }
+
+h1 {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: clamp(40px, 11.5vw, 64px);
+  line-height: 1.02;
+  letter-spacing: -0.03em;
+  margin: 0;
+  text-wrap: balance;
+}
+.sub { margin: 0; font-size: 20px; line-height: 1.4; max-width: 40ch; }
+
+.how { display: flex; flex-direction: column; gap: 14px; border-top: 2px solid var(--fg); padding-top: 16px; }
+.how ol { list-style: none; margin: 0; padding: 0; display: grid; gap: 14px; counter-reset: s; }
+.how li { counter-increment: s; display: grid; grid-template-columns: 34px minmax(0, 1fr); gap: 12px; font-size: 18px; line-height: 1.35; }
+.how li::before { content: counter(s); font: 500 22px/1.1 var(--font-data); }
+.how b { font-weight: 700; }
+
+.key { list-style: none; margin: 0; padding: 14px 0; border-block: 1px solid var(--fg); display: grid; gap: 12px; }
+.key li { display: grid; grid-template-columns: 34px minmax(0, 1fr); gap: 12px; align-items: center; font-size: 17px; line-height: 1.3; }
+.glyph { display: grid; place-items: center; height: 24px; }
+.g-on { width: 16px; height: 16px; border-radius: 50%; background: var(--fg); }
+.g-off { width: 4px; height: 4px; border-radius: 50%; background: var(--fg); opacity: 0.5; }
+.g-dash { width: 28px; height: 28px; border-radius: 50%; border: 2px dashed var(--fg); }
+
+.unit { font: 500 20px/1.2 var(--font-data); letter-spacing: 0.02em; }
+.stage { position: relative; width: 100%; aspect-ratio: 1; }
+canvas { width: 100%; height: 100%; display: block; }
+
+.now { min-height: 8.6em; display: flex; flex-direction: column; gap: 6px; }
+.now .cnt { font: 500 15px/1 var(--font-data); letter-spacing: 0.1em; text-transform: uppercase; color: var(--soft); }
+.now .big { font-weight: 700; font-size: clamp(44px, 13vw, 76px); line-height: 1; letter-spacing: -0.03em; overflow-wrap: anywhere; }
+.now .nm { font-size: 22px; line-height: 1.25; }
+.now .hint { font-size: 22px; line-height: 1.3; }
+
+.play {
+  font: 600 18px/1 var(--font-data);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  width: 100%;
+  min-height: 64px;
+  background: var(--fg);
+  color: var(--bg);
+  border: 2px solid var(--fg);
+  cursor: pointer;
+}
+.play[aria-pressed="true"] { background: var(--bg); color: var(--fg); }
+
+.sound { display: flex; flex-direction: column; gap: 14px; border-top: 2px solid var(--fg); padding-top: 16px; }
+.presets { display: flex; flex-wrap: wrap; gap: 8px; }
+.presets .chip { flex: 1 1 28%; }
+.sound-desc { margin: 0; font-size: 18px; min-height: 1.5em; }
+.slider { display: grid; grid-template-columns: 5.5em minmax(0, 1fr) 3.2em; gap: 12px; align-items: center; font: 500 16px/1 var(--font-data); text-transform: uppercase; letter-spacing: 0.06em; }
+.slider input { width: 100%; min-height: 44px; accent-color: var(--fg); }
+.slider output { text-align: right; }
+.tiny { margin: 0; font-size: 15px; color: var(--soft); }
+
+.rings { list-style: none; margin: 0; padding: 0; border-top: 2px solid var(--fg); }
+.rings li { border-bottom: 1px solid var(--faint); }
+.rings button {
+  display: grid;
+  grid-template-columns: 16px minmax(0, 1fr) auto;
+  gap: 14px;
+  align-items: center;
+  width: 100%;
+  min-height: 60px;
+  padding: 10px 0;
+  background: none;
+  border: 0;
+  color: var(--fg);
+  text-align: left;
+  font: inherit;
+  cursor: pointer;
+}
+.dot { width: 14px; height: 14px; border: 2px solid var(--fg); border-radius: 50%; background: var(--fg); }
+.rings button[aria-pressed="false"] .dot { background: transparent; }
+.rings button[data-silent="true"] .dot { border-style: dashed; background: transparent; }
+.rings .name { min-width: 0; font-size: 19px; line-height: 1.25; overflow-wrap: anywhere; }
+.rings .val { font: 500 16px/1.2 var(--font-data); text-align: right; max-width: 9em; }
+.rings button[aria-pressed="false"] .name { color: var(--soft); text-decoration: line-through; text-decoration-thickness: 1px; }
+.rings li.later { opacity: 0.35; }
+
+.detail { margin: 0; min-height: 5.5em; font-size: 18px; line-height: 1.45; }
+.detail b { font-weight: 700; }
+
+.about { border-top: 2px solid var(--fg); padding-top: 16px; display: flex; flex-direction: column; gap: 12px; font-size: 16px; line-height: 1.45; color: var(--soft); }
+.about p { margin: 0; max-width: 60ch; }
+.about a { color: var(--fg); text-underline-offset: 3px; }
+.links { display: flex; flex-wrap: wrap; gap: 8px 18px; }
+
+/* Poster: one fact, full screen, loud. */
+.poster {
+  position: fixed; inset: 0; z-index: 50;
+  background: var(--fg); color: var(--bg);
+  display: flex; flex-direction: column; gap: 16px;
+  padding-top: calc(env(safe-area-inset-top, 0px) + 16px);
+  padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 16px);
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  font-family: var(--font-poster);
+  overflow: auto;
+}
+.poster:not([hidden]) { animation: pIn 0.22s cubic-bezier(0.2, 0.8, 0.2, 1); }
+@keyframes pIn { from { transform: translateY(5%); opacity: 0; } to { transform: none; opacity: 1; } }
+@media (prefers-reduced-motion: reduce) { .poster:not([hidden]) { animation: none; } }
+.p-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; padding-bottom: 14px; border-bottom: 8px solid var(--bg); }
+.p-label { font: 500 15px/1.3 var(--font-data); letter-spacing: 0.1em; text-transform: uppercase; min-width: 0; overflow-wrap: anywhere; padding-top: 6px; }
+.p-x { flex: none; width: 52px; height: 52px; background: transparent; color: var(--bg); border: 3px solid var(--bg); font: 400 34px/1 var(--font-poster); cursor: pointer; }
+.p-main { flex: 1; min-height: 0; display: flex; flex-direction: column; justify-content: center; gap: 22px; }
+.p-big { font-weight: 900; text-transform: uppercase; line-height: 1; letter-spacing: -0.035em; overflow-wrap: anywhere; }
+.p-big span { background: var(--bg); color: var(--fg); padding: 0 0.08em; -webkit-box-decoration-break: clone; box-decoration-break: clone; }
+.p-text { font-weight: 800; text-transform: uppercase; font-size: clamp(26px, 7vw, 44px); line-height: 1.03; letter-spacing: -0.01em; max-width: 20ch; }
+.p-bottom { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.p-btn { min-height: 60px; background: transparent; color: var(--bg); border: 3px solid var(--bg); font: 600 16px/1.1 var(--font-data); letter-spacing: 0.06em; text-transform: uppercase; cursor: pointer; padding: 8px; }
+.p-btn.solid { background: var(--bg); color: var(--fg); }
+.poster button:focus-visible { outline: 3px solid var(--bg); outline-offset: 3px; }
+
+@media (prefers-reduced-motion: reduce) { * { scroll-behavior: auto; } }
+</style>
+</head>
+<body>
+<main>
+  <div class="eyebrow">No Fixed Address</div>
+  <nav class="tabs" id="tabs" aria-label="Choose a data set"></nav>
+  <h1 id="headline"></h1>
+  <p class="sub" id="sub"></p>
+
+  <section class="how" aria-label="How it works">
+    <div class="sec-title">How it works</div>
+    <ol>
+      <li><span>Every ring is one program or number from the news. <b>Every dot on it is a beat.</b></span></li>
+      <li><span>Press Play. Rings join one at a time. A bigger number gets more beats.</span></li>
+      <li><span><b>Tap a name in the list to mute it.</b> A fact about what goes quiet takes over the screen. Mute it again and you get a different fact.</span></li>
+      <li><span>A ring with only a few beats plays a short tune. Each beat is its own note, and it can roll.</span></li>
+      <li><span>Change the sound below. Try Glitch or Jungle.</span></li>
+    </ol>
+  </section>
+
+  <ul class="key" aria-label="Key to the dots">
+    <li><span class="glyph"><span class="g-on"></span></span><span>A big dot is a beat you can hear.</span></li>
+    <li><span class="glyph"><span class="g-off"></span></span><span>A tiny dot is a beat that went quiet.</span></li>
+    <li><span class="glyph"><span class="g-dash"></span></span><span>A dashed ring is something shut down. It makes no sound.</span></li>
+  </ul>
+
+  <div class="unit" id="unit"></div>
+  <div class="stage"><canvas id="cv" role="img" aria-label="Concentric rings. Each ring is one number from the news, played as a rhythm."></canvas></div>
+
+  <div class="now" id="now" aria-live="polite"></div>
+
+  <button class="play" id="play" aria-pressed="false">Play</button>
+
+  <section class="sound" aria-label="Sound">
+    <div class="sec-title">Sound</div>
+    <div class="presets" id="presets"></div>
+    <p class="sound-desc" id="soundDesc"></p>
+    <label class="slider"><span>Stutter</span><input type="range" id="stutter" min="0" max="1" step="0.05"><output id="stutterV"></output></label>
+    <label class="slider"><span>Grit</span><input type="range" id="grit" min="0" max="1" step="0.05"><output id="gritV"></output></label>
+    <p class="tiny">Stutter makes beats roll and repeat. Grit adds crunch. Both work with every sound.</p>
+  </section>
+
+  <ul class="rings" id="rings"></ul>
+  <p class="detail" id="detail" aria-live="polite"></p>
+
+  <section class="about">
+    <p>The beats bunch together and spread out, and get louder and softer, a little differently on every turn. Bigger dots are harder hits. As more rings join, the earlier ones step back. Mute a ring and the others come forward.</p>
+    <p>The facts describe what each program does. They show what is at risk, and not every cut was final. The program cuts come from CLASP, an advocacy group, using news reports from spring 2025. The savings figures come from coverage of a government audit, NPR and Musk Watch, so check the originals before you quote them. The refugee figures are from the United Nations refugee agency. They sit beside the cuts and do not claim one caused the other.</p>
+    <div class="links">
+      <a href="https://www.clasp.org/doge-tracker/" target="_blank" rel="noopener">CLASP DOGE Tracker</a>
+      <a href="https://thedailyrecord.com/2026/08/06/gao-finds-errors-elon-musk-doge-government-savings/" target="_blank" rel="noopener">GAO audit coverage</a>
+      <a href="https://www.muskwatch.com/p/data-reveals-musk-has-delivered-025" target="_blank" rel="noopener">Musk Watch</a>
+      <a href="https://www.npr.org/2025/02/19/nx-s1-5302705/doge-overstates-savings-federal-contracts" target="_blank" rel="noopener">NPR analysis</a>
+      <a href="https://www.unhcr.org/sites/default/files/2026-06/global-trends-report-2025.pdf" target="_blank" rel="noopener">UNHCR Global Trends 2025</a>
+    </div>
+  </section>
+</main>
+
+<div class="poster" id="poster" role="dialog" aria-modal="true" aria-label="A fact" hidden>
+  <div class="p-top">
+    <div class="p-label" id="pLabel"></div>
+    <button class="p-x" id="pClose" type="button" aria-label="Close">&times;</button>
+  </div>
+  <div class="p-main" id="pMain">
+    <div class="p-big" id="pBig"></div>
+    <div class="p-text" id="pText"></div>
+  </div>
+  <div class="p-bottom">
+    <button class="p-btn" id="pNext" type="button">Another fact</button>
+    <button class="p-btn solid" id="pBack" type="button">Back to the music</button>
+  </div>
+</div>
+
+<script>
+(function () {
+  // Each ring: n steps, k lit beats spread evenly. All rings in a scene share one bar (one full turn).
+  // Scenes with reveal:true add one ring per turn while playing.
+  var SCENES = [
+    {
+      id: "claimed", tab: "Claimed vs checked", bar: 8, reveal: false,
+      headline: "$215 billion claimed. About $5 billion confirmed.",
+      sub: "DOGE was the Trump administration's cost-cutting team. It said it saved $215 billion. Each ring below checks that claim harder, so fewer beats survive.",
+      unit: "1 dot = $5 billion",
+      hint: "Press Play. Listen to the beats thin out.",
+      rings: [
+        { name: "What DOGE claimed", val: "$215B", n: 43, k: 43, f: 1760, w: "triangle", d: 0.05, g: 0.035, note: "DOGE's own total for money saved, from doge.gov. DOGE says only about 30% of it has published paperwork behind it." },
+        { name: "Failed the audit: could not be verified or was wrong", val: "$35B", n: 43, k: 7, f: 880, w: "triangle", d: 0.09, g: 0.06, note: "The US government watchdog (GAO) looked at $110 billion of the claims. It found $35 billion could not be verified or was inaccurate. This is from coverage of the August 2026 audit." },
+        { name: "Contracts that were never actually ended", val: "$27.4B", n: 43, k: 5, f: 440, w: "sine", d: 0.22, g: 0.1, note: "Savings claimed from contracts the watchdog says were not cancelled. Reports differ on how many contracts, so check the audit itself." },
+        { name: "Checked and confirmed", val: "$5B", n: 43, k: 1, f: 98, w: "sine", d: 2.2, g: 0.32, note: "About $5 billion confirmed for the 2026 budget year by the Musk Watch tracker. NPR confirmed about $2.3 billion early on. One economist estimated $1 billion to $7 billion." }
+      ]
+    },
+    {
+      id: "cuts", tab: "Programs cut", bar: 3.2, reveal: true,
+      headline: "9 programs cut. 4 shut down.",
+      sub: "Each ring is one US government program. A full ring is the whole program. Every cut takes beats away. When a program is shut down, its ring goes silent.",
+      unit: "16 dots = the whole program",
+      hint: "Press Play. One program joins after every full turn.",
+      rings: [
+        { name: "Disease control agency (CDC), all staff", val: "18% cut", n: 16, k: 13, f: 220, w: "sine", d: 0.35, g: 0.1, note: "About 2,400 people laid off, roughly 18% of the CDC. 13 of 16 beats left. CLASP, April 2025." },
+        { name: "HIV and STD prevention (CDC)", val: "27% cut", n: 16, k: 12, f: 196, w: "sine", d: 0.35, g: 0.1, note: "27% of the 1,700 staff in this center were cut. 12 of 16 beats left. CLASP, April 2025." },
+        { name: "Help for older and disabled people (ACL)", val: "40% cut", n: 16, k: 10, f: 164.8, w: "sine", d: 0.4, g: 0.11, note: "At least 40% of staff laid off, with plans to shut it down. It runs Meals on Wheels, 216 million meals a year. 10 of 16 beats left. CLASP." },
+        { name: "Head Start preschool offices", val: "40 to 50% cut", n: 16, k: 9, f: 130.8, w: "sine", d: 0.4, g: 0.12, note: "Head Start offices lost 40 to 50% of staff. Drawn here at 45%, so 9 of 16 beats left. Head Start served over 778,000 children and pregnant people in 2023. CLASP." },
+        { name: "Child care office", val: "50% cut", n: 16, k: 8, f: 110, w: "sine", d: 0.45, g: 0.13, note: "About half the staff cut. 8 of 16 beats left. The program helped pay for child care for about 1.4 million children in 2022. CLASP." },
+        { name: "Workplace safety (NIOSH)", val: "Shut down", n: 16, k: 0, silent: true, f: 55, w: "sine", d: 1, g: 0.1, note: "Shut down. 1,600 people laid off. It protects workers, including over 900,000 young people on farms. CLASP, April 2025." },
+        { name: "Injury and violence prevention (CDC)", val: "Shut down", n: 16, k: 0, silent: true, f: 55, w: "sine", d: 1, g: 0.1, note: "Shut down. It got $781 million in 2024 to help communities prevent injuries and violence. CLASP, April 2025." },
+        { name: "Chronic disease prevention (CDC)", val: "Shut down", n: 16, k: 0, silent: true, f: 55, w: "sine", d: 1, g: 0.1, note: "Shut down. Its screening program has reached more than 6.2 million women since 1991. CLASP, April 2025." },
+        { name: "Civil rights watchdog, Homeland Security", val: "Shut down", n: 16, k: 0, silent: true, f: 55, w: "sine", d: 1, g: 0.1, note: "Shut down. Over 100 people laid off. It was the department's internal check on whether its policies protect people's rights. CLASP, April 2025." }
+      ]
+    },
+    {
+      id: "people", tab: "People laid off", bar: 6, reveal: true,
+      headline: "12 programs lost staff. The biggest lost thousands.",
+      sub: "Each ring is one agency or office. The more people laid off, the more beats in its ring. Biggest first.",
+      unit: "1 dot = about 100 people laid off",
+      hint: "Press Play. One agency joins after every full turn.",
+      rings: [
+        { name: "Tax collection (IRS)", val: "7,000", n: 70, k: 70, f: 98, w: "sine", d: 0.1, g: 0.05, note: "About 7,000 people laid off, with plans to cut 45,000 more. Yale's Budget Lab estimated the US could lose $12.6 billion in tax money in 2026. CLASP, April 2025." },
+        { name: "Social Security", val: "7,000", n: 70, k: 70, f: 110, w: "sine", d: 0.1, g: 0.05, note: "A target of 7,000 fewer staff by September 2025. Some were voluntary departures. CLASP." },
+        { name: "Food and drug safety (FDA)", val: "3,500", n: 70, k: 35, f: 130.8, w: "sine", d: 0.14, g: 0.07, note: "3,500 laid off. Every office was affected. CLASP." },
+        { name: "Disease control agency (CDC)", val: "2,400", n: 70, k: 24, f: 146.8, w: "sine", d: 0.16, g: 0.08, note: "About 2,400 laid off. The workplace safety office is counted separately above, so it is left out here to avoid counting it twice. CLASP." },
+        { name: "Weather and ocean science (NOAA)", val: "1,300", n: 70, k: 13, f: 164.8, w: "sine", d: 0.2, g: 0.09, note: "1,300 laid off at the agency behind the National Weather Service. CLASP." },
+        { name: "Medical research (NIH)", val: "1,200", n: 70, k: 12, f: 196, w: "sine", d: 0.22, g: 0.09, note: "1,200 laid off, with more expected. NIH funds about $48 billion of outside research. CLASP." },
+        { name: "Children and families (HHS)", val: "700", n: 70, k: 7, f: 220, w: "sine", d: 0.3, g: 0.1, note: "About 700 laid off, including half the child care office and many Head Start offices. CLASP." },
+        { name: "Education civil rights offices", val: "240", n: 70, k: 2, f: 261.6, w: "triangle", d: 0.35, g: 0.08, note: "240 laid off, including all staff in the 12 regional offices. It handled 18,804 discrimination complaints in 2022. CLASP." },
+        { name: "Education research (IES)", val: "100+", n: 70, k: 1, f: 293.7, w: "triangle", d: 0.5, g: 0.1, note: "More than 100 research analysts laid off. Shown as one beat. CLASP." },
+        { name: "Civil rights watchdog, Homeland Security", val: "100+", n: 70, k: 1, f: 329.6, w: "triangle", d: 0.6, g: 0.1, note: "Over 100 laid off and the office shut down. Shown as one beat. CLASP." },
+        { name: "Immigration ombudsman (DHS)", val: "Under 50", n: 70, k: 1, f: 392, w: "triangle", d: 0.7, g: 0.1, note: "Under 50 laid off. Shown as one beat so it stays visible. CLASP." },
+        { name: "Heating bill help (HHS)", val: "24", n: 70, k: 1, f: 440, w: "triangle", d: 0.8, g: 0.1, note: "24 laid off in the team behind a $4.1 billion program that helps about 6.2 million households pay utility bills. Shown as one beat so it stays visible. CLASP." }
+      ]
+    },
+    {
+      id: "displaced", tab: "People forced to flee", bar: 10, reveal: false,
+      headline: "117.8 million people forced from their homes.",
+      sub: "That is 1 in every 70 people on Earth, counted at the end of 2025. It fell by 5.4 million during the year, the first fall in about ten years.",
+      unit: "1 dot = 1 million people",
+      hint: "Press Play. Listen to how many beats there are.",
+      rings: [
+        { name: "Still inside their own country", val: "68.7M", n: 118, k: 69, f: 196, w: "sine", d: 0.18, g: 0.04, note: "People forced from home by war or violence who have not left their country. That is 58% of the total. Another summary says 68.6 million. UNHCR." },
+        { name: "Refugees who fled to another country", val: "41.6M", n: 118, k: 42, f: 293.7, w: "sine", d: 0.18, g: 0.045, note: "Refugees at the end of 2025, down 3% over the year. UNHCR Global Trends 2025." },
+        { name: "Went home during 2025", val: "14.7M", n: 118, k: 15, f: 587, w: "triangle", d: 0.2, g: 0.04, note: "4.4 million refugees and 10.3 million people displaced at home returned. The UN says many returns happened in hard conditions. This counts one year, not the total above." },
+        { name: "Waiting for a decision on asylum", val: "9M", n: 118, k: 9, f: 440, w: "sine", d: 0.3, g: 0.07, note: "People who asked another country for protection and were still waiting at the end of 2025." },
+        { name: "Fled their country during 2025", val: "5.4M", n: 118, k: 5, f: 880, w: "sine", d: 0.9, g: 0.08, note: "People who crossed a border to flee during the year, mostly into neighbouring countries. This counts one year, not the total above." },
+        { name: "1 in 70 people on Earth", val: "1.4%", n: 70, k: 1, f: 82.4, w: "sine", d: 2.4, g: 0.3, note: "This ring has 70 dots for 70 people. One is lit. It is the one forced from home." }
+      ]
+    }
+  ];
+
+  // Facts shown on the poster when you mute a ring. Each is [big words, small line]. A random one each time.
+  var FACTS = {
+    "What DOGE claimed": [
+      ["30%", "of the claimed savings have published paperwork behind them."],
+      ["$8 billion", "a typo made an $8 million contract look 1,000 times bigger."],
+      ["13,476", "contracts DOGE said it ended."]
+    ],
+    "Failed the audit: could not be verified or was wrong": [
+      ["$110 billion", "of DOGE's claims were checked by the US government watchdog."],
+      ["108", "leases DOGE counted were already being ended before DOGE existed."],
+      ["$1.7 billion", "claimed for a Defense Health Agency contract that never changed."]
+    ],
+    "Contracts that were never actually ended": [
+      ["$27.4 billion", "claimed from contracts the watchdog says were never ended."],
+      ["About 2,000", "contracts DOGE listed as ended were not, reports say."]
+    ],
+    "Checked and confirmed": [
+      ["0.25%", "of the promised $2 trillion in cuts could be confirmed."],
+      ["$2 trillion", "was the cut Elon Musk promised."],
+      ["+6%", "federal spending still rose about 6% over the same period, says Wharton."]
+    ],
+
+    "Disease control agency (CDC), all staff": [
+      ["2,400", "CDC staff laid off. About 18% of the agency."],
+      ["3 centres", "shut down entirely: workplace safety, injury prevention, chronic disease."],
+      ["27%", "of the CDC's HIV and STD prevention staff were cut."]
+    ],
+    "HIV and STD prevention (CDC)": [
+      ["27%", "of its 1,700 staff were cut."],
+      ["2.8 million", "HIV tests run by CDC-funded sites from 2007 to 2010."],
+      ["18,000", "new HIV diagnoses found by those tests."],
+      ["$1.2 billion", "in medical costs those tests helped prevent."],
+      ["1 in 3", "new HIV diagnoses in 2013 came from a CDC-funded test."]
+    ],
+    "Help for older and disabled people (ACL)": [
+      ["216 million", "Meals on Wheels meals a year."],
+      ["2,500", "community groups it funds, from senior centres to independent living centres."],
+      ["40%", "of its staff laid off, with plans to shut it down."]
+    ],
+    "Head Start preschool offices": [
+      ["778,000", "children and pregnant people served by Head Start in 2023."],
+      ["12", "regional offices hit by the cuts."],
+      ["5", "regional offices eliminated: Boston, New York, Chicago, San Francisco, Seattle."],
+      ["40 to 50%", "of staff in Head Start offices cut."]
+    ],
+    "Child care office": [
+      ["50%", "of the Office of Child Care cut."],
+      ["1.4 million", "children got child care help through this program in 2022."],
+      ["Every state", "gets child care help for low income families through this office."]
+    ],
+    "Workplace safety (NIOSH)": [
+      ["1,600", "people laid off. The whole office, gone."],
+      ["900,000", "young people on farms it helps protect."],
+      ["Bird flu", "it was protecting thousands of farm workers from H5N1."]
+    ],
+    "Injury and violence prevention (CDC)": [
+      ["$781 million", "sent to communities in 2024 to prevent injuries and violence."],
+      ["$4 trillion", "a year: what injuries and violence cost the US."],
+      ["Gun violence", "child abuse and elder abuse: this office studied how to prevent them."]
+    ],
+    "Chronic disease prevention (CDC)": [
+      ["1 million", "smokers quit with its Tips campaign from 2012 to 2018."],
+      ["135,000", "cardiac events prevented by its Million Hearts program, 2012 to 2016."],
+      ["6.2 million", "women screened for breast and cervical cancer since 1991."],
+      ["800,000", "people have joined its diabetes prevention program."],
+      ["2 million", "students reached by its school health program."]
+    ],
+    "Civil rights watchdog, Homeland Security": [
+      ["100+", "staff laid off. The office was eliminated."],
+      ["Zero", "internal watchdog offices left at Homeland Security to check immigration enforcement."],
+      ["Rights", "its job was to check that DHS actions protect individual rights and equal treatment."]
+    ],
+
+    "Tax collection (IRS)": [
+      ["7,000", "IRS staff laid off, 5,000 of them in tax compliance."],
+      ["45,000", "more IRS jobs were planned to be cut."],
+      ["$12.6 billion", "in tax money the US could lose in 2026 at 50,000 cuts, says Yale."],
+      ["Tax credits", "the IRS runs the Earned Income and Child Tax Credits. Delays hit families."]
+    ],
+    "Social Security": [
+      ["71.6 million", "people got Social Security benefits in 2023."],
+      ["5.8 million", "were newly awarded benefits that year."],
+      ["7,000", "fewer staff targeted by September 2025."],
+      ["Could double", "the backlog of disability applications."]
+    ],
+    "Food and drug safety (FDA)": [
+      ["3,500", "FDA staff laid off."],
+      ["Every office", "at the FDA was affected."],
+      ["Every home", "the FDA checks the drugs, vaccines, devices and food nearly every household uses."]
+    ],
+    "Disease control agency (CDC)": [
+      ["2,400", "CDC staff laid off. About 18% of the agency."],
+      ["27%", "of the CDC's HIV and STD prevention staff were cut."],
+      ["3 centres", "shut down entirely."]
+    ],
+    "Weather and ocean science (NOAA)": [
+      ["1,300", "NOAA staff laid off."],
+      ["Forecasts", "fewer staff means less accurate weather forecasts, CLASP warns."],
+      ["The world", "other countries rely on US weather and climate data collection."]
+    ],
+    "Medical research (NIH)": [
+      ["$48 billion", "a year NIH pays out for outside research."],
+      ["300,000", "researchers supported by NIH grants."],
+      ["2,500", "hospitals, medical schools and universities get NIH grants."],
+      ["1,200", "NIH staff laid off, with more expected."]
+    ],
+    "Children and families (HHS)": [
+      ["700", "staff laid off at the Administration for Children and Families."],
+      ["50%", "of the child care office cut."],
+      ["5", "regional offices eliminated."]
+    ],
+    "Education civil rights offices": [
+      ["18,804", "discrimination complaints reached these offices in 2022."],
+      ["12", "regional offices lost all their staff."],
+      ["240", "staff laid off."],
+      ["5 kinds", "sex, disability, race, national origin and age discrimination."]
+    ],
+    "Education research (IES)": [
+      ["100+", "research analysts laid off."],
+      ["Schools", "states, districts and colleges use IES research to understand student achievement."]
+    ],
+    "Immigration ombudsman (DHS)": [
+      ["Under 50", "laid off. The office was left unable to work."],
+      ["H-1B", "visa holders, students and green card applicants lose this help."],
+      ["Detention", "this office also watched conditions in immigration detention."]
+    ],
+    "Heating bill help (HHS)": [
+      ["6.2 million", "households helped to pay heating and utility bills each year."],
+      ["$4.1 billion", "the size of the energy assistance program."],
+      ["24", "staff laid off in the team that runs it."]
+    ],
+
+    "Still inside their own country": [
+      ["9.1 million", "displaced inside Sudan, the world's biggest internal crisis."],
+      ["58%", "of all displaced people never leave their own country."],
+      ["68.7 million", "forced from home and still in their own country."]
+    ],
+    "Refugees who fled to another country": [
+      ["65%", "live in a country next door to their own."],
+      ["6 countries", "produce over 70% of refugees and others needing protection: Afghanistan, South Sudan, Sudan, Syria, Ukraine, Venezuela."],
+      ["41.6 million", "refugees at the end of 2025, down 3%."]
+    ],
+    "Went home during 2025": [
+      ["14.7 million", "went home in 2025."],
+      ["4.4 million", "of them were refugees. 10.3 million were displaced at home."],
+      ["Hard", "the UN says many returns happened in difficult conditions."]
+    ],
+    "Waiting for a decision on asylum": [
+      ["9 million", "people waiting on an asylum decision."],
+      ["Flat funding", "in mid-2025, UN refugee agency funding was about its 2015 level."]
+    ],
+    "Fled their country during 2025": [
+      ["5.4 million", "people fled across a border in 2025."],
+      ["Next door", "most of them went to neighbouring countries."]
+    ],
+    "1 in 70 people on Earth": [
+      ["1 in 70", "people on Earth is forced from home."],
+      ["Down 5.4 million", "the first fall in about ten years."],
+      ["38%", "of the displaced are children."]
+    ]
+  };
+
+  var SCALE = [1, 9 / 8, 5 / 4, 3 / 2, 5 / 3, 2];
+
+  var SOUNDS = [
+    { id: "clean", name: "Clean", desc: "Soft plucks.", stutter: 0.1, grit: 0 },
+    { id: "glass", name: "Glass", desc: "Ringing bells.", stutter: 0.1, grit: 0 },
+    { id: "machine", name: "Machine", desc: "Buzzy synth stabs.", stutter: 0.2, grit: 0.2 },
+    { id: "glitch", name: "Glitch", desc: "Clicks, zaps and stutters.", stutter: 0.55, grit: 0.25 },
+    { id: "jungle", name: "Jungle", desc: "Breakbeat drums and sub bass. Dense rings turn into hats.", stutter: 0.45, grit: 0.15 }
+  ];
+
+  function euclid(n, k) {
+    var a = [];
+    for (var i = 0; i < n; i++) a.push(k > 0 && ((i * k) % n) < k ? 1 : 0);
+    return a;
+  }
+  SCENES.forEach(function (s) {
+    s.rings.forEach(function (r, i) {
+      // Rotate each ring by its own amount so beats never all land on 12 o'clock.
+      var base = euclid(r.n, r.k);
+      r.off = Math.floor((((i + 1) * 0.6180339887) % 1) * r.n);
+      r.pat = base.map(function (_, j) { return base[(j - r.off + r.n) % r.n]; });
+      var c = 0;
+      r.hitIdx = r.pat.map(function (x) { var h = c; if (x) c++; return h; });
+      r.sparse = r.k > 0 && r.k <= 5;
+      r.muted = false;
+      r.facts = FACTS[r.name] || null;
+    });
+  });
+
+  // Dynamics. Both change on every turn, a little differently for each ring.
+  function warp(u, a) { return u + (a * Math.sin(2 * Math.PI * u)) / (2 * Math.PI); }
+  function ampFor(i, b) {
+    var a = 0.6 * Math.sin(1.3 * b + 2.1 * i + 0.7) + 0.3 * Math.sin(0.47 * b + 0.9 * i);
+    return Math.max(-0.88, Math.min(0.88, a));
+  }
+  function rh(a, b, c, k) {
+    var h = Math.sin(a * 127.1 + b * 311.7 + c * 74.7 + k * 19.3) * 43758.5453;
+    return h - Math.floor(h);
+  }
+  function vel(i, b, s, n, off) {
+    var u = s / n;
+    var sw = 0.5 + 0.5 * Math.sin(2 * Math.PI * u * (1 + (i % 3)) + b * 1.1 + i * 0.8);
+    return (0.3 + 0.7 * sw) * (s === off ? 1.35 : 1) * (0.88 + 0.24 * rh(i, b, s, 0));
+  }
+
+  var $ = function (id) { return document.getElementById(id); };
+  var cv = $("cv"), g2 = cv.getContext("2d");
+  var scene = SCENES[0], selected = null, lastRev = -1;
+  var ac = null, master = null, pre = null, drive = null, post = null, noiseBuf = null;
+  var playing = false, startT = 0, timer = null, lastMix = 0;
+  var sound = SOUNDS[0], stutter = SOUNDS[0].stutter, grit = SOUNDS[0].grit;
+
+  function el(tag, cls, text) {
+    var e = document.createElement(tag);
+    if (cls) e.className = cls;
+    if (text != null) e.textContent = text;
+    return e;
+  }
+
+  // Poster
+  var posterRing = null;
+  function nextFact(r) {
+    if (!r.bag || !r.bag.length) {
+      var idx = r.facts.map(function (_, j) { return j; });
+      for (var j = idx.length - 1; j > 0; j--) {
+        var k = Math.floor(Math.random() * (j + 1)), t = idx[j]; idx[j] = idx[k]; idx[k] = t;
+      }
+      if (idx.length > 1 && idx[idx.length - 1] === r.lastF) { var t2 = idx[0]; idx[0] = idx[idx.length - 1]; idx[idx.length - 1] = t2; }
+      r.bag = idx;
+    }
+    r.lastF = r.bag.pop();
+    return r.facts[r.lastF];
+  }
+  var fitCtx = document.createElement("canvas").getContext("2d");
+  function fitBig() {
+    if ($("poster").hidden) return;
+    var box = $("pBig"), txt = box.textContent.toUpperCase();
+    var avail = Math.max(120, $("pMain").clientWidth);
+    fitCtx.font = '900 100px Archivo, "Helvetica Neue", Helvetica, Arial, sans-serif';
+    var widest = 0;
+    txt.split(/\s+/).forEach(function (w) { widest = Math.max(widest, fitCtx.measureText(w).width); });
+    var total = fitCtx.measureText(txt).width;
+    var size = avail / (widest / 100 + 0.3);
+    var maxH = window.innerHeight * 0.4;
+    for (var q = 0; q < 12; q++) {
+      var lines = Math.max(1, Math.ceil((total / 100 * size + 0.3 * size) / avail));
+      if (lines * size * 1.02 <= maxH) break;
+      size *= 0.88;
+    }
+    box.style.fontSize = Math.max(44, Math.min(size, 300)) + "px";
+  }
+  function showFact(r) {
+    posterRing = r;
+    var f = nextFact(r);
+    $("pLabel").textContent = (r.silent ? "Shut down" : "Muted") + " · " + r.name;
+    var big = $("pBig");
+    big.textContent = "";
+    big.appendChild(el("span", null, f[0]));
+    $("pText").textContent = f[1];
+    var wasHidden = $("poster").hidden;
+    $("poster").hidden = false;
+    fitBig();
+    if (document.fonts && document.fonts.ready) document.fonts.ready.then(fitBig);
+    if (wasHidden) $("pBack").focus({ preventScroll: true });
+  }
+  function hidePoster() { $("poster").hidden = true; posterRing = null; }
+  $("pClose").addEventListener("click", hidePoster);
+  $("pBack").addEventListener("click", hidePoster);
+  $("pNext").addEventListener("click", function () { if (posterRing) showFact(posterRing); });
+  $("poster").addEventListener("click", function (e) { if (e.target === $("poster") || e.target === $("pMain")) hidePoster(); });
+  document.addEventListener("keydown", function (e) { if (e.key === "Escape") hidePoster(); });
+  window.addEventListener("resize", fitBig);
+
+  // How many rings are showing right now (all of them unless a reveal is running).
+  function revealedNow() {
+    var N = scene.rings.length;
+    if (!scene.reveal || !playing || !ac) return N;
+    return Math.min(N, 1 + Math.floor(Math.max(0, ac.currentTime - startT) / scene.bar));
+  }
+  function revealedAt(t) {
+    var N = scene.rings.length;
+    if (!scene.reveal) return N;
+    return Math.min(N, 1 + Math.floor(Math.max(0, t - startT) / scene.bar));
+  }
+
+  function renderTabs() {
+    var nav = $("tabs");
+    nav.textContent = "";
+    SCENES.forEach(function (s) {
+      var b = el("button", null, s.tab);
+      b.type = "button";
+      b.setAttribute("aria-pressed", s === scene ? "true" : "false");
+      b.addEventListener("click", function () { setScene(s); });
+      nav.appendChild(b);
+    });
+  }
+
+  function renderRings() {
+    var ul = $("rings");
+    ul.textContent = "";
+    scene.rings.forEach(function (r) {
+      var li = document.createElement("li");
+      var b = el("button");
+      b.type = "button";
+      b.setAttribute("aria-pressed", r.muted ? "false" : "true");
+      if (r.silent) b.setAttribute("data-silent", "true");
+      b.appendChild(el("span", "dot"));
+      b.appendChild(el("span", "name", r.name));
+      b.appendChild(el("span", "val", r.val));
+      b.addEventListener("click", function () {
+        if (!r.silent) r.muted = !r.muted;
+        selected = r;
+        renderRings();
+        lastRev = -1;
+        showDetail();
+        updateNow();
+        draw();
+        if (r.facts && (r.silent || r.muted)) showFact(r); else hidePoster();
+      });
+      li.appendChild(b);
+      ul.appendChild(li);
+    });
+  }
+
+  function showDetail() {
+    var d = $("detail");
+    d.textContent = "";
+    if (selected && scene.rings.indexOf(selected) >= 0) {
+      d.appendChild(el("b", null, selected.name + ", " + selected.val + ". "));
+      d.appendChild(document.createTextNode(selected.note));
+    } else {
+      d.textContent = "Tap a name in the list to mute that ring. A fact fills the screen, and you see where its number comes from here.";
+    }
+  }
+
+  // The big caption: the ring that just joined while a reveal plays, otherwise a short hint.
+  function updateNow() {
+    var rev = revealedNow();
+    if (rev === lastRev) return;
+    lastRev = rev;
+    var box = $("now");
+    box.textContent = "";
+    var N = scene.rings.length;
+    if (playing && scene.reveal) {
+      var r = scene.rings[rev - 1];
+      box.appendChild(el("div", "cnt", "Now joining: " + rev + " of " + N));
+      box.appendChild(el("div", "big", r.val));
+      box.appendChild(el("div", "nm", r.name));
+    } else if (playing) {
+      box.appendChild(el("div", "hint", "Listening. Tap a name below to mute a ring."));
+    } else {
+      box.appendChild(el("div", "hint", scene.hint));
+    }
+    var lis = $("rings").children;
+    for (var i = 0; i < lis.length; i++) {
+      lis[i].className = (playing && scene.reveal && i >= rev) ? "later" : "";
+    }
+  }
+
+  function setScene(s) {
+    scene = s;
+    selected = null;
+    lastRev = -1;
+    hidePoster();
+    $("headline").textContent = s.headline;
+    $("sub").textContent = s.sub;
+    $("unit").textContent = s.unit;
+    renderTabs();
+    renderRings();
+    showDetail();
+    if (playing) resetClock();
+    updateNow();
+    draw();
+  }
+
+  function resetClock() {
+    startT = ac.currentTime + 0.08;
+    SCENES.forEach(function (sc) { sc.rings.forEach(function (r) { r.count = 0; r.knocked = false; }); });
+  }
+
+  // Mix. Newer rings sit in front and earlier ones step back. Mute a ring and the rest come forward.
+  function computeMix(rev) {
+    var N = scene.rings.length, aud = [], gains = [];
+    for (var i = 0; i < N; i++) {
+      gains.push(1);
+      if (i < rev && !scene.rings[i].muted && scene.rings[i].k > 0) aud.push(i);
+    }
+    for (var q = 0; q < aud.length; q++) {
+      var rank = aud.length - 1 - q;
+      gains[aud[q]] = Math.max(0.28, Math.pow(0.86, rank));
+    }
+    return { gains: gains, density: Math.min(1, 1.15 / Math.sqrt(Math.max(1, aud.length))) };
+  }
+
+  // Audio
+  function gritCurve(a) {
+    var n = 1024, c = new Float32Array(n), k = a * 40;
+    for (var i = 0; i < n; i++) {
+      var x = (i * 2) / (n - 1) - 1;
+      c[i] = ((1 + k) * x) / (1 + k * Math.abs(x));
+    }
+    return c;
+  }
+  function applyGrit() {
+    if (!ac) return;
+    pre.gain.value = 1 + grit * 5;
+    post.gain.value = 1 / (1 + grit * 2.5);
+    drive.curve = grit === 0 ? null : gritCurve(grit);
+  }
+  function ensureAudio() {
+    if (ac) return;
+    var AC = window.AudioContext || window.webkitAudioContext;
+    ac = new AC();
+    var comp = ac.createDynamicsCompressor();
+    master = ac.createGain();
+    master.gain.value = 0.9;
+    pre = ac.createGain();
+    drive = ac.createWaveShaper();
+    drive.oversample = "2x";
+    post = ac.createGain();
+    master.connect(pre); pre.connect(drive); drive.connect(post); post.connect(comp); comp.connect(ac.destination);
+    applyGrit();
+  }
+  function ringNode(r) {
+    if (!r.node || r.nodeCtx !== ac) {
+      r.node = ac.createGain();
+      r.nodeCtx = ac;
+      r.node.gain.value = 1;
+      r.node.connect(master);
+    }
+    return r.node;
+  }
+  function updateMix(now) {
+    var mx = computeMix(revealedAt(now));
+    master.gain.setTargetAtTime(0.9 * mx.density, now, 0.3);
+    scene.rings.forEach(function (r, i) { ringNode(r).gain.setTargetAtTime(mx.gains[i], now, 0.3); });
+  }
+
+  function noise() {
+    if (!noiseBuf) {
+      noiseBuf = ac.createBuffer(1, ac.sampleRate, ac.sampleRate);
+      var d = noiseBuf.getChannelData(0);
+      for (var i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
+    }
+    return noiseBuf;
+  }
+  function finish(gn, dest, pan) {
+    var end = gn;
+    if (pan) { var p = ac.createStereoPanner(); p.pan.value = pan; gn.connect(p); end = p; }
+    end.connect(dest || master);
+  }
+  function osc(type, f, t, dur, gain, dest, o) {
+    o = o || {};
+    var os = ac.createOscillator(), gn = ac.createGain();
+    os.type = type;
+    os.frequency.setValueAtTime(f, t);
+    if (o.to) os.frequency.exponentialRampToValueAtTime(Math.max(20, o.to), t + (o.glide || dur));
+    gn.gain.setValueAtTime(0.0001, t);
+    gn.gain.exponentialRampToValueAtTime(Math.max(0.0002, gain), t + 0.004);
+    gn.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+    if (o.lp) {
+      var lp = ac.createBiquadFilter();
+      lp.type = "lowpass";
+      lp.frequency.setValueAtTime(o.lp[0], t);
+      lp.frequency.exponentialRampToValueAtTime(o.lp[1], t + dur);
+      lp.Q.value = o.q || 4;
+      os.connect(lp); lp.connect(gn);
+    } else os.connect(gn);
+    finish(gn, dest, o.pan);
+    os.start(t);
+    os.stop(t + dur + 0.05);
+  }
+  function burst(t, dur, gain, type, freq, q, dest, pan) {
+    var src = ac.createBufferSource(), flt = ac.createBiquadFilter(), gn = ac.createGain();
+    src.buffer = noise();
+    flt.type = type;
+    flt.frequency.value = Math.min(18000, freq);
+    flt.Q.value = q || 0.7;
+    gn.gain.setValueAtTime(0.0001, t);
+    gn.gain.exponentialRampToValueAtTime(Math.max(0.0002, gain), t + 0.002);
+    gn.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+    src.connect(flt); flt.connect(gn);
+    finish(gn, dest, pan);
+    src.start(t, Math.random() * 0.4);
+    src.stop(t + dur + 0.03);
+  }
+
+  // One note, shaped by the chosen sound.
+  function voice(r, t, v, mul, rnd) {
+    var dest = ringNode(r), f = r.f * mul, g = r.g * v, d = r.d, id = sound.id;
+    if (id === "clean") {
+      osc(r.w, f, t, d * (0.75 + 0.5 * Math.min(v, 1)), g, dest);
+    } else if (id === "glass") {
+      osc("sine", f * 2, t, d * 2.2 + 0.2, g * 0.9, dest);
+      osc("sine", f * 2 * 2.76, t, d * 1.1 + 0.1, g * 0.35, dest);
+      osc("sine", f * 2 * 5.4, t, 0.12, g * 0.18, dest);
+    } else if (id === "machine") {
+      osc("sawtooth", f, t, Math.max(0.09, d * 0.7), g * 0.6, dest, { lp: [3200, 260], q: 6 });
+    } else if (id === "glitch") {
+      var pan = (rnd * 2 - 1) * 0.8, kind = Math.floor(rnd * 997) % 4;
+      if (kind === 0) burst(t, 0.02 + 0.02 * rnd, g * 2.2, "bandpass", r.f * (2 + rnd * 8), 6, dest, pan);
+      else if (kind === 1) osc("square", f * 2, t, 0.03 + 0.03 * rnd, g * 0.5, dest, { pan: pan });
+      else if (kind === 2) osc("sine", f * 4, t, 0.09, g * 1.2, dest, { to: r.f * 0.5, glide: 0.08, pan: pan });
+      else burst(t, 0.012, g * 2.4, "highpass", 6000 + rnd * 5000, 1, dest, pan);
+    } else {
+      var ty = r.k > 24 ? "hat" : r.f <= 100 ? "sub" : r.f <= 160 ? "kick" : r.f <= 300 ? "snare" : r.f <= 700 ? "rim" : "hat";
+      if (ty === "sub") osc("sine", r.f, t, Math.max(0.5, d), g * 1.4, dest, { to: r.f * 0.8, glide: 0.4 });
+      else if (ty === "kick") { osc("sine", 150, t, 0.22, g * 3, dest, { to: 42, glide: 0.1 }); burst(t, 0.01, g * 1.2, "lowpass", 900, 0.7, dest); }
+      else if (ty === "snare") { burst(t, 0.16, g * 3, "highpass", 1800, 0.7, dest); osc("triangle", 190, t, 0.09, g * 2, dest, { to: 130, glide: 0.08 }); }
+      else if (ty === "rim") { burst(t, 0.04, g * 2.5, "bandpass", 2400 + rnd * 800, 3, dest); osc("square", 820 * mul, t, 0.03, g * 0.8, dest); }
+      else burst(t, rnd > 0.8 ? 0.1 : 0.035, g * 2.4, "highpass", 6500 + (r.f % 7) * 500, 0.8, dest, (rnd * 2 - 1) * 0.4);
+    }
+  }
+
+  // One beat: may roll into a few quick repeats. Rings with only a few beats play a tune and roll more.
+  function hit(r, i, t, v, s, b) {
+    var stepDur = scene.bar / r.n;
+    var p = stutter + (r.sparse ? 0.3 : 0);
+    var reps = 1;
+    if (rh(i, b, s, 1) < p) reps = 2 + Math.floor(rh(i, b, s, 2) * 3);
+    var sp = Math.min(0.075, (stepDur * 0.9) / reps);
+    var mul = r.sparse ? SCALE[(r.hitIdx[s] * 2 + b) % SCALE.length] : 1;
+    for (var q = 0; q < reps; q++) {
+      voice(r, t + q * sp, v * Math.pow(0.72, q), mul * (sound.id === "glitch" && q % 2 ? 1.5 : 1), rh(i, b, s, 3 + q));
+    }
+  }
+
+  function schedule() {
+    if (!playing) return;
+    var now = ac.currentTime, bar = scene.bar;
+    if (now - lastMix > 0.1) { updateMix(now); lastMix = now; }
+    scene.rings.forEach(function (r, i) {
+      // a low knock when a shut-down program joins
+      if (scene.reveal && r.silent && !r.knocked) {
+        var at = startT + i * bar + (r.off / r.n) * bar;
+        if (at < now + 0.15) { osc("sine", 55, Math.max(at, now), 1.4, 0.28, null, { to: 40, glide: 1.2 }); r.knocked = true; }
+      }
+      if (r.count == null) r.count = 0;
+      var tOf = function (c) {
+        var b = Math.floor(c / r.n), s = c % r.n;
+        return startT + (b + warp(s / r.n, ampFor(i, b))) * bar;
+      };
+      while (tOf(r.count) < now + 0.15) {
+        var c = r.count, t = tOf(c), s = c % r.n, b = Math.floor(c / r.n);
+        if (t >= now - 0.02 && r.pat[s] && !r.muted && i < revealedAt(t)) {
+          hit(r, i, Math.max(t, now), vel(i, b, s, r.n, r.off), s, b);
+        }
+        r.count++;
+      }
+    });
+  }
+
+  function start() {
+    ensureAudio();
+    if (ac.state === "suspended") ac.resume();
+    playing = true;
+    resetClock();
+    lastMix = 0;
+    timer = setInterval(schedule, 25);
+    $("play").setAttribute("aria-pressed", "true");
+    $("play").textContent = "Stop";
+    lastRev = -1;
+    updateNow();
+    loop();
+  }
+  function stop() {
+    playing = false;
+    clearInterval(timer);
+    $("play").setAttribute("aria-pressed", "false");
+    $("play").textContent = "Play";
+    lastRev = -1;
+    updateNow();
+    draw();
+  }
+  $("play").addEventListener("click", function () { playing ? stop() : start(); });
+
+  // Sound controls
+  function setSound(s, keepSliders) {
+    sound = s;
+    if (!keepSliders) { stutter = s.stutter; grit = s.grit; }
+    $("stutter").value = stutter;
+    $("grit").value = grit;
+    $("stutterV").textContent = Math.round(stutter * 100) + "%";
+    $("gritV").textContent = Math.round(grit * 100) + "%";
+    $("soundDesc").textContent = s.desc;
+    var box = $("presets");
+    box.textContent = "";
+    SOUNDS.forEach(function (o) {
+      var b = el("button", "chip", o.name);
+      b.type = "button";
+      b.setAttribute("aria-pressed", o === sound ? "true" : "false");
+      b.addEventListener("click", function () { setSound(o); });
+      box.appendChild(b);
+    });
+    applyGrit();
+  }
+  $("stutter").addEventListener("input", function () {
+    stutter = parseFloat(this.value);
+    $("stutterV").textContent = Math.round(stutter * 100) + "%";
+  });
+  $("grit").addEventListener("input", function () {
+    grit = parseFloat(this.value);
+    $("gritV").textContent = Math.round(grit * 100) + "%";
+    applyGrit();
+  });
+
+  // Drawing
+  function sizeCanvas() {
+    var dpr = Math.min(window.devicePixelRatio || 1, 3);
+    var w = cv.clientWidth;
+    cv.width = Math.round(w * dpr);
+    cv.height = Math.round(w * dpr);
+    g2.setTransform(dpr, 0, 0, dpr, 0, 0);
+    return w;
+  }
+
+  function draw() {
+    var W = sizeCanvas();
+    var css = getComputedStyle(document.documentElement);
+    var fg = css.getPropertyValue("--fg").trim() || "#14181C";
+    var cx = W / 2, cy = W / 2;
+    var outer = W / 2 - 10, inner = W * 0.09;
+    var N = scene.rings.length;
+    var gap = N > 1 ? (outer - inner) / (N - 1) : 0;
+    var rev = revealedNow();
+    var phase = 0, elapsed = 0;
+    if (playing && ac) {
+      elapsed = Math.max(0, ac.currentTime - startT);
+      phase = (elapsed / scene.bar) % 1;
+    }
+    var revealing = playing && scene.reveal && elapsed < N * scene.bar;
+    var mixInfo = playing ? computeMix(rev) : null;
+    g2.clearRect(0, 0, W, W);
+    g2.strokeStyle = fg;
+    g2.fillStyle = fg;
+
+    scene.rings.forEach(function (r, i) {
+      if (i >= rev) return;
+      var R = outer - i * gap;
+      var mg = mixInfo ? mixInfo.gains[i] : 1;
+      var dotAlpha = 0.45 + 0.55 * ((mg - 0.28) / 0.72);
+      var isSel = selected === r;
+      var isNew = revealing && i === rev - 1;
+      g2.globalAlpha = isNew ? 0.9 : (isSel ? 0.5 : 0.16);
+      g2.lineWidth = isNew ? 2 : 1;
+      g2.setLineDash(r.silent ? [3, 6] : []);
+      g2.beginPath();
+      g2.arc(cx, cy, R, 0, Math.PI * 2);
+      g2.stroke();
+      g2.setLineDash([]);
+
+      var circ = 2 * Math.PI * R;
+      var dotR = Math.max(1.6, Math.min(5.5, (circ / r.n) * 0.32, gap * 0.34 || 5.5));
+      if (r.sparse) dotR = Math.min(dotR * 1.7, Math.max(dotR, gap * 0.4 || 7));
+      var bIdx = playing ? Math.floor(elapsed / scene.bar) : 0;
+      var amp = ampFor(i, bIdx);
+      for (var s = 0; s < r.n; s++) {
+        var w0 = warp(s / r.n, amp), w1 = warp((s + 1) / r.n, amp);
+        var a = -Math.PI / 2 + 2 * Math.PI * w0;
+        var x = cx + R * Math.cos(a), y = cy + R * Math.sin(a);
+        if (r.pat[s]) {
+          var vr = dotR * Math.max(0.6, Math.min(1.35, 0.55 + 0.5 * vel(i, bIdx, s, r.n, r.off)));
+          if (r.muted) {
+            g2.globalAlpha = 0.6;
+            g2.lineWidth = 1;
+            g2.beginPath(); g2.arc(x, y, vr, 0, Math.PI * 2); g2.stroke();
+          } else {
+            g2.globalAlpha = dotAlpha;
+            g2.beginPath(); g2.arc(x, y, vr, 0, Math.PI * 2); g2.fill();
+            if (playing && phase >= w0 && phase < w1) {
+              g2.globalAlpha = 0.9;
+              g2.lineWidth = 1.5;
+              g2.beginPath(); g2.arc(x, y, vr * (r.sparse ? 3 : 2.3), 0, Math.PI * 2); g2.stroke();
+            }
+          }
+        } else {
+          g2.globalAlpha = 0.5;
+          g2.beginPath(); g2.arc(x, y, 1.1, 0, Math.PI * 2); g2.fill();
+        }
+      }
+    });
+
+    // playhead
+    var pa = -Math.PI / 2 + 2 * Math.PI * phase;
+    g2.globalAlpha = playing ? 0.75 : 0.35;
+    g2.lineWidth = 1.5;
+    g2.beginPath();
+    g2.moveTo(cx, cy);
+    g2.lineTo(cx + (outer + 6) * Math.cos(pa), cy + (outer + 6) * Math.sin(pa));
+    g2.stroke();
+    g2.globalAlpha = 1;
+    g2.beginPath(); g2.arc(cx, cy, 3, 0, Math.PI * 2); g2.fill();
+  }
+
+  function loop() {
+    if (!playing) return;
+    updateNow();
+    draw();
+    requestAnimationFrame(loop);
+  }
+
+  window.addEventListener("resize", draw);
+  if (window.matchMedia) {
+    var mq = window.matchMedia("(prefers-color-scheme: dark)");
+    if (mq.addEventListener) mq.addEventListener("change", draw);
+  }
+
+  setSound(SOUNDS[0]);
+  setScene(SCENES[0]);
+})();
+</script>
+</body>
+</html>
