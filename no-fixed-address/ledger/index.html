@@ -13,7 +13,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@800;900&family=DM+Mono:wght@400;500&family=Instrument+Sans:wght@400;500;600;700&display=swap">
 <style>
-/* Layout: big headline, a plain how-it-works block, one square of concentric rings, a big caption for the ring that just joined, sound controls, the ring list. Muting a program throws a full-screen poster. Two tones only: ink and paper, swapped in dark. */
+/* One full screen, no page scroll. Layer 1: headline, rings, one big caption, three buttons. Layer 2: Sound sheet. Layer 3: More sheet (how to play, the rings, sources). Facts and chapter cards throw a full-screen poster. Two tones only: ink and paper, swapped in dark. */
 html { color-scheme: light; padding-top: env(safe-area-inset-top, 0px); padding-bottom: env(safe-area-inset-bottom, 0px); }
 body { margin: 0; }
 img { max-width: 100%; }
@@ -36,121 +36,99 @@ img { max-width: 100%; }
 :root[data-theme="dark"] { --bg: var(--ink); --fg: var(--paper); color-scheme: dark; }
 
 * { box-sizing: border-box; }
-html, body { background: var(--bg); }
-body {
-  color: var(--fg);
-  font-family: var(--font-body);
-  font-size: 18px;
-  line-height: 1.45;
-  padding-block: 22px 56px;
-  padding-left: max(16px, env(safe-area-inset-left, 0px));
-  padding-right: max(16px, env(safe-area-inset-right, 0px));
-}
-main { max-width: 600px; margin: 0 auto; display: flex; flex-direction: column; gap: 24px; }
-.eyebrow { font-family: var(--font-data); font-size: 14px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--soft); }
-.sec-title { font: 500 14px/1 var(--font-data); letter-spacing: 0.14em; text-transform: uppercase; color: var(--soft); }
-
-.tabs { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
-@media (min-width: 520px) { .tabs { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
-.chip, .tabs button {
-  font: 500 15px/1.15 var(--font-data);
-  letter-spacing: 0.05em;
-  text-transform: uppercase;
-  color: var(--fg);
-  background: var(--bg);
-  border: 2px solid var(--fg);
-  padding: 12px 8px;
-  min-height: 52px;
-  cursor: pointer;
-}
-.chip[aria-pressed="true"], .tabs button[aria-pressed="true"] { background: var(--fg); color: var(--bg); }
+[hidden] { display: none !important; }
+html, body { background: var(--bg); height: 100%; overflow: hidden; overscroll-behavior: none; }
+body { color: var(--fg); font-family: var(--font-body); font-size: 18px; line-height: 1.4; margin: 0; }
+button, input { font: inherit; }
 button:focus-visible, input:focus-visible { outline: 3px solid var(--fg); outline-offset: 3px; }
 
-h1 {
-  font-family: var(--font-display);
-  font-weight: 700;
-  font-size: clamp(40px, 11.5vw, 64px);
-  line-height: 1.02;
-  letter-spacing: -0.03em;
-  margin: 0;
-  text-wrap: balance;
+.app {
+  position: fixed; inset: 0; margin: 0 auto; max-width: 640px;
+  display: flex; flex-direction: column; gap: 10px;
+  padding-top: calc(env(safe-area-inset-top, 0px) + 10px);
+  padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 12px);
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  touch-action: none; user-select: none; -webkit-user-select: none; -webkit-tap-highlight-color: transparent;
 }
-.sub { margin: 0; font-size: 20px; line-height: 1.4; max-width: 40ch; }
 
-.how { display: flex; flex-direction: column; gap: 14px; border-top: 2px solid var(--fg); padding-top: 16px; }
-.how ol { list-style: none; margin: 0; padding: 0; display: grid; gap: 14px; counter-reset: s; }
-.how li { counter-increment: s; display: grid; grid-template-columns: 34px minmax(0, 1fr); gap: 12px; font-size: 18px; line-height: 1.35; }
-.how li::before { content: counter(s); font: 500 22px/1.1 var(--font-data); }
+.top { display: flex; align-items: center; gap: 8px; }
+.tabs { flex: 1; display: flex; gap: 6px; min-width: 0; }
+.tabs button { flex: 1; min-height: 44px; padding: 0; background: none; border: 0; cursor: pointer; display: flex; align-items: center; }
+.tabs button::before { content: ""; width: 100%; height: 5px; background: var(--faint); }
+.tabs button[aria-pressed="true"]::before { background: var(--fg); }
+.tbtn { flex: none; min-height: 44px; min-width: 44px; padding: 0 12px; background: var(--bg); color: var(--fg); border: 2px solid var(--fg); font: 500 14px/1 var(--font-data); letter-spacing: 0.06em; text-transform: uppercase; cursor: pointer; }
+.eyebrow { font: 500 14px/1 var(--font-data); letter-spacing: 0.14em; text-transform: uppercase; color: var(--soft); }
+
+h1 { margin: 0; font-weight: 700; font-size: clamp(34px, 10.5vw, 60px); line-height: 1.02; letter-spacing: -0.03em; text-wrap: balance; }
+body.on h1 { font-size: clamp(22px, 6.4vw, 32px); line-height: 1.08; letter-spacing: -0.02em; }
+.sub { margin: 0; font-size: 18px; line-height: 1.35; max-width: 40ch; }
+body.on .sub { display: none; }
+
+.stage { position: relative; flex: 1; min-height: 0; display: grid; place-items: center; container-type: size; }
+canvas { width: min(100cqw, 100cqh); height: min(100cqw, 100cqh); display: block; }
+.unit { position: absolute; left: 0; top: 0; font: 500 13px/1.2 var(--font-data); letter-spacing: 0.04em; color: var(--soft); pointer-events: none; }
+.toast { position: absolute; left: 50%; top: 6px; transform: translateX(-50%); background: var(--fg); color: var(--bg); font: 800 15px/1 var(--font-poster); text-transform: uppercase; letter-spacing: 0.02em; padding: 8px 12px; white-space: nowrap; pointer-events: none; opacity: 0; transition: opacity 0.2s; max-width: 100%; overflow: hidden; text-overflow: ellipsis; }
+.toast.show { opacity: 1; }
+
+.gest { font: 500 13px/1.2 var(--font-data); letter-spacing: 0.05em; text-transform: uppercase; color: var(--soft); text-align: center; }
+.now { min-height: 7.6em; display: flex; flex-direction: column; gap: 4px; justify-content: flex-end; }
+.now .cnt { font: 500 14px/1 var(--font-data); letter-spacing: 0.1em; text-transform: uppercase; color: var(--soft); }
+.now .big { font-weight: 700; font-size: clamp(36px, 11vw, 60px); line-height: 1; letter-spacing: -0.03em; overflow-wrap: anywhere; }
+.now .big.br { font-size: clamp(24px, 7vw, 38px); line-height: 1.08; letter-spacing: -0.02em; text-wrap: balance; }
+.now .nm { font-size: 19px; line-height: 1.25; }
+.now .hint { font-size: 21px; line-height: 1.3; }
+
+.bar { display: grid; grid-template-columns: 1.5fr 1fr 1fr; gap: 8px; }
+.play { font: 600 17px/1 var(--font-data); letter-spacing: 0.08em; text-transform: uppercase; min-height: 58px; background: var(--fg); color: var(--bg); border: 2px solid var(--fg); cursor: pointer; padding: 0 6px; }
+.play[aria-pressed="true"] { background: var(--bg); color: var(--fg); }
+.play.alt { background: var(--bg); color: var(--fg); font-size: 15px; }
+.play.alt[aria-pressed="true"] { background: var(--fg); color: var(--bg); }
+
+.chip { font: 500 15px/1.15 var(--font-data); letter-spacing: 0.05em; text-transform: uppercase; color: var(--fg); background: var(--bg); border: 2px solid var(--fg); padding: 12px 8px; min-height: 52px; cursor: pointer; }
+.chip[aria-pressed="true"] { background: var(--fg); color: var(--bg); }
+
+/* Sheets */
+.sheet { position: fixed; inset: 0; z-index: 40; display: flex; align-items: flex-end; justify-content: center; background: color-mix(in srgb, var(--fg) 45%, transparent); touch-action: pan-y; user-select: text; -webkit-user-select: text; }
+.sheet-in { width: 100%; max-width: 640px; max-height: 88dvh; overflow: auto; overscroll-behavior: contain; background: var(--bg); color: var(--fg); border-top: 3px solid var(--fg); display: flex; flex-direction: column; gap: 22px; padding: 0 max(16px, env(safe-area-inset-left, 0px)) calc(env(safe-area-inset-bottom, 0px) + 28px); animation: pIn 0.2s cubic-bezier(0.2, 0.8, 0.2, 1); }
+.sheet-top { position: sticky; top: 0; z-index: 2; background: var(--bg); display: flex; align-items: center; justify-content: space-between; padding: 14px 0 10px; }
+.sec-title { font: 500 14px/1 var(--font-data); letter-spacing: 0.14em; text-transform: uppercase; color: var(--soft); }
+.sheet-x { width: 48px; height: 48px; background: var(--bg); color: var(--fg); border: 2px solid var(--fg); font: 400 30px/1 var(--font-body); cursor: pointer; }
+.sec { display: flex; flex-direction: column; gap: 12px; }
+.sec > p { margin: 0; font-size: 17px; line-height: 1.4; max-width: 60ch; }
+
+.how { list-style: none; margin: 0; padding: 0; display: grid; gap: 12px; counter-reset: s; }
+.how li { counter-increment: s; display: grid; grid-template-columns: 30px minmax(0, 1fr); gap: 10px; font-size: 18px; line-height: 1.35; }
+.how li::before { content: counter(s); font: 500 20px/1.2 var(--font-data); }
 .how b { font-weight: 700; }
-
-.key { list-style: none; margin: 0; padding: 14px 0; border-block: 1px solid var(--fg); display: grid; gap: 12px; }
+.key { list-style: none; margin: 0; padding: 12px 0; border-block: 1px solid var(--fg); display: grid; gap: 10px; }
 .key li { display: grid; grid-template-columns: 34px minmax(0, 1fr); gap: 12px; align-items: center; font-size: 17px; line-height: 1.3; }
 .glyph { display: grid; place-items: center; height: 24px; }
 .g-on { width: 16px; height: 16px; border-radius: 50%; background: var(--fg); }
 .g-off { width: 4px; height: 4px; border-radius: 50%; background: var(--fg); opacity: 0.5; }
 .g-dash { width: 28px; height: 28px; border-radius: 50%; border: 2px dashed var(--fg); }
 
-.unit { font: 500 20px/1.2 var(--font-data); letter-spacing: 0.02em; }
-.stage { position: relative; width: 100%; aspect-ratio: 1; }
-canvas { width: 100%; height: 100%; display: block; }
-
-.now { min-height: 8.6em; display: flex; flex-direction: column; gap: 6px; }
-.now .cnt { font: 500 15px/1 var(--font-data); letter-spacing: 0.1em; text-transform: uppercase; color: var(--soft); }
-.now .big { font-weight: 700; font-size: clamp(44px, 13vw, 76px); line-height: 1; letter-spacing: -0.03em; overflow-wrap: anywhere; }
-.now .nm { font-size: 22px; line-height: 1.25; }
-.now .hint { font-size: 22px; line-height: 1.3; }
-
-.play {
-  font: 600 18px/1 var(--font-data);
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  width: 100%;
-  min-height: 64px;
-  background: var(--fg);
-  color: var(--bg);
-  border: 2px solid var(--fg);
-  cursor: pointer;
-}
-.play[aria-pressed="true"] { background: var(--bg); color: var(--fg); }
-
-.sound { display: flex; flex-direction: column; gap: 14px; border-top: 2px solid var(--fg); padding-top: 16px; }
 .presets { display: flex; flex-wrap: wrap; gap: 8px; }
 .presets .chip { flex: 1 1 28%; }
-.sound-desc { margin: 0; font-size: 18px; min-height: 1.5em; }
-.slider { display: grid; grid-template-columns: 5.5em minmax(0, 1fr) 3.2em; gap: 12px; align-items: center; font: 500 16px/1 var(--font-data); text-transform: uppercase; letter-spacing: 0.06em; }
+.sound-desc { margin: 0; font-size: 18px; min-height: 1.4em; }
+.slider { display: grid; grid-template-columns: 8.5em minmax(0, 1fr) 3.2em; gap: 12px; align-items: center; font: 500 15px/1 var(--font-data); text-transform: uppercase; letter-spacing: 0.06em; }
 .slider input { width: 100%; min-height: 44px; accent-color: var(--fg); }
 .slider output { text-align: right; }
 .tiny { margin: 0; font-size: 15px; color: var(--soft); }
 
 .rings { list-style: none; margin: 0; padding: 0; border-top: 2px solid var(--fg); }
 .rings li { border-bottom: 1px solid var(--faint); }
-.rings button {
-  display: grid;
-  grid-template-columns: 16px minmax(0, 1fr) auto;
-  gap: 14px;
-  align-items: center;
-  width: 100%;
-  min-height: 60px;
-  padding: 10px 0;
-  background: none;
-  border: 0;
-  color: var(--fg);
-  text-align: left;
-  font: inherit;
-  cursor: pointer;
-}
+.rings button { display: grid; grid-template-columns: 16px minmax(0, 1fr) auto; gap: 14px; align-items: center; width: 100%; min-height: 56px; padding: 8px 0; background: none; border: 0; color: var(--fg); text-align: left; cursor: pointer; }
 .dot { width: 14px; height: 14px; border: 2px solid var(--fg); border-radius: 50%; background: var(--fg); }
 .rings button[aria-pressed="false"] .dot { background: transparent; }
 .rings button[data-silent="true"] .dot { border-style: dashed; background: transparent; }
-.rings .name { min-width: 0; font-size: 19px; line-height: 1.25; overflow-wrap: anywhere; }
-.rings .val { font: 500 16px/1.2 var(--font-data); text-align: right; max-width: 9em; }
+.rings .name { min-width: 0; font-size: 18px; line-height: 1.25; overflow-wrap: anywhere; }
+.rings .val { font: 500 15px/1.2 var(--font-data); text-align: right; max-width: 9em; }
 .rings button[aria-pressed="false"] .name { color: var(--soft); text-decoration: line-through; text-decoration-thickness: 1px; }
 .rings li.later { opacity: 0.35; }
-
-.detail { margin: 0; min-height: 5.5em; font-size: 18px; line-height: 1.45; }
+.detail { margin: 0; min-height: 4em; font-size: 17px; line-height: 1.4; }
 .detail b { font-weight: 700; }
-
-.about { border-top: 2px solid var(--fg); padding-top: 16px; display: flex; flex-direction: column; gap: 12px; font-size: 16px; line-height: 1.45; color: var(--soft); }
+.about { display: flex; flex-direction: column; gap: 12px; font-size: 16px; line-height: 1.45; color: var(--soft); }
 .about p { margin: 0; max-width: 60ch; }
 .about a { color: var(--fg); text-underline-offset: 3px; }
 .links { display: flex; flex-wrap: wrap; gap: 8px 18px; }
@@ -165,11 +143,11 @@ canvas { width: 100%; height: 100%; display: block; }
   padding-left: max(16px, env(safe-area-inset-left, 0px));
   padding-right: max(16px, env(safe-area-inset-right, 0px));
   font-family: var(--font-poster);
-  overflow: auto;
+  overflow: auto; touch-action: manipulation;
 }
 .poster:not([hidden]) { animation: pIn 0.22s cubic-bezier(0.2, 0.8, 0.2, 1); }
 @keyframes pIn { from { transform: translateY(5%); opacity: 0; } to { transform: none; opacity: 1; } }
-@media (prefers-reduced-motion: reduce) { .poster:not([hidden]) { animation: none; } }
+@media (prefers-reduced-motion: reduce) { .poster:not([hidden]), .sheet-in { animation: none; } .toast { transition: none; } }
 .p-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; padding-bottom: 14px; border-bottom: 8px solid var(--bg); }
 .p-label { font: 500 15px/1.3 var(--font-data); letter-spacing: 0.1em; text-transform: uppercase; min-width: 0; overflow-wrap: anywhere; padding-top: 6px; }
 .p-x { flex: none; width: 52px; height: 52px; background: transparent; color: var(--bg); border: 3px solid var(--bg); font: 400 34px/1 var(--font-poster); cursor: pointer; }
@@ -177,69 +155,89 @@ canvas { width: 100%; height: 100%; display: block; }
 .p-big { font-weight: 900; text-transform: uppercase; line-height: 1; letter-spacing: -0.035em; overflow-wrap: anywhere; }
 .p-big span { background: var(--bg); color: var(--fg); padding: 0 0.08em; -webkit-box-decoration-break: clone; box-decoration-break: clone; }
 .p-text { font-weight: 800; text-transform: uppercase; font-size: clamp(26px, 7vw, 44px); line-height: 1.03; letter-spacing: -0.01em; max-width: 20ch; }
-.p-bottom { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.p-bottom { display: grid; grid-template-columns: repeat(auto-fit, minmax(0, 1fr)); gap: 10px; }
 .p-btn { min-height: 60px; background: transparent; color: var(--bg); border: 3px solid var(--bg); font: 600 16px/1.1 var(--font-data); letter-spacing: 0.06em; text-transform: uppercase; cursor: pointer; padding: 8px; }
 .p-btn.solid { background: var(--bg); color: var(--fg); }
 .poster button:focus-visible { outline: 3px solid var(--bg); outline-offset: 3px; }
-
-@media (prefers-reduced-motion: reduce) { * { scroll-behavior: auto; } }
 </style>
 </head>
 <body>
-<main>
-  <div class="eyebrow">No Fixed Address</div>
-  <nav class="tabs" id="tabs" aria-label="Choose a data set"></nav>
+<div class="app" id="app">
+  <div class="top">
+    <nav class="tabs" id="tabs" aria-label="Chapters"></nav>
+    <button class="tbtn" id="soundBtn" type="button" aria-haspopup="dialog">Sound</button>
+    <button class="tbtn" id="moreBtn" type="button" aria-haspopup="dialog" aria-label="How to play, the rings and sources">?</button>
+  </div>
+  <div class="eyebrow" id="eyebrow">No Fixed Address</div>
   <h1 id="headline"></h1>
   <p class="sub" id="sub"></p>
 
-  <section class="how" aria-label="How it works">
-    <div class="sec-title">How it works</div>
-    <ol>
-      <li><span>Every ring is one program or number from the news. <b>Every dot on it is a beat.</b></span></li>
-      <li><span>Press Play. Rings join one at a time. A bigger number gets more beats.</span></li>
-      <li><span><b>Tap a name in the list to mute it.</b> A fact about what goes quiet takes over the screen. Mute it again and you get a different fact.</span></li>
-      <li><span>A ring with only a few beats plays a short tune. Each beat is its own note, and it can roll.</span></li>
-      <li><span>Change the sound below. Try Glitch or Jungle.</span></li>
-    </ol>
-  </section>
+  <div class="stage">
+    <canvas id="cv" role="img" aria-label="Concentric rings. Each ring is one number from the news, played as a rhythm. Tap a ring to mute it."></canvas>
+    <div class="unit" id="unit"></div>
+    <div class="toast" id="toast" role="status" aria-live="polite"></div>
+  </div>
 
-  <ul class="key" aria-label="Key to the dots">
-    <li><span class="glyph"><span class="g-on"></span></span><span>A big dot is a beat you can hear.</span></li>
-    <li><span class="glyph"><span class="g-off"></span></span><span>A tiny dot is a beat that went quiet.</span></li>
-    <li><span class="glyph"><span class="g-dash"></span></span><span>A dashed ring is something shut down. It makes no sound.</span></li>
-  </ul>
-
-  <div class="unit" id="unit"></div>
-  <div class="stage"><canvas id="cv" role="img" aria-label="Concentric rings. Each ring is one number from the news, played as a rhythm."></canvas></div>
-
+  <div class="gest" id="gest">Tap a ring · Swipe · Drag up or down</div>
   <div class="now" id="now" aria-live="polite"></div>
 
-  <button class="play" id="play" aria-pressed="false">Play</button>
+  <div class="bar">
+    <button class="play" id="play" type="button" aria-pressed="false">Play</button>
+    <button class="play alt" id="story" type="button" aria-pressed="false">Story</button>
+    <button class="play alt" id="nextBtn" type="button">Next</button>
+  </div>
+</div>
 
-  <section class="sound" aria-label="Sound">
-    <div class="sec-title">Sound</div>
-    <div class="presets" id="presets"></div>
-    <p class="sound-desc" id="soundDesc"></p>
-    <label class="slider"><span>Stutter</span><input type="range" id="stutter" min="0" max="1" step="0.05"><output id="stutterV"></output></label>
-    <label class="slider"><span>Grit</span><input type="range" id="grit" min="0" max="1" step="0.05"><output id="gritV"></output></label>
-    <p class="tiny">Stutter makes beats roll and repeat. Grit adds crunch. Both work with every sound.</p>
-  </section>
-
-  <ul class="rings" id="rings"></ul>
-  <p class="detail" id="detail" aria-live="polite"></p>
-
-  <section class="about">
-    <p>The beats bunch together and spread out, and get louder and softer, a little differently on every turn. Bigger dots are harder hits. As more rings join, the earlier ones step back. Mute a ring and the others come forward.</p>
-    <p>The facts describe what each program does. They show what is at risk, and not every cut was final. The program cuts come from CLASP, an advocacy group, using news reports from spring 2025. The savings figures come from coverage of a government audit, NPR and Musk Watch, so check the originals before you quote them. The refugee figures are from the United Nations refugee agency. They sit beside the cuts and do not claim one caused the other.</p>
-    <div class="links">
-      <a href="https://www.clasp.org/doge-tracker/" target="_blank" rel="noopener">CLASP DOGE Tracker</a>
-      <a href="https://thedailyrecord.com/2026/08/06/gao-finds-errors-elon-musk-doge-government-savings/" target="_blank" rel="noopener">GAO audit coverage</a>
-      <a href="https://www.muskwatch.com/p/data-reveals-musk-has-delivered-025" target="_blank" rel="noopener">Musk Watch</a>
-      <a href="https://www.npr.org/2025/02/19/nx-s1-5302705/doge-overstates-savings-federal-contracts" target="_blank" rel="noopener">NPR analysis</a>
-      <a href="https://www.unhcr.org/sites/default/files/2026-06/global-trends-report-2025.pdf" target="_blank" rel="noopener">UNHCR Global Trends 2025</a>
+<div class="sheet" id="sheetSound" hidden>
+  <div class="sheet-in" role="dialog" aria-modal="true" aria-label="Sound">
+    <div class="sheet-top"><div class="sec-title">Sound</div><button class="sheet-x" type="button" data-close aria-label="Close">&times;</button></div>
+    <div class="sec">
+      <div class="presets" id="presets"></div>
+      <p class="sound-desc" id="soundDesc"></p>
+      <label class="slider"><span>Stutter</span><input type="range" id="stutter" min="0" max="1" step="0.05"><output id="stutterV"></output></label>
+      <label class="slider"><span>Grit</span><input type="range" id="grit" min="0" max="1" step="0.05"><output id="gritV"></output></label>
+      <label class="slider"><span>Velocity chaos</span><input type="range" id="chaos" min="0" max="1" step="0.05"><output id="chaosV"></output></label>
+      <button class="chip" id="shuffle" type="button">Shuffle velocities</button>
+      <p class="tiny">Stutter makes beats roll and repeat. Grit adds crunch. Velocity chaos makes every hit a random volume, and you can see it in the dot sizes. On the rings, drag up and down for chaos, and tap the centre to shuffle.</p>
     </div>
-  </section>
-</main>
+  </div>
+</div>
+
+<div class="sheet" id="sheetMore" hidden>
+  <div class="sheet-in" role="dialog" aria-modal="true" aria-label="How to play">
+    <div class="sheet-top"><div class="sec-title">How to play</div><button class="sheet-x" type="button" data-close aria-label="Close">&times;</button></div>
+    <div class="sec">
+      <ol class="how">
+        <li><span><b>Tap a ring to mute it.</b> A fact about what goes quiet fills the screen. Mute it again for a different fact.</span></li>
+        <li><span><b>Swipe left or right</b> for the next chapter, or press <b>Story</b> to hear all four in order.</span></li>
+        <li><span><b>Drag up and down</b> on the rings to make the volumes wild. <b>Tap the centre</b> to shuffle them.</span></li>
+        <li><span>Every ring is one program or number from the news. <b>Every dot on it is a beat.</b> A bigger number gets more beats.</span></li>
+        <li><span>A ring with only a few beats plays a short tune. Open <b>Sound</b> for Glitch, Jungle and Break.</span></li>
+      </ol>
+      <ul class="key" aria-label="Key to the dots">
+        <li><span class="glyph"><span class="g-on"></span></span><span>A big dot is a beat you can hear.</span></li>
+        <li><span class="glyph"><span class="g-off"></span></span><span>A tiny dot is a beat that went quiet.</span></li>
+        <li><span class="glyph"><span class="g-dash"></span></span><span>A dashed ring is something shut down. It makes no sound.</span></li>
+      </ul>
+    </div>
+    <div class="sec">
+      <div class="sec-title">The rings</div>
+      <ul class="rings" id="rings"></ul>
+      <p class="detail" id="detail" aria-live="polite"></p>
+    </div>
+    <section class="about">
+      <p>The four chapters tell one story: the claim, the cuts, the people and the world. The beats bunch together and spread out, and get louder and softer, a little differently on every turn. Bigger dots are harder hits. As more rings join, the earlier ones step back. Mute a ring and the others come forward.</p>
+      <p>The facts describe what each program does. They show what is at risk, and not every cut was final. The program cuts come from CLASP, an advocacy group, using news reports from spring 2025. The savings figures come from coverage of a government audit, NPR and Musk Watch, so check the originals before you quote them. The refugee figures are from the United Nations refugee agency. They sit beside the cuts and do not claim one caused the other.</p>
+      <div class="links">
+        <a href="https://www.clasp.org/doge-tracker/" target="_blank" rel="noopener">CLASP DOGE Tracker</a>
+        <a href="https://thedailyrecord.com/2026/08/06/gao-finds-errors-elon-musk-doge-government-savings/" target="_blank" rel="noopener">GAO audit coverage</a>
+        <a href="https://www.muskwatch.com/p/data-reveals-musk-has-delivered-025" target="_blank" rel="noopener">Musk Watch</a>
+        <a href="https://www.npr.org/2025/02/19/nx-s1-5302705/doge-overstates-savings-federal-contracts" target="_blank" rel="noopener">NPR analysis</a>
+        <a href="https://www.unhcr.org/sites/default/files/2026-06/global-trends-report-2025.pdf" target="_blank" rel="noopener">UNHCR Global Trends 2025</a>
+      </div>
+    </section>
+  </div>
+</div>
 
 <div class="poster" id="poster" role="dialog" aria-modal="true" aria-label="A fact" hidden>
   <div class="p-top">
@@ -277,7 +275,7 @@ canvas { width: 100%; height: 100%; display: block; }
     {
       id: "cuts", tab: "Programs cut", bar: 3.2, reveal: true,
       headline: "9 programs cut. 4 shut down.",
-      sub: "Each ring is one US government program. A full ring is the whole program. Every cut takes beats away. When a program is shut down, its ring goes silent.",
+      sub: "The claims turn into real programs. Each ring is one US government program. A full ring is the whole program. Every cut takes beats away, and a shut down program goes silent.",
       unit: "16 dots = the whole program",
       hint: "Press Play. One program joins after every full turn.",
       rings: [
@@ -293,9 +291,9 @@ canvas { width: 100%; height: 100%; display: block; }
       ]
     },
     {
-      id: "people", tab: "People laid off", bar: 6, reveal: true,
+      id: "people", tab: "People laid off", bar: 5, reveal: true,
       headline: "12 programs lost staff. The biggest lost thousands.",
-      sub: "Each ring is one agency or office. The more people laid off, the more beats in its ring. Biggest first.",
+      sub: "The same cuts, counted in people, plus the biggest agencies. The more people laid off, the more beats in the ring. Biggest first.",
       unit: "1 dot = about 100 people laid off",
       hint: "Press Play. One agency joins after every full turn.",
       rings: [
@@ -316,7 +314,7 @@ canvas { width: 100%; height: 100%; display: block; }
     {
       id: "displaced", tab: "People forced to flee", bar: 10, reveal: false,
       headline: "117.8 million people forced from their homes.",
-      sub: "That is 1 in every 70 people on Earth, counted at the end of 2025. It fell by 5.4 million during the year, the first fall in about ten years.",
+      sub: "Zoom out. These counts are separate from the cuts, but they show how many people need a safety net. That is 1 in every 70 people on Earth at the end of 2025. It fell by 5.4 million in the year, the first fall in about ten years.",
       unit: "1 dot = 1 million people",
       hint: "Press Play. Listen to how many beats there are.",
       rings: [
@@ -335,7 +333,9 @@ canvas { width: 100%; height: 100%; display: block; }
     "What DOGE claimed": [
       ["30%", "of the claimed savings have published paperwork behind them."],
       ["$8 billion", "a typo made an $8 million contract look 1,000 times bigger."],
-      ["13,476", "contracts DOGE said it ended."]
+      ["13,476", "contracts DOGE said it ended."],
+      ["$2 billion", "claimed for one USAID project at launch. It was later listed at $18 million."],
+      ["Foreign aid", "the contracts DOGE targeted included proposed halts to billions of dollars of international aid work, NPR found."]
     ],
     "Failed the audit: could not be verified or was wrong": [
       ["$110 billion", "of DOGE's claims were checked by the US government watchdog."],
@@ -492,6 +492,15 @@ canvas { width: 100%; height: 100%; display: block; }
     ]
   };
 
+  // The story: four chapters. Each has a title card, a line that leads to the next chapter, and how many extra turns to play in story mode.
+  var STORY = [
+    { ch: "The claim", big: "The claim", text: "DOGE said it saved $215 billion. How much can anyone confirm?", bridge: "So what was actually cut? Meet the programs.", next: "Next: The cuts" },
+    { ch: "The cuts", big: "The cuts", text: "Behind the numbers are real programs. Listen to what each one loses.", bridge: "Every cut is also people out of work. Count them.", next: "Next: The people" },
+    { ch: "The people", big: "The people", text: "Each cut is also people out of work. Here they are, agency by agency.", bridge: "Now zoom out to the world.", next: "Next: The world" },
+    { ch: "The world", big: "The world", text: "Zoom out. These counts are separate from the cuts, but they show how many people need a safety net.", bridge: "Back to the start: $215 billion claimed.", next: "Start again" }
+  ];
+  var EXTRA = [3, 2, 1, 3];
+
   var SCALE = [1, 9 / 8, 5 / 4, 3 / 2, 5 / 3, 2];
 
   var SOUNDS = [
@@ -499,7 +508,8 @@ canvas { width: 100%; height: 100%; display: block; }
     { id: "glass", name: "Glass", desc: "Ringing bells.", stutter: 0.1, grit: 0 },
     { id: "machine", name: "Machine", desc: "Buzzy synth stabs.", stutter: 0.2, grit: 0.2 },
     { id: "glitch", name: "Glitch", desc: "Clicks, zaps and stutters.", stutter: 0.55, grit: 0.25 },
-    { id: "jungle", name: "Jungle", desc: "Breakbeat drums and sub bass. Dense rings turn into hats.", stutter: 0.45, grit: 0.15 }
+    { id: "jungle", name: "Jungle", desc: "Breakbeat drums and sub bass. Dense rings turn into hats.", stutter: 0.45, grit: 0.15 },
+    { id: "break", name: "Break", desc: "Heavy, pitched-down breakbeat with a dub echo.", stutter: 0.5, grit: 0.45 }
   ];
 
   function euclid(n, k) {
@@ -521,6 +531,13 @@ canvas { width: 100%; height: 100%; display: block; }
     });
   });
 
+  SCENES.forEach(function (s, i) {
+    s.tab = (i + 1) + " " + STORY[i].ch;
+    s.bridge = STORY[i].bridge;
+    s.nextLabel = STORY[i].next;
+    s.storyDur = ((s.reveal ? s.rings.length : 0) + EXTRA[i]) * s.bar;
+  });
+
   // Dynamics. Both change on every turn, a little differently for each ring.
   function warp(u, a) { return u + (a * Math.sin(2 * Math.PI * u)) / (2 * Math.PI); }
   function ampFor(i, b) {
@@ -534,7 +551,11 @@ canvas { width: 100%; height: 100%; display: block; }
   function vel(i, b, s, n, off) {
     var u = s / n;
     var sw = 0.5 + 0.5 * Math.sin(2 * Math.PI * u * (1 + (i % 3)) + b * 1.1 + i * 0.8);
-    return (0.3 + 0.7 * sw) * (s === off ? 1.35 : 1) * (0.88 + 0.24 * rh(i, b, s, 0));
+    var base = (0.3 + 0.7 * sw) * (s === off ? 1.35 : 1) * (0.88 + 0.24 * rh(i, b, s, 0));
+    if (chaos <= 0) return base;
+    // Velocity chaos: blend the designed dynamics toward a fully random volume for every hit.
+    var rnd = 0.12 + 1.48 * rh(i, b, s, 11 + seed);
+    return base * (1 - chaos) + rnd * chaos;
   }
 
   var $ = function (id) { return document.getElementById(id); };
@@ -542,7 +563,8 @@ canvas { width: 100%; height: 100%; display: block; }
   var scene = SCENES[0], selected = null, lastRev = -1;
   var ac = null, master = null, pre = null, drive = null, post = null, noiseBuf = null;
   var playing = false, startT = 0, timer = null, lastMix = 0;
-  var sound = SOUNDS[0], stutter = SOUNDS[0].stutter, grit = SOUNDS[0].grit;
+  var sound = SOUNDS[0], stutter = SOUNDS[0].stutter, grit = SOUNDS[0].grit, chaos = 0, seed = 0;
+  var story = false, posterTimer = null, dlySend = null;
 
   function el(tag, cls, text) {
     var e = document.createElement(tag);
@@ -585,6 +607,9 @@ canvas { width: 100%; height: 100%; display: block; }
   }
   function showFact(r) {
     posterRing = r;
+    clearTimeout(posterTimer);
+    $("pNext").hidden = false;
+    $("pBack").textContent = "Back to the music";
     var f = nextFact(r);
     $("pLabel").textContent = (r.silent ? "Shut down" : "Muted") + " · " + r.name;
     var big = $("pBig");
@@ -596,13 +621,30 @@ canvas { width: 100%; height: 100%; display: block; }
     fitBig();
     if (document.fonts && document.fonts.ready) document.fonts.ready.then(fitBig);
     if (wasHidden) $("pBack").focus({ preventScroll: true });
+    posterTimer = setTimeout(hidePoster, 9000);
   }
-  function hidePoster() { $("poster").hidden = true; posterRing = null; }
+  function hidePoster() { $("poster").hidden = true; posterRing = null; clearTimeout(posterTimer); }
+  // A chapter card: same poster, no fact buttons, clears itself after a few seconds while the music keeps going.
+  function showCard(label, big, text) {
+    posterRing = null;
+    clearTimeout(posterTimer);
+    $("pLabel").textContent = label;
+    var b = $("pBig");
+    b.textContent = "";
+    b.appendChild(el("span", null, big));
+    $("pText").textContent = text;
+    $("pNext").hidden = true;
+    $("pBack").textContent = "Continue";
+    $("poster").hidden = false;
+    fitBig();
+    if (document.fonts && document.fonts.ready) document.fonts.ready.then(fitBig);
+    posterTimer = setTimeout(hidePoster, 7000);
+  }
   $("pClose").addEventListener("click", hidePoster);
   $("pBack").addEventListener("click", hidePoster);
   $("pNext").addEventListener("click", function () { if (posterRing) showFact(posterRing); });
-  $("poster").addEventListener("click", function (e) { if (e.target === $("poster") || e.target === $("pMain")) hidePoster(); });
-  document.addEventListener("keydown", function (e) { if (e.key === "Escape") hidePoster(); });
+  $("poster").addEventListener("click", function (e) { if (!e.target.closest("button")) hidePoster(); });
+  document.addEventListener("keydown", function (e) { if (e.key === "Escape") { hidePoster(); closeSheets(); } });
   window.addEventListener("resize", fitBig);
 
   // How many rings are showing right now (all of them unless a reveal is running).
@@ -621,10 +663,11 @@ canvas { width: 100%; height: 100%; display: block; }
     var nav = $("tabs");
     nav.textContent = "";
     SCENES.forEach(function (s) {
-      var b = el("button", null, s.tab);
+      var b = el("button");
       b.type = "button";
+      b.setAttribute("aria-label", "Chapter " + s.tab);
       b.setAttribute("aria-pressed", s === scene ? "true" : "false");
-      b.addEventListener("click", function () { setScene(s); });
+      b.addEventListener("click", function () { story = false; setScene(s); });
       nav.appendChild(b);
     });
   }
@@ -641,16 +684,7 @@ canvas { width: 100%; height: 100%; display: block; }
       b.appendChild(el("span", "dot"));
       b.appendChild(el("span", "name", r.name));
       b.appendChild(el("span", "val", r.val));
-      b.addEventListener("click", function () {
-        if (!r.silent) r.muted = !r.muted;
-        selected = r;
-        renderRings();
-        lastRev = -1;
-        showDetail();
-        updateNow();
-        draw();
-        if (r.facts && (r.silent || r.muted)) showFact(r); else hidePoster();
-      });
+      b.addEventListener("click", function () { toggleRing(r); });
       li.appendChild(b);
       ul.appendChild(li);
     });
@@ -663,25 +697,33 @@ canvas { width: 100%; height: 100%; display: block; }
       d.appendChild(el("b", null, selected.name + ", " + selected.val + ". "));
       d.appendChild(document.createTextNode(selected.note));
     } else {
-      d.textContent = "Tap a name in the list to mute that ring. A fact fills the screen, and you see where its number comes from here.";
+      d.textContent = "Tap a name to mute that ring, the same as tapping it on the screen. You see where its number comes from here.";
     }
   }
 
   // The big caption: the ring that just joined while a reveal plays, otherwise a short hint.
   function updateNow() {
     var rev = revealedNow();
-    if (rev === lastRev) return;
-    lastRev = rev;
+    var N = scene.rings.length;
+    var e0 = (playing && ac) ? Math.max(0, ac.currentTime - startT) : 0;
+    var done = playing && e0 >= (scene.reveal ? N : 2) * scene.bar;
+    var key = rev + (done ? 1000 : 0) + (playing ? 0 : 5000);
+    if (key === lastRev) return;
+    lastRev = key;
     var box = $("now");
     box.textContent = "";
-    var N = scene.rings.length;
-    if (playing && scene.reveal) {
+    if (done) {
+      // Once a chapter has played through, the screen leads into the next one.
+      box.appendChild(el("div", "cnt", "Then"));
+      box.appendChild(el("div", "big br", scene.bridge));
+    } else if (playing && scene.reveal) {
       var r = scene.rings[rev - 1];
       box.appendChild(el("div", "cnt", "Now joining: " + rev + " of " + N));
       box.appendChild(el("div", "big", r.val));
       box.appendChild(el("div", "nm", r.name));
     } else if (playing) {
-      box.appendChild(el("div", "hint", "Listening. Tap a name below to mute a ring."));
+      box.appendChild(el("div", "cnt", "Listening"));
+      box.appendChild(el("div", "hint", "Tap a ring to mute it."));
     } else {
       box.appendChild(el("div", "hint", scene.hint));
     }
@@ -699,6 +741,11 @@ canvas { width: 100%; height: 100%; display: block; }
     $("headline").textContent = s.headline;
     $("sub").textContent = s.sub;
     $("unit").textContent = s.unit;
+    $("eyebrow").textContent = (SCENES.indexOf(s) + 1) + " of " + SCENES.length + " · " + STORY[SCENES.indexOf(s)].ch;
+    var last = SCENES.indexOf(s) === SCENES.length - 1;
+    $("nextBtn").textContent = last ? "Again" : "Next";
+    $("nextBtn").setAttribute("aria-label", s.nextLabel);
+    updateStoryBtn();
     renderTabs();
     renderRings();
     showDetail();
@@ -753,7 +800,20 @@ canvas { width: 100%; height: 100%; display: block; }
     drive.oversample = "2x";
     post = ac.createGain();
     master.connect(pre); pre.connect(drive); drive.connect(post); post.connect(comp); comp.connect(ac.destination);
+    // dub echo, only open for the Break sound
+    dlySend = ac.createGain();
+    var dly = ac.createDelay(1), fb = ac.createGain(), dlp = ac.createBiquadFilter();
+    dly.delayTime.value = 0.18;
+    fb.gain.value = 0.46;
+    dlp.type = "lowpass";
+    dlp.frequency.value = 2200;
+    master.connect(dlySend); dlySend.connect(dly); dly.connect(dlp); dlp.connect(fb); fb.connect(dly); dlp.connect(pre);
     applyGrit();
+    applyDub();
+  }
+  function applyDub() {
+    if (!ac) return;
+    dlySend.gain.value = sound.id === "break" ? 0.32 : 0;
   }
   function ringNode(r) {
     if (!r.node || r.nodeCtx !== ac) {
@@ -836,6 +896,14 @@ canvas { width: 100%; height: 100%; display: block; }
       else if (kind === 1) osc("square", f * 2, t, 0.03 + 0.03 * rnd, g * 0.5, dest, { pan: pan });
       else if (kind === 2) osc("sine", f * 4, t, 0.09, g * 1.2, dest, { to: r.f * 0.5, glide: 0.08, pan: pan });
       else burst(t, 0.012, g * 2.4, "highpass", 6000 + rnd * 5000, 1, dest, pan);
+    } else if (id === "break") {
+      // Same roles as Jungle, dropped in pitch, longer and darker, with a hard crack on the snare.
+      var tb = r.k > 24 ? "hat" : r.f <= 100 ? "sub" : r.f <= 160 ? "kick" : r.f <= 300 ? "snare" : r.f <= 700 ? "rim" : "hat";
+      if (tb === "sub") osc("sine", r.f * 0.75, t, Math.max(0.7, d), g * 1.6, dest, { to: r.f * 0.5, glide: 0.6 });
+      else if (tb === "kick") { osc("sine", 105, t, 0.35, g * 3.4, dest, { to: 30, glide: 0.16 }); burst(t, 0.012, g * 1.2, "lowpass", 600, 0.7, dest); }
+      else if (tb === "snare") { burst(t, 0.24, g * 3.2, "bandpass", 1100, 0.9, dest); osc("triangle", 135, t, 0.12, g * 2.4, dest, { to: 90, glide: 0.1 }); burst(t, 0.05, g * 1.2, "highpass", 3500, 0.8, dest); }
+      else if (tb === "rim") { burst(t, 0.06, g * 2.4, "bandpass", 1500, 3, dest); osc("square", 540 * mul, t, 0.035, g * 0.8, dest); }
+      else burst(t, rnd > 0.85 ? 0.16 : 0.05, g * 2.2, "bandpass", 5200, 1.5, dest, (rnd * 2 - 1) * 0.4);
     } else {
       var ty = r.k > 24 ? "hat" : r.f <= 100 ? "sub" : r.f <= 160 ? "kick" : r.f <= 300 ? "snare" : r.f <= 700 ? "rim" : "hat";
       if (ty === "sub") osc("sine", r.f, t, Math.max(0.5, d), g * 1.4, dest, { to: r.f * 0.8, glide: 0.4 });
@@ -862,6 +930,7 @@ canvas { width: 100%; height: 100%; display: block; }
   function schedule() {
     if (!playing) return;
     var now = ac.currentTime, bar = scene.bar;
+    if (story && now - startT > scene.storyDur) { advance(); return; }
     if (now - lastMix > 0.1) { updateMix(now); lastMix = now; }
     scene.rings.forEach(function (r, i) {
       // a low knock when a shut-down program joins
@@ -893,20 +962,57 @@ canvas { width: 100%; height: 100%; display: block; }
     timer = setInterval(schedule, 25);
     $("play").setAttribute("aria-pressed", "true");
     $("play").textContent = "Stop";
+    document.body.classList.add("on");
     lastRev = -1;
     updateNow();
     loop();
   }
   function stop() {
     playing = false;
+    story = false;
+    updateStoryBtn();
     clearInterval(timer);
     $("play").setAttribute("aria-pressed", "false");
     $("play").textContent = "Play";
+    document.body.classList.remove("on");
     lastRev = -1;
     updateNow();
     draw();
   }
-  $("play").addEventListener("click", function () { playing ? stop() : start(); });
+  $("play").addEventListener("click", function () { story = false; playing ? stop() : start(); });
+
+  // Story mode: play the four chapters in order, with a title card between them.
+  function updateStoryBtn() {
+    var b = $("story");
+    b.setAttribute("aria-pressed", story ? "true" : "false");
+    b.textContent = story ? (SCENES.indexOf(scene) + 1) + " of " + SCENES.length : "Story";
+  }
+  function chapterCard(i) {
+    showCard("Chapter " + (i + 1) + " of " + SCENES.length + " · " + STORY[i].ch, STORY[i].big, STORY[i].text);
+  }
+  function startStory() {
+    story = true;
+    setScene(SCENES[0]);
+    if (!playing) start();
+    chapterCard(0);
+    updateStoryBtn();
+  }
+  function advance() {
+    var i = SCENES.indexOf(scene);
+    if (i < SCENES.length - 1) {
+      setScene(SCENES[i + 1]);
+      chapterCard(i + 1);
+    } else {
+      story = false;
+      updateStoryBtn();
+      showCard("The end", "Check the counts.", "Every ring is a number someone claimed or counted. The sources are at the bottom of the page.");
+    }
+  }
+  $("story").addEventListener("click", function () { story ? stop() : startStory(); });
+  $("nextBtn").addEventListener("click", function () {
+    story = false;
+    goChapter(1);
+  });
 
   // Sound controls
   function setSound(s, keepSliders) {
@@ -916,7 +1022,11 @@ canvas { width: 100%; height: 100%; display: block; }
     $("grit").value = grit;
     $("stutterV").textContent = Math.round(stutter * 100) + "%";
     $("gritV").textContent = Math.round(grit * 100) + "%";
+    $("chaos").value = chaos;
+    $("chaosV").textContent = Math.round(chaos * 100) + "%";
     $("soundDesc").textContent = s.desc;
+    $("soundBtn").textContent = s.name;
+    $("soundBtn").setAttribute("aria-label", "Sound: " + s.name + ". Open sound settings");
     var box = $("presets");
     box.textContent = "";
     SOUNDS.forEach(function (o) {
@@ -927,6 +1037,7 @@ canvas { width: 100%; height: 100%; display: block; }
       box.appendChild(b);
     });
     applyGrit();
+    applyDub();
   }
   $("stutter").addEventListener("input", function () {
     stutter = parseFloat(this.value);
@@ -937,11 +1048,109 @@ canvas { width: 100%; height: 100%; display: block; }
     $("gritV").textContent = Math.round(grit * 100) + "%";
     applyGrit();
   });
+  $("chaos").addEventListener("input", function () { setChaos(parseFloat(this.value)); });
+  $("shuffle").addEventListener("click", shuffleVel);
+
+  // Playing with it: toast, chapters, ring taps, sheets and gestures.
+  var toastT = null, gestures = 0;
+  function toast(msg) {
+    var t = $("toast");
+    t.textContent = msg;
+    t.classList.add("show");
+    clearTimeout(toastT);
+    toastT = setTimeout(function () { t.classList.remove("show"); }, 1300);
+  }
+  function usedGesture() {
+    gestures++;
+    if (gestures >= 4) $("gest").hidden = true;
+  }
+  function goChapter(d) {
+    var i = (SCENES.indexOf(scene) + d + SCENES.length) % SCENES.length;
+    setScene(SCENES[i]);
+    toast(STORY[i].ch);
+  }
+  function toggleRing(r) {
+    if (!r.silent) r.muted = !r.muted;
+    selected = r;
+    renderRings();
+    lastRev = -1;
+    showDetail();
+    updateNow();
+    draw();
+    if (r.facts && (r.silent || r.muted)) showFact(r);
+    else { hidePoster(); toast(r.name + " is back"); }
+  }
+  function setChaos(v) {
+    chaos = Math.max(0, Math.min(1, v));
+    $("chaos").value = chaos;
+    $("chaosV").textContent = Math.round(chaos * 100) + "%";
+  }
+  function shuffleVel() {
+    seed += 1;
+    if (chaos === 0) setChaos(1);
+    toast("Volumes shuffled");
+  }
+  function openSheet(id) { closeSheets(); $(id).hidden = false; $(id).querySelector("[data-close]").focus({ preventScroll: true }); }
+  function closeSheets() { $("sheetSound").hidden = true; $("sheetMore").hidden = true; }
+  $("soundBtn").addEventListener("click", function () { openSheet("sheetSound"); });
+  $("moreBtn").addEventListener("click", function () { openSheet("sheetMore"); });
+  ["sheetSound", "sheetMore"].forEach(function (id) {
+    $(id).addEventListener("click", function (e) { if (e.target === $(id) || e.target.closest("[data-close]")) closeSheets(); });
+  });
+
+  // Which ring is under a tap on the canvas.
+  function ringTap(x, y) {
+    var rect = cv.getBoundingClientRect(), W = rect.width;
+    var d = Math.hypot(x - rect.left - W / 2, y - rect.top - rect.height / 2);
+    var outer = W / 2 - 10, inner = W * 0.09, N = scene.rings.length;
+    var gap = N > 1 ? (outer - inner) / (N - 1) : 0;
+    if (d < inner * 1.3) { shuffleVel(); usedGesture(); return; }
+    if (!gap) return;
+    var i = Math.round((outer - d) / gap);
+    if (i < 0 || i >= revealedNow() || d > outer + gap * 0.6) return;
+    usedGesture();
+    toggleRing(scene.rings[i]);
+  }
+
+  // One finger: a tap picks a ring, a sideways swipe changes chapter, an up and down drag is the chaos dial.
+  var gs = null;
+  var appEl = $("app");
+  appEl.addEventListener("pointerdown", function (e) {
+    if (e.target.closest("button, input, a")) { gs = null; return; }
+    gs = { x: e.clientX, y: e.clientY, t: Date.now(), mode: null, onCv: e.target === cv, c0: chaos };
+  });
+  appEl.addEventListener("pointermove", function (e) {
+    if (!gs) return;
+    var dx = e.clientX - gs.x, dy = e.clientY - gs.y;
+    if (!gs.mode && Math.max(Math.abs(dx), Math.abs(dy)) > 14) {
+      gs.mode = Math.abs(dx) > Math.abs(dy) * 1.2 ? "swipe" : (gs.onCv ? "drag" : "none");
+    }
+    if (gs.mode === "drag") {
+      setChaos(gs.c0 - dy / 220);
+      toast("Chaos " + Math.round(chaos * 100) + "%");
+    }
+  });
+  appEl.addEventListener("pointerup", function (e) {
+    if (!gs) return;
+    var g = gs, dx = e.clientX - g.x, dy = e.clientY - g.y;
+    gs = null;
+    if (g.mode === "swipe" && Math.abs(dx) > 50) {
+      story = false;
+      updateStoryBtn();
+      goChapter(dx < 0 ? 1 : -1);
+      usedGesture();
+    } else if (g.mode === "drag") {
+      usedGesture();
+    } else if (!g.mode && g.onCv && Date.now() - g.t < 600) {
+      ringTap(e.clientX, e.clientY);
+    }
+  });
+  appEl.addEventListener("pointercancel", function () { gs = null; });
 
   // Drawing
   function sizeCanvas() {
     var dpr = Math.min(window.devicePixelRatio || 1, 3);
-    var w = cv.clientWidth;
+    var w = Math.min(cv.clientWidth, cv.clientHeight) || cv.clientWidth;
     cv.width = Math.round(w * dpr);
     cv.height = Math.round(w * dpr);
     g2.setTransform(dpr, 0, 0, dpr, 0, 0);
@@ -1024,6 +1233,11 @@ canvas { width: 100%; height: 100%; display: block; }
     g2.stroke();
     g2.globalAlpha = 1;
     g2.beginPath(); g2.arc(cx, cy, 3, 0, Math.PI * 2); g2.fill();
+    // The centre is a button: tap it to shuffle the volumes.
+    g2.globalAlpha = 0.35;
+    g2.lineWidth = 1;
+    g2.beginPath(); g2.arc(cx, cy, inner * 0.8, 0, Math.PI * 2); g2.stroke();
+    g2.globalAlpha = 1;
   }
 
   function loop() {
