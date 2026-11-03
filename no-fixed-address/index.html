@@ -195,6 +195,28 @@ body.dwhere .q[data-g="1"] { opacity: .6; } body.dwhere .q[data-g="2"] { opacity
 .datap .dots { display: block; width: 100%; height: auto; margin: 8px 0 4px; }
 .datap .wx { margin-top: 6px; font-weight: 600; color: var(--ink); }
 .datap .dnote { margin-top: 10px; color: #444; }
+
+/* ---- type: one scale, one rhythm. Labels small and tracked, figures tabular, captions in sentence case at a readable size ---- */
+body { font-kerning: normal; text-rendering: optimizeLegibility; -webkit-font-smoothing: antialiased; }
+.num { font-size: 36px; font-weight: 700; letter-spacing: -.02em; font-variant-numeric: lining-nums tabular-nums; }
+.cname { font-size: 11.5px; font-weight: 600; letter-spacing: .16em; text-decoration: none; }
+.ntime { font-weight: 400; letter-spacing: .04em; font-variant-numeric: tabular-nums; opacity: .7; }
+.sub2 { font-size: 9.6px; letter-spacing: .01em; font-weight: 500; }
+.sub2.b { font-size: 9.2px; font-weight: 400; opacity: .78; }
+.lede { font-size: 13px; line-height: 1.45; font-weight: 400; letter-spacing: .005em; max-width: 34ch; }
+.about { font: 400 13px/1.55 var(--font); }
+.about h2 { font: 600 11px/1.2 var(--font); letter-spacing: .16em; text-transform: uppercase; margin: 0 0 14px; }
+.about p { margin: 0 0 12px; max-width: 58ch; hyphens: auto; }
+.datap { font: 400 12px/1.5 var(--font); }
+.datap h3 { font: 600 11px/1.2 var(--font); letter-spacing: .16em; }
+.datap .one { font-size: 30px; letter-spacing: -.02em; font-variant-numeric: lining-nums tabular-nums; margin: 6px 0 4px; }
+.datap p { font-size: 11.5px; line-height: 1.5; max-width: 46ch; }
+.mix label, .midip label { font-weight: 600; font-size: 10px; letter-spacing: .16em; line-height: 1.2; }
+.mix select, .midip select { font-size: 13px; }
+.sbtn, .tab, .aboutbtn { font-weight: 600; font-size: 10.5px; letter-spacing: .16em; }
+.opt { font: 600 13px/1.25 var(--font); } .opt small { font: 400 11.5px/1.4 var(--font); opacity: .8; }
+@media (max-width: 899px) { .lede { font-size: 12px; max-width: calc(100vw - 200px); } }
+.about, .picker .card { border-width: 1px; }
 </style>
 </head>
 <body>
@@ -784,7 +806,7 @@ body.dwhere .q[data-g="1"] { opacity: .6; } body.dwhere .q[data-g="2"] { opacity
     if (!(c.pop > 0)) { PRESETS.forEach(function (pr) { if (pr.id === c.id && pr.pop) c.pop = pr.pop; }); }
     if (c.pop > 0 && !c.ex) {
       var pc = c.count / c.pop * 100, one = Math.round(c.pop / c.count);
-      c.share = (pc >= 1 ? pc.toFixed(1) : pc >= .1 ? pc.toFixed(2) : pc.toFixed(3)) + "% of residents, about 1 in " + one.toLocaleString("en-GB");
+      c.share = "1 in " + one.toLocaleString("en-GB") + " residents (" + (pc >= 1 ? pc.toFixed(1) : pc >= .1 ? pc.toFixed(2) : pc.toFixed(3)) + "%)";
     } else c.share = "";
     try { c.fmt = new Intl.DateTimeFormat("en-GB", { timeZone: c.tz, hour: "numeric", minute: "numeric", second: "numeric", hourCycle: "h23" }); refreshOffset(c); } catch (e) { c.off = 0; c.fmt = null; }
     c.n = 16;
@@ -896,11 +918,11 @@ body.dwhere .q[data-g="1"] { opacity: .6; } body.dwhere .q[data-g="2"] { opacity
 
     var sg = p.querySelector(".stat");
     el("rect", { x: 20, y: 668, width: 360, height: 84, fill: "transparent" }, sg);
-    c.dotNote = c.ex ? "example rhythm" : "each figure = " + c.per.toLocaleString("en-GB") + " people";
+    c.dotNote = c.ex ? "example rhythm" : "each figure is " + c.per.toLocaleString("en-GB") + " people";
     var nm = el("text", { class: "cname", x: 200, y: 684, "text-anchor": "middle" }, sg); nm.textContent = c.name; c.nameEl = nm; c.timeEl = el("tspan", { class: "ntime" }, nm); c.nmChip = el("circle", { r: 4.5, fill: c.col, stroke: "#0b0b0d", "stroke-width": 1.2 }, sg);
-    var t1 = el("text", { class: "num", transform: "translate(200 718) scale(1.16 .92)", "text-anchor": "middle" }, sg); c.numEl = t1; t1.textContent = c.ex ? "?" : c.count.toLocaleString("en-GB");
-    var t2 = el("text", { class: "sub2", x: 200, y: 733, "text-anchor": "middle" }, sg); t2.textContent = c.l1 + " \u00b7 " + c.l2; fitCap(t2, 360); c.cap1 = t2; c.stG = sg;
-    var t3 = el("text", { class: "sub2 b", x: 200, y: 744, "text-anchor": "middle" }, sg); t3.textContent = (c.share ? c.share + " \u00b7 " : "") + c.dotNote; fitCap(t3, 360); c.cap2 = t3; c.cap1s = t2.textContent; c.cap2s = t3.textContent;
+    var t1 = el("text", { class: "num", transform: "translate(200 715)", "text-anchor": "middle" }, sg); c.numEl = t1; t1.textContent = c.ex ? "?" : c.count.toLocaleString("en-GB");
+    var t2 = el("text", { class: "sub2", x: 200, y: 733, "text-anchor": "middle" }, sg); t2.textContent = c.l1.charAt(0).toUpperCase() + c.l1.slice(1) + ", " + c.l2; c.cap1 = t2; c.stG = sg;
+    var t3 = el("text", { class: "sub2 b", x: 200, y: 744, "text-anchor": "middle" }, sg); t3.textContent = (c.share ? c.share + " \u00b7 " : "") + c.dotNote; c.cap2 = t3; c.cap1s = t2.textContent; c.cap2s = t3.textContent;
     c.wxS = ""; c.tmpS = ""; if (WX[c.id]) { c.wxS = wxText(WX[c.id]); c.tmpS = wxTag(WX[c.id]); }
 
     function makeSlots(sign, count) {
@@ -1085,18 +1107,14 @@ body.dwhere .q[data-g="1"] { opacity: .6; } body.dwhere .q[data-g="2"] { opacity
     c.stG.setAttribute("transform", w ? "translate(" + so[0].toFixed(1) + " " + so[1].toFixed(1) + ")" : "");
     c.qg.setAttribute("transform", w ? "translate(" + qo[0].toFixed(1) + " " + qo[1].toFixed(1) + ")" : "");
     c.qoff = w ? qo : [0, 0];
-    c.nameEl.setAttribute("y", w ? 668 : 684); placeChip(c); c.numEl.setAttribute("transform", w ? "translate(200 710) scale(1.16 .92)" : "translate(200 718) scale(1.16 .92)");
-    if (w) {
-      c.cap1.setAttribute("data-w", "1"); c.cap2.setAttribute("data-w", "1"); c.cap1.removeAttribute("textLength"); c.cap2.removeAttribute("textLength");
-      c.cap2.style.fontSize = "14px"; c.cap1.style.fontSize = "9.5px";
-      k = wrapText(c.cap1, c.cap1s, 176, 731, 11);
-      wrapText(c.cap2, c.cap2s, 224, 731 + (k - 1) * 11 + 29, 17);
-    } else {
-      c.cap1.removeAttribute("data-w"); c.cap2.removeAttribute("data-w"); c.cap2.style.fontSize = ""; c.cap1.style.fontSize = "";
-      c.cap1.textContent = c.cap1s; c.cap2.textContent = c.cap2s;
-      c.cap1.setAttribute("y", 733); c.cap2.setAttribute("y", 744); c.cap1.removeAttribute("x"); c.cap1.setAttribute("x", 200);
-      c.cap2.setAttribute("x", 200);
-    }
+    /* a set type block: name, figure, then two wrapped caption lines. Nothing is squeezed or stretched. */
+    c.nameEl.setAttribute("y", w ? 666 : 680); placeChip(c);
+    c.numEl.setAttribute("transform", w ? "translate(200 704)" : "translate(200 715)");
+    c.cap1.setAttribute("data-w", "1"); c.cap2.setAttribute("data-w", "1"); c.cap1.removeAttribute("textLength"); c.cap2.removeAttribute("textLength");
+    c.cap1.style.fontSize = ""; c.cap2.style.fontSize = "";
+    var mw = w ? 232 : 336, y0 = w ? 722 : 731;
+    k = wrapText(c.cap1, c.cap1s, mw, y0, 12.5);
+    wrapText(c.cap2, c.cap2s, mw, y0 + k * 12.5 + 1, 12);
   }
   function applyMode() {
     var loop = mode === "wrap";
