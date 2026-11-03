@@ -75,7 +75,7 @@ body.loop .stat rect { fill-opacity: .96; }
 .mix .chk { flex-direction: row; align-items: center; gap: 8px; }
 .mix .chk input { width: 18px; height: 18px; accent-color: var(--ink); }
 .mix select { font: 400 13px var(--font); padding: 5px; border: 2px solid var(--ink); background: var(--paper); border-radius: 0; color: var(--ink); text-transform: none; letter-spacing: 0; }
-@media (min-width: 900px) { body.loop .cluster { transform: translateY(-100px); } }
+
 [hidden] { display: none !important; }
 .cname:focus-visible { outline: 2px solid var(--ink); }
 .num { font-weight: 700; font-size: 34px; letter-spacing: -.045em; fill: var(--ink); }
@@ -128,7 +128,7 @@ body.loop .stat rect { fill-opacity: .96; }
 .cta { position: absolute; z-index: 6; left: 50%; top: 50%; transform: translate(-50%, -50%); text-align: center; font: 700 20px/1.25 var(--font); letter-spacing: .02em; opacity: 0; pointer-events: none; transition: opacity 2.4s ease; margin: 0; }
 .cta span { display: block; }
 .cta span + span { margin-top: .5em; }
-body.ended2 .cta { opacity: 1; }
+body.ended2 .cta { opacity: 0; }
 body.ended .pad, body.ended .tabs, body.ended .panel .stat, body.ended .panel .qg, body.ended .panel .st, body.ended .datap { opacity: 0 !important; pointer-events: none !important; transition: opacity 1.6s ease; }
 /* data panel */
 .datap { position: absolute; z-index: 8; bottom: calc(62px + env(safe-area-inset-bottom, 0px)); left: 12px; right: 12px; max-height: 52%; overflow: auto; background: var(--paper); border: 2px solid var(--ink); padding: 12px 14px; font: 400 12px/1.4 var(--font); }
@@ -185,6 +185,12 @@ body.dwhere .q[data-g="1"] { opacity: .6; } body.dwhere .q[data-g="2"] { opacity
 .tag { font-weight: 600; letter-spacing: .18em; }
 .lede { font-weight: 400; font-size: 12px; line-height: 1.4; }
 @media (max-width: 899px) { .lede { max-width: calc(100vw - 210px); } }
+@media (min-width: 900px) {
+  body.loop .dock { top: auto; bottom: calc(14px + env(safe-area-inset-bottom, 0px)); right: auto; left: 50%; transform: translateX(-50%); flex-direction: row; align-items: flex-end; width: auto; gap: 8px; }
+  body.loop .mix, body.loop .datap { top: auto; bottom: calc(62px + env(safe-area-inset-bottom, 0px)); right: auto; left: 50%; transform: translateX(-50%); max-height: calc(100% - 140px); }
+  body.loop .mix { flex-direction: row; flex-wrap: wrap; width: min(720px, calc(100% - 24px)); }
+}
+.lad { display: none; }
 </style>
 </head>
 <body>
@@ -248,7 +254,7 @@ body.dwhere .q[data-g="1"] { opacity: .6; } body.dwhere .q[data-g="2"] { opacity
     </div>
   </div>
 
-  <p class="cta" id="cta" aria-live="polite"><span>No one should be in this ring</span><span>End homelessness</span></p>
+  <p class="cta" id="cta" aria-hidden="true"></p>
   <div class="pad" id="pad" tabindex="0" role="application" aria-label="Effects pad. Drag to blend filter, delay, hall reverb and flanger.">
       <span class="pf" data-fx="filter">FILTER</span><span class="ps" data-fx="hall">HALL</span><span class="pd" data-fx="delay">DELAY</span><span class="pfl" data-fx="flange">FLANGE</span>
       <div class="puck" id="puck"></div>
@@ -699,7 +705,7 @@ body.dwhere .q[data-g="1"] { opacity: .6; } body.dwhere .q[data-g="2"] { opacity
   }
   function wxTag(w) {
     var t = Math.round(w.t), a = Math.round(w.f);
-    return t + "\u00b0C" + (!wideWrap() && Math.abs(a - t) >= 3 ? ", feels " + a + "\u00b0" : "");
+    return t + "\u00b0C" + (Math.abs(a - t) >= 3 ? ", feels " + a + "\u00b0" : "");
   }
   function wxApply(c) {
     var w = WX[c.id]; if (!w || c.dead) return;
@@ -1001,7 +1007,9 @@ body.dwhere .q[data-g="1"] { opacity: .6; } body.dwhere .q[data-g="2"] { opacity
       c.wg = wg; c.wgrp = cgp;
     });
     loopEl.removeChild(tmp);
+    try { var bb = loopEl.getBBox(); wrapExt = Math.max(CY - bb.y, bb.y + bb.height - CY, CX - bb.x, bb.x + bb.width - CX); } catch (e) { wrapExt = 400; }
   }
+  var wrapExt = 400;
   var SINK = 25, bldDY = 0, introT0 = -1, introDone = false, introDirty = true, endT0 = -1, endLad = 0, endBld = 0, endRing = 0;
   function ease(x) { x = Math.max(0, Math.min(1, x)); return x * x * (3 - 2 * x); }
   function introStart() { if (introT0 < 0) { introT0 = performance.now(); if (RM) introT0 -= 5000; } }
@@ -1010,8 +1018,8 @@ body.dwhere .q[data-g="1"] { opacity: .6; } body.dwhere .q[data-g="2"] { opacity
     bldDY = (window.innerWidth >= 900 ? SINK : 0) * bp + 700 * endBld;
     if ((introDone || introT0 < 0) && !introDirty) return;
     introDirty = false; if (t > 8) introDone = true;
-    if (mode === "wrap") { cluster.style.transform = ""; layoutPad(); return; }
-    cluster.style.transform = "";
+    if (mode === "wrap") { wrapStep(); return; }
+    cluster.style.transform = ""; loopEl.style.transform = ""; loopEl.style.opacity = "";
     var m = cluster.getScreenCTM(); if (!m) return;
     var s = m.a, H = window.innerHeight, W = window.innerWidth, R = RADII_BASE[0] * s;
     var k = W < 900 ? 1 : Math.max(1, Math.min(1.05, W * .46 / R)), cyp = m.f + CY * s, cxp = m.e + CX * s;
@@ -1025,6 +1033,24 @@ body.dwhere .q[data-g="1"] { opacity: .6; } body.dwhere .q[data-g="2"] { opacity
     cluster.style.transformOrigin = cxp + "px " + cyp + "px";
     cluster.style.transform = "translate(0px," + dy.toFixed(1) + "px) scale(" + kk.toFixed(4) + ")";
     layoutPad();
+  }
+  /* the wrap view: the ring sits in the middle of the screen, sized so the bent facades fit, and the finale works here too */
+  function wrapStep() {
+    cluster.style.transform = "none"; loopEl.style.transform = "none";
+    var m = cluster.getScreenCTM(); if (!m) return;
+    var s = m.a, H = window.innerHeight, W = window.innerWidth, cxp = m.e + CX * s, cyp = m.f + CY * s, ext = wrapExt * s;
+    var kk = 1, dx = 0, dy = 0;
+    if (W >= 900) { kk = Math.min(1.25, (H / 2 - 34) / ext, (W / 2 - 150) / ext); dx = W / 2 - cxp; dy = H / 2 - 6 - cyp; }
+    if (endRing > 0) {
+      var R = RADII[0] * s, Rt = Math.min(W, H) * .375, kE = Rt / R;
+      kk = kk + (kE - kk) * endRing; dx = dx + (W / 2 - cxp - dx) * endRing; dy = dy + (H / 2 - cyp - dy) * endRing;
+      if (W < 900) { ctaEl.style.top = (H / 2 + Rt + 28).toFixed(0) + "px"; ctaEl.style.transform = "translate(-50%, 0)"; ctaEl.style.width = (W - 48) + "px"; ctaEl.style.fontSize = "18px"; }
+      else { ctaEl.style.top = ""; ctaEl.style.transform = ""; ctaEl.style.fontSize = Math.max(14, Math.min(30, Rt * .068)).toFixed(1) + "px"; ctaEl.style.width = (Rt * 0.9).toFixed(0) + "px"; }
+    }
+    var tf = "translate(" + dx.toFixed(1) + "px," + dy.toFixed(1) + "px) scale(" + kk.toFixed(4) + ")";
+    [cluster, loopEl].forEach(function (sv) { sv.style.transformOrigin = cxp + "px " + cyp + "px"; sv.style.transform = tf; });
+    loopEl.style.opacity = (1 - endBld).toFixed(3);   /* in the finale the bent facades fade away, as the buildings drop in columns */
+    layoutPad(); if (W >= 900) CITIES.forEach(layoutStat);
   }
   var SOFF = [[-91, -260], [339, -16], [100, -353]], QOFF = [[-91, -293], [338, -45], [100, -385]];
   var lastWide = false;
@@ -1043,9 +1069,18 @@ body.dwhere .q[data-g="1"] { opacity: .6; } body.dwhere .q[data-g="2"] { opacity
   function layoutStat(c) {
     var ci = CITIES.indexOf(c), w = wideWrap(), k;
     if (!c.stG || ci < 0) return;
-    c.stG.setAttribute("transform", w ? "translate(" + SOFF[ci % 3][0] + " " + SOFF[ci % 3][1] + ")" : "");
-    c.qg.setAttribute("transform", w ? "translate(" + QOFF[ci % 3][0] + " " + QOFF[ci % 3][1] + ")" : "");
-    c.qoff = w ? QOFF[ci % 3] : [0, 0];
+    var so = SOFF[ci % 3], qo = QOFF[ci % 3];
+    if (w) {   /* Boston left, the other two stacked on the right: always beside the ring, never under the buttons */
+      var mm = c.svg.getScreenCTM();
+      if (mm) {
+        var Wv = window.innerWidth, Hv = window.innerHeight, half = 118 * mm.a, pt = c.svg.createSVGPoint();
+        pt.x = ci % 3 === 0 ? 18 + half : Wv - 18 - half; pt.y = Hv * [0.5, 0.74, 0.34][ci % 3];
+        var q = pt.matrixTransform(mm.inverse()); so = [q.x - 200, q.y - 714]; qo = [so[0], so[1] - 33];
+      }
+    }
+    c.stG.setAttribute("transform", w ? "translate(" + so[0].toFixed(1) + " " + so[1].toFixed(1) + ")" : "");
+    c.qg.setAttribute("transform", w ? "translate(" + qo[0].toFixed(1) + " " + qo[1].toFixed(1) + ")" : "");
+    c.qoff = w ? qo : [0, 0];
     c.nameEl.setAttribute("y", w ? 668 : 684); placeChip(c); c.numEl.setAttribute("transform", w ? "translate(200 710) scale(1.16 .92)" : "translate(200 718) scale(1.16 .92)");
     if (w) {
       c.cap1.setAttribute("data-w", "1"); c.cap2.setAttribute("data-w", "1"); c.cap1.removeAttribute("textLength"); c.cap2.removeAttribute("textLength");
@@ -1509,7 +1544,6 @@ body.dwhere .q[data-g="1"] { opacity: .6; } body.dwhere .q[data-g="2"] { opacity
   function checkEnd() {
     if (finished || !CITIES.every(function (c) { return c.done; })) return;
     finished = true;
-    if (mode === "wrap") { mode = "columns"; applyMode(); }
     endT0 = performance.now(); document.body.classList.add("ended"); dataEl.hidden = true; dataBtn.setAttribute("aria-expanded", "false"); document.body.classList.remove("dwhere");
     setTimeout(function () { midiRT(0xFC); midiAllOff(); clearInterval(timer); playing = false; events = []; playBtn.setAttribute("aria-pressed", "false"); playBtn.textContent = "Start over"; }, 5000);
   }
@@ -1575,11 +1609,36 @@ body.dwhere .q[data-g="1"] { opacity: .6; } body.dwhere .q[data-g="2"] { opacity
   applyFx();
 
   /* ---------- the story: a hit lets one dot in ---------- */
-  var TRAVEL = 3400, lineLit = 0;
+  var TRAVEL = 7600;
   function nodePos(c, idx, deg) {
     var a = (-90 + idx * 360 / c.n + deg) * Math.PI / 180;
     return [CX + c.R * Math.cos(a), CY + c.R * Math.sin(a)];
   }
+  /* a random stretch of the city's own facade, as points on the overlay, so a light can trace it */
+  function traceBuilding(c) {
+    try {
+      var host = document.body.classList.contains("loop") ? c.wgrp : c.bldEl; if (!host) return null;
+      var els = Array.prototype.filter.call(host.querySelectorAll("path"), function (p) { var k = p.getAttribute("class") || ""; return k.indexOf("gl") < 0 && k.indexOf("l3") < 0; });
+      var inv = cluster.getScreenCTM().inverse(), tries = 0;
+      while (els.length && tries++ < 14) {
+        var pe = els[Math.floor(Math.random() * els.length)], subs = (pe.getAttribute("d") || "").split(/(?=M)/).filter(Boolean);
+        if (!subs.length) continue;
+        var sd = subs[Math.floor(Math.random() * subs.length)], tp = document.createElementNS("http://www.w3.org/2000/svg", "path");
+        tp.setAttribute("d", sd); tp.setAttribute("visibility", "hidden"); pe.parentNode.appendChild(tp);
+        var len = tp.getTotalLength(); if (!(len > 60)) { tp.remove(); continue; }
+        var span = Math.min(len, 160 + Math.random() * 200), start = Math.random() * (len - span), m = tp.getScreenCTM().multiply ? inv.multiply(tp.getScreenCTM()) : null, pts = [], n = 40, i;
+        if (!m) { tp.remove(); return null; }
+        var dir = Math.random() < .5 ? 1 : -1;
+        for (i = 0; i <= n; i++) { var p = tp.getPointAtLength(dir > 0 ? start + span * i / n : start + span * (1 - i / n)), pt = cluster.createSVGPoint(); pt.x = p.x; pt.y = p.y; var q = pt.matrixTransform(m); pts.push([q.x, q.y]); }
+        tp.remove();
+        var acc = [0]; for (i = 1; i < pts.length; i++) acc.push(acc[i - 1] + Math.hypot(pts[i][0] - pts[i - 1][0], pts[i][1] - pts[i - 1][1]));
+        if (acc[acc.length - 1] < 20) continue;
+        return { p: pts, a: acc, L: acc[acc.length - 1] };
+      }
+    } catch (e) {}
+    return null;
+  }
+  function alongTrace(tr, e) { var d = e * tr.L, i = 1; while (i < tr.a.length - 1 && tr.a[i] < d) i++; var s0 = tr.a[i - 1], s1 = tr.a[i], k = s1 > s0 ? (d - s0) / (s1 - s0) : 0; return [tr.p[i - 1][0] + (tr.p[i][0] - tr.p[i - 1][0]) * k, tr.p[i - 1][1] + (tr.p[i][1] - tr.p[i - 1][1]) * k]; }
   function launch(c, idx, nowP) {
     var lane = c.nl; c.nl ^= 1;
     if (!c.lanes[lane].length) lane ^= 1;
@@ -1588,9 +1647,10 @@ body.dwhere .q[data-g="1"] { opacity: .6; } body.dwhere .q[data-g="2"] { opacity
     arr.forEach(function (d, i) { d.tx = c.slots[lane][i].x; d.ty = c.slots[lane][i].y; });
     var st = toOverlay(c, head.x, head.y);
     /* the figure stays where it stood and fades; a small light leaves it and glides up the line into the ring */
+    var trace = traceBuilding(c);
     var sp = el("g", {}, travelLayer); el("circle", { r: 7, fill: c.col, opacity: .22 }, sp); el("circle", { r: 3.4, fill: c.col, stroke: "#fbf7ee", "stroke-width": 1 }, sp);
     sp.setAttribute("transform", "translate(" + st[0].toFixed(1) + " " + st[1].toFixed(1) + ")"); sp.style.opacity = 0;
-    c.travelers.push({ dot: head, sp: sp, idx: idx, t0: nowP, x0: st[0], y0: st[1] });
+    c.travelers.push({ dot: head, sp: sp, idx: idx, t0: nowP, x0: st[0], y0: st[1], tr: trace, a0: null });
     if (ENDLESS) { c.pending.push({ at: nowP + 500, lane: lane }); return; }
     lightWindow(c, nowP);
     if (!c.lanes[0].length && !c.lanes[1].length) c.leaving = true;
@@ -1709,16 +1769,19 @@ body.dwhere .q[data-g="1"] { opacity: .6; } body.dwhere .q[data-g="2"] { opacity
         var fx = c.lad ? c.lad[0] : tr.x0, fy = c.lad ? c.lad[1] : tr.y0, topY = CY + c.R + 8, np = nodePos(c, tr.idx, deg);
         /* the figure fades where it stands, over the first fifth */
         tr.dot.el.style.opacity = Math.max(0, 1 - u * 5).toFixed(3);
-        /* one smooth curve: from the figure, to the foot of the line, up to the ring, round to its place. Eased in and out, no bounce. */
-        var e = smooth(clamp(u * 1.05, 0, 1)), qx, qy;
-        var P = [[tr.x0, tr.y0], [fx, fy - 30], [200 + (np[0] - 200) * .35, topY + 30], [np[0], np[1]]], m = 1 - e;
-        qx = m * m * m * P[0][0] + 3 * m * m * e * P[1][0] + 3 * m * e * e * P[2][0] + e * e * e * P[3][0];
-        qy = m * m * m * P[0][1] + 3 * m * m * e * P[1][1] + 3 * m * e * e * P[2][1] + e * e * e * P[3][1];
+        /* the walk: to the facade, along a stretch of it, up to the outer orbit, round the orbit to the door at the bottom, in through the doors, to its place */
+        var Ro = RADII[0] + 14, DOOR = Math.PI / 2, qx, qy, B, w;
+        var tA = .07, tB = .42, tC = .55, tD = .84;
+        var T0 = tr.tr ? tr.tr.p[0] : [tr.x0, tr.y0 - 30], T1 = tr.tr ? tr.tr.p[tr.tr.p.length - 1] : T0;
+        if (tr.a0 === null) { tr.a0 = Math.atan2(T1[1] - CY, T1[0] - CX); var dA = DOOR - tr.a0; while (dA <= -Math.PI) dA += 2 * Math.PI; while (dA > Math.PI) dA -= 2 * Math.PI; if (Math.abs(dA) < .9) dA += dA < 0 ? -2 * Math.PI * .5 : 2 * Math.PI * .5; tr.dA = dA; }
+        if (u < tA) { w = smooth(u / tA); qx = tr.x0 + (T0[0] - tr.x0) * w; qy = tr.y0 + (T0[1] - tr.y0) * w; }
+        else if (u < tB) { B = tr.tr ? alongTrace(tr.tr, smooth((u - tA) / (tB - tA))) : T0; qx = B[0]; qy = B[1]; }
+        else if (u < tC) { w = smooth((u - tB) / (tC - tB)); var ox = CX + Ro * Math.cos(tr.a0), oy = CY + Ro * Math.sin(tr.a0), mx = (T1[0] + ox) / 2, my = Math.min(T1[1], oy) - 24, m1 = 1 - w; qx = m1 * m1 * T1[0] + 2 * m1 * w * mx + w * w * ox; qy = m1 * m1 * T1[1] + 2 * m1 * w * my + w * w * oy; }
+        else if (u < tD) { w = smooth((u - tC) / (tD - tC)); var an = tr.a0 + tr.dA * w; qx = CX + Ro * Math.cos(an); qy = CY + Ro * Math.sin(an); }
+        else { w = smooth((u - tD) / (1 - tD)); var rIn = Ro + (c.R - Ro) * Math.min(1, w * 1.6), w2 = clamp((w - .62) / .38, 0, 1), bx = CX + rIn * Math.cos(DOOR), by = CY + rIn * Math.sin(DOOR); qx = bx + (np[0] - bx) * w2; qy = by + (np[1] - by) * w2; }
         tr.sp.setAttribute("transform", "translate(" + qx.toFixed(1) + " " + qy.toFixed(1) + ")");
         tr.sp.style.opacity = Math.min(1, u * 6, (1 - u) * 8).toFixed(3);
-        lineLit = Math.max(lineLit || 0, 1);
       }
-      if (c.ladEl) c.ladEl.style.opacity = c.travelers.length ? .62 : "";
       if (c.leaving && !c.done && !c.travelers.length) { c.done = true; stopDrone(c); checkEnd(); }
       /* windows glow */
       for (var gi = 0; gi < c.glows.length; gi++) {
