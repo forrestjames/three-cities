@@ -168,7 +168,26 @@ body.dwhere .q[data-g="1"] { opacity: .6; } body.dwhere .q[data-g="2"] { opacity
 .pd { right: 9%; top: 50%; writing-mode: vertical-rl; transform: translateY(-50%); }
 .pfl { left: 9%; top: 50%; writing-mode: vertical-rl; transform: translateY(-50%) rotate(180deg); }
 .puck { position: absolute; width: 20px; height: 20px; border-radius: 50%; background: var(--pink); border: 2px solid var(--ink); left: 50%; top: 50%; margin: -10px 0 0 -10px; pointer-events: none; }
-</style></head><body>
+
+/* ---- quieter: finer lines, fewer marks, calmer controls ---- */
+.ln { stroke-width: .9; opacity: .85; }
+.l2 { stroke-width: .55; opacity: .45; }
+.l3 { opacity: .2; }
+.dk { stroke-width: .9; }
+.lad { stroke: var(--paper); stroke-width: .8; opacity: .3; transition: opacity .6s ease; }
+.sbtn { height: 34px; min-width: 72px; padding: 0 14px; border-width: 1px; font: 600 11px var(--font); letter-spacing: .16em; }
+.tab, .aboutbtn { border-width: 1px; font-weight: 600; font-size: 10px; letter-spacing: .16em; }
+.mix, .datap { border-width: 1px; padding: 14px 18px; box-shadow: 0 10px 30px rgba(11, 11, 13, .12); }
+.mix label, .midip label { font-weight: 600; font-size: 10px; letter-spacing: .16em; }
+.mix select, .midip select, .fld input, .fld select, .opt { border-width: 1px; }
+.mix { gap: 18px 22px; }
+.cname { font-weight: 600; letter-spacing: .18em; }
+.tag { font-weight: 600; letter-spacing: .18em; }
+.lede { font-weight: 400; font-size: 12px; line-height: 1.4; }
+@media (max-width: 899px) { .lede { max-width: calc(100vw - 210px); } }
+</style>
+</head>
+<body>
 
 <div class="app">
   <svg class="cluster loopsvg" id="loop" viewBox="0 0 400 800" preserveAspectRatio="xMidYMax meet" aria-hidden="true"></svg>
@@ -238,6 +257,7 @@ body.dwhere .q[data-g="1"] { opacity: .6; } body.dwhere .q[data-g="2"] { opacity
 
   <div class="mix" id="mix" role="group" aria-label="Mix" hidden>
     <label>Volume<input type="range" id="vol" min="0" max="100" value="80" aria-label="Master volume"></label>
+    <label title="Slow: fewer notes and people climb in less often. Lively: more notes and people come sooner. The middle is the piece as written.">Pace<input type="range" id="pace" min="0" max="100" value="50" aria-label="Pace"></label>
     <label>Pulse<input type="range" id="pulsevol" min="0" max="100" value="45" aria-label="Pulse volume"></label>
     <label>Key<select id="keysel" aria-label="Key"></select></label>
     <label>Scale<select id="scalesel" aria-label="Scale"></select></label>
@@ -850,7 +870,7 @@ body.dwhere .q[data-g="1"] { opacity: .6; } body.dwhere .q[data-g="2"] { opacity
     var p = document.createElement("section"); p.className = "panel"; p.id = "p-" + ci;
     p.style.setProperty("--bg", c.bg); p.style.setProperty("--bg2", c.bg2); p.style.setProperty("--bg3", c.bg3);
     var svg = '<svg class="sc" viewBox="0 0 400 800" preserveAspectRatio="xMidYMax meet" aria-label="' + esc(c.name) + ": " + (c.ex ? "no count yet" : c.count.toLocaleString("en-GB")) + " " + esc(c.l1) + ", " + esc(c.l2) + ". A line of " + c.dots + ' dots waits to enter its ring.">';
-    svg += '<g class="sky"><g class="sun"></g><g class="moon"></g>' + cloud(40, 214, 1) + cloud(300, 176, .8) + cloud(150, 118, .7) + "</g>";
+    svg += '<g class="sky"><g class="sun"></g><g class="moon"></g>' + cloud(40, 214, .85) + cloud(286, 150, .65) + "</g>";
     var baseT = "translate(200 " + (STREET + (typeof bldDY === "number" ? bldDY : 0)) + ") scale(" + BS + ") translate(-200 " + -GROUND + ")";
     var mx0 = ci === 0 ? -400 : -70, mx1 = ci === 2 ? 800 : 480;
     svg += '<defs><linearGradient id="bg' + ci + '" gradientUnits="userSpaceOnUse" x1="' + mx0 + '" x2="' + mx1 + '" y1="0" y2="0"><stop offset="0" stop-color="#000"/><stop offset="' + (ci === 0 ? 0 : (140 / (mx1 - mx0)).toFixed(4)) + '" stop-color="#fff"/><stop offset="' + (ci === 2 ? 1 : (1 - 140 / (mx1 - mx0)).toFixed(4)) + '" stop-color="#fff"/><stop offset="1" stop-color="#000"/></linearGradient><mask id="bm' + ci + '" maskUnits="userSpaceOnUse" x="-400" y="-1400" width="1200" height="2800"><rect x="-400" y="-1400" width="1200" height="2800" fill="url(#bg' + ci + ')"/></mask></defs>';
@@ -1350,6 +1370,11 @@ body.dwhere .q[data-g="1"] { opacity: .6; } body.dwhere .q[data-g="2"] { opacity
   var VOWELS = [[300, 870, 2240], [450, 830, 2830], [730, 1090, 2440]];
   var eng = { bar: -1, chord: 0, section: 0, nextBar: 0, nextPulse: 0, nextClk: 0, pn: 0, shift: 0 };
   var ENDLESS, SHIFTEVERY;
+  /* Pace: 50 is the piece as written. Lower thins the ring notes and people climb in less often; higher adds quiet in-between notes and they come sooner. */
+  var PACE = 50; try { var pv = localStorage.getItem("nfa-pace"); if (pv !== null && +pv >= 0 && +pv <= 100) PACE = +pv; } catch (e) {}
+  var paceEl = document.getElementById("pace"); paceEl.value = PACE;
+  paceEl.addEventListener("input", function () { PACE = +paceEl.value; try { localStorage.setItem("nfa-pace", PACE); } catch (e) {} });
+  function launchEvery() { return Math.max(2, Math.round(9 - 8 * PACE / 100)); }
   var volMaster = .8, volPulse = .45, volVoice = .6, noiseBuf = null, masterG = null;
   /* key and scale, as in Three Cities. The chords are written in D major; each note snaps to the nearest note of the chosen scale, then moves to the chosen key. */
   var KEYS = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"];
@@ -1425,12 +1450,12 @@ body.dwhere .q[data-g="1"] { opacity: .6; } body.dwhere .q[data-g="2"] { opacity
     var ng = ctx.createGain(); ng.gain.value = .05; nz.connect(nb); nb.connect(ng); ng.connect(out); nz.start(when); nz.stop(when + dur + .1);
     var pn = ctx.createStereoPanner ? ctx.createStereoPanner() : null; if (pn) { pn.pan.value = pan; out.connect(pn); pn.connect(bus); } else out.connect(bus);
   }
-  function note(c, when) {
-    var fr = c.pool[c.base[c.hitCount % c.L] % c.pool.length];
+  function note(c, when, gm) {
+    var fr = c.pool[c.base[c.hitCount % c.L] % c.pool.length]; gm = gm || 1;
     midiRing(c, fr, when);
     var out = ctx.createGain(), lp = ctx.createBiquadFilter(); lp.type = "lowpass"; lp.frequency.value = 1500; lp.Q.value = .3;
     var pan = ctx.createStereoPanner ? ctx.createStereoPanner() : null; if (pan) pan.pan.value = c.pan;
-    out.gain.setValueAtTime(.0001, when); out.gain.linearRampToValueAtTime(c.vel, when + .03); out.gain.exponentialRampToValueAtTime(.0001, when + 2.2);
+    out.gain.setValueAtTime(.0001, when); out.gain.linearRampToValueAtTime(c.vel * gm, when + .03); out.gain.exponentialRampToValueAtTime(.0001, when + 2.2);
     [["sine", 1, 1, 0], ["sine", 2, .25, 0], ["triangle", 1, .35, 5]].forEach(function (p) {
       var o = ctx.createOscillator(), g = ctx.createGain(); o.type = p[0]; o.frequency.value = fr * p[1]; o.detune.value = p[3]; g.gain.value = p[2];
       o.connect(g); g.connect(lp); o.start(when); o.stop(when + 2.4);
@@ -1472,9 +1497,9 @@ body.dwhere .q[data-g="1"] { opacity: .6; } body.dwhere .q[data-g="2"] { opacity
         var rot = Math.round(spin(c, wallMs) * c.n);
         var idx = (((c.step - rot) % c.n) + c.n) % c.n;
         if (c.pat[idx]) {
-          if (!c.muted && !c.done) { note(c, c.next); events.push({ c: c, i: idx, t: c.next }); }
+          if (!c.muted && !c.done) { if (PACE >= 50 || Math.random() < .45 + .55 * PACE / 50) note(c, c.next); events.push({ c: c, i: idx, t: c.next }); }
           c.hitCount++;
-        }
+        } else if (PACE > 50 && !c.muted && !c.done && Math.random() < (PACE - 50) / 50 * .3) note(c, c.next, .4);   /* a quiet note in between */
         c.step = (c.step + 1) % c.n; c.next += dur;
       }
     });
@@ -1550,7 +1575,7 @@ body.dwhere .q[data-g="1"] { opacity: .6; } body.dwhere .q[data-g="2"] { opacity
   applyFx();
 
   /* ---------- the story: a hit lets one dot in ---------- */
-  var TRAVEL = 3000;
+  var TRAVEL = 3400, lineLit = 0;
   function nodePos(c, idx, deg) {
     var a = (-90 + idx * 360 / c.n + deg) * Math.PI / 180;
     return [CX + c.R * Math.cos(a), CY + c.R * Math.sin(a)];
@@ -1562,8 +1587,10 @@ body.dwhere .q[data-g="1"] { opacity: .6; } body.dwhere .q[data-g="2"] { opacity
     var head = arr.shift();
     arr.forEach(function (d, i) { d.tx = c.slots[lane][i].x; d.ty = c.slots[lane][i].y; });
     var st = toOverlay(c, head.x, head.y);
-    travelLayer.appendChild(head.el);
-    c.travelers.push({ dot: head, idx: idx, t0: nowP, x0: st[0], y0: st[1] });
+    /* the figure stays where it stood and fades; a small light leaves it and glides up the line into the ring */
+    var sp = el("g", {}, travelLayer); el("circle", { r: 7, fill: c.col, opacity: .22 }, sp); el("circle", { r: 3.4, fill: c.col, stroke: "#fbf7ee", "stroke-width": 1 }, sp);
+    sp.setAttribute("transform", "translate(" + st[0].toFixed(1) + " " + st[1].toFixed(1) + ")"); sp.style.opacity = 0;
+    c.travelers.push({ dot: head, sp: sp, idx: idx, t0: nowP, x0: st[0], y0: st[1] });
     if (ENDLESS) { c.pending.push({ at: nowP + 500, lane: lane }); return; }
     lightWindow(c, nowP);
     if (!c.lanes[0].length && !c.lanes[1].length) c.leaving = true;
@@ -1573,10 +1600,8 @@ body.dwhere .q[data-g="1"] { opacity: .6; } body.dwhere .q[data-g="2"] { opacity
       var f0 = toOverlay(c, 200, STREET + 2), x1 = CX, y1 = CY + c.R + 8, dx = x1 - f0[0], dy = y1 - f0[1], len = Math.hypot(dx, dy) || 1, ux = dx / len, uy = dy / len, nx = -uy * 3.6, ny = ux * 3.6, d = "", n = Math.max(3, Math.round(len / 17)), i, t, a, b;
       c.lad = f0;
       if (endLad > 0) { f0 = [f0[0] + (x1 - f0[0]) * endLad, f0[1] + (y1 - f0[1]) * endLad]; dx = x1 - f0[0]; dy = y1 - f0[1]; len = Math.hypot(dx, dy) || 1; ux = dx / len; uy = dy / len; nx = -uy * 3.6; ny = ux * 3.6; n = Math.max(2, Math.round(len / 17)); }
-      /* two slim rails, little feet, evenly spaced rungs and a hook over the door */
-      d += "M" + f1(f0[0] + nx) + " " + f1(f0[1] + ny) + "L" + f1(x1 + nx - ux * 5) + " " + f1(y1 + ny - uy * 5) + "M" + f1(f0[0] - nx) + " " + f1(f0[1] - ny) + "L" + f1(x1 - nx - ux * 5) + " " + f1(y1 - ny - uy * 5);
-      d += "M" + f1(f0[0] + nx - 2) + " " + f1(f0[1] + ny + 1.5) + "h4M" + f1(f0[0] - nx - 2) + " " + f1(f0[1] - ny + 1.5) + "h4";
-      for (i = 1; i < n; i++) { t = i / n; a = f0[0] + dx * t; b = f0[1] + dy * t; d += "M" + f1(a + nx) + " " + f1(b + ny) + "L" + f1(a - nx) + " " + f1(b - ny); }
+      /* one fine line from the street up to the ring, curving gently */
+      d = "M" + f1(f0[0]) + " " + f1(f0[1]) + "C" + f1(f0[0]) + " " + f1(f0[1] - 30) + " " + f1(x1) + " " + f1(y1 + 30) + " " + f1(x1) + " " + f1(y1 - 6);
       if (!c.ladEl || !c.ladEl.isConnected) c.ladEl = el("path", { class: "lad" }, ladderLayer);
       c.ladEl.setAttribute("d", d);
       var phone = window.innerWidth < 900, cur = Math.round(scene.scrollLeft / (scene.clientWidth || 1));
@@ -1602,7 +1627,7 @@ body.dwhere .q[data-g="1"] { opacity: .6; } body.dwhere .q[data-g="2"] { opacity
     var sx = 40 + fr * 320, sy = 150 - Math.sin(fr * Math.PI) * 80, sun = c.panel.querySelector(".sun"), moon = c.panel.querySelector(".moon");
     if (day) {
       var r = '<circle class="ln" cx="' + f(sx) + '" cy="' + f(sy) + '" r="13"/>', k, a;
-      for (k = 0; k < 10; k++) { a = k / 10 * Math.PI * 2; r += L("M" + f(sx + Math.cos(a) * 18) + " " + f(sy + Math.sin(a) * 18) + "L" + f(sx + Math.cos(a) * 25) + " " + f(sy + Math.sin(a) * 25), "l2"); }
+      /* no rays: just the disc */
       sun.innerHTML = r; moon.innerHTML = "";
     } else {
       moon.innerHTML = '<path class="ln" d="M' + f(sx) + " " + f(sy - 15) + "A15 15 0 1 0 " + f(sx) + " " + f(sy + 15) + "A11 11 0 1 1 " + f(sx) + " " + f(sy - 15) + 'Z"/>' + L("M" + f(sx + 24) + " " + f(sy - 8) + "h6M" + f(sx + 27) + " " + f(sy - 11) + "v6M" + f(sx - 30) + " " + f(sy + 12) + "h5M" + f(sx - 27.5) + " " + f(sy + 9.5) + "v5", "l2");
@@ -1622,7 +1647,7 @@ body.dwhere .q[data-g="1"] { opacity: .6; } body.dwhere .q[data-g="2"] { opacity
     while (events.length && events[0].t <= now) {
       var ev = events.shift(); if (ev.c.dead) continue; ev.c.pt = ev.t;
       for (var n = 0; n < ev.c.nodes.length; n++) if (ev.c.nodes[n].i === ev.i) ev.c.nodes[n].t = ev.t;
-      ev.c.hn = (ev.c.hn || 0) + 1; if (ev.c.hn % 2 === 0) flickerSome(ev.c, nowP); if (ev.c.hn % 5 === 1 && !ev.c.done) launch(ev.c, ev.i, nowP);
+      ev.c.hn = (ev.c.hn || 0) + 1; if (ev.c.hn % 2 === 0) flickerSome(ev.c, nowP); if ((ev.c.hn - 1) % launchEvery() === 0 && !ev.c.done) launch(ev.c, ev.i, nowP);
     }
     if (nowP - lastSky > 1000) {
       lastSky = nowP;
@@ -1657,8 +1682,8 @@ body.dwhere .q[data-g="1"] { opacity: .6; } body.dwhere .q[data-g="2"] { opacity
       [0, 1].forEach(function (ln) {
         c.lanes[ln].forEach(function (d) {
           if (d.tx === undefined) return;
-          d.x += (d.tx - d.x) * .06; d.y += (d.ty - d.y) * .06;
-          if (d.born) { var fo = (nowP - d.born) / 600; if (fo >= 1) { d.born = 0; d.el.style.opacity = ""; } else d.el.style.opacity = fo.toFixed(2); }
+          d.x += (d.tx - d.x) * .03; d.y += (d.ty - d.y) * .03;
+          if (d.born) { var fo = (nowP - d.born) / 1400; if (fo >= 1) { d.born = 0; d.el.style.opacity = ""; } else d.el.style.opacity = fo.toFixed(2); }
           place(d.el, d.x, d.y, 1.3);
         });
       });
@@ -1677,16 +1702,23 @@ body.dwhere .q[data-g="1"] { opacity: .6; } body.dwhere .q[data-g="2"] { opacity
       for (var ti = c.travelers.length - 1; ti >= 0; ti--) {
         var tr = c.travelers[ti], u = (nowP - tr.t0) / TRAVEL, px, py, rr;
         if (u >= 1) {
-          tr.dot.el.remove(); c.travelers.splice(ti, 1);
+          tr.dot.el.remove(); if (tr.sp) tr.sp.remove(); c.travelers.splice(ti, 1);
           for (var q = 0; q < c.nodes.length; q++) if (c.nodes[q].i === tr.idx) c.nodes[q].arrive = nowP;
           continue;
         }
-        var fx = c.lad ? c.lad[0] : tr.x0, fy = c.lad ? c.lad[1] : tr.y0, topY = CY + c.R + 8;
-        if (u < .12) { var s0 = smooth(u / .12); px = tr.x0 + (fx - tr.x0) * s0; py = tr.y0 + (fy - tr.y0) * s0; rr = 1; }
-        else if (u < .78) { var s1 = (u - .12) / .66; px = fx + (200 - fx) * s1; py = fy + (topY - fy) * s1; rr = 1 + 1.1 * s1; py -= Math.abs(Math.sin(s1 * 30)) * 2.4; }
-        else { var s2 = smooth((u - .78) / .22), np = nodePos(c, tr.idx, deg); px = 200 + (np[0] - 200) * s2; py = topY + (np[1] - topY) * s2; rr = 2.1 - 1.4 * s2; }
-        place(tr.dot.el, px, py, rr * 1.3);
+        var fx = c.lad ? c.lad[0] : tr.x0, fy = c.lad ? c.lad[1] : tr.y0, topY = CY + c.R + 8, np = nodePos(c, tr.idx, deg);
+        /* the figure fades where it stands, over the first fifth */
+        tr.dot.el.style.opacity = Math.max(0, 1 - u * 5).toFixed(3);
+        /* one smooth curve: from the figure, to the foot of the line, up to the ring, round to its place. Eased in and out, no bounce. */
+        var e = smooth(clamp(u * 1.05, 0, 1)), qx, qy;
+        var P = [[tr.x0, tr.y0], [fx, fy - 30], [200 + (np[0] - 200) * .35, topY + 30], [np[0], np[1]]], m = 1 - e;
+        qx = m * m * m * P[0][0] + 3 * m * m * e * P[1][0] + 3 * m * e * e * P[2][0] + e * e * e * P[3][0];
+        qy = m * m * m * P[0][1] + 3 * m * m * e * P[1][1] + 3 * m * e * e * P[2][1] + e * e * e * P[3][1];
+        tr.sp.setAttribute("transform", "translate(" + qx.toFixed(1) + " " + qy.toFixed(1) + ")");
+        tr.sp.style.opacity = Math.min(1, u * 6, (1 - u) * 8).toFixed(3);
+        lineLit = Math.max(lineLit || 0, 1);
       }
+      if (c.ladEl) c.ladEl.style.opacity = c.travelers.length ? .62 : "";
       if (c.leaving && !c.done && !c.travelers.length) { c.done = true; stopDrone(c); checkEnd(); }
       /* windows glow */
       for (var gi = 0; gi < c.glows.length; gi++) {
@@ -1705,5 +1737,8 @@ body.dwhere .q[data-g="1"] { opacity: .6; } body.dwhere .q[data-g="2"] { opacity
   requestAnimationFrame(frame);
 })();
 </script>
+
 <script src="/rhythm-geometry/nav.js" defer></script>
-</body></html>
+
+</body>
+</html>
