@@ -217,6 +217,9 @@ body { font-kerning: normal; text-rendering: optimizeLegibility; -webkit-font-sm
 .opt { font: 600 13px/1.25 var(--font); } .opt small { font: 400 11.5px/1.4 var(--font); opacity: .8; }
 @media (max-width: 899px) { .lede { font-size: 12px; max-width: calc(100vw - 200px); } }
 .about, .picker .card { border-width: 1px; }
+body.loop .pbg { display: none; }
+.wcol { position: absolute; inset: 0; width: 100%; height: 100%; z-index: 0; pointer-events: none; display: none; }
+body.loop .wcol { display: block; }
 </style>
 </head>
 <body>
@@ -850,6 +853,52 @@ body { font-kerning: normal; text-rendering: optimizeLegibility; -webkit-font-sm
     if (!c.phG) return;
     [c.phClip, c.phBg, c.phIm, c.phFrame].forEach(function (n) { n.setAttribute("x", (cx - w / 2).toFixed(1)); n.setAttribute("y", top.toFixed(1)); n.setAttribute("width", w); n.setAttribute("height", h); });
   }
+  /* ---- collage: the three photos become the background, two-tone in the page's own blues, never behind a building ---- */
+  function duoFilter(id, lo, hi, op) {
+    var a = hexRgb(lo), b = hexRgb(hi), t = function (k) { return (a[k] / 255).toFixed(3) + " " + (b[k] / 255).toFixed(3); };
+    return '<filter id="' + id + '" color-interpolation-filters="sRGB" x="0" y="0" width="1" height="1"><feColorMatrix type="saturate" values="0"/>' +
+      '<feComponentTransfer><feFuncR type="linear" slope="1.35" intercept="-.15"/><feFuncG type="linear" slope="1.35" intercept="-.15"/><feFuncB type="linear" slope="1.35" intercept="-.15"/></feComponentTransfer>' +
+      '<feComponentTransfer><feFuncR type="table" tableValues="' + t(0) + '"/><feFuncG type="table" tableValues="' + t(1) + '"/><feFuncB type="table" tableValues="' + t(2) + '"/><feFuncA type="table" tableValues="' + op + " " + op + '"/></feComponentTransfer></filter>';
+  }
+  function bigUrl(ph) { return "https://images.unsplash.com/photo-" + ph[0] + "?w=1100&h=1000&fit=crop&crop=entropy&q=60&auto=format"; }
+  function collageSvg(c, ci) {
+    var ph = PHOTOS[c.id]; if (!ph) return "";
+    var f = "cf" + ci + c.id, m = "cm" + ci + c.id, gv = "cv" + ci + c.id, gh = "ch" + ci + c.id;
+    return '<defs>' + duoFilter(f, "#7d84d4", "#b2b0ef", .62) +
+      '<linearGradient id="' + gv + '" gradientUnits="userSpaceOnUse" x1="0" x2="0" y1="0" y2="400"><stop offset="0" stop-color="#fff" stop-opacity=".95"/><stop offset=".6" stop-color="#fff" stop-opacity=".7"/><stop class="roofstop" offset="1" stop-color="#fff" stop-opacity="0"/></linearGradient>' +
+      '<linearGradient id="' + gh + '" x1="0" x2="1" y1="0" y2="0"><stop offset="0" stop-color="#000"/><stop offset=".22" stop-color="#fff"/><stop offset=".78" stop-color="#fff"/><stop offset="1" stop-color="#000"/></linearGradient>' +
+      '<mask id="' + m + '" maskUnits="userSpaceOnUse" x="-300" y="-200" width="1000" height="1100"><rect x="-300" y="-200" width="1000" height="1100" fill="url(#' + gv + ')"/></mask>' +
+      '<mask id="' + m + 'h" maskUnits="userSpaceOnUse" x="-200" y="-200" width="800" height="1100"><rect x="-200" y="-200" width="800" height="1100" fill="url(#' + gh + ')"/></mask></defs>' +
+      '<g class="pbg" mask="url(#' + m + ')"><g mask="url(#' + m + 'h)"><image href="' + bigUrl(ph) + '" x="-200" y="-60" width="800" height="560" preserveAspectRatio="xMidYMid slice" filter="url(#' + f + ')"/></g></g>';
+  }
+  function roofCollage(c) {   /* end the photo just above the tallest roof, so it is never behind a building */
+    try {
+      var g = c.svg.querySelector("[id^='cv']"), b = c.bldEl.getBBox(); if (!g) return;
+      var top = STREET + (b.y - GROUND) * BS + (typeof bldDY === "number" ? bldDY : 0) - 6;
+      g.setAttribute("y2", Math.max(80, top).toFixed(0));
+    } catch (e) {}
+  }
+  /* the wrap view: one collage round the ring, each city leaning in from its own side, with a clear circle where the buildings are */
+  var wrapCol = null;
+  function buildWrapCollage() {
+    var app = document.querySelector(".app");
+    if (!wrapCol) { wrapCol = document.createElementNS("http://www.w3.org/2000/svg", "svg"); wrapCol.setAttribute("class", "wcol"); wrapCol.setAttribute("aria-hidden", "true"); app.insertBefore(wrapCol, app.firstChild); }
+    var W = window.innerWidth, H = window.innerHeight, m = cluster.getScreenCTM(); if (!m) return;
+    var cx = m.e + CX * m.a, cy = m.f + CY * m.a, R = wrapExt * m.a + 8;
+    var spots = [[W * .12, H * .55], [W * .86, H * .8], [W * .86, H * .22]], h = '<defs>' + duoFilter("wduo", "#8087d5", "#b5b2f0", .58);
+    h += '<radialGradient id="whole" gradientUnits="userSpaceOnUse" cx="' + cx + '" cy="' + cy + '" r="' + (R + 60) + '"><stop offset="0" stop-color="#000"/><stop offset="' + (R / (R + 60)).toFixed(3) + '" stop-color="#000"/><stop offset="1" stop-color="#fff"/></radialGradient>';
+    CITIES.forEach(function (c, i) {
+      var sp = spots[i % 3], rr = Math.max(W, H) * .62;
+      h += '<radialGradient id="wg' + i + '" gradientUnits="userSpaceOnUse" cx="' + sp[0] + '" cy="' + sp[1] + '" r="' + rr + '"><stop offset="0" stop-color="#fff"/><stop offset=".5" stop-color="#fff" stop-opacity=".6"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></radialGradient>';
+      h += '<mask id="wm' + i + '" maskUnits="userSpaceOnUse" x="0" y="0" width="' + W + '" height="' + H + '"><rect width="' + W + '" height="' + H + '" fill="url(#wg' + i + ')"/></mask>';
+    });
+    h += '<mask id="wring" maskUnits="userSpaceOnUse" x="0" y="0" width="' + W + '" height="' + H + '"><rect width="' + W + '" height="' + H + '" fill="url(#whole)"/></mask></defs><g mask="url(#wring)">';
+    CITIES.forEach(function (c, i) {
+      var ph = PHOTOS[c.id]; if (!ph) return; var sp = spots[i % 3], iw = Math.max(W, H) * 1.1, ih = iw * .8;
+      h += '<g mask="url(#wm' + i + ')"><image href="' + bigUrl(ph) + '" x="' + (sp[0] - iw / 2) + '" y="' + (sp[1] - ih / 2) + '" width="' + iw + '" height="' + ih + '" preserveAspectRatio="xMidYMid slice" filter="url(#wduo)" style="mix-blend-mode:multiply"/></g>';
+    });
+    wrapCol.innerHTML = h + "</g>";
+  }
   function photoCredits() {
     var el2 = document.getElementById("photocred"); if (!el2) return;
     var parts = CITIES.map(function (c) { var ph = PHOTOS[c.id]; return ph ? esc(c.name) + ' by <a href="https://unsplash.com/photos/' + ph[2] + '?utm_source=no_fixed_address&amp;utm_medium=referral" target="_blank" rel="noopener">' + esc(ph[1]) + "</a>" : ""; }).filter(Boolean);
@@ -959,6 +1008,7 @@ body { font-kerning: normal; text-rendering: optimizeLegibility; -webkit-font-sm
     var p = document.createElement("section"); p.className = "panel"; p.id = "p-" + ci;
     p.style.setProperty("--bg", c.bg); p.style.setProperty("--bg2", c.bg2); p.style.setProperty("--bg3", c.bg3);
     var svg = '<svg class="sc" viewBox="0 0 400 800" preserveAspectRatio="xMidYMax meet" aria-label="' + esc(c.name) + ": " + (c.ex ? "no count yet" : c.count.toLocaleString("en-GB")) + " " + esc(c.l1) + ", " + esc(c.l2) + ". A line of " + c.dots + ' dots waits to enter its ring.">';
+    svg += collageSvg(c, ci);
     svg += '<g class="sky"><g class="sun"></g><g class="moon"></g>' + cloud(40, 214, .85) + cloud(286, 150, .65) + "</g>";
     var baseT = "translate(200 " + (STREET + (typeof bldDY === "number" ? bldDY : 0)) + ") scale(" + BS + ") translate(-200 " + -GROUND + ")";
     var mx0 = ci === 0 ? -400 : -70, mx1 = ci === 2 ? 800 : 480;
@@ -974,7 +1024,6 @@ body { font-kerning: normal; text-rendering: optimizeLegibility; -webkit-font-sm
     c.pg = c.glows; c.bldEl = p.querySelector(".bld"); c.bldEl.setAttribute("data-b", "1"); c.tabEl = tabsEl.children[ci]; c.tabEl.textContent = c.name;
 
     var sg = p.querySelector(".stat");
-    photoBlock(c, ci, sg);
     el("rect", { x: 20, y: 668, width: 360, height: 84, fill: "transparent" }, sg);
     c.dotNote = c.ex ? "example rhythm" : "each figure is " + c.per.toLocaleString("en-GB") + " people";
     var nm = el("text", { class: "cname", x: 200, y: 684, "text-anchor": "middle" }, sg); nm.textContent = c.name; c.nameEl = nm; c.timeEl = el("tspan", { class: "ntime" }, nm); c.nmChip = el("circle", { r: 4.5, fill: c.col, stroke: "#0b0b0d", "stroke-width": 1.2 }, sg);
@@ -1030,7 +1079,7 @@ body { font-kerning: normal; text-rendering: optimizeLegibility; -webkit-font-sm
   }
   CITIES.forEach(function (c, ci) { scene.appendChild(buildPanel(c, ci)); ringLayer.appendChild(buildRing(c, ci)); });
   CITIES.forEach(function (c) { if (!c.ex) wxLoad(c); });
-  photoCredits(); relayoutAll(); if (document.fonts && document.fonts.ready) document.fonts.ready.then(function () { relayoutAll(); if (typeof layoutStat === "function") CITIES.forEach(layoutStat); });
+  photoCredits(); CITIES.forEach(roofCollage); relayoutAll(); if (document.fonts && document.fonts.ready) document.fonts.ready.then(function () { relayoutAll(); if (typeof layoutStat === "function") CITIES.forEach(layoutStat); });
   /* ---------- wrap view: the facades bend round the rings, clockwise ---------- */
   var loopEl = document.getElementById("loop"), viewBtn = document.getElementById("view");
   var RADII_BASE = [160, 124, 88], ringScale = 1, mode = "columns", backing = backingEl;
@@ -1135,6 +1184,7 @@ body { font-kerning: normal; text-rendering: optimizeLegibility; -webkit-font-sm
     [cluster, loopEl].forEach(function (sv) { sv.style.transformOrigin = cxp + "px " + cyp + "px"; sv.style.transform = tf; });
     loopEl.style.opacity = (1 - endBld).toFixed(3);   /* in the finale the bent facades fade away, as the buildings drop in columns */
     layoutPad(); if (W >= 900) CITIES.forEach(layoutStat);
+    buildWrapCollage();
   }
   var SOFF = [[-91, -260], [339, -16], [100, -353]], QOFF = [[-91, -293], [338, -45], [100, -385]];
   var lastWide = false;
@@ -1159,14 +1209,14 @@ body { font-kerning: normal; text-rendering: optimizeLegibility; -webkit-font-sm
       if (mm) {
         var Wv = window.innerWidth, Hv = window.innerHeight, half = 118 * mm.a, pt = c.svg.createSVGPoint();
         pt.x = ci % 3 === 0 ? 18 + half : Wv - 18 - half; pt.y = Hv * [0.5, 0.74, 0.34][ci % 3];
-        var q = pt.matrixTransform(mm.inverse()); so = [q.x - 200, q.y - 700]; qo = [so[0], so[1] - 98];
+        var q = pt.matrixTransform(mm.inverse()); so = [q.x - 200, q.y - 700]; qo = [so[0], so[1] - 33];
       }
     }
     c.stG.setAttribute("transform", w ? "translate(" + so[0].toFixed(1) + " " + so[1].toFixed(1) + ")" : "");
     c.qg.setAttribute("transform", w ? "translate(" + qo[0].toFixed(1) + " " + qo[1].toFixed(1) + ")" : "");
     c.qoff = w ? qo : [0, 0];
     /* a set type block: name, figure, then two wrapped caption lines. Nothing is squeezed or stretched. */
-    var compact = !w && window.innerWidth < 900, ny = w ? 666 : compact ? 684 : 712, ph = w ? 48 : 40, pw = w ? 150 : 124;
+    var compact = !w && window.innerWidth < 900, ny = w ? 666 : compact ? 686 : 700, ph = w ? 48 : 40, pw = w ? 150 : 124;
     c.nameEl.setAttribute("y", ny); placeChip(c);
     c.numEl.setAttribute("transform", "translate(200 " + (ny + 33) + ")");
     if (compact) {   /* on a phone there is no room above the name, so the photo sits beside the number */
@@ -1447,7 +1497,7 @@ body { font-kerning: normal; text-rendering: optimizeLegibility; -webkit-font-sm
     if (playing && ctx) { var dur = BAR / c.n, n = Math.ceil((ctx.currentTime - t0) / dur); c.step = ((n % c.n) + c.n) % c.n; c.next = t0 + n * dur; }
     if (playing && ctx) startDrone(c);
     skyUpdate(c, Date.now()); var sec = Math.floor(localSec(c, Date.now())); setClock(c);
-    saveCities(); markTab(); layoutStat(c); photoCredits(); if (mode === "wrap") applyMode();
+    saveCities(); markTab(); layoutStat(c); roofCollage(c); photoCredits(); if (mode === "wrap") applyMode();
     if (!c.ex) wxLoad(c);
     if (typeof dataEl !== "undefined" && !dataEl.hidden) renderData();
   }
