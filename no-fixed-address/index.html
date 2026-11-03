@@ -860,22 +860,23 @@ body.loop .wcol { display: block; }
       '<feComponentTransfer><feFuncR type="linear" slope="1.35" intercept="-.15"/><feFuncG type="linear" slope="1.35" intercept="-.15"/><feFuncB type="linear" slope="1.35" intercept="-.15"/></feComponentTransfer>' +
       '<feComponentTransfer><feFuncR type="table" tableValues="' + t(0) + '"/><feFuncG type="table" tableValues="' + t(1) + '"/><feFuncB type="table" tableValues="' + t(2) + '"/><feFuncA type="table" tableValues="' + op + " " + op + '"/></feComponentTransfer></filter>';
   }
-  function bigUrl(ph) { return "https://images.unsplash.com/photo-" + ph[0] + "?w=1100&h=1000&fit=crop&crop=entropy&q=60&auto=format"; }
+  function bigUrl(ph) { return "https://images.unsplash.com/photo-" + ph[0] + "?w=1200&h=800&fit=crop&crop=entropy&q=60&auto=format"; }
   function collageSvg(c, ci) {
     var ph = PHOTOS[c.id]; if (!ph) return "";
     var f = "cf" + ci + c.id, m = "cm" + ci + c.id, gv = "cv" + ci + c.id, gh = "ch" + ci + c.id;
     return '<defs>' + duoFilter(f, "#7d84d4", "#b2b0ef", .62) +
-      '<linearGradient id="' + gv + '" gradientUnits="userSpaceOnUse" x1="0" x2="0" y1="0" y2="400"><stop offset="0" stop-color="#fff" stop-opacity=".95"/><stop offset=".6" stop-color="#fff" stop-opacity=".7"/><stop class="roofstop" offset="1" stop-color="#fff" stop-opacity="0"/></linearGradient>' +
+      '<linearGradient id="' + gv + '" gradientUnits="userSpaceOnUse" x1="0" x2="0" y1="0" y2="400"><stop offset="0" stop-color="#fff" stop-opacity=".5"/><stop offset=".45" stop-color="#fff" stop-opacity=".95"/><stop offset=".9" stop-color="#fff" stop-opacity=".9"/><stop class="roofstop" offset="1" stop-color="#fff" stop-opacity="0"/></linearGradient>' +
       '<linearGradient id="' + gh + '" x1="0" x2="1" y1="0" y2="0"><stop offset="0" stop-color="#000"/><stop offset=".22" stop-color="#fff"/><stop offset=".78" stop-color="#fff"/><stop offset="1" stop-color="#000"/></linearGradient>' +
       '<mask id="' + m + '" maskUnits="userSpaceOnUse" x="-300" y="-200" width="1000" height="1100"><rect x="-300" y="-200" width="1000" height="1100" fill="url(#' + gv + ')"/></mask>' +
       '<mask id="' + m + 'h" maskUnits="userSpaceOnUse" x="-200" y="-200" width="800" height="1100"><rect x="-200" y="-200" width="800" height="1100" fill="url(#' + gh + ')"/></mask></defs>' +
-      '<g class="pbg" mask="url(#' + m + ')"><g mask="url(#' + m + 'h)"><image href="' + bigUrl(ph) + '" x="-200" y="-60" width="800" height="560" preserveAspectRatio="xMidYMid slice" filter="url(#' + f + ')"/></g></g>';
+      '<g class="pbg" mask="url(#' + m + ')"><g mask="url(#' + m + 'h)"><image class="pbim" href="' + bigUrl(ph) + '" x="-40" y="60" width="480" height="320" preserveAspectRatio="xMidYMax slice" filter="url(#' + f + ')"/></g></g>';
   }
   function roofCollage(c) {   /* end the photo just above the tallest roof, so it is never behind a building */
     try {
       var g = c.svg.querySelector("[id^='cv']"), b = c.bldEl.getBBox(); if (!g) return;
       var top = STREET + (b.y - GROUND) * BS + (typeof bldDY === "number" ? bldDY : 0) - 6;
       g.setAttribute("y2", Math.max(80, top).toFixed(0));
+      var im = c.svg.querySelector(".pbim"); if (im) im.setAttribute("y", (Math.max(80, top) - 300).toFixed(0));   /* the photo stands on the rooftops */
     } catch (e) {}
   }
   /* the wrap view: one collage round the ring, each city leaning in from its own side, with a clear circle where the buildings are */
@@ -888,13 +889,13 @@ body.loop .wcol { display: block; }
     var spots = [[W * .12, H * .55], [W * .86, H * .8], [W * .86, H * .22]], h = '<defs>' + duoFilter("wduo", "#8087d5", "#b5b2f0", .58);
     h += '<radialGradient id="whole" gradientUnits="userSpaceOnUse" cx="' + cx + '" cy="' + cy + '" r="' + (R + 60) + '"><stop offset="0" stop-color="#000"/><stop offset="' + (R / (R + 60)).toFixed(3) + '" stop-color="#000"/><stop offset="1" stop-color="#fff"/></radialGradient>';
     CITIES.forEach(function (c, i) {
-      var sp = spots[i % 3], rr = Math.max(W, H) * .62;
+      var sp = spots[i % 3], rr = Math.max(W, H) * .36;
       h += '<radialGradient id="wg' + i + '" gradientUnits="userSpaceOnUse" cx="' + sp[0] + '" cy="' + sp[1] + '" r="' + rr + '"><stop offset="0" stop-color="#fff"/><stop offset=".5" stop-color="#fff" stop-opacity=".6"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></radialGradient>';
       h += '<mask id="wm' + i + '" maskUnits="userSpaceOnUse" x="0" y="0" width="' + W + '" height="' + H + '"><rect width="' + W + '" height="' + H + '" fill="url(#wg' + i + ')"/></mask>';
     });
     h += '<mask id="wring" maskUnits="userSpaceOnUse" x="0" y="0" width="' + W + '" height="' + H + '"><rect width="' + W + '" height="' + H + '" fill="url(#whole)"/></mask></defs><g mask="url(#wring)">';
     CITIES.forEach(function (c, i) {
-      var ph = PHOTOS[c.id]; if (!ph) return; var sp = spots[i % 3], iw = Math.max(W, H) * 1.1, ih = iw * .8;
+      var ph = PHOTOS[c.id]; if (!ph) return; var sp = spots[i % 3], iw = Math.max(W, H) * .5, ih = iw * .667;
       h += '<g mask="url(#wm' + i + ')"><image href="' + bigUrl(ph) + '" x="' + (sp[0] - iw / 2) + '" y="' + (sp[1] - ih / 2) + '" width="' + iw + '" height="' + ih + '" preserveAspectRatio="xMidYMid slice" filter="url(#wduo)" style="mix-blend-mode:multiply"/></g>';
     });
     wrapCol.innerHTML = h + "</g>";
