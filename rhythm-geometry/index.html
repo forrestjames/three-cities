@@ -4131,8 +4131,8 @@ function drawMap() {
     const box = [lx - 3, ly - size, lx + tw + 3, ly + size * 0.3];
     if (it.c !== mapHover && !it.on && overlaps(box)) continue;
     placed.push(box);
-    mapCtx.lineJoin = 'round'; mapCtx.lineWidth = Math.max(3, size * 0.3);
-    mapCtx.strokeStyle = 'rgba(18,11,18,0.75)'; mapCtx.strokeText(text, lx, ly);
+    mapCtx.lineJoin = 'round'; mapCtx.lineWidth = Math.max(2, size * 0.12);
+    mapCtx.strokeStyle = 'rgba(18,11,18,0.5)'; mapCtx.strokeText(text, lx, ly);
     mapCtx.fillStyle = it.c === mapHover || it.on ? '#f3ece6' : 'rgba(243,236,230,0.85)';
     mapCtx.fillText(text, lx, ly);
   }
