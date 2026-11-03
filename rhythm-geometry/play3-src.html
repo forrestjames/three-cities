@@ -622,7 +622,7 @@
       <button id="play" type="button" aria-pressed="false" aria-label="Play">Play</button>
       <div class="tp">
         <div class="tpt"><span class="lab">Tempo</span><b id="bpmv">110</b><button id="follow" class="chip" type="button" aria-pressed="true" title="Follow the genre tempo: when on, the tempo jumps to the genre's suggested tempo when you change city or genre"><i class="led"></i>Follow genre</button></div>
-        <input id="bpm" class="big" type="range" min="60" max="180" value="110" aria-label="Tempo">
+        <input id="bpm" class="big" type="range" min="60" max="200" value="110" aria-label="Tempo">
       </div>
     </div>
     <div class="b-fc">
@@ -665,7 +665,7 @@
     <div class="panel on" id="tab-sound"><div class="fx2">
       <p class="tabnote">What the drums and the weather rings sound like. The kit itself is picked in the bar.</p>
       <div class="fxrow">
-        <div class="grp"><span class="fxlab">Genre change</span><button id="keepSet" class="btn" type="button" aria-pressed="true" title="On: picking a new genre in the same city swaps the rhythms and keeps your drum kit, tempo and settings. Off: the genre sets the kit and tempo, as before.">Keep my settings</button></div>
+        <div class="grp"><span class="fxlab">Genre change</span><button id="keepSet" class="btn" type="button" aria-pressed="true" title="On: picking a new genre in the same city swaps the rhythms and keeps your drum kit and settings. The tempo still follows the genre while Follow genre is on. Off: the genre sets the kit too.">Keep my settings</button></div>
         <div class="grp"><span class="fxlab">Drum kit</span><button id="kitAuto" class="btn" type="button" aria-pressed="true" title="On: the drum kit follows the genre, such as the TR-909 for house and the TR-808 for drum and bass. Pick a kit yourself and this turns off.">Follows genre</button></div>
       </div>
       <p class="hint">Follows genre: the kit changes when you change genre, for example the TR-909 for house and the TR-808 for drum and bass. Pick a kit in the bar yourself and it stops following.</p>
@@ -1708,7 +1708,7 @@ function stop() {
 }
 $('play').addEventListener('click', () => playing ? stop() : start());
 $('bpm').addEventListener('input', () => { $('bpmv').textContent = $('bpm').value; setDelayTime(); });
-toggle($('keepSet'), v => { KEEP.on = v; say(v ? 'Changing genre keeps your settings.' : 'Changing genre also sets the kit and tempo.'); });
+toggle($('keepSet'), v => { KEEP.on = v; say(v ? 'Changing genre keeps your settings.' : 'Changing genre also sets the kit.'); });
 toggle($('follow'), v => { followTempo.on = v; if (v) setBpm(genreBpm); say(v ? 'Following the genre tempo.' : 'Tempo stays where you put it.'); });
 
 // ---------- mixer ----------
@@ -2087,7 +2087,7 @@ function pickGenre() {
 // Follow genre tempo: on, the tempo jumps to the genre's suggested tempo (doubled or halved into 60-180)
 const followTempo = { on: true };
 let genreBpm = 110;
-function setBpm(b) { let x = b; while (x < 60) x *= 2; while (x > 180) x /= 2; $('bpm').value = Math.round(x); $('bpmv').textContent = $('bpm').value; setDelayTime(); }
+function setBpm(b) { let x = b; while (x < 60) x *= 2; while (x > 200) x /= 2; $('bpm').value = Math.round(x); $('bpmv').textContent = $('bpm').value; setDelayTime(); }
 // The kit follows the genre until you pick a kit yourself: 909 for house and techno, 808 for bass and hip hop,
 // LinnDrum for pop, funk and rock, CR-78 for reggae and bossa, Latin percussion for salsa and samba, congas for Cuban and Afro rhythms. Anything else keeps the congas.
 const KITAUTO = { on: true };
@@ -2144,7 +2144,7 @@ function scrubApply() {
   const f = SCRUB === 0 ? WX0 : FC[Math.min(SCRUB, FC.length - 1)];
   WX = { ...WX, temp: f.temp, wind: f.wind, hum: f.hum, cloud: f.cloud, pres: f.pres, rain: f.rain, hour: f.hour };
   skyUpdate(); buildLanes(); MODE = modeFromWeather(); retune();
-  if (followTempo.on) setBpm(clamp(genreBpm + clamp(Math.round((WX.temp - WX0.temp) * 1.5), -8, 8), 60, 180));   // warmer is a little faster
+  if (followTempo.on) setBpm(clamp(genreBpm + clamp(Math.round((WX.temp - WX0.temp) * 1.5), -8, 8), 60, 200));   // warmer is a little faster
   $('cWx').textContent = Math.round(WX.temp) + '°  ·  wind ' + Math.round(WX.wind) + '  ·  ' + Math.round(WX.hum) + '% humid';
   $('scrubv').textContent = SCRUB === 0 ? 'Now' : '+' + SCRUB + 'h'; fcShow();
   wxPaint();
@@ -2183,7 +2183,7 @@ async function pickCity() {
 }
 $('scrub').addEventListener('input', e => { SCRUB = +e.target.value; $('scrubv').textContent = SCRUB === 0 ? 'Now' : '+' + SCRUB + 'h'; fcShow(); clearTimeout(scrubTimer); scrubTimer = setTimeout(scrubApply, 60); });
 city.addEventListener('change', () => { pickGenre(); pickCity(); });
-genre.addEventListener('change', () => { const ka = KITAUTO.on, ft = followTempo.on; if (KEEP.on) { KITAUTO.on = false; followTempo.on = false; } try { setPattern(); } finally { KITAUTO.on = ka; followTempo.on = ft; } buildLanes(); $('story').innerHTML = $('story').innerHTML.replace(/plays <b>[^<]*<\/b> at <b>\d+<\/b>/, `plays <b>${genre.selectedOptions[0].text}</b> at <b>${$('bpm').value}</b>`); });
+genre.addEventListener('change', () => { const ka = KITAUTO.on, ft = followTempo.on; if (KEEP.on) KITAUTO.on = false; try { setPattern(); } finally { KITAUTO.on = ka; followTempo.on = ft; } buildLanes(); $('story').innerHTML = $('story').innerHTML.replace(/plays <b>[^<]*<\/b> at <b>\d+<\/b>/, `plays <b>${genre.selectedOptions[0].text}</b> at <b>${$('bpm').value}</b>`); });
 $('shuffle').addEventListener('click', () => { city.value = Math.floor(Math.random() * ATLAS.cities.length); city.dispatchEvent(new Event('change')); });
 
 // ---------- the sky behind the rings ----------
