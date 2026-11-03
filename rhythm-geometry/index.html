@@ -602,6 +602,26 @@
       .ringcard #ring { top: 50%; transform: translate(-50%, -50%); width: min(100cqw, 100cqh); height: min(100cqw, 100cqh); max-width: none; }
     }
   }
+  /* ---- Play 2 look for the map: dark glass over a soft sky, one warm accent, pill controls ---- */
+  .mapview { background:
+    radial-gradient(120% 80% at 50% 0%, rgba(60, 54, 92, .55) 0%, rgba(60, 54, 92, 0) 60%),
+    radial-gradient(90% 60% at 50% 110%, rgba(208, 138, 106, .20) 0%, rgba(208, 138, 106, 0) 70%),
+    linear-gradient(180deg, #17121f 0%, #120b12 55%, #1a0f0e 100%); }
+  .mapbar { align-items: center; padding: 22px clamp(16px, 3vw, 40px); }
+  .mapview .brand h1 { font-size: clamp(26px, 3.4vw, 40px); font-weight: 400; letter-spacing: .02em; text-transform: none; line-height: 1; }
+  .mapview .brand::after { content: "A drum for every city"; display: block; margin-top: 8px; font-size: 10.5px; letter-spacing: .22em; text-transform: uppercase; color: var(--ink-dim); }
+  .mapfind input { border-radius: 999px; padding: 11px 20px; background: rgba(12, 7, 16, .78); border: 1px solid rgba(243, 236, 230, .26); -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px); }
+  .mapfind input::placeholder { color: var(--ink-dim); letter-spacing: .1em; text-transform: uppercase; font-size: 12px; }
+  .mapfind input:focus { outline: 0; border-color: var(--accent); }
+  .maplist { border-radius: 18px; overflow: hidden; background: rgba(12, 7, 16, .92); border-color: rgba(243, 236, 230, .26); -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px); }
+  .zoombar { flex-direction: row; align-items: center; gap: 4px; right: 50%; transform: translateX(50%); bottom: 54px; padding: 5px; border-radius: 999px; background: rgba(12, 7, 16, .78); border: 1px solid rgba(243, 236, 230, .26); -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px); }
+  .zoombar .btn { background: transparent; border: 0; border-radius: 999px; min-width: 40px; height: 34px; padding: 0 14px; font-size: 11px; }
+  .zoombar .btn:hover { background: rgba(243, 236, 230, .1); }
+  .zoombar .btn.zin, .zoombar .btn.zout { font-size: 18px; padding: 0; }
+  .zlevel { min-width: 38px; }
+  .maphint { bottom: 20px; font-size: 11px; letter-spacing: .16em; text-transform: uppercase; }
+  @media (max-width: 640px) { .mapview .brand::after { display: none; } .mapfind { width: 100%; } .zoombar { bottom: 58px; } }
+
 </style>
 </head>
 <body class="on-map">
@@ -4086,8 +4106,12 @@ function drawMap() {
     const f = dock(c);
     const scale = 1 + (DOCK_GAIN * f) + (on ? 0.4 : 0);
     const rad = (on ? 5 : Math.min(5, 3.2 + (mapZ.k - 1) * 0.25)) * scale;
-    mapCtx.fillStyle = on ? ACCENT : 'rgba(208,138,106,0.8)';
+    const halo = mapCtx.createRadialGradient(x, y, 0, x, y, rad * (on ? 3.4 : 2.2));
+    halo.addColorStop(0, on ? 'rgba(208,138,106,0.4)' : 'rgba(208,138,106,0.12)'); halo.addColorStop(1, 'rgba(208,138,106,0)');
+    mapCtx.fillStyle = halo; mapCtx.beginPath(); mapCtx.arc(x, y, rad * (on ? 3.4 : 2.2), 0, Math.PI * 2); mapCtx.fill();
+    mapCtx.fillStyle = on ? ACCENT : 'rgba(208,138,106,0.85)';
     mapCtx.beginPath(); mapCtx.arc(x, y, rad, 0, Math.PI * 2); mapCtx.fill();
+    if (on) { mapCtx.strokeStyle = 'rgba(243,236,230,0.7)'; mapCtx.lineWidth = 1; mapCtx.beginPath(); mapCtx.arc(x, y, rad + 4, 0, Math.PI * 2); mapCtx.stroke(); }
     items.push({ c, x, y, rad, f, on, size: Math.round(nameBase * scale) });
   }
   // labels: the hovered and open city first, then the closest to the pointer.
@@ -4108,7 +4132,7 @@ function drawMap() {
     if (it.c !== mapHover && !it.on && overlaps(box)) continue;
     placed.push(box);
     mapCtx.lineJoin = 'round'; mapCtx.lineWidth = Math.max(3, size * 0.3);
-    mapCtx.strokeStyle = 'rgba(16,8,6,0.9)'; mapCtx.strokeText(text, lx, ly);
+    mapCtx.strokeStyle = 'rgba(18,11,18,0.75)'; mapCtx.strokeText(text, lx, ly);
     mapCtx.fillStyle = it.c === mapHover || it.on ? '#f3ece6' : 'rgba(243,236,230,0.85)';
     mapCtx.fillText(text, lx, ly);
   }
