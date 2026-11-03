@@ -191,6 +191,10 @@ body.dwhere .q[data-g="1"] { opacity: .6; } body.dwhere .q[data-g="2"] { opacity
   body.loop .mix { flex-direction: row; flex-wrap: wrap; width: min(720px, calc(100% - 24px)); }
 }
 .lad { display: none; }
+.datap .one { margin: 4px 0 2px; font: 700 28px/1 var(--font); letter-spacing: -.01em; }
+.datap .dots { display: block; width: 100%; height: auto; margin: 8px 0 4px; }
+.datap .wx { margin-top: 6px; font-weight: 600; color: var(--ink); }
+.datap .dnote { margin-top: 10px; color: #444; }
 </style>
 </head>
 <body>
@@ -285,7 +289,7 @@ body.dwhere .q[data-g="1"] { opacity: .6; } body.dwhere .q[data-g="2"] { opacity
     <button class="sbtn" id="miditest" type="button" style="margin-top:10px;width:100%">Test pad CCs</button>
     <p>Rings: every hit sends a note, from all three cities. Chord: the chord changes every four bars and is held until the next one. Pad: four controllers, Filter CC 74, Delay CC 12, Hall CC 91, Flange CC 93, each 0 to 127. Tempo goes out as MIDI clock at 80 BPM with start and stop: in Ableton, switch on Sync for the port and press Ext beside the tempo. Tick Mute browser sound to hear only your studio.</p>
   </div>
-  <div class="datap" id="data" role="region" aria-label="Who they are and where they end up" hidden></div>
+  <div class="datap" id="data" role="region" aria-label="How many residents that is, city by city" hidden></div>
   <div class="dock">
     <button class="sbtn" id="view" aria-pressed="false" title="Switch between the three columns and the wrap-around view">Wrap</button>
     <button class="sbtn" id="mixbtn" aria-expanded="false" aria-controls="mix">Mix</button>
@@ -682,19 +686,19 @@ body.dwhere .q[data-g="1"] { opacity: .6; } body.dwhere .q[data-g="2"] { opacity
     { id: "madrid", name: "Madrid", tz: "Europe/Madrid", count: 1015, l1: "people sleeping rough", l2: "2025 average, street teams", style: "mediterranean", pop: 3497277 },
     { id: "barcelona", name: "Barcelona", tz: "Europe/Madrid", count: 1982, l1: "people sleeping on the street", l2: "volunteer count, December 2025", style: "mediterranean", pop: 1702547 },
     { id: "la", name: "Los Angeles", tz: "America/Los_Angeles", count: 45194, l1: "people experiencing homelessness", l2: "city count, January 2026", style: "mediterranean", pop: 3869089 },
-    { id: "sf", name: "San Francisco", tz: "America/Los_Angeles", count: 7973, l1: "people experiencing homelessness", l2: "point in time count, January 2026", style: "terrace", pop: 0 },
+    { id: "sf", name: "San Francisco", tz: "America/Los_Angeles", count: 7973, l1: "people experiencing homelessness", l2: "point in time count, January 2026", style: "terrace", pop: 827526 },
     { id: "toronto", name: "Toronto", tz: "America/Toronto", count: 12196, l1: "people experiencing homelessness", l2: "street needs assessment, October 2025", style: "terrace", pop: 3271830 },
-    { id: "dublin", name: "Dublin", tz: "Europe/Dublin", count: 136, l1: "people sleeping rough in the Dublin region", l2: "spring count, April 2026", style: "terrace", pop: 0 },
+    { id: "dublin", name: "Dublin", tz: "Europe/Dublin", count: 136, l1: "people sleeping rough in the Dublin region", l2: "spring count, April 2026", style: "terrace", pop: 1458154 },
     { id: "philly", name: "Philadelphia", tz: "America/New_York", count: 5163, l1: "people experiencing homelessness", l2: "point in time count, February 2026", style: "brownstone", pop: 1603797 },
     { id: "seattle", name: "Seattle", tz: "America/Los_Angeles", count: 18365, l1: "people experiencing homelessness in King County", l2: "point in time count, January 2026", style: "tower", pop: 2269675 },
     { id: "sandiego", name: "San Diego", tz: "America/Los_Angeles", count: 9803, l1: "people experiencing homelessness in San Diego County", l2: "point in time count, January 2026", style: "mediterranean", pop: 3298634 },
     { id: "vancouver", name: "Vancouver", tz: "America/Vancouver", count: 2715, l1: "people experiencing homelessness", l2: "one night count, March 2025", style: "tower", pop: 662248 },
-    { id: "sydney", name: "Sydney", tz: "Australia/Sydney", count: 296, l1: "people sleeping rough in the City of Sydney", l2: "street count, February 2026", style: "terrace", pop: 0 },
-    { id: "helsinki", name: "Helsinki", tz: "Europe/Helsinki", count: 786, l1: "single people without a home", l2: "survey, 15 November 2024", style: "gabled", pop: 0 },
+    { id: "sydney", name: "Sydney", tz: "Australia/Sydney", count: 296, l1: "people sleeping rough in the City of Sydney", l2: "street count, February 2026", style: "terrace", pop: 218096 },
+    { id: "helsinki", name: "Helsinki", tz: "Europe/Helsinki", count: 786, l1: "single people without a home", l2: "survey, 15 November 2024", style: "gabled", pop: 684018 },
     { id: "berlin", name: "Berlin", tz: "Europe/Berlin", count: 57575, l1: "people housed in emergency accommodation", l2: "31 January 2026", style: "tenement", pop: 3596999 },
     { id: "lisbon", name: "Lisbon", tz: "Europe/Lisbon", count: 3122, l1: "people sleeping rough or in temporary housing", l2: "31 December 2024", style: "mediterranean", pop: 545796 },
     { id: "montreal", name: "Montreal", tz: "America/Toronto", count: 4690, l1: "people in visible homelessness", l2: "one night count, April 2022", style: "tenement", pop: 1762949 },
-    { id: "portland", name: "Portland", tz: "America/Los_Angeles", count: 12034, l1: "people experiencing homelessness in the tri-county area", l2: "point in time count, January 2025", style: "terrace", pop: 0 }
+    { id: "portland", name: "Portland", tz: "America/Los_Angeles", count: 12034, l1: "people experiencing homelessness in the tri-county area", l2: "point in time count, January 2025", style: "terrace", pop: 1833026 }
   ];
   /* live weather from Open-Meteo, so you can see what people are sleeping out in */
   var LATLON = { boston: [42.36, -71.06], cph: [55.68, 12.57], london: [51.51, -.13], paris: [48.86, 2.35], nyc: [40.71, -74.01], madrid: [40.42, -3.7], barcelona: [41.39, 2.17], la: [34.05, -118.24], sf: [37.77, -122.42], toronto: [43.65, -79.38], dublin: [53.35, -6.26], philly: [39.95, -75.17], seattle: [47.61, -122.33], sandiego: [32.72, -117.16], vancouver: [49.28, -123.12], sydney: [-33.87, 151.21], helsinki: [60.17, 24.94], berlin: [52.52, 13.4], lisbon: [38.72, -9.14], montreal: [45.5, -73.57], portland: [45.52, -122.68] };
@@ -1202,17 +1206,28 @@ body.dwhere .q[data-g="1"] { opacity: .6; } body.dwhere .q[data-g="2"] { opacity
     }
     return h + (L.note ? "<p>" + esc(L.note) + "</p>" : "");
   }
+  /* one measure every city has: how many residents that is (1 in N), drawn as N dots with one lit, and the weather outside tonight */
+  function dotField(n, col) {
+    var per = n > 1200 ? Math.ceil(n / 1200) : 1, m = Math.ceil(n / per), cols = 60, rows = Math.ceil(m / cols), p = 4.4, i, h = "", lit = Math.floor(m * .618);
+    for (i = 0; i < m; i++) { var x = (i % cols) * p + 2.2, y = Math.floor(i / cols) * p + 2.2; h += i === lit ? "" : '<circle cx="' + x.toFixed(1) + '" cy="' + y.toFixed(1) + '" r="1.25"/>'; }
+    var lx = (lit % cols) * p + 2.2, ly = Math.floor(lit / cols) * p + 2.2;
+    return '<svg class="dots" viewBox="0 0 ' + (cols * p) + " " + (rows * p) + '" role="img" aria-label="' + n.toLocaleString("en-GB") + ' dots, one lit"><g fill="#0b0b0d" opacity=".32">' + h + '</g><circle cx="' + lx.toFixed(1) + '" cy="' + ly.toFixed(1) + '" r="2.6" fill="' + col + '" stroke="#0b0b0d" stroke-width=".8"/></svg>' + (per > 1 ? "<p>Each dot is " + per.toLocaleString("en-GB") + " residents.</p>" : "");
+  }
   function renderData() {
     var h = "";
     CITIES.forEach(function (c) {
-      var bd = BREAKDOWN[c.id] || {};
-      h += "<section><h3><i style=\"background:" + c.col + "\"></i>" + esc(c.name) + "</h3>" + (c.wxS ? "<p><b>" + esc(c.wxS) + "</b></p>" : "") + layer("Where they end up", bd.where) + layer("Who they are", bd.who) + "</section>";
+      h += "<section><h3><i style=\"background:" + c.col + "\"></i>" + esc(c.name) + "</h3>";
+      if (c.pop > 0 && !c.ex) {
+        var one = Math.max(1, Math.round(c.pop / c.count));
+        h += '<p class="one">1 in ' + one.toLocaleString("en-GB") + "</p><p>" + c.count.toLocaleString("en-GB") + " " + esc(c.l1) + " (" + esc(c.l2) + "), out of " + c.pop.toLocaleString("en-GB") + " residents.</p>" + dotField(one, c.col);
+      } else h += "<p>No population figure for this place yet, so no 1 in N.</p>";
+      h += c.wxS ? '<p class="wx">' + esc(c.wxS.replace("Out there now", "Outside tonight")) + "</p>" : "";
+      h += "</section>";
     });
-    dataEl.innerHTML = h;
+    dataEl.innerHTML = h + '<p class="dnote">Each city counts in its own way, so read these side by side, not as a ranking.</p>';
   }
   dataBtn.addEventListener("click", function () {
     dataEl.hidden = !dataEl.hidden; dataBtn.setAttribute("aria-expanded", dataEl.hidden ? "false" : "true");
-    document.body.classList.toggle("dwhere", !dataEl.hidden);
     if (!dataEl.hidden) { renderData(); if (!mixEl.hidden) mixBtn.click(); if (!midiEl.hidden) midiBtn.click(); }
   });
   var mixBtn = document.getElementById("mixbtn"), mixEl = document.getElementById("mix");
