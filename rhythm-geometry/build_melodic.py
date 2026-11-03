@@ -39,8 +39,8 @@ rep('<option value="stab" selected title="Two detuned saws, a bite at the front"
 rep('<option value="glass">Glass</option>', '<option value="glass" selected>Glass</option>')
 rep('<input id="chordRev" type="range" min="0" max="100" value="30"', '<input id="chordRev" type="range" min="0" max="100" value="55"')
 rep('<output id="chordRevOut">30</output>', '<output id="chordRevOut">55</output>')
-# conga ring: marimba, with a little more room
-s = re.sub(r'(<select id="congaInst"[^>]*>.*?</select>)', lambda m: m.group(1).replace(' selected', '').replace('<option value="marimba">', '<option value="marimba" selected>'), s, count=1, flags=re.S)
+# conga ring: woodblock, the same default as the main page (Jim, 3 Nov 2026)
+s = re.sub(r'(<select id="congaInst"[^>]*>.*?</select>)', lambda m: m.group(1).replace(' selected', '').replace('<option value="woodblock">', '<option value="woodblock" selected>'), s, count=1, flags=re.S)
 rep('<input id="congaRev" type="range" min="0" max="100" value="18"', '<input id="congaRev" type="range" min="0" max="100" value="30"')
 rep('<output id="congaRevOut">18%</output>', '<output id="congaRevOut">30%</output>')
 
