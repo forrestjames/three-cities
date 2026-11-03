@@ -9,6 +9,7 @@
     ['Duet', '/rhythm-geometry/duet/', 'The conga and one drum'],
     ['Play', '/rhythm-geometry/play/', 'Congas and bongos on a mixer'],
     ['Play 2', '/rhythm-geometry/play2/', 'Weather sky and forecast slider'],
+    ['Play 3', '/rhythm-geometry/play3/', 'A melody that develops, with a voice'],
     ['No Fixed Address', null],
     ['The ledger of homes', '/no-fixed-address/', 'Homelessness counts as rings'],
     ['The cuts', '/no-fixed-address/ledger/', 'The DOGE cuts as rings']
