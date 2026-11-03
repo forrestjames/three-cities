@@ -865,18 +865,20 @@ body.loop .wcol { display: block; }
     var ph = PHOTOS[c.id]; if (!ph) return "";
     var f = "cf" + ci + c.id, m = "cm" + ci + c.id, gv = "cv" + ci + c.id, gh = "ch" + ci + c.id;
     return '<defs>' + duoFilter(f, "#7d84d4", "#b2b0ef", .62) +
-      '<linearGradient id="' + gv + '" gradientUnits="userSpaceOnUse" x1="0" x2="0" y1="0" y2="400"><stop offset="0" stop-color="#fff" stop-opacity=".5"/><stop offset=".45" stop-color="#fff" stop-opacity=".95"/><stop offset=".9" stop-color="#fff" stop-opacity=".9"/><stop class="roofstop" offset="1" stop-color="#fff" stop-opacity="0"/></linearGradient>' +
-      '<linearGradient id="' + gh + '" x1="0" x2="1" y1="0" y2="0"><stop offset="0" stop-color="#000"/><stop offset=".22" stop-color="#fff"/><stop offset=".78" stop-color="#fff"/><stop offset="1" stop-color="#000"/></linearGradient>' +
+      '<linearGradient id="' + gv + '" gradientUnits="userSpaceOnUse" x1="0" x2="0" y1="0" y2="400"><stop offset="0" stop-color="#fff" stop-opacity="0"/><stop offset=".4" stop-color="#fff" stop-opacity=".95"/><stop offset=".96" stop-color="#fff" stop-opacity=".9"/><stop class="roofstop" offset="1" stop-color="#fff" stop-opacity="0"/></linearGradient>' +
+      '<linearGradient id="' + gh + '" gradientUnits="userSpaceOnUse" x1="-110" x2="510" y1="0" y2="0"><stop offset="0" stop-color="#000"/><stop offset=".3" stop-color="#fff"/><stop offset=".7" stop-color="#fff"/><stop offset="1" stop-color="#000"/></linearGradient>' +
       '<mask id="' + m + '" maskUnits="userSpaceOnUse" x="-300" y="-200" width="1000" height="1100"><rect x="-300" y="-200" width="1000" height="1100" fill="url(#' + gv + ')"/></mask>' +
       '<mask id="' + m + 'h" maskUnits="userSpaceOnUse" x="-200" y="-200" width="800" height="1100"><rect x="-200" y="-200" width="800" height="1100" fill="url(#' + gh + ')"/></mask></defs>' +
-      '<g class="pbg" mask="url(#' + m + ')"><g mask="url(#' + m + 'h)"><image class="pbim" href="' + bigUrl(ph) + '" x="-40" y="60" width="480" height="320" preserveAspectRatio="xMidYMax slice" filter="url(#' + f + ')"/></g></g>';
+      '<g class="pbg" mask="url(#' + m + ')"><g mask="url(#' + m + 'h)"><image class="pbim" href="' + bigUrl(ph) + '" x="-110" y="60" width="620" height="413" preserveAspectRatio="xMidYMax slice" filter="url(#' + f + ')"/></g></g>';
   }
   function roofCollage(c) {   /* end the photo just above the tallest roof, so it is never behind a building */
     try {
       var g = c.svg.querySelector("[id^='cv']"), b = c.bldEl.getBBox(); if (!g) return;
       var top = STREET + (b.y - GROUND) * BS + (typeof bldDY === "number" ? bldDY : 0) - 6;
-      g.setAttribute("y2", Math.max(80, top).toFixed(0));
-      var im = c.svg.querySelector(".pbim"); if (im) im.setAttribute("y", (Math.max(80, top) - 300).toFixed(0));   /* the photo stands on the rooftops */
+      top = Math.max(80, top);
+      var im = c.svg.querySelector(".pbim"), ih = im ? +im.getAttribute("height") : 413, y0 = top - ih + 8;
+      if (im) im.setAttribute("y", y0.toFixed(1));   /* the photo stands on the rooftops, and follows them as they settle */
+      g.setAttribute("y1", y0.toFixed(1)); g.setAttribute("y2", top.toFixed(1));
     } catch (e) {}
   }
   /* the wrap view: one collage round the ring, each city leaning in from its own side, with a clear circle where the buildings are */
@@ -1154,6 +1156,7 @@ body.loop .wcol { display: block; }
     introDirty = false; if (t > 8) introDone = true;
     if (mode === "wrap") { wrapStep(); return; }
     cluster.style.transform = ""; loopEl.style.transform = ""; loopEl.style.opacity = "";
+    CITIES.forEach(roofCollage);
     var m = cluster.getScreenCTM(); if (!m) return;
     var s = m.a, H = window.innerHeight, W = window.innerWidth, R = RADII_BASE[0] * s;
     var k = W < 900 ? 1 : Math.max(1, Math.min(1.05, W * .46 / R)), cyp = m.f + CY * s, cxp = m.e + CX * s;
