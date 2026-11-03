@@ -653,6 +653,7 @@
     .gscroll { overflow: visible; max-height: none; -webkit-mask-image: none !important; mask-image: none !important; }
   }
 
+  #about:disabled { display: none; }
 </style>
 </head>
 <body class="on-map">
@@ -847,7 +848,7 @@
 
     <div class="card voice" id="congaCard">
       <div class="vhead">
-        <h2><select id="congaInst" class="hdr-sel" aria-label="Conga instrument" title="Change the instrument"><option value="conga" selected>Conga</option><option value="bongo">Bongo</option><option value="clave">Clave</option><option value="cowbell">Cowbell</option><option value="woodblock">Woodblock</option><option value="agogo">Agogo</option><option value="timbale">Timbale</option><option value="guiro">Guiro</option><option value="triangle">Triangle</option><option value="tambourine">Tambourine</option><optgroup label="Melodic"><option value="upright">Acoustic bass</option><option value="moogbass">Synth bass</option><option value="subbass">Sub bass</option><option value="marimba">Marimba</option></optgroup></select><small>the ring's hits</small></h2>
+        <h2><select id="congaInst" class="hdr-sel" aria-label="Conga instrument" title="Change the instrument"><option value="conga">Conga</option><option value="bongo">Bongo</option><option value="clave">Clave</option><option value="cowbell">Cowbell</option><option value="woodblock" selected>Woodblock</option><option value="agogo">Agogo</option><option value="timbale">Timbale</option><option value="guiro">Guiro</option><option value="triangle">Triangle</option><option value="tambourine">Tambourine</option><optgroup label="Melodic"><option value="upright">Acoustic bass</option><option value="moogbass">Synth bass</option><option value="subbass">Sub bass</option><option value="marimba">Marimba</option></optgroup></select><small>the ring's hits</small></h2>
         <button id="congaMute" class="btn small" type="button" aria-pressed="false">Mute</button>
       </div>
       <div class="vtabs" role="tablist">
@@ -857,7 +858,7 @@
       </div>
       <div class="vpanel" data-panel="sound">
         <div class="row2">
-          <div class="field grow"><label class="label" for="pitch">Pitch</label><select id="pitch"><option value="melody" selected title="A short tune in the city's scale. It answers itself every fourth lap and changes slowly">Melody</option><option value="alt" title="Low, then high, then low again">Alternate</option><option value="same" title="Always the low note">Same note</option><option value="rand" title="Low or high, by chance">Random</option><option value="deep" title="Random notes, one or two octaves down">Deep</option><option value="sky" title="Random notes, one or two octaves up">Sky</option><option value="climb" title="Alternates, and each time round it steps up an octave">Climb</option><option value="fall" title="Alternates, and each time round it steps down an octave">Fall</option></select></div>
+          <div class="field grow"><label class="label" for="pitch">Pitch</label><select id="pitch"><option value="melody" title="A short tune in the city's scale. It answers itself every fourth lap and changes slowly">Melody</option><option value="alt" title="Low, then high, then low again">Alternate</option><option value="same" title="Always the low note">Same note</option><option value="rand" title="Low or high, by chance">Random</option><option value="deep" selected title="Random notes, one or two octaves down">Deep</option><option value="sky" title="Random notes, one or two octaves up">Sky</option><option value="climb" title="Alternates, and each time round it steps up an octave">Climb</option><option value="fall" title="Alternates, and each time round it steps down an octave">Fall</option></select></div>
           <div class="field grow"><label class="label" for="pitchRepeat">Repeat each note</label><select id="pitchRepeat"><option value="1" selected>×1</option><option value="2">×2</option><option value="3">×3</option><option value="4">×4</option></select></div>
         </div>
         <div class="row2">
@@ -867,7 +868,7 @@
           <div class="knob-cell"><div class="head"><span class="label">Volume</span><output id="congaVolOut">80</output></div><input id="congaVol" type="range" min="0" max="100" value="80" aria-label="Conga volume"></div>
           <div class="knob-cell"><div class="head"><span class="label">Decay</span><output id="congaDecayOut">1.0x</output></div><input id="congaDecay" type="range" min="0" max="100" value="50" aria-label="Conga decay"></div>
           <div class="knob-cell"><div class="head"><span class="label">Tune</span><output id="congaTuneOut">0</output></div><input id="congaTune" type="range" min="-12" max="12" value="0" aria-label="Conga tune in semitones"></div>
-          <div class="knob-cell"><div class="head"><span class="label">Filter</span><output id="congaCutOut">open</output></div><input id="congaCut" type="range" min="0" max="100" value="100" aria-label="Conga filter cutoff"></div>
+          <div class="knob-cell"><div class="head"><span class="label">Filter</span><output id="congaCutOut">open</output></div><input id="congaCut" type="range" min="0" max="100" value="58" aria-label="Conga filter cutoff"></div>
           <div class="knob-cell"><div class="head"><span class="label">Res</span><output id="congaResOut">0</output></div><input id="congaRes" type="range" min="0" max="100" value="0" aria-label="Conga filter resonance"></div>
           <div class="knob-cell"><div class="head"><span class="label">Pan</span><output id="congaPanOut">R8</output></div><input id="congaPan" type="range" min="-100" max="100" value="8" aria-label="Conga pan, left to right"></div>
         </div>
@@ -875,11 +876,11 @@
       <div class="vpanel" data-panel="fx" hidden>
         <div class="row2">
           <div class="field grow"><label class="label" for="congaDelay">Delay</label><select id="congaDelay"><option value="off">Off</option><option value="32">1/32</option><option value="16">1/16</option><option value="16t">1/16 triplet</option><option value="8t">1/8 triplet</option><option value="8">1/8</option><option value="d8" selected>Dotted 1/8</option><option value="4t">1/4 triplet</option><option value="4">1/4</option><option value="d4">Dotted 1/4</option></select></div>
-          <div class="field grow"><label class="label" for="congaStyle">Style</label><select id="congaStyle"><option value="mono" selected>Mono</option><option value="ping-pong">Ping-pong</option><option value="tape">Tape (darkens)</option><option value="slapback">Slapback</option><option value="dub">Dub (dark, long)</option></select></div>
+          <div class="field grow"><label class="label" for="congaStyle">Style</label><select id="congaStyle"><option value="mono">Mono</option><option value="ping-pong" selected>Ping-pong</option><option value="tape">Tape (darkens)</option><option value="slapback">Slapback</option><option value="dub">Dub (dark, long)</option></select></div>
         </div>
         <div class="knobs" style="--n:3">
           <div class="knob-cell"><div class="head"><span class="label">Echo</span><output id="congaFbOut">30%</output></div><input id="congaFb" type="range" min="0" max="100" value="30" aria-label="Conga delay feedback"></div>
-          <div class="knob-cell"><div class="head"><span class="label">Delay level</span><output id="congaDelayLvlOut">35%</output></div><input id="congaDelayLvl" type="range" min="0" max="100" value="35" aria-label="Conga delay level"></div>
+          <div class="knob-cell"><div class="head"><span class="label">Delay level</span><output id="congaDelayLvlOut">19%</output></div><input id="congaDelayLvl" type="range" min="0" max="100" value="19" aria-label="Conga delay level"></div>
           <div class="knob-cell"><div class="head"><span class="label">Reverb</span><output id="congaRevOut">18%</output></div><input id="congaRev" type="range" min="0" max="100" value="18" aria-label="Conga reverb level"></div>
           <div class="knob-cell"><div class="head"><span class="label">Rev decay</span><output id="congaRevDecOut">1.0 s</output></div><input id="congaRevDec" type="range" min="0" max="100" value="40" aria-label="Conga reverb decay"></div>
         </div>
@@ -2582,7 +2583,7 @@ const KITS = [
     open_hat: (o, t, v) => pitchedHit(o, t, 1800, 1750, 0.12 * v, 0.6),
     clap: K_LAZY((o, t, v) => INSTR.cowbell(o, t, mtof(79), 0.5 * v)) } },
 ];
-let activeKit = KITS.find(k => k.id === '808') || KITS[0];
+let activeKit = KITS.find(k => k.id === 'lo_fi') || KITS[0];   // the page starts on the lo-fi tape kit
 const kitSel = $('kitSel');
 for (const g of ['Basic', 'Machines', 'Electronic', 'World']) {
   const og = document.createElement('optgroup');
