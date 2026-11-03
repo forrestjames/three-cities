@@ -622,6 +622,27 @@
   .maphint { bottom: 20px; font-size: 11px; letter-spacing: .16em; text-transform: uppercase; }
   @media (max-width: 640px) { .mapview .brand::after { display: none; } .mapfind { width: 100%; } .zoombar { bottom: 58px; } }
 
+  /* ---- Play 2 look for the app view: ring as hero, quiet glass panels, pill controls ---- */
+  body { background: radial-gradient(120% 70% at 50% 0%, rgba(60, 54, 92, .5) 0%, rgba(60, 54, 92, 0) 60%), radial-gradient(90% 55% at 50% 110%, rgba(208, 138, 106, .16) 0%, rgba(208, 138, 106, 0) 70%), linear-gradient(180deg, #17121f 0%, #120b12 55%, #1a0f0e 100%) fixed; }
+  .titlerow .altlink { display: none; }
+  .top h1 { font-size: clamp(20px, 2.2vw, 28px); letter-spacing: .02em; text-transform: none; }
+  .top .place { font-size: 11px; letter-spacing: .18em; text-transform: uppercase; color: var(--ink-dim); }
+  .card { background: rgba(12, 7, 16, .78); border: 1px solid rgba(243, 236, 230, .2); border-radius: 22px; -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px); }
+  .ringcard { background: transparent; border-color: transparent; -webkit-backdrop-filter: none; backdrop-filter: none; }
+  .btn, .search-row input, .transport .bpm input[type=number], .rec-split, .rec-main, .rec-caret { border-radius: 999px; }
+  .rec-split { overflow: hidden; }
+  .btn.primary { box-shadow: 0 0 0 4px rgba(208, 138, 106, .16); }
+  .btn.primary:hover { box-shadow: 0 0 0 6px rgba(208, 138, 106, .22); }
+  .search-row input { background: rgba(12, 7, 16, .6); padding-left: 18px; border-color: rgba(243, 236, 230, .2); }
+  .search-row input:focus { outline: 0; border-color: var(--accent); }
+  .chip { border-radius: 17px; }
+  .modes { border-radius: 999px; overflow: hidden; border-color: rgba(243, 236, 230, .2); }
+  .wxbtn { border-radius: 16px; }
+  .ringplace b { font-size: clamp(34px, 3.6vw, 50px); letter-spacing: .01em; text-transform: none; line-height: 1; }
+  .ringplace span { font-size: 13px; }
+  .card .label { letter-spacing: .2em; font-size: 10.5px; }
+  .sidebox + .sidebox { border-top: 1px solid rgba(243, 236, 230, .1); padding-top: 14px; }
+
 </style>
 </head>
 <body class="on-map">

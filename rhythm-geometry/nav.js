@@ -27,11 +27,12 @@
     '.gnav-menu a:hover,.gnav-menu a:focus-visible{background:rgba(243,236,230,.09);outline:0}' +
     '.gnav-menu a[aria-current=page]{background:rgba(208,138,106,.16);box-shadow:inset 2px 0 #d08a6a}' +
     '.gnav.low{top:auto;bottom:10px;left:auto;right:10px;transform:none}.gnav.low .gnav-menu{top:auto;bottom:38px;left:auto;right:0;margin-left:0;transform:translateY(6px)}.gnav.low.open .gnav-menu{transform:none}' +
-    '@media(max-width:640px){.gnav,.gnav.low{top:50%;bottom:auto;left:0;right:auto;transform:translateY(-50%)}.gnav-btn{height:56px;width:24px;padding:0;justify-content:center;border-left:0;border-radius:0 14px 14px 0;font-size:0;gap:0}.gnav-menu,.gnav.low .gnav-menu{top:50%;bottom:auto;left:30px;right:auto;margin-left:0;transform:translateY(-50%) translateX(-6px)}.gnav.open .gnav-menu,.gnav.low.open .gnav-menu{transform:translateY(-50%)}}' +
+    'body:not(.on-map) .gnav.app{top:auto;bottom:10px}body:not(.on-map) .gnav.app .gnav-menu{top:auto;bottom:38px;transform:translateY(6px)}body:not(.on-map) .gnav.app.open .gnav-menu{transform:none}' +
+    '@media(max-width:640px){body:not(.on-map) .gnav.app .gnav-menu{top:50%;bottom:auto}.gnav,.gnav.low,body:not(.on-map) .gnav.app{top:50%;bottom:auto;left:0;right:auto;transform:translateY(-50%)}.gnav-btn{height:56px;width:24px;padding:0;justify-content:center;border-left:0;border-radius:0 14px 14px 0;font-size:0;gap:0}.gnav-menu,.gnav.low .gnav-menu{top:50%;bottom:auto;left:30px;right:auto;margin-left:0;transform:translateY(-50%) translateX(-6px)}.gnav.open .gnav-menu,.gnav.low.open .gnav-menu{transform:translateY(-50%)}}' +
     '@media print{.gnav{display:none}}';
   function go() {
     var st = document.createElement('style'); st.textContent = css; document.head.appendChild(st);
-    var w = document.createElement('nav'); w.className = 'gnav'; w.setAttribute('aria-label', 'Rhythm Geometry pages'); if (/\/rhythm-geometry\/play\/$/.test(path)) w.classList.add('low');
+    var w = document.createElement('nav'); w.className = 'gnav'; w.setAttribute('aria-label', 'Rhythm Geometry pages'); if (/\/rhythm-geometry\/play\/$/.test(path)) w.classList.add('low'); if (/\/rhythm-geometry\/(melodic\/|duet\/)?$/.test(path)) w.classList.add('app');
     var b = document.createElement('button'); b.className = 'gnav-btn'; b.type = 'button'; b.setAttribute('aria-expanded', 'false'); b.setAttribute('aria-haspopup', 'true');
     b.innerHTML = '<i></i>Pages';
     var m = document.createElement('div'); m.className = 'gnav-menu';
