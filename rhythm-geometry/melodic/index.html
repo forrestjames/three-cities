@@ -645,6 +645,16 @@
   .card .label { letter-spacing: .2em; font-size: 10.5px; }
   .sidebox + .sidebox { border-top: 1px solid rgba(243, 236, 230, .1); padding-top: 14px; }
 
+  /* genre and pattern lists: never a sliver. Each list shows at least two full rows, and on smaller screens everything shows */
+  .gsec { min-height: 104px; } .psec { min-height: 92px; }
+  .gscroll .chips { padding-bottom: 4px; }
+  .gscroll.more { -webkit-mask-image: linear-gradient(to bottom, #000 calc(100% - 14px), transparent); mask-image: linear-gradient(to bottom, #000 calc(100% - 14px), transparent); }
+  @media not all and (min-width: 1001px) and (min-height: 600px) {
+    .gbody { flex: none !important; overflow: visible !important; }
+    .gsec, .psec { flex: none; min-height: 0; max-height: none; }
+    .gscroll { overflow: visible; max-height: none; -webkit-mask-image: none !important; mask-image: none !important; }
+  }
+
 </style>
 </head>
 <body class="on-map">
@@ -744,8 +754,8 @@
       </div>
       <div class="sidebox around-sec" id="aroundSec">
         <p class="label">Around here <span class="hint">the place leaks into the sound</span></p>
-        <div class="knobs groove-knobs" style="--n:3">
-          <div class="knob-cell"><div class="head"><span class="label">Bleed</span><output id="grooveBleedOut">30%</output></div><input id="grooveBleed" type="range" min="0" max="100" value="30" aria-label="Neighbour bleed: how much the nearest cities' rhythms leak in, quietly"></div>
+        <div class="knobs groove-knobs" style="--n:2">
+          <div class="knob-cell" hidden><div class="head"><span class="label">Bleed</span><output id="grooveBleedOut">30%</output></div><input id="grooveBleed" type="range" min="0" max="100" value="30" aria-label="Neighbour bleed: how much the nearest cities' rhythms leak in, quietly"></div>
           <div class="knob-cell"><div class="head"><span class="label">Grit</span><output id="grooveGritOut">10%</output></div><input id="grooveGrit" type="range" min="0" max="100" value="10" aria-label="Grit: warmth, crackle and dirt from the air quality"></div>
           <div class="knob-cell"><div class="head"><span class="label">Quakes</span><output id="grooveQuakeOut">0%</output></div><input id="grooveQuake" type="range" min="0" max="100" value="0" aria-label="Quakes: how often a low rumble from today's earthquakes plays"></div>
         </div>
@@ -1585,7 +1595,7 @@ function renderGenres() {
       pBox.appendChild(c);
     });
   }
-  $('genreCount').textContent = city.genres.length > 1 ? `${city.genres.length}, scroll for more` : '';
+  $('genreCount').textContent = city.genres.length > 1 ? `${city.genres.length} here` : '';
   $('patCount').textContent = state.genre && state.genre.ids.length > 1 ? `${state.genre.ids.length} for ${state.genre.name}` : '';
   const near = state.cityDist > NEAR_KM && city ? ` · nearest Atlas city is ${city.name}, ${Math.round(state.cityDist).toLocaleString('en-GB')} km away` : '';
   $('genreSub').textContent = city ? `from ${city.name}${near}` : 'no genres for this place';
@@ -3394,7 +3404,8 @@ function aroundDefaults() {
   if (!XV.quake) { XV.quake = Object.assign(XDEF('quake'), { rev: 40, delay: 'off', dlvl: 0, cut: 30 }); laneVol.quake = 70; }
 }
 function pickNeighbours() {
-  NEAR.list = [];
+  NEAR.list = [];   // neighbouring cities are switched off: the rings are this place only
+  return;
   const p = state.place;
   if (!p || !ATLAS.cities) return;
   const here = (state.city && state.city.name || '').toLowerCase(), me = p.name.toLowerCase();
@@ -3475,7 +3486,7 @@ function aroundNote() {
   if (NEAR.list.length) bits.push(`${NEAR.list.map(o => o.name).join(' and ')} bleed${NEAR.list.length === 1 ? 's' : ''} in from ${Math.round(NEAR.list[0].d).toLocaleString('en-GB')} km away`);
   if (state.air && state.air.aqi != null) bits.push(`air quality ${Math.round(state.air.aqi)} gives the grit`);
   if (QUAKE.list.length) bits.push(`${QUAKE.list.length} quakes in the last day`);
-  el.textContent = bits.length ? bits.join(' · ') : 'Looking up the neighbours, the air and the ground.';
+  el.textContent = bits.length ? bits.join(' · ') : 'Looking up the air and the ground.';
 }
 
 // ---------- Groove: the feel of the kit ----------
