@@ -13,7 +13,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@800;900&family=DM+Mono:wght@400;500&family=Instrument+Sans:wght@400;500;600;700&display=swap">
 <style>
-/* Layout: big headline, a plain how-it-works block, one square of concentric rings, a big caption for the ring that just joined, sound controls, the ring list. Muting a program throws a full-screen poster. Two tones only: ink and paper, swapped in dark. */
+/* One screen. Left: headline and controls. Middle: the rings. Right: the data. Help, sound and sources sit in overlays. Two tones only, ink and paper, swapped in dark. */
 html { color-scheme: light; padding-top: env(safe-area-inset-top, 0px); padding-bottom: env(safe-area-inset-bottom, 0px); }
 body { margin: 0; }
 img { max-width: 100%; }
@@ -35,127 +35,139 @@ img { max-width: 100%; }
 }
 :root[data-theme="dark"] { --bg: var(--ink); --fg: var(--paper); color-scheme: dark; }
 
+
 * { box-sizing: border-box; }
-html, body { background: var(--bg); }
-body {
-  color: var(--fg);
-  font-family: var(--font-body);
-  font-size: 18px;
-  line-height: 1.45;
-  padding-block: 22px 56px;
+[hidden] { display: none !important; }
+html, body { background: var(--bg); height: 100%; overflow: hidden; overscroll-behavior: none; }
+body { margin: 0; color: var(--fg); font-family: var(--font-body); font-size: 18px; line-height: 1.4; }
+button, input { font: inherit; }
+button:focus-visible, input:focus-visible { outline: 3px solid var(--fg); outline-offset: 3px; }
+
+.app {
+  position: fixed; inset: 0; margin: 0 auto; max-width: 1680px;
+  display: flex; flex-direction: column; gap: 10px;
+  padding-top: calc(env(safe-area-inset-top, 0px) + 10px);
+  padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 12px);
   padding-left: max(16px, env(safe-area-inset-left, 0px));
   padding-right: max(16px, env(safe-area-inset-right, 0px));
 }
-main { max-width: 600px; margin: 0 auto; display: flex; flex-direction: column; gap: 24px; }
-.eyebrow { font-family: var(--font-data); font-size: 14px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--soft); }
+
+/* Top bar */
+.top { display: flex; align-items: center; gap: 8px; flex: none; }
+.eyebrow { order: 0; font: 500 12px/1 var(--font-data); letter-spacing: 0.12em; text-transform: uppercase; color: var(--soft); }
+.tabs { flex: 1; display: flex; gap: 6px; min-width: 0; }
+.tabs button { flex: 1; min-height: 44px; padding: 0; background: none; border: 0; cursor: pointer; display: flex; align-items: center; font-size: 0; color: var(--fg); }
+.tabs button::before { content: ""; width: 100%; height: 5px; background: var(--faint); }
+.tabs button[aria-pressed="true"]::before { background: var(--fg); }
+.tbtn { flex: none; min-height: 44px; min-width: 44px; padding: 0 14px; background: var(--bg); color: var(--fg); border: 2px solid var(--fg); font: 500 14px/1 var(--font-data); letter-spacing: 0.06em; text-transform: uppercase; cursor: pointer; }
+
+/* Body: phone is one column, wide screens are three */
+.body { flex: 1; min-height: 0; display: flex; flex-direction: column; gap: 8px; }
+.left, .right { display: contents; }
+h1 { order: 1; margin: 0; font-weight: 700; font-size: clamp(24px, 7vw, 34px); line-height: 1.05; letter-spacing: -0.025em; text-wrap: balance; }
+.sub { display: none; margin: 0; }
+.stage { order: 2; position: relative; flex: 1; min-height: 0; display: grid; place-items: end center; container-type: size; }
+canvas { width: min(100cqw, 100cqh); height: min(100cqw, 100cqh); display: block; cursor: pointer; }
+.unit { position: absolute; left: 0; top: 0; font: 500 13px/1.25 var(--font-data); letter-spacing: 0.03em; color: var(--soft); pointer-events: none; max-width: 14em; }
+.toast { position: absolute; left: 50%; bottom: 4px; transform: translateX(-50%); background: var(--fg); color: var(--bg); font: 800 14px/1 var(--font-poster); text-transform: uppercase; letter-spacing: 0.02em; padding: 8px 12px; white-space: nowrap; pointer-events: none; opacity: 0; transition: opacity 0.2s; max-width: 100%; overflow: hidden; text-overflow: ellipsis; }
+.toast.show { opacity: 1; }
+
+.now { order: 3; flex: none; min-height: 3.7em; display: flex; flex-direction: column; justify-content: flex-end; gap: 2px; }
+.now .cnt { font: 500 13px/1 var(--font-data); letter-spacing: 0.1em; text-transform: uppercase; color: var(--soft); }
+.now .big { font-weight: 700; font-size: clamp(30px, 9vw, 44px); line-height: 1; letter-spacing: -0.03em; overflow-wrap: anywhere; }
+.now .nm { font-size: 16px; line-height: 1.25; }
+.now .hint { font-size: 18px; line-height: 1.3; }
+
+.rings { order: 4; flex: none; list-style: none; margin: 0 -16px; padding: 0 16px; display: flex; gap: 8px; overflow-x: auto; scroll-snap-type: x proximity; scroll-padding: 0 16px; scrollbar-width: none; }
+.rings::-webkit-scrollbar { display: none; }
+.rings li { flex: none; width: 138px; scroll-snap-align: start; }
+.rings li.later { opacity: 0.35; }
+.rings button { display: grid; grid-template-columns: minmax(0, 1fr) 14px; grid-template-areas: "val dot" "name name"; gap: 4px 6px; align-items: center; width: 100%; height: 100%; min-height: 76px; padding: 8px 10px; background: var(--bg); color: var(--fg); border: 2px solid var(--fg); text-align: left; cursor: pointer; }
+.dot { grid-area: dot; width: 14px; height: 14px; border: 2px solid var(--fg); border-radius: 50%; background: var(--fg); }
+.rings .val { grid-area: val; font: 600 17px/1.1 var(--font-data); min-width: 0; overflow-wrap: anywhere; }
+.rings .name { grid-area: name; font-size: 13px; line-height: 1.2; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.rings button[aria-pressed="false"] { border-style: dashed; }
+.rings button[aria-pressed="false"] .dot { background: transparent; }
+.rings button[aria-pressed="false"] .name { color: var(--soft); text-decoration: line-through; text-decoration-thickness: 1px; }
+.rings button[data-silent="true"] { border-style: dashed; }
+.rings button[data-silent="true"] .dot { border-style: dashed; background: transparent; }
+.rings li.sel button { background: var(--fg); color: var(--bg); }
+.rings li.sel .dot { border-color: var(--bg); background: var(--bg); }
+.rings li.sel button[aria-pressed="false"] .dot, .rings li.sel button[data-silent="true"] .dot { background: transparent; }
+
+.detail { order: 5; display: none; margin: 0; }
+.bridge { display: none; margin: 0; }
+.bar { order: 6; flex: none; display: grid; grid-template-columns: 1.5fr 1fr 1fr; gap: 8px; }
+.play { font: 600 16px/1 var(--font-data); letter-spacing: 0.08em; text-transform: uppercase; min-height: 54px; background: var(--fg); color: var(--bg); border: 2px solid var(--fg); cursor: pointer; padding: 0 6px; }
+.play[aria-pressed="true"] { background: var(--bg); color: var(--fg); }
+.play.alt { background: var(--bg); color: var(--fg); font-size: 14px; white-space: nowrap; letter-spacing: 0.04em; }
+.play.alt[aria-pressed="true"] { background: var(--fg); color: var(--bg); }
+.chip { font: 500 15px/1.15 var(--font-data); letter-spacing: 0.05em; text-transform: uppercase; color: var(--fg); background: var(--bg); border: 2px solid var(--fg); padding: 12px 8px; min-height: 52px; cursor: pointer; }
+.chip[aria-pressed="true"] { background: var(--fg); color: var(--bg); }
+
+/* Wide screens: left text, middle rings, right data */
+@media (min-width: 880px) {
+  .app { gap: 18px; padding-top: calc(env(safe-area-inset-top, 0px) + 18px); padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 22px); }
+  .eyebrow { font-size: 14px; }
+  .chn { display: none; }
+  .tabs { flex: none; gap: 8px; }
+  .tabs button { flex: none; min-height: 44px; padding: 0 14px; font: 500 14px/1 var(--font-data); letter-spacing: 0.05em; text-transform: uppercase; border: 2px solid var(--fg); }
+  .tabs button::before { display: none; }
+  .tabs button[aria-pressed="true"] { background: var(--fg); color: var(--bg); }
+  .top .tbtn:first-of-type { margin-left: auto; }
+  .body { display: grid; grid-template-columns: minmax(260px, 1fr) minmax(0, 1.7fr) minmax(280px, 1fr); gap: 32px; align-items: stretch; }
+  .left, .right { display: flex; flex-direction: column; min-height: 0; gap: 16px; }
+  h1 { order: 1; font-size: clamp(28px, 2.9vw, 46px); line-height: 1.04; letter-spacing: -0.03em; }
+  .sub { display: block; order: 2; font-size: 17px; line-height: 1.4; max-width: 34ch; color: var(--soft); }
+  .stage { grid-column: 2; grid-row: 1; flex: none; height: 100%; place-items: center; }
+  .left { grid-column: 1; grid-row: 1; }
+  .right { grid-column: 3; grid-row: 1; }
+  .unit { font-size: 14px; }
+  .now { margin-top: auto; min-height: 7em; }
+  .now .big { font-size: clamp(44px, 5vw, 76px); }
+  .now .nm { font-size: 20px; }
+  .now .hint { font-size: 20px; }
+  .bridge { display: block; order: 4; font-weight: 700; font-size: 22px; line-height: 1.15; letter-spacing: -0.01em; text-wrap: balance; }
+  .bar { grid-template-columns: 1.4fr 1fr 1fr; }
+  .play { min-height: 58px; }
+  .rings { flex: 0 1 auto; min-height: 0; flex-direction: column; gap: 0; margin: 0; padding: 0; overflow-x: hidden; overflow-y: auto; border-top: 2px solid var(--fg); scroll-snap-type: none; }
+  .rings li { width: auto; border-bottom: 1px solid var(--faint); }
+  .rings button { grid-template-columns: 14px minmax(0, 1fr) auto; grid-template-areas: "dot name val"; gap: 12px; min-height: 52px; padding: 8px 6px; border: 0; background: none; }
+  .rings button[aria-pressed="false"], .rings button[data-silent="true"] { border-style: solid; }
+  .rings .name { font-size: 17px; line-height: 1.2; -webkit-line-clamp: 3; }
+  .rings .val { font: 500 15px/1.2 var(--font-data); text-align: right; max-width: 8.5em; }
+  .rings li.sel button { background: var(--fg); color: var(--bg); }
+  .detail { display: block; flex: none; font-size: 16px; line-height: 1.4; min-height: 6.2em; color: var(--soft); padding-top: 4px; }
+  .detail b { font-weight: 700; color: var(--fg); }
+}
+@media (min-width: 880px) and (max-height: 640px) { .sub { display: none; } }
+
+/* Overlays: sound and how it works */
+.sheet { position: fixed; inset: 0; z-index: 40; display: flex; align-items: flex-end; justify-content: center; background: color-mix(in srgb, var(--fg) 45%, transparent); }
+.sheet-in { width: 100%; max-width: 640px; max-height: 88dvh; overflow: auto; overscroll-behavior: contain; background: var(--bg); color: var(--fg); border-top: 3px solid var(--fg); display: flex; flex-direction: column; gap: 22px; padding: 0 max(16px, env(safe-area-inset-left, 0px)) calc(env(safe-area-inset-bottom, 0px) + 28px); animation: pIn 0.2s cubic-bezier(0.2, 0.8, 0.2, 1); }
+@media (min-width: 880px) { .sheet { align-items: center; } .sheet-in { border: 3px solid var(--fg); max-height: 84dvh; padding-inline: 28px; } }
+.sheet-top { position: sticky; top: 0; z-index: 2; background: var(--bg); display: flex; align-items: center; justify-content: space-between; padding: 14px 0 10px; }
 .sec-title { font: 500 14px/1 var(--font-data); letter-spacing: 0.14em; text-transform: uppercase; color: var(--soft); }
-
-.tabs { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
-@media (min-width: 520px) { .tabs { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
-.chip, .tabs button {
-  font: 500 15px/1.15 var(--font-data);
-  letter-spacing: 0.05em;
-  text-transform: uppercase;
-  color: var(--fg);
-  background: var(--bg);
-  border: 2px solid var(--fg);
-  padding: 12px 8px;
-  min-height: 52px;
-  cursor: pointer;
-}
-.chip[aria-pressed="true"], .tabs button[aria-pressed="true"] { background: var(--fg); color: var(--bg); }
-button:focus-visible, input:focus-visible { outline: 3px solid var(--fg); outline-offset: 3px; }
-
-h1 {
-  font-family: var(--font-display);
-  font-weight: 700;
-  font-size: clamp(40px, 11.5vw, 64px);
-  line-height: 1.02;
-  letter-spacing: -0.03em;
-  margin: 0;
-  text-wrap: balance;
-}
-.sub { margin: 0; font-size: 20px; line-height: 1.4; max-width: 40ch; }
-
-.how { display: flex; flex-direction: column; gap: 14px; border-top: 2px solid var(--fg); padding-top: 16px; }
-.how ol { list-style: none; margin: 0; padding: 0; display: grid; gap: 14px; counter-reset: s; }
-.how li { counter-increment: s; display: grid; grid-template-columns: 34px minmax(0, 1fr); gap: 12px; font-size: 18px; line-height: 1.35; }
-.how li::before { content: counter(s); font: 500 22px/1.1 var(--font-data); }
+.sheet-x { width: 48px; height: 48px; background: var(--bg); color: var(--fg); border: 2px solid var(--fg); font: 400 30px/1 var(--font-body); cursor: pointer; }
+.sec { display: flex; flex-direction: column; gap: 12px; }
+.how { list-style: none; margin: 0; padding: 0; display: grid; gap: 12px; counter-reset: s; }
+.how li { counter-increment: s; display: grid; grid-template-columns: 30px minmax(0, 1fr); gap: 10px; font-size: 18px; line-height: 1.35; }
+.how li::before { content: counter(s); font: 500 20px/1.2 var(--font-data); }
 .how b { font-weight: 700; }
-
-.key { list-style: none; margin: 0; padding: 14px 0; border-block: 1px solid var(--fg); display: grid; gap: 12px; }
+.key { list-style: none; margin: 0; padding: 12px 0; border-block: 1px solid var(--fg); display: grid; gap: 10px; }
 .key li { display: grid; grid-template-columns: 34px minmax(0, 1fr); gap: 12px; align-items: center; font-size: 17px; line-height: 1.3; }
 .glyph { display: grid; place-items: center; height: 24px; }
 .g-on { width: 16px; height: 16px; border-radius: 50%; background: var(--fg); }
 .g-off { width: 4px; height: 4px; border-radius: 50%; background: var(--fg); opacity: 0.5; }
 .g-dash { width: 28px; height: 28px; border-radius: 50%; border: 2px dashed var(--fg); }
-
-.unit { font: 500 20px/1.2 var(--font-data); letter-spacing: 0.02em; }
-.stage { position: relative; width: 100%; aspect-ratio: 1; }
-canvas { width: 100%; height: 100%; display: block; }
-
-.now { min-height: 8.6em; display: flex; flex-direction: column; gap: 6px; }
-.now .cnt { font: 500 15px/1 var(--font-data); letter-spacing: 0.1em; text-transform: uppercase; color: var(--soft); }
-.now .big { font-weight: 700; font-size: clamp(44px, 13vw, 76px); line-height: 1; letter-spacing: -0.03em; overflow-wrap: anywhere; }
-.now .nm { font-size: 22px; line-height: 1.25; }
-.now .hint { font-size: 22px; line-height: 1.3; }
-
-.play {
-  font: 600 18px/1 var(--font-data);
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  width: 100%;
-  min-height: 64px;
-  background: var(--fg);
-  color: var(--bg);
-  border: 2px solid var(--fg);
-  cursor: pointer;
-}
-.play[aria-pressed="true"] { background: var(--bg); color: var(--fg); }
-
-.playrow { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-.play.alt { background: var(--bg); color: var(--fg); font-size: 15px; }
-.play.alt[aria-pressed="true"] { background: var(--fg); color: var(--bg); }
-.next { display: flex; flex-direction: column; gap: 14px; border-top: 2px solid var(--fg); padding-top: 16px; }
-.bridge { margin: 0; font-weight: 700; font-size: clamp(28px, 8vw, 40px); line-height: 1.08; letter-spacing: -0.02em; text-wrap: balance; }
-.sound { display: flex; flex-direction: column; gap: 14px; border-top: 2px solid var(--fg); padding-top: 16px; }
 .presets { display: flex; flex-wrap: wrap; gap: 8px; }
 .presets .chip { flex: 1 1 28%; }
-.sound-desc { margin: 0; font-size: 18px; min-height: 1.5em; }
-.slider { display: grid; grid-template-columns: 9em minmax(0, 1fr) 3.2em; gap: 12px; align-items: center; font: 500 15px/1 var(--font-data); text-transform: uppercase; letter-spacing: 0.06em; }
+.sound-desc { margin: 0; font-size: 18px; min-height: 1.4em; }
+.slider { display: grid; grid-template-columns: 8.5em minmax(0, 1fr) 3.2em; gap: 12px; align-items: center; font: 500 15px/1 var(--font-data); text-transform: uppercase; letter-spacing: 0.06em; }
 .slider input { width: 100%; min-height: 44px; accent-color: var(--fg); }
 .slider output { text-align: right; }
 .tiny { margin: 0; font-size: 15px; color: var(--soft); }
-
-.rings { list-style: none; margin: 0; padding: 0; border-top: 2px solid var(--fg); }
-.rings li { border-bottom: 1px solid var(--faint); }
-.rings button {
-  display: grid;
-  grid-template-columns: 16px minmax(0, 1fr) auto;
-  gap: 14px;
-  align-items: center;
-  width: 100%;
-  min-height: 60px;
-  padding: 10px 0;
-  background: none;
-  border: 0;
-  color: var(--fg);
-  text-align: left;
-  font: inherit;
-  cursor: pointer;
-}
-.dot { width: 14px; height: 14px; border: 2px solid var(--fg); border-radius: 50%; background: var(--fg); }
-.rings button[aria-pressed="false"] .dot { background: transparent; }
-.rings button[data-silent="true"] .dot { border-style: dashed; background: transparent; }
-.rings .name { min-width: 0; font-size: 19px; line-height: 1.25; overflow-wrap: anywhere; }
-.rings .val { font: 500 16px/1.2 var(--font-data); text-align: right; max-width: 9em; }
-.rings button[aria-pressed="false"] .name { color: var(--soft); text-decoration: line-through; text-decoration-thickness: 1px; }
-.rings li.later { opacity: 0.35; }
-
-.detail { margin: 0; min-height: 5.5em; font-size: 18px; line-height: 1.45; }
-.detail b { font-weight: 700; }
-
-.about { border-top: 2px solid var(--fg); padding-top: 16px; display: flex; flex-direction: column; gap: 12px; font-size: 16px; line-height: 1.45; color: var(--soft); }
+.about { display: flex; flex-direction: column; gap: 12px; font-size: 16px; line-height: 1.45; color: var(--soft); }
 .about p { margin: 0; max-width: 60ch; }
 .about a { color: var(--fg); text-underline-offset: 3px; }
 .links { display: flex; flex-wrap: wrap; gap: 8px 18px; }
@@ -174,7 +186,7 @@ canvas { width: 100%; height: 100%; display: block; }
 }
 .poster:not([hidden]) { animation: pIn 0.22s cubic-bezier(0.2, 0.8, 0.2, 1); }
 @keyframes pIn { from { transform: translateY(5%); opacity: 0; } to { transform: none; opacity: 1; } }
-@media (prefers-reduced-motion: reduce) { .poster:not([hidden]) { animation: none; } }
+@media (prefers-reduced-motion: reduce) { .poster:not([hidden]), .sheet-in { animation: none; } .toast { transition: none; } }
 .p-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; padding-bottom: 14px; border-bottom: 8px solid var(--bg); }
 .p-label { font: 500 15px/1.3 var(--font-data); letter-spacing: 0.1em; text-transform: uppercase; min-width: 0; overflow-wrap: anywhere; padding-top: 6px; }
 .p-x { flex: none; width: 52px; height: 52px; background: transparent; color: var(--bg); border: 3px solid var(--bg); font: 400 34px/1 var(--font-poster); cursor: pointer; }
@@ -187,75 +199,90 @@ canvas { width: 100%; height: 100%; display: block; }
 .p-btn.solid { background: var(--bg); color: var(--fg); }
 .poster button:focus-visible { outline: 3px solid var(--bg); outline-offset: 3px; }
 
-@media (prefers-reduced-motion: reduce) { * { scroll-behavior: auto; } }
+
+.p-note { margin: 0; font: 500 14px/1.35 var(--font-data); letter-spacing: 0.02em; max-width: 60ch; }
+.poster { touch-action: manipulation; }
 </style>
 </head>
 <body>
-<main>
-  <div class="eyebrow" id="eyebrow">No Fixed Address</div>
-  <nav class="tabs" id="tabs" aria-label="Choose a data set"></nav>
-  <h1 id="headline"></h1>
-  <p class="sub" id="sub"></p>
-
-  <section class="how" aria-label="How it works">
-    <div class="sec-title">How it works</div>
-    <ol>
-      <li><span>Every ring is one program or number from the news. <b>Every dot on it is a beat.</b></span></li>
-      <li><span>Press Play, or press <b>Play the story</b> to hear all four chapters in order. Rings join one at a time. A bigger number gets more beats.</span></li>
-      <li><span><b>Tap a name in the list to mute it.</b> A fact about what goes quiet takes over the screen. Mute it again and you get a different fact.</span></li>
-      <li><span>A ring with only a few beats plays a short tune. Each beat is its own note, and it can roll.</span></li>
-      <li><span>Change the sound below. Try Glitch or Jungle.</span></li>
-    </ol>
-  </section>
-
-  <ul class="key" aria-label="Key to the dots">
-    <li><span class="glyph"><span class="g-on"></span></span><span>A big dot is a beat you can hear.</span></li>
-    <li><span class="glyph"><span class="g-off"></span></span><span>A tiny dot is a beat that went quiet.</span></li>
-    <li><span class="glyph"><span class="g-dash"></span></span><span>A dashed ring is something shut down. It makes no sound.</span></li>
-  </ul>
-
-  <div class="unit" id="unit"></div>
-  <div class="stage"><canvas id="cv" role="img" aria-label="Concentric rings. Each ring is one number from the news, played as a rhythm."></canvas></div>
-
-  <div class="now" id="now" aria-live="polite"></div>
-
-  <div class="playrow">
-    <button class="play" id="play" aria-pressed="false">Play</button>
-    <button class="play alt" id="story" aria-pressed="false">Play the story</button>
+<div class="app" id="app">
+  <div class="top">
+    <nav class="tabs" id="tabs" aria-label="Chapters"></nav>
+    <button class="tbtn" id="soundBtn" type="button" aria-haspopup="dialog">Sound</button>
+    <button class="tbtn" id="moreBtn" type="button" aria-haspopup="dialog" aria-label="How it works, and the sources" title="How it works">?</button>
   </div>
 
-  <section class="sound" aria-label="Sound">
-    <div class="sec-title">Sound</div>
-    <div class="presets" id="presets"></div>
-    <p class="sound-desc" id="soundDesc"></p>
-    <label class="slider"><span>Stutter</span><input type="range" id="stutter" min="0" max="1" step="0.05"><output id="stutterV"></output></label>
-    <label class="slider"><span>Grit</span><input type="range" id="grit" min="0" max="1" step="0.05"><output id="gritV"></output></label>
-    <label class="slider"><span>Velocity chaos</span><input type="range" id="chaos" min="0" max="1" step="0.05"><output id="chaosV"></output></label>
-    <button class="chip" id="shuffle" type="button">Shuffle velocities</button>
-    <p class="tiny">Stutter makes beats roll and repeat. Grit adds crunch. Velocity chaos makes every hit a random volume, and you can see it in the dot sizes. Shuffle rolls a new set. All three work with every sound.</p>
-  </section>
-
-  <ul class="rings" id="rings"></ul>
-  <p class="detail" id="detail" aria-live="polite"></p>
-
-  <section class="next" aria-label="Next chapter">
-    <div class="sec-title">Next chapter</div>
-    <p class="bridge" id="bridge"></p>
-    <button class="play" id="nextBtn" type="button"></button>
-  </section>
-
-  <section class="about">
-    <p>The four chapters tell one story: the claim, the cuts, the people and the world. The beats bunch together and spread out, and get louder and softer, a little differently on every turn. Bigger dots are harder hits. As more rings join, the earlier ones step back. Mute a ring and the others come forward.</p>
-    <p>The facts describe what each program does. They show what is at risk, and not every cut was final. The program cuts come from CLASP, an advocacy group, using news reports from spring 2025. The savings figures come from coverage of a government audit, NPR and Musk Watch, so check the originals before you quote them. The refugee figures are from the United Nations refugee agency. They sit beside the cuts and do not claim one caused the other.</p>
-    <div class="links">
-      <a href="https://www.clasp.org/doge-tracker/" target="_blank" rel="noopener">CLASP DOGE Tracker</a>
-      <a href="https://thedailyrecord.com/2026/08/06/gao-finds-errors-elon-musk-doge-government-savings/" target="_blank" rel="noopener">GAO audit coverage</a>
-      <a href="https://www.muskwatch.com/p/data-reveals-musk-has-delivered-025" target="_blank" rel="noopener">Musk Watch</a>
-      <a href="https://www.npr.org/2025/02/19/nx-s1-5302705/doge-overstates-savings-federal-contracts" target="_blank" rel="noopener">NPR analysis</a>
-      <a href="https://www.unhcr.org/sites/default/files/2026-06/global-trends-report-2025.pdf" target="_blank" rel="noopener">UNHCR Global Trends 2025</a>
+  <div class="body">
+    <div class="left">
+      <div class="eyebrow" id="eyebrow">No Fixed Address</div>
+      <h1 id="headline"></h1>
+      <p class="sub" id="sub"></p>
+      <div class="now" id="now" aria-live="polite"></div>
+      <p class="bridge" id="bridge"></p>
+      <div class="bar">
+        <button class="play" id="play" type="button" aria-pressed="false">Play</button>
+        <button class="play alt" id="story" type="button" aria-pressed="false">Story</button>
+        <button class="play alt" id="nextBtn" type="button">Next</button>
+      </div>
     </div>
-  </section>
-</main>
+
+    <div class="stage">
+      <canvas id="cv" role="img" aria-label="Concentric rings. Each ring is one number from the news, played as a rhythm. Tap a ring to mute it."></canvas>
+      <div class="unit" id="unit"></div>
+      <div class="toast" id="toast" role="status" aria-live="polite"></div>
+    </div>
+
+    <div class="right">
+      <ul class="rings" id="rings" aria-label="The data. Tap one to mute it."></ul>
+      <p class="detail" id="detail" aria-live="polite"></p>
+    </div>
+  </div>
+</div>
+
+<div class="sheet" id="sheetSound" hidden>
+  <div class="sheet-in" role="dialog" aria-modal="true" aria-label="Sound">
+    <div class="sheet-top"><div class="sec-title">Sound</div><button class="sheet-x" type="button" data-close aria-label="Close">&times;</button></div>
+    <div class="sec">
+      <div class="presets" id="presets"></div>
+      <p class="sound-desc" id="soundDesc"></p>
+      <label class="slider"><span>Stutter</span><input type="range" id="stutter" min="0" max="1" step="0.05"><output id="stutterV"></output></label>
+      <label class="slider"><span>Grit</span><input type="range" id="grit" min="0" max="1" step="0.05"><output id="gritV"></output></label>
+      <label class="slider"><span>Velocity chaos</span><input type="range" id="chaos" min="0" max="1" step="0.05"><output id="chaosV"></output></label>
+      <button class="chip" id="shuffle" type="button">Shuffle velocities</button>
+      <p class="tiny">Stutter makes beats roll and repeat. Grit adds crunch. Velocity chaos makes every hit a random volume, and you can see it in the dot sizes. Shuffle rolls a new set. You can also tap the middle of the rings to shuffle.</p>
+    </div>
+  </div>
+</div>
+
+<div class="sheet" id="sheetMore" hidden>
+  <div class="sheet-in" role="dialog" aria-modal="true" aria-label="How it works">
+    <div class="sheet-top"><div class="sec-title">How it works</div><button class="sheet-x" type="button" data-close aria-label="Close">&times;</button></div>
+    <div class="sec">
+      <ol class="how">
+        <li><span>Every ring is one program or number from the news. <b>Every dot on it is a beat.</b> A bigger number gets more beats.</span></li>
+        <li><span>Press <b>Play</b>. Rings join one at a time. Or press <b>Story</b> to hear all four chapters in order.</span></li>
+        <li><span><b>Tap a ring, or a card in the data list, to mute it.</b> A fact about what goes quiet takes over the screen. Mute it again and you get a different fact.</span></li>
+        <li><span>A ring with only a few beats plays a short tune. Open <b>Sound</b> to try Glitch, Jungle or Break.</span></li>
+      </ol>
+      <ul class="key" aria-label="Key to the dots">
+        <li><span class="glyph"><span class="g-on"></span></span><span>A big dot is a beat you can hear.</span></li>
+        <li><span class="glyph"><span class="g-off"></span></span><span>A tiny dot is a beat that went quiet.</span></li>
+        <li><span class="glyph"><span class="g-dash"></span></span><span>A dashed ring is something shut down. It makes no sound.</span></li>
+      </ul>
+    </div>
+    <section class="about">
+      <p>The four chapters tell one story: the claim, the cuts, the people and the world. The beats bunch together and spread out, and get louder and softer, a little differently on every turn. Bigger dots are harder hits. As more rings join, the earlier ones step back. Mute a ring and the others come forward.</p>
+      <p>The facts describe what each program does. They show what is at risk, and not every cut was final. The program cuts come from CLASP, an advocacy group, using news reports from spring 2025. The savings figures come from coverage of a government audit, NPR and Musk Watch, so check the originals before you quote them. The refugee figures are from the United Nations refugee agency. They sit beside the cuts and do not claim one caused the other.</p>
+      <div class="links">
+        <a href="https://www.clasp.org/doge-tracker/" target="_blank" rel="noopener">CLASP DOGE Tracker</a>
+        <a href="https://thedailyrecord.com/2026/08/06/gao-finds-errors-elon-musk-doge-government-savings/" target="_blank" rel="noopener">GAO audit coverage</a>
+        <a href="https://www.muskwatch.com/p/data-reveals-musk-has-delivered-025" target="_blank" rel="noopener">Musk Watch</a>
+        <a href="https://www.npr.org/2025/02/19/nx-s1-5302705/doge-overstates-savings-federal-contracts" target="_blank" rel="noopener">NPR analysis</a>
+        <a href="https://www.unhcr.org/sites/default/files/2026-06/global-trends-report-2025.pdf" target="_blank" rel="noopener">UNHCR Global Trends 2025</a>
+      </div>
+    </section>
+  </div>
+</div>
 
 <div class="poster" id="poster" role="dialog" aria-modal="true" aria-label="A fact" hidden>
   <div class="p-top">
@@ -266,6 +293,7 @@ canvas { width: 100%; height: 100%; display: block; }
     <div class="p-big" id="pBig"></div>
     <div class="p-text" id="pText"></div>
   </div>
+  <p class="p-note" id="pNote"></p>
   <div class="p-bottom">
     <button class="p-btn" id="pNext" type="button">Another fact</button>
     <button class="p-btn solid" id="pBack" type="button">Back to the music</button>
@@ -634,6 +662,8 @@ canvas { width: 100%; height: 100%; display: block; }
     big.textContent = "";
     big.appendChild(el("span", null, f[0]));
     $("pText").textContent = f[1];
+    $("pNote").textContent = r.note;
+    $("pNote").hidden = false;
     var wasHidden = $("poster").hidden;
     $("poster").hidden = false;
     fitBig();
@@ -650,6 +680,7 @@ canvas { width: 100%; height: 100%; display: block; }
     b.textContent = "";
     b.appendChild(el("span", null, big));
     $("pText").textContent = text;
+    $("pNote").hidden = true;
     $("pNext").hidden = true;
     $("pBack").textContent = "Continue";
     $("poster").hidden = false;
@@ -700,16 +731,8 @@ canvas { width: 100%; height: 100%; display: block; }
       b.appendChild(el("span", "dot"));
       b.appendChild(el("span", "name", r.name));
       b.appendChild(el("span", "val", r.val));
-      b.addEventListener("click", function () {
-        if (!r.silent) r.muted = !r.muted;
-        selected = r;
-        renderRings();
-        lastRev = -1;
-        showDetail();
-        updateNow();
-        draw();
-        if (r.facts && (r.silent || r.muted)) showFact(r); else hidePoster();
-      });
+      b.addEventListener("click", function () { toggleRing(r); });
+      if (r === selected) li.className = "sel";
       li.appendChild(b);
       ul.appendChild(li);
     });
@@ -722,7 +745,7 @@ canvas { width: 100%; height: 100%; display: block; }
       d.appendChild(el("b", null, selected.name + ", " + selected.val + ". "));
       d.appendChild(document.createTextNode(selected.note));
     } else {
-      d.textContent = "Tap a name in the list to mute that ring. A fact fills the screen, and you see where its number comes from here.";
+      d.textContent = "Tap a ring to mute it. A fact fills the screen. Tap one in this list to see where its number comes from.";
     }
   }
 
@@ -740,13 +763,17 @@ canvas { width: 100%; height: 100%; display: block; }
       box.appendChild(el("div", "big", r.val));
       box.appendChild(el("div", "nm", r.name));
     } else if (playing) {
-      box.appendChild(el("div", "hint", "Listening. Tap a name below to mute a ring."));
+      box.appendChild(el("div", "hint", "Listening. Tap a ring to mute it."));
     } else {
       box.appendChild(el("div", "hint", scene.hint));
     }
     var lis = $("rings").children;
     for (var i = 0; i < lis.length; i++) {
-      lis[i].className = (playing && scene.reveal && i >= rev) ? "later" : "";
+      var later = playing && scene.reveal && i >= rev;
+      lis[i].className = (later ? "later " : "") + (scene.rings[i] === selected ? "sel" : "");
+    }
+    if (playing && scene.reveal && lis[rev - 1] && !(window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches)) {
+      lis[rev - 1].scrollIntoView({ block: "nearest", inline: "nearest", behavior: "smooth" });
     }
   }
 
@@ -758,9 +785,12 @@ canvas { width: 100%; height: 100%; display: block; }
     $("headline").textContent = s.headline;
     $("sub").textContent = s.sub;
     $("unit").textContent = s.unit;
-    $("eyebrow").textContent = "No Fixed Address · Chapter " + (SCENES.indexOf(s) + 1) + " of " + SCENES.length;
+    var eb = $("eyebrow");
+    eb.textContent = "No Fixed Address · " + (SCENES.indexOf(s) + 1) + " of " + SCENES.length;
+    eb.appendChild(el("span", "chn", " · " + STORY[SCENES.indexOf(s)].ch));
     $("bridge").textContent = s.bridge;
-    $("nextBtn").textContent = s.nextLabel;
+    $("nextBtn").textContent = s.nextLabel === "Start again" ? "Again" : "Next";
+    $("nextBtn").setAttribute("aria-label", s.nextLabel);
     updateStoryBtn();
     renderTabs();
     renderRings();
@@ -999,7 +1029,7 @@ canvas { width: 100%; height: 100%; display: block; }
   function updateStoryBtn() {
     var b = $("story");
     b.setAttribute("aria-pressed", story ? "true" : "false");
-    b.textContent = story ? "Chapter " + (SCENES.indexOf(scene) + 1) + " of " + SCENES.length : "Play the story";
+    b.textContent = story ? (SCENES.indexOf(scene) + 1) + " of " + SCENES.length : "Story";
   }
   function chapterCard(i) {
     showCard("Chapter " + (i + 1) + " of " + SCENES.length + " · " + STORY[i].ch, STORY[i].big, STORY[i].text);
@@ -1019,14 +1049,13 @@ canvas { width: 100%; height: 100%; display: block; }
     } else {
       story = false;
       updateStoryBtn();
-      showCard("The end", "Check the counts.", "Every ring is a number someone claimed or counted. The sources are at the bottom of the page.");
+      showCard("The end", "Check the counts.", "Every ring is a number someone claimed or counted. Open the question mark for the sources.");
     }
   }
   $("story").addEventListener("click", function () { story ? stop() : startStory(); });
   $("nextBtn").addEventListener("click", function () {
     story = false;
     setScene(SCENES[(SCENES.indexOf(scene) + 1) % SCENES.length]);
-    window.scrollTo(0, 0);
   });
 
   // Sound controls
@@ -1070,10 +1099,53 @@ canvas { width: 100%; height: 100%; display: block; }
     if (chaos === 0) { chaos = 1; $("chaos").value = 1; $("chaosV").textContent = "100%"; }
   });
 
+  // Playing with it: toast, ring taps and the two overlays.
+  var toastT = null;
+  function toast(msg) {
+    var t = $("toast");
+    t.textContent = msg;
+    t.classList.add("show");
+    clearTimeout(toastT);
+    toastT = setTimeout(function () { t.classList.remove("show"); }, 1300);
+  }
+  function toggleRing(r) {
+    if (!r.silent) r.muted = !r.muted;
+    selected = r;
+    renderRings();
+    lastRev = -1;
+    showDetail();
+    updateNow();
+    draw();
+    if (r.facts && (r.silent || r.muted)) showFact(r);
+    else { hidePoster(); toast(r.name + (r.silent ? " is shut down" : " is back")); }
+  }
+  function openSheet(id) { closeSheets(); $(id).hidden = false; $(id).querySelector("[data-close]").focus({ preventScroll: true }); }
+  function closeSheets() { $("sheetSound").hidden = true; $("sheetMore").hidden = true; }
+  $("soundBtn").addEventListener("click", function () { openSheet("sheetSound"); });
+  $("moreBtn").addEventListener("click", function () { openSheet("sheetMore"); });
+  ["sheetSound", "sheetMore"].forEach(function (id) {
+    $(id).addEventListener("click", function (e) { if (e.target === $(id) || e.target.closest("[data-close]")) closeSheets(); });
+  });
+  document.addEventListener("keydown", function (e) { if (e.key === "Escape") closeSheets(); });
+
+  // Tap a ring on the circle to mute it. Tap the middle to shuffle the velocities.
+  cv.addEventListener("click", function (e) {
+    var rect = cv.getBoundingClientRect(), W = rect.width;
+    var d = Math.hypot(e.clientX - rect.left - W / 2, e.clientY - rect.top - rect.height / 2);
+    var outer = W / 2 - 10, inner = W * 0.09, N = scene.rings.length;
+    var gap = N > 1 ? (outer - inner) / (N - 1) : 0;
+    if (d < inner * 1.3) { seed += 1; if (chaos === 0) { chaos = 1; $("chaos").value = 1; $("chaosV").textContent = "100%"; } toast("Volumes shuffled"); return; }
+    if (!gap) return;
+    var i = Math.round((outer - d) / gap);
+    if (i < 0 || i >= revealedNow() || d > outer + gap * 0.6) return;
+    toggleRing(scene.rings[i]);
+  });
+  if (window.ResizeObserver) new ResizeObserver(function () { draw(); }).observe(document.querySelector(".stage"));
+
   // Drawing
   function sizeCanvas() {
     var dpr = Math.min(window.devicePixelRatio || 1, 3);
-    var w = cv.clientWidth;
+    var w = Math.min(cv.clientWidth, cv.clientHeight) || cv.clientWidth;
     cv.width = Math.round(w * dpr);
     cv.height = Math.round(w * dpr);
     g2.setTransform(dpr, 0, 0, dpr, 0, 0);
