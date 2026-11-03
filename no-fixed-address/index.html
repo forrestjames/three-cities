@@ -237,6 +237,7 @@ body { font-kerning: normal; text-rendering: optimizeLegibility; -webkit-font-sm
   <button class="aboutbtn" id="aboutbtn" aria-expanded="false" aria-controls="about">About the numbers</button>
   <div class="about" id="about" hidden>
     <h2>About the numbers</h2>
+    <p id="photocred"></p>
     <p><b>London:</b> 12,938 people seen sleeping rough during 2025/26 (CHAIN, Greater London Authority).</p>
     <p><b>Boston:</b> 3,674 people experiencing homelessness in a one night count, January 2026, including people in shelters (Boston Health Care for the Homeless Program).</p>
     <p><b>Copenhagen:</b> 1,572 people experiencing homelessness in a counting week, February 2026 (VIVE).</p>
@@ -798,6 +799,62 @@ body { font-kerning: normal; text-rendering: optimizeLegibility; -webkit-font-sm
     while (i > 0 && count / Lv[i] < 12) i--;
     return Lv[i];
   }
+  /* a photo of each city's buildings, printed as a two-colour Riso duotone. Photos from Unsplash, credited in About the numbers. */
+  var PHOTOS = {
+    boston: ["1666128713957-28bcea62c074", "Kvnga", "a-building-with-windows-6ZcAGj_gkfA"],
+    cph: ["1604906148235-df407ed053f8", "Michael Jerrard", "colorful-buildings-line-a-canal-with-boats-and-cars-q9KIP0iytbU"],
+    london: ["1566515610329-94f02c3707d6", "Martin Sepion", "vehicles-on-road-NP9VBSCzEuU"],
+    paris: ["1624388621606-9f837720c14c", "Alex Boyd", "beige-concrete-building-near-green-trees-under-white-clouds-during-daytime-HhFi1gKYosc"],
+    nyc: ["1739131936348-aa227601f140", "Zoshua Colah", "a-city-street-filled-with-traffic-next-to-tall-buildings-Rv9Dc_O-kqk"],
+    madrid: ["1690520776663-598d9891d6dd", "Adrián Valverde", "a-building-with-balconies-and-a-clock-on-the-side-of-it-aJ0y4RltkIY"],
+    barcelona: ["1718120220161-97fc64db1b7a", "Ivan Padial", "a-group-of-buildings-with-balconies-and-balconies-on-top-of-them-LZ3GTfoEb3E"],
+    la: ["1563842740060-55bea0187b84", "Daniel Schludi", "palm-tree-23Jlm7eBsxA"],
+    sf: ["1554107136-57b138ea99df", "Joshua Sortino", "painted-ladies-houses-in-san-francisco-HadloobmnQs"],
+    toronto: ["1610473254734-f22b13aef65b", "Ayman Hallak", "red-and-brown-concrete-building-CR-1eikH7PM"],
+    dublin: ["1548236747-4ff1145a4864", "Louis Hansel", "brown-concrete-building-n_pzLOjR_C8"],
+    philly: ["1732168488633-d8eb259d7999", "John Maldonado", "a-view-of-a-body-of-water-with-houses-in-the-background-nLdLW_yZ7nk"],
+    seattle: ["1681355296680-30dd86fd0174", "Kush Dwivedi", "a-tall-brick-building-covered-in-ivy-1_k5t7KUKBY"],
+    sandiego: ["1698284044422-bc32a5d4e4b2", "Jon Matthews", "a-city-street-at-night-with-a-full-moon-in-the-sky-RyZLczLlSho"],
+    vancouver: ["1730661906876-18bfc6e95f2f", "Luke Lawreszuk", "a-view-of-a-city-with-mountains-in-the-background-rEDvog99iro"],
+    sydney: ["1668420372497-94a81e2eb08a", "Ben Bouvier-Farrell", "a-street-with-buildings-on-both-sides-oFMh_ycfSWs"],
+    helsinki: ["1680595847854-db2d23aab419", "Vladislav Vedenskii", "a-tall-building-with-balconies-and-balconies-on-top-dbirl56JjgM"],
+    berlin: ["1791287941168-354fab8d358c", "Felipe Melo", "apartment-building-facade-with-green-vines-yPs6HW0d8NA"],
+    lisbon: ["1533421821268-87e42c1d70b0", "Diego García", "beige-and-white-2-storey-house-CVZ0y7APRtU"],
+    montreal: ["1689214718217-1beaebb918bf", "Robert Macleod", "a-red-fire-hydrant-sitting-in-front-of-a-brick-building-OZPFjxoVWR4"],
+    portland: ["1722918086947-b98945b5cf3c", "James Sestric", "a-group-of-houses-sitting-on-top-of-a-lush-green-hillside-uoIRPbX2VZo"]
+  };
+  function photoUrl(ph) { return "https://images.unsplash.com/photo-" + ph[0] + "?w=420&h=180&fit=crop&crop=entropy&q=60&auto=format"; }
+  function hexRgb(h) { var n = parseInt(h.slice(1), 16); return [(n >> 16) & 255, (n >> 8) & 255, n & 255]; }
+  function photoBlock(c, ci, sg) {
+    var ph = PHOTOS[c.id]; c.phG = null; if (!ph) return;
+    var g = el("g", { class: "ph" }, sg), fid = "riso" + ci + "_" + c.id, cid = "phc" + ci + "_" + c.id;
+    var hi = hexRgb(c.col), lo = [31, 42, 122], mix = function (k) { return ((hi[k] * .78 + 251 * .22) / 255).toFixed(3); };
+    var defs = el("defs", {}, g), fl = el("filter", { id: fid, "color-interpolation-filters": "sRGB", x: 0, y: 0, width: 1, height: 1 }, defs);
+    el("feColorMatrix", { type: "saturate", values: 0 }, fl);
+    var ct = el("feComponentTransfer", {}, fl); ["feFuncR", "feFuncG", "feFuncB"].forEach(function (f) { el(f, { type: "linear", slope: 1.5, intercept: -.22 }, ct); });
+    var dt = el("feComponentTransfer", { result: "duo" }, fl);
+    [["feFuncR", 0], ["feFuncG", 1], ["feFuncB", 2]].forEach(function (f) { el(f[0], { type: "table", tableValues: (lo[f[1]] / 255).toFixed(3) + " " + mix(f[1]) }, dt); });
+    el("feTurbulence", { type: "fractalNoise", baseFrequency: .9, numOctaves: 1, seed: ci + 3, result: "n" }, fl);
+    el("feColorMatrix", { in: "n", type: "matrix", values: "0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 .5 -.18", result: "grain" }, fl);
+    el("feComposite", { in: "grain", in2: "duo", operator: "atop", result: "g2" }, fl);
+    el("feMerge", {}, fl).innerHTML = '<feMergeNode in="duo"/><feMergeNode in="g2"/>';
+    var cp = el("clipPath", { id: cid }, defs); c.phClip = el("rect", { x: 0, y: 0, width: 10, height: 10 }, cp);
+    c.phBg = el("rect", { x: 0, y: 0, width: 10, height: 10, fill: "rgb(" + lo.join(",") + ")", opacity: .18 }, g);
+    var im = el("image", { href: photoUrl(ph), preserveAspectRatio: "xMidYMid slice", "clip-path": "url(#" + cid + ")", filter: "url(#" + fid + ")" }, g);
+    im.setAttributeNS("http://www.w3.org/1999/xlink", "href", photoUrl(ph));
+    var t = document.createElementNS("http://www.w3.org/2000/svg", "title"); t.textContent = c.name + ". Photo: " + ph[1] + " on Unsplash"; g.appendChild(t);
+    c.phIm = im; c.phFrame = el("rect", { x: 0, y: 0, width: 10, height: 10, fill: "none", stroke: "#0b0b0d", "stroke-width": 1, "vector-effect": "non-scaling-stroke" }, g);
+    c.phG = g;
+  }
+  function placePhoto(c, cx, top, w, h) {
+    if (!c.phG) return;
+    [c.phClip, c.phBg, c.phIm, c.phFrame].forEach(function (n) { n.setAttribute("x", (cx - w / 2).toFixed(1)); n.setAttribute("y", top.toFixed(1)); n.setAttribute("width", w); n.setAttribute("height", h); });
+  }
+  function photoCredits() {
+    var el2 = document.getElementById("photocred"); if (!el2) return;
+    var parts = CITIES.map(function (c) { var ph = PHOTOS[c.id]; return ph ? esc(c.name) + ' by <a href="https://unsplash.com/photos/' + ph[2] + '?utm_source=no_fixed_address&amp;utm_medium=referral" target="_blank" rel="noopener">' + esc(ph[1]) + "</a>" : ""; }).filter(Boolean);
+    el2.innerHTML = parts.length ? "<b>Photos:</b> " + parts.join(", ") + ', on <a href="https://unsplash.com/?utm_source=no_fixed_address&amp;utm_medium=referral" target="_blank" rel="noopener">Unsplash</a>, printed here as two-colour duotones.' : "";
+  }
   function makeCity(slotIdx, data) {
     var c = {}, k, i;
     for (k in SLOTS[slotIdx]) c[k] = SLOTS[slotIdx][k];
@@ -917,6 +974,7 @@ body { font-kerning: normal; text-rendering: optimizeLegibility; -webkit-font-sm
     c.pg = c.glows; c.bldEl = p.querySelector(".bld"); c.bldEl.setAttribute("data-b", "1"); c.tabEl = tabsEl.children[ci]; c.tabEl.textContent = c.name;
 
     var sg = p.querySelector(".stat");
+    photoBlock(c, ci, sg);
     el("rect", { x: 20, y: 668, width: 360, height: 84, fill: "transparent" }, sg);
     c.dotNote = c.ex ? "example rhythm" : "each figure is " + c.per.toLocaleString("en-GB") + " people";
     var nm = el("text", { class: "cname", x: 200, y: 684, "text-anchor": "middle" }, sg); nm.textContent = c.name; c.nameEl = nm; c.timeEl = el("tspan", { class: "ntime" }, nm); c.nmChip = el("circle", { r: 4.5, fill: c.col, stroke: "#0b0b0d", "stroke-width": 1.2 }, sg);
@@ -972,7 +1030,7 @@ body { font-kerning: normal; text-rendering: optimizeLegibility; -webkit-font-sm
   }
   CITIES.forEach(function (c, ci) { scene.appendChild(buildPanel(c, ci)); ringLayer.appendChild(buildRing(c, ci)); });
   CITIES.forEach(function (c) { if (!c.ex) wxLoad(c); });
-  relayoutAll(); if (document.fonts && document.fonts.ready) document.fonts.ready.then(function () { relayoutAll(); if (typeof layoutStat === "function") CITIES.forEach(layoutStat); });
+  photoCredits(); relayoutAll(); if (document.fonts && document.fonts.ready) document.fonts.ready.then(function () { relayoutAll(); if (typeof layoutStat === "function") CITIES.forEach(layoutStat); });
   /* ---------- wrap view: the facades bend round the rings, clockwise ---------- */
   var loopEl = document.getElementById("loop"), viewBtn = document.getElementById("view");
   var RADII_BASE = [160, 124, 88], ringScale = 1, mode = "columns", backing = backingEl;
@@ -1101,18 +1159,23 @@ body { font-kerning: normal; text-rendering: optimizeLegibility; -webkit-font-sm
       if (mm) {
         var Wv = window.innerWidth, Hv = window.innerHeight, half = 118 * mm.a, pt = c.svg.createSVGPoint();
         pt.x = ci % 3 === 0 ? 18 + half : Wv - 18 - half; pt.y = Hv * [0.5, 0.74, 0.34][ci % 3];
-        var q = pt.matrixTransform(mm.inverse()); so = [q.x - 200, q.y - 714]; qo = [so[0], so[1] - 33];
+        var q = pt.matrixTransform(mm.inverse()); so = [q.x - 200, q.y - 700]; qo = [so[0], so[1] - 98];
       }
     }
     c.stG.setAttribute("transform", w ? "translate(" + so[0].toFixed(1) + " " + so[1].toFixed(1) + ")" : "");
     c.qg.setAttribute("transform", w ? "translate(" + qo[0].toFixed(1) + " " + qo[1].toFixed(1) + ")" : "");
     c.qoff = w ? qo : [0, 0];
     /* a set type block: name, figure, then two wrapped caption lines. Nothing is squeezed or stretched. */
-    c.nameEl.setAttribute("y", w ? 666 : 680); placeChip(c);
-    c.numEl.setAttribute("transform", w ? "translate(200 704)" : "translate(200 715)");
+    var compact = !w && window.innerWidth < 900, ny = w ? 666 : compact ? 684 : 712, ph = w ? 48 : 40, pw = w ? 150 : 124;
+    c.nameEl.setAttribute("y", ny); placeChip(c);
+    c.numEl.setAttribute("transform", "translate(200 " + (ny + 33) + ")");
+    if (compact) {   /* on a phone there is no room above the name, so the photo sits beside the number */
+      var nb = null; try { nb = c.numEl.getBBox(); } catch (e) {}
+      var nw = nb && nb.width ? nb.width : 120; placePhoto(c, 200 - nw / 2 - 8 - 33, ny + 6, 66, 30);
+    } else placePhoto(c, 200, ny - ph - 14, pw, ph);
     c.cap1.setAttribute("data-w", "1"); c.cap2.setAttribute("data-w", "1"); c.cap1.removeAttribute("textLength"); c.cap2.removeAttribute("textLength");
     c.cap1.style.fontSize = ""; c.cap2.style.fontSize = "";
-    var mw = w ? 232 : 336, y0 = w ? 722 : 731;
+    var mw = w ? 232 : 336, y0 = ny + 48;
     k = wrapText(c.cap1, c.cap1s, mw, y0, 12.5);
     wrapText(c.cap2, c.cap2s, mw, y0 + k * 12.5 + 1, 12);
   }
@@ -1378,13 +1441,13 @@ body { font-kerning: normal; text-rendering: optimizeLegibility; -webkit-font-sm
   function swapCity(ci, data) {
     var old = CITIES[ci]; old.dead = true; stopDrone(old);
     var c = makeCity(ci, data); CITIES[ci] = c;
-    old.travelers.forEach(function (t) { t.dot.el.remove(); }); if (old.ladEl) old.ladEl.remove(); introDirty = true;
+    old.travelers.forEach(function (t) { t.dot.el.remove(); if (t.sp) t.sp.remove(); }); if (old.ladEl) old.ladEl.remove(); introDirty = true;
     var p = buildPanel(c, ci); scene.replaceChild(p, old.panel); relayoutAll();
     ringLayer.replaceChild(buildRing(c, ci), old.cg);
     if (playing && ctx) { var dur = BAR / c.n, n = Math.ceil((ctx.currentTime - t0) / dur); c.step = ((n % c.n) + c.n) % c.n; c.next = t0 + n * dur; }
     if (playing && ctx) startDrone(c);
     skyUpdate(c, Date.now()); var sec = Math.floor(localSec(c, Date.now())); setClock(c);
-    saveCities(); markTab(); if (mode === "wrap") applyMode();
+    saveCities(); markTab(); layoutStat(c); photoCredits(); if (mode === "wrap") applyMode();
     if (!c.ex) wxLoad(c);
     if (typeof dataEl !== "undefined" && !dataEl.hidden) renderData();
   }
