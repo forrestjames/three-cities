@@ -329,7 +329,7 @@
   }
   .gdesc { position: absolute; left: 36px; bottom: 6px; max-width: min(340px, 34vw); font-size: 12px; line-height: 1.45; color: var(--ink); background: rgba(10,6,12,.5); border-left: 2px solid var(--accent); padding: 8px 12px; border-radius: 0 10px 10px 0; backdrop-filter: blur(4px); opacity: .9; pointer-events: none; }
   .gdesc b { font-family: var(--display); font-weight: 400; font-size: 16px; display: block; margin-bottom: 2px; } .gdesc small { display: block; margin-top: 3px; color: var(--ink-dim); font-size: 10px; letter-spacing: .04em; }
-  .gdesc:empty { display: none; }
+  .gdesc:empty, .gdesc.squeezed { display: none; }
   .w-ctry { display: block; font-family: var(--mono, 'Source Code Pro', monospace); font-size: 11px; letter-spacing: .16em; text-transform: uppercase; color: var(--ink-dim); margin-top: 1px; }
   .w-city { font-size: clamp(40px, 5.4vw, 76px); letter-spacing: .02em; text-shadow: 0 2px 24px rgba(0,0,0,.45); }
   .intro { position: fixed; inset: 0; z-index: 20; display: grid; place-items: center; padding: 20px; background: rgba(6,3,6,.82); backdrop-filter: blur(8px); }
@@ -654,6 +654,17 @@
           <label class="cc-f"><span class="lab">Reverb</span><input class="big" id="chordVerb" type="range" min="0" max="100" value="35"></label>
           <label class="cc-f"><span class="lab">Pump</span><input class="big" id="chordPump" type="range" min="0" max="100" value="75" title="How far each genre kick pushes the chords down"></label>
           <div class="cc-f"><span class="lab">Octave</span><span class="padrow"><button class="oct" id="chordOctD" type="button" aria-label="Chords down an octave">&minus;</button><span class="octv" id="chordOctV">0</span><button class="oct" id="chordOctU" type="button" aria-label="Chords up an octave">+</button></span></div>
+        </div>
+        <div class="cc-sub"><span class="lab">Arpeggio</span></div>
+        <div class="cc-grid">
+          <label class="cc-f"><span class="lab">Style</span><select id="arpOn"><option value="1">On, wind sets the pace</option><option value="0">Off</option></select></label>
+          <label class="cc-f"><span class="lab">Level</span><input class="big" id="arpVol" type="range" min="0" max="100" value="40" title="Cloud darkens it, wind speeds it up"></label>
+        </div>
+        <div class="cc-sub"><span class="lab">Bells</span></div>
+        <div class="cc-grid">
+          <label class="cc-f"><span class="lab">Style</span><select id="bellOn"><option value="1">On, only where the kick is silent</option><option value="0">Off</option></select></label>
+          <label class="cc-f"><span class="lab">Level</span><input class="big" id="bellVol" type="range" min="0" max="100" value="35"></label>
+          <label class="cc-f"><span class="lab">Density</span><input class="big" id="bellDens" type="range" min="0" max="100" value="30" title="How often a bell rings"></label>
         </div>
         <p class="cc-note" id="chordNote"></p>
         <p class="cc-note">Recorded sounds come from the Three Cities set: Salamander Grand Piano (CC BY 3.0), VSCO 2 harp (CC0), Versilian marimba, xylophone and mallets (CC0).</p>
@@ -1048,6 +1059,13 @@ CA.md.connect(CA.g).connect(CA.pan).connect(masterIn); CA.pan.connect(CA.sd).con
 CA.cds = ctx.createGain(); CA.chp = ctx.createBiquadFilter(); CA.chp.type = 'highpass'; CA.chp.frequency.value = 230; CA.cd.connect(CA.chp).connect(CA.cg).connect(masterIn); CA.cg.connect(CA.cv).connect(verbIn); CA.cg.connect(CA.cds).connect(delIn);
 CA.g.gain.value = faderGain(CITY.vol); CA.sd.gain.value = Math.pow(0.2, 2) * 0.9; CA.sv.gain.value = Math.pow(0.3, 2) * 0.9;
 CA.cg.gain.value = CH.level; CA.cv.gain.value = Math.pow(0.35, 2) * 0.9; CA.cds.gain.value = 0; CITY.g = CA.g;
+// An arpeggio that climbs through the current chord (wind sets the pace, cloud darkens it), and a few bells that only
+// sound where the genre kick is silent. Both duck under the kick with the chords.
+const AB = { on: true, vol: 0.4, i: 0, g: ctx.createGain(), lp: ctx.createBiquadFilter(), d: ctx.createGain(), sv: ctx.createGain(), sd: ctx.createGain() };
+AB.lp.type = 'lowpass'; AB.lp.frequency.value = 3000; AB.lp.Q.value = 0.4; AB.g.gain.value = AB.vol * AB.vol;
+AB.g.connect(AB.lp).connect(AB.d).connect(masterIn); AB.d.connect(AB.sv).connect(verbIn); AB.d.connect(AB.sd).connect(delIn); AB.sv.gain.value = 0.3; AB.sd.gain.value = 0.07;
+const BELL = { on: true, vol: 0.35, dens: 30, g: ctx.createGain(), sv: ctx.createGain(), sd: ctx.createGain() };
+BELL.g.gain.value = BELL.vol * BELL.vol; BELL.g.connect(masterIn); BELL.g.connect(BELL.sv).connect(verbIn); BELL.g.connect(BELL.sd).connect(delIn); BELL.sv.gain.value = 0.55; BELL.sd.gain.value = 0.3;
 const CBANK = {};
 const noteMidi = n => { const m = n.match(/^([A-G])(s?)(\d)$/); return 12 * (+m[3] + 1) + { C: 0, D: 2, E: 4, F: 5, G: 7, A: 9, B: 11 }[m[1]] + (m[2] ? 1 : 0); };
 function cityLoad(name) {   // the recorded notes come from the Three Cities sample folder, when a ring first needs them
@@ -1171,12 +1189,43 @@ function cityBuild() {
 function cityDuck(t) {   // the sidechain: every genre kick pushes the chords (and a sub line, a little) down, and they swell back
   const f = Math.max(0.04, 1 - CH.pump), m = CITY.snd === 'sub' ? 1 - CH.pump * 0.4 : 1;
   CA.cd.gain.cancelScheduledValues(t); CA.cd.gain.setValueAtTime(f, t); CA.cd.gain.setTargetAtTime(1, t + 0.025, 0.11);
+  AB.d.gain.cancelScheduledValues(t); AB.d.gain.setValueAtTime(Math.max(0.3, 1 - CH.pump * 0.6), t); AB.d.gain.setTargetAtTime(1, t + 0.025, 0.1);
   CA.md.gain.cancelScheduledValues(t); CA.md.gain.setValueAtTime(m, t); CA.md.gain.setTargetAtTime(1, t + 0.025, 0.09);
+}
+function arpVoice(m, t, len, vel) {   // a soft pluck that rings: a triangle with a quiet sine an octave up
+  const f = 440 * Math.pow(2, (m - 69) / 12), o = ctx.createOscillator(), o2 = ctx.createOscillator(), g = ctx.createGain(), g2 = ctx.createGain();
+  o.type = 'triangle'; o.frequency.value = f; o2.type = 'sine'; o2.frequency.value = f * 2.003; g2.gain.value = 0.22;
+  g.gain.setValueAtTime(0.0001, t); g.gain.linearRampToValueAtTime(0.5 * vel, t + 0.02); g.gain.exponentialRampToValueAtTime(0.0008, t + len + 0.4);
+  o.connect(g); o2.connect(g2).connect(g); g.connect(AB.g); o.start(t); o2.start(t); o.stop(t + len + 0.5); o2.stop(t + len + 0.5);
+}
+function arpStep(t, n, ss, sc) {
+  if (!AB.on || CITY.mute || !sc.city) return;
+  const div = WX.wind < 10 ? 8 : WX.wind < 25 ? 4 : 2;   // calm: a note every half bar. Windy: every eighth
+  if (n % div) return;
+  const held = CH.mode === 'held', bar = Math.floor(n / 16);
+  const root = CPROGS[(Math.abs(Math.round(WX.pres)) + JOURNEY.shift) % 4][Math.floor(bar / (held ? 2 : 1)) % 4];
+  const k = [0, 2, 4, 7, 4, 2][AB.i++ % 6];
+  let m = cityMidi(root + k, 57, CH.oct); if (m > 86 + ROOT) m -= 12;
+  AB.lp.frequency.setTargetAtTime(700 + (1 - clamp(WX.cloud / 100, 0, 1)) * 4800, t, 0.3);   // cloud takes the shine off
+  const vel = (n % 16 === 0 ? 1 : 0.8) * (0.9 + Math.random() * 0.2);
+  arpVoice(m, t, ss * div * 1.4, vel); midiMel(m, t, 0.6 * vel, 'arp');
+}
+function bellStep(t, n, ss, sc) {
+  if (!BELL.on || CITY.mute || !sc.city) return;
+  const kl = lanes.find(l => l.i === 0 && !l.wx);
+  if (kl && kl.bits[n % kl.steps]) return;   // the kick is playing: leave it alone
+  if (Math.random() * 100 >= BELL.dens * 0.3) return;
+  const bar = Math.floor(n / 16), root = CPROGS[(Math.abs(Math.round(WX.pres)) + JOURNEY.shift) % 4][bar % 4];
+  let m = cityMidi(root + [4, 7, 9, 11][Math.floor(Math.random() * 4)], 69, 0); if (m > 98 + ROOT) m -= 12;
+  const f = 440 * Math.pow(2, (m - 69) / 12), v = 0.5 + Math.random() * 0.4;
+  melPartial(BELL.g, f, t, 0.5 * v, 1.9); melPartial(BELL.g, f * 2.76, t, 0.12 * v, 0.6); melPartial(BELL.g, f * 5.4, t, 0.04 * v, 0.25);
+  midiMel(m, t, 0.5 * v, 'bell');
 }
 function cityPlay(snd, midi, t, vel, out, dur) { if (snd === 'sub') citySub(midi, t, vel, out, dur); else citySamp(snd, midi, t, vel, out, dur); }
 function cityStep(t, n) {
   const ss = stepSecs();
   const sc = JOURNEY.on ? jScene(Math.floor(n / 16)) : { city: 1, chords: 1 };
+  arpStep(t, n, ss, sc); bellStep(t, n, ss, sc);
   if (!CITY.mute && sc.city && CITY.bits.length && n % CITY.rate === 0) {
     const pos = (n / CITY.rate) % CITY.steps;
     if (CITY.bits[pos] && Math.random() * 100 < CITY.chance && Math.random() >= Math.min(0.35, (WX.rain || 0) * 0.2)) {   // rain thins the line
@@ -1639,6 +1688,11 @@ function setMute(l, v) { l.mute = v; l.pad.setAttribute('aria-pressed', String(v
   el('chordDel').addEventListener('input', () => CA.cds.gain.setTargetAtTime(Math.pow(val('chordDel') / 100, 2) * 0.9, ctx.currentTime, 0.02));
   el('chordVerb').addEventListener('input', () => CA.cv.gain.setTargetAtTime(Math.pow(val('chordVerb') / 100, 2) * 0.9, ctx.currentTime, 0.02));
   el('chordPump').addEventListener('input', () => { CH.pump = val('chordPump') / 100; });
+  el('arpOn').addEventListener('change', e => { AB.on = e.target.value === '1'; });
+  el('arpVol').addEventListener('input', () => { AB.vol = val('arpVol') / 100; AB.g.gain.setTargetAtTime(AB.vol * AB.vol, ctx.currentTime, 0.02); });
+  el('bellOn').addEventListener('change', e => { BELL.on = e.target.value === '1'; });
+  el('bellVol').addEventListener('input', () => { BELL.vol = val('bellVol') / 100; BELL.g.gain.setTargetAtTime(BELL.vol * BELL.vol, ctx.currentTime, 0.02); });
+  el('bellDens').addEventListener('input', () => { BELL.dens = val('bellDens'); });
   el('cityMute').addEventListener('click', () => { CITY.mute = !CITY.mute; el('cityMute').setAttribute('aria-pressed', String(CITY.mute)); el('cityCard').classList.toggle('muted', CITY.mute); }); }
 function tap(l) {
   if (ctx.state !== 'running') ctx.resume();
@@ -2033,6 +2087,16 @@ function fitRing() {
   w.style.width = w.style.height = Math.max(120, side) + 'px';
 }
 addEventListener('resize', fitRing); addEventListener('orientationchange', fitRing);
+// when the window is short, the genre note would sit on top of the city name and weather, so it steps aside
+function fitNote() {
+  const g = $('gdesc'), wb = document.querySelector('.wxb'); if (!g || !wb) return;
+  g.classList.remove('squeezed');
+  if (!matchMedia('(min-width: 701px)').matches) return;
+  const gb = g.getBoundingClientRect(), wr = wb.getBoundingClientRect();
+  if (g.textContent && gb.top < wr.bottom + 10) g.classList.add('squeezed');
+}
+addEventListener('resize', fitNote); if (window.ResizeObserver) new ResizeObserver(fitNote).observe(document.querySelector('.stage'));
+new MutationObserver(fitNote).observe($('gdesc'), { childList: true, characterData: true, subtree: true }); setTimeout(fitNote, 300);
 if (window.ResizeObserver) new ResizeObserver(fitRing).observe(document.querySelector('.stage')); fitRing();
 function draw() {
   g2.clearRect(0, 0, W, W);
