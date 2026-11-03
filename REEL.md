@@ -22,5 +22,6 @@ Internal notes for the social reel tools. No manual coverage needed.
 - weatherOf(c, k) feeds the reel's weather lines.
 
 ## Looks
-`rl` picks the look: `classic`, `postcard`, `weather`, `split`, or `score`. Auto (by theme) never picks `score`; choose it in the Reel Studio's Look menu.
+`rl` picks the look: `classic`, `postcard`, `weather`, `split`, `score`, or `chiaro`. Auto (by theme) never picks `score` or `chiaro`; choose them in the Reel Studio's Look menu.
+- **Chiaroscuro** (`chiaro`): near-black frames, one shaft of light per city (colour from temperature, brightness from cloud), fog from humidity, no figure. Spec in `daily-reel/CHIAROSCURO-SPEC.md`.
 - **The Score** (`score`): cream manuscript paper. Each city gets a staff, its Euclidean pattern is drawn as notes (hits) and rests (gaps), and a coloured playhead sweeps the live step. The temperature is the tempo mark. The closing section shows all three staves as one system.

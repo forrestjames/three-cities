@@ -6949,6 +6949,34 @@ body.perform.fit .pl-shape-btn { display: inline-block !important; }
     }
     // the timeline
     let t0 = 0, run = false, rec = null, chunks = [], lastCut = 0, cutSeed = 0, idleAt = rQ ? 2.3 : 1.6;   // idle shows the whole question
+    // chiaroscuro look: near-black frame, one shaft of light, fog bands, no figure.
+    // Light colour follows temperature (cold blue-white to warm amber), shaft brightness follows cloud cover, fog follows humidity.
+    function chiaro(c, x, w, s, lit = 1, drift = 0) {
+      const t = c.w ? Math.max(-5, Math.min(30, c.w.t)) : 12, warm = (t + 5) / 35;
+      const mix = (a, b, f) => a.map((v, i) => Math.round(v + (b[i] - v) * f));
+      const rgb = mix([207, 227, 255], [242, 163, 58], warm).join(",");
+      const cloud = c.w ? (c.w.c || 0) / 100 : 0.5, hum = c.w ? (c.w.h || 0) / 100 : 0.5;
+      const beam = Math.max(0, (0.24 - 0.16 * cloud) * lit + (c._reelPulse || 0) * 0.05);
+      g.save();
+      g.beginPath(); g.rect(x, 0, w, H); g.clip();
+      g.fillStyle = "#040404"; g.fillRect(x, 0, w, H);
+      const cx = x + w * (0.5 + 0.05 * Math.sin(s * 0.3 + drift));
+      const beamG = g.createLinearGradient(0, 0, 0, H * 0.9);
+      beamG.addColorStop(0, `rgba(${rgb},${beam})`); beamG.addColorStop(1, `rgba(${rgb},0)`);
+      g.fillStyle = beamG;
+      g.beginPath(); g.moveTo(cx - w * 0.035, 0); g.lineTo(cx + w * 0.035, 0);
+      g.lineTo(cx + w * 0.32, H * 0.9); g.lineTo(cx - w * 0.32, H * 0.9); g.closePath(); g.fill();
+      // fog bands in the lower third: thicker with humidity, drifting slowly across
+      [[1240, 150, 9], [1380, 200, 6], [1530, 130, 11]].forEach(([fy, fh, sp], i) => {
+        const off = (s * sp + i * 97) % w;
+        const a = (0.14 + 0.32 * hum) * lit;
+        const fg = g.createLinearGradient(x - off, 0, x - off + w, 0);
+        fg.addColorStop(0, "rgba(200,200,200,0)"); fg.addColorStop(0.5, `rgba(200,200,200,${a})`); fg.addColorStop(1, "rgba(200,200,200,0)");
+        g.fillStyle = fg; g.fillRect(x - off, fy, w + 1, fh);
+        g.fillRect(x - off + w, fy, w + 1, fh);
+      });
+      g.restore();
+    }
     function scene(now) {
       const s = (now - t0) / 1000, cs = cities;
       g.fillStyle = "#100806"; g.fillRect(0, 0, W, H);
@@ -6980,6 +7008,11 @@ body.perform.fit .pl-shape-btn { display: inline-block !important; }
         label(statOnly(k) || statLine(c, tags[k]), L + 4, 1430, 30, { mono: true, color: INK, shadow: 0, alpha: ease((ls - 1.1) / 0.6), max: SAFE.rLow - L });
         label(c.w ? `${Math.abs(Math.round(c.w.t))}° makes a ${c.pattern.length}-step bar` : "", L + 4, 1490, 28, { mono: true, color: col(c), shadow: 0, alpha: ease((ls - 1.4) / 0.6), max: SAFE.rLow - L });
         if (ls < 0.5) { g.fillStyle = `rgba(16,8,6,${1 - fade})`; g.fillRect(0, 0, W, H); }
+      } else if (s < 18 && rLook === "chiaro") {   // chiaroscuro: one city at a time, held in the dark, one shaft of light
+        const k = Math.min(2, Math.floor((s - 3) / 5)), ls = (s - 3) - k * 5, c = cs[k];
+        const lit = ease(ls / 1.0) * (1 - ease((ls - 4.4) / 0.6));
+        chiaro(c, 0, W, s, lit, k * 2);
+        label(c.name.toUpperCase(), SAFE.l, 400, 34, { mono: true, spacing: 8, alpha: lit * 0.85, shadow: 0, max: SAFE.r - SAFE.l });
       } else if (s < 18 && rLook === "postcard") {   // postcards dropping onto a pile
         const k = Math.min(2, Math.floor((s - 3) / 5)), ls = (s - 3) - k * 5;
         const desk = g.createRadialGradient(W / 2, H * 0.45, 100, W / 2, H * 0.45, H * 0.8); desk.addColorStop(0, "#2a1d18"); desk.addColorStop(1, "#0c0605"); g.fillStyle = desk; g.fillRect(0, 0, W, H);
@@ -7044,6 +7077,13 @@ body.perform.fit .pl-shape-btn { display: inline-block !important; }
           g.save(); g.globalAlpha = e; staff(c, i, SAFE.l, R, y, 28, ls); g.restore();
           label(c.name.toUpperCase(), SAFE.l, y - 40, 40, { spacing: 6, color: INK, shadow: 0, alpha: e, max: 340 });
           label(`${bigOf(c, i)}  ${(tags[i] || "").toUpperCase()}`, SAFE.l + 360, y - 40, 24, { mono: true, color: col(c), shadow: 0, alpha: e, max: R - SAFE.l - 360 });
+        });
+      } else if (s < 23 && rLook === "chiaro") {   // three shafts side by side, playing together
+        const ls = s - 18, e = ease(ls / 0.8);
+        cs.forEach((c, i) => {
+          const x = i * W / 3;
+          chiaro(c, x, W / 3 + 1, s, e, i * 2);
+          label(c.name.toUpperCase(), x + 56, 400, 24, { mono: true, spacing: 6, alpha: e * 0.85, shadow: 0, max: W / 3 - 110 });
         });
       } else if (s < 23 && rLook === "postcard") {   // the three postcards fanned out, nodding to their beats
         const ls = s - 18, e = ease(ls / 0.8);
