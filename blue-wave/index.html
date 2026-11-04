@@ -114,8 +114,6 @@ dd { margin: 0; text-align: right; color: var(--foam); font-size: 13px; overflow
 .news[data-k="first"] .nt { color: var(--spark); }
 @keyframes spark { 50% { box-shadow: 0 0 0 5px rgba(255, 217, 138, .1), 0 0 18px 4px rgba(255, 217, 138, .85); } }
 .nb { animation: newsin .5s ease both; }
-@media (max-width: 760px) { .bn-desk { display: none !important; } }
-@media (min-width: 761px) { .bn-phone { display: none !important; } }
 .bn { margin: 10px 0 0; padding-top: 9px; border-top: 1px solid var(--edge); font: 400 12.5px/1.45 var(--display); color: var(--mist); }
 @keyframes newsin { from { opacity: 0; transform: translateY(4px); } }
 .nh { margin: 6px 0 0; font: 400 15.5px/1.3 var(--display); color: var(--foam); display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 3; overflow: hidden; min-height: 3.9em; }
@@ -214,11 +212,28 @@ input[type=range]::-moz-range-thumb { width: 14px; height: 14px; border-radius: 
   .left .card { display: contents; }
   #surf { display: contents; } .slides { display: contents; margin: 0; overflow: visible; }
   #search { overflow: auto; }
-  #pg-read { order: 1; display: grid; grid-template-columns: 1fr 150px; grid-template-rows: auto auto auto 1fr; column-gap: 10px; align-content: start; }
+  #pg-read { order: 3; display: grid; grid-template-columns: 1fr 150px; grid-template-rows: auto auto auto 1fr; column-gap: 10px; align-content: start; }
   #pg-read .top { grid-column: 1 / -1; } #pg-read .name { grid-column: 1; margin: 2px 0 0; font-size: 20px; align-self: end; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; } #pg-read .geo { display: contents; }
   #pg-read .sub { grid-column: 1; margin: 0; font-size: 12px; align-self: start; } #mini { grid-column: 2; grid-row: 2 / 4; width: 150px; height: 62px; margin: 0; align-self: center; }
   #pg-read #gauges { grid-column: 1 / -1; height: 74px; margin-top: 6px; }
-  #search { order: 2; } #pg-scale { order: 3; } #pg-data { order: 4; } .shead { order: 5; } .slide { order: 6; }
+  /* three screens on a phone: the piece, the news, the beach. Scale, data and surf check stay on desktop. */
+  #pg-intro { order: 0; display: flex; flex-direction: column; justify-content: center; }
+  #panel > #news { order: 1; display: block; flex: 0 0 100%; width: 100%; height: 100%; margin: 0; padding: 14px 16px; border: 0; border-radius: 0; background: none; backdrop-filter: none; -webkit-backdrop-filter: none; scroll-snap-align: start; overflow: hidden; }
+  #search { order: 2; } .shead { order: 5; } .slide { order: 6; }
+  #pg-scale, #pg-data, #surf { display: none !important; }
+  #panel > #news .nh { font-size: 19px; line-height: 1.3; -webkit-line-clamp: 4; min-height: 0; margin-top: 10px; }
+  #panel > #news .ns { display: block; margin-top: 12px; }
+  #panel > #news .bn { display: none; }
+  #blue-note { display: none !important; }   /* on phones the Democrats line sits under the view switch */
+  .bn-phone { margin: 8px 0 0; font-size: 12.5px; white-space: normal; line-height: 1.4; }
+  body:not(.is-blue) .bn-phone { display: none !important; }
+  body.is-place #news { display: none !important; }
+  .intro .intro-h { font: 500 11.5px var(--mono); letter-spacing: .08em; text-transform: uppercase; color: var(--faint); margin: 0 0 10px; }
+  .intro ul { margin: 0; padding: 0; list-style: none; font: 400 15px/1.4 var(--display); color: var(--foam); }
+  .intro li { padding: 7px 0; border-bottom: 1px solid var(--edge); }
+  .intro li:last-child { border-bottom: 0; }
+  .intro li b { font-weight: 500; }
+  .intro .intro-next { margin: 12px 0 0; font: 400 12px var(--mono); color: var(--faint); }
   #pg-scale #scale { height: 128px; margin-top: 0; } .scale-cap { font-size: 12.5px; margin-top: 4px; }
   #r-dl { margin-top: 0; font-size: 12px; gap: 5px 12px; } #r-note { display: none; } #pg-data .go.wide { margin-top: 10px; min-height: 40px; }
   .shead { display: none; } #surf.nodata .shead { display: block; }
@@ -261,7 +276,7 @@ input[type=range]::-moz-range-thumb { width: 14px; height: 14px; border-radius: 
   <section class="news" id="news" aria-label="Headline from election night" hidden data-k="">
     <div class="nb" id="nb"><div class="nt"><i class="nd" aria-hidden="true"></i><span class="tx" id="n-tag"></span></div>
     <p class="nh" id="n-head"></p><div class="ns" id="n-src"></div></div>
-    <p class="bn bn-desk" id="blue-note">The Democrats, the blue, taking over the House and Senate.</p>
+    <p class="bn" id="blue-note">The Democrats, the blue, taking over the House and Senate.</p>
   </section>
 </div>
 
@@ -299,6 +314,15 @@ input[type=range]::-moz-range-thumb { width: 14px; height: 14px; border-radius: 
 </div>
 
 <aside class="panel" id="panel" aria-live="polite">
+  <div class="pg intro" id="pg-intro" aria-label="What this is">
+    <p class="intro-h">How to read the rings</p>
+    <ul>
+      <li><b>Each ring is a beach.</b> The light moves round it, one step at a time.</li>
+      <li><b>Bigger waves</b> light more dots.</li>
+      <li><b>Warmer water</b> plays higher notes.</li>
+    </ul>
+    <p class="intro-next">Swipe for the news, then for the beach.</p>
+  </div>
   <div class="pg" id="pg-read"><div class="top"><div class="cap" id="r-cap">&nbsp;</div><button class="share-btn" id="share" type="button" title="Share what is loaded, with a link"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 15V4M8 8l4-4 4 4" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/><path d="M7 11H5.5A1.5 1.5 0 0 0 4 12.5v6A1.5 1.5 0 0 0 5.5 20h13a1.5 1.5 0 0 0 1.5-1.5v-6a1.5 1.5 0 0 0-1.5-1.5H17" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>Share</button></div>
   <div class="name" id="r-name">&nbsp;</div>
   <div class="geo"><div class="sub"><img id="r-flag" class="flag" alt="" width="20" height="14" hidden><span id="r-sub"></span></div>
@@ -787,7 +811,7 @@ function renderSurf() {
 }
 
 // the phone dock: one dot for every card in the swipeable panel
-function dockPages() { return [...document.querySelectorAll('#panel > .pg, #panel #search, #panel .shead, #panel .slide')].filter(e => e.offsetWidth > 0).sort((a, b) => a.offsetLeft - b.offsetLeft); }
+function dockPages() { return [...document.querySelectorAll('#panel > .pg, #panel > #news, #panel #search, #panel .shead, #panel .slide')].filter(e => e.offsetWidth > 0).sort((a, b) => a.offsetLeft - b.offsetLeft); }
 function refreshDots() {
   const dd = $('dockdots'), panel = $('panel'); if (!dd) return;
   if (W >= 760) { dd.hidden = true; return; }
@@ -910,7 +934,7 @@ function renderPanel() {
   $('gauges').setAttribute('aria-label', 'Quick scan: ' + tiles().map(t => `${t.l} ${t.v}`).join(', '));
   updateNews();
 }
-function syncNote() { const on = !(mode === 'world' && world === BLUE); $('blue-note').hidden = on; $('blue-note-m').hidden = on; }
+function syncNote() { const on = mode === 'world' && world === BLUE; $('blue-note').hidden = !on; $('blue-note-m').hidden = !on; document.body.classList.toggle('is-blue', on); document.body.classList.toggle('is-place', mode === 'place'); }
 function setMode(m, set) {
   mode = m; if (set) { world = set === 'blue' ? BLUE : OCEANS; musicKey = ''; }
   syncNote();
@@ -928,6 +952,16 @@ $('open-place').addEventListener('click', () => { const s = world[selected]; if 
 $('m-place').addEventListener('click', () => setMode('place'));
 // Wide screens keep the search and surf check down the left. Narrow ones fold them into the one panel.
 const wide = window.matchMedia('(min-width: 1180px)');
+// Phones: the headline card is the second screen of the swipe. Wider screens: it sits under the view switch.
+const phone = window.matchMedia('(max-width: 760px)');
+function placeNews() {
+  const news = $('news'), seg = document.querySelector('.seg');
+  if (phone.matches) { if (news.parentNode !== $('panel')) $('panel').insertBefore(news, $('pg-read')); }
+  else if (news.parentNode !== seg.parentNode || news.previousElementSibling !== seg) seg.after(news);
+  setTimeout(resize, 0);
+}
+if (phone.addEventListener) phone.addEventListener('change', placeNews); else phone.addListener(placeNews);
+placeNews();
 function placeLeft() {
   const left = $('left'), panel = $('panel');
   if (wide.matches) { left.classList.add('float'); if (left.parentNode !== document.body) document.body.appendChild(left); }
