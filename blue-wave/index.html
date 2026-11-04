@@ -87,10 +87,10 @@ dd { margin: 0; text-align: right; color: var(--foam); font-size: 13px; overflow
 #s-note { font-size: 11.5px; color: var(--faint); }
 .scale-cap { font-size: 13px; color: var(--foam); margin-top: 2px; line-height: 1.4; }
 .scale-cap b { font-weight: 500; }
-.geo { display: flex; align-items: flex-end; margin-bottom: 10px; align-items: center; justify-content: space-between; gap: 12px; }
+.geo { display: flex; margin-bottom: 10px; align-items: flex-start; justify-content: space-between; gap: 12px; }
 .geo-t { min-width: 0; }
-#mini { flex: none; width: 124px; height: 52px; margin-top: 2px; }
-.geo .sub { margin: 4px 0 0; }
+#mini { flex: none; width: 168px; height: 70px; margin-top: -6px; }
+.geo .sub { margin: 0; }
 .pg { display: contents; }
 .mh, .dockdots { display: none; }
 .kicker { margin: 6px 0 0; font: 400 14px/1.4 var(--display); letter-spacing: .02em; color: var(--foam); max-width: 34ch; text-shadow: 0 1px 10px rgba(3,14,38,.6); }
@@ -176,9 +176,9 @@ input[type=range]::-moz-range-thumb { width: 14px; height: 14px; border-radius: 
   .left .card { display: contents; }
   #surf { display: contents; } .slides { display: contents; margin: 0; overflow: visible; }
   #search { overflow: auto; }
-  #pg-read { order: 1; display: grid; grid-template-columns: 1fr 124px; grid-template-rows: auto auto auto 1fr; column-gap: 10px; align-content: start; }
-  #pg-read .top { grid-column: 1 / -1; } #pg-read .name { grid-column: 1; margin: 2px 0 0; font-size: 20px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; } #pg-read .geo { display: contents; }
-  #pg-read .sub { grid-column: 1; margin: 2px 0 0; font-size: 12px; align-self: start; } #mini { grid-column: 2; grid-row: 2 / 4; width: 124px; height: 52px; margin: 0; align-self: center; }
+  #pg-read { order: 1; display: grid; grid-template-columns: 1fr 150px; grid-template-rows: auto auto auto 1fr; column-gap: 10px; align-content: start; }
+  #pg-read .top { grid-column: 1 / -1; } #pg-read .name { grid-column: 1; margin: 2px 0 0; font-size: 20px; align-self: end; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; } #pg-read .geo { display: contents; }
+  #pg-read .sub { grid-column: 1; margin: 0; font-size: 12px; align-self: start; } #mini { grid-column: 2; grid-row: 2 / 4; width: 150px; height: 62px; margin: 0; align-self: center; }
   #pg-read #gauges { grid-column: 1 / -1; height: 74px; margin-top: 6px; }
   #search { order: 2; } #pg-scale { order: 3; } #pg-data { order: 4; } .shead { order: 5; } .slide { order: 6; }
   #pg-scale #scale { height: 128px; margin-top: 0; } .scale-cap { font-size: 12.5px; margin-top: 4px; }
