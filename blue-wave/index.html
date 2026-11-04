@@ -1059,22 +1059,23 @@ function melodyStep(t) {
 let waveT = 0, waveStart = 0, waveP = 8, breakAt = 0, breakFlash = 0;
 function scheduleWave(t) {
   const a = seaState(), P = clamp(a.per, 5, 15), h = a.h, lvl = Number($('ocean').value) / 100, still = a.still;
-  waveP = P; waveStart = t;
-  const tb = t + P * .68, g = swayG.gain, f = swayLP.frequency, amt = still ? 0 : clamp(.35 + h / 3, .35, 1);   // how much the music sways
+  const P0 = P; waveP = P0 * (.75 + Math.random() * .55); waveStart = t;
+  const tb = t + waveP * (.55 + Math.random() * .25), g = swayG.gain, f = swayLP.frequency, amt = still ? 0 : clamp(.35 + h / 3, .35, 1) * (.35 + Math.random() * .65);   // how much the music sways, different every wave
   // the music: the water rises and the sound opens, then it closes as the wave breaks and runs out
-  g.setValueAtTime(.55, t); g.linearRampToValueAtTime(.55 + .45 * amt, tb - .05); g.linearRampToValueAtTime(.4, tb + .5); g.linearRampToValueAtTime(.5, t + P);
-  f.setValueAtTime(500, t); f.exponentialRampToValueAtTime(500 + 3600 * amt, tb - .05); f.exponentialRampToValueAtTime(700, tb + .6); f.exponentialRampToValueAtTime(420, t + P);
+  g.setValueAtTime(.55, t); g.linearRampToValueAtTime(.55 + .45 * amt, tb - .05); g.linearRampToValueAtTime(.4, tb + .5); g.linearRampToValueAtTime(.5, t + waveP);
+  f.setValueAtTime(500, t); f.exponentialRampToValueAtTime(500 + 3600 * amt, tb - .05); f.exponentialRampToValueAtTime(700, tb + .6); f.exponentialRampToValueAtTime(420, t + waveP);
   if (still || lvl <= 0) return;
-  const A = lvl * (.025 + .07 * clamp(h / 3, 0, 1)), src = ctx.createBufferSource(), lp = ctx.createBiquadFilter(), ng = ctx.createGain(), pn = ctx.createStereoPanner ? ctx.createStereoPanner() : null;
+  if (Math.random() < .4) return;   // some waves just roll in quietly
+  const A = lvl * (.012 + .035 * clamp(h / 3, 0, 1)) * (.25 + Math.random() * .75), src = ctx.createBufferSource(), lp = ctx.createBiquadFilter(), ng = ctx.createGain(), pn = ctx.createStereoPanner ? ctx.createStereoPanner() : null;
   src.buffer = pinkBuf; src.loop = true; lp.type = 'lowpass'; lp.Q.value = .5; src.connect(lp).connect(ng);
   if (pn) { pn.pan.value = (Math.random() - .5) * .8; ng.connect(pn).connect(crashBus); } else ng.connect(crashBus);
   const ng2 = ng.gain, lf = lp.frequency;
   ng2.setValueAtTime(.0001, t); ng2.linearRampToValueAtTime(A * .45, tb - .3);                       // the swell, getting louder as the wave stands up
-  ng2.linearRampToValueAtTime(A, tb + .45); ng2.exponentialRampToValueAtTime(A * .3, tb + P * .2); // the break
-  ng2.exponentialRampToValueAtTime(.0001, t + P);                                                      // the wash, sinking into the sand
-  lf.setValueAtTime(240, t); lf.exponentialRampToValueAtTime(1100, tb - .3); lf.linearRampToValueAtTime(2400, tb + .45); lf.exponentialRampToValueAtTime(1300, tb + P * .2); lf.exponentialRampToValueAtTime(240, t + P);
-  src.start(t, Math.random() * 2); src.stop(t + P + .2);
-  setTimeout(() => { breakFlash = clamp(.35 + h / 3, .35, 1); breakAt = performance.now(); }, Math.max(0, (tb - ctx.currentTime) * 1000));
+  ng2.linearRampToValueAtTime(A, tb + .45); ng2.exponentialRampToValueAtTime(A * .3, tb + waveP * .2); // the break
+  ng2.exponentialRampToValueAtTime(.0001, t + waveP);                                                      // the wash, sinking into the sand
+  lf.setValueAtTime(240, t); lf.exponentialRampToValueAtTime(1100, tb - .3); lf.linearRampToValueAtTime(2400, tb + .45); lf.exponentialRampToValueAtTime(1300, tb + waveP * .2); lf.exponentialRampToValueAtTime(240, t + waveP);
+  src.start(t, Math.random() * 2); src.stop(t + waveP + .2);
+  setTimeout(() => { breakFlash = clamp(.15 + h / 5, .15, .5) * A / (lvl * .047 || 1); breakAt = performance.now(); }, Math.max(0, (tb - ctx.currentTime) * 1000));
 }
 function schedule() {
   const list = voices;
