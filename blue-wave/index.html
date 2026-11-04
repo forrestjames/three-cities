@@ -64,6 +64,10 @@ h1 { margin: 0; font-weight: 200; letter-spacing: -.02em; line-height: .9; font-
   max-height: calc(100% - (env(safe-area-inset-top, 0px) + clamp(16px, 3vw, 36px) + clamp(44px, 7vw, 104px) * .9 + 150px) - 112px);
 }
 .left:not(.float) .card { background: none; border: 0; border-radius: 0; padding: 0 0 14px; margin-bottom: 14px; border-bottom: 1px solid var(--edge); backdrop-filter: none; -webkit-backdrop-filter: none; }
+.top { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.share-btn { display: inline-flex; align-items: center; gap: 7px; flex: none; font: 500 12px var(--mono); letter-spacing: .04em; color: var(--foam); background: transparent; border: 1px solid var(--edge); border-radius: 999px; padding: 0 13px; min-height: 32px; cursor: pointer; }
+.share-btn svg { width: 15px; height: 15px; }
+.share-btn:hover, .share-btn:focus-visible { border-color: var(--accent); }
 .cap { font-size: 11.5px; color: var(--faint); letter-spacing: .06em; text-transform: uppercase; }
 .name { font-family: var(--display); font-weight: 300; font-size: 28px; line-height: 1.1; color: var(--foam); margin: 6px 0 4px; overflow-wrap: anywhere; }
 .head { font-family: var(--display); font-weight: 300; font-size: 24px; line-height: 1.15; color: var(--foam); margin: 6px 0 2px; }
@@ -173,7 +177,7 @@ input[type=range]::-moz-range-thumb { width: 14px; height: 14px; border-radius: 
 </div>
 
 <aside class="panel" id="panel" aria-live="polite">
-  <div class="cap" id="r-cap">&nbsp;</div>
+  <div class="top"><div class="cap" id="r-cap">&nbsp;</div><button class="share-btn" id="share" type="button" title="Share what is loaded, with a link"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 15V4M8 8l4-4 4 4" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/><path d="M7 11H5.5A1.5 1.5 0 0 0 4 12.5v6A1.5 1.5 0 0 0 5.5 20h13a1.5 1.5 0 0 0 1.5-1.5v-6a1.5 1.5 0 0 0-1.5-1.5H17" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>Share</button></div>
   <div class="name" id="r-name">&nbsp;</div>
   <div class="sub" id="r-sub"></div>
   <canvas class="inline" id="gauges" role="img" aria-label="Quick scan of the conditions"></canvas>
@@ -543,7 +547,7 @@ function setMode(m) {
   $('left').hidden = m !== 'place';
   ripples.length = 0; ringOrder = order();
   if (m === 'place' && !place.loaded) fetchPlace();
-  showFacts(); renderPanel(); renderSurf();
+  showFacts(); renderPanel(); renderSurf(); syncUrl();
 }
 $('m-world').addEventListener('click', () => setMode('world'));
 $('m-place').addEventListener('click', () => setMode('place'));
@@ -556,13 +560,41 @@ function placeLeft() {
 }
 if (wide.addEventListener) wide.addEventListener('change', placeLeft); else wide.addListener(placeLeft);
 
+// ---------- share: the link carries the place that is loaded ----------
+const enc = (x) => encodeURIComponent(x).replace(/%20/g, '+');
+function shareURL() {
+  try {
+    const u = new URL(location.href); u.search = ''; u.hash = '';
+    if (mode !== 'place') return u.toString();
+    return u.toString() + `?lat=${place.lat.toFixed(4)}&lon=${place.lon.toFixed(4)}&name=${enc(place.name)}` + (place.sub ? `&sub=${enc(place.sub)}` : '');
+  } catch (e) { return ''; }
+}
+function syncUrl() { try { const u = shareURL(); if (u) history.replaceState(null, '', u); } catch (e) { /* some browsers refuse on local files */ } }
+function shareLine() {
+  return mode === 'place' ? `Here's the sea at ${place.name} right now, played as a rhythm. Try your own beach.` : `Here's the sea around the world right now, played as a rhythm.`;
+}
+$('share').addEventListener('click', () => {
+  const btn = $('share'), url = shareURL(); if (!url) return;
+  const line = shareLine(), label = btn.lastChild, done = (m) => { label.textContent = m; clearTimeout(btn._t); btn._t = setTimeout(() => { label.textContent = 'Share'; }, 2000); };
+  if (navigator.share && matchMedia('(pointer: coarse)').matches) { navigator.share({ title: 'Blue Wave · Forrest James', text: line, url }).catch(() => {}); return; }
+  const oldSchool = () => { const t = document.createElement('textarea'); t.value = url; t.style.position = 'fixed'; t.style.opacity = '0'; document.body.appendChild(t); t.select(); let ok = false; try { ok = document.execCommand('copy'); } catch (e) { /* ignore */ } t.remove(); done(ok ? 'Link copied' : 'Could not copy'); };
+  // two versions on the clipboard: mail and docs paste the sentence with the link, the address bar gets the clean link
+  const esc = (x) => x.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+  const html = `<p>${esc(line)}</p><p><a href="${esc(url)}">${esc(url)}</a></p>`;
+  if (navigator.clipboard && navigator.clipboard.write && window.ClipboardItem) {
+    navigator.clipboard.write([new ClipboardItem({ 'text/plain': new Blob([url], { type: 'text/plain' }), 'text/html': new Blob([html], { type: 'text/html' }) })])
+      .then(() => done('Link copied'), () => navigator.clipboard.writeText ? navigator.clipboard.writeText(url).then(() => done('Link copied'), oldSchool) : oldSchool());
+  } else if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(url).then(() => done('Link copied'), oldSchool);
+  else oldSchool();
+});
+
 // ---------- place search ----------
 const msg = (t) => { $('msg').textContent = t || ''; };
 function choose(lat, lon, name, sub) {
   Object.assign(place, { lat, lon, name, sub, loaded: false, live: false, noSea: false, error: false, hr: null, tide: null, coast: null });
   try { localStorage.setItem('bluewave.place', JSON.stringify({ lat, lon, name, sub })); } catch (e) { /* ignore */ }
   $('results').textContent = ''; $('q').value = ''; msg('');
-  showFacts(); renderPanel(); renderSurf(); fetchPlace();
+  showFacts(); renderPanel(); renderSurf(); fetchPlace(); syncUrl();
 }
 async function geocode(q) {
   const res = await fetch('https://nominatim.openstreetmap.org/search?format=jsonv2&limit=5&q=' + encodeURIComponent(q));
@@ -1029,7 +1061,16 @@ function frame(now) {
   requestAnimationFrame(frame);
 }
 
-placeLeft(); showFacts(); renderPanel();
+placeLeft();
+let arrivedByLink = false;
+try {
+  const q = new URLSearchParams(location.search), la = parseFloat(q.get('lat')), lo = parseFloat(q.get('lon')), nm = (q.get('name') || '').trim();
+  if (isFinite(la) && isFinite(lo) && Math.abs(la) <= 90 && Math.abs(lo) <= 180 && nm) {
+    place.lat = la; place.lon = lo; place.name = nm.slice(0, 80); place.sub = (q.get('sub') || '').slice(0, 100); arrivedByLink = true;
+  }
+} catch (e) { /* no link state, fine */ }
+showFacts(); renderPanel();
+if (arrivedByLink) setMode('place');
 fetchWorld();
 setInterval(() => { fetchWorld(); if (place.loaded) fetchPlace(); }, REFRESH_MS);
 setInterval(() => { showFacts(); if (mode === 'place' && place.hr) { analyseTide(place); renderSurf(); } }, 60000);
