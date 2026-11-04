@@ -169,6 +169,7 @@ input[type=search]::placeholder { color: var(--faint); }
 .howbtn { display: inline-flex; align-items: center; justify-content: center; vertical-align: 1px; width: 16px; height: 16px; margin-left: 4px; border-radius: 50%; border: 1px solid rgba(255,255,255,.28); background: none; color: var(--foam); opacity: .6; font: 400 10px/1 var(--mono); cursor: pointer; padding: 0; text-shadow: none; transition: opacity .2s, border-color .2s; }
 .howbtn:hover, .howbtn:focus-visible, .howbtn[aria-expanded="true"] { opacity: 1; border-color: var(--accent); }
 .how-pop { position: absolute; z-index: 5; top: calc(100% + 6px); left: 0; width: min(280px, 80vw); right: auto; transform: none; bottom: auto; max-height: none; padding: 14px 16px; }
+.title:has(#p-how:not([hidden])) { z-index: 6; }   /* the note opens above the panels and bar */
 .how-pop ul { margin: 6px 0 0; padding: 0; list-style: none; font: 400 13.5px/1.45 var(--display); color: var(--foam); }
 .how-pop li { padding: 6px 0; border-bottom: 1px solid var(--edge); }
 .how-pop li:last-child { border-bottom: 0; }
