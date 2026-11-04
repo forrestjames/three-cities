@@ -1607,26 +1607,26 @@ setInterval(placeFloat, 500); addEventListener('resize', placeFloat);
 function drawTitle(dt) {
   if (!tpts.length) return;
   const s = voices[selected] || { val: 1, per: 8 }, h = clamp(s.val / (mode === 'world' && world === OCEANS ? 5 : 2.6), .1, 1), per = clamp(s.per || 8, 4, 18);
-  let fl = 0; voices.forEach(v => { if (v.flash > fl) fl = v.flash; }); tPulse = Math.max(tPulse * Math.pow(.02, dt), fl);
+  let fl = 0; voices.forEach(v => { if (v.flash > fl) fl = v.flash; }); tPulse = Math.max(tPulse * Math.pow(.05, dt), fl * .6);
   const flipped = mode === 'world' && world === BLUE && s.flip; if (s !== tSel) { tSel = s; if (flipped) tBurst = 1; }
   tBurst = Math.max(0, tBurst - dt * .45);
   tClock += dt * (reduce ? 0 : 1); const t = tClock, wv = Math.PI * 2 / per;
   const sw = playing && ctx && waveP ? (() => { const ph = clamp((ctx.currentTime - waveStart) / waveP, 0, 1); return ph < .68 ? ph / .68 : Math.max(0, 1 - (ph - .68) / .3); })() : .35 + .2 * Math.sin(t * wv);
-  const amp = tH * (.03 + .1 * h) * (.5 + sw * .6), k = Math.PI * 2 / (tW * (.55 + .5 * (1 - h)));
-  const lp = ((t % (per * 1.6)) / (per * 1.6)), lx = -tH * .4 + lp * (tW + tH * .8), ly = tH * .5, LR = tH * (.62 + .18 * breakFlash);
+  const amp = tH * (.012 + .045 * h) * (.7 + sw * .3), k = Math.PI * 2 / (tW * (.55 + .5 * (1 - h)));
+  const lp = ((t % (per * 1.6)) / (per * 1.6)), lx = -tH * .4 + lp * (tW + tH * .8), ly = tH * .5, LR = tH * (.6 + .06 * breakFlash);
   tx.setTransform(tD, 0, 0, tD, 0, 0); tx.clearRect(0, 0, tW, tH);
   tx.fillStyle = flipped ? 'rgba(168,214,255,.98)' : 'rgba(242,247,255,.96)'; tx.beginPath(); const bf = Math.max(breakFlash, tBurst);
   for (let i = 0; i < tpts.length; i++) {
-    const p = tpts[i]; let x = p.x, y = p.y + Math.sin(p.x * k - t * wv * 1.3) * amp + Math.sin(p.x * k * 2.3 + t * wv * .7 + p.ph * .2) * amp * .35;
-    let rr = p.r * (.85 + .35 * Math.sin(t * 1.7 + p.ph) * .5 + tPulse * .5 + sw * .15 + tBurst * .35);
-    if (bf > .05) { const j = bf * 2.2; x += Math.sin(p.ph * 9 + t * 11) * j; y += Math.cos(p.ph * 7 + t * 9) * j; }
+    const p = tpts[i]; let x = p.x, y = p.y + Math.sin(p.x * k - t * wv * .6) * amp + Math.sin(p.x * k * 2.3 + t * wv * .35 + p.ph * .2) * amp * .25;
+    let rr = p.r * (.9 + .08 * Math.sin(t * .9 + p.ph) + tPulse * .14 + sw * .05 + tBurst * .12);
+    if (bf > .05) { const j = bf * .8; x += Math.sin(p.ph * 9 + t * 11) * j; y += Math.cos(p.ph * 7 + t * 9) * j; }
     const dx = x - lx, dy = y - ly, dd = Math.hypot(dx, dy);
-    if (dd < LR) { const f = 1 - dd / LR; y = ly + dy * (1 + 1.35 * f * f); x = lx + dx * (1 + .25 * f); rr *= 1 + .5 * f; }
+    if (dd < LR) { const f = 1 - dd / LR; y = ly + dy * (1 + .55 * f * f); x = lx + dx * (1 + .1 * f); rr *= 1 + .2 * f; }
     tx.moveTo(x + rr, y); tx.arc(x, y, rr, 0, 6.2832);
   }
   tx.fill();
-  tx.setTransform(tD, 0, 0, tD, 0, 0); tx.lineWidth = 1.4; tx.strokeStyle = 'rgba(255,255,255,.55)'; tx.beginPath(); tx.arc(lx, ly, LR, 0, 6.2832); tx.stroke();
-  tx.strokeStyle = 'rgba(255,255,255,.8)'; tx.lineWidth = 2.4; tx.lineCap = 'round'; tx.beginPath(); tx.arc(lx, ly, LR * .8, Math.PI * 1.15, Math.PI * 1.45); tx.stroke();
+  tx.setTransform(tD, 0, 0, tD, 0, 0); tx.lineWidth = 1.4; tx.strokeStyle = 'rgba(255,255,255,.28)'; tx.beginPath(); tx.arc(lx, ly, LR, 0, 6.2832); tx.stroke();
+  tx.strokeStyle = 'rgba(255,255,255,.4)'; tx.lineWidth = 1.8; tx.lineCap = 'round'; tx.beginPath(); tx.arc(lx, ly, LR * .8, Math.PI * 1.15, Math.PI * 1.45); tx.stroke();
 }
 if (document.fonts && document.fonts.load) document.fonts.load('20px "Archivo Black"').then(buildTitle, buildTitle); else buildTitle();
 addEventListener('resize', buildTitle);
