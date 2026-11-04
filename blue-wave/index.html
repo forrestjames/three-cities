@@ -1942,8 +1942,9 @@ function drawWorld(now, dt) {
 
 // ---------- the rings ----------
 function geom() {
-  const small = W < 760, cx = W / 2, cy = small ? (areaTop + areaBot) / 2 + 12 : H * .47;
-  const maxR = small ? Math.max(60, Math.min(W * (.44 + .056 * playEase), (areaBot - areaTop) / 2 - (24 - 14 * playEase))) : Math.min(W * .38, H * .35);
+  const small = W < 760, cx = W / 2, aT = small ? areaTop * (1 - playEase) + 34 * playEase : 0, aB = small ? areaBot + 4 * playEase : 0;   // playing on a phone: the rings may slip a little under the title
+  const cy = small ? (aT + aB) / 2 + 12 * (1 - playEase) : H * .47;
+  const maxR = small ? Math.max(60, Math.min(W * (.44 + .056 * playEase), (aB - aT) / 2 - (24 - 20 * playEase))) : Math.min(W * .38, H * .35);
   return { cx, cy, maxR, minR: maxR * (mode === 'place' ? .36 : .2), small };
 }
 // Smallest wave, smallest ring. Largest wave, largest ring. The rest fill in between. Air is always the middle of the place rings.
