@@ -64,6 +64,7 @@ h1 { margin: 0; font-weight: 200; letter-spacing: -.02em; line-height: .9; font-
   top: calc(env(safe-area-inset-top, 0px) + clamp(16px, 3vw, 36px));
   right: max(16px, calc(env(safe-area-inset-right, 0px) + clamp(16px, 3vw, 40px)));
 }
+#rings { touch-action: none; }
 .left { display: flex; flex-direction: column; gap: 12px; scrollbar-width: thin; scrollbar-color: rgba(170,202,255,.35) transparent; }
 .left.float {
   position: fixed; z-index: 3; width: 316px; overflow: auto;
@@ -1016,10 +1017,13 @@ function play(m, t, o) {
   const env = ctx.createGain(), pan = ctx.createStereoPanner ? ctx.createStereoPanner() : null;
   const top = Math.max(...tm.p.map(q => q[3])) * dec;
   env.gain.setValueAtTime(.0001, t); env.gain.linearRampToValueAtTime(amp, t + tm.a); env.gain.exponentialRampToValueAtTime(.0001, t + top);
-  const lp = ctx.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = tm.lp || 1500; lp.Q.value = .3; lp.connect(env);
+  const lp = ctx.createBiquadFilter(); lp.type = 'lowpass'; lp.Q.value = .3; lp.connect(env);
+  const wt = clamp(o.touch || 0, 0, 1), base = tm.lp || 1500; // under the water: duller at first, opening slowly, with a wobble
+  if (wt > .02) { lp.Q.value = .3 + wt * 4; lp.frequency.setValueAtTime(base * (1 - .7 * wt), t); lp.frequency.exponentialRampToValueAtTime(base * (1 + .4 * wt), t + .45 + top * .3); } else lp.frequency.value = base;
+  let wob = null; if (wt > .02) { wob = ctx.createOscillator(); const wg = ctx.createGain(); wob.frequency.value = 4 + wt * 3; wg.gain.value = 28 * wt; wob.connect(wg); wob.start(t); wob.stop(t + top + .05); wob.g = wg; }
   tm.p.forEach(([r, lv, wave, dm, cents]) => {
     const os = ctx.createOscillator(), g = ctx.createGain(); os.type = wave; os.frequency.value = f * r; os.detune.value = cents || 0; g.gain.value = lv;
-    os.connect(g).connect(lp); os.start(t); os.stop(t + top + .05);
+    if (wob) wob.g.connect(os.detune); os.connect(g).connect(lp); os.start(t); os.stop(t + top + .05);
   });
   let out = env; if (pan) { pan.pan.value = o.pan || 0; env.connect(pan); out = pan; }
   const wet = ctx.createGain(); wet.gain.value = o.wet == null ? 1 : o.wet; out.connect(dryBus); out.connect(wet).connect(verbSend); out.connect(delaySend);
@@ -1039,7 +1043,7 @@ function sing(m, t, o) {
 }
 function voice(s, t) {
   const i = voices.indexOf(s), amp = .045 + clamp(s.lv, 0, 1) * .05, dec = 1.4 + clamp(s.per / 16, 0, 1) * 1.6;
-  play(s.note, t, { tim: s.kind === 'air' ? TIMBRES[0] : timbreOfVoice(s, i), amp, dec, pan: s.pan, wet: CH.wet });
+  play(s.note, t, { tim: s.kind === 'air' ? TIMBRES[0] : timbreOfVoice(s, i), amp, dec, pan: s.pan, wet: CH.wet * (1 + (s.touch || 0) * 1.4), touch: s.touch || 0 });
   midiNote(MIDI.c1, s.note, Math.round(50 + clamp(s.lv, 0, 1) * 60), t, stepDur() * 1.6);
 }
 // chord pad: four soft voices held for four bars, then the next chord
@@ -1578,6 +1582,17 @@ function hitVisual(i, step) {
   ripples.push({ x: g.cx + Math.cos(a) * r, y: g.cy + Math.sin(a) * r, t: 0, c: tempColor(s.temp, 1) }); if (ripples.length > 60) ripples.shift();
 }
 let manual = 0, lastCycle = 0;
+// Moving over the water: every touch leaves a wake that bends the rings near it and softens their notes.
+const wakes = []; let wkX = -1e4, wkY = -1e4;
+function addWake(x, y) { if (Math.hypot(x - wkX, y - wkY) < 16) return; wkX = x; wkY = y; wakes.push({ x, y, t: 0 }); if (wakes.length > 28) wakes.shift(); }
+rings.addEventListener('pointermove', (e) => { if (!reduce) addWake(e.clientX, e.clientY); });
+rings.addEventListener('pointerleave', () => { wkX = wkY = -1e4; });
+function wakeOff(x, y) { // how far the water pushes a point, from every wake still spreading
+  let dx = 0, dy = 0;
+  for (let j = 0; j < wakes.length; j++) { const w = wakes[j], R = w.t * 120, ex = x - w.x, ey = y - w.y, d = Math.hypot(ex, ey) || 1, z = (d - R) / 26;
+    if (z > -1 && z < 1) { const k = Math.sin(z * Math.PI) * 7 * (1 - w.t / 1.6); dx += ex / d * k; dy += ey / d * k; } }
+  return [dx, dy];
+}
 rings.addEventListener('pointerdown', (e) => {
   const g = geom(), d = Math.hypot(e.clientX - g.cx, e.clientY - g.cy); let best = -1, bd = 1e9;
   voices.forEach((s, i) => { const dd = Math.abs(radiusOf(i, g) - d); if (dd < bd) { bd = dd; best = i; } });
@@ -1666,11 +1681,13 @@ function frame(now) {
   if (playing && ctx) { const sd = stepDur(); frac = clamp((ctx.currentTime - (nextTime - sd)) / sd, 0, 1); curTick = tick - 1; }
   voices.forEach((s, i) => {
     const r = radiusOf(i, g), sel = i === selected; rx.globalAlpha = s.fade == null ? 1 : clamp(s.fade, 0, 1);
-    rx.beginPath(); rx.arc(g.cx, g.cy, r, 0, Math.PI * 2); rx.strokeStyle = 'rgba(5,16,44,' + (sel ? .3 : .2) + ')'; rx.lineWidth = (sel ? 3.6 : 3); rx.stroke();
-    rx.beginPath(); rx.arc(g.cx, g.cy, r, 0, Math.PI * 2); rx.strokeStyle = tempColor(s.temp, (sel ? .95 : .55 + s.flash * .35) + swell * .18); rx.lineWidth = (sel ? 1.8 : 1.3) + swell * .5; rx.stroke();
+    const ringPath = () => { rx.beginPath(); if (!wakes.length) { rx.arc(g.cx, g.cy, r, 0, Math.PI * 2); return; }
+      const n = Math.max(90, Math.round(r / 3)); for (let q = 0; q <= n; q++) { const a = q / n * Math.PI * 2, px = g.cx + Math.cos(a) * r, py = g.cy + Math.sin(a) * r, o = wakeOff(px, py); q ? rx.lineTo(px + o[0], py + o[1]) : rx.moveTo(px + o[0], py + o[1]); } };
+    ringPath(); rx.strokeStyle = 'rgba(5,16,44,' + (sel ? .3 : .2) + ')'; rx.lineWidth = (sel ? 3.6 : 3); rx.stroke();
+    ringPath(); rx.strokeStyle = tempColor(s.temp, (sel ? .95 : .55 + s.flash * .35) + swell * .18); rx.lineWidth = (sel ? 1.8 : 1.3) + swell * .5; rx.stroke();
     const steps = s.steps;
     for (let q = 0; q < steps; q++) {
-      const ang = q / steps * Math.PI * 2 - Math.PI / 2, x = g.cx + Math.cos(ang) * r, y = g.cy + Math.sin(ang) * r, hit = s.pattern[(q + s.offset) % steps];
+      const ang = q / steps * Math.PI * 2 - Math.PI / 2, wo = wakes.length ? wakeOff(g.cx + Math.cos(ang) * r, g.cy + Math.sin(ang) * r) : [0, 0], x = g.cx + Math.cos(ang) * r + wo[0], y = g.cy + Math.sin(ang) * r + wo[1], hit = s.pattern[(q + s.offset) % steps];
       rx.beginPath();
       if (hit) { rx.fillStyle = 'rgba(5,16,44,.3)'; rx.arc(x, y, (g.small ? 4.4 : 5.8), 0, Math.PI * 2); rx.fill(); rx.beginPath(); const lit = playing && ((curTick % steps + steps) % steps) === q ? s.flash : 0; rx.arc(x, y, (g.small ? 2.8 : 4) + lit * 3.5, 0, Math.PI * 2); rx.fillStyle = tempColor(s.temp, .88 + lit * .12); rx.fill(); }
       else { rx.arc(x, y, 1.3, 0, Math.PI * 2); rx.fillStyle = 'rgba(235,243,255,.7)'; rx.fill(); }
@@ -1680,6 +1697,9 @@ function frame(now) {
     rx.globalAlpha = 1;
   });
   voices.forEach((s, i) => { if (mode === 'place' || i === selected) pill(labelFor(s), g.cx, g.cy - radiusOf(i, g) - 18, i === selected, iconFor(s, now / 1000)); });
+  for (let j = wakes.length - 1; j >= 0; j--) { const w = wakes[j]; w.t = Math.max(0, w.t + dt); if (w.t > 1.6) { wakes.splice(j, 1); continue; }
+    const kk = w.t / 1.6; rx.lineWidth = 1; [1, .62].forEach((m, q) => { rx.beginPath(); rx.arc(w.x, w.y, 3 + Math.max(0, w.t) * 120 * m, 0, Math.PI * 2); rx.strokeStyle = `rgba(232,242,255,${(1 - kk) * (q ? .14 : .26)})`; rx.stroke(); }); }
+  voices.forEach((s, i) => { const r = radiusOf(i, g); let tt = 0; wakes.forEach(w => { const near = 1 - Math.abs(Math.hypot(w.x - g.cx, w.y - g.cy) - r) / 60; if (near > 0) tt = Math.max(tt, near * (1 - w.t / 1.6)); }); s.touch = Math.max((s.touch || 0) * Math.pow(.15, dt), tt); });
   for (let j = ripples.length - 1; j >= 0; j--) {
     const p = ripples[j]; p.t += dt; if (p.t > 1.8) { ripples.splice(j, 1); continue; }
     const kk = p.t / 1.8; rx.beginPath(); rx.arc(p.x, p.y, 4 + kk * 46, 0, Math.PI * 2); rx.strokeStyle = p.c.replace(/,1\)$/, `,${(1 - kk) * .45})`); rx.lineWidth = 1; rx.stroke();
