@@ -1066,6 +1066,16 @@ function showCard(which) {   // phone: swipe the dock to the search card or to t
   if (W >= 760) return; const panel = $('panel'), el = which === 'search' ? $('search') : $('pg-read'), i = dockPages().indexOf(el);
   if (i >= 0) panel.scrollTo({ left: i * panel.clientWidth, behavior: 'smooth' });
 }
+// phone: while the headline card is up, the dock rocks gently between it and the beach card, so it is obvious where the place is. It stops for a while once you touch the dock.
+let lastUser = -1e9;
+['pointerdown', 'touchstart', 'wheel', 'keydown'].forEach(ev => $('panel').addEventListener(ev, () => { lastUser = performance.now(); }, { passive: true }));
+$('q').addEventListener('focus', () => { lastUser = performance.now(); });
+setInterval(() => {
+  if (W >= 760 || document.hidden || $('news').hidden || reduce || performance.now() - lastUser < 20000) return;
+  const panel = $('panel'), pages = dockPages(), n = pages.indexOf($('news')), r = pages.indexOf($('pg-read')); if (n < 0 || r < 0) return;
+  const cur = Math.round(panel.scrollLeft / Math.max(1, panel.clientWidth));
+  panel.scrollTo({ left: (cur === n ? r : n) * panel.clientWidth, behavior: 'smooth' });
+}, 6000);
 const msg = (t) => { $('msg').textContent = t || ''; };
 function choose(lat, lon, name, sub) {
   Object.assign(place, { lat, lon, name, sub, loaded: false, live: false, noSea: false, error: false, hr: null, tide: null, coast: null, suggest: null });
