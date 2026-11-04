@@ -1927,7 +1927,7 @@ function drawWorld(now, dt) {
 // ---------- the rings ----------
 function geom() {
   const small = W < 760, cx = W / 2, cy = small ? (areaTop + areaBot) / 2 + 12 : H * .47;
-  const maxR = small ? Math.max(60, Math.min(W * (.44 + .035 * playEase), (areaBot - areaTop) / 2 - 24)) : Math.min(W * .38, H * .35);
+  const maxR = small ? Math.max(60, Math.min(W * (.44 + .056 * playEase), (areaBot - areaTop) / 2 - (24 - 14 * playEase))) : Math.min(W * .38, H * .35);
   return { cx, cy, maxR, minR: maxR * (mode === 'place' ? .36 : .2), small };
 }
 // Smallest wave, smallest ring. Largest wave, largest ring. The rest fill in between. Air is always the middle of the place rings.
@@ -2085,6 +2085,12 @@ function frame(now) {
   // every ring gets its label in Place view, unless the rings are so close that the labels would pile up: then only the one you picked is named
   const rr = voices.map((s, i) => radiusOf(i, g)).sort((a, b) => b - a), crowded = rr.some((r, k) => k && rr[k - 1] - r < 27);
   voices.forEach((s, i) => { if (W >= 760 || mode === 'place') { if ((mode === 'place' && !crowded) || i === selected) pill(labelFor(s), g.cx, g.cy - radiusOf(i, g) - 18, i === selected, iconFor(s, now / 1000)); } });
+  if (g.small && mode !== 'place' && playEase > .5) {   // phone, playing: name each ring's beach so you can see where every sound comes from
+    rx.save(); rx.font = '500 9.5px "JetBrains Mono", ui-monospace, monospace'; rx.textAlign = 'left'; rx.textBaseline = 'alphabetic'; rx.lineJoin = 'round';
+    voices.forEach((s, i) => { const sel = i === selected, nm = (String(s.name).replace(/ beach$/i, '').toUpperCase().slice(0, 15) + ' ' + s.val.toFixed(1) + 'M'), y = g.cy - radiusOf(i, g) - 3.5;
+      rx.globalAlpha = playEase * (s.fade == null ? 1 : clamp(s.fade, 0, 1)) * (sel ? 1 : .8); rx.lineWidth = 3; rx.strokeStyle = 'rgba(5,16,44,.75)'; rx.strokeText(nm, g.cx + 7, y);
+      rx.fillStyle = sel ? '#ffffff' : 'rgba(225,236,255,.92)'; rx.fillText(nm, g.cx + 7, y); });
+    rx.restore(); }
   for (let j = wakes.length - 1; j >= 0; j--) { const w = wakes[j]; w.t = Math.max(0, w.t + dt); if (w.t > 1.6) { wakes.splice(j, 1); continue; }
     const kk = w.t / 1.6; rx.lineWidth = 1; [1, .62].forEach((m, q) => { rx.beginPath(); rx.arc(w.x, w.y, 3 + Math.max(0, w.t) * 120 * m, 0, Math.PI * 2); rx.strokeStyle = `rgba(232,242,255,${(1 - kk) * (q ? .14 : .26)})`; rx.stroke(); }); }
   voices.forEach((s, i) => { const r = radiusOf(i, g); let tt = 0; wakes.forEach(w => { const near = 1 - Math.abs(Math.hypot(w.x - g.cx, w.y - g.cy) - r) / 60; if (near > 0) tt = Math.max(tt, near * (1 - w.t / 1.6)); }); s.touch = Math.max((s.touch || 0) * Math.pow(.15, dt), tt); });
