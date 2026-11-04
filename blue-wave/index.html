@@ -89,6 +89,10 @@ dd { margin: 0; text-align: right; color: var(--foam); font-size: 13px; overflow
 .geo-t { min-width: 0; }
 #mini { flex: none; width: 124px; height: 52px; margin-top: 2px; }
 .geo .sub { margin: 4px 0 0; }
+.pg { display: contents; }
+.mh, .dockdots { display: none; }
+.kicker { margin: 6px 0 0; font: 400 14px/1.4 var(--display); letter-spacing: .02em; color: var(--foam); max-width: 34ch; text-shadow: 0 1px 10px rgba(3,14,38,.6); }
+.go.wide { width: 100%; margin-top: 12px; }
 #gauges { height: 78px; margin-top: 4px; }
 #scale { height: 168px; margin-top: 4px; }
 #tide { height: 64px; margin-top: 4px; }
@@ -109,10 +113,11 @@ form { margin: 0; }
 input[type=search] { flex: 1; min-width: 0; font: 400 14px var(--display); color: var(--foam); background: var(--field); border: 1px solid var(--edge); border-radius: 10px; padding: 11px 13px; min-height: 42px; }
 input[type=search]::placeholder { color: var(--faint); }
 .go, .chip { font: 500 12.5px var(--mono); color: var(--abyss); background: var(--accent); border: 0; border-radius: 10px; padding: 0 16px; cursor: pointer; min-height: 42px; }
-.chips { display: flex; flex-wrap: nowrap; gap: 8px; margin-top: 10px; overflow-x: auto; padding-bottom: 2px; scrollbar-width: none; }
+.chips { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
 .chips::-webkit-scrollbar { display: none; }
 .chip { background: transparent; color: var(--foam); border: 1px solid var(--edge); border-radius: 999px; min-height: 32px; padding: 0 12px; font-size: 12px; white-space: nowrap; flex: none; }
-.chip:hover, .chip:focus-visible { border-color: var(--accent); }
+.chip:hover, .chip:focus-visible, .chip[aria-pressed="true"] { border-color: var(--accent); }
+.chip[aria-pressed="true"] { background: var(--accent); color: var(--abyss); }
 #results:empty, .msg:empty { display: none; }
 #results { list-style: none; margin: 10px 0 0; padding: 0; display: grid; gap: 2px; max-height: 40vh; overflow: auto; scrollbar-width: thin; }
 .rhead { font-size: 11.5px; color: var(--faint); letter-spacing: .08em; text-transform: uppercase; padding: 2px 10px 6px; }
@@ -153,21 +158,44 @@ input[type=range]::-moz-range-thumb { width: 14px; height: 14px; border-radius: 
 .credit a { color: inherit; }
 
 @media (max-width: 760px) {
-  .title { max-width: calc(100% - 32px); }
-  h1 { font-size: 38px; }
-  .facts { font-size: 12px; margin-top: 8px; line-height: 1.6; }
-  .seg { position: fixed; margin: 0; top: calc(env(safe-area-inset-top, 0px) + 18px); right: max(16px, env(safe-area-inset-right, 0px)); }
-  .seg button { padding: 7px 14px; min-height: 34px; font-size: 12px; }
-  .panel { top: auto; width: auto; left: 16px; right: 16px; bottom: calc(env(safe-area-inset-bottom, 0px) + 176px); max-height: 31vh; padding: 12px 14px; }
-  .name { font-size: 20px; margin: 4px 0 2px; }
-  dl { margin-top: 8px; gap: 6px 14px; }
-  #scale { height: 120px; } #gauges { height: 70px; }
-  .bar { width: auto; left: 16px; right: 16px; transform: none; max-width: none; gap: 10px 14px; border-radius: 22px; padding: 10px 14px; bottom: calc(env(safe-area-inset-bottom, 0px) + 34px); }
+  /* Phone layout: a header, the rings, then one swipeable dock with every card side by side, and the controls along the bottom. */
+  .title { max-width: none; right: 16px; top: calc(env(safe-area-inset-top, 0px) + 10px); left: 16px; }
+  h1 { font-size: 32px; line-height: 1; }
+  .kicker { font-size: clamp(10.5px, 3vw, 12px); margin-top: 4px; max-width: none; white-space: nowrap; }
+  .facts { font-size: 11.5px; margin-top: 6px; line-height: 1.5; }
+  #means { display: none; }
+  .seg { display: flex; position: static; margin: 8px 0 0; width: 100%; }
+  .seg button { flex: 1; padding: 6px 4px; min-height: 34px; font-size: 12px; letter-spacing: .03em; }
+  .panel { top: auto; width: auto; left: 12px; right: 12px; bottom: calc(var(--dockb, 150px) + 24px); height: 200px; max-height: none; padding: 0; display: flex; overflow-x: auto; overflow-y: hidden; scroll-snap-type: x mandatory; scrollbar-width: none; overscroll-behavior-x: contain; }
+  .panel::-webkit-scrollbar { display: none; }
+  .left { display: contents; }
+  .panel > .pg, #search, .shead, .slide { display: block; flex: 0 0 100%; width: 100%; height: 100%; scroll-snap-align: start; padding: 12px 16px; overflow: hidden; margin: 0; border: 0; border-radius: 0; background: none; backdrop-filter: none; -webkit-backdrop-filter: none; }
+  .left .card { display: contents; }
+  #surf { display: contents; } .slides { display: contents; margin: 0; overflow: visible; }
+  #search { overflow: auto; }
+  #pg-read { order: 1; display: grid; grid-template-columns: 1fr 124px; grid-template-rows: auto auto auto 1fr; column-gap: 10px; align-content: start; }
+  #pg-read .top { grid-column: 1 / -1; } #pg-read .name { grid-column: 1; margin: 2px 0 0; font-size: 20px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; } #pg-read .geo { display: contents; }
+  #pg-read .sub { grid-column: 1; margin: 2px 0 0; font-size: 12px; align-self: start; } #mini { grid-column: 2; grid-row: 2 / 4; width: 124px; height: 52px; margin: 0; align-self: center; }
+  #pg-read #gauges { grid-column: 1 / -1; height: 74px; margin-top: 6px; }
+  #search { order: 2; } #pg-scale { order: 3; } #pg-data { order: 4; } .shead { order: 5; } .slide { order: 6; }
+  #pg-scale #scale { height: 128px; margin-top: 0; } .scale-cap { font-size: 12.5px; margin-top: 4px; }
+  #r-dl { margin-top: 0; font-size: 12px; gap: 5px 12px; } #r-note { display: none; } #pg-data .go.wide { margin-top: 10px; min-height: 40px; }
+  .shead { display: none; } #surf.nodata .shead { display: block; }
+  .mh { display: inline; } .slide .stitle { margin-bottom: 2px; } #tide { height: 56px; } .slide dl { margin-top: 6px; gap: 4px 12px; font-size: 12px; }
+  #s-dots { display: none !important; }
+  #results { max-height: 96px; }
+  .chips { margin-top: 8px; } .chip { min-height: 34px; }
+  .dockdots { display: flex; position: fixed; z-index: 3; left: 0; right: 0; bottom: var(--dockb, 150px); height: 24px; justify-content: center; align-items: center; gap: 2px; }
+  .dockdots button { width: 22px; height: 22px; padding: 0; border: 0; background: transparent; position: relative; cursor: pointer; }
+  .dockdots button::after { content: ""; position: absolute; left: 50%; top: 50%; width: 7px; height: 7px; margin: -3.5px; border-radius: 50%; background: rgba(242,247,255,.35); }
+  .dockdots button[aria-current="true"]::after { background: var(--foam); }
+  .dockdots[hidden] { display: none; }
+  .bar { width: auto; left: 12px; right: 12px; transform: none; max-width: none; gap: 6px 14px; border-radius: 22px; padding: 8px 14px 10px; bottom: calc(env(safe-area-inset-bottom, 0px) + 34px); }
   .btns { width: 100%; } .play { flex: 1; padding: 11px 0; } .mini-btn { min-height: 40px; }
-  .pop { bottom: calc(env(safe-area-inset-bottom, 0px) + 200px); }
-  .ctl { flex: 1; min-width: 0; }
+  .pop { left: 12px; right: 12px; width: auto; transform: none; bottom: calc(var(--dockb, 150px) + 8px); max-height: 62vh; }
+  .ctl { flex: 1; min-width: 0; } .ctl label { font-size: 10.5px; }
   input[type=range] { width: 100%; }
-  .credit { font-size: 10px; }
+  .credit { font-size: 9.5px; bottom: calc(env(safe-area-inset-bottom, 0px) + 6px); line-height: 1.35; }
 }
 </style>
 </head>
@@ -177,12 +205,14 @@ input[type=range]::-moz-range-thumb { width: 14px; height: 14px; border-radius: 
 
 <div class="title">
   <h1>Blue Wave</h1>
+  <p class="kicker">The Democrats, the blue, taking over the House and Senate.</p>
   <div class="facts">
     <div><span class="live offline" id="live">Loading the sea</span></div>
     <div id="means">&nbsp;</div>
   </div>
   <div class="seg" role="group" aria-label="View">
-    <button id="m-world" aria-pressed="true">World</button>
+    <button id="m-blue" aria-pressed="true">Blue coast</button>
+    <button id="m-world" aria-pressed="false">World</button>
     <button id="m-place" aria-pressed="false">Place</button>
   </div>
 </div>
@@ -196,6 +226,8 @@ input[type=range]::-moz-range-thumb { width: 14px; height: 14px; border-radius: 
     </div>
     <div class="chips">
       <button type="button" class="chip" id="here">Use my location</button>
+      <button type="button" class="chip" id="shuffle" title="A beach from somewhere else, chosen at random">Shuffle</button>
+      <button type="button" class="chip" id="wander" aria-pressed="false" title="A new beach every half a minute">Wander</button>
       <button type="button" class="chip" data-lat="42.6177" data-lon="-70.5866" data-name="Good Harbor Beach" data-sub="Gloucester, Massachusetts">Good Harbor</button>
       <button type="button" class="chip" data-lat="-33.8915" data-lon="151.2767" data-name="Bondi Beach" data-sub="Sydney, Australia">Bondi</button>
       <button type="button" class="chip" data-lat="39.6050" data-lon="-9.0870" data-name="Praia do Norte" data-sub="Nazaré, Portugal">Nazaré</button>
@@ -204,12 +236,12 @@ input[type=range]::-moz-range-thumb { width: 14px; height: 14px; border-radius: 
     <div class="msg" id="msg" role="status"></div>
   </form>
   <section class="card" id="surf" aria-live="polite">
-    <div class="cap">Surf check</div>
+    <div class="shead"><div class="cap">Surf check</div>
     <div class="head" id="s-head">Reading the sea</div>
     <div class="note" id="s-lead"></div>
-    <div class="sug" id="s-sug"></div>
+    <div class="sug" id="s-sug"></div></div>
     <div class="slides" id="s-slides" hidden>
-    <div class="slide"><div class="stitle">Tide</div>
+    <div class="slide"><div class="stitle">Tide<span class="mh" id="s-mh"></span></div>
     <canvas class="inline" id="tide" role="img" aria-label="Tide height and wave height for the next day"></canvas>
     <div class="key" id="s-key"><span><i style="background:#6aa2ff"></i>Tide</span><span><i style="background:rgba(242,247,255,.55)"></i>Waves</span><span><i style="background:rgba(0,0,0,.6);border:1px solid rgba(170,202,255,.4)"></i>Night</span></div>
     <dl id="s-dl1"></dl></div>
@@ -222,22 +254,29 @@ input[type=range]::-moz-range-thumb { width: 14px; height: 14px; border-radius: 
 </div>
 
 <aside class="panel" id="panel" aria-live="polite">
-  <div class="top"><div class="cap" id="r-cap">&nbsp;</div><button class="share-btn" id="share" type="button" title="Share what is loaded, with a link"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 15V4M8 8l4-4 4 4" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/><path d="M7 11H5.5A1.5 1.5 0 0 0 4 12.5v6A1.5 1.5 0 0 0 5.5 20h13a1.5 1.5 0 0 0 1.5-1.5v-6a1.5 1.5 0 0 0-1.5-1.5H17" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>Share</button></div>
+  <div class="pg" id="pg-read"><div class="top"><div class="cap" id="r-cap">&nbsp;</div><button class="share-btn" id="share" type="button" title="Share what is loaded, with a link"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 15V4M8 8l4-4 4 4" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/><path d="M7 11H5.5A1.5 1.5 0 0 0 4 12.5v6A1.5 1.5 0 0 0 5.5 20h13a1.5 1.5 0 0 0 1.5-1.5v-6a1.5 1.5 0 0 0-1.5-1.5H17" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>Share</button></div>
   <div class="name" id="r-name">&nbsp;</div>
   <div class="geo"><div class="sub" id="r-sub"></div>
   <canvas id="mini" role="img" aria-label="A small world map with a dot where this is"></canvas></div>
   <canvas class="inline" id="gauges" role="img" aria-label="Quick scan of the conditions"></canvas>
+  </div>
+  <div class="pg" id="pg-scale">
   <canvas class="inline" id="scale" role="img" aria-label="A surfer standing beside a wave drawn at the same scale"></canvas>
   <div class="scale-cap" id="scale-cap"></div>
+  </div>
+  <div class="pg" id="pg-data">
   <dl id="r-dl"></dl>
   <div class="note" id="r-note"></div>
+  <button class="go wide" id="open-place" type="button" hidden>Open this beach</button>
+  </div>
 </aside>
+<div class="dockdots" id="dockdots" hidden></div>
 
-<div class="bar" role="group" aria-label="Controls">
+<div class="bar" id="bar" role="group" aria-label="Controls">
   <div class="btns"><button class="play" id="play" aria-pressed="false">Play</button><button class="mini-btn" id="b-music" type="button" aria-expanded="false" aria-controls="p-music">Music</button><button class="mini-btn" id="b-midi" type="button" aria-expanded="false" aria-controls="p-midi">MIDI</button></div>
   <div class="ctl"><label for="tempo">Tempo <output id="tempo-o">60</output></label><input id="tempo" type="range" min="40" max="100" value="60"></div>
   <div class="ctl"><label for="drift">Drift <output id="drift-o">35</output></label><input id="drift" type="range" min="0" max="100" value="35"></div>
-  <div class="ctl"><label for="ocean">Ocean <output id="ocean-o">40</output></label><input id="ocean" type="range" min="0" max="100" value="40"></div>
+  <div class="ctl"><label for="ocean">Ocean <output id="ocean-o">55</output></label><input id="ocean" type="range" min="0" max="100" value="55"></div>
   <div class="ctl"><label for="vol">Level <output id="vol-o">70</output></label><input id="vol" type="range" min="0" max="100" value="70"></div>
 </div>
 
@@ -249,7 +288,7 @@ input[type=range]::-moz-range-thumb { width: 14px; height: 14px; border-radius: 
     <label>Shift key<select id="m-shift"><option value="0">Off</option><option value="8">Every 8 bars</option><option value="16">Every 16 bars</option><option value="32">Every 32 bars</option></select></label>
     <div class="ctl"><label for="m-chord">Chords <output id="m-chord-o">40</output></label><input id="m-chord" type="range" min="0" max="100" value="40"></div>
     <div class="ctl"><label for="m-mel">Melody <output id="m-mel-o">35</output></label><input id="m-mel" type="range" min="0" max="100" value="35"></div>
-    <div class="ctl"><label for="m-drone">Drone <output id="m-drone-o">50</output></label><input id="m-drone" type="range" min="0" max="100" value="50"></div>
+    <div class="ctl"><label for="m-drone">Drone <output id="m-drone-o">0</output></label><input id="m-drone" type="range" min="0" max="100" value="0"></div>
   </div>
   <p class="note" id="m-line"></p>
   <p class="note">On Auto, every place gets its own key, scale, chords and sound, picked from where it is and how warm its sea is. Wave height sets how many hits, wave period sets the steps, temperature sets the pitch. The chord changes every four bars. Shift key moves everything up a tone and comes round again after six moves.</p>
@@ -298,8 +337,25 @@ const SEAS = [
   ['North Pacific', 35.0, -150.0, 2.2, 10.0, 300, 20.7], ['Drake Passage', -57.0, -63.0, 4.6, 14.0, 260, 4.2],
 ]; // numbers after the coordinates are sample readings, used until the live sea answers
 const WORLD_REF = 6, PLACE_REF = 2.5, WIND_REF = 50;
-const world = SEAS.map(([name, lat, lon, h, p, d, t]) =>
+const OCEANS = SEAS.map(([name, lat, lon, h, p, d, t]) =>
   make({ name, lat, lon, tval: h, tper: p, tdir: d, ttemp: t, tlv: h / WORLD_REF, pan: clamp(lon / 180, -1, 1) * .8 }));
+// Blue coast: a beach for every coastal state where Democrats won a statewide race on 3 November 2026, from news reports on 4 November. The point is a little way out to sea, where the wave model has a reading.
+// [short name, sea lat, sea lon, sample height, period, direction, sea temp, full name, state, beach lat, beach lon, result, flipped]
+const BLUE_REF = 3;
+const BLUE_BEACHES = [
+  ['Old Orchard', 43.48, -70.30, .9, 8, 100, 9, 'Old Orchard Beach', 'Maine', 43.52, -70.38, 'Troy Jackson (D) won the Senate seat from the Republicans', true],
+  ['Hampton', 42.88, -70.75, .8, 8, 95, 9, 'Hampton Beach', 'New Hampshire', 42.91, -70.81, 'Chris Pappas (D) won the Senate seat', false],
+  ['Hatteras', 35.20, -75.45, 1.3, 8, 80, 18, 'Cape Hatteras', 'North Carolina', 35.25, -75.53, 'Roy Cooper (D) won the Senate seat from the Republicans', true],
+  ['Myrtle Beach', 33.62, -78.80, .8, 7, 100, 20, 'Myrtle Beach', 'South Carolina', 33.69, -78.89, 'Annie Andrews (D) won the Senate seat from the Republicans', true],
+  ['Tybee', 31.98, -80.76, .6, 6, 90, 21, 'Tybee Island', 'Georgia', 32.0, -80.85, 'Jon Ossoff (D) won the Senate seat again', false],
+  ['Galveston', 29.18, -94.76, .6, 5, 130, 24, 'Galveston Beach', 'Texas', 29.27, -94.83, 'James Talarico (D) won the Senate seat from the Republicans', true],
+  ['Virginia Beach', 36.85, -75.90, 1.0, 7, 90, 15, 'Virginia Beach', 'Virginia', 36.85, -75.98, 'Mark Warner (D) won a fourth term in the Senate', false],
+  ['Ocean City', 38.28, -75.02, .9, 7, 110, 13, 'Ocean City Beach', 'Maryland', 38.33, -75.08, 'Wes Moore (D) won re-election as governor', false],
+];
+const BLUE = BLUE_BEACHES.map(([short, lat, lon, h, p, d, t, name, sub, blat, blon, res, flip]) =>
+  make({ name, short, sub, blat, blon, res, flip, lat, lon, tval: h, tper: p, tdir: d, ttemp: t, tlv: h / BLUE_REF, pan: clamp(lon / 180, -1, 1) * .8 }));
+let world = BLUE;
+const ALL = [OCEANS, BLUE];
 
 const place = {
   name: 'Good Harbor Beach', sub: 'Gloucester, Massachusetts', lat: 42.6177, lon: -70.5866,
@@ -338,15 +394,17 @@ const GROUPS = [['dorian', 'natural minor', 'phrygian', 'minor pentatonic', 'har
   ['lydian', 'major', 'yo (Japanese folk)', 'lydian dominant', 'ryukyu (Okinawan)', 'major pentatonic']];         // warm
 const PROGS = [[0, 5, 3, 4], [0, 3, 4, 3], [0, 4, 5, 3], [5, 3, 0, 4], [0, 2, 3, 4], [0, 6, 5, 4]];            // scale degrees, one chord per four bars
 const PPAT = [[0, 1, 2, 3, 2, 1], [0, 2, 1, 3], [0, 0, 1, 0, 2, 1], [3, 2, 1, 0], [0, 1, 0, 2, 1, 3, 2, 4]];   // melody contours over the chord notes
-// each timbre: partials as [ratio, level, wave, decay multiplier], an attack, and an optional low-pass
+// Soft and felty, after No Fixed Address: sines with a quiet octave, a slightly detuned triangle, a low-pass, a slow-ish attack and a long tail.
+// each timbre: partials as [ratio, level, wave, decay multiplier, detune in cents], an attack, a low-pass, and a decay scale
 const TIMBRES = [
-  { n: 'glass', p: [[1, 1, 'sine', 1], [2.001, .18, 'sine', .6]], a: .006 },
-  { n: 'bell', p: [[1, 1, 'sine', 1], [2.76, .34, 'sine', .5], [5.4, .14, 'sine', .25]], a: .004 },
-  { n: 'pluck', p: [[1, 1, 'triangle', .4], [2, .22, 'sine', .25]], a: .003 },
-  { n: 'marimba', p: [[1, 1, 'sine', .45], [4, .26, 'sine', .14]], a: .003 },
-  { n: 'organ', p: [[1, .8, 'sine', 1.3], [2, .4, 'sine', 1.3], [3, .18, 'sine', 1.3]], a: .035 },
-  { n: 'reed', p: [[1, .3, 'square', .8], [1.004, .3, 'sawtooth', .8]], a: .02, lp: 1700 },
+  { n: 'felt', p: [[1, 1, 'sine', 1, 0], [2, .25, 'sine', 1, 0], [1, .35, 'triangle', 1, 5]], a: .03, lp: 1500 },
+  { n: 'soft felt', p: [[1, 1, 'sine', 1, 0], [2, .14, 'sine', .8, 0], [1, .3, 'triangle', 1, -4]], a: .05, lp: 1000 },
+  { n: 'pluck', p: [[1, 1, 'sine', 1, 0], [4, .2, 'sine', .5, 0]], a: .008, lp: 2400, d: .4 },
+  { n: 'hush', p: [[1, 1, 'sine', 1, 0], [1.5, .16, 'sine', 1, 0], [2, .08, 'sine', .7, 0]], a: .12, lp: 800, d: 1.2 },
+  { n: 'choir', vowel: true, a: .3 },
 ];
+const RING_T = 4, MEL_T = [4, 0, 3, 2]; // ring voices use the first four timbres, the melody can also be the wordless choir
+const VOWELS = [[300, 870, 2240], [450, 830, 2830], [730, 1090, 2440]];
 let ROOT = 2, SC = [0, 2, 4, 7, 9], SHIFT = 0, CH = { seed: 0, prog: 0, contour: 0, tim: 0, mel: 1, wet: 1, key: 2, sc: 1, auto: true, grp: 1 };
 let musicKey = '', shiftBars = 0;
 function hash(str) { let h = 2166136261; for (let i = 0; i < str.length; i++) { h ^= str.charCodeAt(i); h = Math.imul(h, 16777619); } return h >>> 0; }
@@ -356,7 +414,7 @@ function chordMidis(i) {
   const n = SC.length, r = PROGS[CH.prog % PROGS.length][i % 4] % n, st = [0, 2, 4, n >= 7 ? 6 : n + 1];
   return st.map(k => degPitch(r + k)).map(m => m > 71 ? m - 12 : m);
 }
-const timbreOfVoice = (s, i) => TIMBRES[mode === 'place' ? (CH.tim + (i || 0) * 2) % TIMBRES.length : hash(s.name) % TIMBRES.length];
+const timbreOfVoice = (s, i) => TIMBRES[mode === 'place' ? (CH.tim + (i || 0) * 2) % RING_T : hash(s.name) % RING_T];
 function rebuild(s) {
   const steps = Math.round(clamp(s.tper, 5, 16)), maxHits = Math.max(1, Math.floor(steps / 2));
   const hits = s.tlv < .02 ? 0 : clamp(1 + Math.round(clamp(s.tlv, 0, 1) * (maxHits - 1)), 1, maxHits);
@@ -364,7 +422,7 @@ function rebuild(s) {
   s.offset = Math.round(((s.tdir % 360) + 360) % 360 / 360 * steps) % steps;
   s.note = noteFor(s.ttemp);
 }
-world.forEach(rebuild); place.voices.forEach(rebuild);
+ALL.forEach(l => l.forEach(rebuild)); place.voices.forEach(rebuild);
 
 // ---------- words and units ----------
 const fm = (m) => `${m.toFixed(1)} m · ${(m * 3.281).toFixed(1)} ft`;
@@ -431,25 +489,26 @@ function astro(lat, lon, ms) {
 function skyX(az, lat) { const d = lat >= 0 ? az : ((az + 180 + 540) % 360) - 180; return .5 + d / 240; }
 
 // ---------- data ----------
-async function fetchWorld() {
+async function fetchList(list, ref) {
   const url = 'https://marine-api.open-meteo.com/v1/marine'
-    + '?latitude=' + world.map(s => s.lat).join(',') + '&longitude=' + world.map(s => s.lon).join(',')
+    + '?latitude=' + list.map(s => s.lat).join(',') + '&longitude=' + list.map(s => s.lon).join(',')
     + '&current=wave_height,wave_period,wave_direction,sea_surface_temperature&timezone=GMT';
   try {
     const res = await fetch(url); if (!res.ok) throw new Error(res.status);
     let json = await res.json(); if (!Array.isArray(json)) json = [json];
     let got = 0;
     json.forEach((loc, i) => {
-      const c = loc && loc.current, s = world[i]; if (!c || !s) return;
-      if (c.wave_height != null) { s.tval = c.wave_height; s.tlv = c.wave_height / WORLD_REF; got++; }
+      const c = loc && loc.current, s = list[i]; if (!c || !s) return;
+      if (c.wave_height != null) { s.tval = c.wave_height; s.tlv = c.wave_height / ref; got++; }
       if (c.wave_period != null) s.tper = c.wave_period;
       if (c.wave_direction != null) s.tdir = c.wave_direction;
       if (c.sea_surface_temperature != null) s.ttemp = c.sea_surface_temperature;
     });
-    if (got) { worldLive = true; worldUpdated = new Date(); }
-  } catch (e) { console.warn('Blue Wave: world sea unavailable, using sample readings', e); }
-  world.forEach(rebuild); showFacts(); renderPanel();
+    if (got) { list.live = true; worldLive = true; worldUpdated = new Date(); }
+  } catch (e) { console.warn('Blue Wave: sea list unavailable, using sample readings', e); }
+  list.forEach(rebuild);
 }
+async function fetchWorld() { await Promise.all([fetchList(BLUE, BLUE_REF), fetchList(OCEANS, WORLD_REF)]); showFacts(); renderPanel(); }
 
 async function fetchPlace() {
   const p = place, stamp = ++fetchPlace.n;
@@ -597,7 +656,7 @@ function windClass() {
 }
 function renderSurf() {
   const p = place, dls = [1, 2, 3, 4].map(n => $('s-dl' + n)); dls.forEach(d => d.textContent = ''); $('s-note').textContent = ''; $('s-lead').textContent = ''; $('s-sug').textContent = '';
-  const full = mode === 'place' && p.loaded && !p.error && !p.noSea; $('s-slides').hidden = $('s-dots').hidden = !full;
+  const full = mode === 'place' && p.loaded && !p.error && !p.noSea; $('s-slides').hidden = $('s-dots').hidden = !full; $('surf').classList.toggle('nodata', !full);
   $('tide').hidden = $('s-key').hidden = !(p.loaded && p.tide);
   if (mode !== 'place') return;
   if (!p.loaded) { $('s-head').textContent = 'Reading the sea'; return; }
@@ -613,7 +672,7 @@ function renderSurf() {
   }
   const [waves, swell] = p.voices, h = waves.tval, wc = windClass();
   const tag = wc.tag || (p.windKmh < 10 ? 'calm' : p.windKmh < 22 ? 'breezy' : 'windy');
-  $('s-head').textContent = `${sizeWord(h)} and ${tag}`;
+  $('s-head').textContent = `${sizeWord(h)} and ${tag}`; $('s-mh').textContent = ` · ${sizeWord(h)} and ${tag}`;
   const row = (k, v, n) => { const dt = document.createElement('dt'), dd = document.createElement('dd'); dt.textContent = k; dd.textContent = v; dls[(n || 1) - 1].append(dt, dd); };
   buildDots();
   const T = p.tide;
@@ -636,6 +695,19 @@ function renderSurf() {
   $('s-note').textContent = 'Model estimates for the nearest sea point, not a surf report. Wind and swell direction are a guess from the shape of the coast. Check the beach before you paddle out.';
 }
 
+// the phone dock: one dot for every card in the swipeable panel
+function dockPages() { return [...document.querySelectorAll('#panel > .pg, #panel #search, #panel .shead, #panel .slide')].filter(e => e.offsetWidth > 0).sort((a, b) => a.offsetLeft - b.offsetLeft); }
+function refreshDots() {
+  const dd = $('dockdots'), panel = $('panel'); if (!dd) return;
+  if (W >= 760) { dd.hidden = true; return; }
+  const pages = dockPages(); dd.hidden = pages.length < 2;
+  if (dd.children.length !== pages.length) {
+    dd.textContent = '';
+    pages.forEach((p, i) => { const b = document.createElement('button'); b.type = 'button'; b.setAttribute('aria-label', 'Card ' + (i + 1) + ' of ' + pages.length); b.addEventListener('click', () => panel.scrollTo({ left: i * panel.clientWidth, behavior: 'smooth' })); dd.append(b); });
+  }
+  const cur = Math.round(panel.scrollLeft / Math.max(1, panel.clientWidth)); [...dd.children].forEach((b, j) => b.setAttribute('aria-current', j === cur));
+}
+$('panel').addEventListener('scroll', refreshDots, { passive: true });
 // swipeable sections, with dots
 function buildDots() {
   const sl = $('s-slides'), dots = $('s-dots'), n = sl.children.length; if (dots.children.length === n) return;
@@ -648,8 +720,9 @@ function buildDots() {
 function showFacts() {
   const el = $('live'), means = $('means');
   if (mode === 'world') {
-    el.classList.toggle('offline', !worldLive);
-    el.textContent = worldLive ? `Live · ${world.length} seas · read ${pad2(worldUpdated.getUTCHours())}:${pad2(worldUpdated.getUTCMinutes())} GMT` : 'Sample readings · live sea not reached';
+    const blue = world === BLUE, live = !!world.live;
+    el.classList.toggle('offline', !live);
+    el.textContent = live ? `Live · ${world.length} ${blue ? 'blue coast beaches' : 'seas'} · read ${pad2(worldUpdated.getUTCHours())}:${pad2(worldUpdated.getUTCMinutes())} GMT` : 'Sample readings · live sea not reached';
     const mw = world.reduce((a, s) => a + s.tval, 0) / world.length, mt = world.reduce((a, s) => a + s.ttemp, 0) / world.length;
     means.textContent = `Mean wave ${mw.toFixed(1)} m · mean sea ${mt.toFixed(1)} °C`;
   } else {
@@ -669,10 +742,13 @@ function renderPanel() {
   if (mode === 'world') {
     const s = world[selected];
     $('r-cap').textContent = `${coord(s.lat, s.lon)} · ${s.hits} in ${s.steps}`;
-    $('r-name').textContent = s.name; $('r-sub').textContent = '';
+    $('r-name').textContent = s.name; $('r-sub').textContent = s.sub || '';
+    $('open-place').hidden = !s.blat;
+    if (s.res) row(s.flip ? 'Flipped' : 'Won', s.res);
     row('Wave', fm(s.tval)); row('Period', s.tper.toFixed(1) + ' s'); row('From', dirName(s.tdir)); row('Sea', fc(s.ttemp));
-    $('r-note').textContent = 'Tap a ring to read another sea.';
+    $('r-note').textContent = world === BLUE ? 'Tap a ring to read another beach. Smallest wave, smallest ring. Results as reported on 4 November 2026.' : 'Tap a ring to read another sea. Smallest wave, smallest ring.';
   } else {
+    $('open-place').hidden = true;
     const p = place, [waves, swell, wind, air] = p.voices, na = '–';
     $('r-cap').textContent = coord(p.lat, p.lon);
     $('r-name').textContent = p.name; $('r-sub').textContent = p.sub;
@@ -690,17 +766,19 @@ function renderPanel() {
   else { const b = document.createElement('b'); b.textContent = sv.name; cap.append(b, document.createTextNode(` · ${sv.tval.toFixed(1)} m, ${compare(sv.tval)}`)); }
   $('gauges').setAttribute('aria-label', 'Quick scan: ' + tiles().map(t => `${t.l} ${t.v}`).join(', '));
 }
-function setMode(m) {
-  mode = m;
+function setMode(m, set) {
+  mode = m; if (set) { world = set === 'blue' ? BLUE : OCEANS; musicKey = ''; }
   voices = m === 'world' ? world : place.voices;
-  selected = m === 'world' ? 1 : 0;
-  $('m-world').setAttribute('aria-pressed', m === 'world'); $('m-place').setAttribute('aria-pressed', m === 'place');
+  selected = m === 'world' ? (world === BLUE ? 2 : 1) : 0;
+  $('m-blue').setAttribute('aria-pressed', m === 'world' && world === BLUE); $('m-world').setAttribute('aria-pressed', m === 'world' && world === OCEANS); $('m-place').setAttribute('aria-pressed', m === 'place');
   $('left').hidden = m !== 'place';
   ripples.length = 0; ringOrder = order();
   if (m === 'place' && !place.loaded) fetchPlace();
-  showFacts(); renderPanel(); renderSurf(); syncUrl();
+  showFacts(); renderPanel(); renderSurf(); syncUrl(); $('panel').scrollTo({ left: 0 }); setTimeout(() => { resize(); }, 0);
 }
-$('m-world').addEventListener('click', () => setMode('world'));
+$('m-blue').addEventListener('click', () => setMode('world', 'blue'));
+$('m-world').addEventListener('click', () => setMode('world', 'oceans'));
+$('open-place').addEventListener('click', () => { const s = world[selected]; if (!s || !s.blat) return; setMode('place'); choose(s.blat, s.blon, s.name, s.sub); });
 $('m-place').addEventListener('click', () => setMode('place'));
 // Wide screens keep the search and surf check down the left. Narrow ones fold them into the one panel.
 const wide = window.matchMedia('(min-width: 1180px)');
@@ -716,14 +794,14 @@ const enc = (x) => encodeURIComponent(x).replace(/%20/g, '+');
 function shareURL() {
   try {
     const u = new URL(location.href); u.search = ''; u.hash = '';
-    if (mode !== 'place') return u.toString();
+    if (mode !== 'place') return u.toString() + (world === OCEANS ? '?view=world' : '');
     return u.toString() + `?lat=${place.lat.toFixed(4)}&lon=${place.lon.toFixed(4)}&name=${enc(place.name)}` + (place.sub ? `&sub=${enc(place.sub)}` : '');
   } catch (e) { return ''; }
 }
-const titleLine = () => mode === 'place' ? `Blue Wave · ${place.name}${place.sub ? ', ' + place.sub : ''}` : 'Blue Wave · the sea around the world';
+const titleLine = () => mode === 'place' ? `Blue Wave · ${place.name}${place.sub ? ', ' + place.sub : ''}` : (world === BLUE ? 'Blue Wave · the blue coast' : 'Blue Wave · the sea around the world');
 function syncUrl() { document.title = titleLine(); try { const u = shareURL(); if (u) history.replaceState(null, '', u); } catch (e) { /* some browsers refuse on local files */ } }
 function shareLine() {
-  return mode === 'place' ? `Here's the sea at ${place.name}${place.sub ? ', ' + place.sub : ''} right now, played as a rhythm. Try your own beach.` : `Here's the sea around the world right now, played as a rhythm.`;
+  return mode === 'place' ? `Here's the sea at ${place.name}${place.sub ? ', ' + place.sub : ''} right now, played as a rhythm. Try your own beach.` : (world === BLUE ? `Here's the sea off the blue coast right now, played as a rhythm.` : `Here's the sea around the world right now, played as a rhythm.`);
 }
 $('share').addEventListener('click', () => {
   const btn = $('share'), url = shareURL(); if (!url) return;
@@ -776,6 +854,29 @@ $('search').addEventListener('submit', async (e) => {
     });
   } catch (err) { msg('Search is not reachable right now.'); }
 });
+// Shuffle and Wander: a beach from somewhere else, chosen at random.
+const BEACHES = [
+  ['Bondi Beach', 'Sydney, Australia', -33.8915, 151.2767], ['Praia do Norte', 'Nazaré, Portugal', 39.605, -9.087], ['Pipeline', 'Oahu, Hawaii', 21.665, -158.05], ['Mavericks', 'Half Moon Bay, California', 37.4947, -122.5],
+  ['Jeffreys Bay', 'South Africa', -34.05, 24.93], ['La Gravière', 'Hossegor, France', 43.67, -1.44], ['Côte des Basques', 'Biarritz, France', 43.48, -1.56], ['Supertubos', 'Peniche, Portugal', 39.35, -9.38],
+  ['Ribeira d’Ilhas', 'Ericeira, Portugal', 38.99, -9.42], ['Uluwatu', 'Bali, Indonesia', -8.83, 115.09], ['Teahupo’o', 'Tahiti, French Polynesia', -17.85, -149.27], ['Main Beach', 'Byron Bay, Australia', -28.64, 153.62],
+  ['Fistral Beach', 'Newquay, Cornwall', 50.42, -5.1], ['Tullan Strand', 'Bundoran, Ireland', 54.48, -8.28], ['Lahinch Beach', 'County Clare, Ireland', 52.93, -9.35], ['Chesterman Beach', 'Tofino, Canada', 49.1, -125.89],
+  ['Copacabana', 'Rio de Janeiro, Brazil', -22.97, -43.18], ['Playa Santa Teresa', 'Costa Rica', 9.64, -85.17], ['Mundaka', 'Basque Country, Spain', 43.41, -2.7], ['Raglan', 'New Zealand', -37.8, 174.87],
+  ['Praia do Tonel', 'Sagres, Portugal', 37.01, -8.94], ['Scheveningen', 'The Hague, Netherlands', 52.11, 4.27], ['Grenen', 'Skagen, Denmark', 57.73, 10.6], ['Amager Strand', 'Copenhagen, Denmark', 55.65, 12.65],
+  ['Hornbæk Strand', 'Zealand, Denmark', 56.09, 12.46], ['Brighton Beach', 'England', 50.82, -0.14], ['Muizenberg', 'Cape Town, South Africa', -34.11, 18.47], ['Taghazout', 'Morocco', 30.54, -9.71],
+  ['Cloud 9', 'Siargao, Philippines', 9.8, 126.16], ['Hikkaduwa', 'Sri Lanka', 6.14, 80.1], ['Revere Beach', 'Boston, Massachusetts', 42.41, -70.99], ['Malibu Surfrider', 'California', 34.03, -118.68],
+  ['Cape Hatteras', 'North Carolina', 35.25, -75.53], ['Montauk', 'New York', 41.04, -71.94], ['Steamer Lane', 'Santa Cruz, California', 36.95, -122.02], ['Cannon Beach', 'Oregon', 45.89, -123.96],
+  ['Hanalei Bay', 'Kauai, Hawaii', 22.21, -159.5], ['Snapper Rocks', 'Gold Coast, Australia', -28.17, 153.55], ['Playa Zicatela', 'Puerto Escondido, Mexico', 15.86, -97.06], ['Punta de Lobos', 'Pichilemu, Chile', -34.43, -72.04],
+];
+function shuffleBeach() {
+  let b; do { b = BEACHES[Math.floor(Math.random() * BEACHES.length)]; } while (b[0] === place.name && BEACHES.length > 1);
+  if (mode !== 'place') setMode('place'); choose(b[2], b[3], b[0], b[1]);
+}
+$('shuffle').addEventListener('click', shuffleBeach);
+let wanderTimer = null;
+$('wander').addEventListener('click', () => {
+  const on = $('wander').getAttribute('aria-pressed') !== 'true'; $('wander').setAttribute('aria-pressed', on);
+  clearInterval(wanderTimer); if (on) { shuffleBeach(); wanderTimer = setInterval(() => { if (mode === 'place') shuffleBeach(); }, 30000); }
+});
 // A country: its beaches, busiest first, the top 20. The beaches come from OpenStreetMap, the wave height from the nearest sea reading.
 let countryRun = 0;
 async function countryBeaches(c) {
@@ -823,23 +924,30 @@ $('here').addEventListener('click', () => {
 // ---------- audio ----------
 let ctx = null, master, dryBus, delaySend, verbSend, oceanGain, oceanFilter, delayNode, playing = false;
 let tick = 0, nextTime = 0, timer = null;
-function impulse(seconds, decay) {
+function impulse(seconds, decay) { // a dark room: the highs die away first
   const len = Math.floor(ctx.sampleRate * seconds), buf = ctx.createBuffer(2, len, ctx.sampleRate);
-  for (let ch = 0; ch < 2; ch++) { const d = buf.getChannelData(ch); for (let i = 0; i < len; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / len, decay); }
+  for (let ch = 0; ch < 2; ch++) { const d = buf.getChannelData(ch); let lp = 0; for (let i = 0; i < len; i++) { const tt = i / len; lp += ((Math.random() * 2 - 1) - lp) * Math.max(.05, (.6 - .55 * tt) ** 2); d[i] = lp * Math.pow(1 - tt, decay) * 2; } }
   return buf;
 }
+let swayIn, swayLP, swayG, crashBus, pinkBuf;
 function initAudio() {
   ctx = new (window.AudioContext || window.webkitAudioContext)();
   master = ctx.createGain(); master.gain.value = $('vol').value / 100;
   const comp = ctx.createDynamicsCompressor(); comp.threshold.value = -18; comp.ratio.value = 3;
   master.connect(comp).connect(ctx.destination);
-  dryBus = ctx.createGain(); dryBus.gain.value = .8; dryBus.connect(master);
-  const verb = ctx.createConvolver(); verb.buffer = impulse(5.5, 2.6);
-  verbSend = ctx.createGain(); verbSend.gain.value = .55; verbSend.connect(verb).connect(master);
+  // everything the music makes goes through the sway: a low-pass and a level that follow the waves coming in
+  swayIn = ctx.createGain(); swayLP = ctx.createBiquadFilter(); swayLP.type = 'lowpass'; swayLP.frequency.value = 2200; swayLP.Q.value = .4; swayG = ctx.createGain(); swayG.gain.value = .8;
+  swayIn.connect(swayLP).connect(swayG).connect(master);
+  crashBus = ctx.createGain(); crashBus.gain.value = 1; crashBus.connect(master);
+  const pl = ctx.sampleRate * 3; pinkBuf = ctx.createBuffer(2, pl, ctx.sampleRate);
+  for (let c = 0; c < 2; c++) { const d = pinkBuf.getChannelData(c); let b0 = 0, b1 = 0, b2 = 0; for (let i = 0; i < pl; i++) { const w = Math.random() * 2 - 1; b0 = .997 * b0 + w * .029591; b1 = .985 * b1 + w * .032534; b2 = .95 * b2 + w * .048056; d[i] = (b0 + b1 + b2 + w * .1848) * 1.1; } }
+  dryBus = ctx.createGain(); dryBus.gain.value = .8; dryBus.connect(swayIn);
+  const verb = ctx.createConvolver(); verb.buffer = impulse(6, 2.8);
+  verbSend = ctx.createGain(); verbSend.gain.value = .6; verbSend.connect(verb).connect(swayIn);
   delayNode = ctx.createDelay(4); const fb = ctx.createGain(), dlf = ctx.createBiquadFilter();
-  dlf.type = 'lowpass'; dlf.frequency.value = 2400; fb.gain.value = .38;
+  dlf.type = 'lowpass'; dlf.frequency.value = 1800; fb.gain.value = .34;
   delaySend = ctx.createGain(); delaySend.gain.value = .3;
-  delaySend.connect(delayNode); delayNode.connect(dlf).connect(fb).connect(delayNode); dlf.connect(verbSend); dlf.connect(master);
+  delaySend.connect(delayNode); delayNode.connect(dlf).connect(fb).connect(delayNode); dlf.connect(verbSend); dlf.connect(swayIn);
   delayNode.delayTime.value = stepDur() * 3;
   const len = ctx.sampleRate * 4, nb = ctx.createBuffer(2, len, ctx.sampleRate);
   for (let ch = 0; ch < 2; ch++) { const d = nb.getChannelData(ch); let last = 0; for (let i = 0; i < len; i++) { last = (last + .02 * (Math.random() * 2 - 1)) / 1.02; d[i] = last * 3.2; } }
@@ -852,18 +960,31 @@ function stepDur() { return 60 / Number($('tempo').value) / 2; }
 const mtof = (m) => 440 * Math.pow(2, (m - 69) / 12);
 // A note, made from a timbre. Used by the rings, the melody and the chord pad.
 function play(m, t, o) {
-  const tm = o.tim, f = mtof(m), amp = o.amp, dec = o.dec;
-  const env = ctx.createGain(), pan = ctx.createStereoPanner ? ctx.createStereoPanner() : null, oscs = [];
+  const tm = o.tim; if (tm.vowel) { sing(m, t, o); return; }
+  const f = mtof(m), amp = o.amp, dec = o.dec * (tm.d || 1);
+  const env = ctx.createGain(), pan = ctx.createStereoPanner ? ctx.createStereoPanner() : null;
   const top = Math.max(...tm.p.map(q => q[3])) * dec;
-  env.gain.setValueAtTime(0, t); env.gain.linearRampToValueAtTime(amp, t + tm.a); env.gain.exponentialRampToValueAtTime(.0001, t + top);
-  let head = env;
-  if (tm.lp) { const lp = ctx.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = tm.lp; env.connect(lp); head = lp; }
-  tm.p.forEach(([r, lv, wave, dm]) => {
-    const os = ctx.createOscillator(), g = ctx.createGain(); os.type = wave; os.frequency.value = f * r; g.gain.setValueAtTime(lv, t);
-    g.gain.exponentialRampToValueAtTime(.001, t + Math.max(.1, dm * dec)); os.connect(g).connect(env); os.start(t); os.stop(t + top + .05); oscs.push(os);
+  env.gain.setValueAtTime(.0001, t); env.gain.linearRampToValueAtTime(amp, t + tm.a); env.gain.exponentialRampToValueAtTime(.0001, t + top);
+  const lp = ctx.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = tm.lp || 1500; lp.Q.value = .3; lp.connect(env);
+  tm.p.forEach(([r, lv, wave, dm, cents]) => {
+    const os = ctx.createOscillator(), g = ctx.createGain(); os.type = wave; os.frequency.value = f * r; os.detune.value = cents || 0; g.gain.value = lv;
+    os.connect(g).connect(lp); os.start(t); os.stop(t + top + .05);
   });
-  let out = head; if (pan) { pan.pan.value = o.pan || 0; head.connect(pan); out = pan; }
+  let out = env; if (pan) { pan.pan.value = o.pan || 0; env.connect(pan); out = pan; }
   const wet = ctx.createGain(); wet.gain.value = o.wet == null ? 1 : o.wet; out.connect(dryBus); out.connect(wet).connect(verbSend); out.connect(delaySend);
+}
+// a wordless voice: slow breaths that glide between ooh, oh and ah, as in No Fixed Address
+let noiseBuf = null;
+function sing(m, t, o) {
+  const fr = mtof(m), dur = Math.max(2.2, o.dec * 1.1), vi = Math.floor(m) % 3, v = VOWELS[vi], v2 = VOWELS[(vi + 1) % 3], peak = o.amp * 4.2;
+  const out = ctx.createGain(); out.gain.setValueAtTime(.0001, t); out.gain.linearRampToValueAtTime(peak, t + dur * .32); out.gain.setValueAtTime(peak, t + dur * .5); out.gain.exponentialRampToValueAtTime(.0001, t + dur);
+  const vib = ctx.createOscillator(), vg = ctx.createGain(); vib.frequency.value = 5.1 + vi * .25; vg.gain.setValueAtTime(0, t); vg.gain.linearRampToValueAtTime(6, t + dur * .5); vib.connect(vg); vib.start(t); vib.stop(t + dur + .1);
+  const src = ctx.createGain(); src.gain.value = .5;
+  [0, 6, -7].forEach(c => { const os = ctx.createOscillator(); os.type = 'sawtooth'; os.frequency.value = fr; os.detune.value = c; vg.connect(os.detune); os.connect(src); os.start(t); os.stop(t + dur + .1); });
+  [[1, 1], [.45, .5], [.14, .3]].forEach((a, k) => { const bp = ctx.createBiquadFilter(), g = ctx.createGain(); bp.type = 'bandpass'; bp.Q.value = 6 + k * 2;
+    bp.frequency.setValueAtTime(v[k], t); bp.frequency.linearRampToValueAtTime(v2[k], t + dur); g.gain.value = a[0] * (k === 0 ? 1.6 : 1); src.connect(bp); bp.connect(g); g.connect(out); });
+  const pan = ctx.createStereoPanner ? ctx.createStereoPanner() : null; let end = out; if (pan) { pan.pan.value = o.pan || 0; out.connect(pan); end = pan; }
+  const wet = ctx.createGain(); wet.gain.value = (o.wet == null ? 1 : o.wet) * 1.2; end.connect(dryBus); end.connect(wet).connect(verbSend);
 }
 function voice(s, t) {
   const i = voices.indexOf(s), amp = .045 + clamp(s.lv, 0, 1) * .05, dec = 1.4 + clamp(s.per / 16, 0, 1) * 1.6;
@@ -884,7 +1005,7 @@ function chordPad(m, t, dur) {
 // drone: the key note and its fifth, low and steady. It gets louder as the sea does.
 let drone = null;
 function startDrone() {
-  if (drone || !ctx) return; const out = ctx.createGain(), lp = ctx.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 420; out.gain.value = 0; out.connect(lp).connect(master);
+  if (drone || !ctx) return; const out = ctx.createGain(), lp = ctx.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 420; out.gain.value = 0; out.connect(lp).connect(swayIn);
   const root = 36 + ROOT + SHIFT, oscs = [[root, 'sine', 1], [root + 7, 'sine', .5], [root + 12, 'triangle', .22]].map(([m, w, l]) => { const o = ctx.createOscillator(), g = ctx.createGain(); o.type = w; o.frequency.value = mtof(m); g.gain.value = l; o.connect(g).connect(out); o.start(); return { o, off: m - root }; });
   drone = { out, oscs }; droneLevel();
 }
@@ -899,8 +1020,30 @@ function melodyStep(t) {
   play(m, t, { tim: TIMBRES[CH.mel % TIMBRES.length], amp: .05 * (.6 + dens * .6), dec: 1.8, pan: (Math.random() - .5) * .8, wet: CH.wet * 1.1 });
   midiNote(MIDI.c4, m, 70 + Math.round(Math.random() * 25), t, stepDur() * 3);
 }
+// ---------- the waves: slowly build, crest, break with a crash, then wash into the sand ----------
+let waveT = 0, waveStart = 0, waveP = 8, breakAt = 0, breakFlash = 0;
+function scheduleWave(t) {
+  const a = seaState(), P = clamp(a.per, 5, 15), h = a.h, lvl = Number($('ocean').value) / 100, still = a.still;
+  waveP = P; waveStart = t;
+  const tb = t + P * .68, g = swayG.gain, f = swayLP.frequency, amt = still ? 0 : clamp(.35 + h / 3, .35, 1);   // how much the music sways
+  // the music: the water rises and the sound opens, then it closes as the wave breaks and runs out
+  g.setValueAtTime(.55, t); g.linearRampToValueAtTime(.55 + .45 * amt, tb - .05); g.linearRampToValueAtTime(.4, tb + .5); g.linearRampToValueAtTime(.5, t + P);
+  f.setValueAtTime(500, t); f.exponentialRampToValueAtTime(500 + 3600 * amt, tb - .05); f.exponentialRampToValueAtTime(700, tb + .6); f.exponentialRampToValueAtTime(420, t + P);
+  if (still || lvl <= 0) return;
+  const A = lvl * (.06 + .2 * clamp(h / 3, 0, 1)), src = ctx.createBufferSource(), lp = ctx.createBiquadFilter(), ng = ctx.createGain(), pn = ctx.createStereoPanner ? ctx.createStereoPanner() : null;
+  src.buffer = pinkBuf; src.loop = true; lp.type = 'lowpass'; lp.Q.value = .5; src.connect(lp).connect(ng);
+  if (pn) { pn.pan.value = (Math.random() - .5) * .8; ng.connect(pn).connect(crashBus); } else ng.connect(crashBus);
+  const ng2 = ng.gain, lf = lp.frequency;
+  ng2.setValueAtTime(.0001, t); ng2.linearRampToValueAtTime(A * .3, tb - .05);                       // the swell, getting louder as the wave stands up
+  ng2.linearRampToValueAtTime(A, tb + .04); ng2.exponentialRampToValueAtTime(A * .22, tb + P * .12); // the break
+  ng2.exponentialRampToValueAtTime(.0001, t + P);                                                      // the wash, sinking into the sand
+  lf.setValueAtTime(260, t); lf.exponentialRampToValueAtTime(2200, tb - .05); lf.linearRampToValueAtTime(6500, tb + .05); lf.exponentialRampToValueAtTime(2600, tb + P * .12); lf.exponentialRampToValueAtTime(240, t + P);
+  src.start(t, Math.random() * 2); src.stop(t + P + .2);
+  setTimeout(() => { breakFlash = clamp(.35 + h / 3, .35, 1); breakAt = performance.now(); }, Math.max(0, (tb - ctx.currentTime) * 1000));
+}
 function schedule() {
   const list = voices;
+  while (waveT < ctx.currentTime + .6) { scheduleWave(waveT); waveT += waveP; }
   while (nextTime < ctx.currentTime + .12) {
     const t = nextTime, sd = stepDur();
     if (MIDI.on && MIDI.clock) for (let k = 0; k < 12; k++) midiSend([0xF8], t + k * sd / 12);
@@ -922,14 +1065,14 @@ function schedule() {
 function musicSync() {
   const inPlace = mode === 'place' && place.loaded, t = inPlace ? (place.seaTemp != null ? place.seaTemp : place.airTemp != null ? place.airTemp : 12) : 14, grp = t < 9 ? 0 : t < 19 ? 1 : 2;
   const kv = $('m-key').value, sv = $('m-scale').value;
-  const k = [inPlace ? place.lat.toFixed(2) + ',' + place.lon.toFixed(2) : 'world', grp, kv, sv, SHIFT].join('|'); if (k === musicKey) return; musicKey = k;
+  const k = [inPlace ? place.lat.toFixed(2) + ',' + place.lon.toFixed(2) : (world === BLUE ? 'blue' : 'world'), grp, kv, sv, SHIFT].join('|'); if (k === musicKey) return; musicKey = k;
   const seed = inPlace ? hash(place.lat.toFixed(2) + ',' + place.lon.toFixed(2)) : 0, g = GROUPS[grp];
   const aKey = inPlace ? seed % 12 : 2, aScale = inPlace ? scaleIx(g[(seed >>> 4) % g.length]) : scaleIx('major pentatonic');
   const key = kv === 'auto' ? aKey : +kv, sc = sv === 'auto' ? aScale : +sv;
   ROOT = key; SC = SCALES[sc][1];
-  CH = { seed, prog: inPlace ? (seed >>> 8) % PROGS.length : 0, contour: inPlace ? (seed >>> 12) % PPAT.length : 0, tim: inPlace ? (seed >>> 16) % TIMBRES.length : 0, mel: inPlace ? ((seed >>> 16) + 2) % TIMBRES.length : 1,
+  CH = { seed, prog: inPlace ? (seed >>> 8) % PROGS.length : 0, contour: inPlace ? (seed >>> 12) % PPAT.length : 0, tim: inPlace ? (seed >>> 16) % RING_T : 0, mel: inPlace ? MEL_T[(seed >>> 18) % MEL_T.length] : 4,
     wet: inPlace ? .6 + ((seed >>> 20) % 8) / 10 : 1, key, sc, auto: kv === 'auto' || sv === 'auto', grp };
-  world.forEach(rebuild); place.voices.forEach(rebuild); droneTune(); MIDI.last = -1;
+  ALL.forEach(l => l.forEach(rebuild)); place.voices.forEach(rebuild); droneTune(); MIDI.last = -1;
   $('m-line').textContent = `${KEYS[key]} ${SCALES[sc][0]}: ${SC.map(iv => KEYS[(key + iv) % 12]).join(' ')}` + (inPlace ? ` · sounds like ${TIMBRES[CH.tim].n} and ${TIMBRES[CH.mel % TIMBRES.length].n}` : '');
 }
 // Drift, like Rhythm Geometry: at the start of each lap, each hit may slide one step forward into an empty step.
@@ -963,7 +1106,7 @@ function togglePlay() {
   if (ctx.state === 'suspended') ctx.resume();
   playing = !playing;
   $('play').setAttribute('aria-pressed', playing); $('play').textContent = playing ? 'Stop' : 'Play';
-  if (playing) { tick = 0; mi = 0; chordNow = []; nextTime = ctx.currentTime + .05; musicSync(); startDrone(); if (MIDI.on && MIDI.clock) midiSend([0xFA]); timer = setInterval(schedule, 25); }
+  if (playing) { tick = 0; mi = 0; chordNow = []; nextTime = ctx.currentTime + .05; waveT = ctx.currentTime + .05; swayG.gain.cancelScheduledValues(0); swayLP.frequency.cancelScheduledValues(0); musicSync(); startDrone(); if (MIDI.on && MIDI.clock) midiSend([0xFA]); timer = setInterval(schedule, 25); }
   else { clearInterval(timer); stopDrone(); if (MIDI.on) { if (MIDI.clock) midiSend([0xFC]); midiAllOff(); } }
   droneLevel(); updateOcean();
 }
@@ -1037,7 +1180,7 @@ if (lsGet('bw-midi-on', '0') === '1') { $('midion').checked = true; MIDI.on = tr
 // ---------- the Music and MIDI panels ----------
 KEYS.forEach((k, i) => $('m-key').add(new Option(k, i))); $('m-key').insertBefore(new Option('Auto, from the place', 'auto'), $('m-key').firstChild);
 SCALES.forEach((x, i) => $('m-scale').add(new Option(x[0], i))); $('m-scale').insertBefore(new Option('Auto, from the place', 'auto'), $('m-scale').firstChild);
-[['m-key', 'bw-key', 'auto'], ['m-scale', 'bw-scale', 'auto'], ['m-shift', 'bw-shift', '0'], ['m-chord', 'bw-chord', '40'], ['m-mel', 'bw-mel', '35'], ['m-drone', 'bw-drone', '50']].forEach(([id, key, d]) => {
+[['m-key', 'bw-key', 'auto'], ['m-scale', 'bw-scale', 'auto'], ['m-shift', 'bw-shift', '0'], ['m-chord', 'bw-chord', '40'], ['m-mel', 'bw-mel', '35'], ['m-drone', 'bw-drone', '0']].forEach(([id, key, d]) => {
   const el = $(id); const v = lsGet(key, d); el.value = v; if (el.value !== v) el.value = d; const o = $(id + '-o'); if (o) o.textContent = el.value;
   el.addEventListener('input', () => { if (o) o.textContent = el.value; lsSet(key, el.value); if (id === 'm-shift') { shiftBars = +el.value; SHIFT = 0; } if (id === 'm-drone') droneLevel(); musicSync(); });
   el.addEventListener('change', () => { lsSet(key, el.value); if (id === 'm-shift') { shiftBars = +el.value; SHIFT = 0; } musicSync(); });
@@ -1055,8 +1198,14 @@ const sea = $('sea'), rings = $('rings');
 const sx = sea.getContext('2d'), rx = rings.getContext('2d');
 let W = 0, H = 0, DPR = 1;
 const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+let areaTop = 0, areaBot = 0;
 function resize() {
   DPR = Math.min(2, window.devicePixelRatio || 1); W = innerWidth; H = innerHeight;
+  if (W < 760) { // phone: measure what is above and below the rings
+    const bar = $('bar').getBoundingClientRect(); document.documentElement.style.setProperty('--dockb', Math.round(H - bar.top + 8) + 'px');
+    const ttl = document.querySelector('.title').getBoundingClientRect(); areaTop = ttl.bottom + 4; areaBot = $('panel').getBoundingClientRect().top - 4;
+  }
+  refreshDots();
   [sea, rings].forEach(c => { c.width = W * DPR; c.height = H * DPR; });
   sx.setTransform(DPR, 0, 0, DPR, 0, 0); rx.setTransform(DPR, 0, 0, DPR, 0, 0);
 }
@@ -1109,7 +1258,7 @@ function gTide(c, x, y, s, frac, up, t) {
   if (up) { c.moveTo(ax, y - 7); c.lineTo(ax + 5, y + 2); c.lineTo(ax - 5, y + 2); } else { c.moveTo(ax, y + 7); c.lineTo(ax + 5, y - 2); c.lineTo(ax - 5, y - 2); }
   c.fill();
 }
-const waveFrac = (h) => clamp(h / (mode === 'world' ? 6 : 3), 0, 1);
+const waveFrac = (h) => clamp(h / (mode === 'world' && world === OCEANS ? 6 : 3), 0, 1);
 function tiles() {
   if (mode === 'world') {
     const s = world[selected];
@@ -1359,13 +1508,17 @@ function drawWorld(now, dt) {
 
 // ---------- the rings ----------
 function geom() {
-  const small = W < 760, cx = W / 2, cy = small ? H * .34 : H * .47;
-  const maxR = Math.min(W * (small ? .42 : .38), H * (small ? .17 : .35));
+  const small = W < 760, cx = W / 2, cy = small ? (areaTop + areaBot) / 2 + 12 : H * .47;
+  const maxR = small ? Math.max(60, Math.min(W * .44, (areaBot - areaTop) / 2 - 24)) : Math.min(W * .38, H * .35);
   return { cx, cy, maxR, minR: maxR * (mode === 'place' ? .36 : .2), small };
 }
-function order() { const idx = voices.map((s, i) => i); return mode === 'world' ? idx.sort((a, b) => voices[a].temp - voices[b].temp) : idx; }
+// Smallest wave, smallest ring. Largest wave, largest ring. The rest fill in between. Air is always the middle of the place rings.
+function order() {
+  const idx = voices.map((s, i) => i), air = idx.filter(i => voices[i].kind === 'air'), rest = idx.filter(i => voices[i].kind !== 'air').sort((a, b) => voices[b].val - voices[a].val);
+  return rest.concat(air);
+}
 let ringOrder = order();
-function radiusOf(i, g) { const n = voices.length, k = ringOrder.indexOf(i); return n < 2 ? g.maxR : g.maxR - (g.maxR - g.minR) * (k / (n - 1)); }
+function radiusOf(i, g) { const n = voices.length, s = voices[i], k = s && s.rk != null ? s.rk : ringOrder.indexOf(i) / Math.max(1, n - 1); return n < 2 ? g.maxR : g.maxR - (g.maxR - g.minR) * k; }
 const ripples = [];
 function hitVisual(i, step) {
   const s = voices[i]; if (!s) return; s.flash = 1;
@@ -1396,18 +1549,20 @@ let t0 = performance.now();
 function frame(now) {
   const dt = Math.min(.05, (now - t0) / 1000); t0 = now;
   const k = 1 - Math.pow(.2, dt);
-  [world, place.voices].forEach(list => list.forEach(s => {
+  [OCEANS, BLUE, place.voices].forEach(list => list.forEach(s => {
     s.val = lerp(s.val, s.tval, k); s.per = lerp(s.per, s.tper, k); s.temp = lerp(s.temp, s.ttemp, k); s.lv = lerp(s.lv, s.tlv, k); s.flash = Math.max(0, s.flash - dt * 1.6);
   }));
-  if (mode === 'world') { ringOrder = order(); if (now - manual > 20000 && now - lastCycle > 7000) { selected = (selected + 1) % world.length; lastCycle = now; renderPanel(); } }
+  if (mode === 'world') { if (now - manual > 20000 && now - lastCycle > 7000) { selected = (selected + 1) % world.length; lastCycle = now; renderPanel(); } }
+  ringOrder = order(); voices.forEach((s, i) => { const tk = ringOrder.indexOf(i) / Math.max(1, voices.length - 1); s.rk = s.rk == null ? tk : lerp(s.rk, tk, 1 - Math.pow(.05, dt)); });
   skyUpdate(dt); drawWorld(now, dt);
 
   rx.clearRect(0, 0, W, H);
-  const g = geom(); let frac = 0, curTick = 0;
+  const g = geom(); let frac = 0, curTick = 0, swell = 0;
+  if (playing && ctx && waveP) { const ph = clamp((ctx.currentTime - waveStart) / waveP, 0, 1); swell = ph < .68 ? ph / .68 : Math.max(0, 1 - (ph - .68) / .3); }
   if (playing && ctx) { const sd = stepDur(); frac = clamp((ctx.currentTime - (nextTime - sd)) / sd, 0, 1); curTick = tick - 1; }
   voices.forEach((s, i) => {
     const r = radiusOf(i, g), sel = i === selected;
-    rx.beginPath(); rx.arc(g.cx, g.cy, r, 0, Math.PI * 2); rx.strokeStyle = tempColor(s.temp, sel ? .75 : .3 + s.flash * .35); rx.lineWidth = sel ? 1.6 : 1; rx.stroke();
+    rx.beginPath(); rx.arc(g.cx, g.cy, r, 0, Math.PI * 2); rx.strokeStyle = tempColor(s.temp, (sel ? .75 : .3 + s.flash * .35) + swell * .18); rx.lineWidth = (sel ? 1.6 : 1) + swell * .5; rx.stroke();
     const steps = s.steps;
     for (let q = 0; q < steps; q++) {
       const ang = q / steps * Math.PI * 2 - Math.PI / 2, x = g.cx + Math.cos(ang) * r, y = g.cy + Math.sin(ang) * r, hit = s.pattern[(q + s.offset) % steps];
@@ -1422,6 +1577,10 @@ function frame(now) {
   for (let j = ripples.length - 1; j >= 0; j--) {
     const p = ripples[j]; p.t += dt; if (p.t > 1.8) { ripples.splice(j, 1); continue; }
     const kk = p.t / 1.8; rx.beginPath(); rx.arc(p.x, p.y, 4 + kk * 46, 0, Math.PI * 2); rx.strokeStyle = p.c.replace(/,1\)$/, `,${(1 - kk) * .45})`); rx.lineWidth = 1; rx.stroke();
+  }
+  if (playing && breakFlash > 0) { // the wave breaks: a wide ring runs out from the middle and fades
+    const age = (performance.now() - breakAt) / 1000;
+    if (age < 2.4) { const kk = age / 2.4; rx.beginPath(); rx.arc(g.cx, g.cy, g.maxR * (.1 + 1.0 * Math.sqrt(kk)), 0, Math.PI * 2); rx.strokeStyle = `rgba(242,247,255,${(1 - kk) * .55 * breakFlash})`; rx.lineWidth = 2 + (1 - kk) * 5 * breakFlash; rx.stroke(); } else breakFlash = 0;
   }
   rx.beginPath(); rx.arc(g.cx, g.cy, 2.2, 0, Math.PI * 2); rx.fillStyle = 'rgba(106,162,255,.95)'; rx.fill();
 
@@ -1438,6 +1597,7 @@ try {
     place.lat = la; place.lon = lo; place.name = nm.slice(0, 80); place.sub = (q.get('sub') || '').slice(0, 100); arrivedByLink = true;
   }
 } catch (e) { /* no link state, fine */ }
+try { if (new URLSearchParams(location.search).get('view') === 'world') setMode('world', 'oceans'); } catch (e) { /* ignore */ }
 showFacts(); renderPanel();
 if (arrivedByLink) setMode('place');
 fetchWorld();
