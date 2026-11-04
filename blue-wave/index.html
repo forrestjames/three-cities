@@ -163,6 +163,16 @@ input[type=search]::placeholder { color: var(--faint); }
 .pop { position: fixed; z-index: 4; left: 50%; transform: translateX(-50%); bottom: calc(env(safe-area-inset-bottom, 0px) + 118px); width: min(560px, calc(100% - 32px)); max-height: calc(100% - 150px); overflow: auto;
   background: var(--glass); border: 1px solid var(--edge); border-radius: 16px; backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); padding: 16px 20px; font: 400 13px var(--mono); color: var(--mist); }
 .pop[hidden] { display: none; }
+@media (min-width: 761px) { .bn-phone { display: none !important; } }   /* the line sits in the headline card on wider screens, so no second copy */
+/* "?" : a short note on how to read the rings. Hover shows it on a mouse; a tap opens and closes it on a phone. */
+.howbtn { position: absolute; top: 0; right: 0; z-index: 4; width: 30px; height: 30px; border-radius: 50%; border: 1px solid var(--edge); background: var(--glass); color: var(--foam); font: 500 14px var(--mono); cursor: pointer; padding: 0; }
+.howbtn:hover, .howbtn:focus-visible, .howbtn[aria-expanded="true"] { border-color: var(--accent); }
+.how-pop { position: absolute; z-index: 5; top: 38px; right: 0; width: min(280px, 80vw); left: auto; transform: none; bottom: auto; max-height: none; padding: 14px 16px; }
+.how-pop ul { margin: 6px 0 0; padding: 0; list-style: none; font: 400 13.5px/1.45 var(--display); color: var(--foam); }
+.how-pop li { padding: 6px 0; border-bottom: 1px solid var(--edge); }
+.how-pop li:last-child { border-bottom: 0; }
+.how-pop b { font-weight: 500; }
+
 .pgrid { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 12px 18px; margin-top: 10px; align-items: end; }
 .pgrid > label { display: flex; flex-direction: column; gap: 4px; font: 400 11.5px var(--mono); letter-spacing: .08em; text-transform: uppercase; color: var(--mist); }
 .pgrid > label.chk { flex-direction: row; align-items: center; gap: 8px; text-transform: none; letter-spacing: 0; color: var(--foam); font-size: 12.5px; }
@@ -217,15 +227,14 @@ input[type=range]::-moz-range-thumb { width: 14px; height: 14px; border-radius: 
   #pg-read .sub { grid-column: 1; margin: 0; font-size: 12px; align-self: start; } #mini { grid-column: 2; grid-row: 2 / 4; width: 150px; height: 62px; margin: 0; align-self: center; }
   #pg-read #gauges { grid-column: 1 / -1; height: 74px; margin-top: 6px; }
   /* three screens on a phone: the piece, the news, the beach. Scale, data and surf check stay on desktop. */
-  #pg-intro { order: 0; display: flex; flex-direction: column; justify-content: center; }
   #panel > #news { order: 1; display: block; flex: 0 0 100%; width: 100%; height: 100%; margin: 0; padding: 14px 16px; border: 0; border-radius: 0; background: none; backdrop-filter: none; -webkit-backdrop-filter: none; scroll-snap-align: start; overflow: hidden; }
   #search { order: 2; } .shead { order: 5; } .slide { order: 6; }
   #pg-scale, #pg-data, #surf { display: none !important; }
   .mix { display: grid; grid-template-columns: 1fr 1fr; gap: 12px 18px; margin: 8px 0 16px; padding-bottom: 14px; border-bottom: 1px solid var(--edge); }
   .mix .ctl { min-width: 0; }
   .bar .btns { width: 100%; }
-  /* short phones: take the status line and the intro's last line out, shorten the screens, so the rings get the middle */
-  @media (max-height: 760px) { .facts { display: none; } .intro-next { display: none; } .panel { height: clamp(150px, 24vh, 200px); } .intro li { padding: 5px 0; } }
+  /* short phones: take the status line out, shorten the screens, so the rings get the middle */
+  @media (max-height: 760px) { .facts { display: none; } .panel { height: clamp(150px, 24vh, 200px); } .intro li { padding: 5px 0; } }
   #panel > #news .nh { font-size: 19px; line-height: 1.3; -webkit-line-clamp: 4; min-height: 0; margin-top: 10px; }
   #panel > #news .ns { display: block; margin-top: 12px; }
   #panel > #news .bn { display: none; }
@@ -233,12 +242,6 @@ input[type=range]::-moz-range-thumb { width: 14px; height: 14px; border-radius: 
   .bn-phone { margin: 8px 0 0; font-size: 12.5px; white-space: normal; line-height: 1.4; }
   body:not(.is-blue) .bn-phone { display: none !important; }
   body.is-place #news { display: none !important; }
-  .intro .intro-h { font: 500 11.5px var(--mono); letter-spacing: .08em; text-transform: uppercase; color: var(--faint); margin: 0 0 10px; }
-  .intro ul { margin: 0; padding: 0; list-style: none; font: 400 15px/1.4 var(--display); color: var(--foam); }
-  .intro li { padding: 7px 0; border-bottom: 1px solid var(--edge); }
-  .intro li:last-child { border-bottom: 0; }
-  .intro li b { font-weight: 500; }
-  .intro .intro-next { margin: 12px 0 0; font: 400 12px var(--mono); color: var(--faint); }
   #pg-scale #scale { height: 128px; margin-top: 0; } .scale-cap { font-size: 12.5px; margin-top: 4px; }
   #r-dl { margin-top: 0; font-size: 12px; gap: 5px 12px; } #r-note { display: none; } #pg-data .go.wide { margin-top: 10px; min-height: 40px; }
   .shead { display: none; } #surf.nodata .shead { display: block; }
@@ -265,6 +268,16 @@ input[type=range]::-moz-range-thumb { width: 14px; height: 14px; border-radius: 
 <canvas class="fill" id="rings" aria-label="Rings. Hits come from wave height, steps from wave period, pitch from temperature."></canvas>
 
 <div class="title">
+  <button type="button" class="howbtn" id="how-btn" aria-expanded="false" aria-controls="p-how" aria-label="How to read the rings" title="How to read the rings">?</button>
+  <section class="pop how-pop" id="p-how" role="region" aria-label="How to read the rings" hidden>
+    <div class="cap">How to read the rings</div>
+    <ul>
+      <li><b>Each ring is a beach.</b> The light moves round it, one step at a time.</li>
+      <li><b>Bigger waves</b> light more dots.</li>
+      <li><b>Warmer water</b> plays higher notes.</li>
+      <li><b>Wave period</b> sets how many steps the loop has.</li>
+    </ul>
+  </section>
   <svg width="0" height="0" style="position:absolute" aria-hidden="true"><filter id="goo" x="-5%" y="-20%" width="110%" height="140%"><feGaussianBlur in="SourceGraphic" stdDeviation="2.2" result="b"/><feColorMatrix in="b" type="matrix" values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 20 -9"/></filter></svg>
   <h1><span class="sr">Blue Wave</span><canvas id="ttl" aria-hidden="true"></canvas></h1>
   <p class="kicker">Live sea waves from around the world, played as a rhythm.</p>
@@ -319,15 +332,6 @@ input[type=range]::-moz-range-thumb { width: 14px; height: 14px; border-radius: 
 </div>
 
 <aside class="panel" id="panel" aria-live="polite">
-  <div class="pg intro" id="pg-intro" aria-label="What this is">
-    <p class="intro-h">How to read the rings</p>
-    <ul>
-      <li><b>Each ring is a beach.</b> The light moves round it, one step at a time.</li>
-      <li><b>Bigger waves</b> light more dots.</li>
-      <li><b>Warmer water</b> plays higher notes.</li>
-    </ul>
-    <p class="intro-next">Swipe for the news, then for the beach.</p>
-  </div>
   <div class="pg" id="pg-read"><div class="top"><div class="cap" id="r-cap">&nbsp;</div><button class="share-btn" id="share" type="button" title="Share what is loaded, with a link"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 15V4M8 8l4-4 4 4" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/><path d="M7 11H5.5A1.5 1.5 0 0 0 4 12.5v6A1.5 1.5 0 0 0 5.5 20h13a1.5 1.5 0 0 0 1.5-1.5v-6a1.5 1.5 0 0 0-1.5-1.5H17" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>Share</button></div>
   <div class="name" id="r-name">&nbsp;</div>
   <div class="geo"><div class="sub"><img id="r-flag" class="flag" alt="" width="20" height="14" hidden><span id="r-sub"></span></div>
@@ -1472,6 +1476,18 @@ function measureArea() {
     const ttl = document.querySelector('.title').getBoundingClientRect(); areaTop = ttl.bottom + 4; areaBot = $('panel').getBoundingClientRect().top - 4;
   }
 }
+// The "?" note: on a mouse it opens while the pointer is over the button; a click pins it open or shut.
+(() => {
+  const btn = $('how-btn'), pop = $('p-how'); let pinned = false;
+  const show = (on) => { pop.hidden = !on; btn.setAttribute('aria-expanded', on); };
+  btn.addEventListener('click', () => { pinned = !pop.hidden ? false : true; if (pop.hidden) { show(true); } else { pinned = false; show(false); } });
+  btn.addEventListener('mouseenter', () => { if (matchMedia('(hover: hover)').matches && !pinned) show(true); });
+  btn.addEventListener('mouseleave', () => { if (!pinned && matchMedia('(hover: hover)').matches) show(false); });
+  btn.addEventListener('focus', () => { if (matchMedia('(hover: hover)').matches) show(true); });
+  btn.addEventListener('blur', () => { if (!pinned) show(false); });
+  document.addEventListener('keydown', (e) => { if (e.key === 'Escape') { pinned = false; show(false); } });
+  document.addEventListener('pointerdown', (e) => { if (!pop.hidden && !pop.contains(e.target) && e.target !== btn) { pinned = false; show(false); } });
+})();
 // Phones: the four sliders (Tempo, Drift, Ocean, Level) move into the Music panel, so the bottom bar is just Play, Music and MIDI.
 const barSliders = [...document.querySelectorAll('#bar > .ctl')];
 function placeMix() {
