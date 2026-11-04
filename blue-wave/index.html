@@ -1,0 +1,737 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Blue Wave</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@200;300;400;500&family=JetBrains+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: rings are the hero, centred. Title and mode switch top left, one solid panel top right, one control bar along the bottom. Live sea drawn behind everything. */
+:root {
+  --abyss: #03102a;
+  --deep: #0a2453;
+  --accent: #6aa2ff;
+  --foam: #f2f7ff;
+  --mist: rgba(226, 236, 255, .86);
+  --faint: rgba(206, 222, 255, .64);
+  --glass: rgba(3, 14, 38, .84);
+  --field: rgba(255, 255, 255, .08);
+  --edge: rgba(170, 202, 255, .26);
+  --display: "Hanken Grotesk", "Helvetica Neue", Arial, sans-serif;
+  --mono: "JetBrains Mono", ui-monospace, "SF Mono", Menlo, monospace;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+html, body { height: 100%; margin: 0; }
+body { background: var(--abyss); color: var(--foam); font-family: var(--display); overflow: hidden; -webkit-font-smoothing: antialiased; }
+canvas { position: fixed; inset: 0; width: 100%; height: 100%; display: block; }
+#sea { z-index: 0; }
+#rings { z-index: 1; cursor: pointer; }
+.sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+
+.title {
+  position: fixed; z-index: 2; max-width: 46vw;
+  top: calc(env(safe-area-inset-top, 0px) + clamp(16px, 3vw, 36px));
+  left: max(16px, calc(env(safe-area-inset-left, 0px) + clamp(16px, 3vw, 40px)));
+}
+h1 { margin: 0; font-weight: 200; letter-spacing: -.02em; line-height: .9; font-size: clamp(44px, 7vw, 104px); }
+.facts { margin-top: 16px; font-family: var(--mono); font-size: 13px; line-height: 1.75; color: var(--mist); font-variant-numeric: tabular-nums; }
+.live::before { content: ""; display: inline-block; width: 7px; height: 7px; border-radius: 50%; background: var(--accent); margin-right: 9px; vertical-align: 1px; box-shadow: 0 0 9px var(--accent); }
+.live.offline::before { background: var(--faint); box-shadow: none; }
+
+.seg { margin-top: 16px; display: inline-flex; border: 1px solid var(--edge); border-radius: 999px; padding: 3px; background: var(--glass); }
+.seg button {
+  font: 500 13px var(--mono); letter-spacing: .06em; color: var(--mist); background: transparent;
+  border: 0; border-radius: 999px; padding: 9px 20px; cursor: pointer; min-height: 38px;
+}
+.seg button[aria-pressed="true"] { background: var(--foam); color: var(--abyss); }
+
+.panel {
+  position: fixed; z-index: 3; width: 320px; max-height: calc(100% - 150px); overflow: auto;
+  top: calc(env(safe-area-inset-top, 0px) + clamp(16px, 3vw, 36px));
+  right: max(16px, calc(env(safe-area-inset-right, 0px) + clamp(16px, 3vw, 40px)));
+  background: var(--glass); border: 1px solid var(--edge); border-radius: 16px;
+  backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
+  padding: 18px 20px; font-family: var(--mono); font-size: 13px; color: var(--mist); font-variant-numeric: tabular-nums;
+}
+.cap { font-size: 11.5px; color: var(--faint); letter-spacing: .06em; text-transform: uppercase; }
+.name { font-family: var(--display); font-weight: 300; font-size: 28px; line-height: 1.1; color: var(--foam); margin: 6px 0 4px; overflow-wrap: anywhere; }
+.sub { font-size: 12.5px; color: var(--faint); margin-bottom: 12px; overflow-wrap: anywhere; }
+#scale { position: static; inset: auto; z-index: auto; width: 100%; height: 138px; display: block; margin: 6px 0 0; }
+.scale-cap { font-size: 13px; color: var(--foam); margin-top: 2px; line-height: 1.4; }
+.scale-cap b { font-weight: 500; }
+dl { margin: 14px 0 0; display: grid; grid-template-columns: auto 1fr; gap: 9px 16px; align-items: baseline; }
+dt { color: var(--faint); font-size: 11.5px; letter-spacing: .08em; text-transform: uppercase; }
+dd { margin: 0; text-align: right; color: var(--foam); font-size: 13.5px; }
+.note { margin-top: 14px; font-size: 12.5px; line-height: 1.5; color: var(--mist); }
+
+form { margin: 0 0 16px; }
+.row { display: flex; gap: 8px; }
+input[type=search] {
+  flex: 1; min-width: 0; font: 400 14px var(--display); color: var(--foam); background: var(--field);
+  border: 1px solid var(--edge); border-radius: 10px; padding: 11px 13px; min-height: 42px;
+}
+input[type=search]::placeholder { color: var(--faint); }
+.go, .chip { font: 500 12.5px var(--mono); color: var(--abyss); background: var(--accent); border: 0; border-radius: 10px; padding: 0 16px; cursor: pointer; min-height: 42px; }
+.chips { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+.chip { background: transparent; color: var(--foam); border: 1px solid var(--edge); border-radius: 999px; min-height: 34px; padding: 0 13px; font-size: 12px; }
+.chip:hover, .chip:focus-visible { border-color: var(--accent); }
+#results { list-style: none; margin: 10px 0 0; padding: 0; display: grid; gap: 2px; }
+#results button { width: 100%; text-align: left; font: 400 13px var(--display); color: var(--foam); background: transparent; border: 0; border-radius: 8px; padding: 9px 10px; cursor: pointer; line-height: 1.35; }
+#results button:hover, #results button:focus-visible { background: var(--field); }
+#results small { display: block; color: var(--faint); font: 400 12px var(--mono); }
+.msg { margin-top: 10px; font-size: 12.5px; color: var(--mist); min-height: 1em; }
+
+.bar {
+  position: fixed; z-index: 3; left: 50%; transform: translateX(-50%);
+  bottom: calc(env(safe-area-inset-bottom, 0px) + 40px);
+  display: flex; align-items: center; gap: 26px; flex-wrap: wrap; justify-content: center;
+  max-width: calc(100% - 32px);
+  background: var(--glass); border: 1px solid var(--edge); border-radius: 999px;
+  backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
+  padding: 10px 26px 10px 10px;
+}
+.play { font: 500 13px var(--mono); letter-spacing: .1em; text-transform: uppercase; color: var(--abyss); background: var(--accent); border: 0; border-radius: 999px; padding: 13px 24px; cursor: pointer; min-width: 104px; }
+.play[aria-pressed="true"] { background: var(--foam); }
+button:focus-visible, input:focus-visible { outline: 2px solid var(--foam); outline-offset: 2px; }
+.ctl { display: flex; flex-direction: column; gap: 3px; }
+.ctl label { font: 400 11.5px var(--mono); letter-spacing: .08em; text-transform: uppercase; color: var(--mist); display: flex; justify-content: space-between; gap: 12px; }
+.ctl output { color: var(--foam); font-variant-numeric: tabular-nums; }
+input[type=range] { -webkit-appearance: none; appearance: none; width: 120px; height: 22px; background: transparent; margin: 0; }
+input[type=range]::-webkit-slider-runnable-track { height: 3px; background: var(--edge); border-radius: 2px; }
+input[type=range]::-moz-range-track { height: 3px; background: var(--edge); border-radius: 2px; }
+input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; width: 14px; height: 14px; border-radius: 50%; background: var(--accent); margin-top: -5.5px; border: 0; }
+input[type=range]::-moz-range-thumb { width: 14px; height: 14px; border-radius: 50%; background: var(--accent); border: 0; }
+
+.credit { position: fixed; z-index: 2; left: 16px; right: 16px; text-align: center; font: 400 11px var(--mono); color: var(--faint); bottom: calc(env(safe-area-inset-bottom, 0px) + 12px); }
+.credit a { color: inherit; }
+
+@media (max-width: 760px) {
+  .title { max-width: calc(100% - 32px); }
+  h1 { font-size: 38px; }
+  .facts { font-size: 12px; margin-top: 8px; line-height: 1.6; }
+  .seg { position: fixed; margin: 0; top: calc(env(safe-area-inset-top, 0px) + 18px); right: max(16px, env(safe-area-inset-right, 0px)); }
+  .seg button { padding: 7px 14px; min-height: 34px; font-size: 12px; }
+  .panel { top: auto; width: auto; left: 16px; right: 16px; bottom: calc(env(safe-area-inset-bottom, 0px) + 176px); max-height: 25vh; padding: 12px 14px; }
+  .name { font-size: 20px; margin: 4px 0 2px; }
+  dl { margin-top: 8px; gap: 6px 14px; }
+  #scale { height: 100px; }
+  .bar { left: 16px; right: 16px; transform: none; max-width: none; gap: 10px 14px; border-radius: 22px; padding: 10px 14px; bottom: calc(env(safe-area-inset-bottom, 0px) + 34px); }
+  .play { width: 100%; padding: 11px 0; }
+  .ctl { flex: 1; min-width: 0; }
+  input[type=range] { width: 100%; }
+  .credit { font-size: 10px; }
+}
+</style>
+</head>
+<body>
+<canvas id="sea" aria-hidden="true"></canvas>
+<canvas id="rings" aria-label="Rings. Hits come from wave height, steps from wave period, pitch from temperature."></canvas>
+
+<div class="title">
+  <h1>Blue Wave</h1>
+  <div class="facts">
+    <div><span class="live offline" id="live">Loading the sea</span></div>
+    <div id="means">&nbsp;</div>
+  </div>
+  <div class="seg" role="group" aria-label="View">
+    <button id="m-world" aria-pressed="true">World</button>
+    <button id="m-place" aria-pressed="false">Place</button>
+  </div>
+</div>
+
+<aside class="panel" id="panel" aria-live="polite">
+  <form id="search" role="search" hidden>
+    <label class="sr" for="q">Search for a beach or place</label>
+    <div class="row">
+      <input id="q" type="search" placeholder="Search a beach or town" autocomplete="off">
+      <button type="submit" class="go">Go</button>
+    </div>
+    <div class="chips">
+      <button type="button" class="chip" id="here">Use my location</button>
+      <button type="button" class="chip" data-lat="42.6177" data-lon="-70.5866" data-name="Good Harbor Beach" data-sub="Gloucester, Massachusetts">Good Harbor</button>
+      <button type="button" class="chip" data-lat="-33.8915" data-lon="151.2767" data-name="Bondi Beach" data-sub="Sydney, Australia">Bondi</button>
+      <button type="button" class="chip" data-lat="39.6050" data-lon="-9.0870" data-name="Praia do Norte" data-sub="Nazaré, Portugal">Nazaré</button>
+    </div>
+    <ul id="results"></ul>
+    <div class="msg" id="msg" role="status"></div>
+  </form>
+  <div class="cap" id="r-cap">&nbsp;</div>
+  <div class="name" id="r-name">&nbsp;</div>
+  <div class="sub" id="r-sub"></div>
+  <canvas id="scale" role="img" aria-label="A person standing beside a wave drawn at the same scale"></canvas>
+  <div class="scale-cap" id="scale-cap"></div>
+  <dl id="r-dl"></dl>
+  <div class="note" id="r-note"></div>
+</aside>
+
+<div class="bar" role="group" aria-label="Controls">
+  <button class="play" id="play" aria-pressed="false">Play</button>
+  <div class="ctl"><label for="tempo">Tempo <output id="tempo-o">60</output></label><input id="tempo" type="range" min="40" max="100" value="60"></div>
+  <div class="ctl"><label for="ocean">Ocean <output id="ocean-o">40</output></label><input id="ocean" type="range" min="0" max="100" value="40"></div>
+  <div class="ctl"><label for="vol">Level <output id="vol-o">70</output></label><input id="vol" type="range" min="0" max="100" value="70"></div>
+</div>
+
+<div class="credit">Sea and weather: <a href="https://open-meteo.com/" target="_blank" rel="noopener">Open-Meteo</a> (DWD, ECMWF, Météo-France), CC BY 4.0 · Places: <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a></div>
+
+<script>
+(() => {
+const $ = (id) => document.getElementById(id);
+const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+const lerp = (a, b, k) => a + (b - a) * k;
+const REFRESH_MS = 10 * 60 * 1000;
+
+// ---------- voices (one per ring) ----------
+function make(o) {
+  const v = Object.assign({ name: '', lat: 0, lon: 0, kind: 'wave',
+    tval: 0, tper: 8, tdir: 0, ttemp: 10, tlv: 0,
+    steps: 0, hits: -1, pattern: [], offset: 0, flash: 0, note: 60, pan: 0 }, o);
+  v.val = v.tval; v.per = v.tper; v.temp = v.ttemp; v.lv = v.tlv;
+  return v;
+}
+
+// World: twelve open-water points, spread round the globe.
+const SEAS = [
+  ['Gulf of Maine', 42.5, -69.0, 1.4, 7.5, 210, 12.1], ['North Atlantic', 47.0, -35.0, 3.2, 11.0, 260, 15.8],
+  ['North Sea', 56.0, 3.0, 2.1, 7.0, 300, 11.4], ['Mediterranean', 35.0, 18.0, 0.9, 6.0, 320, 21.0],
+  ['Gulf of Guinea', 2.0, 3.0, 1.3, 12.0, 200, 28.2], ['Cape of Good Hope', -36.0, 18.0, 3.6, 13.0, 240, 16.5],
+  ['Indian Ocean', -20.0, 75.0, 2.8, 12.5, 190, 24.6], ['Bay of Bengal', 15.0, 88.0, 1.2, 8.5, 210, 28.8],
+  ['South China Sea', 15.0, 115.0, 1.8, 7.5, 50, 28.4], ['Tasman Sea', -38.0, 160.0, 2.6, 11.5, 225, 16.0],
+  ['North Pacific', 35.0, -150.0, 2.2, 10.0, 300, 20.7], ['Drake Passage', -57.0, -63.0, 4.6, 14.0, 260, 4.2],
+]; // the numbers after the coordinates are sample readings, used until the live sea answers
+const WORLD_REF = 6;   // metres of wave that fill a ring with hits
+const PLACE_REF = 2.5;
+const WIND_REF = 50;   // km/h of wind that fills the air ring
+const world = SEAS.map(([name, lat, lon, h, p, d, t]) =>
+  make({ name, lat, lon, tval: h, tper: p, tdir: d, ttemp: t, tlv: h / WORLD_REF, pan: clamp(lon / 180, -1, 1) * .8 }));
+
+const place = {
+  name: 'Good Harbor Beach', sub: 'Gloucester, Massachusetts', lat: 42.6177, lon: -70.5866,
+  voices: [
+    make({ name: 'Waves', tval: .8, tper: 7, tdir: 200, ttemp: 12, tlv: .8 / PLACE_REF, pan: -.6 }),
+    make({ name: 'Swell', tval: .6, tper: 9, tdir: 190, ttemp: 12, tlv: .6 / PLACE_REF, pan: -.2 }),
+    make({ name: 'Wind sea', tval: .3, tper: 4, tdir: 80, ttemp: 12, tlv: .3 / PLACE_REF, pan: .2 }),
+    make({ name: 'Air', kind: 'air', tval: 12, tper: 8, tdir: 270, ttemp: 8, tlv: 12 / WIND_REF, pan: .6 }),
+  ],
+  loaded: false, live: false, noSea: false, error: false, distKm: 0, windKmh: 0, seaTemp: null, airTemp: null, updatedAt: null,
+};
+try {
+  const saved = JSON.parse(localStorage.getItem('bluewave.place') || 'null');
+  if (saved && isFinite(saved.lat) && isFinite(saved.lon) && saved.name) {
+    place.name = String(saved.name); place.sub = String(saved.sub || ''); place.lat = +saved.lat; place.lon = +saved.lon;
+  }
+} catch (e) { /* storage unavailable, fine */ }
+
+let mode = 'world', voices = world, selected = 1;
+let worldLive = false, worldUpdated = null;
+
+// ---------- rhythm ----------
+function euclid(k, n) {
+  const out = [];
+  for (let i = 0; i < n; i++) out.push(Math.floor((i + 1) * k / n) - Math.floor(i * k / n) === 1);
+  return out;
+}
+const PENTA = [0, 2, 4, 7, 9];
+function noteFor(temp) { // D pentatonic: cold is low, warm is high
+  const idx = Math.round(clamp((temp + 2) / 32, 0, 1) * 14);
+  return 50 + Math.floor(idx / 5) * 12 + PENTA[idx % 5];
+}
+function rebuild(s) {
+  const steps = Math.round(clamp(s.tper, 5, 16));
+  const maxHits = Math.max(1, Math.floor(steps / 2));
+  const hits = s.tlv < .02 ? 0 : clamp(1 + Math.round(clamp(s.tlv, 0, 1) * (maxHits - 1)), 1, maxHits);
+  if (steps !== s.steps || hits !== s.hits) {
+    s.steps = steps; s.hits = hits; s.pattern = hits ? euclid(hits, steps) : new Array(steps).fill(false);
+  }
+  s.offset = Math.round(((s.tdir % 360) + 360) % 360 / 360 * steps) % steps;
+  s.note = noteFor(s.ttemp);
+}
+world.forEach(rebuild); place.voices.forEach(rebuild);
+
+// ---------- units ----------
+const fm = (m) => `${m.toFixed(1)} m · ${(m * 3.281).toFixed(1)} ft`;
+const fc = (c) => `${c.toFixed(1)} °C · ${Math.round(c * 9 / 5 + 32)} °F`;
+const fw = (k) => `${Math.round(k)} km/h · ${Math.round(k * .621)} mph`;
+const COMPASS = ['N','NNE','NE','ENE','E','ESE','SE','SSE','S','SSW','SW','WSW','W','WNW','NW','NNW'];
+const dirName = (d) => COMPASS[Math.round(((d % 360) + 360) % 360 / 22.5) % 16];
+const hhmm = (d) => String(d.getUTCHours()).padStart(2, '0') + ':' + String(d.getUTCMinutes()).padStart(2, '0');
+const coord = (lat, lon) => `${Math.abs(lat).toFixed(2)}° ${lat >= 0 ? 'N' : 'S'} · ${Math.abs(lon).toFixed(2)}° ${lon >= 0 ? 'E' : 'W'}`;
+function km(aLat, aLon, bLat, bLon) {
+  const r = Math.PI / 180, dLat = (bLat - aLat) * r, dLon = (bLon - aLon) * r;
+  const h = Math.sin(dLat / 2) ** 2 + Math.cos(aLat * r) * Math.cos(bLat * r) * Math.sin(dLon / 2) ** 2;
+  return 12742 * Math.asin(Math.sqrt(h));
+}
+
+// ---------- data ----------
+async function fetchWorld() {
+  const url = 'https://marine-api.open-meteo.com/v1/marine'
+    + '?latitude=' + world.map(s => s.lat).join(',') + '&longitude=' + world.map(s => s.lon).join(',')
+    + '&current=wave_height,wave_period,wave_direction,sea_surface_temperature&timezone=GMT';
+  try {
+    const res = await fetch(url);
+    if (!res.ok) throw new Error(res.status);
+    let json = await res.json(); if (!Array.isArray(json)) json = [json];
+    let got = 0;
+    json.forEach((loc, i) => {
+      const c = loc && loc.current, s = world[i]; if (!c || !s) return;
+      if (c.wave_height != null) { s.tval = c.wave_height; s.tlv = c.wave_height / WORLD_REF; got++; }
+      if (c.wave_period != null) s.tper = c.wave_period;
+      if (c.wave_direction != null) s.tdir = c.wave_direction;
+      if (c.sea_surface_temperature != null) s.ttemp = c.sea_surface_temperature;
+    });
+    if (got) { worldLive = true; worldUpdated = new Date(); }
+  } catch (e) { console.warn('Blue Wave: world sea unavailable, using sample readings', e); }
+  world.forEach(rebuild); showFacts(); renderPanel();
+}
+
+async function fetchPlace() {
+  const p = place;
+  // The marine model only has ocean cells, so look at the spot and at rings of points around it.
+  const pts = [[0, 0]];
+  [.05, .12].forEach(d => { for (let k = 0; k < 8; k++) { const a = k * Math.PI / 4; pts.push([Math.cos(a) * d, Math.sin(a) * d / Math.cos(p.lat * Math.PI / 180)]); } });
+  const lats = pts.map(q => (p.lat + q[0]).toFixed(4)), lons = pts.map(q => (p.lon + q[1]).toFixed(4));
+  const marine = 'https://marine-api.open-meteo.com/v1/marine?latitude=' + lats.join(',') + '&longitude=' + lons.join(',')
+    + '&current=wave_height,wave_period,wave_direction,swell_wave_height,swell_wave_period,swell_wave_direction,wind_wave_height,wind_wave_period,wind_wave_direction,sea_surface_temperature&timezone=GMT';
+  const wx = 'https://api.open-meteo.com/v1/forecast?latitude=' + p.lat + '&longitude=' + p.lon
+    + '&current=temperature_2m,wind_speed_10m,wind_direction_10m&timezone=GMT';
+  const stamp = ++fetchPlace.n;
+  let m = null, w = null;
+  try {
+    const [a, b] = await Promise.all([fetch(marine), fetch(wx)]);
+    if (a.ok) m = await a.json();
+    if (b.ok) w = await b.json();
+  } catch (e) { console.warn('Blue Wave: place data unavailable', e); }
+  if (stamp !== fetchPlace.n) return; // a newer search replaced this one
+  if (m && m.error) m = null; // the service answered with an error
+  if (m && !Array.isArray(m)) m = [m];
+  p.error = !m;
+
+  let best = null;
+  (m || []).forEach((loc, i) => {
+    const c = loc && loc.current;
+    if (!c || c.wave_height == null) return;
+    const d = km(p.lat, p.lon, loc.latitude != null ? loc.latitude : +lats[i], loc.longitude != null ? loc.longitude : +lons[i]);
+    if (!best || d < best.d) best = { c, d };
+  });
+  const wc = w && w.current;
+  p.airTemp = wc && wc.temperature_2m != null ? wc.temperature_2m : null;
+  p.windKmh = wc && wc.wind_speed_10m != null ? wc.wind_speed_10m : 0;
+  const [waves, swell, wind, air] = p.voices;
+  p.noSea = !best && !p.error; p.distKm = best ? best.d : 0;
+  if (best) {
+    const c = best.c, sst = c.sea_surface_temperature != null ? c.sea_surface_temperature : (p.airTemp != null ? p.airTemp : 10);
+    p.seaTemp = c.sea_surface_temperature != null ? c.sea_surface_temperature : null;
+    [[waves, 'wave_height', 'wave_period', 'wave_direction'], [swell, 'swell_wave_height', 'swell_wave_period', 'swell_wave_direction'], [wind, 'wind_wave_height', 'wind_wave_period', 'wind_wave_direction']]
+      .forEach(([v, h, per, dir]) => {
+        v.tval = c[h] != null ? c[h] : 0; v.tlv = v.tval / PLACE_REF;
+        v.tper = c[per] != null ? c[per] : v.tper; v.tdir = c[dir] != null ? c[dir] : v.tdir; v.ttemp = sst;
+      });
+  } else {
+    p.seaTemp = null;
+    [waves, swell, wind].forEach(v => { v.tval = 0; v.tlv = 0; v.ttemp = p.airTemp != null ? p.airTemp : 10; });
+  }
+  air.tval = p.windKmh; air.tlv = p.windKmh / WIND_REF; air.tper = 8;
+  air.tdir = wc && wc.wind_direction_10m != null ? wc.wind_direction_10m : air.tdir;
+  air.ttemp = p.airTemp != null ? p.airTemp : (p.seaTemp != null ? p.seaTemp : 10);
+  p.live = !!(best || wc) && !p.error; p.loaded = true; p.updatedAt = new Date();
+  p.voices.forEach(rebuild); showFacts(); renderPanel();
+}
+fetchPlace.n = 0;
+
+// ---------- panel and facts ----------
+function showFacts() {
+  const el = $('live'), means = $('means');
+  if (mode === 'world') {
+    el.classList.toggle('offline', !worldLive);
+    el.textContent = worldLive ? `Live · ${world.length} seas · read ${hhmm(worldUpdated)} GMT` : 'Sample readings · live sea not reached';
+    const mw = world.reduce((a, s) => a + s.tval, 0) / world.length, mt = world.reduce((a, s) => a + s.ttemp, 0) / world.length;
+    means.textContent = `Mean wave ${mw.toFixed(1)} m · mean sea ${mt.toFixed(1)} °C`;
+  } else {
+    const p = place;
+    el.classList.toggle('offline', !p.live);
+    el.textContent = !p.loaded ? 'Loading the sea' : p.error ? 'Sea data not reached' : p.noSea ? 'No sea reading near here' : `Live · read ${hhmm(p.updatedAt)} GMT`;
+    const bits = [];
+    if (p.seaTemp != null) bits.push(`Sea ${p.seaTemp.toFixed(1)} °C`);
+    if (p.airTemp != null) bits.push(`Air ${p.airTemp.toFixed(1)} °C`);
+    means.textContent = bits.join(' · ') || ' ';
+  }
+}
+function row(dl, k, v) {
+  const dt = document.createElement('dt'), dd = document.createElement('dd');
+  dt.textContent = k; dd.textContent = v; dl.append(dt, dd);
+}
+function renderPanel() {
+  const dl = $('r-dl'); dl.textContent = '';
+  if (typeof renderScaleCaption === 'function') renderScaleCaption();
+  if (mode === 'world') {
+    const s = world[selected];
+    $('r-cap').textContent = `${coord(s.lat, s.lon)} · ${s.hits} in ${s.steps}`;
+    $('r-name').textContent = s.name; $('r-sub').textContent = '';
+    row(dl, 'Wave', fm(s.tval)); row(dl, 'Period', s.tper.toFixed(1) + ' s');
+    row(dl, 'From', dirName(s.tdir)); row(dl, 'Sea', fc(s.ttemp));
+    $('r-note').textContent = 'Tap a ring to read another sea.';
+  } else {
+    const p = place, [waves, swell, wind, air] = p.voices, na = '–';
+    $('r-cap').textContent = coord(p.lat, p.lon);
+    $('r-name').textContent = p.name; $('r-sub').textContent = p.sub;
+    const wv = (v) => p.noSea ? na : `${fm(v.tval)} · ${v.tper.toFixed(0)} s`;
+    row(dl, 'Waves', wv(waves)); row(dl, 'Swell', wv(swell)); row(dl, 'Wind sea', wv(wind));
+    row(dl, 'Sea', p.seaTemp != null ? fc(p.seaTemp) : na);
+    row(dl, 'Air', p.airTemp != null ? fc(p.airTemp) : na);
+    row(dl, 'Wind', `${fw(p.windKmh)} from ${dirName(air.tdir)}`);
+    $('r-note').textContent = !p.loaded ? 'Reading the sea…'
+      : p.error ? 'Could not reach the sea data. Check your connection, then pick the place again.'
+      : p.noSea ? 'No sea reading within about 15 km. Try a spot on the coast.'
+      : p.distKm > 1.5 ? `Sea reading taken ${Math.round(p.distKm)} km out from this spot.` : 'Sea reading taken right here.';
+  }
+}
+// ---------- scale picture: a person beside the wave, drawn to the same scale ----------
+const sc = $('scale'), scx = sc.getContext('2d');
+const PERSON = 1.75;
+function scaleVoice() { const s = voices[selected]; return !s || s.kind === 'air' ? voices[0] : s; }
+function compare(h) {
+  if (h < .15) return 'barely a ripple';
+  if (h < .35) return 'around your ankles';
+  if (h < .7) return 'up to your knees';
+  if (h < 1.1) return 'up to your waist';
+  if (h < 1.5) return 'up to your chest';
+  if (h < 1.95) return 'over your head';
+  return (h >= 4.4 ? 'taller than a double-decker bus, ' : '') + `about ${(h / PERSON).toFixed(1)} people tall`;
+}
+function renderScaleCaption() {
+  const s = scaleVoice(), cap = $('scale-cap'); cap.textContent = '';
+  if (mode === 'place' && (place.noSea || place.error)) { cap.textContent = place.error ? 'Sea data not reached.' : 'No sea reading near this spot.'; return; }
+  const b = document.createElement('b'); b.textContent = s.name;
+  cap.append(b, document.createTextNode(` · ${s.tval.toFixed(1)} m, ${compare(s.tval)}`));
+}
+function drawScale(now) {
+  const cw = sc.clientWidth, ch = sc.clientHeight; if (!cw || !ch) return;
+  if (sc.width !== Math.round(cw * DPR) || sc.height !== Math.round(ch * DPR)) { sc.width = Math.round(cw * DPR); sc.height = Math.round(ch * DPR); }
+  scx.setTransform(DPR, 0, 0, DPR, 0, 0); scx.clearRect(0, 0, cw, ch);
+  const s = scaleVoice(), h = Math.max(0, s.val);
+  const base = ch - 20, k = (base - 12) / Math.max(h * 1.1, 2.1), px = 26, wx0 = 58;
+  const FOAM = 'rgba(242,247,255,.92)', ACC = '#6aa2ff';
+  // sand under the person, still-water line under the waves
+  scx.lineCap = 'round'; scx.lineJoin = 'round';
+  scx.strokeStyle = 'rgba(242,247,255,.5)'; scx.lineWidth = 1.5;
+  scx.beginPath(); scx.moveTo(4, base); scx.lineTo(wx0 - 8, base); scx.stroke();
+  // the wave: its crest reaches exactly the measured height, and rolls in towards the person
+  const lam = Math.max(110, cw * .42), spd = lam / Math.max(4, s.per) * (reduce ? .2 : 1), t = now / 1000;
+  const prof = (x, shift) => Math.pow((Math.sin((x + t * spd + shift) / lam * 2 * Math.PI) + 1) / 2, 1.7);
+  const path = (shift) => { scx.beginPath(); for (let x = wx0; x <= cw - 6; x += 3) { const y = base - h * k * prof(x, shift); x === wx0 ? scx.moveTo(x, y) : scx.lineTo(x, y); } };
+  path(lam * .33); scx.strokeStyle = 'rgba(106,162,255,.35)'; scx.lineWidth = 1.2; scx.stroke();
+  path(0);
+  const grad = scx.createLinearGradient(0, base - h * k, 0, base); grad.addColorStop(0, 'rgba(106,162,255,.22)'); grad.addColorStop(1, 'rgba(106,162,255,.03)');
+  scx.save(); scx.lineTo(cw - 6, base); scx.lineTo(wx0, base); scx.closePath(); scx.fillStyle = grad; scx.fill(); scx.restore();
+  path(0); scx.strokeStyle = ACC; scx.lineWidth = 2; scx.stroke();
+  // height marker
+  const yH = Math.max(8, base - h * k);
+  scx.setLineDash([3, 4]); scx.strokeStyle = 'rgba(242,247,255,.5)'; scx.lineWidth = 1;
+  scx.beginPath(); scx.moveTo(px + 16, yH); scx.lineTo(cw - 6, yH); scx.stroke(); scx.setLineDash([]);
+  scx.font = '500 12px "JetBrains Mono", ui-monospace, monospace'; scx.textAlign = 'right'; scx.textBaseline = 'bottom';
+  scx.fillStyle = FOAM; scx.fillText(`${h.toFixed(1)} m`, cw - 6, yH - 4);
+  // the person, 1.75 m tall
+  scx.strokeStyle = FOAM; scx.lineWidth = 1.6;
+  const L = (x1, y1, x2, y2) => { scx.beginPath(); scx.moveTo(px + x1 * k, base - y1 * k); scx.lineTo(px + x2 * k, base - y2 * k); scx.stroke(); };
+  scx.beginPath(); scx.arc(px, base - 1.64 * k, .1 * k, 0, Math.PI * 2); scx.stroke();
+  L(0, 1.54, 0, .92); L(0, 1.4, -.27, .98); L(0, 1.4, .27, .98); L(0, .92, -.16, 0); L(0, .92, .16, 0);
+  scx.font = '400 11px "JetBrains Mono", ui-monospace, monospace'; scx.textAlign = 'left'; scx.textBaseline = 'top';
+  scx.fillStyle = 'rgba(206,222,255,.75)'; scx.fillText('you · 1.75 m', 4, base + 6);
+}
+function setMode(m) {
+  mode = m;
+  voices = m === 'world' ? world : place.voices;
+  selected = m === 'world' ? 1 : 0;
+  $('m-world').setAttribute('aria-pressed', m === 'world'); $('m-place').setAttribute('aria-pressed', m === 'place');
+  $('search').hidden = m !== 'place';
+  ripples.length = 0; ringOrder = order();
+  if (m === 'place' && !place.loaded) fetchPlace();
+  showFacts(); renderPanel();
+}
+$('m-world').addEventListener('click', () => setMode('world'));
+$('m-place').addEventListener('click', () => setMode('place'));
+
+// ---------- place search ----------
+const msg = (t) => { $('msg').textContent = t || ''; };
+function choose(lat, lon, name, sub) {
+  Object.assign(place, { lat, lon, name, sub, loaded: false, live: false, noSea: false, error: false });
+  try { localStorage.setItem('bluewave.place', JSON.stringify({ lat, lon, name, sub })); } catch (e) { /* ignore */ }
+  $('results').textContent = ''; $('q').value = ''; msg('');
+  showFacts(); renderPanel(); fetchPlace();
+}
+async function geocode(q) {
+  const res = await fetch('https://nominatim.openstreetmap.org/search?format=jsonv2&limit=5&q=' + encodeURIComponent(q));
+  if (!res.ok) throw new Error(res.status);
+  return res.json();
+}
+function split(display) {
+  const parts = String(display).split(', ');
+  return { name: parts[0], sub: parts.slice(1, 3).join(', ') + (parts.length > 3 ? ', ' + parts[parts.length - 1] : '') };
+}
+$('search').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const q = $('q').value.trim(); if (!q) return;
+  msg('Searching…'); $('results').textContent = '';
+  try {
+    const found = await geocode(q);
+    if (!found.length) { msg('Nothing found. Try a beach name and a town.'); return; }
+    msg('');
+    found.forEach(r => {
+      const li = document.createElement('li'), b = document.createElement('button'), sm = document.createElement('small');
+      const { name, sub } = split(r.display_name);
+      b.type = 'button'; b.append(document.createTextNode(name)); sm.textContent = sub; b.append(sm);
+      b.addEventListener('click', () => choose(+r.lat, +r.lon, name, sub));
+      li.append(b); $('results').append(li);
+    });
+  } catch (err) { msg('Search is not reachable right now.'); }
+});
+document.querySelectorAll('.chip[data-lat]').forEach(b =>
+  b.addEventListener('click', () => choose(+b.dataset.lat, +b.dataset.lon, b.dataset.name, b.dataset.sub)));
+$('here').addEventListener('click', () => {
+  if (!navigator.geolocation) { msg('This browser cannot share your location.'); return; }
+  msg('Finding you…');
+  navigator.geolocation.getCurrentPosition(async (pos) => {
+    const lat = pos.coords.latitude, lon = pos.coords.longitude;
+    let name = 'Your location', sub = '';
+    try {
+      const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=jsonv2&zoom=13&lat=${lat}&lon=${lon}`);
+      const j = await res.json(), a = j.address || {};
+      name = a.suburb || a.neighbourhood || a.village || a.town || a.city || name;
+      sub = [a.city || a.town || a.county, a.state || a.country].filter(x => x && x !== name).join(', ');
+    } catch (e) { /* keep the plain label */ }
+    choose(lat, lon, name, sub);
+  }, () => msg('Location was not shared. Search for a place instead.'), { timeout: 10000 });
+});
+
+// ---------- audio ----------
+let ctx = null, master, dryBus, delaySend, verbSend, oceanGain, oceanFilter, delayNode, playing = false;
+let tick = 0, nextTime = 0, timer = null;
+function impulse(seconds, decay) {
+  const len = Math.floor(ctx.sampleRate * seconds), buf = ctx.createBuffer(2, len, ctx.sampleRate);
+  for (let ch = 0; ch < 2; ch++) { const d = buf.getChannelData(ch); for (let i = 0; i < len; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / len, decay); }
+  return buf;
+}
+function initAudio() {
+  ctx = new (window.AudioContext || window.webkitAudioContext)();
+  master = ctx.createGain(); master.gain.value = $('vol').value / 100;
+  const comp = ctx.createDynamicsCompressor(); comp.threshold.value = -18; comp.ratio.value = 3;
+  master.connect(comp).connect(ctx.destination);
+  dryBus = ctx.createGain(); dryBus.gain.value = .8; dryBus.connect(master);
+  const verb = ctx.createConvolver(); verb.buffer = impulse(5.5, 2.6);
+  verbSend = ctx.createGain(); verbSend.gain.value = .55; verbSend.connect(verb).connect(master);
+  delayNode = ctx.createDelay(4); const fb = ctx.createGain(), dlf = ctx.createBiquadFilter();
+  dlf.type = 'lowpass'; dlf.frequency.value = 2400; fb.gain.value = .38;
+  delaySend = ctx.createGain(); delaySend.gain.value = .3;
+  delaySend.connect(delayNode); delayNode.connect(dlf).connect(fb).connect(delayNode); dlf.connect(verbSend); dlf.connect(master);
+  delayNode.delayTime.value = stepDur() * 3;
+  const len = ctx.sampleRate * 4, nb = ctx.createBuffer(2, len, ctx.sampleRate);
+  for (let ch = 0; ch < 2; ch++) { const d = nb.getChannelData(ch); let last = 0; for (let i = 0; i < len; i++) { last = (last + .02 * (Math.random() * 2 - 1)) / 1.02; d[i] = last * 3.2; } }
+  const src = ctx.createBufferSource(); src.buffer = nb; src.loop = true;
+  oceanFilter = ctx.createBiquadFilter(); oceanFilter.type = 'lowpass'; oceanFilter.frequency.value = 500; oceanFilter.Q.value = .4;
+  oceanGain = ctx.createGain(); oceanGain.gain.value = 0;
+  src.connect(oceanFilter).connect(oceanGain).connect(master); src.start();
+}
+function stepDur() { return 60 / Number($('tempo').value) / 2; }
+const mtof = (m) => 440 * Math.pow(2, (m - 69) / 12);
+function voice(s, t) {
+  const f = mtof(s.note), amp = .045 + clamp(s.lv, 0, 1) * .05;
+  const o1 = ctx.createOscillator(), o2 = ctx.createOscillator(), g2 = ctx.createGain(), env = ctx.createGain();
+  const pan = ctx.createStereoPanner ? ctx.createStereoPanner() : null;
+  o1.type = 'sine'; o1.frequency.value = f;
+  o2.type = s.kind === 'air' ? 'triangle' : 'sine'; o2.frequency.value = f * 2.001; g2.gain.value = .18;
+  const decay = 1.4 + clamp(s.per / 16, 0, 1) * 1.6;
+  env.gain.setValueAtTime(0, t); env.gain.linearRampToValueAtTime(amp, t + .006); env.gain.exponentialRampToValueAtTime(.0001, t + decay);
+  o1.connect(env); o2.connect(g2).connect(env);
+  let out = env; if (pan) { pan.pan.value = s.pan; env.connect(pan); out = pan; }
+  out.connect(dryBus); out.connect(verbSend); out.connect(delaySend);
+  o1.start(t); o2.start(t); o1.stop(t + decay + .05); o2.stop(t + decay + .05);
+}
+function schedule() {
+  const list = voices;
+  while (nextTime < ctx.currentTime + .12) {
+    const t = nextTime;
+    list.forEach((s, i) => {
+      const step = tick % s.steps;
+      if (s.pattern[(step + s.offset) % s.steps]) {
+        voice(s, t);
+        setTimeout(() => { if (voices === list) hitVisual(i, step); }, Math.max(0, (t - ctx.currentTime) * 1000));
+      }
+    });
+    tick++; nextTime += stepDur();
+  }
+}
+function ambient() { // the sea's overall size, used by the sound bed and the moving water
+  if (mode === 'place') { const w = place.voices[0]; return { h: w.val, p: w.per, e: clamp(w.lv * 1.2, 0, 1) }; }
+  return { h: world.reduce((a, s) => a + s.val, 0) / world.length, p: world.reduce((a, s) => a + s.per, 0) / world.length, e: clamp(world.reduce((a, s) => a + s.lv, 0) / world.length * 1.4, 0, 1) };
+}
+function updateOcean() {
+  if (!ctx) return;
+  const a = ambient(), level = Number($('ocean').value) / 100;
+  oceanGain.gain.setTargetAtTime(playing ? level * (.22 + a.e * .6) : 0, ctx.currentTime, .8);
+  const swell = .5 + .5 * Math.sin(ctx.currentTime * 2 * Math.PI / Math.max(4, a.p));
+  oceanFilter.frequency.setTargetAtTime(260 + swell * (500 + a.h * 300), ctx.currentTime, .3);
+}
+function togglePlay() {
+  if (!ctx) initAudio();
+  if (ctx.state === 'suspended') ctx.resume();
+  playing = !playing;
+  $('play').setAttribute('aria-pressed', playing); $('play').textContent = playing ? 'Stop' : 'Play';
+  if (playing) { tick = 0; nextTime = ctx.currentTime + .05; timer = setInterval(schedule, 25); } else clearInterval(timer);
+  updateOcean();
+}
+$('play').addEventListener('click', togglePlay);
+document.addEventListener('keydown', (e) => {
+  const t = e.target.tagName;
+  if (e.code === 'Space' && t !== 'BUTTON' && t !== 'INPUT') { e.preventDefault(); togglePlay(); }
+});
+function bindRange(id, fn) { const el = $(id), o = $(id + '-o'); el.addEventListener('input', () => { o.textContent = el.value; if (fn) fn(); }); }
+bindRange('tempo', () => { if (delayNode) delayNode.delayTime.value = stepDur() * 3; });
+bindRange('ocean', updateOcean);
+bindRange('vol', () => { if (master) master.gain.setTargetAtTime($('vol').value / 100, ctx.currentTime, .05); });
+
+// ---------- drawing ----------
+const sea = $('sea'), rings = $('rings');
+const sx = sea.getContext('2d'), rx = rings.getContext('2d');
+let W = 0, H = 0, DPR = 1;
+const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+function resize() {
+  DPR = Math.min(2, window.devicePixelRatio || 1); W = innerWidth; H = innerHeight;
+  [sea, rings].forEach(c => { c.width = W * DPR; c.height = H * DPR; });
+  sx.setTransform(DPR, 0, 0, DPR, 0, 0); rx.setTransform(DPR, 0, 0, DPR, 0, 0);
+}
+addEventListener('resize', resize); resize();
+
+function geom() {
+  const small = W < 760;
+  const cx = W / 2, cy = small ? H * .34 : H * .47;
+  const maxR = Math.min(W * (small ? .42 : .38), H * (small ? .17 : .35));
+  const minR = maxR * (mode === 'place' ? .36 : .2);
+  return { cx, cy, maxR, minR, small };
+}
+function order() {
+  const idx = voices.map((s, i) => i);
+  return mode === 'world' ? idx.sort((a, b) => voices[a].temp - voices[b].temp) : idx;
+}
+let ringOrder = order();
+function radiusOf(i, g) {
+  const n = voices.length, k = ringOrder.indexOf(i);
+  return n < 2 ? g.maxR : g.maxR - (g.maxR - g.minR) * (k / (n - 1));
+}
+function tempColor(t, a) {
+  const k = clamp((t + 2) / 32, 0, 1);
+  return `rgba(${Math.round(lerp(205, 80, k))},${Math.round(lerp(234, 120, k))},255,${a})`;
+}
+const ripples = [];
+function hitVisual(i, step) {
+  const s = voices[i]; if (!s) return;
+  s.flash = 1;
+  const g = geom(), r = radiusOf(i, g), a = step / s.steps * Math.PI * 2 - Math.PI / 2;
+  ripples.push({ x: g.cx + Math.cos(a) * r, y: g.cy + Math.sin(a) * r, t: 0, c: tempColor(s.temp, 1) });
+  if (ripples.length > 60) ripples.shift();
+}
+let manual = 0, lastCycle = 0;
+rings.addEventListener('pointerdown', (e) => {
+  const g = geom(), d = Math.hypot(e.clientX - g.cx, e.clientY - g.cy);
+  let best = -1, bd = 1e9;
+  voices.forEach((s, i) => { const dd = Math.abs(radiusOf(i, g) - d); if (dd < bd) { bd = dd; best = i; } });
+  if (best >= 0 && bd < 26) { selected = best; manual = performance.now(); renderPanel(); }
+});
+function pill(text, x, y, strong) {
+  rx.font = `500 13px "JetBrains Mono", ui-monospace, monospace`;
+  const w = rx.measureText(text).width + 18, h = 24;
+  rx.fillStyle = 'rgba(3,14,38,.9)'; rx.beginPath();
+  if (rx.roundRect) rx.roundRect(x - w / 2, y - h / 2, w, h, 12); else rx.rect(x - w / 2, y - h / 2, w, h);
+  rx.fill(); rx.strokeStyle = strong ? 'rgba(170,202,255,.55)' : 'rgba(170,202,255,.28)'; rx.lineWidth = 1; rx.stroke();
+  rx.fillStyle = '#f2f7ff'; rx.textAlign = 'center'; rx.textBaseline = 'middle'; rx.fillText(text, x, y + .5);
+}
+function labelFor(s) {
+  if (mode === 'world') return `${s.name}  ${s.val.toFixed(1)} m`;
+  return s.kind === 'air' ? `Air  ${s.temp.toFixed(0)} °C` : `${s.name}  ${s.val.toFixed(1)} m`;
+}
+
+let t0 = performance.now();
+function frame(now) {
+  const dt = Math.min(.05, (now - t0) / 1000); t0 = now;
+  const k = 1 - Math.pow(.2, dt);
+  [world, place.voices].forEach(list => list.forEach(s => {
+    s.val = lerp(s.val, s.tval, k); s.per = lerp(s.per, s.tper, k); s.temp = lerp(s.temp, s.ttemp, k); s.lv = lerp(s.lv, s.tlv, k);
+    s.flash = Math.max(0, s.flash - dt * 1.6);
+  }));
+  if (mode === 'world') {
+    ringOrder = order();
+    if (now - manual > 20000 && now - lastCycle > 7000) { selected = (selected + 1) % world.length; lastCycle = now; renderPanel(); }
+  }
+
+  // the water behind
+  const a = ambient(), speed = reduce ? .2 : 1;
+  const sky = sx.createLinearGradient(0, 0, 0, H);
+  sky.addColorStop(0, '#020b1f'); sky.addColorStop(.55, '#06183d'); sky.addColorStop(1, '#0d2e6e');
+  sx.fillStyle = sky; sx.fillRect(0, 0, W, H);
+  const time = now / 1000 * speed, layers = 7;
+  for (let L = 0; L < layers; L++) {
+    const depth = L / (layers - 1), base = H * (.66 + depth * .3);
+    const amp = (6 + a.h * 9) * (.5 + depth * .8), wl = W / (1.4 + L * .35);
+    const ph = time * (2 * Math.PI / Math.max(4, a.p)) * (1 + L * .12);
+    sx.beginPath();
+    for (let x = 0; x <= W + 8; x += 8) {
+      const y = base + Math.sin(x / wl * Math.PI * 2 + ph + L) * amp + Math.sin(x / (wl * .37) - ph * 1.7 + L * 2) * amp * .28;
+      x === 0 ? sx.moveTo(x, y) : sx.lineTo(x, y);
+    }
+    sx.lineTo(W, H); sx.lineTo(0, H); sx.closePath();
+    sx.fillStyle = `rgba(${Math.round(20 + depth * 20)},${Math.round(60 + depth * 40)},${Math.round(150 + depth * 70)},${.10 + depth * .06})`; sx.fill();
+    sx.strokeStyle = `rgba(190,215,255,${.05 + depth * .07})`; sx.lineWidth = 1; sx.stroke();
+  }
+
+  // the rings
+  rx.clearRect(0, 0, W, H);
+  const g = geom();
+  let frac = 0, curTick = 0;
+  if (playing && ctx) { const sd = stepDur(); frac = clamp((ctx.currentTime - (nextTime - sd)) / sd, 0, 1); curTick = tick - 1; }
+  voices.forEach((s, i) => {
+    const r = radiusOf(i, g), sel = i === selected;
+    rx.beginPath(); rx.arc(g.cx, g.cy, r, 0, Math.PI * 2);
+    rx.strokeStyle = tempColor(s.temp, sel ? .7 : .26 + s.flash * .35); rx.lineWidth = sel ? 1.6 : 1; rx.stroke();
+    const steps = s.steps;
+    for (let q = 0; q < steps; q++) {
+      const ang = q / steps * Math.PI * 2 - Math.PI / 2, x = g.cx + Math.cos(ang) * r, y = g.cy + Math.sin(ang) * r;
+      const hit = s.pattern[(q + s.offset) % steps];
+      rx.beginPath();
+      if (hit) {
+        const lit = playing && ((curTick % steps + steps) % steps) === q ? s.flash : 0;
+        rx.arc(x, y, (g.small ? 2.8 : 4) + lit * 3.5, 0, Math.PI * 2); rx.fillStyle = tempColor(s.temp, .85 + lit * .15); rx.fill();
+      } else { rx.arc(x, y, 1.3, 0, Math.PI * 2); rx.fillStyle = 'rgba(210,226,255,.4)'; rx.fill(); }
+    }
+    if (playing) {
+      const pos = (((curTick % steps) + steps) % steps + frac) / steps, ang = pos * Math.PI * 2 - Math.PI / 2;
+      rx.beginPath(); rx.arc(g.cx + Math.cos(ang) * r, g.cy + Math.sin(ang) * r, 1.8, 0, Math.PI * 2); rx.fillStyle = 'rgba(242,247,255,.95)'; rx.fill();
+    }
+  });
+  // labels sit just above each ring at twelve o'clock, clear of the dots
+  voices.forEach((s, i) => { if (mode === 'place' || i === selected) pill(labelFor(s), g.cx, g.cy - radiusOf(i, g) - 17, i === selected); });
+
+  for (let j = ripples.length - 1; j >= 0; j--) {
+    const p = ripples[j]; p.t += dt;
+    if (p.t > 1.8) { ripples.splice(j, 1); continue; }
+    const kk = p.t / 1.8;
+    rx.beginPath(); rx.arc(p.x, p.y, 4 + kk * 46, 0, Math.PI * 2);
+    rx.strokeStyle = p.c.replace(/,1\)$/, `,${(1 - kk) * .45})`); rx.lineWidth = 1; rx.stroke();
+  }
+  rx.beginPath(); rx.arc(g.cx, g.cy, 2.2, 0, Math.PI * 2); rx.fillStyle = 'rgba(106,162,255,.95)'; rx.fill();
+
+  drawScale(now);
+  updateOcean();
+  requestAnimationFrame(frame);
+}
+
+showFacts(); renderPanel();
+fetchWorld();
+setInterval(() => { fetchWorld(); if (place.loaded) fetchPlace(); }, REFRESH_MS);
+requestAnimationFrame(frame);
+})();
+</script>
+<script src="/rhythm-geometry/nav.js" defer></script>
+</body>
+</html>

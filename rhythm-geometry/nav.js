@@ -1,4 +1,4 @@
-/* One small menu for every Rhythm Geometry and No Fixed Address page.
+/* One small menu for every Rhythm Geometry, No Fixed Address and Blue Wave page.
    Add <script src="/rhythm-geometry/nav.js" defer></script> to a page and it appears. */
 (function () {
   if (window.__rgNav) return; window.__rgNav = 1;
@@ -12,7 +12,9 @@
     ['Play 3', '/rhythm-geometry/play3/', 'A melody that develops, with a voice'],
     ['No Fixed Address', null],
     ['The ledger of homes', '/no-fixed-address/', 'Homelessness counts as rings'],
-    ['The cuts', '/no-fixed-address/ledger/', 'The DOGE cuts as rings']
+    ['The cuts', '/no-fixed-address/ledger/', 'The DOGE cuts as rings'],
+    ['Blue Wave', null],
+    ['Blue Wave', '/blue-wave/', 'Live waves and sea temperature']
   ];
   var path = location.pathname.replace(/index\.html$/, '');
   var css = '.gnav{position:fixed;top:10px;left:50%;transform:translateX(-50%);z-index:2147483000;font:12px/1.4 "Source Code Pro",ui-monospace,Menlo,monospace;letter-spacing:.06em}' +
