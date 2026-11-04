@@ -4,6 +4,12 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Blue Wave</title>
+<meta name="description" content="Live wave height and sea temperature, anywhere in the world, played as a rhythm.">
+<meta property="og:title" content="Blue Wave">
+<meta property="og:description" content="Live wave height and sea temperature, anywhere in the world, played as a rhythm.">
+<meta property="og:type" content="website">
+<meta property="og:image" content="https://threecities.forrestjamesmusic.com/og.jpg">
+<meta name="twitter:card" content="summary_large_image">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@200;300;400;500&family=JetBrains+Mono:wght@400;500&display=swap">
@@ -108,7 +114,8 @@ input[type=search]::placeholder { color: var(--faint); }
 .chip { background: transparent; color: var(--foam); border: 1px solid var(--edge); border-radius: 999px; min-height: 32px; padding: 0 12px; font-size: 12px; white-space: nowrap; flex: none; }
 .chip:hover, .chip:focus-visible { border-color: var(--accent); }
 #results:empty, .msg:empty { display: none; }
-#results { list-style: none; margin: 10px 0 0; padding: 0; display: grid; gap: 2px; }
+#results { list-style: none; margin: 10px 0 0; padding: 0; display: grid; gap: 2px; max-height: 40vh; overflow: auto; scrollbar-width: thin; }
+.rhead { font-size: 11.5px; color: var(--faint); letter-spacing: .08em; text-transform: uppercase; padding: 2px 10px 6px; }
 .sug { display: grid; gap: 2px; margin-top: 8px; }
 .sug:empty { display: none; }
 #results button, .sug button { width: 100%; text-align: left; font: 400 13px var(--display); color: var(--foam); background: transparent; border: 0; border-radius: 8px; padding: 9px 10px; cursor: pointer; line-height: 1.35; }
@@ -117,6 +124,19 @@ input[type=search]::placeholder { color: var(--faint); }
 #results small, .sug small { display: block; color: var(--faint); font: 400 12px var(--mono); }
 .msg { margin-top: 10px; font-size: 12.5px; color: var(--mist); }
 
+.btns { display: flex; align-items: center; gap: 8px; }
+.mini-btn { font: 500 12px var(--mono); letter-spacing: .06em; color: var(--foam); background: transparent; border: 1px solid var(--edge); border-radius: 999px; padding: 0 14px; min-height: 40px; cursor: pointer; }
+.mini-btn:hover, .mini-btn[aria-expanded="true"] { border-color: var(--accent); }
+.pop { position: fixed; z-index: 4; left: 50%; transform: translateX(-50%); bottom: calc(env(safe-area-inset-bottom, 0px) + 118px); width: min(560px, calc(100% - 32px)); max-height: calc(100% - 150px); overflow: auto;
+  background: var(--glass); border: 1px solid var(--edge); border-radius: 16px; backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); padding: 16px 20px; font: 400 13px var(--mono); color: var(--mist); }
+.pop[hidden] { display: none; }
+.pgrid { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 12px 18px; margin-top: 10px; align-items: end; }
+.pgrid > label { display: flex; flex-direction: column; gap: 4px; font: 400 11.5px var(--mono); letter-spacing: .08em; text-transform: uppercase; color: var(--mist); }
+.pgrid > label.chk { flex-direction: row; align-items: center; gap: 8px; text-transform: none; letter-spacing: 0; color: var(--foam); font-size: 12.5px; }
+.pgrid input[type=checkbox] { width: 18px; height: 18px; accent-color: var(--accent); }
+.pop select { font: 400 13px var(--mono); color: var(--foam); background: var(--field); border: 1px solid var(--edge); border-radius: 10px; padding: 9px 10px; min-height: 40px; text-transform: none; letter-spacing: 0; }
+.pop input[type=range] { width: 100%; }
+.pop .go { padding: 0 16px; }
 .bar { width: max-content; position: fixed; z-index: 3; left: 50%; transform: translateX(-50%); bottom: calc(env(safe-area-inset-bottom, 0px) + 40px); display: flex; align-items: center; gap: 26px; flex-wrap: wrap; justify-content: center; max-width: calc(100% - 32px); background: var(--glass); border: 1px solid var(--edge); border-radius: 999px; backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); padding: 10px 26px 10px 10px; }
 .play { font: 500 13px var(--mono); letter-spacing: .1em; text-transform: uppercase; color: var(--abyss); background: var(--accent); border: 0; border-radius: 999px; padding: 13px 24px; cursor: pointer; min-width: 104px; }
 .play[aria-pressed="true"] { background: var(--foam); }
@@ -143,7 +163,8 @@ input[type=range]::-moz-range-thumb { width: 14px; height: 14px; border-radius: 
   dl { margin-top: 8px; gap: 6px 14px; }
   #scale { height: 120px; } #gauges { height: 70px; }
   .bar { width: auto; left: 16px; right: 16px; transform: none; max-width: none; gap: 10px 14px; border-radius: 22px; padding: 10px 14px; bottom: calc(env(safe-area-inset-bottom, 0px) + 34px); }
-  .play { width: 100%; padding: 11px 0; }
+  .btns { width: 100%; } .play { flex: 1; padding: 11px 0; } .mini-btn { min-height: 40px; }
+  .pop { bottom: calc(env(safe-area-inset-bottom, 0px) + 200px); }
   .ctl { flex: 1; min-width: 0; }
   input[type=range] { width: 100%; }
   .credit { font-size: 10px; }
@@ -213,12 +234,42 @@ input[type=range]::-moz-range-thumb { width: 14px; height: 14px; border-radius: 
 </aside>
 
 <div class="bar" role="group" aria-label="Controls">
-  <button class="play" id="play" aria-pressed="false">Play</button>
+  <div class="btns"><button class="play" id="play" aria-pressed="false">Play</button><button class="mini-btn" id="b-music" type="button" aria-expanded="false" aria-controls="p-music">Music</button><button class="mini-btn" id="b-midi" type="button" aria-expanded="false" aria-controls="p-midi">MIDI</button></div>
   <div class="ctl"><label for="tempo">Tempo <output id="tempo-o">60</output></label><input id="tempo" type="range" min="40" max="100" value="60"></div>
   <div class="ctl"><label for="drift">Drift <output id="drift-o">35</output></label><input id="drift" type="range" min="0" max="100" value="35"></div>
   <div class="ctl"><label for="ocean">Ocean <output id="ocean-o">40</output></label><input id="ocean" type="range" min="0" max="100" value="40"></div>
   <div class="ctl"><label for="vol">Level <output id="vol-o">70</output></label><input id="vol" type="range" min="0" max="100" value="70"></div>
 </div>
+
+<section class="pop" id="p-music" role="region" aria-label="Music" hidden>
+  <div class="cap">Music</div>
+  <div class="pgrid">
+    <label>Key<select id="m-key"></select></label>
+    <label>Scale<select id="m-scale"></select></label>
+    <label>Shift key<select id="m-shift"><option value="0">Off</option><option value="8">Every 8 bars</option><option value="16">Every 16 bars</option><option value="32">Every 32 bars</option></select></label>
+    <div class="ctl"><label for="m-chord">Chords <output id="m-chord-o">40</output></label><input id="m-chord" type="range" min="0" max="100" value="40"></div>
+    <div class="ctl"><label for="m-mel">Melody <output id="m-mel-o">35</output></label><input id="m-mel" type="range" min="0" max="100" value="35"></div>
+    <div class="ctl"><label for="m-drone">Drone <output id="m-drone-o">50</output></label><input id="m-drone" type="range" min="0" max="100" value="50"></div>
+  </div>
+  <p class="note" id="m-line"></p>
+  <p class="note">On Auto, every place gets its own key, scale, chords and sound, picked from where it is and how warm its sea is. Wave height sets how many hits, wave period sets the steps, temperature sets the pitch. The chord changes every four bars. Shift key moves everything up a tone and comes round again after six moves.</p>
+</section>
+<section class="pop" id="p-midi" role="region" aria-label="MIDI out" hidden>
+  <div class="cap">MIDI out</div>
+  <p class="note" id="midist">Send the rings, chord and melody to your studio. Needs Chrome or Edge.</p>
+  <div class="pgrid">
+    <label class="chk"><input type="checkbox" id="midion"> Send MIDI</label>
+    <label>Output<select id="midiout" aria-label="MIDI output"></select></label>
+    <label>Rings channel<select id="midich1"></select></label>
+    <label>Chord channel<select id="midich2"></select></label>
+    <label>Sea controllers channel<select id="midich3"></select></label>
+    <label>Melody channel<select id="midich4"></select></label>
+    <label class="chk"><input type="checkbox" id="midiclock" checked> Send tempo (MIDI clock)</label>
+    <label class="chk"><input type="checkbox" id="midimute"> Mute browser sound</label>
+  </div>
+  <button class="go" id="miditest" type="button" style="margin-top:10px">Test controllers</button>
+  <p class="note">Every ring hit is a note. The chord is held for four bars. Four controllers follow the sea: wave energy on CC 74, wind on CC 12, wave period on CC 91, sea warmth on CC 93. Tempo goes out as MIDI clock, with start and stop, and follows the Tempo slider. In Ableton, switch on Sync for the port and press Ext.</p>
+</section>
 
 <div class="credit">Sea and weather: <a href="https://open-meteo.com/" target="_blank" rel="noopener">Open-Meteo</a> (DWD, ECMWF, Météo-France), CC BY 4.0 · Places: <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a></div>
 
@@ -278,8 +329,34 @@ function euclid(k, n) {
   for (let i = 0; i < n; i++) out.push(Math.floor((i + 1) * k / n) - Math.floor(i * k / n) === 1);
   return out;
 }
-const PENTA = [0, 2, 4, 7, 9];
-function noteFor(temp) { const idx = Math.round(clamp((temp + 2) / 32, 0, 1) * 14); return 50 + Math.floor(idx / 5) * 12 + PENTA[idx % 5]; }
+// ---------- key, scale and the sound of each place ----------
+const KEYS = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
+const SCALES = [['minor pentatonic', [0, 3, 5, 7, 10]], ['major pentatonic', [0, 2, 4, 7, 9]], ['dorian', [0, 2, 3, 5, 7, 9, 10]], ['natural minor', [0, 2, 3, 5, 7, 8, 10]], ['major', [0, 2, 4, 5, 7, 9, 11]], ['lydian', [0, 2, 4, 6, 7, 9, 11]], ['phrygian', [0, 1, 3, 5, 7, 8, 10]], ['whole tone', [0, 2, 4, 6, 8, 10]], ['mixolydian', [0, 2, 4, 5, 7, 9, 10]], ['harmonic minor', [0, 2, 3, 5, 7, 8, 11]], ['blues', [0, 3, 5, 6, 7, 10]], ['suspended pentatonic', [0, 2, 5, 7, 10]], ['yo (Japanese folk)', [0, 2, 5, 7, 9]], ['kumoi', [0, 2, 3, 7, 9]], ['major hexatonic', [0, 2, 4, 7, 9, 11]], ['minor hexatonic', [0, 2, 3, 5, 7, 10]], ['ryukyu (Okinawan)', [0, 4, 5, 7, 11]], ['harmonic major', [0, 2, 4, 5, 7, 8, 11]], ['melodic minor', [0, 2, 3, 5, 7, 9, 11]], ['dorian #4', [0, 2, 3, 6, 7, 9, 10]], ['phrygian dominant', [0, 1, 4, 5, 7, 8, 10]], ['lydian dominant', [0, 2, 4, 6, 7, 9, 10]], ['hirajoshi', [0, 2, 3, 7, 8]], ['in-sen', [0, 1, 5, 7, 10]], ['iwato', [0, 1, 5, 6, 10]], ['pelog selisir', [0, 1, 3, 7, 8]], ['pelog tembung', [0, 1, 5, 7, 8]], ['bhairav', [0, 1, 4, 5, 7, 8, 11]]];
+const scaleIx = (name) => SCALES.findIndex(x => x[0] === name);
+const GROUPS = [['dorian', 'natural minor', 'phrygian', 'minor pentatonic', 'harmonic minor', 'hirajoshi'],        // cold seas
+  ['major pentatonic', 'mixolydian', 'dorian', 'major hexatonic', 'suspended pentatonic', 'kumoi'],                // mild
+  ['lydian', 'major', 'yo (Japanese folk)', 'lydian dominant', 'ryukyu (Okinawan)', 'major pentatonic']];         // warm
+const PROGS = [[0, 5, 3, 4], [0, 3, 4, 3], [0, 4, 5, 3], [5, 3, 0, 4], [0, 2, 3, 4], [0, 6, 5, 4]];            // scale degrees, one chord per four bars
+const PPAT = [[0, 1, 2, 3, 2, 1], [0, 2, 1, 3], [0, 0, 1, 0, 2, 1], [3, 2, 1, 0], [0, 1, 0, 2, 1, 3, 2, 4]];   // melody contours over the chord notes
+// each timbre: partials as [ratio, level, wave, decay multiplier], an attack, and an optional low-pass
+const TIMBRES = [
+  { n: 'glass', p: [[1, 1, 'sine', 1], [2.001, .18, 'sine', .6]], a: .006 },
+  { n: 'bell', p: [[1, 1, 'sine', 1], [2.76, .34, 'sine', .5], [5.4, .14, 'sine', .25]], a: .004 },
+  { n: 'pluck', p: [[1, 1, 'triangle', .4], [2, .22, 'sine', .25]], a: .003 },
+  { n: 'marimba', p: [[1, 1, 'sine', .45], [4, .26, 'sine', .14]], a: .003 },
+  { n: 'organ', p: [[1, .8, 'sine', 1.3], [2, .4, 'sine', 1.3], [3, .18, 'sine', 1.3]], a: .035 },
+  { n: 'reed', p: [[1, .3, 'square', .8], [1.004, .3, 'sawtooth', .8]], a: .02, lp: 1700 },
+];
+let ROOT = 2, SC = [0, 2, 4, 7, 9], SHIFT = 0, CH = { seed: 0, prog: 0, contour: 0, tim: 0, mel: 1, wet: 1, key: 2, sc: 1, auto: true, grp: 1 };
+let musicKey = '', shiftBars = 0;
+function hash(str) { let h = 2166136261; for (let i = 0; i < str.length; i++) { h ^= str.charCodeAt(i); h = Math.imul(h, 16777619); } return h >>> 0; }
+function degPitch(d) { const n = SC.length; return 48 + ROOT + SHIFT + 12 * Math.floor(d / n) + SC[((d % n) + n) % n]; }
+function noteFor(temp) { const n = SC.length, deg = Math.round(clamp((temp + 2) / 32, 0, 1) * (n * 3 - 1)); return degPitch(deg); }
+function chordMidis(i) {
+  const n = SC.length, r = PROGS[CH.prog % PROGS.length][i % 4] % n, st = [0, 2, 4, n >= 7 ? 6 : n + 1];
+  return st.map(k => degPitch(r + k)).map(m => m > 71 ? m - 12 : m);
+}
+const timbreOfVoice = (s, i) => TIMBRES[mode === 'place' ? (CH.tim + (i || 0) * 2) % TIMBRES.length : hash(s.name) % TIMBRES.length];
 function rebuild(s) {
   const steps = Math.round(clamp(s.tper, 5, 16)), maxHits = Math.max(1, Math.floor(steps / 2));
   const hits = s.tlv < .02 ? 0 : clamp(1 + Math.round(clamp(s.tlv, 0, 1) * (maxHits - 1)), 1, maxHits);
@@ -643,20 +720,21 @@ function shareURL() {
     return u.toString() + `?lat=${place.lat.toFixed(4)}&lon=${place.lon.toFixed(4)}&name=${enc(place.name)}` + (place.sub ? `&sub=${enc(place.sub)}` : '');
   } catch (e) { return ''; }
 }
-function syncUrl() { try { const u = shareURL(); if (u) history.replaceState(null, '', u); } catch (e) { /* some browsers refuse on local files */ } }
+const titleLine = () => mode === 'place' ? `Blue Wave · ${place.name}${place.sub ? ', ' + place.sub : ''}` : 'Blue Wave · the sea around the world';
+function syncUrl() { document.title = titleLine(); try { const u = shareURL(); if (u) history.replaceState(null, '', u); } catch (e) { /* some browsers refuse on local files */ } }
 function shareLine() {
-  return mode === 'place' ? `Here's the sea at ${place.name} right now, played as a rhythm. Try your own beach.` : `Here's the sea around the world right now, played as a rhythm.`;
+  return mode === 'place' ? `Here's the sea at ${place.name}${place.sub ? ', ' + place.sub : ''} right now, played as a rhythm. Try your own beach.` : `Here's the sea around the world right now, played as a rhythm.`;
 }
 $('share').addEventListener('click', () => {
   const btn = $('share'), url = shareURL(); if (!url) return;
   const line = shareLine(), label = btn.lastChild, done = (m) => { label.textContent = m; clearTimeout(btn._t); btn._t = setTimeout(() => { label.textContent = 'Share'; }, 2000); };
-  if (navigator.share && matchMedia('(pointer: coarse)').matches) { navigator.share({ title: 'Blue Wave · Forrest James', text: line, url }).catch(() => {}); return; }
+  if (navigator.share && matchMedia('(pointer: coarse)').matches) { navigator.share({ title: titleLine(), text: line, url }).catch(() => {}); return; }
   const oldSchool = () => { const t = document.createElement('textarea'); t.value = url; t.style.position = 'fixed'; t.style.opacity = '0'; document.body.appendChild(t); t.select(); let ok = false; try { ok = document.execCommand('copy'); } catch (e) { /* ignore */ } t.remove(); done(ok ? 'Link copied' : 'Could not copy'); };
   // two versions on the clipboard: mail and docs paste the sentence with the link, the address bar gets the clean link
   const esc = (x) => x.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
-  const html = `<p>${esc(line)}</p><p><a href="${esc(url)}">${esc(url)}</a></p>`;
+  const html = `<p><b>${esc(titleLine())}</b></p><p>${esc(line)}</p><p><a href="${esc(url)}">${esc(url)}</a></p>`;
   if (navigator.clipboard && navigator.clipboard.write && window.ClipboardItem) {
-    navigator.clipboard.write([new ClipboardItem({ 'text/plain': new Blob([url], { type: 'text/plain' }), 'text/html': new Blob([html], { type: 'text/html' }) })])
+    navigator.clipboard.write([new ClipboardItem({ 'text/plain': new Blob([titleLine() + '\n' + url], { type: 'text/plain' }), 'text/html': new Blob([html], { type: 'text/html' }) })])
       .then(() => done('Link copied'), () => navigator.clipboard.writeText ? navigator.clipboard.writeText(url).then(() => done('Link copied'), oldSchool) : oldSchool());
   } else if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(url).then(() => done('Link copied'), oldSchool);
   else oldSchool();
@@ -671,7 +749,7 @@ function choose(lat, lon, name, sub) {
   showFacts(); renderPanel(); renderSurf(); fetchPlace(); syncUrl();
 }
 async function geocode(q) {
-  const res = await fetch('https://nominatim.openstreetmap.org/search?format=jsonv2&limit=5&q=' + encodeURIComponent(q));
+  const res = await fetch('https://nominatim.openstreetmap.org/search?format=jsonv2&limit=5&addressdetails=1&q=' + encodeURIComponent(q));
   if (!res.ok) throw new Error(res.status);
   return res.json();
 }
@@ -687,6 +765,8 @@ $('search').addEventListener('submit', async (e) => {
     const found = await geocode(q);
     if (!found.length) { msg('Nothing found. Try a beach name and a town.'); return; }
     msg('');
+    const top = found[0];
+    if (top.addresstype === 'country' && top.address && top.address.country_code) { countryBeaches(top); return; }
     found.forEach(r => {
       const li = document.createElement('li'), b = document.createElement('button'), sm = document.createElement('small');
       const { name, sub } = split(r.display_name);
@@ -696,6 +776,33 @@ $('search').addEventListener('submit', async (e) => {
     });
   } catch (err) { msg('Search is not reachable right now.'); }
 });
+// A country: its beaches, busiest first, the top 20. The beaches come from OpenStreetMap, the wave height from the nearest sea reading.
+let countryRun = 0;
+async function countryBeaches(c) {
+  const run = ++countryRun, cc = c.address.country_code, nm = c.name || c.address.country;
+  msg(`Finding beaches in ${nm}…`);
+  try {
+    const one = async (q) => { const r = await fetch(`https://nominatim.openstreetmap.org/search?format=jsonv2&limit=40&countrycodes=${cc}&q=${encodeURIComponent(q)}`); return r.ok ? r.json() : []; };
+    const lists = await Promise.all([one('beach'), one('surf beach')]), seen = [], all = [];
+    lists.flat().forEach(r => { if (!(r.category === 'natural' && r.type === 'beach') && !/beach|praia|playa|plage|strand/i.test(r.display_name.split(',')[0])) return;
+      const la = +r.lat, lo = +r.lon; if (seen.some(x => Math.abs(x[0] - la) < .02 && Math.abs(x[1] - lo) < .02)) return; seen.push([la, lo]); all.push({ la, lo, r }); });
+    if (run !== countryRun) return;
+    if (!all.length) { msg(`No named beaches found in ${nm}. Try a beach name and a town.`); return; }
+    const pts = all.slice(0, 40), url = `https://marine-api.open-meteo.com/v1/marine?latitude=${pts.map(p => p.la.toFixed(3)).join(',')}&longitude=${pts.map(p => p.lo.toFixed(3)).join(',')}&current=wave_height,wave_period&cell_selection=nearest`;
+    const res = await fetch(url); let j = res.ok ? await res.json() : []; if (!Array.isArray(j)) j = [j];
+    pts.forEach((p, i) => { const cur = j[i] && j[i].current; p.h = cur && cur.wave_height != null ? cur.wave_height : null; p.per = cur && cur.wave_period != null ? cur.wave_period : null; });
+    if (run !== countryRun) return;
+    const ranked = pts.filter(p => p.h != null).sort((a, b) => b.h - a.h), list = (ranked.length >= 3 ? ranked : pts).slice(0, 20);
+    msg(''); const ul = $('results'); ul.textContent = '';
+    const head = document.createElement('li'); head.className = 'rhead'; head.textContent = ranked.length >= 3 ? `Most active beaches in ${nm}, top ${list.length}` : `Beaches in ${nm}`; ul.append(head);
+    list.forEach((p, i) => {
+      const li = document.createElement('li'), b = document.createElement('button'), sm = document.createElement('small'), { name, sub } = split(p.r.display_name);
+      b.type = 'button'; b.append(document.createTextNode(`${ranked.length >= 3 ? (i + 1) + '. ' : ''}${name}`));
+      sm.textContent = (p.h != null ? `${p.h.toFixed(1)} m${p.per != null ? ' · ' + Math.round(p.per) + ' s' : ''} · ` : '') + sub; b.append(sm);
+      b.addEventListener('click', () => choose(p.la, p.lo, name, sub)); li.append(b); ul.append(li);
+    });
+  } catch (err) { msg('Could not list the beaches right now.'); }
+}
 document.querySelectorAll('.chip[data-lat]').forEach(b => b.addEventListener('click', () => choose(+b.dataset.lat, +b.dataset.lon, b.dataset.name, b.dataset.sub)));
 $('here').addEventListener('click', () => {
   if (!navigator.geolocation) { msg('This browser cannot share your location.'); return; }
@@ -739,34 +846,91 @@ function initAudio() {
   const src = ctx.createBufferSource(); src.buffer = nb; src.loop = true;
   oceanFilter = ctx.createBiquadFilter(); oceanFilter.type = 'lowpass'; oceanFilter.frequency.value = 500; oceanFilter.Q.value = .4;
   oceanGain = ctx.createGain(); oceanGain.gain.value = 0;
-  src.connect(oceanFilter).connect(oceanGain).connect(master); src.start();
+  src.connect(oceanFilter).connect(oceanGain).connect(master); src.start(); applyMaster();
 }
 function stepDur() { return 60 / Number($('tempo').value) / 2; }
 const mtof = (m) => 440 * Math.pow(2, (m - 69) / 12);
+// A note, made from a timbre. Used by the rings, the melody and the chord pad.
+function play(m, t, o) {
+  const tm = o.tim, f = mtof(m), amp = o.amp, dec = o.dec;
+  const env = ctx.createGain(), pan = ctx.createStereoPanner ? ctx.createStereoPanner() : null, oscs = [];
+  const top = Math.max(...tm.p.map(q => q[3])) * dec;
+  env.gain.setValueAtTime(0, t); env.gain.linearRampToValueAtTime(amp, t + tm.a); env.gain.exponentialRampToValueAtTime(.0001, t + top);
+  let head = env;
+  if (tm.lp) { const lp = ctx.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = tm.lp; env.connect(lp); head = lp; }
+  tm.p.forEach(([r, lv, wave, dm]) => {
+    const os = ctx.createOscillator(), g = ctx.createGain(); os.type = wave; os.frequency.value = f * r; g.gain.setValueAtTime(lv, t);
+    g.gain.exponentialRampToValueAtTime(.001, t + Math.max(.1, dm * dec)); os.connect(g).connect(env); os.start(t); os.stop(t + top + .05); oscs.push(os);
+  });
+  let out = head; if (pan) { pan.pan.value = o.pan || 0; head.connect(pan); out = pan; }
+  const wet = ctx.createGain(); wet.gain.value = o.wet == null ? 1 : o.wet; out.connect(dryBus); out.connect(wet).connect(verbSend); out.connect(delaySend);
+}
 function voice(s, t) {
-  const f = mtof(s.note), amp = .045 + clamp(s.lv, 0, 1) * .05;
-  const o1 = ctx.createOscillator(), o2 = ctx.createOscillator(), g2 = ctx.createGain(), env = ctx.createGain();
-  const pan = ctx.createStereoPanner ? ctx.createStereoPanner() : null;
-  o1.type = 'sine'; o1.frequency.value = f;
-  o2.type = s.kind === 'air' ? 'triangle' : 'sine'; o2.frequency.value = f * 2.001; g2.gain.value = .18;
-  const decay = 1.4 + clamp(s.per / 16, 0, 1) * 1.6;
-  env.gain.setValueAtTime(0, t); env.gain.linearRampToValueAtTime(amp, t + .006); env.gain.exponentialRampToValueAtTime(.0001, t + decay);
-  o1.connect(env); o2.connect(g2).connect(env);
-  let out = env; if (pan) { pan.pan.value = s.pan; env.connect(pan); out = pan; }
-  out.connect(dryBus); out.connect(verbSend); out.connect(delaySend);
-  o1.start(t); o2.start(t); o1.stop(t + decay + .05); o2.stop(t + decay + .05);
+  const i = voices.indexOf(s), amp = .045 + clamp(s.lv, 0, 1) * .05, dec = 1.4 + clamp(s.per / 16, 0, 1) * 1.6;
+  play(s.note, t, { tim: s.kind === 'air' ? TIMBRES[0] : timbreOfVoice(s, i), amp, dec, pan: s.pan, wet: CH.wet });
+  midiNote(MIDI.c1, s.note, Math.round(50 + clamp(s.lv, 0, 1) * 60), t, stepDur() * 1.6);
+}
+// chord pad: four soft voices held for four bars, then the next chord
+let padNodes = [], chordNow = [];
+function chordPad(m, t, dur) {
+  const lv = Number($('m-chord').value) / 100; if (lv <= 0) return;
+  m.forEach((n, i) => {
+    [-4, 4].forEach(dt => { const o = ctx.createOscillator(), g = ctx.createGain(), lp = ctx.createBiquadFilter(); o.type = 'triangle'; o.frequency.value = mtof(n); o.detune.value = dt + (i - 1.5) * 2;
+      lp.type = 'lowpass'; lp.frequency.value = 700 + CH.wet * 400; const a = .018 * lv;
+      g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(a, t + Math.min(2, dur * .3)); g.gain.setValueAtTime(a, t + dur - .2); g.gain.linearRampToValueAtTime(0, t + dur + 2.4);
+      o.connect(lp).connect(g); g.connect(dryBus); g.connect(verbSend); o.start(t); o.stop(t + dur + 2.5); });
+  });
+}
+// drone: the key note and its fifth, low and steady. It gets louder as the sea does.
+let drone = null;
+function startDrone() {
+  if (drone || !ctx) return; const out = ctx.createGain(), lp = ctx.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 420; out.gain.value = 0; out.connect(lp).connect(master);
+  const root = 36 + ROOT + SHIFT, oscs = [[root, 'sine', 1], [root + 7, 'sine', .5], [root + 12, 'triangle', .22]].map(([m, w, l]) => { const o = ctx.createOscillator(), g = ctx.createGain(); o.type = w; o.frequency.value = mtof(m); g.gain.value = l; o.connect(g).connect(out); o.start(); return { o, off: m - root }; });
+  drone = { out, oscs }; droneLevel();
+}
+function stopDrone() { if (!drone) return; const d = drone; drone = null; d.out.gain.setTargetAtTime(0, ctx.currentTime, .4); setTimeout(() => d.oscs.forEach(x => { try { x.o.stop(); } catch (e) {} }), 2500); }
+function droneLevel() { if (!drone) return; const e = seaState().e, lv = Number($('m-drone').value) / 100; drone.out.gain.setTargetAtTime(playing ? lv * (.02 + e * .05) : 0, ctx.currentTime, .6); }
+function droneTune() { if (!drone) return; const root = 36 + ROOT + SHIFT; drone.oscs.forEach(x => x.o.frequency.setTargetAtTime(mtof(root + x.off), ctx.currentTime, 1.5)); }
+let mi = 0;
+function melodyStep(t) {
+  const dens = Number($('m-mel').value) / 100; if (dens <= 0) return;
+  const e = seaState().e, p = dens * (.3 + .7 * e); if (Math.random() > p * .8) return;
+  const pat = PPAT[CH.contour % PPAT.length], idx = pat[mi++ % pat.length], tones = chordNow.length ? chordNow : chordMidis(0), m = tones[idx % tones.length] + 12;
+  play(m, t, { tim: TIMBRES[CH.mel % TIMBRES.length], amp: .05 * (.6 + dens * .6), dec: 1.8, pan: (Math.random() - .5) * .8, wet: CH.wet * 1.1 });
+  midiNote(MIDI.c4, m, 70 + Math.round(Math.random() * 25), t, stepDur() * 3);
 }
 function schedule() {
   const list = voices;
   while (nextTime < ctx.currentTime + .12) {
-    const t = nextTime;
+    const t = nextTime, sd = stepDur();
+    if (MIDI.on && MIDI.clock) for (let k = 0; k < 12; k++) midiSend([0xF8], t + k * sd / 12);
+    if (tick % 8 === 0) { // a new bar
+      const bar = tick / 8;
+      if (shiftBars > 0 && bar > 0 && bar % shiftBars === 0) { SHIFT = (SHIFT + 2) % 12; musicSync(); }
+      if (bar % 4 === 0) { const ch = chordMidis(bar / 4); chordNow = ch; chordPad(ch, t, sd * 32); midiChord(ch, t, sd * 32); }
+    }
+    if (tick % 2 === 0) melodyStep(t);
     list.forEach((s, i) => {
       const step = tick % s.steps;
       if (step === 0 && tick > 0) driftLap(s);
       if (s.pattern[(step + s.offset) % s.steps]) { voice(s, t); setTimeout(() => { if (voices === list) hitVisual(i, step); }, Math.max(0, (t - ctx.currentTime) * 1000)); }
     });
-    tick++; nextTime += stepDur();
+    tick++; nextTime += sd;
   }
+}
+// The key, scale and character of the place. Auto gives every place its own, from where it is and how warm its sea is.
+function musicSync() {
+  const inPlace = mode === 'place' && place.loaded, t = inPlace ? (place.seaTemp != null ? place.seaTemp : place.airTemp != null ? place.airTemp : 12) : 14, grp = t < 9 ? 0 : t < 19 ? 1 : 2;
+  const kv = $('m-key').value, sv = $('m-scale').value;
+  const k = [inPlace ? place.lat.toFixed(2) + ',' + place.lon.toFixed(2) : 'world', grp, kv, sv, SHIFT].join('|'); if (k === musicKey) return; musicKey = k;
+  const seed = inPlace ? hash(place.lat.toFixed(2) + ',' + place.lon.toFixed(2)) : 0, g = GROUPS[grp];
+  const aKey = inPlace ? seed % 12 : 2, aScale = inPlace ? scaleIx(g[(seed >>> 4) % g.length]) : scaleIx('major pentatonic');
+  const key = kv === 'auto' ? aKey : +kv, sc = sv === 'auto' ? aScale : +sv;
+  ROOT = key; SC = SCALES[sc][1];
+  CH = { seed, prog: inPlace ? (seed >>> 8) % PROGS.length : 0, contour: inPlace ? (seed >>> 12) % PPAT.length : 0, tim: inPlace ? (seed >>> 16) % TIMBRES.length : 0, mel: inPlace ? ((seed >>> 16) + 2) % TIMBRES.length : 1,
+    wet: inPlace ? .6 + ((seed >>> 20) % 8) / 10 : 1, key, sc, auto: kv === 'auto' || sv === 'auto', grp };
+  world.forEach(rebuild); place.voices.forEach(rebuild); droneTune(); MIDI.last = -1;
+  $('m-line').textContent = `${KEYS[key]} ${SCALES[sc][0]}: ${SC.map(iv => KEYS[(key + iv) % 12]).join(' ')}` + (inPlace ? ` · sounds like ${TIMBRES[CH.tim].n} and ${TIMBRES[CH.mel % TIMBRES.length].n}` : '');
 }
 // Drift, like Rhythm Geometry: at the start of each lap, each hit may slide one step forward into an empty step.
 // The hits and steps stay the same. At 0 the pattern settles back to the plain Euclidean ring.
@@ -788,7 +952,7 @@ function seaState() {
   return { h, swell: h * .75, chop: h * .3, per: world.reduce((a, s) => a + s.per, 0) / n, wind: 14, e: clamp(world.reduce((a, s) => a + s.lv, 0) / n * 1.4, 0, 1), still: false };
 }
 function updateOcean() {
-  if (!ctx) return;
+  if (!ctx) return; droneLevel();
   const a = seaState(), level = Number($('ocean').value) / 100;
   oceanGain.gain.setTargetAtTime(playing ? level * (.22 + a.e * .6) : 0, ctx.currentTime, .8);
   const swell = .5 + .5 * Math.sin(ctx.currentTime * 2 * Math.PI / Math.max(4, a.per));
@@ -799,8 +963,9 @@ function togglePlay() {
   if (ctx.state === 'suspended') ctx.resume();
   playing = !playing;
   $('play').setAttribute('aria-pressed', playing); $('play').textContent = playing ? 'Stop' : 'Play';
-  if (playing) { tick = 0; nextTime = ctx.currentTime + .05; timer = setInterval(schedule, 25); } else clearInterval(timer);
-  updateOcean();
+  if (playing) { tick = 0; mi = 0; chordNow = []; nextTime = ctx.currentTime + .05; musicSync(); startDrone(); if (MIDI.on && MIDI.clock) midiSend([0xFA]); timer = setInterval(schedule, 25); }
+  else { clearInterval(timer); stopDrone(); if (MIDI.on) { if (MIDI.clock) midiSend([0xFC]); midiAllOff(); } }
+  droneLevel(); updateOcean();
 }
 $('play').addEventListener('click', togglePlay);
 document.addEventListener('keydown', (e) => { const t = e.target.tagName; if (e.code === 'Space' && t !== 'BUTTON' && t !== 'INPUT') { e.preventDefault(); togglePlay(); } });
@@ -808,7 +973,82 @@ function bindRange(id, fn) { const el = $(id), o = $(id + '-o'); el.addEventList
 bindRange('tempo', () => { if (delayNode) delayNode.delayTime.value = stepDur() * 3; });
 bindRange('ocean', updateOcean);
 bindRange('drift');
-bindRange('vol', () => { if (master) master.gain.setTargetAtTime($('vol').value / 100, ctx.currentTime, .05); });
+bindRange('vol', () => applyMaster());
+
+// ---------- MIDI out: rings, chord, melody and four sea controllers ----------
+const MIDI = { clock: true, acc: null, out: null, on: false, c1: 0, c2: 1, c3: 2, c4: 3, held: [], last: -1, cc: {}, mute: false };
+const MCC = { filter: 74, delay: 12, hall: 91, flange: 93 }; // wave energy, wind, wave period, sea warmth
+const lsGet = (k, d) => { try { const v = localStorage.getItem(k); return v === null ? d : v; } catch (e) { return d; } };
+const lsSet = (k, v) => { try { localStorage.setItem(k, v); } catch (e) {} };
+function midiSend(bytes, whenAudio) {
+  if (!MIDI.on || !MIDI.out) return;
+  try { MIDI.out.send(bytes, performance.now() + (whenAudio && ctx ? Math.max(0, (whenAudio - ctx.currentTime) * 1000) : 0)); } catch (e) {}
+}
+function midiNote(ch, n, v, t, len) { if (!MIDI.on || !MIDI.out) return; n = clamp(Math.round(n), 0, 127); midiSend([0x90 | ch, n, clamp(v, 1, 127)], t); midiSend([0x80 | ch, n, 0], t + len); }
+function midiChord(notes, t, len) {
+  if (!MIDI.on || !MIDI.out) return;
+  MIDI.held.forEach(n => midiSend([0x80 | MIDI.c2, n, 0], t)); notes.forEach(n => midiSend([0x90 | MIDI.c2, n, 72], t)); MIDI.held = notes.slice();
+}
+function midiAllOff() {
+  if (MIDI.out) { try { [MIDI.c1, MIDI.c2, MIDI.c4].forEach(ch => { MIDI.out.send([0xB0 | ch, 123, 0]); MIDI.out.send([0xB0 | ch, 64, 0]); }); MIDI.held.forEach(n => MIDI.out.send([0x80 | MIDI.c2, n, 0])); } catch (e) {} }
+  MIDI.held = [];
+}
+function midiCC() { // the sea, as four controllers
+  if (!MIDI.on || !MIDI.out) return; const a = seaState(), vals = { filter: a.e, delay: clamp(a.wind / 50, 0, 1), hall: clamp(a.per / 16, 0, 1), flange: mode === 'place' && place.seaTemp != null ? clamp(place.seaTemp / 30, 0, 1) : .5 };
+  for (const k in MCC) { const v = clamp(Math.round(vals[k] * 127), 0, 127); if (MIDI.cc[k] !== v) { MIDI.cc[k] = v; midiSend([0xB0 | MIDI.c3, MCC[k], v]); } }
+}
+setInterval(midiCC, 250);
+function applyMaster() { if (master) master.gain.setTargetAtTime(MIDI.mute ? 0 : $('vol').value / 100, ctx.currentTime, .05); }
+const mEl = { st: $('midist'), on: $('midion'), out: $('midiout') };
+for (let i = 1; i <= 16; i++) ['midich1', 'midich2', 'midich3', 'midich4'].forEach(id => $(id).add(new Option('Channel ' + i, i - 1)));
+[['c1', 'midich1', 0], ['c2', 'midich2', 1], ['c3', 'midich3', 2], ['c4', 'midich4', 3]].forEach(([k, id, d]) => {
+  MIDI[k] = clamp(+lsGet('bw-midi-' + k, d) || 0, 0, 15); $(id).value = MIDI[k];
+  $(id).addEventListener('change', () => { midiAllOff(); MIDI[k] = +$(id).value; lsSet('bw-midi-' + k, MIDI[k]); midiStatus(); });
+});
+MIDI.mute = lsGet('bw-midi-mute', '0') === '1'; $('midimute').checked = MIDI.mute;
+function midiFill() {
+  const cur = lsGet('bw-midi-out', ''); let found = false; mEl.out.innerHTML = '';
+  if (MIDI.acc) MIDI.acc.outputs.forEach(o => { mEl.out.add(new Option(o.name, o.id)); if (o.id === cur) found = true; });
+  if (!mEl.out.options.length) { mEl.out.add(new Option('No outputs found', '')); MIDI.out = null; return; }
+  mEl.out.value = found ? cur : mEl.out.options[0].value; MIDI.out = MIDI.acc.outputs.get(mEl.out.value) || null;
+}
+function midiStatus() {
+  mEl.st.textContent = !MIDI.acc ? 'Allow MIDI access when the browser asks.' : !MIDI.out ? 'No MIDI output found. Connect a device or turn on a virtual port (IAC on Mac, loopMIDI on Windows).'
+    : MIDI.on ? `Sending to ${MIDI.out.name}. Rings on channel ${MIDI.c1 + 1}, chord ${MIDI.c2 + 1}, sea controllers ${MIDI.c3 + 1}, melody ${MIDI.c4 + 1}.` : 'Ready. Tick Send MIDI to start.';
+}
+function midiConnect() {
+  if (MIDI.acc) { midiFill(); midiStatus(); return; }
+  if (!navigator.requestMIDIAccess) { mEl.st.textContent = 'This browser has no Web MIDI. Use Chrome or Edge on a computer.'; mEl.on.disabled = true; return; }
+  navigator.requestMIDIAccess().then(a => { MIDI.acc = a; a.onstatechange = () => { midiFill(); midiStatus(); }; midiFill(); midiStatus(); },
+    () => { mEl.st.textContent = "MIDI access was blocked. Allow it in the browser's site settings, then try again."; });
+}
+mEl.on.addEventListener('change', () => { MIDI.on = mEl.on.checked; lsSet('bw-midi-on', MIDI.on ? '1' : '0'); if (!MIDI.on) midiAllOff(); else { MIDI.cc = {}; midiCC(); if (playing && MIDI.clock) midiSend([0xFA]); } midiStatus(); });
+mEl.out.addEventListener('change', () => { midiAllOff(); lsSet('bw-midi-out', mEl.out.value); MIDI.out = MIDI.acc ? MIDI.acc.outputs.get(mEl.out.value) || null : null; midiStatus(); });
+MIDI.clock = lsGet('bw-midi-clock', '1') === '1'; $('midiclock').checked = MIDI.clock;
+$('midiclock').addEventListener('change', () => { if (MIDI.clock && playing) midiSend([0xFC]); MIDI.clock = $('midiclock').checked; lsSet('bw-midi-clock', MIDI.clock ? '1' : '0'); if (MIDI.clock && playing) midiSend([0xFA]); });
+$('midimute').addEventListener('change', () => { MIDI.mute = $('midimute').checked; lsSet('bw-midi-mute', MIDI.mute ? '1' : '0'); applyMaster(); });
+$('miditest').addEventListener('click', () => { // sweeps each controller so a DAW's map mode can find it
+  const keys = Object.keys(MCC); let step = 0; if (!MIDI.out) { midiConnect(); return; }
+  const tm = setInterval(() => { const k = keys[Math.floor(step / 40) % keys.length], ph = step % 40, v = Math.round(127 * (ph < 20 ? ph / 19 : (39 - ph) / 19));
+    midiSend([0xB0 | MIDI.c3, MCC[k], v]); if (++step >= 40 * keys.length) { clearInterval(tm); MIDI.cc = {}; midiCC(); } }, 50);
+});
+if (lsGet('bw-midi-on', '0') === '1') { $('midion').checked = true; MIDI.on = true; midiConnect(); }
+
+// ---------- the Music and MIDI panels ----------
+KEYS.forEach((k, i) => $('m-key').add(new Option(k, i))); $('m-key').insertBefore(new Option('Auto, from the place', 'auto'), $('m-key').firstChild);
+SCALES.forEach((x, i) => $('m-scale').add(new Option(x[0], i))); $('m-scale').insertBefore(new Option('Auto, from the place', 'auto'), $('m-scale').firstChild);
+[['m-key', 'bw-key', 'auto'], ['m-scale', 'bw-scale', 'auto'], ['m-shift', 'bw-shift', '0'], ['m-chord', 'bw-chord', '40'], ['m-mel', 'bw-mel', '35'], ['m-drone', 'bw-drone', '50']].forEach(([id, key, d]) => {
+  const el = $(id); const v = lsGet(key, d); el.value = v; if (el.value !== v) el.value = d; const o = $(id + '-o'); if (o) o.textContent = el.value;
+  el.addEventListener('input', () => { if (o) o.textContent = el.value; lsSet(key, el.value); if (id === 'm-shift') { shiftBars = +el.value; SHIFT = 0; } if (id === 'm-drone') droneLevel(); musicSync(); });
+  el.addEventListener('change', () => { lsSet(key, el.value); if (id === 'm-shift') { shiftBars = +el.value; SHIFT = 0; } musicSync(); });
+});
+shiftBars = +$('m-shift').value;
+function openPanel(id) {
+  ['music', 'midi'].forEach(p => { const el = $('p-' + p), btn = $('b-' + p), open = p === id && el.hidden; el.hidden = !open; btn.setAttribute('aria-expanded', open); });
+  if (id === 'midi' && !$('p-midi').hidden) midiConnect();
+}
+$('b-music').addEventListener('click', () => openPanel('music')); $('b-midi').addEventListener('click', () => openPanel('midi'));
+document.addEventListener('keydown', (e) => { if (e.key === 'Escape') openPanel(null); });
 
 // ---------- drawing helpers ----------
 const sea = $('sea'), rings = $('rings');
@@ -1185,7 +1425,7 @@ function frame(now) {
   }
   rx.beginPath(); rx.arc(g.cx, g.cy, 2.2, 0, Math.PI * 2); rx.fillStyle = 'rgba(106,162,255,.95)'; rx.fill();
 
-  drawMini(now); drawGauges(now); drawScale(now); if (mode === 'place') drawTide(now);
+  musicSync(); drawMini(now); drawGauges(now); drawScale(now); if (mode === 'place') drawTide(now);
   updateOcean();
   requestAnimationFrame(frame);
 }
