@@ -1118,10 +1118,19 @@ async function countryBeaches(c) {
   const run = ++countryRun, cc = c.address.country_code, nm = c.name || c.address.country;
   msg(`Finding beaches in ${nm}…`);
   try {
-    const one = async (q) => { const r = await fetch(`https://nominatim.openstreetmap.org/search?format=jsonv2&limit=40&countrycodes=${cc}&q=${encodeURIComponent(q)}`); return r.ok ? r.json() : []; };
-    const lists = await Promise.all([one('beach'), one('surf beach')]), seen = [], all = [];
-    lists.flat().forEach(r => { if (!(r.category === 'natural' && r.type === 'beach') && !/beach|praia|playa|plage|strand/i.test(r.display_name.split(',')[0])) return;
-      const la = +r.lat, lo = +r.lon; if (seen.some(x => Math.abs(x[0] - la) < .02 && Math.abs(x[1] - lo) < .02)) return; seen.push([la, lo]); all.push({ la, lo, r }); });
+    const seen = [], all = [], add = (la, lo, r) => { if (!isFinite(la) || !isFinite(lo) || seen.some(x => Math.abs(x[0] - la) < .04 && Math.abs(x[1] - lo) < .04)) return; seen.push([la, lo]); all.push({ la, lo, r }); };
+    // 1. OpenStreetMap's own beach list for the country (named beaches only). Works for Denmark's "Strand", Spain's "Playa" and so on.
+    try {
+      const q = `[out:json][timeout:20];area["ISO3166-1"="${cc.toUpperCase()}"]->.a;nwr["natural"="beach"]["name"](area.a);out center 150;`;
+      const r = await fetch('https://overpass-api.de/api/interpreter', { method: 'POST', body: 'data=' + encodeURIComponent(q), headers: { 'Content-Type': 'application/x-www-form-urlencoded' } });
+      if (r.ok) { const j = await r.json(); (j.elements || []).sort(() => Math.random() - .5).forEach(e => { const la = e.lat != null ? e.lat : e.center && e.center.lat, lo = e.lon != null ? e.lon : e.center && e.center.lon; add(la, lo, { display_name: e.tags.name + ', ' + nm }); }); }
+    } catch (e) {}
+    // 2. If that fails, fall back to a name search.
+    if (all.length < 3) {
+      const one = async (q) => { const r = await fetch(`https://nominatim.openstreetmap.org/search?format=jsonv2&limit=40&countrycodes=${cc}&q=${encodeURIComponent(q)}`); return r.ok ? r.json() : []; };
+      const lists = await Promise.all([one('beach'), one('strand'), one('playa')]).catch(() => []);
+      lists.flat().forEach(r => { if (!(r.category === 'natural' && r.type === 'beach') && !/beach|praia|playa|plage|strand/i.test(r.display_name.split(',')[0])) return; add(+r.lat, +r.lon, r); });
+    }
     if (run !== countryRun) return;
     if (!all.length) { msg(`No named beaches found in ${nm}. Try a beach name and a town.`); return; }
     const pts = all.slice(0, 40), url = `https://marine-api.open-meteo.com/v1/marine?latitude=${pts.map(p => p.la.toFixed(3)).join(',')}&longitude=${pts.map(p => p.lo.toFixed(3)).join(',')}&current=wave_height,wave_period&cell_selection=nearest`;
