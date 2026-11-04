@@ -97,6 +97,20 @@ dd { margin: 0; text-align: right; color: var(--foam); font-size: 13px; overflow
 .mh, .dockdots { display: none; }
 .kicker { margin: 6px 0 0; font: 400 14px/1.4 var(--display); letter-spacing: .02em; color: var(--foam); max-width: 34ch; text-shadow: 0 1px 10px rgba(3,14,38,.6); }
 .go.wide { width: 100%; margin-top: 12px; }
+/* Headline card: one real result from the night, tied to the beach on show. Firsts get a small glowing dot. */
+:root { --spark: #ffd98a; }
+.news { margin-top: 14px; width: min(330px, 100%); padding: 11px 14px 11px 16px; border: 1px solid var(--edge); border-radius: 16px; background: var(--glass); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); text-shadow: none; font-family: var(--mono); }
+.nt { display: flex; align-items: center; gap: 9px; font: 500 10.5px/1.3 var(--mono); letter-spacing: .08em; text-transform: uppercase; color: var(--faint); min-width: 0; }
+.nt .tx { flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.nd { flex: none; width: 8px; height: 8px; border-radius: 50%; border: 1.5px solid var(--accent); }
+.news[data-k="first"] .nd { background: var(--spark); border-color: var(--spark); box-shadow: 0 0 0 3px rgba(255, 217, 138, .16), 0 0 12px 2px rgba(255, 217, 138, .65); animation: spark 2.8s ease-in-out infinite; }
+.news[data-k="first"] .nt { color: var(--spark); }
+@keyframes spark { 50% { box-shadow: 0 0 0 5px rgba(255, 217, 138, .1), 0 0 18px 4px rgba(255, 217, 138, .85); } }
+.nb { animation: newsin .5s ease both; }
+@keyframes newsin { from { opacity: 0; transform: translateY(4px); } }
+.nh { margin: 6px 0 0; font: 400 15.5px/1.3 var(--display); color: var(--foam); display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 3; overflow: hidden; min-height: 3.9em; }
+.ns { margin-top: 6px; font: 400 10px/1.3 var(--mono); letter-spacing: .04em; color: var(--faint); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+@media (prefers-reduced-motion: reduce) { .nb, .news[data-k="first"] .nd { animation: none; } }
 #gauges { height: 78px; margin-top: 4px; }
 #scale { height: 168px; margin-top: 4px; }
 #tide { height: 64px; margin-top: 4px; }
@@ -171,6 +185,11 @@ input[type=range]::-moz-range-thumb { width: 14px; height: 14px; border-radius: 
   #means { display: none; }
   .seg { display: flex; position: static; margin: 8px 0 0; width: 100%; }
   .seg button { flex: 1; padding: 6px 4px; min-height: 34px; font-size: 12px; letter-spacing: .03em; }
+  .news { margin-top: 8px; width: 100%; padding: 8px 12px 8px 14px; border-radius: 14px; }
+  .nh { font-size: 13.5px; -webkit-line-clamp: 2; min-height: 2.6em; margin-top: 4px; }
+  .ns { display: none; margin-top: 4px; }
+  @media (min-height: 880px) { .ns { display: block; } }
+  @media (max-height: 780px) { .kicker { display: none; } .facts { margin-top: 8px; } }
   .panel { top: auto; width: auto; left: 12px; right: 12px; bottom: calc(var(--dockb, 150px) + 24px); height: 200px; max-height: none; padding: 0; display: flex; overflow-x: auto; overflow-y: hidden; scroll-snap-type: x mandatory; scrollbar-width: none; overscroll-behavior-x: contain; }
   .panel::-webkit-scrollbar { display: none; }
   .left { display: contents; }
@@ -221,6 +240,10 @@ input[type=range]::-moz-range-thumb { width: 14px; height: 14px; border-radius: 
     <button id="m-world" aria-pressed="false">World</button>
     <button id="m-place" aria-pressed="false">Place</button>
   </div>
+  <section class="news" id="news" aria-label="Headline from election night" hidden data-k="">
+    <div class="nb" id="nb"><div class="nt"><i class="nd" aria-hidden="true"></i><span class="tx" id="n-tag"></span></div>
+    <p class="nh" id="n-head"></p><div class="ns" id="n-src"></div></div>
+  </section>
 </div>
 
 <div class="left" id="left" hidden>
@@ -763,6 +786,50 @@ function showFacts() {
     means.textContent = bits.join(' · ') || ' ';
   }
 }
+// ---------- headlines: results from 3 November 2026, each checked against at least two outlets or a named AP call ----------
+// k: first | flip | upset. r: race. t: the line. s: where it was reported. A state with no line of its own shows a story from elsewhere, labelled with its state.
+const APL = 'AP call, via local press';
+const NEWS_STATE = {
+  'Maine': [{ k: 'flip', r: 'Senate', t: 'Troy Jackson flips Maine\'s Senate seat.', s: APL }],
+  'New Hampshire': [{ k: 'first', r: 'Senate', t: 'Chris Pappas is the first openly gay man elected to the Senate.', s: 'Washington Blade, ABC, PBS' }],
+  'North Carolina': [{ k: 'flip', r: 'Senate', t: 'Roy Cooper flips North Carolina\'s Senate seat.', s: APL }],
+  'South Carolina': [{ k: 'flip', r: 'Senate', t: 'Annie Andrews beats Darline Graham and flips South Carolina\'s Senate seat.', s: APL }],
+  'Georgia': [{ k: 'first', r: 'Governor', t: 'Keisha Lance Bottoms becomes the first Black woman governor in US history.', s: 'NBC, ABC' }],
+  'Texas': [{ k: 'first', r: 'Governor', t: 'Gina Hinojosa ousts Greg Abbott. Texas gets its first Latina governor.', s: 'NBC, Time, US News' },
+            { k: 'flip', r: 'Senate', t: 'James Talarico beats Ken Paxton and flips a Texas Senate seat.', s: APL }],
+  'California': [{ k: 'flip', r: 'House', t: 'Mike McGuire flips California\'s 1st District. Xavier Becerra wins the governor\'s race.', s: APL }],
+  'New York': [{ k: 'flip', r: 'House', t: 'Cait Conley flips New York\'s 17th District. Kathy Hochul wins again.', s: APL }],
+  'New Jersey': [{ k: 'flip', r: 'House', t: 'Rebecca Bennett flips New Jersey\'s 7th District. Cory Booker wins again.', s: APL }],
+};
+const NEWS_NATIONAL = [
+  { st: 'Minnesota', k: 'first', r: 'Senate', t: 'Peggy Flanagan is the first Native American woman elected to the Senate.', s: 'MPR, Star Tribune, PBS' },
+  { st: 'New Mexico', k: 'first', r: 'Governor', t: 'Deb Haaland wins New Mexico and becomes the first Native American woman governor.', s: 'AP call, Source NM, ABC' },
+  { st: 'Michigan', k: 'first', r: 'Senate', t: 'Abdul El-Sayed beats Mike Rogers and becomes the first Muslim senator.', s: 'NPR, The Hill, Al Jazeera' },
+  { st: 'Michigan', k: 'first', r: 'House', t: 'Jeremy Moss is Michigan\'s first openly LGBTQ+ member of Congress.', s: 'The Hill, Advocate, Out' },
+  { st: 'Ohio', k: 'upset', r: 'Senate', t: 'Sherrod Brown beats Jon Husted in the Ohio Senate race.', s: 'NPR, AP, Washington Post' },
+  { st: 'Kansas', k: 'upset', r: 'Senate', t: 'Adam Hamilton is the first Democratic senator from Kansas in nearly a century.', s: 'NPR, Rolling Stone' },
+];
+const BLUE_STATES = new Set(BLUE_BEACHES.map(b => b[8]));
+let newsKey = '', newsTick = 0, newsPool = Math.floor(Math.random() * NEWS_NATIONAL.length), newsList = [];
+function newsState() {
+  if (mode === 'world') { if (world !== BLUE) return null; const s = world[selected]; return s && s.blat ? s.sub : null; }
+  if (place.cc !== 'us' || !place.sub) return null;
+  return place.sub.split(',').map(x => x.trim()).find(x => BLUE_STATES.has(x)) || null;
+}
+function updateNews(cycle) {
+  const card = $('news'), st0 = newsState(), st = st0 && (mode === 'world' || NEWS_STATE[st0]) ? st0 : null, key = mode + '|' + (mode === 'world' ? world[selected] && world[selected].name : place.name) + '|' + st;
+  const was = card.hidden;
+  if (!st) { card.hidden = true; newsKey = key; if (!was) setTimeout(resize, 0); return; }
+  if (key !== newsKey) { newsKey = key; newsTick = 0; newsList = NEWS_STATE[st] || []; if (!newsList.length) newsPool++; }
+  else if (!cycle && !was) return;
+  const it = newsList.length ? newsList[newsTick % newsList.length] : NEWS_NATIONAL[newsPool % NEWS_NATIONAL.length];
+  const nb = $('nb'); nb.style.animation = 'none'; void nb.offsetWidth; nb.style.animation = '';
+  card.dataset.k = it.k; card.hidden = false;
+  $('n-tag').textContent = `${{ first: 'A first', flip: 'A flip', upset: 'An upset' }[it.k]} · ${it.st || st} · ${it.r}`;
+  $('n-head').textContent = it.t; $('n-src').textContent = 'Reported by ' + it.s;
+  if (was) setTimeout(resize, 0);
+}
+setInterval(() => { if (newsList.length > 1 && !$('news').hidden) { newsTick++; updateNews(true); } }, 9000);
 function scaleVoice() { const s = voices[selected]; return !s || s.kind === 'air' ? voices[0] : s; }
 function renderPanel() {
   const dl = $('r-dl'); dl.textContent = '';
@@ -794,6 +861,7 @@ function renderPanel() {
   if (mode === 'place' && (place.noSea || place.error)) cap.textContent = place.error ? 'Sea data not reached.' : 'No sea reading near this spot.';
   else { const b = document.createElement('b'); b.textContent = sv.name; cap.append(b, document.createTextNode(` · ${sv.tval.toFixed(1)} m, ${compare(sv.tval)}`)); }
   $('gauges').setAttribute('aria-label', 'Quick scan: ' + tiles().map(t => `${t.l} ${t.v}`).join(', '));
+  updateNews();
 }
 function setMode(m, set) {
   mode = m; if (set) { world = set === 'blue' ? BLUE : OCEANS; musicKey = ''; }
@@ -866,7 +934,7 @@ async function findCountry(lat, lon) {
   try {
     const r = await fetch(`https://nominatim.openstreetmap.org/reverse?format=jsonv2&zoom=3&lat=${lat}&lon=${lon}`); if (!r.ok) return;
     const j = await r.json(), cc = j && j.address && j.address.country_code;
-    if (run === ccRun && cc && /^[a-z]{2}$/.test(cc)) { place.cc = cc; if (mode === 'place') setFlag(cc); }
+    if (run === ccRun && cc && /^[a-z]{2}$/.test(cc)) { place.cc = cc; if (mode === 'place') { setFlag(cc); updateNews(); } }
   } catch (e) { /* no flag then */ }
 }
 $('r-flag').addEventListener('error', () => { $('r-flag').hidden = true; });
@@ -1696,7 +1764,9 @@ function frame(now) {
       rx.beginPath(); rx.arc(g.cx + Math.cos(ang) * r, g.cy + Math.sin(ang) * r, 1.8, 0, Math.PI * 2); rx.fillStyle = 'rgba(242,247,255,.95)'; rx.fill(); }
     rx.globalAlpha = 1;
   });
-  voices.forEach((s, i) => { if (mode === 'place' || i === selected) pill(labelFor(s), g.cx, g.cy - radiusOf(i, g) - 18, i === selected, iconFor(s, now / 1000)); });
+  // every ring gets its label in Place view, unless the rings are so close that the labels would pile up: then only the one you picked is named
+  const rr = voices.map((s, i) => radiusOf(i, g)).sort((a, b) => b - a), crowded = rr.some((r, k) => k && rr[k - 1] - r < 27);
+  voices.forEach((s, i) => { if ((mode === 'place' && !crowded) || i === selected) pill(labelFor(s), g.cx, g.cy - radiusOf(i, g) - 18, i === selected, iconFor(s, now / 1000)); });
   for (let j = wakes.length - 1; j >= 0; j--) { const w = wakes[j]; w.t = Math.max(0, w.t + dt); if (w.t > 1.6) { wakes.splice(j, 1); continue; }
     const kk = w.t / 1.6; rx.lineWidth = 1; [1, .62].forEach((m, q) => { rx.beginPath(); rx.arc(w.x, w.y, 3 + Math.max(0, w.t) * 120 * m, 0, Math.PI * 2); rx.strokeStyle = `rgba(232,242,255,${(1 - kk) * (q ? .14 : .26)})`; rx.stroke(); }); }
   voices.forEach((s, i) => { const r = radiusOf(i, g); let tt = 0; wakes.forEach(w => { const near = 1 - Math.abs(Math.hypot(w.x - g.cx, w.y - g.cy) - r) / 60; if (near > 0) tt = Math.max(tt, near * (1 - w.t / 1.6)); }); s.touch = Math.max((s.touch || 0) * Math.pow(.15, dt), tt); });
