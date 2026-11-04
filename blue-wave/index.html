@@ -1973,12 +1973,14 @@ function order() {
 let ringOrder = order();
 function radiusOf(i, g) { const n = voices.length, s = voices[i], k = s && s.rk != null ? s.rk : ringOrder.indexOf(i) / Math.max(1, n - 1); return n < 2 ? g.maxR : g.maxR - (g.maxR - g.minR) * k; }
 const ripples = [];
-const drips = [];   // every struck dot lets a drop fall into the sea
+const drips = [];
+const tagsNow = [];   // beach names that pop up beside a struck dot, phone only   // every struck dot lets a drop fall into the sea
 let flagCv = null, flagPulse = 0;   // the flag's ripple: a pulse that every hit adds to
 function hitVisual(i, step) {
   const s = voices[i]; if (!s) return; s.flash = 1; flagPulse = Math.min(1, flagPulse + .35);
   const g = geom(), r = radiusOf(i, g), a = step / s.steps * Math.PI * 2 - Math.PI / 2;
   ripples.push({ x: g.cx + Math.cos(a) * r, y: g.cy + Math.sin(a) * r, t: 0, c: tempColor(s.temp, 1) }); if (ripples.length > 60) ripples.shift();
+  if (W < 760 && mode !== 'place' && playing && i !== selected) { tagsNow.push({ nm: String(s.name).toUpperCase().slice(0, 21) + ' ' + s.val.toFixed(1) + 'M', x: g.cx + Math.cos(a) * r, y: g.cy + Math.sin(a) * r, t: 0 }); if (tagsNow.length > 2) tagsNow.shift(); }
   if (!reduce && Math.random() < .15) { const dx = g.cx + Math.cos(a) * r, dy = g.cy + Math.sin(a) * r; drips.push({ x: dx, y: dy, vy: 30 + Math.random() * 50, ty: Math.min(H - 24, Math.max(dy + 36, H * (.66 + Math.random() * .26))), c: tempColor(s.temp, 1), t: 0, hit: false }); if (drips.length > 48) drips.shift(); }
 }
 let manual = 0, lastCycle = 0;
@@ -2120,11 +2122,13 @@ function frame(now) {
   // every ring gets its label in Place view, unless the rings are so close that the labels would pile up: then only the one you picked is named
   const rr = voices.map((s, i) => radiusOf(i, g)).sort((a, b) => b - a), crowded = rr.some((r, k) => k && rr[k - 1] - r < 27);
   voices.forEach((s, i) => { if (W >= 760 || mode === 'place') { if ((mode === 'place' && !crowded) || i === selected) pill(labelFor(s), g.cx, g.cy - radiusOf(i, g) - 18, i === selected, iconFor(s, now / 1000)); } });
-  if (g.small && mode !== 'place' && playEase > .5) {   // phone, playing: name each ring's beach so you can see where every sound comes from
-    rx.save(); rx.font = '500 9.5px "JetBrains Mono", ui-monospace, monospace'; rx.textAlign = 'left'; rx.textBaseline = 'alphabetic'; rx.lineJoin = 'round';
-    voices.forEach((s, i) => { const sel = i === selected, nm = (String(s.name).toUpperCase().slice(0, 21) + ' ' + s.val.toFixed(1) + 'M'), y = g.cy - radiusOf(i, g) - 3.5;
-      rx.globalAlpha = playEase * (s.fade == null ? 1 : clamp(s.fade, 0, 1)) * (sel ? 1 : .8); rx.lineWidth = 3; rx.strokeStyle = 'rgba(5,16,44,.75)'; rx.strokeText(nm, g.cx + 7, y);
-      rx.fillStyle = sel ? '#ffffff' : 'rgba(225,236,255,.92)'; rx.fillText(nm, g.cx + 7, y); });
+  if (g.small && mode !== 'place' && playEase > .5) {   // phone, playing: the selected ring keeps its name; every other beach names itself for a moment when its dot is struck
+    rx.save(); rx.font = '500 10px "JetBrains Mono", ui-monospace, monospace'; rx.lineJoin = 'round'; rx.textBaseline = 'middle';
+    const tag = (nm, x, y, right, a, bright) => { rx.globalAlpha = a * playEase; rx.textAlign = right ? 'right' : 'left'; rx.lineWidth = 3; rx.strokeStyle = 'rgba(5,16,44,.8)'; rx.strokeText(nm, x, y); rx.fillStyle = bright ? '#fff' : 'rgba(225,236,255,.95)'; rx.fillText(nm, x, y); };
+    const nameOf = (s) => String(s.name).toUpperCase().slice(0, 21) + ' ' + s.val.toFixed(1) + 'M';
+    const sv = voices[selected]; if (sv) tag(nameOf(sv), g.cx + 7, g.cy - radiusOf(selected, g) - 4, false, 1, true);
+    for (let j = tagsNow.length - 1; j >= 0; j--) { const t = tagsNow[j]; t.t += dt; if (t.t > 1.2) { tagsNow.splice(j, 1); continue; }
+      const k = t.t / 1.2, right = t.x > g.cx; tag(t.nm, t.x + (right ? -9 : 9), t.y - 9, right, (k < .15 ? k / .15 : 1 - (k - .15) / .85) * .95, false); }
     rx.restore(); }
   for (let j = wakes.length - 1; j >= 0; j--) { const w = wakes[j]; w.t = Math.max(0, w.t + dt); if (w.t > 1.6) { wakes.splice(j, 1); continue; }
     const kk = w.t / 1.6; rx.lineWidth = 1; [1, .62].forEach((m, q) => { rx.beginPath(); rx.arc(w.x, w.y, 3 + Math.max(0, w.t) * 120 * m, 0, Math.PI * 2); rx.strokeStyle = `rgba(232,242,255,${(1 - kk) * (q ? .14 : .26)})`; rx.stroke(); }); }
