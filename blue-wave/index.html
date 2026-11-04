@@ -371,6 +371,7 @@ input[type=range]::-moz-range-thumb { width: 14px; height: 14px; border-radius: 
       <li><b>Wave period</b>, the time between waves, sets how many steps the loop has.</li>
       <li><b>Sea temperature</b> sets the pitch. Warmer water, higher notes.</li>
       <li><b>Wave direction</b> sets where the pattern starts around the ring.</li>
+      <li><b>Random clusters</b> bunches each ring's hits into a few tight groups, and re-rolls them every lap.</li>
       <li><b>Drift</b> nudges the hits along, one step at a time, so the pattern slowly changes.</li>
     </ul>
   </div>
@@ -378,6 +379,7 @@ input[type=range]::-moz-range-thumb { width: 14px; height: 14px; border-radius: 
     <label class="wide-l">Sound<select id="m-style"><option value="default">Default</option><option value="surf">Surfer</option><option value="calm">Meditative</option></select></label>
     <label>Key<select id="m-key"></select></label>
     <label>Scale<select id="m-scale"></select></label>
+    <label>Rhythm<select id="m-rhythm"><option value="even">Even</option><option value="cluster">Random clusters</option></select></label>
     <label>Shift key<select id="m-shift"><option value="0">Off</option><option value="8">Every 8 bars</option><option value="16">Every 16 bars</option><option value="32">Every 32 bars</option></select></label>
     <div class="ctl"><label for="m-chord">Chords <output id="m-chord-o">40</output></label><input id="m-chord" type="range" min="0" max="100" value="40"></div>
     <div class="ctl"><label for="m-mel">Melody <output id="m-mel-o">35</output></label><input id="m-mel" type="range" min="0" max="100" value="35"></div>
@@ -1339,9 +1341,25 @@ function musicSync() {
 }
 // Drift, like Rhythm Geometry: at the start of each lap, each hit may slide one step forward into an empty step.
 // The hits and steps stay the same. At 0 the pattern settles back to the plain Euclidean ring.
+// Random clusters: same number of hits, but bunched into 1 to 3 tight groups at random places. Re-rolled each lap.
+let CLUSTER = false;
+function clusterPattern(H, L) {
+  const g = Math.min(H, 1 + Math.floor(Math.random() * 3)), sizes = new Array(g).fill(1);
+  for (let k = g; k < H; k++) sizes[Math.floor(Math.random() * g)]++;
+  const free = L - H, gaps = new Array(g).fill(0);
+  for (let k = 0; k < free; k++) gaps[Math.floor(Math.random() * g)]++;
+  const out = new Array(L).fill(false); let pos = Math.floor(Math.random() * L);
+  for (let j = 0; j < g; j++) { for (let k = 0; k < sizes[j]; k++) out[pos++ % L] = true; pos += gaps[j]; }
+  return out;
+}
+function setRhythm(v) {
+  CLUSTER = v === 'cluster'; $('m-rhythm').value = CLUSTER ? 'cluster' : 'even'; lsSet('bw-rhythm', CLUSTER ? 'cluster' : 'even');
+  voices.forEach(s => { if (s.hits && s.steps) s.pattern = CLUSTER ? clusterPattern(s.hits, s.steps) : euclid(s.hits, s.steps); });
+}
 function driftLap(s) {
   const L = s.steps, H = s.hits, p = Number($('drift').value) / 100;
   if (!H || !L) return;
+  if (CLUSTER) { s.pattern = clusterPattern(H, L); return; }
   if (p === 0) { s.pattern = euclid(H, L); return; }
   const prev = s.pattern, next = new Array(L).fill(false);
   for (let i = 0; i < L; i++) { if (!prev[i]) continue; const to = (i + 1) % L; if (Math.random() < p * .7 && !prev[to] && !next[to]) next[to] = true; else next[i] = true; }
@@ -1378,6 +1396,7 @@ function bindRange(id, fn) { const el = $(id), o = $(id + '-o'); el.addEventList
 bindRange('tempo', () => { if (delayNode) delayNode.delayTime.value = stepDur() * 3; });
 bindRange('ocean', updateOcean);
 bindRange('drift');
+$('m-rhythm').addEventListener('change', e => setRhythm(e.target.value));
 bindRange('vol', () => applyMaster());
 
 // ---------- MIDI out: rings, chord, melody and four sea controllers ----------
@@ -1385,6 +1404,7 @@ const MIDI = { clock: true, acc: null, out: null, on: false, c1: 0, c2: 1, c3: 2
 const MCC = { filter: 74, delay: 12, hall: 91, flange: 93 }; // wave energy, wind, wave period, sea warmth
 const lsGet = (k, d) => { try { const v = localStorage.getItem(k); return v === null ? d : v; } catch (e) { return d; } };
 const lsSet = (k, v) => { try { localStorage.setItem(k, v); } catch (e) {} };
+if (lsGet('bw-rhythm') === 'cluster') setRhythm('cluster');
 function midiSend(bytes, whenAudio) {
   if (!MIDI.on || !MIDI.out) return;
   try { MIDI.out.send(bytes, performance.now() + (whenAudio && ctx ? Math.max(0, (whenAudio - ctx.currentTime) * 1000) : 0)); } catch (e) {}
@@ -1930,6 +1950,15 @@ function frame(now) {
   const g = geom(); let frac = 0, curTick = 0, swell = 0;
   if (playing && ctx && waveP) { const ph = clamp((ctx.currentTime - waveStart) / waveP, 0, 1); swell = ph < .68 ? ph / .68 : Math.max(0, 1 - (ph - .68) / .3); }
   if (playing && ctx) { const sd = stepDur(); frac = clamp((ctx.currentTime - (nextTime - sd)) / sd, 0, 1); curTick = tick - 1; }
+  // Blue coast: a faint US flag fills the middle of the innermost ring
+  if (mode === 'world' && world === BLUE && voices.length) {
+    const ri = Math.min(...voices.map((s, i) => radiusOf(i, g))) - 3, fh = ri * 2, fw = fh * 1.9, fx = g.cx - fw * .4, fy = g.cy - fh / 2, sh = fh / 13, cw = fw * .4, ch = sh * 7;
+    rx.save(); rx.beginPath(); rx.arc(g.cx, g.cy, ri, 0, Math.PI * 2); rx.clip(); rx.globalAlpha = .17;
+    for (let k = 0; k < 13; k++) { rx.fillStyle = k % 2 ? '#f4f7ff' : '#d8434f'; rx.fillRect(fx, fy + k * sh, fw, sh + .5); }
+    rx.fillStyle = '#1c2f6b'; rx.fillRect(fx, fy, cw, ch); rx.fillStyle = '#f4f7ff';
+    for (let rw = 0; rw < 9; rw++) { const cnt = rw % 2 ? 5 : 6; for (let c = 0; c < cnt; c++) { rx.beginPath(); rx.arc(fx + cw * ((rw % 2 ? 2 : 1) + c * 2) / 12.2, fy + ch * (rw + 1) / 10, Math.max(.8, ri / 55), 0, Math.PI * 2); rx.fill(); } }
+    rx.restore();
+  }
   voices.forEach((s, i) => {
     const r = radiusOf(i, g), sel = i === selected; rx.globalAlpha = s.fade == null ? 1 : clamp(s.fade, 0, 1);
     const ringPath = () => { rx.beginPath(); if (!wakes.length) { rx.arc(g.cx, g.cy, r, 0, Math.PI * 2); return; }
