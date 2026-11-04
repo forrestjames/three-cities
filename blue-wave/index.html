@@ -97,6 +97,7 @@ dd { margin: 0; text-align: right; color: var(--foam); font-size: 13px; overflow
 .mh, .dockdots { display: none; }
 .kicker { margin: 6px 0 0; font: 400 14px/1.4 var(--display); letter-spacing: .02em; color: var(--foam); max-width: 34ch; text-shadow: 0 1px 10px rgba(3,14,38,.6); }
 .go.wide { width: 100%; margin-top: 12px; }
+.pgrid .wide-l { grid-column: 1 / -1; }
 /* Headline card: one real result from the night, tied to the beach on show. Firsts get a small glowing dot. */
 :root { --spark: #ffd98a; }
 .news { margin-top: 14px; width: min(330px, 100%); padding: 11px 14px 11px 16px; border: 1px solid var(--edge); border-radius: 16px; background: var(--glass); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); text-shadow: none; font-family: var(--mono); }
@@ -303,7 +304,7 @@ input[type=range]::-moz-range-thumb { width: 14px; height: 14px; border-radius: 
 
 <div class="bar" id="bar" role="group" aria-label="Controls">
   <div class="btns"><button class="play" id="play" aria-pressed="false">Play</button><button class="mini-btn" id="b-music" type="button" aria-expanded="false" aria-controls="p-music">Music</button><button class="mini-btn" id="b-midi" type="button" aria-expanded="false" aria-controls="p-midi">MIDI</button></div>
-  <div class="ctl"><label for="tempo">Tempo <output id="tempo-o">60</output></label><input id="tempo" type="range" min="40" max="100" value="60"></div>
+  <div class="ctl"><label for="tempo">Tempo <output id="tempo-o">60</output></label><input id="tempo" type="range" min="30" max="140" value="60"></div>
   <div class="ctl"><label for="drift">Drift <output id="drift-o">35</output></label><input id="drift" type="range" min="0" max="100" value="35"></div>
   <div class="ctl"><label for="ocean">Ocean <output id="ocean-o">55</output></label><input id="ocean" type="range" min="0" max="100" value="55"></div>
   <div class="ctl"><label for="vol">Level <output id="vol-o">70</output></label><input id="vol" type="range" min="0" max="100" value="70"></div>
@@ -312,6 +313,7 @@ input[type=range]::-moz-range-thumb { width: 14px; height: 14px; border-radius: 
 <section class="pop" id="p-music" role="region" aria-label="Music" hidden>
   <div class="cap">Music</div>
   <div class="pgrid">
+    <label class="wide-l">Sound<select id="m-style"><option value="default">Default</option><option value="surf">Surfer</option><option value="calm">Meditative</option></select></label>
     <label>Key<select id="m-key"></select></label>
     <label>Scale<select id="m-scale"></select></label>
     <label>Shift key<select id="m-shift"><option value="0">Off</option><option value="8">Every 8 bars</option><option value="16">Every 16 bars</option><option value="32">Every 32 bars</option></select></label>
@@ -319,6 +321,7 @@ input[type=range]::-moz-range-thumb { width: 14px; height: 14px; border-radius: 
     <div class="ctl"><label for="m-mel">Melody <output id="m-mel-o">35</output></label><input id="m-mel" type="range" min="0" max="100" value="35"></div>
     <div class="ctl"><label for="m-drone">Drone <output id="m-drone-o">0</output></label><input id="m-drone" type="range" min="0" max="100" value="0"></div>
   </div>
+  <p class="note" id="m-style-note"></p>
   <p class="note" id="m-line"></p>
   <p class="note">On Auto, every place gets its own key, scale, chords and sound, picked from where it is and how warm its sea is. Wave height sets how many hits, wave period sets the steps, temperature sets the pitch. The chord changes every four bars. Shift key moves everything up a tone and comes round again after six moves.</p>
 </section>
@@ -455,6 +458,16 @@ const TIMBRES = [
   { n: 'hush', p: [[1, 1, 'sine', 1, 0], [1.5, .16, 'sine', 1, 0], [2, .08, 'sine', .7, 0]], a: .12, lp: 800, d: 1.2 },
   { n: 'choir', vowel: true, a: .3 },
 ];
+// Two more sounds for the Surfer and Meditative settings. They are not in the list above, so the Default sound is untouched.
+const T_SURF = { n: 'surf guitar', p: [[1, 1, 'sawtooth', 1, -6], [1, .7, 'square', 1, 7], [2, .18, 'sawtooth', .6, 0]], a: .004, lp: 3000, d: .55, gtr: true };   // twangy, through a soft crunch and a chorus
+const T_BASS = { n: 'bass', p: [[1, 1, 'triangle', 1, 0], [2, .22, 'sine', .7, 0]], a: .012, lp: 520, d: .5 };
+const T_BELL = { n: 'singing bell', bell: true, p: [[1, 1, 'sine', 1, 0], [1, .55, 'sine', 1, 7], [2.71, .3, 'sine', .55, 0], [2.71, .18, 'sine', .55, -9], [5.17, .12, 'sine', .3, 0], [8.2, .05, 'sine', .2, 0]], a: .006, lp: 6000, d: 2.6 };   // a struck bowl: inharmonic partials, a slow shimmer from the twin tones
+const STYLES = {
+  default: { tempo: 60, chord: 40, mel: 35, drone: 0, note: 'The felt, glassy sound the piece started with.' },
+  surf: { tempo: 108, chord: 25, mel: 55, drone: 0, note: 'Twangy guitar with a little crunch and chorus, a bass line underneath, minor pentatonic in E, and a driving tempo.' },
+  calm: { tempo: 36, chord: 30, mel: 20, drone: 30, note: 'Struck singing bowls, sparse and unhurried, with a low drone and a slow tempo.' },
+};
+let STYLE = 'default';
 const RING_T = 4, MEL_T = [4, 0, 3, 2]; // ring voices use the first four timbres, the melody can also be the wordless choir
 const VOWELS = [[300, 870, 2240], [450, 830, 2830], [730, 1090, 2440]];
 let ROOT = 2, SC = [0, 2, 4, 7, 9], SHIFT = 0, CH = { seed: 0, prog: 0, contour: 0, tim: 0, mel: 1, wet: 1, key: 2, sc: 1, auto: true, grp: 1 };
@@ -1091,10 +1104,29 @@ function play(m, t, o) {
   let wob = null; if (wt > .02) { wob = ctx.createOscillator(); const wg = ctx.createGain(); wob.frequency.value = 4 + wt * 3; wg.gain.value = 28 * wt; wob.connect(wg); wob.start(t); wob.stop(t + top + .05); wob.g = wg; }
   tm.p.forEach(([r, lv, wave, dm, cents]) => {
     const os = ctx.createOscillator(), g = ctx.createGain(); os.type = wave; os.frequency.value = f * r; os.detune.value = cents || 0; g.gain.value = lv;
+    if (tm.bell) { g.gain.setValueAtTime(lv, t); g.gain.exponentialRampToValueAtTime(.0001, t + Math.max(.4, dec * dm)); }   // the high partials die first
     if (wob) wob.g.connect(os.detune); os.connect(g).connect(lp); os.start(t); os.stop(t + top + .05);
   });
   let out = env; if (pan) { pan.pan.value = o.pan || 0; env.connect(pan); out = pan; }
+  if (tm.gtr) { out.connect(gtrBus()); return; }
   const wet = ctx.createGain(); wet.gain.value = o.wet == null ? 1 : o.wet; out.connect(dryBus); out.connect(wet).connect(verbSend); out.connect(delaySend);
+}
+// the guitar: a soft crunch, a gentle tone control, then two slow chorus voices spread left and right
+let gtrIn = null;
+function gtrBus() {
+  if (gtrIn) return gtrIn;
+  gtrIn = ctx.createGain(); gtrIn.gain.value = 6;
+  const ws = ctx.createWaveShaper(), n = 1024, cv = new Float32Array(n); for (let i = 0; i < n; i++) { const x = i / (n / 2) - 1; cv[i] = Math.tanh(x * 1.6) / Math.tanh(1.6); } ws.curve = cv; ws.oversample = '2x';
+  const tone = ctx.createBiquadFilter(); tone.type = 'lowpass'; tone.frequency.value = 3200; tone.Q.value = .5;
+  const post = ctx.createGain(); post.gain.value = .2; gtrIn.connect(ws).connect(tone).connect(post);
+  const mix = ctx.createGain(); post.connect(mix);
+  [[.017, .55, .004, -.7], [.027, .4, .005, .7]].forEach(([d, rate, depth, pn]) => {
+    const dl = ctx.createDelay(.1), lfo = ctx.createOscillator(), lg = ctx.createGain(), wg = ctx.createGain(), pp = ctx.createStereoPanner ? ctx.createStereoPanner() : null;
+    dl.delayTime.value = d; lfo.frequency.value = rate; lg.gain.value = depth; lfo.connect(lg).connect(dl.delayTime); lfo.start(); wg.gain.value = .6;
+    post.connect(dl).connect(wg); if (pp) { pp.pan.value = pn; wg.connect(pp).connect(mix); } else wg.connect(mix);
+  });
+  const wet = ctx.createGain(); wet.gain.value = .9; mix.connect(dryBus); mix.connect(wet).connect(verbSend); mix.connect(delaySend);
+  return gtrIn;
 }
 // a wordless voice: slow breaths that glide between ooh, oh and ah, as in No Fixed Address
 let noiseBuf = null;
@@ -1110,9 +1142,14 @@ function sing(m, t, o) {
   const wet = ctx.createGain(); wet.gain.value = (o.wet == null ? 1 : o.wet) * 1.2; end.connect(dryBus); end.connect(wet).connect(verbSend);
 }
 function voice(s, t) {
-  const i = voices.indexOf(s), amp = .045 + clamp(s.lv, 0, 1) * .05, dec = 1.4 + clamp(s.per / 16, 0, 1) * 1.6;
-  play(s.note, t, { tim: s.kind === 'air' ? TIMBRES[0] : timbreOfVoice(s, i), amp, dec, pan: s.pan, wet: CH.wet * (1 + (s.touch || 0) * 1.4), touch: s.touch || 0 });
-  midiNote(MIDI.c1, s.note, Math.round(50 + clamp(s.lv, 0, 1) * 60), t, stepDur() * 1.6);
+  if (STYLE === 'calm' && Math.random() > .5) return false;   // bells are sparse: about half the hits ring
+  const i = voices.indexOf(s); let amp = .045 + clamp(s.lv, 0, 1) * .05, dec = 1.4 + clamp(s.per / 16, 0, 1) * 1.6, tim = s.kind === 'air' ? TIMBRES[0] : timbreOfVoice(s, i), note = s.note, wet = CH.wet * (1 + (s.touch || 0) * 1.4);
+  if (STYLE === 'surf') {
+    if (s.kind === 'air' || i % 3 === 1) { tim = T_BASS; note = s.note - 24; while (note < 31) note += 12; amp *= 1.25; }   // some rings are the bass line
+    else { tim = T_SURF; amp *= .75; }
+  } else if (STYLE === 'calm') { tim = T_BELL; amp *= .8; dec *= 1.2; wet *= 1.5; }
+  play(note, t, { tim, amp, dec, pan: s.pan, wet, touch: s.touch || 0 });
+  midiNote(MIDI.c1, note, Math.round(50 + clamp(s.lv, 0, 1) * 60), t, stepDur() * 1.6);
 }
 // chord pad: four soft voices held for four bars, then the next chord
 let padNodes = [], chordNow = [];
@@ -1140,7 +1177,8 @@ function melodyStep(t) {
   const dens = Number($('m-mel').value) / 100; if (dens <= 0) return;
   const e = seaState().e, p = dens * (.3 + .7 * e); if (Math.random() > p * .8) return;
   const pat = PPAT[CH.contour % PPAT.length], idx = pat[mi++ % pat.length], tones = chordNow.length ? chordNow : chordMidis(0), m = tones[idx % tones.length] + 12;
-  play(m, t, { tim: TIMBRES[CH.mel % TIMBRES.length], amp: .05 * (.6 + dens * .6), dec: 1.8, pan: (Math.random() - .5) * .8, wet: CH.wet * 1.1 });
+  const tim = STYLE === 'surf' ? T_SURF : STYLE === 'calm' ? T_BELL : TIMBRES[CH.mel % TIMBRES.length], k = STYLE === 'surf' ? .8 : STYLE === 'calm' ? .8 : 1;
+  play(m, t, { tim, amp: .05 * (.6 + dens * .6) * k, dec: STYLE === 'calm' ? 2.4 : 1.8, pan: (Math.random() - .5) * .8, wet: CH.wet * (STYLE === 'calm' ? 1.6 : 1.1) });
   midiNote(MIDI.c4, m, 70 + Math.round(Math.random() * 25), t, stepDur() * 3);
 }
 // ---------- the waves: slowly build, crest, break with a crash, then wash into the sand ----------
@@ -1180,7 +1218,7 @@ function schedule() {
     list.forEach((s, i) => {
       const step = tick % s.steps;
       if (step === 0 && tick > 0) driftLap(s);
-      if (s.pattern[(step + s.offset) % s.steps] && !(s.fade != null && s.fade < .2)) { voice(s, t); setTimeout(() => { if (voices === list) hitVisual(i, step); }, Math.max(0, (t - ctx.currentTime) * 1000)); }
+      if (s.pattern[(step + s.offset) % s.steps] && !(s.fade != null && s.fade < .2)) { if (voice(s, t) !== false) setTimeout(() => { if (voices === list) hitVisual(i, step); }, Math.max(0, (t - ctx.currentTime) * 1000)); }
     });
     tick++; nextTime += sd;
   }
@@ -1189,9 +1227,9 @@ function schedule() {
 function musicSync() {
   const inPlace = mode === 'place' && place.loaded, t = inPlace ? (place.seaTemp != null ? place.seaTemp : place.airTemp != null ? place.airTemp : 12) : 14, grp = t < 9 ? 0 : t < 19 ? 1 : 2;
   const kv = $('m-key').value, sv = $('m-scale').value;
-  const k = [inPlace ? place.lat.toFixed(2) + ',' + place.lon.toFixed(2) : (world === BLUE ? 'blue' : 'world'), grp, kv, sv, SHIFT].join('|'); if (k === musicKey) return; musicKey = k;
+  const k = [inPlace ? place.lat.toFixed(2) + ',' + place.lon.toFixed(2) : (world === BLUE ? 'blue' : 'world'), grp, kv, sv, SHIFT, STYLE].join('|'); if (k === musicKey) return; musicKey = k;
   const seed = inPlace ? hash(place.lat.toFixed(2) + ',' + place.lon.toFixed(2)) : 0, g = GROUPS[grp];
-  const aKey = inPlace ? seed % 12 : 2, aScale = inPlace ? scaleIx(g[(seed >>> 4) % g.length]) : scaleIx('major pentatonic');
+  const aKey = inPlace ? seed % 12 : STYLE === 'surf' ? 4 : 2, aScale = inPlace ? scaleIx(g[(seed >>> 4) % g.length]) : scaleIx(STYLE === 'surf' ? 'minor pentatonic' : 'major pentatonic');
   const key = kv === 'auto' ? aKey : +kv, sc = sv === 'auto' ? aScale : +sv;
   ROOT = key; SC = SCALES[sc][1];
   CH = { seed, prog: inPlace ? (seed >>> 8) % PROGS.length : 0, contour: inPlace ? (seed >>> 12) % PPAT.length : 0, tim: inPlace ? (seed >>> 16) % RING_T : 0, mel: inPlace ? MEL_T[(seed >>> 18) % MEL_T.length] : 4,
@@ -1310,6 +1348,17 @@ SCALES.forEach((x, i) => $('m-scale').add(new Option(x[0], i))); $('m-scale').in
   el.addEventListener('change', () => { lsSet(key, el.value); if (id === 'm-shift') { shiftBars = +el.value; SHIFT = 0; } musicSync(); });
 });
 shiftBars = +$('m-shift').value;
+// Sound presets. Choosing one also sets the tempo, chords, melody and drone to suit it. Every slider can still be moved afterwards.
+function setStyle(v, apply) {
+  STYLE = STYLES[v] ? v : 'default'; $('m-style').value = STYLE; lsSet('bw-style', STYLE); const P = STYLES[STYLE];
+  if (apply) {
+    [['tempo', P.tempo, null], ['m-chord', P.chord, 'bw-chord'], ['m-mel', P.mel, 'bw-mel'], ['m-drone', P.drone, 'bw-drone']].forEach(([id, val, key]) => { $(id).value = val; $(id + '-o').textContent = val; if (key) lsSet(key, String(val)); });
+    if (delayNode) delayNode.delayTime.value = stepDur() * 3; droneLevel();
+  }
+  $('m-style-note').textContent = P.note; musicKey = ''; musicSync();
+}
+$('m-style').addEventListener('change', () => setStyle($('m-style').value, true));
+setStyle(lsGet('bw-style', 'default'), false);
 function openPanel(id) {
   ['music', 'midi'].forEach(p => { const el = $('p-' + p), btn = $('b-' + p), open = p === id && el.hidden; el.hidden = !open; btn.setAttribute('aria-expanded', open); });
   if (id === 'midi' && !$('p-midi').hidden) midiConnect();
