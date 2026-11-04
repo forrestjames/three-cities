@@ -235,11 +235,11 @@ input[type=range]::-moz-range-thumb { width: 14px; height: 14px; border-radius: 
   .left .card { display: contents; }
   #surf { display: contents; } .slides { display: contents; margin: 0; overflow: visible; }
   #search { overflow: auto; }
-  #pg-read { order: 3; position: relative; display: grid; grid-template-columns: 1fr 112px; grid-template-rows: auto auto auto auto 1fr; column-gap: 10px; align-content: start; }
+  #pg-read { order: 3; position: relative; display: grid; grid-template-columns: 1fr 92px; grid-template-rows: auto auto auto auto 1fr; column-gap: 10px; align-content: start; }
   #pg-read .top { grid-column: 1; min-width: 0; } #r-cap { font-size: 10.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   #pg-read .share-btn { position: absolute; right: 14px; bottom: 12px; padding: 0; width: 38px; min-height: 38px; justify-content: center; font-size: 0; gap: 0; } #pg-read .share-btn svg { width: 17px; height: 17px; }
-  #pg-read .name { grid-column: 1; margin: 2px 0 0; font-size: 23px; align-self: end; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; } #pg-read .geo { display: contents; }
-  #pg-read .sub { grid-column: 1; margin: 2px 0 0; font-size: 12.5px; } #mini { grid-column: 2; grid-row: 1 / 4; width: 112px; height: 48px; margin: 0; align-self: center; }
+  #pg-read .name { grid-column: 1; margin: 2px 0 0; font-size: calc(23px * var(--nfit, 1)); align-self: end; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; } #pg-read .geo { display: contents; }
+  #pg-read .sub { grid-column: 1; margin: 2px 0 0; font-size: 12.5px; } #mini { grid-column: 2; grid-row: 1 / 4; width: 92px; height: 48px; margin: 0; align-self: center; }
   #pg-read #gauges { grid-column: 1 / -1; width: 232px; height: 74px; margin-top: 6px; }
   #r-line { display: block; grid-column: 1 / -1; margin: 6px 0 0; font: 400 11.5px/1.3 var(--display); color: var(--mist); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; } #r-line:empty { display: none; }
   body.is-playing #r-line, body.is-playing .chg { display: none; }
@@ -252,18 +252,19 @@ input[type=range]::-moz-range-thumb { width: 14px; height: 14px; border-radius: 
   body.is-playing .dockdots { opacity: 0; pointer-events: none; }
   body.is-playing .panel { height: 78px; bottom: calc(var(--dockb, 150px) + 4px); }
   body.is-playing #pg-read #gauges, body.is-playing #pg-read .share-btn, body.is-playing #mini, body.is-playing #r-cap { display: none; }
-  body.is-playing #pg-read .name { font-size: 20px; }
+  body.is-playing #pg-read .name { font-size: calc(20px * var(--nfit, 1)); }
   body.is-playing #panel > #news { padding: 10px 16px; } body.is-playing #panel > #news .nt, body.is-playing #panel > #news .ns, body.is-playing #panel > #news .bn { display: none; }
   body.is-playing #panel > #news .nh { font-size: 15px; -webkit-line-clamp: 2; margin-top: 0; }
   /* three screens on a phone: the piece, the news, the beach. Scale, data and surf check stay on desktop. */
   #panel > #news { order: 1; display: block; flex: 0 0 100%; width: 100%; height: 100%; margin: 0; padding: 14px 16px; border: 0; border-radius: 0; background: none; backdrop-filter: none; -webkit-backdrop-filter: none; scroll-snap-align: start; overflow: hidden; }
   #search { order: 2; } .shead { order: 5; } .slide { order: 6; }
   #pg-scale, #pg-data, #surf { display: none !important; }
+  .ns, #panel > #news .ns { white-space: normal; overflow: visible; text-overflow: clip; }
   .mix { display: grid; grid-template-columns: 1fr 1fr; gap: 12px 18px; margin: 8px 0 16px; padding-bottom: 14px; border-bottom: 1px solid var(--edge); }
   .mix .ctl { min-width: 0; }
   .bar .btns { width: 100%; }
   /* short phones: take the status line out, shorten the screens, so the rings get the middle */
-  @media (max-height: 760px) { .facts { display: none; } .panel { height: 168px; } #r-line { display: none; } #pg-read #gauges { height: 74px; margin-top: 2px; } #pg-read .name { font-size: 21px; } .intro li { padding: 5px 0; } }
+  @media (max-height: 760px) { .facts { display: none; } .panel { height: 168px; } #r-line { display: none; } #pg-read #gauges { height: 74px; margin-top: 2px; } #pg-read .name { font-size: calc(21px * var(--nfit, 1)); } .intro li { padding: 5px 0; } }
   #panel > #news .nh { font-size: 19px; line-height: 1.3; -webkit-line-clamp: 4; min-height: 0; margin-top: 10px; }
   #panel > #news .ns { display: block; margin-top: 12px; }
   #panel > #news .bn { display: block; margin-top: 10px; padding-top: 8px; font-size: 12.5px; line-height: 1.4; }   /* on phones the Democrats line sits in the headline card */
@@ -949,6 +950,11 @@ function updateNews(cycle) {
   setTimeout(resize, 0); // the card is taller or shorter now, so the rings move to make room
 }
 setInterval(() => { if (newsList.length > 1 && !$('news').hidden) { newsTick++; updateNews(true); } }, 9000);
+function fitName() {   // phone: shrink a long beach name to fit its line instead of cutting it off
+  const el = $('r-name'); if (!el || W >= 760) { if (el) el.style.removeProperty('--nfit'); return; }
+  el.style.setProperty('--nfit', 1); const need = el.scrollWidth, have = el.clientWidth;
+  const r = need > have + 1 ? have / need - .01 : 1; el.style.setProperty('--nfit', Math.max(.62, r).toFixed(3));
+}
 function scaleVoice() { const s = voices[selected]; return !s || s.kind === 'air' ? voices[0] : s; }
 function renderPanel() {
   const dl = $('r-dl'); dl.textContent = '';
@@ -965,7 +971,7 @@ function renderPanel() {
     const P = .49 * s.tval * s.tval * s.tper; row('Power', `${P.toFixed(1)} kW per metre, ${powerWord(P)}`);
     const rk = [...world].filter(x => !x.leaving).sort((a, b) => b.tval - a.tval).indexOf(s) + 1; if (rk) row('Rank', `${rk} of ${world.filter(x => !x.leaving).length}, biggest first`);
     row('Rhythm', `${s.hits} hits in ${s.steps} steps`);
-    $('r-line').textContent = [compare(s.tval), periodFeel(s.tper), wetsuit(s.ttemp)].join(' · ');
+    $('r-line').textContent = [compare(s.tval), periodFeel(s.tper).split(',')[0], wetsuit(s.ttemp).split(',')[0]].join(' · ');
     $('r-note').textContent = world === BLUE ? 'Tap a ring to read another beach. Smallest wave, smallest ring. Results as reported on 4 November 2026.' : 'Tap a ring to read another sea. Smallest wave, smallest ring.';
   } else {
     $('r-line').textContent = '';
@@ -986,7 +992,7 @@ function renderPanel() {
   if (mode === 'place' && (place.noSea || place.error)) cap.textContent = place.error ? 'Sea data not reached.' : 'No sea reading near this spot.';
   else { const b = document.createElement('b'); b.textContent = sv.name; cap.append(b, document.createTextNode(` · ${sv.tval.toFixed(1)} m, ${compare(sv.tval)}`)); }
   $('gauges').setAttribute('aria-label', 'Quick scan: ' + tiles().map(t => `${t.l} ${t.v}`).join(', '));
-  updateNews();
+  updateNews(); fitName(); requestAnimationFrame(fitName); setTimeout(fitName, 400);
 }
 function syncNote() { const on = mode === 'world' && world === BLUE; $('blue-note').hidden = !on; $('blue-note-m').hidden = !on; document.body.classList.toggle('is-blue', on); document.body.classList.toggle('is-place', mode === 'place'); }
 function setMode(m, set) {
@@ -1492,7 +1498,7 @@ function togglePlay() {
   if (!ctx) initAudio();
   if (ctx.state === 'suspended') ctx.resume();
   playing = !playing;
-  $('play').setAttribute('aria-pressed', playing); $('play').textContent = playing ? 'Stop' : 'Play'; document.body.classList.toggle('is-playing', playing);
+  $('play').setAttribute('aria-pressed', playing); $('play').textContent = playing ? 'Stop' : 'Play'; document.body.classList.toggle('is-playing', playing); setTimeout(fitName, 450);
   if (playing) { tick = 0; mi = 0; chordNow = []; nextTime = ctx.currentTime + .05; waveT = ctx.currentTime + .05; swayG.gain.cancelScheduledValues(0); swayLP.frequency.cancelScheduledValues(0); musicSync(); startDrone(); if (MIDI.on && MIDI.clock) midiSend([0xFA]); timer = setInterval(schedule, 25); }
   else { clearInterval(timer); stopDrone(); if (MIDI.on) { if (MIDI.clock) midiSend([0xFC]); midiAllOff(); } }
   droneLevel(); updateOcean();
