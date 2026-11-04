@@ -699,7 +699,7 @@
         <label class="label" for="bpm">BPM</label>
         <input id="bpm" type="number" value="100" min="60" max="200">
       </div>
-      <button id="follow" class="btn small tog" type="button" aria-pressed="false" title="Follow genre tempo: when on, the BPM jumps to the genre's suggested tempo"><i class="tog-dot" aria-hidden="true"></i>Follow tempo</button>
+      <button id="follow" class="btn small tog" type="button" aria-pressed="true" title="Follow genre tempo: when on, the BPM jumps to the genre's suggested tempo"><i class="tog-dot" aria-hidden="true"></i>Follow tempo</button>
       <span class="rec-wrap" id="recWrap">
         <span class="rec-split">
           <button class="rec-main" id="rec" type="button" aria-pressed="false" title="Record what's playing and save it to your device"><i class="rec-dot" aria-hidden="true"></i><span class="rec-label">Record</span></button>
@@ -1378,7 +1378,7 @@ const state = {
   place: LONDON, w: null, steps: 0, hits: 0, pattern: [],
   source: 'humidity', density: 50,   // fixed at 50% now the knob is gone
   city: null, cityDist: 0, genre: null, patId: null, kick: null,
-  seq: 0, follow: false, mode: 'drift',
+  seq: 0, follow: true, mode: 'drift',   // the tempo follows each genre by default
 };
 
 // Which Atlas city's genres a place uses: the place's own city if it is close, else the nearest one
@@ -4453,7 +4453,7 @@ function readSharedLink() {
   return { place: { name: q.get('city'), country: q.get('country') || '', lat, lon }, genre: q.get('genre'), kit: q.get('kit'), bpm: q.get('bpm'), follow: q.get('follow') === '1' };
 }
 function applyShared(s) {
-  if (s.follow) { state.follow = true; $('follow').setAttribute('aria-pressed', 'true'); }
+  state.follow = !!s.follow || !s.bpm; $('follow').setAttribute('aria-pressed', String(state.follow));   // a shared link with its own tempo keeps that tempo
   if (s.kit && KITS.some(k => k.id === s.kit)) { kitSel.value = s.kit; activeKit = KITS.find(k => k.id === s.kit); kitSel.title = activeKit.note; preloadSamples(); }
   const want = (s.genre || '').toLowerCase();
   const g = state.city && state.city.genres.find(x => x.name.toLowerCase() === want);
