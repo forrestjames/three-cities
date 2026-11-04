@@ -242,7 +242,7 @@ input[type=range]::-moz-range-thumb { width: 14px; height: 14px; border-radius: 
   #pg-read .sub { grid-column: 1; margin: 2px 0 0; font-size: 12.5px; } #mini { grid-column: 2; grid-row: 1 / 4; width: 92px; height: 48px; margin: 0; align-self: center; }
   #pg-read #gauges { grid-column: 1 / -1; width: 232px; height: 74px; margin-top: 6px; }
   #r-line { display: block; grid-column: 1 / -1; margin: 6px 0 0; font: 400 11.5px/1.3 var(--display); color: var(--mist); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; } #r-line:empty { display: none; }
-  body.is-playing #r-line, body.is-playing .chg { display: none; }
+  body.is-playing #r-line { display: none; } body.is-playing .chg { display: none !important; }
   body.is-place .chg { display: block; grid-column: 1 / -1; justify-self: start; margin: 4px 0 0; padding: 4px 12px; border: 1px solid var(--edge); border-radius: 17px; background: none; color: var(--foam); font: 400 11.5px var(--mono); letter-spacing: .06em; text-transform: uppercase; cursor: pointer; }
   /* while it plays, everything but the rings steps back */
   .seg, .panel, .dockdots { transition: max-height .4s ease, opacity .3s ease, margin .4s ease, height .4s ease, bottom .4s ease; }
@@ -1521,7 +1521,7 @@ function togglePlay() {
   if (!ctx) initAudio();
   if (ctx.state === 'suspended') ctx.resume();
   playing = !playing;
-  $('play').setAttribute('aria-pressed', playing); $('play').textContent = playing ? 'Stop' : 'Play'; document.body.classList.toggle('is-playing', playing); setTimeout(fitName, 450);
+  $('play').setAttribute('aria-pressed', playing); $('play').textContent = playing ? 'Stop' : 'Play'; document.body.classList.toggle('is-playing', playing); setTimeout(fitName, 450); if (playing && mode === 'place') showCard('read');
   if (playing) { tick = 0; mi = 0; chordNow = []; nextTime = ctx.currentTime + .05; waveT = ctx.currentTime + .05; swayG.gain.cancelScheduledValues(0); swayLP.frequency.cancelScheduledValues(0); musicSync(); startDrone(); if (MIDI.on && MIDI.clock) midiSend([0xFA]); timer = setInterval(schedule, 25); }
   else { clearInterval(timer); stopDrone(); if (MIDI.on) { if (MIDI.clock) midiSend([0xFC]); midiAllOff(); } }
   droneLevel(); updateOcean();
@@ -1971,7 +1971,7 @@ function drawWorld(now, dt) {
 
 // ---------- the rings ----------
 function geom() {
-  const small = W < 760, cx = W / 2, aT = small ? areaTop * (1 - playEase) + 12 * playEase : 0, aB = small ? areaBot + 4 * playEase : 0;   // playing on a phone: the rings may slip a little under the title
+  const small = W < 760, cx = W / 2, aT = small ? areaTop * (1 - playEase) + (mode === 'place' ? 52 : 12) * playEase : 0, aB = small ? areaBot + 4 * playEase : 0;   // playing on a phone: the rings may slip a little under the title
   const cy = small ? (aT + aB) / 2 + 12 * (1 - playEase) : H * .47;
   const maxR = small ? Math.max(60, Math.min(W * (.44 + .056 * playEase), (aB - aT) / 2 - (12 - 8 * playEase))) : Math.min(W * .38, H * .35);
   return { cx, cy, maxR, minR: maxR * (mode === 'place' ? .36 : .2), small };
