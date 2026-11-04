@@ -221,6 +221,9 @@ input[type=range]::-moz-range-thumb { width: 14px; height: 14px; border-radius: 
   #panel > #news { order: 1; display: block; flex: 0 0 100%; width: 100%; height: 100%; margin: 0; padding: 14px 16px; border: 0; border-radius: 0; background: none; backdrop-filter: none; -webkit-backdrop-filter: none; scroll-snap-align: start; overflow: hidden; }
   #search { order: 2; } .shead { order: 5; } .slide { order: 6; }
   #pg-scale, #pg-data, #surf { display: none !important; }
+  .mix { display: grid; grid-template-columns: 1fr 1fr; gap: 12px 18px; margin: 8px 0 16px; padding-bottom: 14px; border-bottom: 1px solid var(--edge); }
+  .mix .ctl { min-width: 0; }
+  .bar .btns { width: 100%; }
   /* short phones: take the status line and the intro's last line out, shorten the screens, so the rings get the middle */
   @media (max-height: 760px) { .facts { display: none; } .intro-next { display: none; } .panel { height: clamp(150px, 24vh, 200px); } .intro li { padding: 5px 0; } }
   #panel > #news .nh { font-size: 19px; line-height: 1.3; -webkit-line-clamp: 4; min-height: 0; margin-top: 10px; }
@@ -1469,6 +1472,22 @@ function measureArea() {
     const ttl = document.querySelector('.title').getBoundingClientRect(); areaTop = ttl.bottom + 4; areaBot = $('panel').getBoundingClientRect().top - 4;
   }
 }
+// Phones: the four sliders (Tempo, Drift, Ocean, Level) move into the Music panel, so the bottom bar is just Play, Music and MIDI.
+const barSliders = [...document.querySelectorAll('#bar > .ctl')];
+function placeMix() {
+  const pop = $('p-music'); let mix = $('mix');
+  if (phone.matches) {
+    if (!mix) { mix = document.createElement('div'); mix.id = 'mix'; mix.className = 'mix'; mix.setAttribute('aria-label', 'Mix'); }
+    barSliders.forEach(c => mix.append(c));
+    if (mix.parentNode !== pop || mix.previousElementSibling !== pop.querySelector('.cap')) pop.querySelector('.cap').after(mix);
+  } else {
+    barSliders.forEach(c => $('bar').append(c));
+    if (mix) mix.remove();
+  }
+  setTimeout(resize, 0);
+}
+if (phone.addEventListener) phone.addEventListener('change', placeMix); else phone.addListener(placeMix);
+placeMix();
 if (window.ResizeObserver) new ResizeObserver(() => { measureArea(); }).observe(document.querySelector('.title'));
 function resize() {
   DPR = Math.min(2, window.devicePixelRatio || 1); W = innerWidth; H = innerHeight;
