@@ -1238,7 +1238,7 @@ function initAudio() {
   delaySend = ctx.createGain(); delaySend.gain.value = .3;
   delaySend.connect(delayNode); delayNode.connect(dlf).connect(fb).connect(delayNode); dlf.connect(verbSend); dlf.connect(swayIn);
   delayNode.delayTime.value = stepDur() * 3;
-  const len = ctx.sampleRate * 4, nb = ctx.createBuffer(2, len, ctx.sampleRate);
+  const len = ctx.sampleRate * 12, nb = ctx.createBuffer(2, len, ctx.sampleRate);
   for (let ch = 0; ch < 2; ch++) { const d = nb.getChannelData(ch); let last = 0; for (let i = 0; i < len; i++) { last = (last + .02 * (Math.random() * 2 - 1)) / 1.02; d[i] = last * 3.2; } }
   const src = ctx.createBufferSource(); src.buffer = nb; src.loop = true;
   oceanFilter = ctx.createBiquadFilter(); oceanFilter.type = 'lowpass'; oceanFilter.frequency.value = 500; oceanFilter.Q.value = .4;
@@ -1338,25 +1338,34 @@ function melodyStep(t) {
   midiNote(MIDI.c4, m, 70 + Math.round(Math.random() * 25), t, stepDur() * 3);
 }
 // ---------- the waves: slowly build, crest, break with a crash, then wash into the sand ----------
-let waveT = 0, waveStart = 0, waveP = 8, breakAt = 0, breakFlash = 0;
+let waveT = 0, waveStart = 0, waveP = 8, breakAt = 0, breakFlash = 0, setPos = 0, setLen = 4;   // waves come in sets: build, peak, then a lull
 function scheduleWave(t) {
   const a = seaState(), P = clamp(a.per, 5, 15), h = a.h, lvl = Number($('ocean').value) / 100, still = a.still;
-  const P0 = P; waveP = P0 * (.75 + Math.random() * .55); waveStart = t;
-  const tb = t + waveP * (.55 + Math.random() * .25), g = swayG.gain, f = swayLP.frequency, amt = still ? 0 : clamp(.35 + h / 3, .35, 1) * (.35 + Math.random() * .65);   // how much the music sways, different every wave
+  // sets of waves, like a real sea: a few build, one or two are big, then it lulls. Each set is a different length.
+  if (++setPos > setLen) { setPos = 0; setLen = 3 + Math.floor(Math.random() * 5); }
+  const sf = .3 + .7 * Math.sin(Math.PI * (setPos + .5) / (setLen + 1)) ** 1.5, lull = setPos === 0 && Math.random() < .6;
+  const P0 = P; waveP = P0 * (.6 + Math.random() * .95); waveStart = t;
+  const tb = t + waveP * (.55 + Math.random() * .25), g = swayG.gain, f = swayLP.frequency, amt = still ? 0 : clamp(.35 + h / 3, .35, 1) * (.35 + Math.random() * .65) * (.75 + .25 * sf);   // how much the music sways, different every wave
   // the music: the water rises and the sound opens, then it closes as the wave breaks and runs out
   g.setValueAtTime(.55, t); g.linearRampToValueAtTime(.55 + .45 * amt, tb - .05); g.linearRampToValueAtTime(.4, tb + .5); g.linearRampToValueAtTime(.5, t + waveP);
   f.setValueAtTime(500, t); f.exponentialRampToValueAtTime(500 + 3600 * amt, tb - .05); f.exponentialRampToValueAtTime(700, tb + .6); f.exponentialRampToValueAtTime(420, t + waveP);
   if (still || lvl <= 0) return;
-  if (Math.random() < .4) return;   // some waves just roll in quietly
-  const A = lvl * (.012 + .035 * clamp(h / 3, 0, 1)) * (.25 + Math.random() * .75), src = ctx.createBufferSource(), lp = ctx.createBiquadFilter(), ng = ctx.createGain(), pn = ctx.createStereoPanner ? ctx.createStereoPanner() : null;
+  if (lull || Math.random() < .3) return;   // some waves just roll in quietly, and sets end in a lull
+  const A = lvl * (.012 + .035 * clamp(h / 3, 0, 1)) * (.2 + Math.random() * .8) * (.4 + .9 * sf), src = ctx.createBufferSource(), lp = ctx.createBiquadFilter(), ng = ctx.createGain(), pn = ctx.createStereoPanner ? ctx.createStereoPanner() : null;
   src.buffer = pinkBuf; src.loop = true; lp.type = 'lowpass'; lp.Q.value = .5; src.connect(lp).connect(ng);
-  if (pn) { pn.pan.value = (Math.random() - .5) * .8; ng.connect(pn).connect(crashBus); } else ng.connect(crashBus);
+  if (pn) { const p0 = (Math.random() - .5) * 1.2; pn.pan.setValueAtTime(p0, t); pn.pan.linearRampToValueAtTime(clamp(p0 + (Math.random() - .5) * .9, -.9, .9), t + waveP); ng.connect(pn).connect(crashBus); } else ng.connect(crashBus);   // the crash drifts across the stereo field
   const ng2 = ng.gain, lf = lp.frequency;
   ng2.setValueAtTime(.0001, t); ng2.linearRampToValueAtTime(A * .45, tb - .3);                       // the swell, getting louder as the wave stands up
   ng2.linearRampToValueAtTime(A, tb + .45); ng2.exponentialRampToValueAtTime(A * .3, tb + waveP * .2); // the break
   ng2.exponentialRampToValueAtTime(.0001, t + waveP);                                                      // the wash, sinking into the sand
   lf.setValueAtTime(240, t); lf.exponentialRampToValueAtTime(1100, tb - .3); lf.linearRampToValueAtTime(2400, tb + .45); lf.exponentialRampToValueAtTime(1300, tb + waveP * .2); lf.exponentialRampToValueAtTime(240, t + waveP);
   src.start(t, Math.random() * 2); src.stop(t + waveP + .2);
+  if (sf > .7 && Math.random() < .45) {   // a big wave sometimes breaks twice: a second, smaller crash a moment later
+    const s2 = ctx.createBufferSource(), l2 = ctx.createBiquadFilter(), g2 = ctx.createGain(), t2 = tb + .5 + Math.random() * 1.2;
+    s2.buffer = pinkBuf; s2.loop = true; l2.type = 'lowpass'; l2.Q.value = .5; l2.frequency.setValueAtTime(900, t2); l2.frequency.exponentialRampToValueAtTime(260, t2 + waveP * .4);
+    g2.gain.setValueAtTime(.0001, t2); g2.gain.linearRampToValueAtTime(A * .5, t2 + .25); g2.gain.exponentialRampToValueAtTime(.0001, t2 + waveP * .4);
+    s2.connect(l2).connect(g2).connect(crashBus); s2.start(t2, Math.random() * 2); s2.stop(t2 + waveP * .4 + .2);
+  }
   setTimeout(() => { breakFlash = clamp(.15 + h / 5, .15, .5) * A / (lvl * .047 || 1); breakAt = performance.now(); }, Math.max(0, (tb - ctx.currentTime) * 1000));
 }
 function schedule() {
@@ -1431,9 +1440,11 @@ function seaState() {
 function updateOcean() {
   if (!ctx) return; droneLevel();
   const a = seaState(), level = Number($('ocean').value) / 100;
-  oceanGain.gain.setTargetAtTime(playing ? level * (.22 + a.e * .6) : 0, ctx.currentTime, .8);
-  const swell = .5 + .5 * Math.sin(ctx.currentTime * 2 * Math.PI / Math.max(4, a.per));
-  oceanFilter.frequency.setTargetAtTime(260 + swell * (500 + a.h * 300), ctx.currentTime, .3);
+  // the bed breathes with three slow swells that never line up, so it doesn't repeat
+  const T = ctx.currentTime, per = Math.max(4, a.per), tw = 2 * Math.PI * T;
+  const swell = .5 + .5 * (.5 * Math.sin(tw / per) + .3 * Math.sin(tw / (per * 1.73) + 1.3) + .2 * Math.sin(tw / (per * 2.91) + .4));
+  oceanFilter.frequency.setTargetAtTime(260 + swell * (500 + a.h * 300), T, .3);
+  oceanGain.gain.setTargetAtTime(playing ? level * (.22 + a.e * .6) * (.75 + .5 * swell) : 0, T, .8);
 }
 function togglePlay() {
   if (!ctx) initAudio();
