@@ -906,12 +906,12 @@ $('wander').addEventListener('click', () => {
 });
 // Blue coast: every so often one beach leaves and another arrives from the rest of the pool
 function rotateBlue() {
-  if (mode !== 'world' || world !== BLUE || document.hidden || performance.now() - manual < 20000) return;
+  if (mode !== 'world' || world !== BLUE || document.hidden || performance.now() - manual < 60000) return;
   const out = BLUE.filter(s => !s.leaving), spare = BLUE_POOL.filter(s => !BLUE.includes(s)); if (!spare.length || out.length < 4) return;
   const leave = out.filter((s, i) => i !== selected)[Math.floor(Math.random() * (out.length - 1))], come = spare[Math.floor(Math.random() * spare.length)];
   if (leave) leave.leaving = true; come.fade = 0; come.leaving = false; come.rk = null; BLUE.push(come); showFacts();
 }
-setInterval(rotateBlue, 9000);
+setInterval(rotateBlue, 30000);
 // A country: its beaches, busiest first, the top 20. The beaches come from OpenStreetMap, the wave height from the nearest sea reading.
 let countryRun = 0;
 async function countryBeaches(c) {
@@ -1638,7 +1638,7 @@ function frame(now) {
   [OCEANS, BLUE_POOL, place.voices].forEach(list => list.forEach(s => {
     s.val = lerp(s.val, s.tval, k); s.per = lerp(s.per, s.tper, k); s.temp = lerp(s.temp, s.ttemp, k); s.lv = lerp(s.lv, s.tlv, k); s.flash = Math.max(0, s.flash - dt * 1.6);
   }));
-  if (mode === 'world') { if (now - manual > 20000 && now - lastCycle > 7000) { selected = (selected + 1) % world.length; lastCycle = now; renderPanel(); } }
+  if (mode === 'world') { if (now - manual > 60000 && now - lastCycle > 16000) { selected = (selected + 1) % world.length; lastCycle = now; renderPanel(); } }
   BLUE.forEach(s => { s.fade = s.fade == null ? 1 : s.fade + ((s.leaving ? 0 : 1) - s.fade) * (1 - Math.exp(-dt * 1.4)); });
   for (let i = BLUE.length - 1; i >= 0; i--) if (BLUE[i].leaving && BLUE[i].fade < .03) { BLUE[i].leaving = false; BLUE[i].fade = 0; BLUE.splice(i, 1); if (i < selected) selected--; else if (i === selected) { selected = Math.min(selected, BLUE.length - 1); if (mode === 'world' && world === BLUE) renderPanel(); } }
   ringOrder = order(); voices.forEach((s, i) => { const tk = ringOrder.indexOf(i) / Math.max(1, voices.length - 1); s.rk = s.rk == null ? tk : lerp(s.rk, tk, 1 - Math.pow(.05, dt)); });
