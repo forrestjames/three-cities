@@ -351,11 +351,21 @@ const BLUE_BEACHES = [
   ['Galveston', 29.18, -94.76, .6, 5, 130, 24, 'Galveston Beach', 'Texas', 29.27, -94.83, 'James Talarico (D) won the Senate seat from the Republicans', true],
   ['Virginia Beach', 36.85, -75.90, 1.0, 7, 90, 15, 'Virginia Beach', 'Virginia', 36.85, -75.98, 'Mark Warner (D) won a fourth term in the Senate', false],
   ['Ocean City', 38.28, -75.02, .9, 7, 110, 13, 'Ocean City Beach', 'Maryland', 38.33, -75.08, 'Wes Moore (D) won re-election as governor', false],
+  // a second beach for each of the same states, so the rings can change over time
+  ['Ogunquit', 43.22, -70.55, .8, 8, 100, 9, 'Ogunquit Beach', 'Maine', 43.25, -70.59, 'Troy Jackson (D) won the Senate seat from the Republicans', true],
+  ['Rye', 42.95, -70.70, .8, 8, 95, 9, 'Rye Beach', 'New Hampshire', 42.98, -70.76, 'Chris Pappas (D) won the Senate seat', false],
+  ['Wrightsville', 34.14, -77.78, 1.0, 7, 110, 19, 'Wrightsville Beach', 'North Carolina', 34.21, -77.80, 'Roy Cooper (D) won the Senate seat from the Republicans', true],
+  ['Folly Beach', 32.58, -79.88, .7, 6, 100, 20, 'Folly Beach', 'South Carolina', 32.65, -79.94, 'Annie Andrews (D) won the Senate seat from the Republicans', true],
+  ['St Simons', 31.08, -81.30, .6, 6, 95, 21, 'St Simons Island', 'Georgia', 31.15, -81.37, 'Jon Ossoff (D) won the Senate seat again', false],
+  ['South Padre', 26.08, -97.05, .8, 6, 120, 25, 'South Padre Island', 'Texas', 26.08, -97.16, 'James Talarico (D) won the Senate seat from the Republicans', true],
+  ['Assateague', 37.85, -75.25, 1.0, 7, 100, 14, 'Assateague Island', 'Virginia', 37.9, -75.35, 'Mark Warner (D) won a fourth term in the Senate', false],
+  ['Assateague MD', 38.16, -75.08, 1.0, 7, 100, 13, 'Assateague Island, Maryland', 'Maryland', 38.2, -75.16, 'Wes Moore (D) won re-election as governor', false],
 ];
-const BLUE = BLUE_BEACHES.map(([short, lat, lon, h, p, d, t, name, sub, blat, blon, res, flip]) =>
+const BLUE_POOL = BLUE_BEACHES.map(([short, lat, lon, h, p, d, t, name, sub, blat, blon, res, flip]) =>
   make({ name, short, sub, blat, blon, res, flip, lat, lon, tval: h, tper: p, tdir: d, ttemp: t, tlv: h / BLUE_REF, pan: clamp(lon / 180, -1, 1) * .8 }));
+const BLUE = BLUE_POOL.slice(0, 8); // the beaches on show. The rest come and go.
 let world = BLUE;
-const ALL = [OCEANS, BLUE];
+const ALL = [OCEANS, BLUE_POOL];
 
 const place = {
   name: 'Good Harbor Beach', sub: 'Gloucester, Massachusetts', lat: 42.6177, lon: -70.5866,
@@ -508,7 +518,7 @@ async function fetchList(list, ref) {
   } catch (e) { console.warn('Blue Wave: sea list unavailable, using sample readings', e); }
   list.forEach(rebuild);
 }
-async function fetchWorld() { await Promise.all([fetchList(BLUE, BLUE_REF), fetchList(OCEANS, WORLD_REF)]); showFacts(); renderPanel(); }
+async function fetchWorld() { await Promise.all([fetchList(BLUE_POOL, BLUE_REF), fetchList(OCEANS, WORLD_REF)]); BLUE.live = BLUE_POOL.live; showFacts(); renderPanel(); }
 
 async function fetchPlace() {
   const p = place, stamp = ++fetchPlace.n;
@@ -877,6 +887,14 @@ $('wander').addEventListener('click', () => {
   const on = $('wander').getAttribute('aria-pressed') !== 'true'; $('wander').setAttribute('aria-pressed', on);
   clearInterval(wanderTimer); if (on) { shuffleBeach(); wanderTimer = setInterval(() => { if (mode === 'place') shuffleBeach(); }, 30000); }
 });
+// Blue coast: every so often one beach leaves and another arrives from the rest of the pool
+function rotateBlue() {
+  if (mode !== 'world' || world !== BLUE || document.hidden || performance.now() - manual < 20000) return;
+  const out = BLUE.filter(s => !s.leaving), spare = BLUE_POOL.filter(s => !BLUE.includes(s)); if (!spare.length || out.length < 4) return;
+  const leave = out.filter((s, i) => i !== selected)[Math.floor(Math.random() * (out.length - 1))], come = spare[Math.floor(Math.random() * spare.length)];
+  if (leave) leave.leaving = true; come.fade = 0; come.leaving = false; come.rk = null; BLUE.push(come); showFacts();
+}
+setInterval(rotateBlue, 9000);
 // A country: its beaches, busiest first, the top 20. The beaches come from OpenStreetMap, the wave height from the nearest sea reading.
 let countryRun = 0;
 async function countryBeaches(c) {
@@ -1056,7 +1074,7 @@ function schedule() {
     list.forEach((s, i) => {
       const step = tick % s.steps;
       if (step === 0 && tick > 0) driftLap(s);
-      if (s.pattern[(step + s.offset) % s.steps]) { voice(s, t); setTimeout(() => { if (voices === list) hitVisual(i, step); }, Math.max(0, (t - ctx.currentTime) * 1000)); }
+      if (s.pattern[(step + s.offset) % s.steps] && !(s.fade != null && s.fade < .2)) { voice(s, t); setTimeout(() => { if (voices === list) hitVisual(i, step); }, Math.max(0, (t - ctx.currentTime) * 1000)); }
     });
     tick++; nextTime += sd;
   }
@@ -1549,10 +1567,12 @@ let t0 = performance.now();
 function frame(now) {
   const dt = Math.min(.05, (now - t0) / 1000); t0 = now;
   const k = 1 - Math.pow(.2, dt);
-  [OCEANS, BLUE, place.voices].forEach(list => list.forEach(s => {
+  [OCEANS, BLUE_POOL, place.voices].forEach(list => list.forEach(s => {
     s.val = lerp(s.val, s.tval, k); s.per = lerp(s.per, s.tper, k); s.temp = lerp(s.temp, s.ttemp, k); s.lv = lerp(s.lv, s.tlv, k); s.flash = Math.max(0, s.flash - dt * 1.6);
   }));
   if (mode === 'world') { if (now - manual > 20000 && now - lastCycle > 7000) { selected = (selected + 1) % world.length; lastCycle = now; renderPanel(); } }
+  BLUE.forEach(s => { s.fade = s.fade == null ? 1 : s.fade + ((s.leaving ? 0 : 1) - s.fade) * (1 - Math.exp(-dt * 1.4)); });
+  for (let i = BLUE.length - 1; i >= 0; i--) if (BLUE[i].leaving && BLUE[i].fade < .03) { BLUE[i].leaving = false; BLUE[i].fade = 0; BLUE.splice(i, 1); if (i < selected) selected--; else if (i === selected) { selected = Math.min(selected, BLUE.length - 1); if (mode === 'world' && world === BLUE) renderPanel(); } }
   ringOrder = order(); voices.forEach((s, i) => { const tk = ringOrder.indexOf(i) / Math.max(1, voices.length - 1); s.rk = s.rk == null ? tk : lerp(s.rk, tk, 1 - Math.pow(.05, dt)); });
   skyUpdate(dt); drawWorld(now, dt);
 
@@ -1561,17 +1581,19 @@ function frame(now) {
   if (playing && ctx && waveP) { const ph = clamp((ctx.currentTime - waveStart) / waveP, 0, 1); swell = ph < .68 ? ph / .68 : Math.max(0, 1 - (ph - .68) / .3); }
   if (playing && ctx) { const sd = stepDur(); frac = clamp((ctx.currentTime - (nextTime - sd)) / sd, 0, 1); curTick = tick - 1; }
   voices.forEach((s, i) => {
-    const r = radiusOf(i, g), sel = i === selected;
-    rx.beginPath(); rx.arc(g.cx, g.cy, r, 0, Math.PI * 2); rx.strokeStyle = tempColor(s.temp, (sel ? .75 : .3 + s.flash * .35) + swell * .18); rx.lineWidth = (sel ? 1.6 : 1) + swell * .5; rx.stroke();
+    const r = radiusOf(i, g), sel = i === selected; rx.globalAlpha = s.fade == null ? 1 : clamp(s.fade, 0, 1);
+    rx.beginPath(); rx.arc(g.cx, g.cy, r, 0, Math.PI * 2); rx.strokeStyle = 'rgba(5,16,44,' + (sel ? .3 : .2) + ')'; rx.lineWidth = (sel ? 3.6 : 3); rx.stroke();
+    rx.beginPath(); rx.arc(g.cx, g.cy, r, 0, Math.PI * 2); rx.strokeStyle = tempColor(s.temp, (sel ? .95 : .55 + s.flash * .35) + swell * .18); rx.lineWidth = (sel ? 1.8 : 1.3) + swell * .5; rx.stroke();
     const steps = s.steps;
     for (let q = 0; q < steps; q++) {
       const ang = q / steps * Math.PI * 2 - Math.PI / 2, x = g.cx + Math.cos(ang) * r, y = g.cy + Math.sin(ang) * r, hit = s.pattern[(q + s.offset) % steps];
       rx.beginPath();
-      if (hit) { const lit = playing && ((curTick % steps + steps) % steps) === q ? s.flash : 0; rx.arc(x, y, (g.small ? 2.8 : 4) + lit * 3.5, 0, Math.PI * 2); rx.fillStyle = tempColor(s.temp, .88 + lit * .12); rx.fill(); }
-      else { rx.arc(x, y, 1.3, 0, Math.PI * 2); rx.fillStyle = 'rgba(210,226,255,.45)'; rx.fill(); }
+      if (hit) { rx.fillStyle = 'rgba(5,16,44,.3)'; rx.arc(x, y, (g.small ? 4.4 : 5.8), 0, Math.PI * 2); rx.fill(); rx.beginPath(); const lit = playing && ((curTick % steps + steps) % steps) === q ? s.flash : 0; rx.arc(x, y, (g.small ? 2.8 : 4) + lit * 3.5, 0, Math.PI * 2); rx.fillStyle = tempColor(s.temp, .88 + lit * .12); rx.fill(); }
+      else { rx.arc(x, y, 1.3, 0, Math.PI * 2); rx.fillStyle = 'rgba(235,243,255,.7)'; rx.fill(); }
     }
     if (playing) { const pos = (((curTick % steps) + steps) % steps + frac) / steps, ang = pos * Math.PI * 2 - Math.PI / 2;
       rx.beginPath(); rx.arc(g.cx + Math.cos(ang) * r, g.cy + Math.sin(ang) * r, 1.8, 0, Math.PI * 2); rx.fillStyle = 'rgba(242,247,255,.95)'; rx.fill(); }
+    rx.globalAlpha = 1;
   });
   voices.forEach((s, i) => { if (mode === 'place' || i === selected) pill(labelFor(s), g.cx, g.cy - radiusOf(i, g) - 18, i === selected, iconFor(s, now / 1000)); });
   for (let j = ripples.length - 1; j >= 0; j--) {
