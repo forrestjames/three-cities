@@ -364,10 +364,23 @@ const BLUE_BEACHES = [
   ['South Padre', 26.08, -97.05, .8, 6, 120, 25, 'South Padre Island', 'Texas', 26.08, -97.16, 'James Talarico (D) won the Senate seat from the Republicans', true],
   ['Assateague', 37.85, -75.25, 1.0, 7, 100, 14, 'Assateague Island', 'Virginia', 37.9, -75.35, 'Mark Warner (D) won a fourth term in the Senate', false],
   ['Assateague MD', 38.16, -75.08, 1.0, 7, 100, 13, 'Assateague Island, Maryland', 'Maryland', 38.2, -75.16, 'Wes Moore (D) won re-election as governor', false],
+  // the other blue coastal states, checked on 4 November 2026 (AP calls via local press; governor winners as listed by MultiState)
+  ['Santa Cruz', 36.90, -122.05, 1.4, 12, 280, 14, 'Santa Cruz', 'California', 36.96, -122.02, 'Xavier Becerra (D) won the governor\'s race, and Mike McGuire (D) flipped the 1st District', true],
+  ['Huntington', 33.60, -118.05, 1.0, 13, 220, 18, 'Huntington Beach', 'California', 33.655, -118.0, 'Xavier Becerra (D) won the governor\'s race, and Democrats flipped House seats', true],
+  ['Cannon Beach', 45.89, -124.05, 2.2, 12, 280, 12, 'Cannon Beach', 'Oregon', 45.89, -123.96, 'Jeff Merkley (D) won the Senate seat again', false],
+  ['Waikiki', 21.24, -157.85, .8, 13, 190, 26, 'Waikiki Beach', 'Hawaii', 21.276, -157.827, 'Josh Green (D) won re-election as governor', false],
+  ['Pipeline', 21.70, -158.06, 2.0, 14, 320, 26, 'Banzai Pipeline', 'Hawaii', 21.665, -158.053, 'Josh Green (D) won re-election as governor', false],
+  ['Good Harbor', 42.62, -70.60, .7, 8, 90, 11, 'Good Harbor Beach', 'Massachusetts', 42.618, -70.627, 'Ed Markey (D) won the Senate seat again', false],
+  ['Narragansett', 41.38, -71.43, .8, 8, 170, 14, 'Narragansett Town Beach', 'Rhode Island', 41.43, -71.455, 'Jack Reed (D) won a sixth term in the Senate', false],
+  ['Hammonasset', 41.22, -72.55, .3, 4, 200, 14, 'Hammonasset Beach', 'Connecticut', 41.262, -72.553, 'Ned Lamont (D) won re-election as governor', false],
+  ['Rockaway', 40.52, -73.85, .9, 8, 150, 15, 'Rockaway Beach', 'New York', 40.583, -73.816, 'Kathy Hochul (D) won re-election as governor, and Cait Conley (D) flipped the 17th District', true],
+  ['Montauk', 41.00, -71.90, 1.1, 9, 150, 15, 'Montauk', 'New York', 41.035, -71.94, 'Kathy Hochul (D) won re-election as governor, and Cait Conley (D) flipped the 17th District', true],
+  ['Asbury Park', 40.22, -73.95, .9, 8, 120, 16, 'Asbury Park', 'New Jersey', 40.22, -74.0, 'Cory Booker (D) won the Senate seat again, and Rebecca Bennett (D) flipped the 7th District', true],
+  ['Rehoboth', 38.72, -75.00, .8, 8, 110, 15, 'Rehoboth Beach', 'Delaware', 38.72, -75.076, 'Chris Coons (D) won a fourth term in the Senate', false],
 ];
 const BLUE_POOL = BLUE_BEACHES.map(([short, lat, lon, h, p, d, t, name, sub, blat, blon, res, flip]) =>
   make({ name, short, sub, blat, blon, res, flip, lat, lon, tval: h, tper: p, tdir: d, ttemp: t, tlv: h / BLUE_REF, pan: clamp(lon / 180, -1, 1) * .8 }));
-const BLUE = BLUE_POOL.slice(0, 8); // the beaches on show. The rest come and go.
+const BLUE = [...BLUE_POOL.slice(0, 8), BLUE_POOL[16], BLUE_POOL[18], BLUE_POOL[21], BLUE_POOL[26]]; // the beaches on show. The rest come and go.
 let world = BLUE;
 const ALL = [OCEANS, BLUE_POOL];
 
@@ -1052,14 +1065,14 @@ function scheduleWave(t) {
   g.setValueAtTime(.55, t); g.linearRampToValueAtTime(.55 + .45 * amt, tb - .05); g.linearRampToValueAtTime(.4, tb + .5); g.linearRampToValueAtTime(.5, t + P);
   f.setValueAtTime(500, t); f.exponentialRampToValueAtTime(500 + 3600 * amt, tb - .05); f.exponentialRampToValueAtTime(700, tb + .6); f.exponentialRampToValueAtTime(420, t + P);
   if (still || lvl <= 0) return;
-  const A = lvl * (.06 + .2 * clamp(h / 3, 0, 1)), src = ctx.createBufferSource(), lp = ctx.createBiquadFilter(), ng = ctx.createGain(), pn = ctx.createStereoPanner ? ctx.createStereoPanner() : null;
+  const A = lvl * (.025 + .07 * clamp(h / 3, 0, 1)), src = ctx.createBufferSource(), lp = ctx.createBiquadFilter(), ng = ctx.createGain(), pn = ctx.createStereoPanner ? ctx.createStereoPanner() : null;
   src.buffer = pinkBuf; src.loop = true; lp.type = 'lowpass'; lp.Q.value = .5; src.connect(lp).connect(ng);
   if (pn) { pn.pan.value = (Math.random() - .5) * .8; ng.connect(pn).connect(crashBus); } else ng.connect(crashBus);
   const ng2 = ng.gain, lf = lp.frequency;
-  ng2.setValueAtTime(.0001, t); ng2.linearRampToValueAtTime(A * .3, tb - .05);                       // the swell, getting louder as the wave stands up
-  ng2.linearRampToValueAtTime(A, tb + .04); ng2.exponentialRampToValueAtTime(A * .22, tb + P * .12); // the break
+  ng2.setValueAtTime(.0001, t); ng2.linearRampToValueAtTime(A * .45, tb - .3);                       // the swell, getting louder as the wave stands up
+  ng2.linearRampToValueAtTime(A, tb + .45); ng2.exponentialRampToValueAtTime(A * .3, tb + P * .2); // the break
   ng2.exponentialRampToValueAtTime(.0001, t + P);                                                      // the wash, sinking into the sand
-  lf.setValueAtTime(260, t); lf.exponentialRampToValueAtTime(2200, tb - .05); lf.linearRampToValueAtTime(6500, tb + .05); lf.exponentialRampToValueAtTime(2600, tb + P * .12); lf.exponentialRampToValueAtTime(240, t + P);
+  lf.setValueAtTime(240, t); lf.exponentialRampToValueAtTime(1100, tb - .3); lf.linearRampToValueAtTime(2400, tb + .45); lf.exponentialRampToValueAtTime(1300, tb + P * .2); lf.exponentialRampToValueAtTime(240, t + P);
   src.start(t, Math.random() * 2); src.stop(t + P + .2);
   setTimeout(() => { breakFlash = clamp(.35 + h / 3, .35, 1); breakAt = performance.now(); }, Math.max(0, (tb - ctx.currentTime) * 1000));
 }
@@ -1582,21 +1595,30 @@ function buildTitle() {
     if (d[((y | 0) * tW + (x | 0)) * 4 + 3] > 128) tpts.push({ x: x + (Math.random() - .5) * step * .5, y: y + (Math.random() - .5) * step * .5, r: step * (.46 + Math.random() * .3), ph: Math.random() * 6.28 });
   }
 }
-let tPulse = 0, tClock = 0;
+let tPulse = 0, tClock = 0, tSel = null, tBurst = 0;
+function placeFloat() {
+  const el = document.querySelector('.left.float'); if (!el) return;
+  if (innerWidth <= 760) { el.style.top = el.style.maxHeight = ''; return; }
+  const b = document.querySelector('.title').getBoundingClientRect().bottom + 14;
+  el.style.top = b + 'px'; el.style.maxHeight = `calc(100% - ${b}px - 112px)`;
+}
+setInterval(placeFloat, 500); addEventListener('resize', placeFloat);
 function drawTitle(dt) {
   if (!tpts.length) return;
   const s = voices[selected] || { val: 1, per: 8 }, h = clamp(s.val / (mode === 'world' && world === OCEANS ? 5 : 2.6), .1, 1), per = clamp(s.per || 8, 4, 18);
   let fl = 0; voices.forEach(v => { if (v.flash > fl) fl = v.flash; }); tPulse = Math.max(tPulse * Math.pow(.02, dt), fl);
+  const flipped = mode === 'world' && world === BLUE && s.flip; if (s !== tSel) { tSel = s; if (flipped) tBurst = 1; }
+  tBurst = Math.max(0, tBurst - dt * .45);
   tClock += dt * (reduce ? 0 : 1); const t = tClock, wv = Math.PI * 2 / per;
   const sw = playing && ctx && waveP ? (() => { const ph = clamp((ctx.currentTime - waveStart) / waveP, 0, 1); return ph < .68 ? ph / .68 : Math.max(0, 1 - (ph - .68) / .3); })() : .35 + .2 * Math.sin(t * wv);
   const amp = tH * (.03 + .1 * h) * (.5 + sw * .6), k = Math.PI * 2 / (tW * (.55 + .5 * (1 - h)));
   const lp = ((t % (per * 1.6)) / (per * 1.6)), lx = -tH * .4 + lp * (tW + tH * .8), ly = tH * .5, LR = tH * (.62 + .18 * breakFlash);
   tx.setTransform(tD, 0, 0, tD, 0, 0); tx.clearRect(0, 0, tW, tH);
-  tx.fillStyle = 'rgba(242,247,255,.96)'; tx.beginPath();
+  tx.fillStyle = flipped ? 'rgba(168,214,255,.98)' : 'rgba(242,247,255,.96)'; tx.beginPath(); const bf = Math.max(breakFlash, tBurst);
   for (let i = 0; i < tpts.length; i++) {
     const p = tpts[i]; let x = p.x, y = p.y + Math.sin(p.x * k - t * wv * 1.3) * amp + Math.sin(p.x * k * 2.3 + t * wv * .7 + p.ph * .2) * amp * .35;
-    let rr = p.r * (.85 + .35 * Math.sin(t * 1.7 + p.ph) * .5 + tPulse * .5 + sw * .15);
-    if (breakFlash > .05) { const j = breakFlash * 2.2; x += Math.sin(p.ph * 9 + t * 11) * j; y += Math.cos(p.ph * 7 + t * 9) * j; }
+    let rr = p.r * (.85 + .35 * Math.sin(t * 1.7 + p.ph) * .5 + tPulse * .5 + sw * .15 + tBurst * .35);
+    if (bf > .05) { const j = bf * 2.2; x += Math.sin(p.ph * 9 + t * 11) * j; y += Math.cos(p.ph * 7 + t * 9) * j; }
     const dx = x - lx, dy = y - ly, dd = Math.hypot(dx, dy);
     if (dd < LR) { const f = 1 - dd / LR; y = ly + dy * (1 + 1.35 * f * f); x = lx + dx * (1 + .25 * f); rr *= 1 + .5 * f; }
     tx.moveTo(x + rr, y); tx.arc(x, y, rr, 0, 6.2832);
