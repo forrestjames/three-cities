@@ -165,6 +165,7 @@ input[type=search]::placeholder { color: var(--faint); }
 .pop { position: fixed; z-index: 4; left: 50%; transform: translateX(-50%); bottom: calc(env(safe-area-inset-bottom, 0px) + 118px); width: min(560px, calc(100% - 32px)); max-height: calc(100% - 150px); overflow: auto;
   background: var(--glass); border: 1px solid var(--edge); border-radius: 16px; backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); padding: 16px 20px; font: 400 13px var(--mono); color: var(--mist); }
 .pop[hidden] { display: none; }
+.phone-only { display: none; }
 @media (min-width: 761px) { .bn-phone { display: none !important; } }   /* the line sits in the headline card on wider screens, so no second copy */
 /* "?" : a short note on how to read the rings. Hover shows it on a mouse; a tap opens and closes it on a phone. */
 .kickrow { position: relative; }
@@ -207,29 +208,49 @@ input[type=range]::-moz-range-thumb { width: 14px; height: 14px; border-radius: 
   /* Phone layout: a header, the rings, then one swipeable dock with every card side by side, and the controls along the bottom. */
   .title { max-width: none; right: 16px; top: calc(env(safe-area-inset-top, 0px) + 10px); left: 16px; }
   h1 { font-size: 32px; line-height: 1; }
-  #ttl { width: min(68%, 260px); margin: -2px 0 2px -4px; }
-  .kicker { font-size: clamp(10.5px, 3vw, 12px); margin-top: 4px; max-width: none; white-space: nowrap; }
-  .facts { font-size: 12.5px; margin-top: 4px; line-height: 1.45; }
+  #ttl { width: min(76%, 300px); margin: -2px 0 2px -4px; filter: none; }   /* the gooey blur eats the thin strokes at this size, so the dots just overlap */
+  /* keep it quiet: the tagline goes (the "?" says it), and the status line only shows when the sea can't be reached */
+  .kickrow { position: static; }
+  .kickrow .kicker { position: absolute; right: 0; top: 2px; margin: 0; max-width: none; }
+  .kickrow .kicker .kt { display: none; }
+  .howbtn { width: 30px; height: 30px; margin: 0; font-size: 13px; opacity: .85; }
+  .how-pop { top: 44px !important; }
+  .facts { display: none; font-size: 11.5px; margin-top: 4px; line-height: 1.45; }
+  body.sea-off .facts { display: block; }
   #means { display: none; }
   .seg { display: flex; position: static; margin: 8px 0 0; width: 100%; }
-  .seg button { flex: 1; padding: 6px 4px; min-height: 34px; font-size: 12px; letter-spacing: .03em; }
+  .seg button { flex: 1; display: flex; align-items: center; justify-content: center; gap: 6px; white-space: nowrap; padding: 6px 4px; min-height: 36px; font-size: 12px; letter-spacing: .03em; }
+  .seg .usf { margin: 0; width: 16px; height: 16px; flex: none; vertical-align: baseline; }
   .news { margin-top: 6px; width: 100%; padding: 7px 12px 7px 14px; border-radius: 14px; }
   .bn { margin-top: 6px; padding-top: 6px; font-size: 11.5px; line-height: 1.4; }
   .nh { font-size: 13.5px; -webkit-line-clamp: 2; min-height: 2.6em; margin-top: 4px; }
   .ns { display: none; margin-top: 4px; }
   @media (min-height: 880px) { .ns { display: block; } }
   @media (max-height: 780px) { .kicker:not(.bluenote) .kt { display: none; } .facts { margin-top: 8px; } }
-  .panel { top: auto; width: auto; left: 12px; right: 12px; bottom: calc(var(--dockb, 150px) + 24px); height: 200px; max-height: none; padding: 0; display: flex; overflow-x: auto; overflow-y: hidden; scroll-snap-type: x mandatory; scrollbar-width: none; overscroll-behavior-x: contain; }
+  .panel { top: auto; width: auto; left: 12px; right: 12px; bottom: calc(var(--dockb, 150px) + 24px); height: 192px; max-height: none; padding: 0; display: flex; overflow-x: auto; overflow-y: hidden; scroll-snap-type: x mandatory; scrollbar-width: none; overscroll-behavior-x: contain; }
   .panel::-webkit-scrollbar { display: none; }
   .left { display: contents; }
   .panel > .pg, #search, .shead, .slide { display: block; flex: 0 0 100%; width: 100%; height: 100%; scroll-snap-align: start; padding: 12px 16px; overflow: hidden; margin: 0; border: 0; border-radius: 0; background: none; backdrop-filter: none; -webkit-backdrop-filter: none; }
   .left .card { display: contents; }
   #surf { display: contents; } .slides { display: contents; margin: 0; overflow: visible; }
   #search { overflow: auto; }
-  #pg-read { order: 3; display: grid; grid-template-columns: 1fr 150px; grid-template-rows: auto auto auto 1fr; column-gap: 10px; align-content: start; }
-  #pg-read .top { grid-column: 1 / -1; } #pg-read .name { grid-column: 1; margin: 2px 0 0; font-size: 20px; align-self: end; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; } #pg-read .geo { display: contents; }
-  #pg-read .sub { grid-column: 1; margin: 0; font-size: 12px; align-self: start; } #mini { grid-column: 2; grid-row: 2 / 4; width: 150px; height: 62px; margin: 0; align-self: center; }
-  #pg-read #gauges { grid-column: 1 / -1; height: 74px; margin-top: 6px; }
+  #pg-read { order: 3; position: relative; display: grid; grid-template-columns: 1fr 112px; grid-template-rows: auto auto auto 1fr; column-gap: 10px; align-content: start; }
+  #pg-read .top { grid-column: 1; min-width: 0; } #r-cap { font-size: 10.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  #pg-read .share-btn { position: absolute; right: 14px; bottom: 12px; padding: 0; width: 38px; min-height: 38px; justify-content: center; font-size: 0; gap: 0; } #pg-read .share-btn svg { width: 17px; height: 17px; }
+  #pg-read .name { grid-column: 1; margin: 2px 0 0; font-size: 23px; align-self: end; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; } #pg-read .geo { display: contents; }
+  #pg-read .sub { grid-column: 1; margin: 2px 0 0; font-size: 12.5px; } #mini { grid-column: 2; grid-row: 1 / 4; width: 112px; height: 48px; margin: 0; align-self: center; }
+  #pg-read #gauges { grid-column: 1 / -1; width: 232px; height: 74px; margin-top: 8px; }
+  /* while it plays, everything but the rings steps back */
+  .seg, .panel, .dockdots { transition: max-height .4s ease, opacity .3s ease, margin .4s ease, height .4s ease, bottom .4s ease; }
+  .seg { max-height: 60px; }
+  body.is-playing .seg { max-height: 0; opacity: 0; margin-top: 0; padding-top: 0; padding-bottom: 0; border-width: 0; overflow: hidden; pointer-events: none; }
+  body.is-playing .facts { display: none; }
+  body.is-playing .dockdots { opacity: 0; pointer-events: none; }
+  body.is-playing .panel { height: 78px; bottom: calc(var(--dockb, 150px) + 4px); }
+  body.is-playing #pg-read #gauges, body.is-playing #pg-read .share-btn, body.is-playing #mini, body.is-playing #r-cap { display: none; }
+  body.is-playing #pg-read .name { font-size: 20px; }
+  body.is-playing #panel > #news { padding: 10px 16px; } body.is-playing #panel > #news .nt, body.is-playing #panel > #news .ns, body.is-playing #panel > #news .bn { display: none; }
+  body.is-playing #panel > #news .nh { font-size: 15px; -webkit-line-clamp: 2; margin-top: 0; }
   /* three screens on a phone: the piece, the news, the beach. Scale, data and surf check stay on desktop. */
   #panel > #news { order: 1; display: block; flex: 0 0 100%; width: 100%; height: 100%; margin: 0; padding: 14px 16px; border: 0; border-radius: 0; background: none; backdrop-filter: none; -webkit-backdrop-filter: none; scroll-snap-align: start; overflow: hidden; }
   #search { order: 2; } .shead { order: 5; } .slide { order: 6; }
@@ -238,11 +259,11 @@ input[type=range]::-moz-range-thumb { width: 14px; height: 14px; border-radius: 
   .mix .ctl { min-width: 0; }
   .bar .btns { width: 100%; }
   /* short phones: take the status line out, shorten the screens, so the rings get the middle */
-  @media (max-height: 760px) { .facts { display: none; } .panel { height: clamp(150px, 24vh, 200px); } .intro li { padding: 5px 0; } }
+  @media (max-height: 760px) { .facts { display: none; } .panel { height: 168px; } #pg-read #gauges { height: 74px; margin-top: 2px; } #pg-read .name { font-size: 21px; } .intro li { padding: 5px 0; } }
   #panel > #news .nh { font-size: 19px; line-height: 1.3; -webkit-line-clamp: 4; min-height: 0; margin-top: 10px; }
   #panel > #news .ns { display: block; margin-top: 12px; }
-  #panel > #news .bn { display: none; }
-  #blue-note { display: none !important; }   /* on phones the Democrats line sits under the view switch */
+  #panel > #news .bn { display: block; margin-top: 10px; padding-top: 8px; font-size: 12.5px; line-height: 1.4; }   /* on phones the Democrats line sits in the headline card */
+  #blue-note[hidden], #blue-note-m { display: none !important; }
   .bn-phone { margin: 8px 0 0; font-size: 12.5px; white-space: normal; line-height: 1.4; }
   body:not(.is-blue) .bn-phone { display: none !important; }
   body.is-place #news { display: none !important; }
@@ -259,7 +280,9 @@ input[type=range]::-moz-range-thumb { width: 14px; height: 14px; border-radius: 
   .dockdots button[aria-current="true"]::after { background: var(--foam); }
   .dockdots[hidden] { display: none; }
   .bar { width: auto; left: 12px; right: 12px; transform: none; max-width: none; gap: 6px 14px; border-radius: 22px; padding: 8px 14px 10px; bottom: calc(env(safe-area-inset-bottom, 0px) + 34px); }
-  .btns { width: 100%; } .play { flex: 1; padding: 11px 0; } .mini-btn { min-height: 40px; }
+  .btns { width: 100%; } .play { flex: 1; padding: 13px 0; } .mini-btn { min-height: 44px; padding: 0 20px; }
+  #b-midi, .credit, #p-music .how { display: none; }   /* the "?" already says how to read the rings */
+  .phone-only { display: block; }
   .pop { left: 12px; right: 12px; width: auto; transform: none; bottom: calc(var(--dockb, 150px) + 8px); max-height: 62vh; }
   .how-pop { left: 0; right: 0; bottom: auto; top: calc(100% + 6px); max-height: none; overflow: visible; }
   .ctl { flex: 1; min-width: 0; } .ctl label { font-size: 10.5px; }
@@ -391,6 +414,8 @@ input[type=range]::-moz-range-thumb { width: 14px; height: 14px; border-radius: 
   <p class="note" id="m-style-note"></p>
   <p class="note" id="m-line"></p>
   <p class="note">On Auto, every place gets its own key, scale, chords and sound, picked from where it is and how warm its sea is. Wave height sets how many hits, wave period sets the steps, temperature sets the pitch. The chord changes every four bars. Shift key moves everything up a tone and comes round again after six moves.</p>
+  <button class="go phone-only" id="b-midi2" type="button" style="margin-top:6px">MIDI out</button>
+  <p class="note phone-only">Sea and weather: <a href="https://open-meteo.com/" target="_blank" rel="noopener">Open-Meteo</a> (DWD, ECMWF, Météo-France), CC BY 4.0 · Places: <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a> · <a href="https://threecities.forrestjamesmusic.com">Three Cities</a>, the sister piece</p>
 </section>
 <section class="pop" id="p-midi" role="region" aria-label="MIDI out" hidden>
   <div class="cap">MIDI out</div>
@@ -854,11 +879,12 @@ function showFacts() {
   if (mode === 'world') {
     const blue = world === BLUE, live = !!world.live;
     el.classList.toggle('offline', !live);
+    document.body.classList.toggle('sea-off', !live);
     el.textContent = live ? `Live · ${world.length} ${blue ? 'blue coast beaches' : 'seas'} · read ${pad2(worldUpdated.getUTCHours())}:${pad2(worldUpdated.getUTCMinutes())} GMT` : 'Sample readings · live sea not reached';
     const mw = world.reduce((a, s) => a + s.tval, 0) / world.length, mt = world.reduce((a, s) => a + s.ttemp, 0) / world.length;
     means.textContent = `Mean wave ${mw.toFixed(1)} m · mean sea ${mt.toFixed(1)} °C`;
   } else {
-    const p = place; el.classList.toggle('offline', !p.live);
+    const p = place; el.classList.toggle('offline', !p.live); document.body.classList.toggle('sea-off', p.loaded && !p.live);
     el.textContent = !p.loaded ? 'Loading the sea' : p.error ? 'Sea data not reached' : p.noSea ? 'No sea reading near here' : `Live · ${hhmmOf(localNow())} local time`;
     const bits = [];
     if (p.seaTemp != null) bits.push(`Sea ${p.seaTemp.toFixed(1)} °C`);
@@ -1450,7 +1476,7 @@ function togglePlay() {
   if (!ctx) initAudio();
   if (ctx.state === 'suspended') ctx.resume();
   playing = !playing;
-  $('play').setAttribute('aria-pressed', playing); $('play').textContent = playing ? 'Stop' : 'Play';
+  $('play').setAttribute('aria-pressed', playing); $('play').textContent = playing ? 'Stop' : 'Play'; document.body.classList.toggle('is-playing', playing);
   if (playing) { tick = 0; mi = 0; chordNow = []; nextTime = ctx.currentTime + .05; waveT = ctx.currentTime + .05; swayG.gain.cancelScheduledValues(0); swayLP.frequency.cancelScheduledValues(0); musicSync(); startDrone(); if (MIDI.on && MIDI.clock) midiSend([0xFA]); timer = setInterval(schedule, 25); }
   else { clearInterval(timer); stopDrone(); if (MIDI.on) { if (MIDI.clock) midiSend([0xFC]); midiAllOff(); } }
   droneLevel(); updateOcean();
@@ -1548,7 +1574,7 @@ function openPanel(id) {
   ['music', 'midi'].forEach(p => { const el = $('p-' + p), btn = $('b-' + p), open = p === id && el.hidden; el.hidden = !open; btn.setAttribute('aria-expanded', open); });
   if (id === 'midi' && !$('p-midi').hidden) midiConnect();
 }
-$('b-music').addEventListener('click', () => openPanel('music')); $('b-midi').addEventListener('click', () => openPanel('midi'));
+$('b-music').addEventListener('click', () => openPanel('music')); $('b-midi').addEventListener('click', () => openPanel('midi')); $('b-midi2').addEventListener('click', () => openPanel('midi'));
 document.addEventListener('keydown', (e) => { if (e.key === 'Escape') openPanel(null); });
 
 // ---------- drawing helpers ----------
@@ -1556,11 +1582,11 @@ const sea = $('sea'), rings = $('rings');
 const sx = sea.getContext('2d'), rx = rings.getContext('2d');
 let W = 0, H = 0, DPR = 1;
 const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-let areaTop = 0, areaBot = 0;
+let areaTop = 0, areaBot = 0, lastDockb = '', playEase = 0, lastMeasure = 0;
 // phone: measure what is above and below the rings. Runs again whenever the title block changes height (fonts, the headline card).
 function measureArea() {
   if (W < 760) {
-    const bar = $('bar').getBoundingClientRect(); document.documentElement.style.setProperty('--dockb', Math.round(H - bar.top + 8) + 'px');
+    const bar = $('bar').getBoundingClientRect(), db = Math.round(H - bar.top + 8) + 'px'; if (db !== lastDockb) { lastDockb = db; document.documentElement.style.setProperty('--dockb', db); }
     const ttl = document.querySelector('.title').getBoundingClientRect(); areaTop = ttl.bottom + 4; areaBot = $('panel').getBoundingClientRect().top - 4;
   }
 }
@@ -1901,7 +1927,7 @@ function drawWorld(now, dt) {
 // ---------- the rings ----------
 function geom() {
   const small = W < 760, cx = W / 2, cy = small ? (areaTop + areaBot) / 2 + 12 : H * .47;
-  const maxR = small ? Math.max(60, Math.min(W * .44, (areaBot - areaTop) / 2 - 24)) : Math.min(W * .38, H * .35);
+  const maxR = small ? Math.max(60, Math.min(W * (.44 + .035 * playEase), (areaBot - areaTop) / 2 - 24)) : Math.min(W * .38, H * .35);
   return { cx, cy, maxR, minR: maxR * (mode === 'place' ? .36 : .2), small };
 }
 // Smallest wave, smallest ring. Largest wave, largest ring. The rest fill in between. Air is always the middle of the place rings.
@@ -1912,11 +1938,13 @@ function order() {
 let ringOrder = order();
 function radiusOf(i, g) { const n = voices.length, s = voices[i], k = s && s.rk != null ? s.rk : ringOrder.indexOf(i) / Math.max(1, n - 1); return n < 2 ? g.maxR : g.maxR - (g.maxR - g.minR) * k; }
 const ripples = [];
+const drips = [];   // every struck dot lets a drop fall into the sea
 let flagCv = null, flagPulse = 0;   // the flag's ripple: a pulse that every hit adds to
 function hitVisual(i, step) {
   const s = voices[i]; if (!s) return; s.flash = 1; flagPulse = Math.min(1, flagPulse + .35);
   const g = geom(), r = radiusOf(i, g), a = step / s.steps * Math.PI * 2 - Math.PI / 2;
   ripples.push({ x: g.cx + Math.cos(a) * r, y: g.cy + Math.sin(a) * r, t: 0, c: tempColor(s.temp, 1) }); if (ripples.length > 60) ripples.shift();
+  if (!reduce) { const dx = g.cx + Math.cos(a) * r, dy = g.cy + Math.sin(a) * r; drips.push({ x: dx, y: dy, vy: 30 + Math.random() * 50, ty: Math.min(H - 24, Math.max(dy + 36, H * (.66 + Math.random() * .26))), c: tempColor(s.temp, 1), t: 0, hit: false }); if (drips.length > 48) drips.shift(); }
 }
 let manual = 0, lastCycle = 0;
 // Moving over the water: every touch leaves a wake that bends the rings near it and softens their notes.
@@ -1959,9 +1987,9 @@ function buildTitle() {
   let fs = tH * .92; oc.font = fs + 'px "Archivo Black", "Arial Black", sans-serif';
   const w = oc.measureText('BLUE WAVE').width; fs *= Math.min(1, (tW * .97) / w); oc.font = fs + 'px "Archivo Black", "Arial Black", sans-serif';
   oc.fillText('BLUE WAVE', 2, tH * .86);
-  const d = oc.getImageData(0, 0, tW, tH).data, step = tW < 300 ? 3.6 : 4.2; tpts = [];
+  const d = oc.getImageData(0, 0, tW, tH).data, step = tW < 300 ? 2.4 : 4.2; tpts = [];
   for (let y = step / 2; y < tH; y += step) for (let x = step / 2; x < tW; x += step) {
-    if (d[((y | 0) * tW + (x | 0)) * 4 + 3] > 128) tpts.push({ x: x + (Math.random() - .5) * step * .5, y: y + (Math.random() - .5) * step * .5, r: step * (.46 + Math.random() * .3), ph: Math.random() * 6.28 });
+    if (d[((y | 0) * tW + (x | 0)) * 4 + 3] > 128) tpts.push({ x: x + (Math.random() - .5) * step * .5, y: y + (Math.random() - .5) * step * .5, r: step * (tW < 300 ? .72 + Math.random() * .22 : .46 + Math.random() * .3), ph: Math.random() * 6.28 });
   }
 }
 let tPulse = 0, tClock = 0, tSel = null, tBurst = 0;
@@ -1980,8 +2008,8 @@ function drawTitle(dt) {
   tBurst = Math.max(0, tBurst - dt * .45);
   tClock += dt * (reduce ? 0 : 1); const t = tClock, wv = Math.PI * 2 / per;
   const sw = playing && ctx && waveP ? (() => { const ph = clamp((ctx.currentTime - waveStart) / waveP, 0, 1); return ph < .68 ? ph / .68 : Math.max(0, 1 - (ph - .68) / .3); })() : .35 + .2 * Math.sin(t * wv);
-  const amp = tH * (.012 + .045 * h) * (.7 + sw * .3), k = Math.PI * 2 / (tW * (.55 + .5 * (1 - h)));
-  const lp = ((t % (per * 1.6)) / (per * 1.6)), lx = -tH * .4 + lp * (tW + tH * .8), ly = tH * .5, LR = tH * (.6 + .06 * breakFlash);
+  const amp = tH * (.012 + .045 * h) * (.7 + sw * .3) * (tW < 300 ? .4 : 1), k = Math.PI * 2 / (tW * (.55 + .5 * (1 - h)));
+  const lp = ((t % (per * 1.6)) / (per * 1.6)), lx = -tH * .4 + lp * (tW + tH * .8), ly = tH * .5, LR = tW < 300 ? 0 : tH * (.6 + .06 * breakFlash);   // phones: no glass drop over the letters, it chops them up at this size
   tx.setTransform(tD, 0, 0, tD, 0, 0); tx.clearRect(0, 0, tW, tH);
   tx.fillStyle = flipped ? 'rgba(168,214,255,.98)' : 'rgba(242,247,255,.96)'; tx.beginPath(); const bf = Math.max(breakFlash, tBurst);
   for (let i = 0; i < tpts.length; i++) {
@@ -1993,8 +2021,8 @@ function drawTitle(dt) {
     tx.moveTo(x + rr, y); tx.arc(x, y, rr, 0, 6.2832);
   }
   tx.fill();
-  tx.setTransform(tD, 0, 0, tD, 0, 0); tx.lineWidth = 1.4; tx.strokeStyle = 'rgba(255,255,255,.28)'; tx.beginPath(); tx.arc(lx, ly, LR, 0, 6.2832); tx.stroke();
-  tx.strokeStyle = 'rgba(255,255,255,.4)'; tx.lineWidth = 1.8; tx.lineCap = 'round'; tx.beginPath(); tx.arc(lx, ly, LR * .8, Math.PI * 1.15, Math.PI * 1.45); tx.stroke();
+  if (LR > 0) tx.setTransform(tD, 0, 0, tD, 0, 0); if (LR > 0) tx.lineWidth = 1.4; if (LR > 0) { tx.strokeStyle = 'rgba(255,255,255,.28)'; tx.beginPath(); tx.arc(lx, ly, LR, 0, 6.2832); tx.stroke();
+  tx.strokeStyle = 'rgba(255,255,255,.4)'; tx.lineWidth = 1.8; tx.lineCap = 'round'; tx.beginPath(); tx.arc(lx, ly, LR * .8, Math.PI * 1.15, Math.PI * 1.45); tx.stroke(); }
 }
 if (document.fonts && document.fonts.load) document.fonts.load('20px "Archivo Black"').then(buildTitle, buildTitle); else buildTitle();
 addEventListener('resize', buildTitle);
@@ -2003,6 +2031,8 @@ let t0 = performance.now();
 function frame(now) {
   const dt = Math.min(.05, (now - t0) / 1000); t0 = now;
   const k = 1 - Math.pow(.2, dt);
+  playEase += ((playing ? 1 : 0) - playEase) * (1 - Math.exp(-dt * 3));
+  if (W < 760 && now - lastMeasure > 33) { lastMeasure = now; measureArea(); }   // phone: the title and card slide away while playing, so keep measuring
   [OCEANS, BLUE_POOL, place.voices].forEach(list => list.forEach(s => {
     s.val = lerp(s.val, s.tval, k); s.per = lerp(s.per, s.tper, k); s.temp = lerp(s.temp, s.ttemp, k); s.lv = lerp(s.lv, s.tlv, k); s.flash = Math.max(0, s.flash - dt * 1.6);
   }));
@@ -2054,13 +2084,26 @@ function frame(now) {
   });
   // every ring gets its label in Place view, unless the rings are so close that the labels would pile up: then only the one you picked is named
   const rr = voices.map((s, i) => radiusOf(i, g)).sort((a, b) => b - a), crowded = rr.some((r, k) => k && rr[k - 1] - r < 27);
-  voices.forEach((s, i) => { if ((mode === 'place' && !crowded) || i === selected) pill(labelFor(s), g.cx, g.cy - radiusOf(i, g) - 18, i === selected, iconFor(s, now / 1000)); });
+  voices.forEach((s, i) => { if (W >= 760 || mode === 'place') { if ((mode === 'place' && !crowded) || i === selected) pill(labelFor(s), g.cx, g.cy - radiusOf(i, g) - 18, i === selected, iconFor(s, now / 1000)); } });
   for (let j = wakes.length - 1; j >= 0; j--) { const w = wakes[j]; w.t = Math.max(0, w.t + dt); if (w.t > 1.6) { wakes.splice(j, 1); continue; }
     const kk = w.t / 1.6; rx.lineWidth = 1; [1, .62].forEach((m, q) => { rx.beginPath(); rx.arc(w.x, w.y, 3 + Math.max(0, w.t) * 120 * m, 0, Math.PI * 2); rx.strokeStyle = `rgba(232,242,255,${(1 - kk) * (q ? .14 : .26)})`; rx.stroke(); }); }
   voices.forEach((s, i) => { const r = radiusOf(i, g); let tt = 0; wakes.forEach(w => { const near = 1 - Math.abs(Math.hypot(w.x - g.cx, w.y - g.cy) - r) / 60; if (near > 0) tt = Math.max(tt, near * (1 - w.t / 1.6)); }); s.touch = Math.max((s.touch || 0) * Math.pow(.15, dt), tt); });
   for (let j = ripples.length - 1; j >= 0; j--) {
     const p = ripples[j]; p.t += dt; if (p.t > 1.8) { ripples.splice(j, 1); continue; }
     const kk = p.t / 1.8; rx.beginPath(); rx.arc(p.x, p.y, 4 + kk * 46, 0, Math.PI * 2); rx.strokeStyle = p.c.replace(/,1\)$/, `,${(1 - kk) * .45})`); rx.lineWidth = 1; rx.stroke();
+  }
+  for (let j = drips.length - 1; j >= 0; j--) {   // a struck dot drips into the sea: the drop falls, then a little ring opens on the water
+    const d = drips[j];
+    if (!d.hit) {
+      d.vy += 1100 * dt; d.y += d.vy * dt;
+      if (d.y >= d.ty) { d.hit = true; d.t = 0; d.y = d.ty; }
+      else { rx.beginPath(); rx.moveTo(d.x, d.y - Math.min(16, d.vy * .035)); rx.lineTo(d.x, d.y); rx.strokeStyle = d.c.replace(/,1\)$/, ',.4)'); rx.lineWidth = 1.4; rx.stroke();
+        rx.beginPath(); rx.arc(d.x, d.y, 2.4, 0, Math.PI * 2); rx.fillStyle = d.c.replace(/,1\)$/, ',.95)'); rx.fill(); }
+    } else {
+      d.t += dt; const kk = d.t / 1.5; if (kk >= 1) { drips.splice(j, 1); continue; }
+      [1, .55].forEach((m, q) => { rx.beginPath(); rx.ellipse(d.x, d.y, 2 + kk * 30 * m, (2 + kk * 30 * m) * .3, 0, 0, Math.PI * 2); rx.strokeStyle = d.c.replace(/,1\)$/, `,${(1 - kk) * (q ? .25 : .5)})`); rx.lineWidth = 1.2; rx.stroke(); });
+      if (kk < .3) { const u = kk / .3; [-1, 1].forEach(sg => { rx.beginPath(); rx.arc(d.x + sg * (3 + u * 9), d.y - Math.sin(u * Math.PI) * 9, 1.4, 0, Math.PI * 2); rx.fillStyle = d.c.replace(/,1\)$/, `,${(1 - u) * .8})`); rx.fill(); }); }
+    }
   }
   if (playing && breakFlash > 0) { // the wave breaks: a wide ring runs out from the middle and fades
     const age = (performance.now() - breakAt) / 1000;
