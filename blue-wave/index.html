@@ -52,7 +52,7 @@ h1 { margin: 0; font-weight: 200; letter-spacing: -.02em; line-height: .9; font-
 .live.offline::before { background: var(--faint); box-shadow: none; }
 .seg { margin-top: 16px; display: inline-flex; border: 1px solid var(--edge); border-radius: 999px; padding: 3px; background: var(--glass); text-shadow: none; }
 .seg button { font: 500 13px var(--mono); letter-spacing: .06em; color: var(--mist); background: transparent; border: 0; border-radius: 999px; padding: 9px 20px; cursor: pointer; min-height: 38px; }
-.seg .usf { display: inline-block; vertical-align: -1px; margin-left: 6px; border-radius: 1.5px; opacity: .45; }
+.seg .usf { display: inline-block; vertical-align: -5px; margin-left: 8px; border-radius: 50%; box-shadow: 0 0 0 1px rgba(255,255,255,.25); opacity: .75; }
 .seg button[aria-pressed="true"] .usf { opacity: .7; }
 .seg button[aria-pressed="true"] { background: var(--foam); color: var(--abyss); }
 
@@ -292,9 +292,9 @@ input[type=range]::-moz-range-thumb { width: 14px; height: 14px; border-radius: 
     <div id="means">&nbsp;</div>
   </div>
   <div class="seg" role="group" aria-label="View">
-    <button id="m-blue" aria-pressed="true">Blue coast <svg class="usf" viewBox="0 0 19 10" width="19" height="10" aria-hidden="true"><rect width="19" height="10" fill="#f4f7ff"/><g fill="#d8434f"><rect width="19" height=".77"/><rect y="1.54" width="19" height=".77"/><rect y="3.08" width="19" height=".77"/><rect y="4.62" width="19" height=".77"/><rect y="6.16" width="19" height=".77"/><rect y="7.7" width="19" height=".77"/><rect y="9.23" width="19" height=".77"/></g><rect width="8" height="5.4" fill="#1c2f6b"/></svg></button>
-    <button id="m-world" aria-pressed="false">World</button>
+    <button id="m-blue" aria-pressed="true">Blue coast <svg class="usf" viewBox="0 0 10 10" width="20" height="20" aria-hidden="true"><defs><clipPath id="usfc"><circle cx="5" cy="5" r="5"/></clipPath></defs><g clip-path="url(#usfc)"><rect width="19" height="10" fill="#f4f7ff"/><g fill="#d8434f"><rect y="0.00" width="19" height=".77"/><rect y="1.54" width="19" height=".77"/><rect y="3.08" width="19" height=".77"/><rect y="4.62" width="19" height=".77"/><rect y="6.16" width="19" height=".77"/><rect y="7.70" width="19" height=".77"/><rect y="9.24" width="19" height=".77"/></g><rect width="8" height="5.4" fill="#1c2f6b"/></g></svg></button>
     <button id="m-place" aria-pressed="false">Place</button>
+    <button id="m-world" aria-pressed="false">World</button>
   </div>
   <p class="kicker bluenote bn-phone" id="blue-note-m" hidden>The Democrats, the blue, taking over the House and Senate.</p>
   <section class="news" id="news" aria-label="Headline from election night" hidden data-k="">
