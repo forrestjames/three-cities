@@ -319,7 +319,7 @@ input[type=range]::-moz-range-thumb { width: 14px; height: 14px; border-radius: 
     <div id="means">&nbsp;</div>
   </div>
   <div class="seg" role="group" aria-label="View">
-    <button id="m-blue" aria-pressed="true">Blue coast <svg class="usf" viewBox="0 0 10 10" width="20" height="20" aria-hidden="true"><defs><clipPath id="usfc"><circle cx="5" cy="5" r="5"/></clipPath></defs><g clip-path="url(#usfc)"><rect width="19" height="10" fill="#f4f7ff"/><g fill="#d8434f"><rect y="0.00" width="19" height=".77"/><rect y="1.54" width="19" height=".77"/><rect y="3.08" width="19" height=".77"/><rect y="4.62" width="19" height=".77"/><rect y="6.16" width="19" height=".77"/><rect y="7.70" width="19" height=".77"/><rect y="9.24" width="19" height=".77"/></g><rect width="8" height="5.4" fill="#1c2f6b"/></g></svg></button>
+    <button id="m-blue" aria-pressed="true">Blue Coast <svg class="usf" viewBox="0 0 10 10" width="20" height="20" aria-hidden="true"><defs><clipPath id="usfc"><circle cx="5" cy="5" r="5"/></clipPath></defs><g clip-path="url(#usfc)"><rect width="19" height="10" fill="#f4f7ff"/><g fill="#d8434f"><rect y="0.00" width="19" height=".77"/><rect y="1.54" width="19" height=".77"/><rect y="3.08" width="19" height=".77"/><rect y="4.62" width="19" height=".77"/><rect y="6.16" width="19" height=".77"/><rect y="7.70" width="19" height=".77"/><rect y="9.24" width="19" height=".77"/></g><rect width="8" height="5.4" fill="#1c2f6b"/></g></svg></button>
     <button id="m-place" aria-pressed="false">Place</button>
     <button id="m-world" aria-pressed="false">World</button>
   </div>
@@ -885,7 +885,7 @@ function showFacts() {
     const blue = world === BLUE, live = !!world.live;
     el.classList.toggle('offline', !live);
     document.body.classList.toggle('sea-off', !live);
-    el.textContent = live ? `Live · ${world.length} ${blue ? 'blue coast beaches' : 'seas'} · read ${pad2(worldUpdated.getUTCHours())}:${pad2(worldUpdated.getUTCMinutes())} GMT` : 'Sample readings · live sea not reached';
+    el.textContent = live ? `Live · ${world.length} ${blue ? 'Blue Coast beaches' : 'seas'} · read ${pad2(worldUpdated.getUTCHours())}:${pad2(worldUpdated.getUTCMinutes())} GMT` : 'Sample readings · live sea not reached';
     const mw = world.reduce((a, s) => a + s.tval, 0) / world.length, mt = world.reduce((a, s) => a + s.ttemp, 0) / world.length;
     means.textContent = `Mean wave ${mw.toFixed(1)} m · mean sea ${mt.toFixed(1)} °C`;
   } else {
@@ -1033,10 +1033,10 @@ function shareURL() {
     return u.toString() + `?lat=${place.lat.toFixed(4)}&lon=${place.lon.toFixed(4)}&name=${enc(place.name)}` + (place.sub ? `&sub=${enc(place.sub)}` : '');
   } catch (e) { return ''; }
 }
-const titleLine = () => mode === 'place' ? `Blue Wave · ${place.name}${place.sub ? ', ' + place.sub : ''}` : (world === BLUE ? 'Blue Wave · the blue coast' : 'Blue Wave · the sea around the world');
+const titleLine = () => mode === 'place' ? `Blue Wave · ${place.name}${place.sub ? ', ' + place.sub : ''}` : (world === BLUE ? 'Blue Wave · the Blue Coast' : 'Blue Wave · the sea around the world');
 function syncUrl() { document.title = titleLine(); try { const u = shareURL(); if (u) history.replaceState(null, '', u); } catch (e) { /* some browsers refuse on local files */ } }
 function shareLine() {
-  return mode === 'place' ? `Here's the sea at ${place.name}${place.sub ? ', ' + place.sub : ''} right now, played as a rhythm. Try your own beach.` : (world === BLUE ? `Here's the sea off the blue coast right now, played as a rhythm.` : `Here's the sea around the world right now, played as a rhythm.`);
+  return mode === 'place' ? `Here's the sea at ${place.name}${place.sub ? ', ' + place.sub : ''} right now, played as a rhythm. Try your own beach.` : (world === BLUE ? `Here's the sea off the Blue Coast right now, played as a rhythm.` : `Here's the sea around the world right now, played as a rhythm.`);
 }
 $('share').addEventListener('click', () => {
   const btn = $('share'), url = shareURL(); if (!url) return;
