@@ -98,6 +98,12 @@ dd { margin: 0; text-align: right; color: var(--foam); font-size: 13px; overflow
 .kicker { margin: 6px 0 0; font: 400 14px/1.4 var(--display); letter-spacing: .02em; color: var(--foam); max-width: 34ch; text-shadow: 0 1px 10px rgba(3,14,38,.6); }
 .go.wide { width: 100%; margin-top: 12px; }
 .pgrid .wide-l { grid-column: 1 / -1; }
+.how { margin: 4px 0 14px; padding-bottom: 12px; border-bottom: 1px solid var(--edge); }
+.how p { margin: 6px 0; color: var(--mist); }
+.how ul { margin: 6px 0 0; padding-left: 18px; color: var(--mist); line-height: 1.5; }
+.how li { margin: 3px 0; }
+.how b { color: var(--foam); font-weight: 500; }
+.how-h { font-size: 11.5px; letter-spacing: .08em; text-transform: uppercase; color: var(--faint); }
 /* Headline card: one real result from the night, tied to the beach on show. Firsts get a small glowing dot. */
 :root { --spark: #ffd98a; }
 .news { margin-top: 14px; width: min(330px, 100%); padding: 11px 14px 11px 16px; border: 1px solid var(--edge); border-radius: 16px; background: var(--glass); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); text-shadow: none; font-family: var(--mono); }
@@ -316,6 +322,17 @@ input[type=range]::-moz-range-thumb { width: 14px; height: 14px; border-radius: 
 
 <section class="pop" id="p-music" role="region" aria-label="Music" hidden>
   <div class="cap">Music</div>
+  <div class="how" aria-label="How the rings work">
+    <p class="how-h">How the rings work</p>
+    <p>Each ring is one beach. It is a loop of steps, and the sweep of light shows where the music is now.</p>
+    <ul>
+      <li><b>Wave height</b> sets how many dots light up. Bigger waves, more hits.</li>
+      <li><b>Wave period</b>, the time between waves, sets how many steps the loop has.</li>
+      <li><b>Sea temperature</b> sets the pitch. Warmer water, higher notes.</li>
+      <li><b>Wave direction</b> sets where the pattern starts around the ring.</li>
+      <li><b>Drift</b> nudges the hits along, one step at a time, so the pattern slowly changes.</li>
+    </ul>
+  </div>
   <div class="pgrid">
     <label class="wide-l">Sound<select id="m-style"><option value="default">Default</option><option value="surf">Surfer</option><option value="calm">Meditative</option></select></label>
     <label>Key<select id="m-key"></select></label>
