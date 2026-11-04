@@ -47,7 +47,7 @@ canvas.inline { display: block; width: 100%; }
 #ttl { display: block; width: min(30vw, 400px); aspect-ratio: 5.4 / 1; height: auto; filter: url(#goo); margin: -4px 0 2px -6px; }
 .sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
 h1 { margin: 0; font-weight: 200; letter-spacing: -.02em; line-height: .9; font-size: clamp(44px, 7vw, 104px); }
-.facts { margin-top: 16px; font-family: var(--mono); font-size: 13px; line-height: 1.75; color: var(--foam); font-variant-numeric: tabular-nums; }
+.facts { margin-top: 16px; font-family: var(--mono); font-size: 15px; line-height: 1.75; color: var(--foam); font-variant-numeric: tabular-nums; }
 .live::before { content: ""; display: inline-block; width: 7px; height: 7px; border-radius: 50%; background: var(--accent); margin-right: 9px; vertical-align: 1px; box-shadow: 0 0 9px var(--accent); }
 .live.offline::before { background: var(--faint); box-shadow: none; }
 .seg { margin-top: 16px; display: inline-flex; border: 1px solid var(--edge); border-radius: 999px; padding: 3px; background: var(--glass); text-shadow: none; }
@@ -95,7 +95,6 @@ dd { margin: 0; text-align: right; color: var(--foam); font-size: 13px; overflow
 .flag { height: 14px; width: auto; border-radius: 2px; margin-right: 8px; vertical-align: -1px; box-shadow: 0 0 0 1px rgba(170,202,255,.25); }
 .pg { display: contents; }
 .mh, .dockdots { display: none; }
-.bluenote { margin: 8px 0 0; font-size: 13px; max-width: 40ch; }
 .kicker { margin: 6px 0 0; font: 400 14px/1.4 var(--display); letter-spacing: .02em; color: var(--foam); max-width: 34ch; text-shadow: 0 1px 10px rgba(3,14,38,.6); }
 .go.wide { width: 100%; margin-top: 12px; }
 .pgrid .wide-l { grid-column: 1 / -1; }
@@ -115,6 +114,9 @@ dd { margin: 0; text-align: right; color: var(--foam); font-size: 13px; overflow
 .news[data-k="first"] .nt { color: var(--spark); }
 @keyframes spark { 50% { box-shadow: 0 0 0 5px rgba(255, 217, 138, .1), 0 0 18px 4px rgba(255, 217, 138, .85); } }
 .nb { animation: newsin .5s ease both; }
+@media (max-width: 760px) { .bn-desk { display: none !important; } }
+@media (min-width: 761px) { .bn-phone { display: none !important; } }
+.bn { margin: 10px 0 0; padding-top: 9px; border-top: 1px solid var(--edge); font: 400 12.5px/1.45 var(--display); color: var(--mist); }
 @keyframes newsin { from { opacity: 0; transform: translateY(4px); } }
 .nh { margin: 6px 0 0; font: 400 15.5px/1.3 var(--display); color: var(--foam); display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 3; overflow: hidden; min-height: 3.9em; }
 .ns { margin-top: 6px; font: 400 10px/1.3 var(--mono); letter-spacing: .04em; color: var(--faint); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
@@ -195,11 +197,12 @@ input[type=range]::-moz-range-thumb { width: 14px; height: 14px; border-radius: 
   h1 { font-size: 32px; line-height: 1; }
   #ttl { width: min(68%, 260px); margin: -2px 0 2px -4px; }
   .kicker { font-size: clamp(10.5px, 3vw, 12px); margin-top: 4px; max-width: none; white-space: nowrap; }
-  .facts { font-size: 11.5px; margin-top: 6px; line-height: 1.5; }
+  .facts { font-size: 12.5px; margin-top: 4px; line-height: 1.45; }
   #means { display: none; }
   .seg { display: flex; position: static; margin: 8px 0 0; width: 100%; }
   .seg button { flex: 1; padding: 6px 4px; min-height: 34px; font-size: 12px; letter-spacing: .03em; }
-  .news { margin-top: 8px; width: 100%; padding: 8px 12px 8px 14px; border-radius: 14px; }
+  .news { margin-top: 6px; width: 100%; padding: 7px 12px 7px 14px; border-radius: 14px; }
+  .bn { margin-top: 6px; padding-top: 6px; font-size: 11.5px; line-height: 1.4; }
   .nh { font-size: 13.5px; -webkit-line-clamp: 2; min-height: 2.6em; margin-top: 4px; }
   .ns { display: none; margin-top: 4px; }
   @media (min-height: 880px) { .ns { display: block; } }
@@ -254,10 +257,11 @@ input[type=range]::-moz-range-thumb { width: 14px; height: 14px; border-radius: 
     <button id="m-world" aria-pressed="false">World</button>
     <button id="m-place" aria-pressed="false">Place</button>
   </div>
-  <p class="kicker bluenote" id="blue-note">The Democrats, the blue, taking over the House and Senate.</p>
+  <p class="kicker bluenote bn-phone" id="blue-note-m" hidden>The Democrats, the blue, taking over the House and Senate.</p>
   <section class="news" id="news" aria-label="Headline from election night" hidden data-k="">
     <div class="nb" id="nb"><div class="nt"><i class="nd" aria-hidden="true"></i><span class="tx" id="n-tag"></span></div>
     <p class="nh" id="n-head"></p><div class="ns" id="n-src"></div></div>
+    <p class="bn bn-desk" id="blue-note">The Democrats, the blue, taking over the House and Senate.</p>
   </section>
 </div>
 
@@ -862,7 +866,7 @@ function newsState() {
 function updateNews(cycle) {
   const card = $('news'), st0 = newsState(), st = st0 && (mode === 'world' || NEWS_STATE[st0]) ? st0 : null, key = mode + '|' + (mode === 'world' ? world[selected] && world[selected].name : place.name) + '|' + st;
   const was = card.hidden;
-  if (!st) { card.hidden = true; newsKey = key; if (!was) setTimeout(resize, 0); return; }
+  if (!st) { card.hidden = true; newsKey = key; setTimeout(resize, 0); return; }
   if (key !== newsKey) { newsKey = key; newsTick = 0; newsList = NEWS_STATE[st] || []; if (!newsList.length) newsPool++; }
   else if (!cycle && !was) return;
   const it = newsList.length ? newsList[newsTick % newsList.length] : NEWS_NATIONAL[newsPool % NEWS_NATIONAL.length];
@@ -870,7 +874,7 @@ function updateNews(cycle) {
   card.dataset.k = it.k; card.hidden = false;
   $('n-tag').textContent = `${{ first: 'A first', flip: 'A flip', upset: 'An upset', hold: 'A hold' }[it.k]} · ${it.st || st} · ${it.r}`;
   $('n-head').textContent = it.t; $('n-src').textContent = 'Reported by ' + it.s;
-  if (was) setTimeout(resize, 0);
+  setTimeout(resize, 0); // the card is taller or shorter now, so the rings move to make room
 }
 setInterval(() => { if (newsList.length > 1 && !$('news').hidden) { newsTick++; updateNews(true); } }, 9000);
 function scaleVoice() { const s = voices[selected]; return !s || s.kind === 'air' ? voices[0] : s; }
@@ -906,9 +910,10 @@ function renderPanel() {
   $('gauges').setAttribute('aria-label', 'Quick scan: ' + tiles().map(t => `${t.l} ${t.v}`).join(', '));
   updateNews();
 }
+function syncNote() { const on = !(mode === 'world' && world === BLUE); $('blue-note').hidden = on; $('blue-note-m').hidden = on; }
 function setMode(m, set) {
   mode = m; if (set) { world = set === 'blue' ? BLUE : OCEANS; musicKey = ''; }
-  $('blue-note').hidden = !(m === 'world' && world === BLUE);
+  syncNote();
   voices = m === 'world' ? world : place.voices;
   selected = m === 'world' ? (world === BLUE ? 2 : 1) : 0;
   $('m-blue').setAttribute('aria-pressed', m === 'world' && world === BLUE); $('m-world').setAttribute('aria-pressed', m === 'world' && world === OCEANS); $('m-place').setAttribute('aria-pressed', m === 'place');
@@ -1004,7 +1009,7 @@ function showFound(found) {
   });
 }
 async function runSearch(q, typing) {
-  const run = ++aheadRun;
+  const run = ++aheadRun; ++countryRun;   // a new search cancels any country list still loading
   msg(typing ? '' : 'Searching…'); $('results').textContent = '';
   try {
     const found = await geocode(q);
@@ -1012,14 +1017,14 @@ async function runSearch(q, typing) {
     if (!found.length) { msg('Nothing found. Try a beach name and a town.'); return; }
     msg('');
     const top = found[0];
-    if (!typing && top.addresstype === 'country' && top.address && top.address.country_code) { countryBeaches(top); return; }
+    if (top.addresstype === 'country' && top.address && top.address.country_code) { countryBeaches(top); return; }   // a country: list its beaches, as you type or on Go
     showFound(found);
   } catch (err) { if (run === aheadRun) msg('Search is not reachable right now.'); }
 }
 $('q').addEventListener('input', () => {
   clearTimeout(aheadTimer);
   const q = $('q').value.trim();
-  if (q.length < 3) { aheadRun++; $('results').textContent = ''; msg(''); return; }
+  if (q.length < 3) { aheadRun++; countryRun++; $('results').textContent = ''; msg(''); return; }
   aheadTimer = setTimeout(() => runSearch(q, true), 350);
 });
 $('search').addEventListener('submit', (e) => {
@@ -1421,12 +1426,17 @@ const sx = sea.getContext('2d'), rx = rings.getContext('2d');
 let W = 0, H = 0, DPR = 1;
 const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 let areaTop = 0, areaBot = 0;
-function resize() {
-  DPR = Math.min(2, window.devicePixelRatio || 1); W = innerWidth; H = innerHeight;
-  if (W < 760) { // phone: measure what is above and below the rings
+// phone: measure what is above and below the rings. Runs again whenever the title block changes height (fonts, the headline card).
+function measureArea() {
+  if (W < 760) {
     const bar = $('bar').getBoundingClientRect(); document.documentElement.style.setProperty('--dockb', Math.round(H - bar.top + 8) + 'px');
     const ttl = document.querySelector('.title').getBoundingClientRect(); areaTop = ttl.bottom + 4; areaBot = $('panel').getBoundingClientRect().top - 4;
   }
+}
+if (window.ResizeObserver) new ResizeObserver(() => { measureArea(); }).observe(document.querySelector('.title'));
+function resize() {
+  DPR = Math.min(2, window.devicePixelRatio || 1); W = innerWidth; H = innerHeight;
+  measureArea();
   refreshDots();
   [sea, rings].forEach(c => { c.width = W * DPR; c.height = H * DPR; });
   sx.setTransform(DPR, 0, 0, DPR, 0, 0); rx.setTransform(DPR, 0, 0, DPR, 0, 0);
@@ -1895,7 +1905,7 @@ try {
 try { if (new URLSearchParams(location.search).get('view') === 'world') setMode('world', 'oceans'); } catch (e) { /* ignore */ }
 showFacts(); renderPanel();
 if (arrivedByLink) setMode('place');
-$('blue-note').hidden = !(mode === 'world' && world === BLUE);
+syncNote();
 fetchWorld();
 setInterval(() => { fetchWorld(); if (place.loaded) fetchPlace(); }, REFRESH_MS);
 setInterval(() => { showFacts(); if (mode === 'place' && place.hr) { analyseTide(place); renderSurf(); } }, 60000);
