@@ -165,9 +165,10 @@ input[type=search]::placeholder { color: var(--faint); }
 .pop[hidden] { display: none; }
 @media (min-width: 761px) { .bn-phone { display: none !important; } }   /* the line sits in the headline card on wider screens, so no second copy */
 /* "?" : a short note on how to read the rings. Hover shows it on a mouse; a tap opens and closes it on a phone. */
-.howbtn { position: absolute; top: 0; right: 0; z-index: 4; width: 30px; height: 30px; border-radius: 50%; border: 1px solid var(--edge); background: var(--glass); color: var(--foam); font: 500 14px var(--mono); cursor: pointer; padding: 0; }
-.howbtn:hover, .howbtn:focus-visible, .howbtn[aria-expanded="true"] { border-color: var(--accent); }
-.how-pop { position: absolute; z-index: 5; top: 38px; right: 0; width: min(280px, 80vw); left: auto; transform: none; bottom: auto; max-height: none; padding: 14px 16px; }
+.kickrow { position: relative; }
+.howbtn { display: inline-flex; align-items: center; justify-content: center; vertical-align: 1px; width: 16px; height: 16px; margin-left: 4px; border-radius: 50%; border: 1px solid rgba(255,255,255,.28); background: none; color: var(--foam); opacity: .6; font: 400 10px/1 var(--mono); cursor: pointer; padding: 0; text-shadow: none; transition: opacity .2s, border-color .2s; }
+.howbtn:hover, .howbtn:focus-visible, .howbtn[aria-expanded="true"] { opacity: 1; border-color: var(--accent); }
+.how-pop { position: absolute; z-index: 5; top: calc(100% + 6px); left: 0; width: min(280px, 80vw); right: auto; transform: none; bottom: auto; max-height: none; padding: 14px 16px; }
 .how-pop ul { margin: 6px 0 0; padding: 0; list-style: none; font: 400 13.5px/1.45 var(--display); color: var(--foam); }
 .how-pop li { padding: 6px 0; border-bottom: 1px solid var(--edge); }
 .how-pop li:last-child { border-bottom: 0; }
@@ -214,7 +215,7 @@ input[type=range]::-moz-range-thumb { width: 14px; height: 14px; border-radius: 
   .nh { font-size: 13.5px; -webkit-line-clamp: 2; min-height: 2.6em; margin-top: 4px; }
   .ns { display: none; margin-top: 4px; }
   @media (min-height: 880px) { .ns { display: block; } }
-  @media (max-height: 780px) { .kicker:not(.bluenote) { display: none; } .facts { margin-top: 8px; } }
+  @media (max-height: 780px) { .kicker:not(.bluenote) .kt { display: none; } .facts { margin-top: 8px; } }
   .panel { top: auto; width: auto; left: 12px; right: 12px; bottom: calc(var(--dockb, 150px) + 24px); height: 200px; max-height: none; padding: 0; display: flex; overflow-x: auto; overflow-y: hidden; scroll-snap-type: x mandatory; scrollbar-width: none; overscroll-behavior-x: contain; }
   .panel::-webkit-scrollbar { display: none; }
   .left { display: contents; }
@@ -257,6 +258,7 @@ input[type=range]::-moz-range-thumb { width: 14px; height: 14px; border-radius: 
   .bar { width: auto; left: 12px; right: 12px; transform: none; max-width: none; gap: 6px 14px; border-radius: 22px; padding: 8px 14px 10px; bottom: calc(env(safe-area-inset-bottom, 0px) + 34px); }
   .btns { width: 100%; } .play { flex: 1; padding: 11px 0; } .mini-btn { min-height: 40px; }
   .pop { left: 12px; right: 12px; width: auto; transform: none; bottom: calc(var(--dockb, 150px) + 8px); max-height: 62vh; }
+  .how-pop { left: 0; right: 0; bottom: auto; top: calc(100% + 6px); max-height: none; overflow: visible; }
   .ctl { flex: 1; min-width: 0; } .ctl label { font-size: 10.5px; }
   input[type=range] { width: 100%; }
   .credit { font-size: 9.5px; bottom: calc(env(safe-area-inset-bottom, 0px) + 6px); line-height: 1.35; }
@@ -268,7 +270,10 @@ input[type=range]::-moz-range-thumb { width: 14px; height: 14px; border-radius: 
 <canvas class="fill" id="rings" aria-label="Rings. Hits come from wave height, steps from wave period, pitch from temperature."></canvas>
 
 <div class="title">
-  <button type="button" class="howbtn" id="how-btn" aria-expanded="false" aria-controls="p-how" aria-label="How to read the rings" title="How to read the rings">?</button>
+  <svg width="0" height="0" style="position:absolute" aria-hidden="true"><filter id="goo" x="-5%" y="-20%" width="110%" height="140%"><feGaussianBlur in="SourceGraphic" stdDeviation="2.2" result="b"/><feColorMatrix in="b" type="matrix" values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 20 -9"/></filter></svg>
+  <h1><span class="sr">Blue Wave</span><canvas id="ttl" aria-hidden="true"></canvas></h1>
+  <div class="kickrow">
+  <p class="kicker"><span class="kt">Live sea waves from around the world, played as a rhythm.</span> <button type="button" class="howbtn" id="how-btn" aria-expanded="false" aria-controls="p-how" aria-label="How to read the rings" title="How to read the rings">?</button></p>
   <section class="pop how-pop" id="p-how" role="region" aria-label="How to read the rings" hidden>
     <div class="cap">How to read the rings</div>
     <ul>
@@ -278,9 +283,7 @@ input[type=range]::-moz-range-thumb { width: 14px; height: 14px; border-radius: 
       <li><b>Wave period</b> sets how many steps the loop has.</li>
     </ul>
   </section>
-  <svg width="0" height="0" style="position:absolute" aria-hidden="true"><filter id="goo" x="-5%" y="-20%" width="110%" height="140%"><feGaussianBlur in="SourceGraphic" stdDeviation="2.2" result="b"/><feColorMatrix in="b" type="matrix" values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 20 -9"/></filter></svg>
-  <h1><span class="sr">Blue Wave</span><canvas id="ttl" aria-hidden="true"></canvas></h1>
-  <p class="kicker">Live sea waves from around the world, played as a rhythm.</p>
+  </div>
   <div class="facts">
     <div><span class="live offline" id="live">Loading the sea</span></div>
     <div id="means">&nbsp;</div>
