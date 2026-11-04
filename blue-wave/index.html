@@ -87,10 +87,11 @@ dd { margin: 0; text-align: right; color: var(--foam); font-size: 13px; overflow
 #s-note { font-size: 11.5px; color: var(--faint); }
 .scale-cap { font-size: 13px; color: var(--foam); margin-top: 2px; line-height: 1.4; }
 .scale-cap b { font-weight: 500; }
-.geo { display: flex; margin-bottom: 10px; align-items: flex-start; justify-content: space-between; gap: 12px; }
+.geo { display: flex; flex-direction: column; margin-bottom: 10px; align-items: flex-start; gap: 10px; }
 .geo-t { min-width: 0; }
-#mini { flex: none; width: 168px; height: 70px; margin-top: -6px; }
-.geo .sub { margin: 0; }
+#mini { flex: none; width: 190px; height: 79px; margin: 0; }
+.geo .sub { margin: 0; max-width: 100%; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.flag { height: 14px; width: auto; border-radius: 2px; margin-right: 8px; vertical-align: -1px; box-shadow: 0 0 0 1px rgba(170,202,255,.25); }
 .pg { display: contents; }
 .mh, .dockdots { display: none; }
 .kicker { margin: 6px 0 0; font: 400 14px/1.4 var(--display); letter-spacing: .02em; color: var(--foam); max-width: 34ch; text-shadow: 0 1px 10px rgba(3,14,38,.6); }
@@ -260,7 +261,7 @@ input[type=range]::-moz-range-thumb { width: 14px; height: 14px; border-radius: 
 <aside class="panel" id="panel" aria-live="polite">
   <div class="pg" id="pg-read"><div class="top"><div class="cap" id="r-cap">&nbsp;</div><button class="share-btn" id="share" type="button" title="Share what is loaded, with a link"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 15V4M8 8l4-4 4 4" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/><path d="M7 11H5.5A1.5 1.5 0 0 0 4 12.5v6A1.5 1.5 0 0 0 5.5 20h13a1.5 1.5 0 0 0 1.5-1.5v-6a1.5 1.5 0 0 0-1.5-1.5H17" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>Share</button></div>
   <div class="name" id="r-name">&nbsp;</div>
-  <div class="geo"><div class="sub" id="r-sub"></div>
+  <div class="geo"><div class="sub"><img id="r-flag" class="flag" alt="" width="20" height="14" hidden><span id="r-sub"></span></div>
   <canvas id="mini" role="img" aria-label="A small world map with a dot where this is"></canvas></div>
   <canvas class="inline" id="gauges" role="img" aria-label="Quick scan of the conditions"></canvas>
   </div>
@@ -769,7 +770,7 @@ function renderPanel() {
   if (mode === 'world') {
     const s = world[selected];
     $('r-cap').textContent = `${coord(s.lat, s.lon)} · ${s.hits} in ${s.steps}`;
-    $('r-name').textContent = s.name; $('r-sub').textContent = s.sub || '';
+    $('r-name').textContent = s.name; $('r-sub').textContent = s.sub || ''; setFlag(s.blat ? 'us' : null);
     $('open-place').hidden = !s.blat;
     if (s.res) row(s.flip ? 'Flipped' : 'Won', s.res);
     row('Wave', fm(s.tval)); row('Period', s.tper.toFixed(1) + ' s'); row('From', dirName(s.tdir)); row('Sea', fc(s.ttemp));
@@ -778,7 +779,7 @@ function renderPanel() {
     $('open-place').hidden = true;
     const p = place, [waves, swell, wind, air] = p.voices, na = '–';
     $('r-cap').textContent = coord(p.lat, p.lon);
-    $('r-name').textContent = p.name; $('r-sub').textContent = p.sub;
+    $('r-name').textContent = p.name; $('r-sub').textContent = p.sub; setFlag(p.cc);
     const wv = (v) => p.noSea || p.error ? na : `${fm(v.tval)} · ${v.tper.toFixed(0)} s`;
     row('Waves', wv(waves)); row('Swell', wv(swell)); row('Wind sea', wv(wind));
     row('Sea', p.seaTemp != null ? fc(p.seaTemp) : na);
@@ -800,7 +801,7 @@ function setMode(m, set) {
   $('m-blue').setAttribute('aria-pressed', m === 'world' && world === BLUE); $('m-world').setAttribute('aria-pressed', m === 'world' && world === OCEANS); $('m-place').setAttribute('aria-pressed', m === 'place');
   $('left').hidden = m !== 'place';
   ripples.length = 0; ringOrder = order();
-  if (m === 'place' && !place.loaded) fetchPlace();
+  if (m === 'place' && !place.loaded) { fetchPlace(); if (!place.cc) findCountry(place.lat, place.lon); }
   showFacts(); renderPanel(); renderSurf(); syncUrl(); $('panel').scrollTo({ left: 0 }); setTimeout(() => { resize(); }, 0);
 }
 $('m-blue').addEventListener('click', () => setMode('world', 'blue'));
@@ -851,8 +852,23 @@ function choose(lat, lon, name, sub) {
   Object.assign(place, { lat, lon, name, sub, loaded: false, live: false, noSea: false, error: false, hr: null, tide: null, coast: null, suggest: null });
   try { localStorage.setItem('bluewave.place', JSON.stringify({ lat, lon, name, sub })); } catch (e) { /* ignore */ }
   $('results').textContent = ''; $('q').value = ''; msg('');
-  showFacts(); renderPanel(); renderSurf(); fetchPlace(); syncUrl();
+  showFacts(); renderPanel(); renderSurf(); fetchPlace(); syncUrl(); findCountry(lat, lon);
 }
+// The flag: the country of the place, looked up once per place.
+function setFlag(cc) {
+  const f = $('r-flag'); if (!cc) { f.hidden = true; return; }
+  const src = `https://flagcdn.com/w40/${cc}.png`; if (f.getAttribute('src') !== src) f.src = src; f.hidden = false;
+}
+let ccRun = 0;
+async function findCountry(lat, lon) {
+  const run = ++ccRun; place.cc = null; setFlag(null);
+  try {
+    const r = await fetch(`https://nominatim.openstreetmap.org/reverse?format=jsonv2&zoom=3&lat=${lat}&lon=${lon}`); if (!r.ok) return;
+    const j = await r.json(), cc = j && j.address && j.address.country_code;
+    if (run === ccRun && cc && /^[a-z]{2}$/.test(cc)) { place.cc = cc; if (mode === 'place') setFlag(cc); }
+  } catch (e) { /* no flag then */ }
+}
+$('r-flag').addEventListener('error', () => { $('r-flag').hidden = true; });
 async function geocode(q) {
   const res = await fetch('https://nominatim.openstreetmap.org/search?format=jsonv2&limit=5&addressdetails=1&q=' + encodeURIComponent(q));
   if (!res.ok) throw new Error(res.status);
