@@ -1944,7 +1944,7 @@ function hitVisual(i, step) {
   const s = voices[i]; if (!s) return; s.flash = 1; flagPulse = Math.min(1, flagPulse + .35);
   const g = geom(), r = radiusOf(i, g), a = step / s.steps * Math.PI * 2 - Math.PI / 2;
   ripples.push({ x: g.cx + Math.cos(a) * r, y: g.cy + Math.sin(a) * r, t: 0, c: tempColor(s.temp, 1) }); if (ripples.length > 60) ripples.shift();
-  if (!reduce) { const dx = g.cx + Math.cos(a) * r, dy = g.cy + Math.sin(a) * r; drips.push({ x: dx, y: dy, vy: 30 + Math.random() * 50, ty: Math.min(H - 24, Math.max(dy + 36, H * (.66 + Math.random() * .26))), c: tempColor(s.temp, 1), t: 0, hit: false }); if (drips.length > 48) drips.shift(); }
+  if (!reduce && Math.random() < .15) { const dx = g.cx + Math.cos(a) * r, dy = g.cy + Math.sin(a) * r; drips.push({ x: dx, y: dy, vy: 30 + Math.random() * 50, ty: Math.min(H - 24, Math.max(dy + 36, H * (.66 + Math.random() * .26))), c: tempColor(s.temp, 1), t: 0, hit: false }); if (drips.length > 48) drips.shift(); }
 }
 let manual = 0, lastCycle = 0;
 // Moving over the water: every touch leaves a wake that bends the rings near it and softens their notes.
