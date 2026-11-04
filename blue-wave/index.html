@@ -955,6 +955,8 @@ function fitName() {   // phone: shrink a long beach name to fit its line instea
   el.style.setProperty('--nfit', 1); const need = el.scrollWidth, have = el.clientWidth;
   const r = need > have + 1 ? have / need - .01 : 1; el.style.setProperty('--nfit', Math.max(.62, r).toFixed(3));
 }
+if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => fitName());
+window.addEventListener('resize', () => fitName());
 function scaleVoice() { const s = voices[selected]; return !s || s.kind === 'air' ? voices[0] : s; }
 function renderPanel() {
   const dl = $('r-dl'); dl.textContent = '';
@@ -1948,7 +1950,7 @@ function drawWorld(now, dt) {
 
 // ---------- the rings ----------
 function geom() {
-  const small = W < 760, cx = W / 2, aT = small ? areaTop * (1 - playEase) + 34 * playEase : 0, aB = small ? areaBot + 4 * playEase : 0;   // playing on a phone: the rings may slip a little under the title
+  const small = W < 760, cx = W / 2, aT = small ? areaTop * (1 - playEase) + 48 * playEase : 0, aB = small ? areaBot + 4 * playEase : 0;   // playing on a phone: the rings may slip a little under the title
   const cy = small ? (aT + aB) / 2 + 12 * (1 - playEase) : H * .47;
   const maxR = small ? Math.max(60, Math.min(W * (.44 + .056 * playEase), (aB - aT) / 2 - (24 - 20 * playEase))) : Math.min(W * .38, H * .35);
   return { cx, cy, maxR, minR: maxR * (mode === 'place' ? .36 : .2), small };
@@ -2110,7 +2112,7 @@ function frame(now) {
   voices.forEach((s, i) => { if (W >= 760 || mode === 'place') { if ((mode === 'place' && !crowded) || i === selected) pill(labelFor(s), g.cx, g.cy - radiusOf(i, g) - 18, i === selected, iconFor(s, now / 1000)); } });
   if (g.small && mode !== 'place' && playEase > .5) {   // phone, playing: name each ring's beach so you can see where every sound comes from
     rx.save(); rx.font = '500 9.5px "JetBrains Mono", ui-monospace, monospace'; rx.textAlign = 'left'; rx.textBaseline = 'alphabetic'; rx.lineJoin = 'round';
-    voices.forEach((s, i) => { const sel = i === selected, nm = (String(s.name).replace(/ beach$/i, '').toUpperCase().slice(0, 15) + ' ' + s.val.toFixed(1) + 'M'), y = g.cy - radiusOf(i, g) - 3.5;
+    voices.forEach((s, i) => { const sel = i === selected, nm = (String(s.name).toUpperCase().slice(0, 21) + ' ' + s.val.toFixed(1) + 'M'), y = g.cy - radiusOf(i, g) - 3.5;
       rx.globalAlpha = playEase * (s.fade == null ? 1 : clamp(s.fade, 0, 1)) * (sel ? 1 : .8); rx.lineWidth = 3; rx.strokeStyle = 'rgba(5,16,44,.75)'; rx.strokeText(nm, g.cx + 7, y);
       rx.fillStyle = sel ? '#ffffff' : 'rgba(225,236,255,.92)'; rx.fillText(nm, g.cx + 7, y); });
     rx.restore(); }
