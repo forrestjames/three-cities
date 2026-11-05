@@ -262,16 +262,19 @@ input[type=range]::-moz-range-thumb { width: 14px; height: 14px; border-radius: 
   .bar, .credit, #b-midi, #blue-note-m { display: none !important; }
   .phone-only { display: block; }
 
-  .msheet { --mh: 80px; display: flex; flex-direction: column; position: fixed; z-index: 4; left: 12px; right: 12px; bottom: calc(env(safe-area-inset-bottom, 0px) + 12px + var(--kb, 0px));
+  .msheet { --mh: 80px; display: flex; flex-direction: column; position: fixed; z-index: 4; left: 12px; right: 12px; bottom: calc(env(safe-area-inset-bottom, 0px) + 12px);
     height: auto; max-height: var(--mh); overflow: hidden; border-radius: 24px; background: rgba(5,16,44,.93); border: 1px solid rgba(160,190,255,.26);
     backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); box-shadow: 0 -6px 30px rgba(3,14,38,.35);
     transition: max-height .5s cubic-bezier(.2,.8,.2,1); }
   body.sheet-open .msheet { max-height: min(540px, calc(100vh - 100px)); max-height: min(580px, calc(var(--vvh, 100dvh) - 100px)); }
   input[type=search], .pgrid select { font-size: 16px; }   /* 16px or more stops iPhones zooming in when a field is tapped */
-  body.kb-open .seg, body.kb-open .dockdots, body.kb-open .chips { display: none; }
-  body.kb-open.sheet-open .msheet { max-height: calc(var(--vvh) - 76px); }
-  body.kb-open .panel { height: clamp(150px, calc(var(--vvh) - 330px), 260px); }
-  body.kb-open #results { max-height: none; }
+  /* typing in the search box: the card pins to the top of what you can see, above the keyboard, and the rest steps aside */
+  body.typing .msheet { top: calc(env(safe-area-inset-top, 0px) + 8px); bottom: auto; transform: translateY(var(--vvtop, 0px)); max-height: calc(var(--vvh, 48vh) - 16px); transition: none; }
+  body.typing .seg, body.typing .dockdots, body.typing .chips, body.typing .mgrab, body.typing .title, body.typing .hact { display: none; }
+  body.typing .mhead { min-height: 64px; }
+  body.typing .panel { height: auto; max-height: calc(var(--vvh, 48vh) - 110px); }
+  body.typing #search { overflow-y: auto; }
+  body.typing #results { max-height: none; }
   .msheet.nudge { animation: sheetBob 5.5s ease-in-out 1.2s infinite, sheetGlow 2.6s ease-in-out infinite; }
   body.sheet-open .msheet.nudge { animation: none; }
   .msheet.nudge .mgrab { animation: grabGlow 2.6s ease-in-out infinite; }
@@ -1198,17 +1201,20 @@ function setSheet(on) {
   document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && sheetOpen) setSheet(false); });
   if (phone.matches) $('msheet').classList.add('nudge');
 })();
-// The on-screen keyboard: lift the card above it and give the cards the room that is left, so the field you are typing in stays in view.
+// Typing in the search box: pin the card to the top of what you can see, so the keyboard never covers it.
 (() => {
-  const vv = window.visualViewport; if (!vv) return; const root = document.documentElement; let t = 0;
+  const vv = window.visualViewport, root = document.documentElement, q = $('q'); let t = 0;
   const sync = () => {
-    const kb = Math.max(0, Math.round(window.innerHeight - vv.height - vv.offsetTop)), open = phone.matches && kb > 80;
-    root.style.setProperty('--kb', (open ? kb : 0) + 'px'); root.style.setProperty('--vvh', Math.round(vv.height) + 'px');
-    document.body.classList.toggle('kb-open', open);
-    if (open && (window.scrollY || vv.offsetTop)) window.scrollTo(0, 0);
+    if (vv) { root.style.setProperty('--vvh', Math.round(vv.height) + 'px'); root.style.setProperty('--vvtop', Math.round(vv.offsetTop) + 'px'); }
+    if (document.body.classList.contains('typing') && (window.scrollY || (vv && vv.offsetTop))) window.scrollTo(0, 0);
     clearTimeout(t); t = setTimeout(() => { measureArea(); resize(); }, 260);
   };
-  vv.addEventListener('resize', sync); vv.addEventListener('scroll', sync); sync();
+  if (vv) { vv.addEventListener('resize', sync); vv.addEventListener('scroll', sync); sync(); }
+  const on = () => { if (!phone.matches) return; document.body.classList.add('typing'); if (!sheetOpen) setSheet(true); $('panel').scrollLeft = $('search').offsetLeft; setTimeout(sync, 50); setTimeout(sync, 400); };
+  const off = () => { setTimeout(() => { if (document.activeElement !== q) { document.body.classList.remove('typing'); sync(); } }, 120); };
+  q.addEventListener('focus', on); q.addEventListener('blur', off);
+  $('results').addEventListener('mousedown', (e) => e.preventDefault());   // tapping a result keeps the box focused until the place is chosen
+  window.stopTyping = () => { q.blur(); document.body.classList.remove('typing'); sync(); };
 })();
 function placeLeft() {
   const left = $('left'), panel = $('panel');
@@ -1258,7 +1264,7 @@ function choose(lat, lon, name, sub) {
   Object.assign(place, { lat, lon, name, sub, loaded: false, live: false, noSea: false, error: false, hr: null, tide: null, coast: null, suggest: null });
   try { localStorage.setItem('bluewave.place', JSON.stringify({ lat, lon, name, sub })); } catch (e) { /* ignore */ }
   $('results').textContent = ''; $('q').value = ''; msg('');
-  showFacts(); renderPanel(); renderSurf(); fetchPlace(); syncUrl(); findCountry(lat, lon); showCard('read'); setSheet(false);
+  showFacts(); renderPanel(); renderSurf(); fetchPlace(); syncUrl(); findCountry(lat, lon); window.stopTyping && window.stopTyping(); showCard('read'); setSheet(false);
 }
 // The flag: the country of the place, looked up once per place.
 function setFlag(cc) {
