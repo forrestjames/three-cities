@@ -110,7 +110,7 @@ dd { margin: 0; text-align: right; color: var(--foam); font-size: 13px; overflow
 .how ul { margin: 6px 0 0; padding-left: 18px; color: var(--mist); line-height: 1.5; }
 .how li { margin: 3px 0; }
 .how b { color: var(--foam); font-weight: 500; }
-.how-h { font-size: 11.5px; letter-spacing: .08em; text-transform: uppercase; color: var(--faint); }
+summary.how-h { cursor: pointer; padding: 6px 0; } .how-h { font-size: 11.5px; letter-spacing: .08em; text-transform: uppercase; color: var(--faint); }
 /* Headline card: one real result from the night, tied to the beach on show. Firsts get a small glowing dot. */
 :root { --spark: #ffd98a; }
 .news { margin-top: 14px; width: min(330px, 100%); padding: 11px 14px 11px 16px; border: 1px solid var(--edge); border-radius: 16px; background: var(--glass); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); text-shadow: none; font-family: var(--mono); }
@@ -172,8 +172,6 @@ input[type=search]::placeholder { color: var(--faint); }
   background: var(--glass); border: 1px solid var(--edge); border-radius: 16px; backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); padding: 16px 20px; font: 400 13px var(--mono); color: var(--mist); }
 .pop[hidden] { display: none; }
 .go.alt { background: transparent; color: var(--foam); border: 1px solid var(--edge); }
-.mrow { display: flex; gap: 8px; width: 100%; flex: none; }
-.mrow .go { flex: 1; margin-top: 0; }
 .fchips { display: flex; gap: 6px; overflow-x: auto; margin: 0 -4px; padding: 2px 4px 10px; scrollbar-width: none; }
 .fchip { flex: none; font: 500 12px var(--mono); letter-spacing: .04em; color: var(--foam); background: transparent; border: 1px solid var(--edge); border-radius: 17px; padding: 0 14px; min-height: 40px; cursor: pointer; white-space: nowrap; }
 .fchip[aria-pressed="true"] { background: var(--foam); color: var(--abyss); }
@@ -189,6 +187,13 @@ input[type=search]::placeholder { color: var(--faint); }
 .scrim { position: fixed; inset: 0; z-index: 6; background: rgba(2, 8, 24, .62); -webkit-backdrop-filter: blur(3px); backdrop-filter: blur(3px); }
 .scrim[hidden] { display: none; }
 .pop:not(.how-pop) { z-index: 7; }
+.hact { display: none; }
+@media (max-width: 760px) {
+  .hact { display: flex; gap: 8px; position: fixed; z-index: 3; right: 16px; top: calc(env(safe-area-inset-top, 0px) + 13px); }
+  .hbtn { display: flex; align-items: center; justify-content: center; width: 44px; height: 44px; border-radius: 50%; border: 1px solid var(--edge); background: rgba(5,16,44,.5); color: var(--foam); cursor: pointer; padding: 0; }
+  .hbtn:active { border-color: var(--accent); }
+  .kickrow .kicker { display: none; }
+}
 @media (max-width: 760px) { .fchips { display: grid; grid-auto-flow: column; grid-template-rows: repeat(2, auto); } }
 @media (min-width: 761px) {   /* on a big screen the windows sit in the middle and have room */
   .pop:not(.how-pop) { top: 50%; bottom: auto; transform: translate(-50%, -50%); width: min(820px, calc(100% - 64px)); max-height: calc(100vh - 64px); max-height: calc(100dvh - 64px); padding: 22px 30px 0; font-size: 14px; }
@@ -254,7 +259,7 @@ input[type=range]::-moz-range-thumb { width: 14px; height: 14px; border-radius: 
   .howbtn { width: 38px; height: 38px; margin: 0; font-size: 15px; opacity: .95; background: rgba(5,16,44,.5); }
   .how-pop { top: 46px !important; }
   .facts { display: none; font-size: 10.5px; margin-top: 2px; line-height: 1.4; } body.sea-off .facts { display: block; } #means { display: none; }
-  .bar, .credit, #b-midi, #p-music .how, #blue-note-m { display: none !important; }
+  .bar, .credit, #b-midi, #blue-note-m { display: none !important; }
   .phone-only { display: block; }
 
   .msheet { --mh: 80px; display: flex; flex-direction: column; position: fixed; z-index: 4; left: 12px; right: 12px; bottom: calc(env(safe-area-inset-bottom, 0px) + 12px);
@@ -279,7 +284,6 @@ input[type=range]::-moz-range-thumb { width: 14px; height: 14px; border-radius: 
   .seg button { flex: 1; display: flex; align-items: center; justify-content: center; gap: 6px; white-space: nowrap; padding: 6px 4px; min-height: 44px; font-size: 12.5px; letter-spacing: .03em; }
   .seg .usf { margin: 0; width: 16px; height: 16px; flex: none; vertical-align: baseline; }
   .seg #m-blue { flex: 1.7 1 0; padding: 6px 14px; gap: 8px; } .seg #m-place, .seg #m-world { flex: 1 1 0; }
-  .mrow { position: sticky; bottom: 0; } .mrow .go { min-height: 46px; padding: 0 8px; }
   .mbody { padding-bottom: calc(14px + env(safe-area-inset-bottom, 0px)); }
 
   /* the swipeable cards */
@@ -428,11 +432,15 @@ input[type=range]::-moz-range-thumb { width: 14px; height: 14px; border-radius: 
   <div class="ctl"><label for="vol">Level <output id="vol-o">70</output></label><input id="vol" type="range" min="0" max="100" value="70"></div>
 </div>
 
+<div class="hact" id="hact">
+  <button type="button" class="hbtn" id="h-facts" aria-label="Fun facts" title="Fun facts"><svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path d="M12 3l1.9 5.1L19 10l-5.1 1.9L12 17l-1.9-5.1L5 10l5.1-1.9zM19 16l.8 2.2L22 19l-2.2.8L19 22l-.8-2.2L16 19l2.2-.8z" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></svg></button>
+  <button type="button" class="hbtn" id="h-music" aria-label="Music settings" title="Music settings"><svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path d="M9 18V6l11-2v12M9 18a3 3 0 11-6 0 3 3 0 016 0zM20 16a3 3 0 11-6 0 3 3 0 016 0z" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+</div>
 <div class="scrim" id="scrim" hidden></div>
 <section class="pop" id="p-music" role="region" aria-label="Music" hidden>
   <div class="popbar"><div class="cap">Music</div></div>
-  <div class="how" aria-label="How the rings work">
-    <p class="how-h">How the rings work</p>
+  <details class="how" id="how-d" open>
+    <summary class="how-h">How to read the rings</summary>
     <p>Each ring is one beach. It is a loop of steps, and the sweep of light shows where the music is now.</p>
     <ul>
       <li><b>Wave height</b> sets how many dots light up. Bigger waves, more hits.</li>
@@ -442,7 +450,7 @@ input[type=range]::-moz-range-thumb { width: 14px; height: 14px; border-radius: 
       <li><b>Random clusters</b> bunches each ring's hits into a few tight groups, and re-rolls them every lap.</li>
       <li><b>Drift</b> nudges the hits along, one step at a time, so the pattern slowly changes.</li>
     </ul>
-  </div>
+  </details>
   <div class="pgrid">
     <label class="wide-l">Sound<select id="m-style"><option value="default">Default</option><option value="surf">Surfer</option><option value="calm">Meditative</option></select></label>
     <label>Key<select id="m-key"></select></label>
@@ -495,7 +503,7 @@ input[type=range]::-moz-range-thumb { width: 14px; height: 14px; border-radius: 
     <button type="button" class="mtxt" id="mtoggle" aria-expanded="false" aria-controls="mbody" aria-label="Show more: views, headline and data"><span id="mb-name">&nbsp;</span><span id="mb-sub"></span></button>
     <button type="button" class="mplay" id="mb-play" aria-label="Play" aria-pressed="false"><svg class="i-play" width="22" height="22" viewBox="0 0 22 22" aria-hidden="true"><path d="M6 3.5v15l13-7.5z" fill="#06143a"/></svg><svg class="i-stop" width="20" height="20" viewBox="0 0 20 20" aria-hidden="true"><rect x="3" y="3" width="14" height="14" rx="2" fill="#06143a"/></svg></button>
   </div>
-  <div class="mbody" id="mbody" inert><div class="mrow" id="mrow"><button type="button" class="go alt" id="mb-facts">Fun facts</button><button type="button" class="go mmusic" id="mb-music">Music settings</button></div></div>
+  <div class="mbody" id="mbody" inert></div>
 </div>
 
 <script>
@@ -1115,7 +1123,9 @@ $('f-go').addEventListener('click', () => {
   const s = factPlace; if (!s) return; TRACK.add('fact:' + factSel);
   openPanel(null); if (mode !== 'place') setMode('place'); choose(s.blat || s.lat, s.blon || s.lon, s.name, s.sub || '');
 });
-$('mb-facts').addEventListener('click', () => { setSheet(false); openPanel('facts'); });
+$('h-facts').addEventListener('click', () => { setSheet(false); openPanel('facts'); });
+$('h-music').addEventListener('click', () => { setSheet(false); openPanel('music'); });
+try { if (window.matchMedia('(max-width: 760px)').matches) $('how-d').open = false; } catch (e) {}
 function setMode(m, set) {
   mode = m; TRACK.add('view:' + (m === 'place' ? 'place' : (set ? set : (world === BLUE ? 'blue' : 'oceans')))); if (set) { world = set === 'blue' ? BLUE : OCEANS; musicKey = ''; }
   syncNote();
@@ -1141,7 +1151,7 @@ function toSheet(el) { if (!holes[el.id]) { holes[el.id] = document.createCommen
 function fromSheet(el) { const h = holes[el.id]; if (h) { h.replaceWith(el); delete holes[el.id]; } }
 function placeNews() {
   const news = $('news'), seg = document.querySelector('.seg');
-  if (phone.matches) { if (news.parentNode !== $('panel')) $('panel').insertBefore(news, $('pg-read')); toSheet(seg); toSheet($('panel')); toSheet($('dockdots')); $('mbody').append($('mrow')); $('panel').scrollLeft = 0; }
+  if (phone.matches) { if (news.parentNode !== $('panel')) $('panel').insertBefore(news, $('pg-read')); toSheet(seg); toSheet($('panel')); toSheet($('dockdots')); $('panel').scrollLeft = 0; }
   else { fromSheet($('panel')); fromSheet($('dockdots')); fromSheet(seg); if (news.parentNode !== seg.parentNode || news.previousElementSibling !== seg) seg.after(news); }
   setTimeout(resize, 0);
 }
@@ -1161,7 +1171,6 @@ function setSheet(on) {
   head.addEventListener('touchend', (e) => { if (y0 == null) return; const dy = e.changedTouches[0].clientY - y0; y0 = null; if (dy < -24) setSheet(true); else if (dy > 24) setSheet(false); }, { passive: true });
   $('rings').addEventListener('pointerdown', () => { if (sheetOpen) setSheet(false); });
   document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && sheetOpen) setSheet(false); });
-  $('mb-music').addEventListener('click', () => { setSheet(false); openPanel('music'); });
   if (phone.matches) $('msheet').classList.add('nudge');
 })();
 function placeLeft() {
