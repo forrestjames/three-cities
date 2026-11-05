@@ -187,8 +187,8 @@ input[type=search]::placeholder { color: var(--faint); }
 .fl { font: 400 12.5px/1.45 var(--mono); color: var(--mist); margin-top: 8px; }
 .fcard .go { margin-top: 14px; }
 .popbar { margin-bottom: 16px; } .popbar .cap { margin: 0; }
-.popbar.has-x { display: flex; align-items: center; justify-content: space-between; margin-top: -6px; }
-.xbtn { flex: none; width: 40px; height: 40px; padding: 0; display: grid; place-items: center; border: 1px solid var(--edge); border-radius: 50%; background: transparent; color: var(--foam); cursor: pointer; }
+.popbar.has-x { padding-right: 52px; min-height: 40px; } .popbar.has-x .cap { margin-bottom: 8px; }
+.xbtn { position: absolute; top: 12px; right: 12px; z-index: 2; width: 40px; height: 40px; padding: 0; display: grid; place-items: center; border: 1px solid var(--edge); border-radius: 50%; background: transparent; color: var(--foam); cursor: pointer; }
 .xbtn svg { width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; }
 .xbtn:hover { background: rgba(242, 247, 255, .1); }
 .pfoot { position: sticky; bottom: -1px; margin: 14px -20px -16px; padding: 10px 20px 16px; background: linear-gradient(to top, var(--abyss) 70%, transparent); border-radius: 0 0 16px 16px; }
@@ -336,7 +336,7 @@ input[type=range]::-moz-range-thumb { width: 14px; height: 14px; border-radius: 
   #r-line { display: block; grid-column: 1 / -1; margin: 8px 0 0; font: 400 15px/1.35 var(--display); color: var(--foam); } #r-line:empty, #r-line2 { display: none; }
   #pg-read #gauges { grid-column: 1 / -1; width: calc(100% - 56px); height: 78px; margin-top: 8px; }
   #pg-read .share-btn { position: absolute; right: 14px; bottom: 10px; padding: 0; width: 38px; min-height: 38px; justify-content: center; font-size: 0; gap: 0; } #pg-read .share-btn svg { width: 17px; height: 17px; }
-  body.is-place .chg { display: block; grid-column: 1 / -1; justify-self: start; margin: 4px 0 0; padding: 4px 12px; border: 1px solid var(--edge); border-radius: 17px; background: none; color: var(--foam); font: 400 11.5px var(--mono); letter-spacing: .06em; text-transform: uppercase; cursor: pointer; }
+  body.is-place .chg { display: grid; place-items: center; position: absolute; right: 14px; bottom: 56px; width: 38px; height: 38px; margin: 0; padding: 0; border: 1px solid var(--edge); border-radius: 50%; background: none; color: var(--foam); cursor: pointer; } body.is-place .chg svg { width: 17px; height: 17px; } body.is-place .chg:hover, body.is-place .chg:focus-visible { border-color: var(--accent); }
   /* card: the surfer */
   #pg-scale #scale { height: 150px; margin-top: 0; } .scale-cap { font-size: 12.5px; margin-top: 6px; }
   /* card: the data */
@@ -428,7 +428,7 @@ input[type=range]::-moz-range-thumb { width: 14px; height: 14px; border-radius: 
   <div class="name" id="r-name">&nbsp;</div>
   <div class="geo"><div class="sub"><img id="r-flag" class="flag" alt="" width="20" height="14" hidden><span id="r-sub"></span></div>
   <canvas id="mini" role="img" aria-label="A small world map with a dot where this is"></canvas></div>
-  <div class="wline" id="r-line"></div><div class="wline" id="r-line2"></div><button type="button" class="chg" id="chg">Change place</button>
+  <div class="wline" id="r-line"></div><div class="wline" id="r-line2"></div><button type="button" class="chg" id="chg" aria-label="Change place" title="Change place"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M15 15l5 5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg></button>
   <canvas class="inline" id="gauges" role="img" aria-label="Quick scan of the conditions"></canvas>
   </div>
   <div class="pg" id="pg-scale">
@@ -457,7 +457,7 @@ input[type=range]::-moz-range-thumb { width: 14px; height: 14px; border-radius: 
 </div>
 <div class="scrim" id="scrim" hidden></div>
 <section class="pop" id="p-music" role="region" aria-label="Music" hidden>
-  <div class="popbar"><div class="cap">Music</div></div>
+  <div class="popbar has-x"><div class="cap">Music</div><button type="button" class="xbtn" data-close aria-label="Close music settings"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
   <details class="how" id="how-d" open>
     <summary class="how-h">How to read the rings</summary>
     <p>Each ring is one beach. It is a loop of steps, and the sweep of light shows where the music is now.</p>
@@ -486,7 +486,6 @@ input[type=range]::-moz-range-thumb { width: 14px; height: 14px; border-radius: 
   <p class="note">On Auto, every place gets its own key, scale, chords and sound, picked from where it is and how warm its sea is. Wave height sets how many hits, wave period sets the steps, temperature sets the pitch. The chord changes every four bars. Shift key moves everything up a tone and comes round again after six moves.</p>
   <button class="go phone-only" id="b-midi2" type="button" style="margin-top:6px">MIDI out</button>
   <p class="note phone-only">Sea and weather: <a href="https://open-meteo.com/" target="_blank" rel="noopener">Open-Meteo</a> (DWD, ECMWF, Météo-France), CC BY 4.0 · Places: <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a> · <a href="https://threecities.forrestjamesmusic.com">Three Cities</a>, the sister piece</p>
-<div class="pfoot"><button type="button" class="go wide pclose" data-close aria-label="Close music settings">Close</button></div>
 </section>
 <section class="pop" id="p-facts" role="region" aria-label="Fun facts" hidden>
   <div class="popbar has-x"><div class="cap">Fun facts</div><button type="button" class="xbtn" data-close aria-label="Close fun facts"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
@@ -1091,10 +1090,10 @@ function renderPanel() {
     const P = .49 * s.tval * s.tval * s.tper; row('Power', `${(isUS() ? P * .3048 : P).toFixed(1)} kW per ${isUS() ? 'foot' : 'metre'}, ${powerWord(P)}`);
     const rk = [...world].filter(x => !x.leaving).sort((a, b) => b.tval - a.tval).indexOf(s) + 1; if (rk) row('Rank', `${rk} of ${world.filter(x => !x.leaving).length}, biggest first`);
     row('Rhythm', `${s.hits} hits in ${s.steps} steps`);
-    $('r-line').textContent = [up1(compare(s.tval)), periodFeel(s.tper).split(',')[0], wetsuit(s.ttemp).split(',')[0]].join(' · ');
+    $('r-line').textContent = [up1(compare(s.tval)), periodFeel(s.tper).split(',')[0], wetsuit(s.ttemp)].join(' · ');
     $('r-note').textContent = world === BLUE ? 'Tap a ring to read another beach. Smallest wave, smallest ring. Results as reported on 4 November 2026.' : 'Tap a ring to read another sea. Smallest wave, smallest ring.';
   } else {
-    $('r-line').textContent = (!place.noSea && !place.error && place.loaded) ? [up1(compare(place.voices[0].tval)), place.seaTemp != null ? wetsuit(place.seaTemp).split(',')[0] : ''].filter(Boolean).join(' · ') : '';
+    $('r-line').textContent = (!place.noSea && !place.error && place.loaded) ? [up1(compare(place.voices[0].tval)), place.seaTemp != null ? wetsuit(place.seaTemp) : ''].filter(Boolean).join(' · ') : '';
     $('open-place').hidden = true;
     const p = place, [waves, swell, wind, air] = p.voices, na = '–';
     $('r-cap').textContent = coord(p.lat, p.lon);
@@ -1172,11 +1171,11 @@ function setMode(m, set) {
   if (m === 'place' && !place.loaded) { fetchPlace(); if (!place.cc) findCountry(place.lat, place.lon); }
   showFacts(); renderPanel(); renderSurf(); syncUrl(); $('panel').scrollTo({ left: 0 }); if (m === 'place' && place.loaded) setTimeout(() => showCard('read'), 60); setTimeout(() => { resize(); }, 0);
 }
-$('chg').addEventListener('click', () => { showCard('search'); setTimeout(() => $('q').focus({ preventScroll: true }), 350); });
+$('chg').addEventListener('click', () => { $('results').textContent = ''; $('q').value = ''; msg(''); showCard('search'); setTimeout(() => $('q').focus({ preventScroll: true }), 350); });
 $('m-blue').addEventListener('click', () => setMode('world', 'blue'));
 $('m-world').addEventListener('click', () => setMode('world', 'oceans'));
 $('open-place').addEventListener('click', () => { const s = world[selected]; if (!s || !s.blat) return; setMode('place'); choose(s.blat, s.blon, s.name, s.sub); });
-$('m-place').addEventListener('click', () => { setMode('place'); setTimeout(() => showCard('search'), 140); });
+$('m-place').addEventListener('click', () => { setMode('place'); $('results').textContent = ''; $('q').value = ''; msg(''); setTimeout(() => showCard('search'), 140); });   // tapping Place, even when already there, opens a blank search
 // Wide screens keep the search and surf check down the left. Narrow ones fold them into the one panel.
 const wide = window.matchMedia('(min-width: 1180px)');
 // Phones: the headline card is the second screen of the swipe. Wider screens: it sits under the view switch.
