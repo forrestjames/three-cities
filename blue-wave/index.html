@@ -187,6 +187,10 @@ input[type=search]::placeholder { color: var(--faint); }
 .fl { font: 400 12.5px/1.45 var(--mono); color: var(--mist); margin-top: 8px; }
 .fcard .go { margin-top: 14px; }
 .popbar { margin-bottom: 16px; } .popbar .cap { margin: 0; }
+.popbar.has-x { display: flex; align-items: center; justify-content: space-between; margin-top: -6px; }
+.xbtn { flex: none; width: 40px; height: 40px; padding: 0; display: grid; place-items: center; border: 1px solid var(--edge); border-radius: 50%; background: transparent; color: var(--foam); cursor: pointer; }
+.xbtn svg { width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; }
+.xbtn:hover { background: rgba(242, 247, 255, .1); }
 .pfoot { position: sticky; bottom: -1px; margin: 14px -20px -16px; padding: 10px 20px 16px; background: linear-gradient(to top, var(--abyss) 70%, transparent); border-radius: 0 0 16px 16px; }
 .pfoot .pclose { width: 100%; margin: 0; min-height: 46px; }
 .scrim { position: fixed; inset: 0; z-index: 6; background: rgba(2, 8, 24, .62); -webkit-backdrop-filter: blur(3px); backdrop-filter: blur(3px); }
@@ -485,14 +489,13 @@ input[type=range]::-moz-range-thumb { width: 14px; height: 14px; border-radius: 
 <div class="pfoot"><button type="button" class="go wide pclose" data-close aria-label="Close music settings">Close</button></div>
 </section>
 <section class="pop" id="p-facts" role="region" aria-label="Fun facts" hidden>
-  <div class="popbar"><div class="cap">Fun facts</div></div>
+  <div class="popbar has-x"><div class="cap">Fun facts</div><button type="button" class="xbtn" data-close aria-label="Close fun facts"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
   <div class="fchips" id="f-chips" role="group" aria-label="Pick a fact"></div>
   <div class="fcard" id="f-card" aria-live="polite">
     <div class="fe-big" id="f-e" aria-hidden="true"></div><div class="fk" id="f-k"></div><div class="fv" id="f-v"></div><div class="fn" id="f-n"></div><div class="fl" id="f-l"></div>
     <button type="button" class="go wide" id="f-go">Play this place</button>
   </div>
   <p class="note">Read live across the seas of the world and the Blue Coast beaches.</p>
-<div class="pfoot"><button type="button" class="go wide pclose" data-close aria-label="Close fun facts">Close</button></div>
 </section>
 <section class="pop" id="p-midi" role="region" aria-label="MIDI out" hidden>
   <div class="popbar"><div class="cap">MIDI out</div></div>
