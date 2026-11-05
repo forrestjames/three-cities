@@ -262,11 +262,16 @@ input[type=range]::-moz-range-thumb { width: 14px; height: 14px; border-radius: 
   .bar, .credit, #b-midi, #blue-note-m { display: none !important; }
   .phone-only { display: block; }
 
-  .msheet { --mh: 80px; display: flex; flex-direction: column; position: fixed; z-index: 4; left: 12px; right: 12px; bottom: calc(env(safe-area-inset-bottom, 0px) + 12px);
+  .msheet { --mh: 80px; display: flex; flex-direction: column; position: fixed; z-index: 4; left: 12px; right: 12px; bottom: calc(env(safe-area-inset-bottom, 0px) + 12px + var(--kb, 0px));
     height: auto; max-height: var(--mh); overflow: hidden; border-radius: 24px; background: rgba(5,16,44,.93); border: 1px solid rgba(160,190,255,.26);
     backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); box-shadow: 0 -6px 30px rgba(3,14,38,.35);
     transition: max-height .5s cubic-bezier(.2,.8,.2,1); }
-  body.sheet-open .msheet { max-height: min(540px, calc(100vh - 100px)); max-height: min(540px, calc(100dvh - 100px)); }
+  body.sheet-open .msheet { max-height: min(540px, calc(100vh - 100px)); max-height: min(540px, calc(var(--vvh, 100dvh) - 100px)); }
+  input[type=search], .pgrid select { font-size: 16px; }   /* 16px or more stops iPhones zooming in when a field is tapped */
+  body.kb-open .seg, body.kb-open .dockdots, body.kb-open .chips { display: none; }
+  body.kb-open.sheet-open .msheet { max-height: calc(var(--vvh) - 76px); }
+  body.kb-open .panel { height: clamp(150px, calc(var(--vvh) - 330px), 260px); }
+  body.kb-open #results { max-height: none; }
   .msheet.nudge { animation: sheetBob 5.5s ease-in-out 1.2s infinite, sheetGlow 2.6s ease-in-out infinite; }
   body.sheet-open .msheet.nudge { animation: none; }
   .msheet.nudge .mgrab { animation: grabGlow 2.6s ease-in-out infinite; }
@@ -1173,6 +1178,18 @@ function setSheet(on) {
   $('rings').addEventListener('pointerdown', () => { if (sheetOpen) setSheet(false); });
   document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && sheetOpen) setSheet(false); });
   if (phone.matches) $('msheet').classList.add('nudge');
+})();
+// The on-screen keyboard: lift the card above it and give the cards the room that is left, so the field you are typing in stays in view.
+(() => {
+  const vv = window.visualViewport; if (!vv) return; const root = document.documentElement; let t = 0;
+  const sync = () => {
+    const kb = Math.max(0, Math.round(window.innerHeight - vv.height - vv.offsetTop)), open = phone.matches && kb > 80;
+    root.style.setProperty('--kb', (open ? kb : 0) + 'px'); root.style.setProperty('--vvh', Math.round(vv.height) + 'px');
+    document.body.classList.toggle('kb-open', open);
+    if (open && (window.scrollY || vv.offsetTop)) window.scrollTo(0, 0);
+    clearTimeout(t); t = setTimeout(() => { measureArea(); resize(); }, 260);
+  };
+  vv.addEventListener('resize', sync); vv.addEventListener('scroll', sync); sync();
 })();
 function placeLeft() {
   const left = $('left'), panel = $('panel');
