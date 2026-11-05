@@ -175,6 +175,11 @@ input[type=search]::placeholder { color: var(--faint); }
 .fchips { display: flex; gap: 6px; overflow-x: auto; margin: 0 -4px; padding: 2px 4px 10px; scrollbar-width: none; }
 .fchip { flex: none; font: 500 12px var(--mono); letter-spacing: .04em; color: var(--foam); background: transparent; border: 1px solid var(--edge); border-radius: 17px; padding: 0 14px; min-height: 40px; cursor: pointer; white-space: nowrap; }
 .fchip[aria-pressed="true"] { background: var(--foam); color: var(--abyss); }
+.fchip .fe { margin-right: 7px; font-size: 15px; }
+.fe-big { font-size: 52px; line-height: 1; margin: 2px 0 8px; font-family: 'Apple Color Emoji', 'Segoe UI Emoji', 'Noto Color Emoji', sans-serif; }
+.fe-big.bump { animation: fepop .5s cubic-bezier(.3, 1.6, .5, 1); }
+@keyframes fepop { from { transform: scale(.4) rotate(-14deg); opacity: 0; } to { transform: none; opacity: 1; } }
+@media (prefers-reduced-motion: reduce) { .fe-big.bump { animation: none; } }
 .fcard { border: 1px solid var(--edge); border-radius: 16px; padding: 14px 18px 16px; }
 .fk { font: 500 10.5px var(--mono); letter-spacing: .1em; text-transform: uppercase; color: var(--mist); }
 .fv { font: 400 44px/1.1 var(--display); color: var(--foam); margin-top: 6px; }
@@ -483,7 +488,7 @@ input[type=range]::-moz-range-thumb { width: 14px; height: 14px; border-radius: 
   <div class="popbar"><div class="cap">Fun facts</div></div>
   <div class="fchips" id="f-chips" role="group" aria-label="Pick a fact"></div>
   <div class="fcard" id="f-card" aria-live="polite">
-    <div class="fk" id="f-k"></div><div class="fv" id="f-v"></div><div class="fn" id="f-n"></div><div class="fl" id="f-l"></div>
+    <div class="fe-big" id="f-e" aria-hidden="true"></div><div class="fk" id="f-k"></div><div class="fv" id="f-v"></div><div class="fn" id="f-n"></div><div class="fl" id="f-l"></div>
     <button type="button" class="go wide" id="f-go">Play this place</button>
   </div>
   <p class="note">Read live across the seas of the world and the Blue Coast beaches.</p>
@@ -1134,13 +1139,15 @@ const FACTS = [
   { k: 'typical', label: 'The most typical sea', dir: -1, f: (s, L) => { const n = L.length, mh = L.reduce((a, x) => a + x.tval, 0) / n, mt = L.reduce((a, x) => a + x.ttemp, 0) / n; return Math.abs(s.tval - mh) / 2 + Math.abs(s.ttemp - mt) / 8; }, show: (s) => fH(s.tval) + ', ' + fT(s.ttemp) + '', line: (s, L) => 'Closest to the average of all of them: ' + fH(L.reduce((a, x) => a + x.tval, 0) / L.length) + ' and ' + fT(L.reduce((a, x) => a + x.ttemp, 0) / L.length, 0) + '.' },
   { k: 'gap', label: 'The temperature gap', dir: 1, f: (s) => s.ttemp, show: (s, L) => fTd(Math.max(...L.map(x => x.ttemp)) - Math.min(...L.map(x => x.ttemp))), line: (s, L) => 'From the coldest sea to this one, the warmest, ' + fT(s.ttemp) + '.' },
 ];
+const FACT_E = { big: '🌊', calm: '😌', warm: '🌴', cold: '🧊', long: '⏳', short: '💨', power: '⚡', surf: '🏄', bbig: '🐳', bwarm: '🌞', bcold: '🥶', bcalm: '🛶', bsurf: '🤙', swim: '🏊', warmbig: '🐠', coldbig: '🐧', steep: '⛰️', gentle: '🍃', north: '🐻‍❄️', south: '🦘', typical: '🎯', gap: '🌡️' };
 let factSel = 'big', factPlace = null;
 function renderFacts() {
   const chips = $('f-chips'); if (!chips) return;
-  if (!chips.children.length) FACTS.forEach(F => { const b = document.createElement('button'); b.type = 'button'; b.className = 'fchip'; b.textContent = F.label; b.dataset.k = F.k; b.addEventListener('click', () => { factSel = F.k; renderFacts(); }); chips.append(b); });
+  if (!chips.children.length) FACTS.forEach(F => { const b = document.createElement('button'); b.type = 'button'; b.className = 'fchip'; const fe = document.createElement('span'); fe.className = 'fe'; fe.setAttribute('aria-hidden', 'true'); fe.textContent = FACT_E[F.k] || '🌊'; b.append(fe, F.label); b.dataset.k = F.k; b.addEventListener('click', () => { factSel = F.k; renderFacts(); }); chips.append(b); });
   [...chips.children].forEach(b => b.setAttribute('aria-pressed', b.dataset.k === factSel));
   const F = FACTS.find(x => x.k === factSel), all = F.set === 'blue' ? BLUE_POOL : OCEANS.concat(BLUE_POOL), list = F.ok ? all.filter(F.ok) : all;
   const s = list.reduce((a, x) => (!a || F.dir * F.f(x, all) > F.dir * F.f(a, all) ? x : a), null); factPlace = s;
+  { const fe = $('f-e'); fe.textContent = FACT_E[factSel] || '🌊'; fe.classList.remove('bump'); void fe.offsetWidth; fe.classList.add('bump'); }
   $('f-go').hidden = !s; if (!s) { $('f-k').textContent = F.label; $('f-v').textContent = '–'; $('f-n').textContent = 'Nothing fits right now.'; $('f-l').textContent = ''; return; }
   $('f-k').textContent = F.label; $('f-v').textContent = F.show(s, all); $('f-n').textContent = s.sub ? s.name + ', ' + s.sub : s.name; $('f-l').textContent = F.line(s, all);
 }
