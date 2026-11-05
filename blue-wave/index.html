@@ -274,8 +274,9 @@ input[type=range]::-moz-range-thumb { width: 14px; height: 14px; border-radius: 
   body.typing .mhead { display: none; }
   body.typing .mbody { flex: 0 1 auto; min-height: 0; }
   body.typing .panel { height: auto; max-height: none; flex: 0 1 auto; min-height: 0; }
-  body.typing #search { overflow-y: auto; max-height: calc(var(--vvh, 48vh) - 40px); }
-  body.typing #results { max-height: none; }
+  body.typing #search { overflow: hidden; max-height: calc(var(--vvh, 48vh) - 40px); }
+  body.typing #search .chips, body.typing #search .msg { display: none; }
+  body.typing #results { max-height: calc(var(--vvh, 48vh) - 100px); overflow-y: auto; }
   .msheet.nudge { animation: sheetBob 5.5s ease-in-out 1.2s infinite, sheetGlow 2.6s ease-in-out infinite; }
   body.sheet-open .msheet.nudge { animation: none; }
   .msheet.nudge .mgrab { animation: grabGlow 2.6s ease-in-out infinite; }
