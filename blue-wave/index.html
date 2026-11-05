@@ -95,6 +95,9 @@ dd { margin: 0; text-align: right; color: var(--foam); font-size: 13px; overflow
 #s-note { font-size: 11.5px; color: var(--faint); }
 .scale-cap { font-size: 13px; color: var(--foam); margin-top: 2px; line-height: 1.4; }
 .scale-cap b { font-weight: 500; }
+:root { --sb: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cg transform='rotate(35 12 12)' fill='none' stroke='%23000' stroke-width='1.7' stroke-linecap='round'%3E%3Cpath d='M12 1.8c3 4 4 9 4 13.2 0 4-1.8 7.2-4 7.2s-4-3.2-4-7.2c0-4.2 1-9.2 4-13.2z'/%3E%3Cpath d='M12 6v13'/%3E%3C/g%3E%3C/svg%3E"); }
+.sline { margin-top: 8px; font: 400 15px/1.35 var(--display); color: var(--foam); }
+#r-line:not(:empty)::before, .sline:not(:empty)::before { content: ""; display: inline-block; width: 27px; height: 27px; margin-right: 8px; vertical-align: -8px; background: currentColor; -webkit-mask: var(--sb) center / contain no-repeat; mask: var(--sb) center / contain no-repeat; }
 .geo { display: flex; margin-bottom: 8px; align-items: center; justify-content: space-between; gap: 12px; }
 .geo-t { min-width: 0; }
 #mini { flex: none; width: 130px; height: 54px; margin: 0; }
@@ -330,15 +333,16 @@ input[type=range]::-moz-range-thumb { width: 14px; height: 14px; border-radius: 
   #blue-note[hidden] { display: none !important; }
   /* card: this beach (the name is already in the bar) */
   #pg-read { position: relative; display: grid; grid-template-columns: 1fr 112px; grid-template-rows: auto auto auto 1fr; column-gap: 10px; align-content: start; }
-  #pg-read .top { grid-column: 1; min-width: 0; } #r-cap { font-size: 10.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  #pg-read .top { display: contents; } #r-cap { grid-column: 1; grid-row: 1; min-width: 0; font-size: 10.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   #pg-read .name { display: none; } #pg-read .geo { display: contents; }
   #pg-read .sub { grid-column: 1; margin: 2px 0 0; font-size: 12.5px; } #mini { grid-column: 2; grid-row: 1 / 3; width: 112px; height: 48px; margin: 0; align-self: center; }
-  #r-line { display: block; grid-column: 1 / -1; margin: 8px 0 0; font: 400 15px/1.35 var(--display); color: var(--foam); } #r-line:empty, #r-line2 { display: none; }
-  #pg-read #gauges { grid-column: 1 / -1; width: calc(100% - 56px); height: 78px; margin-top: 8px; }
-  #pg-read .share-btn { position: absolute; right: 14px; bottom: 10px; padding: 0; width: 38px; min-height: 38px; justify-content: center; font-size: 0; gap: 0; } #pg-read .share-btn svg { width: 17px; height: 17px; }
-  body.is-place .chg { display: grid; place-items: center; position: absolute; right: 14px; bottom: 56px; width: 38px; height: 38px; margin: 0; padding: 0; border: 1px solid var(--edge); border-radius: 50%; background: none; color: var(--foam); cursor: pointer; } body.is-place .chg svg { width: 17px; height: 17px; } body.is-place .chg:hover, body.is-place .chg:focus-visible { border-color: var(--accent); }
+  #r-line { display: block; grid-column: 1 / -1; grid-row: 3; margin: 8px 0 0; font: 400 15px/1.35 var(--display); color: var(--foam); } #r-line:empty, #r-line2 { display: none; }
+  #pg-read #gauges { grid-column: 1 / -1; grid-row: 4; width: calc(100% - 56px); height: 78px; margin-top: 8px; }
+  #pg-read .share-btn { grid-column: 1 / -1; grid-row: 4; justify-self: end; align-self: start; margin: 14px 0 0; padding: 0; width: 38px; min-height: 38px; justify-content: center; font-size: 0; gap: 0; } #pg-read .share-btn svg { width: 17px; height: 17px; }
+  body.is-place #pg-read .share-btn { margin-top: 60px; }
+  body.is-place .chg { display: grid; place-items: center; grid-column: 1 / -1; grid-row: 4; justify-self: end; align-self: start; margin: 14px 0 0; width: 38px; height: 38px; padding: 0; border: 1px solid var(--edge); border-radius: 50%; background: none; color: var(--foam); cursor: pointer; } body.is-place .chg svg { width: 17px; height: 17px; } body.is-place .chg:hover, body.is-place .chg:focus-visible { border-color: var(--accent); }
   /* card: the surfer */
-  #pg-scale #scale { height: 150px; margin-top: 0; } .scale-cap { font-size: 12.5px; margin-top: 6px; }
+  #pg-scale #scale { height: 132px; margin-top: 0; } .scale-cap { font-size: 12.5px; margin-top: 6px; }
   /* card: the data */
   #r-dl { margin-top: 0; font-size: 12.5px; gap: 6px 12px; } #r-note { display: none; } #pg-data .go.wide { margin-top: 10px; min-height: 40px; }
   .mh { display: inline; } .slide .stitle { margin-bottom: 2px; } #tide { height: 84px; } .slide dl { margin-top: 6px; gap: 4px 12px; font-size: 12px; }
@@ -434,6 +438,7 @@ input[type=range]::-moz-range-thumb { width: 14px; height: 14px; border-radius: 
   <div class="pg" id="pg-scale">
   <canvas class="inline" id="scale" role="img" aria-label="A surfer standing beside a wave drawn at the same scale"></canvas>
   <div class="scale-cap" id="scale-cap"></div>
+  <div class="sline" id="scale-line"></div>
   </div>
   <div class="pg" id="pg-data">
   <dl id="r-dl"></dl>
@@ -1075,6 +1080,7 @@ function updateBar() {   // the bar along the bottom of a phone: where you are, 
   $('mb-name').textContent = name || ''; $('mb-sub').textContent = sub.filter(Boolean).join(' · '); fitName();
 }
 function scaleVoice() { const s = voices[selected]; return !s || s.kind === 'air' ? voices[0] : s; }
+function setLine(t) { $('r-line').textContent = t; $('scale-line').textContent = t; }   // the one-line read of the sea: shown on the headline card and the surfer card
 function renderPanel() {
     const dl = $('r-dl'); dl.textContent = '';
   const row = (k, v) => { const dt = document.createElement('dt'), dd = document.createElement('dd'); dt.textContent = k; dd.textContent = v; dl.append(dt, dd); };
@@ -1090,10 +1096,10 @@ function renderPanel() {
     const P = .49 * s.tval * s.tval * s.tper; row('Power', `${(isUS() ? P * .3048 : P).toFixed(1)} kW per ${isUS() ? 'foot' : 'metre'}, ${powerWord(P)}`);
     const rk = [...world].filter(x => !x.leaving).sort((a, b) => b.tval - a.tval).indexOf(s) + 1; if (rk) row('Rank', `${rk} of ${world.filter(x => !x.leaving).length}, biggest first`);
     row('Rhythm', `${s.hits} hits in ${s.steps} steps`);
-    $('r-line').textContent = [up1(compare(s.tval)), periodFeel(s.tper).split(',')[0], wetsuit(s.ttemp)].join(' · ');
+    setLine([up1(compare(s.tval)), periodFeel(s.tper).split(',')[0], wetsuit(s.ttemp)].join(' · '));
     $('r-note').textContent = world === BLUE ? 'Tap a ring to read another beach. Smallest wave, smallest ring. Results as reported on 4 November 2026.' : 'Tap a ring to read another sea. Smallest wave, smallest ring.';
   } else {
-    $('r-line').textContent = (!place.noSea && !place.error && place.loaded) ? [up1(compare(place.voices[0].tval)), place.seaTemp != null ? wetsuit(place.seaTemp) : ''].filter(Boolean).join(' · ') : '';
+    setLine((!place.noSea && !place.error && place.loaded) ? [up1(compare(place.voices[0].tval)), place.seaTemp != null ? wetsuit(place.seaTemp) : ''].filter(Boolean).join(' · ') : '');
     $('open-place').hidden = true;
     const p = place, [waves, swell, wind, air] = p.voices, na = '–';
     $('r-cap').textContent = coord(p.lat, p.lon);
