@@ -8,13 +8,8 @@
 <meta property="og:title" content="Blue Wave">
 <meta property="og:description" content="Live wave height and sea temperature, anywhere in the world, played as a rhythm.">
 <meta property="og:type" content="website">
-<meta property="og:image" content="https://threecities.forrestjamesmusic.com/blue-wave/og.jpg?v=2">
-<meta property="og:image:width" content="1200">
-<meta property="og:image:height" content="630">
-<meta property="og:image:alt" content="Blue Wave in red and blue type over rhythm rings">
-<meta property="og:url" content="https://threecities.forrestjamesmusic.com/blue-wave/">
+<meta property="og:image" content="https://threecities.forrestjamesmusic.com/og.jpg">
 <meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:image" content="https://threecities.forrestjamesmusic.com/blue-wave/og.jpg?v=2">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Hanken+Grotesk:wght@200;300;400;500&family=JetBrains+Mono:wght@400;500&display=swap">
@@ -1390,12 +1385,22 @@ function sing(m, t, o) {
   const pan = ctx.createStereoPanner ? ctx.createStereoPanner() : null; let end = out; if (pan) { pan.pan.value = o.pan || 0; out.connect(pan); end = pan; }
   const wet = ctx.createGain(); wet.gain.value = (o.wet == null ? 1 : o.wet) * 1.2; end.connect(dryBus); end.connect(wet).connect(verbSend);
 }
-function voice(s, t) {
+function voice(s, t, step) {
   if (STYLE === 'calm' && Math.random() > .5) return false;   // bells are sparse: about half the hits ring
   const i = voices.indexOf(s); let amp = .045 + clamp(s.lv, 0, 1) * .05, dec = 1.4 + clamp(s.per / 16, 0, 1) * 1.6, tim = s.kind === 'air' ? TIMBRES[0] : timbreOfVoice(s, i), note = s.note, wet = CH.wet * (1 + (s.touch || 0) * 1.4);
   if (STYLE === 'surf') {
     if (s.kind === 'air' || i % 3 === 1) { tim = T_BASS; note = s.note - 24; while (note < 31) note += 12; amp *= 1.25; }   // some rings are the bass line
-    else { tim = T_SURF; amp *= .75; }
+    else {
+      tim = T_SURF; amp *= .75;
+      // a power chord (root, fifth, octave) on the first hit of each loop, on the rings with the biggest waves
+      let first = -1; for (let q = 0; q < s.steps && first < 0; q++) if (s.pattern[(q + s.offset) % s.steps]) first = q;
+      const big = voices.filter(v => v.kind !== 'air').sort((a, b) => b.val - a.val).slice(0, 3).includes(s);
+      if (big && step === first) {
+        let r = note; while (r > 62) r -= 12;
+        [[r, 1.15], [r + 7, .95], [r + 12, .6]].forEach(([m, k]) => { play(m, t, { tim, amp: amp * k, dec: dec * 1.1, pan: s.pan, wet, touch: s.touch || 0 }); midiNote(MIDI.c1, m, Math.round(60 + clamp(s.lv, 0, 1) * 55), t, stepDur() * 1.8); });
+        s.flash = Math.max(s.flash, .2); return;
+      }
+    }
   } else if (STYLE === 'calm') { tim = T_BELL; amp *= .8; dec *= 1.2; wet *= 1.5; }
   play(note, t, { tim, amp, dec, pan: s.pan, wet, touch: s.touch || 0 });
   midiNote(MIDI.c1, note, Math.round(50 + clamp(s.lv, 0, 1) * 60), t, stepDur() * 1.6);
@@ -1476,7 +1481,7 @@ function schedule() {
     list.forEach((s, i) => {
       const step = tick % s.steps;
       if (step === 0 && tick > 0) driftLap(s);
-      if (s.pattern[(step + s.offset) % s.steps] && !(s.fade != null && s.fade < .2)) { if (voice(s, t) !== false) setTimeout(() => { if (voices === list) hitVisual(i, step); }, Math.max(0, (t - ctx.currentTime) * 1000)); }
+      if (s.pattern[(step + s.offset) % s.steps] && !(s.fade != null && s.fade < .2)) { if (voice(s, t, step) !== false) setTimeout(() => { if (voices === list) hitVisual(i, step); }, Math.max(0, (t - ctx.currentTime) * 1000)); }
     });
     tick++; nextTime += sd;
   }
