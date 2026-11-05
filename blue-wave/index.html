@@ -343,7 +343,7 @@ input[type=range]::-moz-range-thumb { width: 14px; height: 14px; border-radius: 
   body.is-place #r-place { cursor: pointer; -webkit-tap-highlight-color: transparent; padding: 9px 0; margin: -7px 0 -7px; } body.is-place #r-place #r-sub { text-decoration: underline dotted; text-underline-offset: 4px; text-decoration-color: rgba(206, 222, 255, .45); } body.is-place #r-place:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 6px; }
   .mshare { flex: none; width: 40px; height: 40px; margin-right: -2px; padding: 0; border: 0; border-radius: 10px; background: none; color: var(--foam); display: grid; place-items: center; cursor: pointer; } .mshare svg { width: 22px; height: 22px; } .mshare:hover, .mshare:focus-visible { color: var(--accent); }
   /* card: the surfer */
-  #pg-scale { overflow: hidden; } #pg-scale #scale { height: 132px; margin-top: -16px; } .scale-cap { display: none; } #pg-scale .sline { margin-top: 2px; }   /* the sea line says what the caption said, so the card fits without scrolling */
+  #pg-scale { overflow: hidden; } #pg-scale #scale { height: 148px; margin-top: -16px; } .scale-cap { display: none; } #pg-scale .sline { margin-top: 2px; }   /* the sea line says what the caption said, so the card fits without scrolling */
   /* card: the data */
   #r-dl { margin-top: 0; font-size: 12.5px; gap: 6px 12px; } #r-note { display: none; } #pg-data .go.wide { margin-top: 10px; min-height: 40px; }
   .mh { display: inline; } .slide .stitle { margin-bottom: 2px; } #tide { height: 84px; } .slide dl { margin-top: 6px; gap: 4px 12px; font-size: 12px; }
@@ -2043,7 +2043,7 @@ function drawScale(now) {
   const f = fit($('scale')); if (!f) return; const { c, cw, ch } = f;
   const lost = mode === 'place' && place.loaded && (place.noSea || place.error);
   const s = scaleVoice(), h = lost ? 0 : Math.max(0, s.val), t = now / 1000;
-  const base = ch - 22, k = (base - 14) / Math.max(h * 1.1, 2.15), px = Math.max(30, .43 * k + 6), wx0 = Math.max(px + .95 * k + 18, 80);
+  const head = phone.matches ? 32 : 14, base = ch - 22, k = (base - head) / Math.max(h * 1.1, 2.15), px = Math.max(30, .43 * k + 6), wx0 = Math.max(px + .95 * k + 18, 80);
   const P = place;
   const alt = mode === 'place' ? SKY.alt : 30;
   const o = { t, wet: mode === 'place' ? (P.seaTemp != null ? P.seaTemp < 20 : false) : false,
@@ -2070,7 +2070,7 @@ function drawScale(now) {
   path(0); const grad = c.createLinearGradient(0, base - h * k, 0, base); grad.addColorStop(0, 'rgba(106,162,255,.26)'); grad.addColorStop(1, 'rgba(106,162,255,.04)');
   c.save(); c.lineTo(cw - 6, base); c.lineTo(wx0, base); c.closePath(); c.fillStyle = grad; c.fill(); c.restore();
   path(0); c.strokeStyle = '#6aa2ff'; c.lineWidth = 2; c.stroke();
-  const yH = Math.max(10, base - h * k);
+  const yH = Math.max(head - 4, base - h * k);
   c.setLineDash([3, 4]); c.strokeStyle = 'rgba(242,247,255,.5)'; c.lineWidth = 1; c.beginPath(); c.moveTo(wx0 - 6, yH); c.lineTo(cw - 6, yH); c.stroke(); c.setLineDash([]);
   c.font = '500 12px "JetBrains Mono", ui-monospace, monospace'; c.textAlign = 'right'; c.textBaseline = 'bottom'; c.fillStyle = FOAM; c.fillText(`${fH(h)}`, cw - 6, yH - 4);
   drawSurfer(c, px, base, k, o);
