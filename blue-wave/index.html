@@ -2379,9 +2379,10 @@ try {
 } catch (e) { /* no link state, fine */ }
 try { if (new URLSearchParams(location.search).get('view') === 'world') setMode('world', 'oceans'); } catch (e) { /* ignore */ }
 showFacts(); renderPanel();
-// Start on Good Harbor (place view) unless the link asks for the sea view.
+// Start on Good Harbor in the Blue Coast view, unless a link opens a place or the sea view.
 const wantWorld = (() => { try { return new URLSearchParams(location.search).get('view') === 'world'; } catch (e) { return false; } })();
-if (arrivedByLink || !wantWorld) setMode('place');
+if (arrivedByLink) setMode('place');
+else if (!wantWorld) { setMode('world', 'blue'); const gh = BLUE.findIndex(s => s.name === 'Good Harbor Beach'); if (gh >= 0) selected = gh; manual = performance.now(); renderPanel(); }
 syncNote();
 fetchWorld();
 setInterval(() => { fetchWorld(); if (place.loaded) fetchPlace(); }, REFRESH_MS);
