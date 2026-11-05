@@ -460,6 +460,7 @@ input[type=range]::-moz-range-thumb { width: 14px; height: 14px; border-radius: 
     <label class="wide-l">Sound<select id="m-style"><option value="default">Default</option><option value="surf">Surfer</option><option value="calm">Meditative</option></select></label>
     <label>Key<select id="m-key"></select></label>
     <label>Scale<select id="m-scale"></select></label>
+    <label>Units<select id="m-units"><option value="auto">Auto</option><option value="metric">Metres and °C</option><option value="us">Feet and °F</option></select></label>
     <label>Rhythm<select id="m-rhythm"><option value="even">Even</option><option value="cluster">Random clusters</option></select></label>
     <label>Shift key<select id="m-shift"><option value="0">Off</option><option value="8">Every 8 bars</option><option value="16">Every 16 bars</option><option value="32">Every 32 bars</option></select></label>
     <div class="ctl"><label for="m-chord">Chords <output id="m-chord-o">40</output></label><input id="m-chord" type="range" min="0" max="100" value="40"></div>
@@ -672,9 +673,26 @@ function rebuild(s) {
 ALL.forEach(l => l.forEach(rebuild)); place.voices.forEach(rebuild);
 
 // ---------- words and units ----------
-const fm = (m) => `${m.toFixed(1)} m · ${(m * 3.281).toFixed(1)} ft`;
-const fc = (c) => `${c.toFixed(1)} °C · ${Math.round(c * 9 / 5 + 32)} °F`;
-const fw = (k) => `${Math.round(k)} km/h · ${Math.round(k * .621)} mph`;
+// Units: metres and °C, or feet and °F for the US. Auto picks from the phone or browser's language (en-US) and, failing that, its time zone. Music settings can override it.
+const US_ZONES = /^(America\/(New_York|Chicago|Denver|Los_Angeles|Phoenix|Anchorage|Detroit|Boise|Juneau|Sitka|Nome|Adak|Metlakatla|Menominee|Indiana\/.+|Kentucky\/.+|North_Dakota\/.+)|Pacific\/Honolulu|US\/.+)$/;
+function detectUS() {
+  try {
+    const m = /^[a-z]{2,3}[-_]([A-Za-z]{2})\b/.exec(navigator.language || ''); if (m) return m[1].toUpperCase() === 'US';
+    return US_ZONES.test(Intl.DateTimeFormat().resolvedOptions().timeZone || '');
+  } catch (e) { return false; }
+}
+let unitPref = 'auto'; try { unitPref = localStorage.getItem('bw-units') || 'auto'; } catch (e) {}
+const isUS = () => unitPref === 'us' || (unitPref === 'auto' && detectUS());
+const FT = 3.281, ftn = (m) => { const f = m * FT; return f < 10 ? f.toFixed(1) : String(Math.round(f)); };
+const fH = (m) => isUS() ? `${ftn(m)} ft` : `${m.toFixed(1)} m`;                       // a height
+const fT = (c, d = 1) => isUS() ? `${Math.round(c * 9 / 5 + 32)} °F` : `${c.toFixed(d)} °C`;   // a temperature
+const fDeg = (c) => isUS() ? `${Math.round(c * 9 / 5 + 32)}°` : `${c.toFixed(1)}°`;
+const fTd = (c) => isUS() ? `${Math.round(c * 9 / 5)} °F` : `${Math.round(c)} °C`;          // a difference in temperature
+const fK = (k) => isUS() ? `${Math.round(k * .621)} mi` : `${Math.round(k)} km`;           // a distance
+const fW = (k) => isUS() ? `${Math.round(k * .621)} mph` : `${Math.round(k)} km/h`;        // a speed
+const fm = (m) => isUS() ? `${(m * FT).toFixed(1)} ft · ${m.toFixed(1)} m` : `${m.toFixed(1)} m · ${(m * FT).toFixed(1)} ft`;
+const fc = (c) => isUS() ? `${Math.round(c * 9 / 5 + 32)} °F · ${c.toFixed(1)} °C` : `${c.toFixed(1)} °C · ${Math.round(c * 9 / 5 + 32)} °F`;
+const fw = (k) => isUS() ? `${Math.round(k * .621)} mph · ${Math.round(k)} km/h` : `${Math.round(k)} km/h · ${Math.round(k * .621)} mph`;
 const COMPASS = ['N','NNE','NE','ENE','E','ESE','SE','SSE','S','SSW','SW','WSW','W','WNW','NW','NNW'];
 const dirName = (d) => COMPASS[Math.round(((d % 360) + 360) % 360 / 22.5) % 16];
 const pad2 = (n) => String(n).padStart(2, '0');
@@ -896,11 +914,11 @@ function analyseTide(p) {
 function windClass() {
   const p = place, kmh = p.windKmh, wd = p.voices[3].tdir;
   if (kmh < 6) return { tag: 'glassy', text: 'Almost no wind' };
-  if (p.coast == null) return { tag: null, text: `${dirName(wd)}, ${Math.round(kmh)} km/h` };
+  if (p.coast == null) return { tag: null, text: `${dirName(wd)}, ${fW(kmh)}` };
   const dlt = angDiff(wd, p.coast); // wind blows from wd; the sea lies towards coast
-  if (dlt < 45) return { tag: kmh >= 15 ? 'messy' : 'a bit bumpy', text: `Onshore ${dirName(wd)}, ${Math.round(kmh)} km/h` };
-  if (dlt > 135) return { tag: 'clean', text: `Offshore ${dirName(wd)}, ${Math.round(kmh)} km/h` };
-  return { tag: kmh >= 15 ? 'a little bumpy' : 'fairly clean', text: `Cross-shore ${dirName(wd)}, ${Math.round(kmh)} km/h` };
+  if (dlt < 45) return { tag: kmh >= 15 ? 'messy' : 'a bit bumpy', text: `Onshore ${dirName(wd)}, ${fW(kmh)}` };
+  if (dlt > 135) return { tag: 'clean', text: `Offshore ${dirName(wd)}, ${fW(kmh)}` };
+  return { tag: kmh >= 15 ? 'a little bumpy' : 'fairly clean', text: `Cross-shore ${dirName(wd)}, ${fW(kmh)}` };
 }
 function renderSurf() {
   const p = place, dls = [1, 2, 3, 4].map(n => $('s-dl' + n)); dls.forEach(d => d.textContent = ''); $('s-note').textContent = ''; $('s-lead').textContent = ''; $('s-sug').textContent = '';
@@ -912,10 +930,10 @@ function renderSurf() {
   if (p.noSea) {
     $('s-head').textContent = 'No sea here'; const sg = p.suggest;
     if (!sg) { $('s-lead').textContent = 'Looking for the nearest sea…'; return; }
-    if (!sg.opts.length) { $('s-lead').textContent = 'No sea within about 250 km. Search for a coastal place instead.'; return; }
-    $('s-lead').textContent = `The nearest sea is about ${Math.round(sg.d)} km ${dirName(sg.bear)} of here. Try:`;
+    if (!sg.opts.length) { $('s-lead').textContent = `No sea within about ${isUS() ? '150 miles' : '250 km'}. Search for a coastal place instead.`; return; }
+    $('s-lead').textContent = `The nearest sea is about ${fK(sg.d)} ${dirName(sg.bear)} of here. Try:`;
     sg.opts.forEach(o => { const b = document.createElement('button'), sm = document.createElement('small'); b.type = 'button'; b.append(document.createTextNode(o.name));
-      sm.textContent = `${Math.round(o.d)} km away${o.sub ? ' · ' + o.sub : ''}`; b.append(sm); b.addEventListener('click', () => choose(o.lat, o.lon, o.name, o.sub)); $('s-sug').append(b); });
+      sm.textContent = `${fK(o.d)} away${o.sub ? ' · ' + o.sub : ''}`; b.append(sm); b.addEventListener('click', () => choose(o.lat, o.lon, o.name, o.sub)); $('s-sug').append(b); });
     return;
   }
   const [waves, swell] = p.voices, h = waves.tval, wc = windClass();
@@ -928,17 +946,17 @@ function renderSurf() {
   if (T) {
     const day = (ms) => new Date(ms).getUTCDate() !== new Date(localNow()).getUTCDate() ? 'tomorrow ' : '';
     const ev = [T.nextHigh && ['High tide', T.nextHigh], T.nextLow && ['Low tide', T.nextLow]].filter(Boolean).sort((a, b) => a[1].t - b[1].t);
-    row('Tide', `${T.rising ? 'Rising' : 'Falling'}, range ${T.range.toFixed(1)} m`);
+    row('Tide', `${T.rising ? 'Rising' : 'Falling'}, range ${fH(T.range)}`);
     ev.forEach(([k, e]) => row(k, `${day(e.t)}${hhmmOf(e.t)} · waves ${e.wh != null ? e.wh.toFixed(1) : '–'} m`));
   }
-  if (p.seaTemp != null) { row('Sea', `${p.seaTemp.toFixed(1)} °C`, 2); row('Wetsuit', wetsuit(p.seaTemp), 2); row('Water feels', feels(p.seaTemp), 2); }
+  if (p.seaTemp != null) { row('Sea', `${fT(p.seaTemp)}`, 2); row('Wetsuit', wetsuit(p.seaTemp), 2); row('Water feels', feels(p.seaTemp), 2); }
   row('Waves feel', periodFeel(waves.tper), 2);
   row('Wind', wc.text + (p.coast == null ? '' : ' (est.)'), 3);
   if (p.coast != null) {
     const sv = swell.tval > .1 ? swell : waves, dlt = angDiff(sv.tdir, p.coast);
     row('Swell reach', dlt < 40 ? 'Faces the beach' : dlt < 75 ? 'Angled in' : 'Barely reaches here', 3);
   }
-  const P = .49 * h * h * waves.tper; row('Power', `${P.toFixed(1)} kW per metre, ${powerWord(P)}`, 3);
+  const P = .49 * h * h * waves.tper; row('Power', `${(isUS() ? P * .3048 : P).toFixed(1)} kW per ${isUS() ? 'foot' : 'metre'}, ${powerWord(P)}`, 3);
   if (p.sunrise && p.sunset) row('Daylight', `${hhmmOf(p.sunrise)} to ${hhmmOf(p.sunset)}`, 4);
   $('s-note').textContent = 'Model estimates for the nearest sea point, not a surf report. Wind and swell direction are a guess from the shape of the coast. Check the beach before you paddle out.';
 }
@@ -973,13 +991,13 @@ function showFacts() {
     document.body.classList.toggle('sea-off', !live);
     el.textContent = live ? `Live · ${world.length} ${blue ? 'Blue Coast beaches' : 'seas'} · read ${pad2(worldUpdated.getUTCHours())}:${pad2(worldUpdated.getUTCMinutes())} GMT` : 'Sample readings · live sea not reached';
     const mw = world.reduce((a, s) => a + s.tval, 0) / world.length, mt = world.reduce((a, s) => a + s.ttemp, 0) / world.length;
-    means.textContent = `Mean wave ${mw.toFixed(1)} m · mean sea ${mt.toFixed(1)} °C`;
+    means.textContent = `Mean wave ${fH(mw)} · mean sea ${fT(mt)}`;
   } else {
     const p = place; el.classList.toggle('offline', !p.live); document.body.classList.toggle('sea-off', p.loaded && !p.live);
     el.textContent = !p.loaded ? 'Loading the sea' : p.error ? 'Sea data not reached' : p.noSea ? 'No sea reading near here' : `Live · ${hhmmOf(localNow())} local time`;
     const bits = [];
-    if (p.seaTemp != null) bits.push(`Sea ${p.seaTemp.toFixed(1)} °C`);
-    if (p.airTemp != null) bits.push(`Air ${p.airTemp.toFixed(1)} °C`);
+    if (p.seaTemp != null) bits.push(`Sea ${fT(p.seaTemp)}`);
+    if (p.airTemp != null) bits.push(`Air ${fT(p.airTemp)}`);
     means.textContent = bits.join(' · ') || ' ';
   }
 }
@@ -1044,8 +1062,8 @@ if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => fitN
 window.addEventListener('resize', () => fitName());
 function updateBar() {   // the bar along the bottom of a phone: where you are, and how big the sea is
   let name, sub; const off = (v) => v == null || isNaN(v);
-  if (mode === 'world') { const s = world[selected]; if (!s) return; name = s.name; sub = [playing ? 'Playing' : s.sub, `${s.val.toFixed(1)} m`, `${s.per.toFixed(0)} s`]; }
-  else { const w = place.voices[0], none = place.noSea || place.error || !place.loaded; name = place.name; sub = [playing ? 'Playing' : place.sub, none ? null : `${w.val.toFixed(1)} m`, none ? null : `${w.per.toFixed(0)} s`]; }
+  if (mode === 'world') { const s = world[selected]; if (!s) return; name = s.name; sub = [playing ? 'Playing' : s.sub, `${fH(s.val)}`, `${s.per.toFixed(0)} s`]; }
+  else { const w = place.voices[0], none = place.noSea || place.error || !place.loaded; name = place.name; sub = [playing ? 'Playing' : place.sub, none ? null : `${fH(w.val)}`, none ? null : `${w.per.toFixed(0)} s`]; }
   $('mb-name').textContent = name || ''; $('mb-sub').textContent = sub.filter(Boolean).join(' · '); fitName();
 }
 function scaleVoice() { const s = voices[selected]; return !s || s.kind === 'air' ? voices[0] : s; }
@@ -1061,7 +1079,7 @@ function renderPanel() {
     if (s.res) row(s.flip ? 'Flipped' : 'Won', s.res);
     row('Wave', fm(s.tval) + ' · ' + up1(compare(s.tval))); row('Period', s.tper.toFixed(1) + ' s · ' + periodFeel(s.tper)); row('From', dirName(s.tdir));
     row('Sea', fc(s.ttemp) + ' · ' + feels(s.ttemp)); row('Wetsuit', wetsuit(s.ttemp));
-    const P = .49 * s.tval * s.tval * s.tper; row('Power', `${P.toFixed(1)} kW per metre, ${powerWord(P)}`);
+    const P = .49 * s.tval * s.tval * s.tper; row('Power', `${(isUS() ? P * .3048 : P).toFixed(1)} kW per ${isUS() ? 'foot' : 'metre'}, ${powerWord(P)}`);
     const rk = [...world].filter(x => !x.leaving).sort((a, b) => b.tval - a.tval).indexOf(s) + 1; if (rk) row('Rank', `${rk} of ${world.filter(x => !x.leaving).length}, biggest first`);
     row('Rhythm', `${s.hits} hits in ${s.steps} steps`);
     $('r-line').textContent = [up1(compare(s.tval)), periodFeel(s.tper).split(',')[0], wetsuit(s.ttemp).split(',')[0]].join(' · ');
@@ -1075,15 +1093,15 @@ function renderPanel() {
     const wv = (v) => p.noSea || p.error ? na : `${fm(v.tval)} · ${v.tper.toFixed(0)} s`;
     row('Waves', wv(waves)); row('Swell', wv(swell)); row('Wind sea', wv(wind));
     row('Sea', p.seaTemp != null ? fc(p.seaTemp) : na);
-    row('Air', p.airTemp != null ? fc(p.airTemp) + (p.feels != null && Math.abs(p.feels - p.airTemp) >= 2 ? ` · feels ${Math.round(p.feels)}°` : '') : na);
+    row('Air', p.airTemp != null ? fc(p.airTemp) + (p.feels != null && Math.abs(p.feels - p.airTemp) >= 2 ? ` · feels ${isUS() ? Math.round(p.feels * 9 / 5 + 32) : Math.round(p.feels)}°` : '') : na);
     row('Wind', `${fw(p.windKmh)} from ${dirName(air.tdir)}` + (p.gust != null && p.gust > p.windKmh + 6 ? `, gusts ${Math.round(p.gust)}` : ''));
     $('r-note').textContent = !p.loaded ? 'Reading the sea…'
       : p.error ? 'Could not reach the sea data. Check your connection, then pick the place again.'
-      : p.noSea ? 'No sea reading within about 15 km. The Surf check suggests the nearest coast.'
-      : p.distKm > 1.5 ? `Sea reading taken ${Math.round(p.distKm)} km out from this spot.` : 'Sea reading taken right here.';
+      : p.noSea ? `No sea reading within about ${isUS() ? '9 miles' : '15 km'}. The Surf check suggests the nearest coast.`
+      : p.distKm > 1.5 ? `Sea reading taken ${fK(p.distKm)} out from this spot.` : 'Sea reading taken right here.';
   }
   if (mode === 'place' && (place.noSea || place.error)) cap.textContent = place.error ? 'Sea data not reached.' : 'No sea reading near this spot.';
-  else { const b = document.createElement('b'); b.textContent = sv.name; cap.append(b, document.createTextNode(` · ${sv.tval.toFixed(1)} m, ${compare(sv.tval)}`)); }
+  else { const b = document.createElement('b'); b.textContent = sv.name; cap.append(b, document.createTextNode(` · ${fH(sv.tval)}, ${compare(sv.tval)}`)); }
   $('gauges').setAttribute('aria-label', 'Quick scan: ' + tiles().map(t => `${t.l} ${t.v}`).join(', '));
   $('r-line2').textContent = tiles().filter(t => /^(Wave|Waves|Period|Wind|Sea)$/.test(t.l)).map(t => `${t.l} ${t.v}`).join(' · ');
   updateNews(); updateBar(); requestAnimationFrame(fitName); setTimeout(fitName, 400);
@@ -1092,28 +1110,28 @@ function syncNote() { const on = mode === 'world' && world === BLUE; $('blue-not
 // Fun facts: one window, one card. Pick a fact and it finds the place in the live readings.
 const POWER = (s) => .49 * s.tval * s.tval * s.tper;
 const FACTS = [
-  { k: 'big', label: 'Biggest wave', dir: 1, f: (s) => s.tval, show: (s) => s.tval.toFixed(1) + ' m', line: (s) => up1(compare(s.tval)) },
-  { k: 'calm', label: 'Calmest sea', dir: -1, f: (s) => s.tval, show: (s) => s.tval.toFixed(1) + ' m', line: (s) => 'Waves ' + s.tper.toFixed(0) + ' seconds apart. A good day for a swim, if it were warm.' },
-  { k: 'warm', label: 'Warmest sea', dir: 1, f: (s) => s.ttemp, show: (s) => s.ttemp.toFixed(1) + ' °C', line: (s) => wetsuit(s.ttemp) },
-  { k: 'cold', label: 'Coldest sea', dir: -1, f: (s) => s.ttemp, show: (s) => s.ttemp.toFixed(1) + ' °C', line: (s) => wetsuit(s.ttemp) },
+  { k: 'big', label: 'Biggest wave', dir: 1, f: (s) => s.tval, show: (s) => fH(s.tval) + '', line: (s) => up1(compare(s.tval)) },
+  { k: 'calm', label: 'Calmest sea', dir: -1, f: (s) => s.tval, show: (s) => fH(s.tval) + '', line: (s) => 'Waves ' + s.tper.toFixed(0) + ' seconds apart. A good day for a swim, if it were warm.' },
+  { k: 'warm', label: 'Warmest sea', dir: 1, f: (s) => s.ttemp, show: (s) => fT(s.ttemp) + '', line: (s) => wetsuit(s.ttemp) },
+  { k: 'cold', label: 'Coldest sea', dir: -1, f: (s) => s.ttemp, show: (s) => fT(s.ttemp) + '', line: (s) => wetsuit(s.ttemp) },
   { k: 'long', label: 'Longest wait between waves', dir: 1, f: (s) => s.tper, show: (s) => s.tper.toFixed(0) + ' s', line: () => 'A long gap means the swell began a long way off.' },
   { k: 'short', label: 'Choppiest sea', dir: -1, f: (s) => s.tper, show: (s) => s.tper.toFixed(0) + ' s', line: () => 'Waves close together are made by the wind right here.' },
   { k: 'power', label: 'Most powerful', dir: 1, f: POWER, show: (s) => POWER(s).toFixed(0) + ' kW', line: () => 'Wave energy per metre of coast. Height and wait both count.' },
-  { k: 'surf', label: 'Best surf right now', dir: 1, f: (s) => Math.min(s.tval, 3) * Math.min(s.tper, 14), show: (s) => s.tval.toFixed(1) + ' m at ' + s.tper.toFixed(0) + ' s', line: () => 'Tall and well spaced. Height times wait, capped so a storm does not win.' },
-  { k: 'bbig', label: 'Biggest on the Blue Coast', set: 'blue', dir: 1, f: (s) => s.tval, show: (s) => s.tval.toFixed(1) + ' m', line: (s) => s.res || up1(compare(s.tval)) },
-  { k: 'bwarm', label: 'Warmest on the Blue Coast', set: 'blue', dir: 1, f: (s) => s.ttemp, show: (s) => s.ttemp.toFixed(1) + ' °C', line: (s) => wetsuit(s.ttemp) },
-  { k: 'bcold', label: 'Coldest on the Blue Coast', set: 'blue', dir: -1, f: (s) => s.ttemp, show: (s) => s.ttemp.toFixed(1) + ' °C', line: (s) => wetsuit(s.ttemp) },
-  { k: 'bcalm', label: 'Calmest on the Blue Coast', set: 'blue', dir: -1, f: (s) => s.tval, show: (s) => s.tval.toFixed(1) + ' m', line: (s) => s.res || 'Waves ' + s.tper.toFixed(0) + ' seconds apart.' },
-  { k: 'bsurf', label: 'Best surf on the Blue Coast', set: 'blue', dir: 1, f: (s) => Math.min(s.tval, 3) * Math.min(s.tper, 14), show: (s) => s.tval.toFixed(1) + ' m at ' + s.tper.toFixed(0) + ' s', line: (s) => s.res || 'Tall and well spaced.' },
-  { k: 'swim', label: 'Best for a swim', dir: 1, f: (s) => s.ttemp - s.tval * 5, show: (s) => s.ttemp.toFixed(1) + ' °C, ' + s.tval.toFixed(1) + ' m', line: () => 'The warmest water with the smallest waves.' },
-  { k: 'warmbig', label: 'Biggest wave in warm water', dir: 1, ok: (s) => s.ttemp >= 24, f: (s) => s.tval, show: (s) => s.tval.toFixed(1) + ' m', line: (s) => 'In a sea of ' + s.ttemp.toFixed(0) + ' °C, ' + compare(s.tval) },
-  { k: 'coldbig', label: 'Biggest wave in cold water', dir: 1, ok: (s) => s.ttemp <= 8, f: (s) => s.tval, show: (s) => s.tval.toFixed(1) + ' m', line: (s) => 'In a sea of ' + s.ttemp.toFixed(0) + ' °C, ' + compare(s.tval) },
-  { k: 'steep', label: 'Steepest waves', dir: 1, f: (s) => s.tval / (s.tper * s.tper), show: (s) => s.tval.toFixed(1) + ' m every ' + s.tper.toFixed(0) + ' s', line: () => 'Tall and close together, so they break hard.' },
-  { k: 'gentle', label: 'Gentlest swell', dir: -1, f: (s) => s.tval / (s.tper * s.tper), show: (s) => s.tval.toFixed(1) + ' m every ' + s.tper.toFixed(0) + ' s', line: () => 'Low and widely spaced. It barely lifts the water.' },
-  { k: 'north', label: 'Furthest north', dir: 1, f: (s) => s.lat, show: (s) => Math.abs(s.lat).toFixed(0) + '° ' + (s.lat < 0 ? 'S' : 'N'), line: (s) => s.tval.toFixed(1) + ' m waves in a ' + s.ttemp.toFixed(0) + ' °C sea.' },
-  { k: 'south', label: 'Furthest south', dir: -1, f: (s) => s.lat, show: (s) => Math.abs(s.lat).toFixed(0) + '° ' + (s.lat < 0 ? 'S' : 'N'), line: (s) => s.tval.toFixed(1) + ' m waves in a ' + s.ttemp.toFixed(0) + ' °C sea.' },
-  { k: 'typical', label: 'The most typical sea', dir: -1, f: (s, L) => { const n = L.length, mh = L.reduce((a, x) => a + x.tval, 0) / n, mt = L.reduce((a, x) => a + x.ttemp, 0) / n; return Math.abs(s.tval - mh) / 2 + Math.abs(s.ttemp - mt) / 8; }, show: (s) => s.tval.toFixed(1) + ' m, ' + s.ttemp.toFixed(0) + ' °C', line: (s, L) => 'Closest to the average of all of them: ' + (L.reduce((a, x) => a + x.tval, 0) / L.length).toFixed(1) + ' m and ' + (L.reduce((a, x) => a + x.ttemp, 0) / L.length).toFixed(0) + ' °C.' },
-  { k: 'gap', label: 'The temperature gap', dir: 1, f: (s) => s.ttemp, show: (s, L) => (Math.max(...L.map(x => x.ttemp)) - Math.min(...L.map(x => x.ttemp))).toFixed(0) + ' °C', line: (s, L) => 'From the coldest sea to this one, the warmest, ' + s.ttemp.toFixed(0) + ' °C.' },
+  { k: 'surf', label: 'Best surf right now', dir: 1, f: (s) => Math.min(s.tval, 3) * Math.min(s.tper, 14), show: (s) => fH(s.tval) + ' at ' + s.tper.toFixed(0) + ' s', line: () => 'Tall and well spaced. Height times wait, capped so a storm does not win.' },
+  { k: 'bbig', label: 'Biggest on the Blue Coast', set: 'blue', dir: 1, f: (s) => s.tval, show: (s) => fH(s.tval) + '', line: (s) => s.res || up1(compare(s.tval)) },
+  { k: 'bwarm', label: 'Warmest on the Blue Coast', set: 'blue', dir: 1, f: (s) => s.ttemp, show: (s) => fT(s.ttemp) + '', line: (s) => wetsuit(s.ttemp) },
+  { k: 'bcold', label: 'Coldest on the Blue Coast', set: 'blue', dir: -1, f: (s) => s.ttemp, show: (s) => fT(s.ttemp) + '', line: (s) => wetsuit(s.ttemp) },
+  { k: 'bcalm', label: 'Calmest on the Blue Coast', set: 'blue', dir: -1, f: (s) => s.tval, show: (s) => fH(s.tval) + '', line: (s) => s.res || 'Waves ' + s.tper.toFixed(0) + ' seconds apart.' },
+  { k: 'bsurf', label: 'Best surf on the Blue Coast', set: 'blue', dir: 1, f: (s) => Math.min(s.tval, 3) * Math.min(s.tper, 14), show: (s) => fH(s.tval) + ' at ' + s.tper.toFixed(0) + ' s', line: (s) => s.res || 'Tall and well spaced.' },
+  { k: 'swim', label: 'Best for a swim', dir: 1, f: (s) => s.ttemp - s.tval * 5, show: (s) => fT(s.ttemp) + ', ' + fH(s.tval) + '', line: () => 'The warmest water with the smallest waves.' },
+  { k: 'warmbig', label: 'Biggest wave in warm water', dir: 1, ok: (s) => s.ttemp >= 24, f: (s) => s.tval, show: (s) => fH(s.tval) + '', line: (s) => 'In a sea of ' + fT(s.ttemp) + ', ' + compare(s.tval) },
+  { k: 'coldbig', label: 'Biggest wave in cold water', dir: 1, ok: (s) => s.ttemp <= 8, f: (s) => s.tval, show: (s) => fH(s.tval) + '', line: (s) => 'In a sea of ' + fT(s.ttemp) + ', ' + compare(s.tval) },
+  { k: 'steep', label: 'Steepest waves', dir: 1, f: (s) => s.tval / (s.tper * s.tper), show: (s) => fH(s.tval) + ' every ' + s.tper.toFixed(0) + ' s', line: () => 'Tall and close together, so they break hard.' },
+  { k: 'gentle', label: 'Gentlest swell', dir: -1, f: (s) => s.tval / (s.tper * s.tper), show: (s) => fH(s.tval) + ' every ' + s.tper.toFixed(0) + ' s', line: () => 'Low and widely spaced. It barely lifts the water.' },
+  { k: 'north', label: 'Furthest north', dir: 1, f: (s) => s.lat, show: (s) => Math.abs(s.lat).toFixed(0) + '° ' + (s.lat < 0 ? 'S' : 'N'), line: (s) => fH(s.tval) + ' waves in a ' + fT(s.ttemp) + ' sea.' },
+  { k: 'south', label: 'Furthest south', dir: -1, f: (s) => s.lat, show: (s) => Math.abs(s.lat).toFixed(0) + '° ' + (s.lat < 0 ? 'S' : 'N'), line: (s) => fH(s.tval) + ' waves in a ' + fT(s.ttemp) + ' sea.' },
+  { k: 'typical', label: 'The most typical sea', dir: -1, f: (s, L) => { const n = L.length, mh = L.reduce((a, x) => a + x.tval, 0) / n, mt = L.reduce((a, x) => a + x.ttemp, 0) / n; return Math.abs(s.tval - mh) / 2 + Math.abs(s.ttemp - mt) / 8; }, show: (s) => fH(s.tval) + ', ' + fT(s.ttemp) + '', line: (s, L) => 'Closest to the average of all of them: ' + fH(L.reduce((a, x) => a + x.tval, 0) / L.length) + ' and ' + fT(L.reduce((a, x) => a + x.ttemp, 0) / L.length, 0) + '.' },
+  { k: 'gap', label: 'The temperature gap', dir: 1, f: (s) => s.ttemp, show: (s, L) => fTd(Math.max(...L.map(x => x.ttemp)) - Math.min(...L.map(x => x.ttemp))), line: (s, L) => 'From the coldest sea to this one, the warmest, ' + fT(s.ttemp) + '.' },
 ];
 let factSel = 'big', factPlace = null;
 function renderFacts() {
@@ -1413,7 +1431,7 @@ async function countryBeaches(c) {
     list.forEach((p, i) => {
       const li = document.createElement('li'), b = document.createElement('button'), sm = document.createElement('small'), { name, sub } = split(p.r.display_name);
       b.type = 'button'; b.append(document.createTextNode(`${ranked.length >= 3 ? (i + 1) + '. ' : ''}${name}`));
-      sm.textContent = (p.h != null ? `${p.h.toFixed(1)} m${p.per != null ? ' · ' + Math.round(p.per) + ' s' : ''} · ` : '') + sub; b.append(sm);
+      sm.textContent = (p.h != null ? `${fH(p.h)}${p.per != null ? ' · ' + Math.round(p.per) + ' s' : ''} · ` : '') + sub; b.append(sm);
       b.addEventListener('click', () => choose(p.la, p.lo, name, sub)); li.append(b); ul.append(li);
     });
   } catch (err) { msg('Could not list the beaches right now.'); }
@@ -1768,6 +1786,11 @@ SCALES.forEach((x, i) => $('m-scale').add(new Option(x[0], i))); $('m-scale').in
   el.addEventListener('change', () => { lsSet(key, el.value); if (id === 'm-shift') { shiftBars = +el.value; SHIFT = 0; } musicSync(); });
 });
 shiftBars = +$('m-shift').value;
+$('m-units').value = unitPref;
+$('m-units').addEventListener('change', () => {
+  unitPref = $('m-units').value; try { localStorage.setItem('bw-units', unitPref); } catch (e) {}
+  showFacts(); renderPanel(); renderSurf(); renderFacts(); updateBar(); fitName();
+});
 // Sound presets. Choosing one also sets the tempo, chords, melody and drone to suit it. Every slider can still be moved afterwards.
 function setStyle(v, apply) {
   STYLE = STYLES[v] ? v : 'default'; $('m-style').value = STYLE; lsSet('bw-style', STYLE); const P = STYLES[STYLE];
@@ -1889,16 +1912,16 @@ const waveFrac = (h) => clamp(h / (mode === 'world' && world === OCEANS ? 6 : 3)
 function tiles() {
   if (mode === 'world') {
     const s = world[selected];
-    return [{ k: 'glass', l: 'Wave', v: `${s.val.toFixed(1)} m`, f: waveFrac(s.val) }, { k: 'glass', l: 'Period', v: `${s.per.toFixed(0)} s`, f: clamp(s.per / 16, 0, 1) },
-      { k: 'thermo', l: 'Sea', v: `${s.temp.toFixed(1)}°`, f: clamp(s.temp / 30, 0, 1), col: tempColor(s.temp, .95) }];
+    return [{ k: 'glass', l: 'Wave', v: `${fH(s.val)}`, f: waveFrac(s.val) }, { k: 'glass', l: 'Period', v: `${s.per.toFixed(0)} s`, f: clamp(s.per / 16, 0, 1) },
+      { k: 'thermo', l: 'Sea', v: fDeg(s.temp), f: clamp(s.temp / 30, 0, 1), col: tempColor(s.temp, .95) }];
   }
   const p = place, [w, s, , a] = p.voices, T = p.tide, off = p.noSea || p.error;
   return [
-    { k: 'glass', l: 'Waves', v: off ? '–' : `${w.val.toFixed(1)} m`, f: off ? 0 : waveFrac(w.val) },
-    { k: 'glass', l: 'Swell', v: off ? '–' : `${s.val.toFixed(1)} m`, f: off ? 0 : waveFrac(s.val) },
-    { k: 'wind', l: 'Wind', v: `${Math.round(p.windKmh)} km/h`, f: clamp(p.windKmh / 60, 0, 1), dir: a.tdir },
-    { k: 'thermo', l: 'Sea', v: p.seaTemp != null ? `${p.seaTemp.toFixed(1)}°` : '–', f: p.seaTemp != null ? clamp(p.seaTemp / 30, 0, 1) : 0, col: p.seaTemp != null ? tempColor(p.seaTemp, .95) : FOAM },
-    { k: 'thermo', l: 'Air', v: p.airTemp != null ? `${p.airTemp.toFixed(1)}°` : '–', f: p.airTemp != null ? clamp((p.airTemp + 10) / 50, 0, 1) : 0, col: p.airTemp != null ? airColor(p.airTemp) : FOAM },
+    { k: 'glass', l: 'Waves', v: off ? '–' : `${fH(w.val)}`, f: off ? 0 : waveFrac(w.val) },
+    { k: 'glass', l: 'Swell', v: off ? '–' : `${fH(s.val)}`, f: off ? 0 : waveFrac(s.val) },
+    { k: 'wind', l: 'Wind', v: `${fW(p.windKmh)}`, f: clamp(p.windKmh / 60, 0, 1), dir: a.tdir },
+    { k: 'thermo', l: 'Sea', v: p.seaTemp != null ? fDeg(p.seaTemp) : '–', f: p.seaTemp != null ? clamp(p.seaTemp / 30, 0, 1) : 0, col: p.seaTemp != null ? tempColor(p.seaTemp, .95) : FOAM },
+    { k: 'thermo', l: 'Air', v: p.airTemp != null ? fDeg(p.airTemp) : '–', f: p.airTemp != null ? clamp((p.airTemp + 10) / 50, 0, 1) : 0, col: p.airTemp != null ? airColor(p.airTemp) : FOAM },
     { k: 'tide', l: 'Tide', v: T ? (T.rising ? 'rising' : 'falling') : '–', f: T ? T.frac : .5, up: T ? T.rising : true },
   ];
 }
@@ -2008,7 +2031,7 @@ function drawScale(now) {
     c.beginPath(); c.arc(0, 0, tr, 0, 7); c.stroke(); c.beginPath(); c.arc(tr * .15, 0, tr * .62, .4, 4.6); c.stroke(); c.beginPath(); c.arc(-tr * .2, tr * .1, tr * .35, 1, 5.6); c.stroke(); c.restore();
     c.font = '500 12px "JetBrains Mono", ui-monospace, monospace'; c.textAlign = 'right'; c.textBaseline = 'bottom'; c.fillStyle = FOAM; c.fillText('no sea', cw - 6, 22);
     drawSurfer(c, px, base, k, o);
-    c.font = '400 11px "JetBrains Mono", ui-monospace, monospace'; c.textAlign = 'left'; c.textBaseline = 'top'; c.fillStyle = 'rgba(206,222,255,.78)'; c.fillText('you 1.75 m · board 1.9 m', 4, base + 8);
+    c.font = '400 11px "JetBrains Mono", ui-monospace, monospace'; c.textAlign = 'left'; c.textBaseline = 'top'; c.fillStyle = 'rgba(206,222,255,.78)'; c.fillText(isUS() ? `you 5'9" · board 6'3"` : 'you 1.75 m · board 1.9 m', 4, base + 8);
     return;
   }
   path(lam * .33); c.strokeStyle = 'rgba(106,162,255,.35)'; c.lineWidth = 1.2; c.stroke();
@@ -2017,10 +2040,10 @@ function drawScale(now) {
   path(0); c.strokeStyle = '#6aa2ff'; c.lineWidth = 2; c.stroke();
   const yH = Math.max(10, base - h * k);
   c.setLineDash([3, 4]); c.strokeStyle = 'rgba(242,247,255,.5)'; c.lineWidth = 1; c.beginPath(); c.moveTo(wx0 - 6, yH); c.lineTo(cw - 6, yH); c.stroke(); c.setLineDash([]);
-  c.font = '500 12px "JetBrains Mono", ui-monospace, monospace'; c.textAlign = 'right'; c.textBaseline = 'bottom'; c.fillStyle = FOAM; c.fillText(`${h.toFixed(1)} m`, cw - 6, yH - 4);
+  c.font = '500 12px "JetBrains Mono", ui-monospace, monospace'; c.textAlign = 'right'; c.textBaseline = 'bottom'; c.fillStyle = FOAM; c.fillText(`${fH(h)}`, cw - 6, yH - 4);
   drawSurfer(c, px, base, k, o);
   c.font = '400 11px "JetBrains Mono", ui-monospace, monospace'; c.textAlign = 'left'; c.textBaseline = 'top'; c.fillStyle = 'rgba(206,222,255,.78)';
-  c.fillText('you 1.75 m · board 1.9 m', 4, base + 8);
+  c.fillText(isUS() ? `you 5'9" · board 6'3"` : 'you 1.75 m · board 1.9 m', 4, base + 8);
 }
 
 // ---------- the tide chart: the next day of tide and waves, with the night shaded ----------
@@ -2156,7 +2179,7 @@ function hitVisual(i, step) {
   const s = voices[i]; if (!s) return; s.flash = 1; flagPulse = Math.min(1, flagPulse + .35);
   const g = geom(), r = radiusOf(i, g), a = step / s.steps * Math.PI * 2 - Math.PI / 2;
   ripples.push({ x: g.cx + Math.cos(a) * r, y: g.cy + Math.sin(a) * r, t: 0, c: tempColor(s.temp, 1) }); if (ripples.length > 60) ripples.shift();
-  if (W < 760 && mode !== 'place' && playing && i !== selected && !sheetOpen) { tagsNow.push({ nm: String(s.name).toUpperCase().slice(0, 21) + ' ' + s.val.toFixed(1) + 'M', x: g.cx + Math.cos(a) * r, y: g.cy + Math.sin(a) * r, t: 0 }); if (tagsNow.length > 2) tagsNow.shift(); }
+  if (W < 760 && mode !== 'place' && playing && i !== selected && !sheetOpen) { tagsNow.push({ nm: String(s.name).toUpperCase().slice(0, 21) + ' ' + (isUS() ? ftn(s.val) + 'FT' : s.val.toFixed(1) + 'M'), x: g.cx + Math.cos(a) * r, y: g.cy + Math.sin(a) * r, t: 0 }); if (tagsNow.length > 2) tagsNow.shift(); }
   if (!reduce && Math.random() < .15) { const dx = g.cx + Math.cos(a) * r, dy = g.cy + Math.sin(a) * r; drips.push({ x: dx, y: dy, vy: 30 + Math.random() * 50, ty: Math.min(H - 24, Math.max(dy + 36, H * (.66 + Math.random() * .26))), c: tempColor(s.temp, 1), t: 0, hit: false }); if (drips.length > 48) drips.shift(); }
 }
 let manual = 0, lastCycle = 0;
@@ -2184,7 +2207,7 @@ function pill(text, x, y, strong, icon) {
   if (icon) icon(rx, x - w / 2 + 16, y);
   rx.fillStyle = '#f2f7ff'; rx.textAlign = 'center'; rx.textBaseline = 'middle'; rx.fillText(text, x + iw / 2, y + .5);
 }
-function labelFor(s) { return mode === 'place' && s.kind === 'air' ? `Air  ${s.temp.toFixed(0)} °C` : `${s.name}  ${s.val.toFixed(1)} m`; }
+function labelFor(s) { return mode === 'place' && s.kind === 'air' ? `Air  ${fT(s.temp, 0)}` : `${s.name}  ${fH(s.val)}`; }
 function iconFor(s, t) {
   if (mode === 'place' && s.kind === 'air') return (c, x, y) => gThermo(c, x, y, 18, clamp((s.temp + 10) / 50, 0, 1), airColor(s.temp));
   return (c, x, y) => gGlass(c, x, y, 11, 16, waveFrac(s.val), t);
@@ -2301,7 +2324,7 @@ function frame(now) {
   if (g.small && mode !== 'place' && playEase > .5 && !sheetOpen) {   // phone, playing: the selected ring keeps its name; every other beach names itself for a moment when its dot is struck
     rx.save(); rx.font = '500 10px "JetBrains Mono", ui-monospace, monospace'; rx.lineJoin = 'round'; rx.textBaseline = 'middle';
     const tag = (nm, x, y, right, a, bright) => { rx.globalAlpha = a * playEase; rx.textAlign = right ? 'right' : 'left'; rx.lineWidth = 3; rx.strokeStyle = 'rgba(5,16,44,.8)'; rx.strokeText(nm, x, y); rx.fillStyle = bright ? '#fff' : 'rgba(225,236,255,.95)'; rx.fillText(nm, x, y); };
-    const nameOf = (s) => String(s.name).toUpperCase().slice(0, 21) + ' ' + s.val.toFixed(1) + 'M';
+    const nameOf = (s) => String(s.name).toUpperCase().slice(0, 21) + ' ' + (isUS() ? ftn(s.val) + 'FT' : s.val.toFixed(1) + 'M');
     const sv = voices[selected]; if (sv) tag(nameOf(sv), g.cx + 7, g.cy - radiusOf(selected, g) - 4, false, 1, true);
     for (let j = tagsNow.length - 1; j >= 0; j--) { const t = tagsNow[j]; t.t += dt; if (t.t > 1.2) { tagsNow.splice(j, 1); continue; }
       const k = t.t / 1.2, right = t.x > g.cx; tag(t.nm, t.x + (right ? -9 : 9), t.y - 9, right, (k < .15 ? k / .15 : 1 - (k - .15) / .85) * .95, false); }
