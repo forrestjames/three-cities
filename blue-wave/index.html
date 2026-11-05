@@ -3,10 +3,14 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Blue Wave</title>
-<meta name="description" content="Live wave height and sea temperature, anywhere in the world, played as a rhythm.">
-<meta property="og:title" content="Blue Wave">
-<meta property="og:description" content="Live wave height and sea temperature, anywhere in the world, played as a rhythm.">
+<title>Blue Wave: live wave height and sea temperature, played as music</title>
+<meta name="description" content="Live wave height and sea temperature for beaches around the world, played as a Euclidean rhythm. Pick a beach and hear the sea.">
+<link rel="canonical" href="https://threecities.forrestjamesmusic.com/blue-wave/">
+<meta name="robots" content="index, follow, max-image-preview:large">
+<meta name="theme-color" content="#03102a">
+<meta property="og:site_name" content="Three Cities">
+<meta property="og:title" content="Blue Wave: live wave height and sea temperature, played as music">
+<meta property="og:description" content="Live wave height and sea temperature for beaches around the world, played as a Euclidean rhythm. Pick a beach and hear the sea.">
 <meta property="og:type" content="website">
 <meta property="og:image" content="https://threecities.forrestjamesmusic.com/blue-wave/og.jpg?v=4">
 <meta property="og:image:width" content="1200">
@@ -14,7 +18,10 @@
 <meta property="og:image:alt" content="Blue Wave in red and blue type on one line over rhythm rings">
 <meta property="og:url" content="https://threecities.forrestjamesmusic.com/blue-wave/">
 <meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Blue Wave: live wave height and sea temperature, played as music">
+<meta name="twitter:description" content="Live wave height and sea temperature for beaches around the world, played as a Euclidean rhythm. Pick a beach and hear the sea.">
 <meta name="twitter:image" content="https://threecities.forrestjamesmusic.com/blue-wave/og.jpg?v=4">
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"WebApplication","name":"Blue Wave","url":"https://threecities.forrestjamesmusic.com/blue-wave/","description":"Live wave height and sea temperature for beaches around the world, played as a Euclidean rhythm. Pick a beach and hear the sea.","applicationCategory":"MusicApplication","genre":"Generative music","operatingSystem":"Any (web browser)","browserRequirements":"Requires JavaScript and Web Audio","isAccessibleForFree":true,"offers":{"@type":"Offer","price":"0","priceCurrency":"USD"},"image":"https://threecities.forrestjamesmusic.com/blue-wave/og.jpg?v=4","author":{"@type":"Person","name":"Jim Forrest","url":"https://forrestjamesmusic.com"},"isPartOf":{"@type":"WebSite","name":"Three Cities","url":"https://threecities.forrestjamesmusic.com/"}}</script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Hanken+Grotesk:wght@200;300;400;500&family=JetBrains+Mono:wght@400;500&display=swap">
@@ -366,6 +373,12 @@ input[type=range]::-moz-range-thumb { width: 14px; height: 14px; border-radius: 
 <div class="title">
   <svg width="0" height="0" style="position:absolute" aria-hidden="true"><filter id="goo" x="-5%" y="-20%" width="110%" height="140%"><feGaussianBlur in="SourceGraphic" stdDeviation="2.2" result="b"/><feColorMatrix in="b" type="matrix" values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 20 -9"/></filter></svg>
   <h1><span class="sr">Blue Wave</span><canvas id="ttl" aria-hidden="true"></canvas></h1>
+  <div class="sr">
+    <h2>Live wave height and sea temperature, played as music</h2>
+    <p>Blue Wave turns the sea into a rhythm. Pick any beach or coast in the world and hear its live wave height, wave period and water temperature as a Euclidean rhythm. Bigger waves play more notes. Longer swells give more steps. Warmer water plays higher.</p>
+    <p>It also shows surf conditions, what to wear in the water, and fun facts about the sea. Free, in your browser, no sign up. Made by Jim Forrest.</p>
+  </div>
+  <noscript><p>Blue Wave plays live wave height and sea temperature from beaches around the world as a rhythm. It needs JavaScript to run. Please turn it on and reload.</p></noscript>
   <div class="kickrow">
   <p class="kicker"><span class="kt">Live sea waves from around the world, played as a rhythm.</span> <button type="button" class="howbtn" id="how-btn" aria-expanded="false" aria-controls="p-how" aria-label="How to read the rings" title="How to read the rings">?</button></p>
   <section class="pop how-pop" id="p-how" role="region" aria-label="How to read the rings" hidden>
@@ -1253,7 +1266,8 @@ function shareURL() {
   } catch (e) { return ''; }
 }
 const titleLine = () => mode === 'place' ? `Blue Wave · ${place.name}${place.sub ? ', ' + place.sub : ''}` : (world === BLUE ? 'Blue Wave · the Blue Coast' : 'Blue Wave · the sea around the world');
-function syncUrl() { document.title = titleLine(); /* the address bar stays plain, so a reload opens on the Blue Coast. The Share button carries the place. */ }
+const BASE_TITLE = document.title;
+function syncUrl() { document.title = mode === 'place' ? titleLine() + ' · live waves' : BASE_TITLE; /* the address bar stays plain, so a reload opens on the Blue Coast. The Share button carries the place. */ }
 function shareLine() {
   return mode === 'place' ? `Here's the sea at ${place.name}${place.sub ? ', ' + place.sub : ''} right now, played as a rhythm. Try your own beach.` : (world === BLUE ? `Here's the sea off the Blue Coast right now, played as a rhythm.` : `Here's the sea around the world right now, played as a rhythm.`);
 }
