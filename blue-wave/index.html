@@ -690,6 +690,7 @@ const localNow = () => Date.now() + (place.off != null ? place.off : Math.round(
 const parseLocal = (s) => Date.parse(String(s).length === 16 ? s + ':00Z' : s + 'Z'); // local clock time stored as if it were UTC
 
 function sizeWord(h) { return h < .3 ? 'Flat' : h < .7 ? 'Small' : h < 1.3 ? 'Fun-sized' : h < 2 ? 'Solid' : h < 3.5 ? 'Big' : 'Huge'; }
+const up1 = (t) => String(t).charAt(0).toUpperCase() + String(t).slice(1);
 function compare(h) {
   if (h < .15) return 'barely a ripple'; if (h < .35) return 'around your ankles'; if (h < .7) return 'up to your knees';
   if (h < 1.1) return 'up to your waist'; if (h < 1.5) return 'up to your chest'; if (h < 1.95) return 'over your head';
@@ -1053,15 +1054,15 @@ function renderPanel() {
     $('r-name').textContent = s.name; $('r-sub').textContent = s.sub || ''; setFlag(s.blat ? 'us' : null);
     $('open-place').hidden = !s.blat;
     if (s.res) row(s.flip ? 'Flipped' : 'Won', s.res);
-    row('Wave', fm(s.tval) + ' · ' + compare(s.tval)); row('Period', s.tper.toFixed(1) + ' s · ' + periodFeel(s.tper)); row('From', dirName(s.tdir));
+    row('Wave', fm(s.tval) + ' · ' + up1(compare(s.tval))); row('Period', s.tper.toFixed(1) + ' s · ' + periodFeel(s.tper)); row('From', dirName(s.tdir));
     row('Sea', fc(s.ttemp) + ' · ' + feels(s.ttemp)); row('Wetsuit', wetsuit(s.ttemp));
     const P = .49 * s.tval * s.tval * s.tper; row('Power', `${P.toFixed(1)} kW per metre, ${powerWord(P)}`);
     const rk = [...world].filter(x => !x.leaving).sort((a, b) => b.tval - a.tval).indexOf(s) + 1; if (rk) row('Rank', `${rk} of ${world.filter(x => !x.leaving).length}, biggest first`);
     row('Rhythm', `${s.hits} hits in ${s.steps} steps`);
-    $('r-line').textContent = [compare(s.tval), periodFeel(s.tper).split(',')[0], wetsuit(s.ttemp).split(',')[0]].join(' · ');
+    $('r-line').textContent = [up1(compare(s.tval)), periodFeel(s.tper).split(',')[0], wetsuit(s.ttemp).split(',')[0]].join(' · ');
     $('r-note').textContent = world === BLUE ? 'Tap a ring to read another beach. Smallest wave, smallest ring. Results as reported on 4 November 2026.' : 'Tap a ring to read another sea. Smallest wave, smallest ring.';
   } else {
-    $('r-line').textContent = (!place.noSea && !place.error && place.loaded) ? [compare(place.voices[0].tval), place.seaTemp != null ? wetsuit(place.seaTemp).split(',')[0] : ''].filter(Boolean).join(' · ') : '';
+    $('r-line').textContent = (!place.noSea && !place.error && place.loaded) ? [up1(compare(place.voices[0].tval)), place.seaTemp != null ? wetsuit(place.seaTemp).split(',')[0] : ''].filter(Boolean).join(' · ') : '';
     $('open-place').hidden = true;
     const p = place, [waves, swell, wind, air] = p.voices, na = '–';
     $('r-cap').textContent = coord(p.lat, p.lon);
@@ -1086,7 +1087,7 @@ function syncNote() { const on = mode === 'world' && world === BLUE; $('blue-not
 // Fun facts: one window, one card. Pick a fact and it finds the place in the live readings.
 const POWER = (s) => .49 * s.tval * s.tval * s.tper;
 const FACTS = [
-  { k: 'big', label: 'Biggest wave', dir: 1, f: (s) => s.tval, show: (s) => s.tval.toFixed(1) + ' m', line: (s) => compare(s.tval) },
+  { k: 'big', label: 'Biggest wave', dir: 1, f: (s) => s.tval, show: (s) => s.tval.toFixed(1) + ' m', line: (s) => up1(compare(s.tval)) },
   { k: 'calm', label: 'Calmest sea', dir: -1, f: (s) => s.tval, show: (s) => s.tval.toFixed(1) + ' m', line: (s) => 'Waves ' + s.tper.toFixed(0) + ' seconds apart. A good day for a swim, if it were warm.' },
   { k: 'warm', label: 'Warmest sea', dir: 1, f: (s) => s.ttemp, show: (s) => s.ttemp.toFixed(1) + ' °C', line: (s) => wetsuit(s.ttemp) },
   { k: 'cold', label: 'Coldest sea', dir: -1, f: (s) => s.ttemp, show: (s) => s.ttemp.toFixed(1) + ' °C', line: (s) => wetsuit(s.ttemp) },
@@ -1094,7 +1095,7 @@ const FACTS = [
   { k: 'short', label: 'Choppiest sea', dir: -1, f: (s) => s.tper, show: (s) => s.tper.toFixed(0) + ' s', line: () => 'Waves close together are made by the wind right here.' },
   { k: 'power', label: 'Most powerful', dir: 1, f: POWER, show: (s) => POWER(s).toFixed(0) + ' kW', line: () => 'Wave energy per metre of coast. Height and wait both count.' },
   { k: 'surf', label: 'Best surf right now', dir: 1, f: (s) => Math.min(s.tval, 3) * Math.min(s.tper, 14), show: (s) => s.tval.toFixed(1) + ' m at ' + s.tper.toFixed(0) + ' s', line: () => 'Tall and well spaced. Height times wait, capped so a storm does not win.' },
-  { k: 'bbig', label: 'Biggest on the Blue Coast', set: 'blue', dir: 1, f: (s) => s.tval, show: (s) => s.tval.toFixed(1) + ' m', line: (s) => s.res || compare(s.tval) },
+  { k: 'bbig', label: 'Biggest on the Blue Coast', set: 'blue', dir: 1, f: (s) => s.tval, show: (s) => s.tval.toFixed(1) + ' m', line: (s) => s.res || up1(compare(s.tval)) },
   { k: 'bwarm', label: 'Warmest on the Blue Coast', set: 'blue', dir: 1, f: (s) => s.ttemp, show: (s) => s.ttemp.toFixed(1) + ' °C', line: (s) => wetsuit(s.ttemp) },
   { k: 'bcold', label: 'Coldest on the Blue Coast', set: 'blue', dir: -1, f: (s) => s.ttemp, show: (s) => s.ttemp.toFixed(1) + ' °C', line: (s) => wetsuit(s.ttemp) },
   { k: 'bcalm', label: 'Calmest on the Blue Coast', set: 'blue', dir: -1, f: (s) => s.tval, show: (s) => s.tval.toFixed(1) + ' m', line: (s) => s.res || 'Waves ' + s.tper.toFixed(0) + ' seconds apart.' },
