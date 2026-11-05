@@ -57,6 +57,12 @@ h1 { margin: 0; font-weight: 200; letter-spacing: -.02em; line-height: .9; font-
 .live.offline::before { background: var(--faint); box-shadow: none; }
 .seg { margin-top: 16px; display: inline-flex; border: 1px solid var(--edge); border-radius: 999px; padding: 3px; background: var(--glass); text-shadow: none; }
 .seg button { font: 500 13px var(--mono); letter-spacing: .06em; color: var(--mist); background: transparent; border: 0; border-radius: 999px; padding: 9px 20px; cursor: pointer; min-height: 38px; }
+.supers[hidden] { display: none !important; }
+.supers { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; max-width: 560px; }
+.sup { display: flex; flex-direction: column; align-items: flex-start; gap: 1px; text-align: left; min-width: 0; font: 500 11px var(--mono); letter-spacing: .03em; color: var(--foam); background: var(--glass); border: 1px solid var(--edge); border-radius: 17px; padding: 6px 14px; min-height: 44px; cursor: pointer; text-shadow: none; }
+.sup .sk { color: var(--mist); font-size: 9.5px; letter-spacing: .08em; text-transform: uppercase; white-space: nowrap; } .sup .sv { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .sup .sn::before { content: ' · '; }
+.sup[aria-pressed="true"] { background: var(--foam); color: var(--abyss); } .sup[aria-pressed="true"] .sk { color: var(--abyss); }
 .seg .usf { display: inline-block; vertical-align: -5px; margin-left: 8px; border-radius: 50%; box-shadow: 0 0 0 1px rgba(255,255,255,.25); opacity: .75; }
 .seg button[aria-pressed="true"] .usf { opacity: .7; }
 .seg button[aria-pressed="true"] { background: var(--foam); color: var(--abyss); }
@@ -249,6 +255,7 @@ input[type=range]::-moz-range-thumb { width: 14px; height: 14px; border-radius: 
   .mplay { flex: none; width: 56px; height: 56px; padding: 0; border-radius: 50%; border: 0; background: var(--foam); display: flex; align-items: center; justify-content: center; cursor: pointer; }
   .mplay .i-stop, .mplay[aria-pressed="true"] .i-play { display: none; } .mplay[aria-pressed="true"] .i-stop { display: block; }
   .mbody { flex: 1 1 auto; min-height: 0; overflow-y: auto; overscroll-behavior: contain; padding: 4px 14px 14px; display: flex; flex-direction: column; gap: 10px; }
+  .mbody .supers { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; width: 100%; max-width: none; margin: 0; flex: none; } .mbody .sup { padding: 5px 9px; font-size: 10.5px; } .mbody .sup .sv span { display: block; overflow: hidden; text-overflow: ellipsis; } .mbody .sup .sn::before { content: none; } .mbody .sup .sn { color: var(--mist); font-size: 10px; } .mbody .sup[aria-pressed="true"] .sn { color: var(--abyss); }
   .mbody .seg { display: flex; position: static; width: 100%; margin: 0; flex: none; }
   .seg button { flex: 1; display: flex; align-items: center; justify-content: center; gap: 6px; white-space: nowrap; padding: 6px 4px; min-height: 44px; font-size: 12.5px; letter-spacing: .03em; }
   .seg .usf { margin: 0; width: 16px; height: 16px; flex: none; vertical-align: baseline; }
@@ -331,6 +338,11 @@ input[type=range]::-moz-range-thumb { width: 14px; height: 14px; border-radius: 
     <button id="m-blue" aria-pressed="true">Blue Coast <svg class="usf" viewBox="0 0 10 10" width="20" height="20" aria-hidden="true"><defs><clipPath id="usfc"><circle cx="5" cy="5" r="5"/></clipPath></defs><g clip-path="url(#usfc)"><rect width="19" height="10" fill="#f4f7ff"/><g fill="#d8434f"><rect y="0.00" width="19" height=".77"/><rect y="1.54" width="19" height=".77"/><rect y="3.08" width="19" height=".77"/><rect y="4.62" width="19" height=".77"/><rect y="6.16" width="19" height=".77"/><rect y="7.70" width="19" height=".77"/><rect y="9.24" width="19" height=".77"/></g><rect width="8" height="5.4" fill="#1c2f6b"/></g></svg></button>
     <button id="m-place" aria-pressed="false">Place</button>
     <button id="m-world" aria-pressed="false">World</button>
+  </div>
+  <div class="supers" id="supers" role="group" aria-label="Jump to a record" hidden>
+    <button type="button" class="sup" data-k="big"><span class="sk">Biggest wave</span><span class="sv"></span></button>
+    <button type="button" class="sup" data-k="warm"><span class="sk">Warmest sea</span><span class="sv"></span></button>
+    <button type="button" class="sup" data-k="cold"><span class="sk">Coldest sea</span><span class="sv"></span></button>
   </div>
   <p class="kicker bluenote bn-phone" id="blue-note-m" hidden>The Democrats, the blue, taking over the House and Senate.</p>
   <section class="news" id="news" aria-label="Headline from election night" hidden data-k="">
@@ -687,7 +699,7 @@ async function fetchList(list, ref) {
   } catch (e) { console.warn('Blue Wave: sea list unavailable, using sample readings', e); }
   list.forEach(rebuild);
 }
-async function fetchWorld() { await Promise.all([fetchList(BLUE_POOL, BLUE_REF), fetchList(OCEANS, WORLD_REF)]); BLUE.live = BLUE_POOL.live; showFacts(); renderPanel(); }
+async function fetchWorld() { await Promise.all([fetchList(BLUE_POOL, BLUE_REF), fetchList(OCEANS, WORLD_REF)]); BLUE.live = BLUE_POOL.live; showFacts(); renderPanel(); updateSupers(); }
 
 async function fetchPlace() {
   const p = place, stamp = ++fetchPlace.n;
@@ -981,6 +993,7 @@ function updateBar() {   // the bar along the bottom of a phone: where you are, 
 }
 function scaleVoice() { const s = voices[selected]; return !s || s.kind === 'air' ? voices[0] : s; }
 function renderPanel() {
+  if (typeof updateSupers === 'function') updateSupers();
   const dl = $('r-dl'); dl.textContent = '';
   const row = (k, v) => { const dt = document.createElement('dt'), dd = document.createElement('dd'); dt.textContent = k; dd.textContent = v; dl.append(dt, dd); };
   const sv = scaleVoice(), cap = $('scale-cap'); cap.textContent = '';
@@ -1020,6 +1033,31 @@ function renderPanel() {
   updateNews(); updateBar(); requestAnimationFrame(fitName); setTimeout(fitName, 400);
 }
 function syncNote() { const on = mode === 'world' && world === BLUE; $('blue-note').hidden = !on; $('blue-note-m').hidden = !on; document.body.classList.toggle('is-blue', on); document.body.classList.toggle('is-place', mode === 'place'); }
+// Records: biggest wave, warmest and coldest sea, in the view you are on. Tap one to go straight to that ring.
+function recordSet() { return world === BLUE ? BLUE_POOL : OCEANS; }
+function records() {
+  const l = recordSet(), by = (f, d) => l.reduce((a, s) => (!a || d * f(s) > d * f(a) ? s : a), null);
+  return { big: by(s => s.tval, 1), warm: by(s => s.ttemp, 1), cold: by(s => s.ttemp, -1) };
+}
+function updateSupers() {
+  const box = $('supers'); box.hidden = mode !== 'world'; if (box.hidden) return;
+  const r = records(), cur = world[selected];
+  box.querySelectorAll('.sup').forEach(b => {
+    const s = r[b.dataset.k]; if (!s) { b.hidden = true; return; } b.hidden = false;
+    const v = b.dataset.k === 'big' ? s.tval.toFixed(1) + ' m' : Math.round(s.ttemp) + '°C';
+    const sv = b.querySelector('.sv'); sv.textContent = ''; const a1 = document.createElement('span'), a2 = document.createElement('span'); a1.textContent = v; a2.className = 'sn'; a2.textContent = s.short || s.name; sv.append(a1, a2); b.setAttribute('aria-pressed', cur === s);
+    b.setAttribute('aria-label', b.querySelector('.sk').textContent + ': ' + (s.short || s.name) + ', ' + v);
+  });
+}
+$('supers').addEventListener('click', (e) => {
+  const b = e.target.closest('.sup'); if (!b) return; const s = records()[b.dataset.k]; if (!s) return;
+  let i = world.indexOf(s);
+  if (i < 0 && world === BLUE) {   // a beach resting off screen: bring it in and send one of the others out
+    const out = BLUE.filter((x, j) => !x.leaving && j !== selected)[0]; if (out) out.leaving = true;
+    s.fade = 0; s.leaving = false; s.rk = null; BLUE.push(s); i = BLUE.length - 1;
+  }
+  if (i < 0) return; selected = i; manual = performance.now(); renderPanel(); showCard('read'); updateSupers();
+});
 function setMode(m, set) {
   mode = m; if (set) { world = set === 'blue' ? BLUE : OCEANS; musicKey = ''; }
   syncNote();
@@ -1029,7 +1067,7 @@ function setMode(m, set) {
   $('left').hidden = m !== 'place';
   ripples.length = 0; ringOrder = order();
   if (m === 'place' && !place.loaded) { fetchPlace(); if (!place.cc) findCountry(place.lat, place.lon); }
-  showFacts(); renderPanel(); renderSurf(); syncUrl(); $('panel').scrollTo({ left: 0 }); if (m === 'place' && place.loaded) setTimeout(() => showCard('read'), 60); setTimeout(() => { resize(); }, 0);
+  showFacts(); renderPanel(); updateSupers(); renderSurf(); syncUrl(); $('panel').scrollTo({ left: 0 }); if (m === 'place' && place.loaded) setTimeout(() => showCard('read'), 60); setTimeout(() => { resize(); }, 0);
 }
 $('chg').addEventListener('click', () => { showCard('search'); setTimeout(() => $('q').focus({ preventScroll: true }), 350); });
 $('m-blue').addEventListener('click', () => setMode('world', 'blue'));
@@ -1045,8 +1083,8 @@ function toSheet(el) { if (!holes[el.id]) { holes[el.id] = document.createCommen
 function fromSheet(el) { const h = holes[el.id]; if (h) { h.replaceWith(el); delete holes[el.id]; } }
 function placeNews() {
   const news = $('news'), seg = document.querySelector('.seg');
-  if (phone.matches) { if (news.parentNode !== $('panel')) $('panel').insertBefore(news, $('pg-read')); toSheet(seg); toSheet($('panel')); toSheet($('dockdots')); $('mbody').append($('mb-music')); $('panel').scrollLeft = 0; }
-  else { fromSheet($('panel')); fromSheet($('dockdots')); fromSheet(seg); if (news.parentNode !== seg.parentNode || news.previousElementSibling !== seg) seg.after(news); }
+  if (phone.matches) { if (news.parentNode !== $('panel')) $('panel').insertBefore(news, $('pg-read')); toSheet(seg); toSheet($('supers')); toSheet($('panel')); toSheet($('dockdots')); $('mbody').append($('mb-music')); $('panel').scrollLeft = 0; }
+  else { fromSheet($('panel')); fromSheet($('dockdots')); fromSheet($('supers')); fromSheet(seg); $('supers').after && seg.after($('supers')); if (news.parentNode !== seg.parentNode || news.previousElementSibling !== $('supers')) $('supers').after(news); }
   setTimeout(resize, 0);
 }
 if (phone.addEventListener) phone.addEventListener('change', placeNews); else phone.addListener(placeNews);
