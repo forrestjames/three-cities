@@ -205,104 +205,95 @@ input[type=range]::-moz-range-thumb { width: 14px; height: 14px; border-radius: 
 .credit .tc span { border-bottom: 1px solid transparent; }
 .credit .tc:hover span, .credit .tc:focus-visible span { border-bottom-color: var(--foam); }
 
+/* the phone sheet and its bar: hidden on wider screens */
+.msheet { display: none; }
+@keyframes sheetBob { 0%, 58%, 100% { transform: translateY(0); } 68% { transform: translateY(-12px); } 78% { transform: translateY(0); } 86% { transform: translateY(-7px); } 94% { transform: translateY(0); } }
+@keyframes sheetGlow { 0%, 100% { box-shadow: 0 -6px 30px rgba(3,14,38,.35), 0 0 0 0 rgba(106,162,255,0); } 50% { box-shadow: 0 -10px 34px rgba(3,14,38,.35), 0 0 22px 2px rgba(106,162,255,.55); } }
+@keyframes grabGlow { 0%, 100% { background: rgba(255,255,255,.32); width: 36px; margin-left: -18px; } 50% { background: rgba(255,255,255,.95); width: 52px; margin-left: -26px; } }
+
 @media (max-width: 760px) {
-  /* Phone layout: a header, the rings, then one swipeable dock with every card side by side, and the controls along the bottom. */
-  .title { max-width: none; right: 16px; top: calc(env(safe-area-inset-top, 0px) + 10px); left: 16px; }
-  h1 { font-size: 32px; line-height: 1; }
-  #ttl { width: min(76%, 300px); margin: -2px 0 2px -4px; filter: none; }   /* the gooey blur eats the thin strokes at this size, so the dots just overlap */
-  /* keep it quiet: the tagline goes (the "?" says it), and the status line only shows when the sea can't be reached */
+  /* Phone layout: the rings are the screen. One bar along the bottom says where you are and has Play.
+     Pull it up for the sheet: the three views, then cards you swipe through (headline, data, the surfer, tide), and Music. */
+  .title { max-width: none; right: 16px; left: 16px; top: calc(env(safe-area-inset-top, 0px) + 18px); }
+  h1 { font-size: 20px; line-height: 1; }
+  #ttl { width: 188px; margin: 0 0 0 -2px; filter: none; }
   .kickrow { position: static; }
-  .kickrow .kicker { position: absolute; right: 0; top: 2px; margin: 0; max-width: none; }
+  .kickrow .kicker { position: absolute; right: 0; top: -8px; margin: 0; max-width: none; }
   .kickrow .kicker .kt { display: none; }
-  .howbtn { width: 30px; height: 30px; margin: 0; font-size: 13px; opacity: .85; }
-  .how-pop { top: 44px !important; }
-  .facts { display: none; font-size: 11.5px; margin-top: 4px; line-height: 1.45; }
-  body.sea-off .facts { display: block; }
-  #means { display: none; }
-  .seg { display: flex; position: static; margin: 8px 0 0; width: 100%; }
-  .seg button { flex: 1; display: flex; align-items: center; justify-content: center; gap: 6px; white-space: nowrap; padding: 6px 4px; min-height: 36px; font-size: 12px; letter-spacing: .03em; }
+  .howbtn { width: 38px; height: 38px; margin: 0; font-size: 15px; opacity: .95; background: rgba(5,16,44,.5); }
+  .how-pop { top: 46px !important; }
+  .facts { display: none; font-size: 10.5px; margin-top: 2px; line-height: 1.4; } body.sea-off .facts { display: block; } #means { display: none; }
+  .bar, .credit, #b-midi, #p-music .how, #blue-note-m { display: none !important; }
+  .phone-only { display: block; }
+
+  .msheet { --mh: 80px; display: flex; flex-direction: column; position: fixed; z-index: 4; left: 12px; right: 12px; bottom: calc(env(safe-area-inset-bottom, 0px) + 12px);
+    height: auto; max-height: var(--mh); overflow: hidden; border-radius: 24px; background: rgba(5,16,44,.93); border: 1px solid rgba(160,190,255,.26);
+    backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); box-shadow: 0 -6px 30px rgba(3,14,38,.35);
+    transition: max-height .5s cubic-bezier(.2,.8,.2,1); }
+  body.sheet-open .msheet { max-height: min(540px, calc(100vh - 100px)); max-height: min(540px, calc(100dvh - 100px)); }
+  .msheet.nudge { animation: sheetBob 5.5s ease-in-out 1.2s infinite, sheetGlow 2.6s ease-in-out infinite; }
+  body.sheet-open .msheet.nudge { animation: none; }
+  .msheet.nudge .mgrab { animation: grabGlow 2.6s ease-in-out infinite; }
+  @media (prefers-reduced-motion: reduce) { .msheet.nudge, .msheet.nudge .mgrab { animation: none; } .msheet { transition: none; } }
+  .msheet .mhead { flex: 0 0 var(--mh); }
+  .mhead { position: relative; flex: 0 0 var(--mh); display: flex; align-items: center; gap: 12px; padding: 10px 14px 0 20px; cursor: pointer; touch-action: none; }
+  .mgrab { position: absolute; left: 50%; top: 8px; width: 36px; height: 4px; margin-left: -18px; border-radius: 2px; background: rgba(255,255,255,.32); }
+  .mtxt { flex: 1; min-width: 0; text-align: left; background: none; border: 0; padding: 0; color: inherit; font: inherit; cursor: pointer; }
+  #mb-name { display: block; font: 500 calc(20px * var(--nfit, 1))/1.15 var(--display); color: var(--foam); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  #mb-sub { display: block; margin-top: 4px; font: 400 11px var(--mono); letter-spacing: .04em; text-transform: uppercase; color: #b4c8ee; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .mplay { flex: none; width: 56px; height: 56px; padding: 0; border-radius: 50%; border: 0; background: var(--foam); display: flex; align-items: center; justify-content: center; cursor: pointer; }
+  .mplay .i-stop, .mplay[aria-pressed="true"] .i-play { display: none; } .mplay[aria-pressed="true"] .i-stop { display: block; }
+  .mbody { flex: 1 1 auto; min-height: 0; overflow-y: auto; overscroll-behavior: contain; padding: 4px 14px 14px; display: flex; flex-direction: column; gap: 10px; }
+  .mbody .seg { display: flex; position: static; width: 100%; margin: 0; flex: none; }
+  .seg button { flex: 1; display: flex; align-items: center; justify-content: center; gap: 6px; white-space: nowrap; padding: 6px 4px; min-height: 44px; font-size: 12.5px; letter-spacing: .03em; }
   .seg .usf { margin: 0; width: 16px; height: 16px; flex: none; vertical-align: baseline; }
-  .news { margin-top: 6px; width: 100%; padding: 7px 12px 7px 14px; border-radius: 14px; }
-  .bn { margin-top: 6px; padding-top: 6px; font-size: 11.5px; line-height: 1.4; }
-  .nh { font-size: 13.5px; -webkit-line-clamp: 2; min-height: 2.6em; margin-top: 4px; }
-  .ns { display: none; margin-top: 4px; }
-  @media (min-height: 880px) { .ns { display: block; } }
-  @media (max-height: 780px) { .kicker:not(.bluenote) .kt { display: none; } .facts { margin-top: 8px; } }
-  .panel { top: auto; width: auto; left: 12px; right: 12px; bottom: calc(var(--dockb, 150px) + 24px); height: 208px; max-height: none; padding: 0; display: flex; overflow-x: auto; overflow-y: hidden; scroll-snap-type: x mandatory; scrollbar-width: none; overscroll-behavior-x: contain; }
+  .mmusic { flex: none; min-height: 46px; }
+
+  /* the swipeable cards */
+  .panel { position: static; z-index: auto; width: auto; max-height: none; height: 236px; flex: none; margin: 0 -14px; padding: 0; border: 0; border-radius: 0; background: none; backdrop-filter: none; -webkit-backdrop-filter: none;
+    display: flex; overflow-x: auto; overflow-y: hidden; scroll-snap-type: x mandatory; scrollbar-width: none; overscroll-behavior-x: contain; overflow-anchor: none; }
   .panel::-webkit-scrollbar { display: none; }
   .left { display: contents; }
-  .panel > .pg, #search, .shead, .slide { display: block; flex: 0 0 100%; width: 100%; height: 100%; scroll-snap-align: start; padding: 12px 16px; overflow: hidden; margin: 0; border: 0; border-radius: 0; background: none; backdrop-filter: none; -webkit-backdrop-filter: none; }
+  .panel > .pg, #search, .shead, .slide, #panel > #news { display: block; flex: 0 0 100%; width: 100%; height: 100%; scroll-snap-align: start; padding: 6px 14px; overflow-x: hidden; overflow-y: auto; margin: 0; border: 0; border-radius: 0; background: none; backdrop-filter: none; -webkit-backdrop-filter: none; }
   .left .card { display: contents; }
   #surf { display: contents; } .slides { display: contents; margin: 0; overflow: visible; }
-  #search { overflow: auto; }
-  #pg-read { order: 3; position: relative; display: grid; grid-template-columns: 1fr 92px; grid-template-rows: auto auto auto auto 1fr; column-gap: 10px; align-content: start; }
-  #pg-read .top { grid-column: 1; min-width: 0; } #r-cap { font-size: 10.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  #pg-read .share-btn { position: absolute; right: 14px; bottom: 12px; padding: 0; width: 38px; min-height: 38px; justify-content: center; font-size: 0; gap: 0; } #pg-read .share-btn svg { width: 17px; height: 17px; }
-  #pg-read .name { grid-column: 1; margin: 2px 0 0; font-size: calc(23px * var(--nfit, 1)); align-self: end; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; } #pg-read .geo { display: contents; }
-  #pg-read .sub { grid-column: 1; margin: 2px 0 0; font-size: 12.5px; } #mini { grid-column: 2; grid-row: 1 / 4; width: 92px; height: 48px; margin: 0; align-self: center; }
-  #pg-read #gauges { grid-column: 1 / -1; width: 232px; height: 74px; margin-top: 6px; }
-  #r-line { display: block; grid-column: 1 / -1; margin: 6px 0 0; font: 400 11.5px/1.3 var(--display); color: var(--mist); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; } #r-line:empty { display: none; }
-  body.is-playing #r-line { display: none; } body.is-playing .chg { display: none !important; }
-  body.is-place .chg { display: block; grid-column: 1 / -1; justify-self: start; margin: 4px 0 0; padding: 4px 12px; border: 1px solid var(--edge); border-radius: 17px; background: none; color: var(--foam); font: 400 11.5px var(--mono); letter-spacing: .06em; text-transform: uppercase; cursor: pointer; }
-  /* while it plays, everything but the rings steps back */
-  .seg, .panel, .dockdots { transition: max-height .4s ease, opacity .3s ease, margin .4s ease, height .4s ease, bottom .4s ease; }
-  .seg { max-height: 60px; }
-  body.is-playing .seg { max-height: 0; opacity: 0; margin-top: 0; padding-top: 0; padding-bottom: 0; border-width: 0; overflow: hidden; pointer-events: none; }
-  body.is-playing .facts { display: none; }
-  body.is-playing .dockdots { opacity: 0; pointer-events: none; }
-  body.is-playing .panel { height: 78px; bottom: calc(var(--dockb, 150px) + 4px); }
-  body.is-playing #pg-read #gauges, body.is-playing #pg-read .share-btn, body.is-playing #mini, body.is-playing #r-cap { display: none; }
-  body.is-playing #pg-read .name { font-size: calc(20px * var(--nfit, 1)); }
-  body.is-playing #panel > #news { padding: 10px 16px; } body.is-playing #panel > #news .nt, body.is-playing #panel > #news .ns, body.is-playing #panel > #news .bn { display: none; }
-  body.is-playing #panel > #news .nh { font-size: 15px; -webkit-line-clamp: 2; margin-top: 0; }
-  /* three screens on a phone: the piece, the news, the beach. Scale, data and surf check stay on desktop. */
-  #panel > #news { order: 1; display: block; flex: 0 0 100%; width: 100%; height: 100%; margin: 0; padding: 14px 16px; border: 0; border-radius: 0; background: none; backdrop-filter: none; -webkit-backdrop-filter: none; scroll-snap-align: start; overflow: hidden; }
-  #search { order: 2; } .shead { order: 5; } .slide { order: 6; }
-  #pg-scale, #pg-data, #surf { display: none !important; }
-  .ns, #panel > #news .ns { white-space: normal; overflow: visible; text-overflow: clip; }
-  .mix { display: grid; grid-template-columns: 1fr 1fr; gap: 12px 18px; margin: 8px 0 16px; padding-bottom: 14px; border-bottom: 1px solid var(--edge); }
-  .mix .ctl { min-width: 0; }
-  .bar .btns { width: 100%; }
-  /* short phones: take the status line out, shorten the screens, so the rings get the middle */
-  @media (max-height: 760px) { .facts { display: none; } .panel { height: 168px; } #r-line { display: none; } #pg-read #gauges { height: 74px; margin-top: 2px; } #pg-read .name { font-size: calc(21px * var(--nfit, 1)); } .intro li { padding: 5px 0; } }
-  /* small screens (browser bars eat the height): give the rings the room. Data becomes one line, the headline card sheds its small print. */
-  @media (max-height: 700px) {
-    #ttl { width: min(62%, 240px); } .seg { margin-top: 8px; } .seg button { min-height: 32px; padding: 6px 16px; }
-    .panel { height: 112px; } #pg-read #gauges, #pg-read .top, #r-line { display: none; }
-    #r-line2 { display: block; grid-column: 1 / -1; margin: 4px 0 0; font: 400 11.5px/1.3 var(--mono); color: var(--mist); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; padding-right: 44px; }
-    body.is-place .chg { margin-top: 2px; }
-    #panel > #news { padding: 10px 16px; } #panel > #news .ns, #panel > #news .bn { display: none; } #panel > #news .nh { font-size: 16px; -webkit-line-clamp: 3; margin-top: 6px; }
-    body.is-playing #r-line2 { display: none; }
-  }
-  #ttl { transition: opacity .35s ease; } body.is-playing #ttl { opacity: 0; }
-  #panel > #news .nh { font-size: 19px; line-height: 1.3; -webkit-line-clamp: 4; min-height: 0; margin-top: 10px; }
-  #panel > #news .ns { display: block; margin-top: 12px; }
-  #panel > #news .bn { display: block; margin-top: 10px; padding-top: 8px; font-size: 12.5px; line-height: 1.4; }   /* on phones the Democrats line sits in the headline card */
-  #blue-note[hidden], #blue-note-m { display: none !important; }
-  .bn-phone { margin: 8px 0 0; font-size: 12.5px; white-space: normal; line-height: 1.4; }
-  body:not(.is-blue) .bn-phone { display: none !important; }
+  #panel > #news { order: 1; } #search { order: 2; } #pg-read { order: 3; } #pg-scale { order: 4; } #pg-data { order: 5; } .shead { order: 6; } .slide { order: 7; }
   body.is-place #news { display: none !important; }
-  #pg-scale #scale { height: 128px; margin-top: 0; } .scale-cap { font-size: 12.5px; margin-top: 4px; }
-  #r-dl { margin-top: 0; font-size: 12px; gap: 5px 12px; } #r-note { display: none; } #pg-data .go.wide { margin-top: 10px; min-height: 40px; }
   .shead { display: none; } #surf.nodata .shead { display: block; }
-  .mh { display: inline; } .slide .stitle { margin-bottom: 2px; } #tide { height: 56px; } .slide dl { margin-top: 6px; gap: 4px 12px; font-size: 12px; }
   #s-dots { display: none !important; }
-  #results { max-height: 96px; }
-  .chips { margin-top: 8px; } .chip { min-height: 34px; }
-  .dockdots { display: flex; position: fixed; z-index: 3; left: 0; right: 0; bottom: var(--dockb, 150px); height: 24px; justify-content: center; align-items: center; gap: 2px; }
+  .dockdots { display: flex; position: static; flex: none; height: 18px; justify-content: center; align-items: center; gap: 2px; margin-top: -4px; }
   .dockdots button { width: 22px; height: 22px; padding: 0; border: 0; background: transparent; position: relative; cursor: pointer; }
   .dockdots button::after { content: ""; position: absolute; left: 50%; top: 50%; width: 7px; height: 7px; margin: -3.5px; border-radius: 50%; background: rgba(242,247,255,.35); }
   .dockdots button[aria-current="true"]::after { background: var(--foam); }
   .dockdots[hidden] { display: none; }
-  .bar { width: auto; left: 12px; right: 12px; transform: none; max-width: none; gap: 6px 14px; border-radius: 22px; padding: 8px 14px 10px; bottom: calc(env(safe-area-inset-bottom, 0px) + 34px); }
-  .btns { width: 100%; } .play { flex: 1; padding: 13px 0; } .mini-btn { min-height: 44px; padding: 0 20px; }
-  #b-midi, .credit, #p-music .how { display: none; }   /* the "?" already says how to read the rings */
-  .phone-only { display: block; }
-  .pop { left: 12px; right: 12px; width: auto; transform: none; bottom: calc(var(--dockb, 150px) + 8px); max-height: 62vh; }
+
+  /* card 1: the headline */
+  .nt { font-size: 10.5px; } .ns { display: block; margin-top: 10px; white-space: normal; overflow: visible; text-overflow: clip; }
+  #panel > #news .nh { font-size: 19px; line-height: 1.3; -webkit-line-clamp: 3; min-height: 0; margin-top: 8px; }
+  #panel > #news .bn { display: block; margin-top: 10px; padding-top: 8px; font-size: 12.5px; line-height: 1.4; }
+  #blue-note[hidden] { display: none !important; }
+  /* card: this beach (the name is already in the bar) */
+  #pg-read { position: relative; display: grid; grid-template-columns: 1fr 112px; grid-template-rows: auto auto auto 1fr; column-gap: 10px; align-content: start; }
+  #pg-read .top { grid-column: 1; min-width: 0; } #r-cap { font-size: 10.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  #pg-read .name { display: none; } #pg-read .geo { display: contents; }
+  #pg-read .sub { grid-column: 1; margin: 2px 0 0; font-size: 12.5px; } #mini { grid-column: 2; grid-row: 1 / 3; width: 112px; height: 48px; margin: 0; align-self: center; }
+  #r-line { display: block; grid-column: 1 / -1; margin: 8px 0 0; font: 400 15px/1.35 var(--display); color: var(--foam); } #r-line:empty, #r-line2 { display: none; }
+  #pg-read #gauges { grid-column: 1 / -1; width: calc(100% - 56px); height: 78px; margin-top: 8px; }
+  #pg-read .share-btn { position: absolute; right: 14px; bottom: 10px; padding: 0; width: 38px; min-height: 38px; justify-content: center; font-size: 0; gap: 0; } #pg-read .share-btn svg { width: 17px; height: 17px; }
+  body.is-place .chg { display: block; grid-column: 1 / -1; justify-self: start; margin: 4px 0 0; padding: 4px 12px; border: 1px solid var(--edge); border-radius: 17px; background: none; color: var(--foam); font: 400 11.5px var(--mono); letter-spacing: .06em; text-transform: uppercase; cursor: pointer; }
+  /* card: the surfer */
+  #pg-scale #scale { height: 150px; margin-top: 0; } .scale-cap { font-size: 12.5px; margin-top: 6px; }
+  /* card: the data */
+  #r-dl { margin-top: 0; font-size: 12.5px; gap: 6px 12px; } #r-note { display: none; } #pg-data .go.wide { margin-top: 10px; min-height: 40px; }
+  .mh { display: inline; } .slide .stitle { margin-bottom: 2px; } #tide { height: 84px; } .slide dl { margin-top: 6px; gap: 4px 12px; font-size: 12px; }
+  #results { max-height: 96px; }
+  .chips { margin-top: 8px; } .chip { min-height: 38px; }
+
+  @media (max-height: 700px) { body.sheet-open .msheet { max-height: calc(100vh - 190px); max-height: calc(100dvh - 190px); } .panel { height: 190px; } .mbody { gap: 8px; } }
+  .pop { left: 12px; right: 12px; width: auto; transform: none; bottom: calc(env(safe-area-inset-bottom, 0px) + 12px); max-height: 80vh; z-index: 7; }
   .how-pop { left: 0; right: 0; bottom: auto; top: calc(100% + 6px); max-height: none; overflow: visible; }
   .ctl { flex: 1; min-width: 0; } .ctl label { font-size: 10.5px; }
   input[type=range] { width: 100%; }
-  .credit { font-size: 9.5px; bottom: calc(env(safe-area-inset-bottom, 0px) + 6px); line-height: 1.35; }
 }
 </style>
 </head>
@@ -329,7 +320,7 @@ input[type=range]::-moz-range-thumb { width: 14px; height: 14px; border-radius: 
     <div><span class="live offline" id="live">Loading the sea</span></div>
     <div id="means">&nbsp;</div>
   </div>
-  <div class="seg" role="group" aria-label="View">
+  <div class="seg" id="seg" role="group" aria-label="View">
     <button id="m-blue" aria-pressed="true">Blue Coast <svg class="usf" viewBox="0 0 10 10" width="20" height="20" aria-hidden="true"><defs><clipPath id="usfc"><circle cx="5" cy="5" r="5"/></clipPath></defs><g clip-path="url(#usfc)"><rect width="19" height="10" fill="#f4f7ff"/><g fill="#d8434f"><rect y="0.00" width="19" height=".77"/><rect y="1.54" width="19" height=".77"/><rect y="3.08" width="19" height=".77"/><rect y="4.62" width="19" height=".77"/><rect y="6.16" width="19" height=".77"/><rect y="7.70" width="19" height=".77"/><rect y="9.24" width="19" height=".77"/></g><rect width="8" height="5.4" fill="#1c2f6b"/></g></svg></button>
     <button id="m-place" aria-pressed="false">Place</button>
     <button id="m-world" aria-pressed="false">World</button>
@@ -451,6 +442,14 @@ input[type=range]::-moz-range-thumb { width: 14px; height: 14px; border-radius: 
 </section>
 
 <div class="credit"><a class="tc" href="https://threecities.forrestjamesmusic.com" title="Three Cities, the sister piece"><svg viewBox="0 0 35.4 24" aria-hidden="true"><path fill="#d08a6a" d="M0.5 24v-6.6h11V24zM1.6 17.4v-1.6h8.8v1.6zM3 15.8v-2.4h6v2.4zM2.9 13.4a3.1 3.1 0 0 1 6.2 0zM5.4 10.4V8.2h1.2v2.2zM5.2 8.2L6 6.6l.8 1.6z"/><path fill="#6fa38c" fill-rule="evenodd" d="M13.4 24V13h12.6v11h-3.6v-5.2a2.7 2.7 0 0 0-5.4 0V24zM13 13v-1.4h13.4V13zM15.8 11.6a3.9 3.9 0 0 1 7.8 0zM19.3 7.7V5.6h.8v2.1zM19.1 5.6l.6-1.8.6 1.8zM13.6 11.6v-1.8h.9v1.8zM24.9 11.6v-1.8h.9v1.8zM13.4 9.8l.65-1.4.65 1.4zM24.7 9.8l.65-1.4.65 1.4z"/><path fill="#a98bc4" fill-rule="evenodd" d="M27.9 24v-3.5h.6V9h-.4V7.6h1V5.4h.8L31.4 0l1.5 5.4h.8v2.2h1V9h-.4v11.5h.6V24zM31.4 10a1.7 1.7 0 1 0 0 3.4 1.7 1.7 0 0 0 0-3.4z"/></svg><span>Three Cities</span></a><span class="tc-sep" aria-hidden="true"> · </span>Sea and weather: <a href="https://open-meteo.com/" target="_blank" rel="noopener">Open-Meteo</a> (DWD, ECMWF, Météo-France), CC BY 4.0 · Places: <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a></div>
+
+<div class="msheet" id="msheet" aria-label="Where you are, play, and more">
+  <div class="mhead" id="mhead"><div class="mgrab" aria-hidden="true"></div>
+    <button type="button" class="mtxt" id="mtoggle" aria-expanded="false" aria-controls="mbody" aria-label="Show more: views, headline and data"><span id="mb-name">&nbsp;</span><span id="mb-sub"></span></button>
+    <button type="button" class="mplay" id="mb-play" aria-label="Play" aria-pressed="false"><svg class="i-play" width="22" height="22" viewBox="0 0 22 22" aria-hidden="true"><path d="M6 3.5v15l13-7.5z" fill="#06143a"/></svg><svg class="i-stop" width="20" height="20" viewBox="0 0 20 20" aria-hidden="true"><rect x="3" y="3" width="14" height="14" rx="2" fill="#06143a"/></svg></button>
+  </div>
+  <div class="mbody" id="mbody" inert><button type="button" class="go wide mmusic" id="mb-music">Music settings</button></div>
+</div>
 
 <script>
 (() => {
@@ -954,19 +953,25 @@ function updateNews(cycle) {
   else if (!cycle && !was) return;
   const it = newsList.length ? newsList[newsTick % newsList.length] : NEWS_NATIONAL[newsPool % NEWS_NATIONAL.length];
   const nb = $('nb'); nb.style.animation = 'none'; void nb.offsetWidth; nb.style.animation = '';
-  card.dataset.k = it.k; card.hidden = false;
+  card.dataset.k = it.k; card.hidden = false; if (was && W < 760) $('panel').scrollLeft = 0;
   $('n-tag').textContent = `${{ first: 'A first', flip: 'A flip', upset: 'An upset', hold: 'A hold' }[it.k]} · ${it.st || st} · ${it.r}`;
   $('n-head').textContent = it.t; $('n-src').textContent = 'Reported by ' + it.s;
   setTimeout(resize, 0); // the card is taller or shorter now, so the rings move to make room
 }
 setInterval(() => { if (newsList.length > 1 && !$('news').hidden) { newsTick++; updateNews(true); } }, 9000);
 function fitName() {   // phone: shrink a long beach name to fit its line instead of cutting it off
-  const el = $('r-name'); if (!el || W >= 760) { if (el) el.style.removeProperty('--nfit'); return; }
+  const el = $('mb-name'); if (!el || W >= 760) { if (el) el.style.removeProperty('--nfit'); return; }
   el.style.setProperty('--nfit', 1); const need = el.scrollWidth, have = el.clientWidth;
   const r = need > have + 1 ? have / need - .01 : 1; el.style.setProperty('--nfit', Math.max(.62, r).toFixed(3));
 }
 if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => fitName());
 window.addEventListener('resize', () => fitName());
+function updateBar() {   // the bar along the bottom of a phone: where you are, and how big the sea is
+  let name, sub; const off = (v) => v == null || isNaN(v);
+  if (mode === 'world') { const s = world[selected]; if (!s) return; name = s.name; sub = [playing ? 'Playing' : s.sub, `${s.val.toFixed(1)} m`, `${s.per.toFixed(0)} s`]; }
+  else { const w = place.voices[0], none = place.noSea || place.error || !place.loaded; name = place.name; sub = [playing ? 'Playing' : place.sub, none ? null : `${w.val.toFixed(1)} m`, none ? null : `${w.per.toFixed(0)} s`]; }
+  $('mb-name').textContent = name || ''; $('mb-sub').textContent = sub.filter(Boolean).join(' · '); fitName();
+}
 function scaleVoice() { const s = voices[selected]; return !s || s.kind === 'air' ? voices[0] : s; }
 function renderPanel() {
   const dl = $('r-dl'); dl.textContent = '';
@@ -986,7 +991,7 @@ function renderPanel() {
     $('r-line').textContent = [compare(s.tval), periodFeel(s.tper).split(',')[0], wetsuit(s.ttemp).split(',')[0]].join(' · ');
     $('r-note').textContent = world === BLUE ? 'Tap a ring to read another beach. Smallest wave, smallest ring. Results as reported on 4 November 2026.' : 'Tap a ring to read another sea. Smallest wave, smallest ring.';
   } else {
-    $('r-line').textContent = '';
+    $('r-line').textContent = (!place.noSea && !place.error && place.loaded) ? [compare(place.voices[0].tval), place.seaTemp != null ? wetsuit(place.seaTemp).split(',')[0] : ''].filter(Boolean).join(' · ') : '';
     $('open-place').hidden = true;
     const p = place, [waves, swell, wind, air] = p.voices, na = '–';
     $('r-cap').textContent = coord(p.lat, p.lon);
@@ -1005,7 +1010,7 @@ function renderPanel() {
   else { const b = document.createElement('b'); b.textContent = sv.name; cap.append(b, document.createTextNode(` · ${sv.tval.toFixed(1)} m, ${compare(sv.tval)}`)); }
   $('gauges').setAttribute('aria-label', 'Quick scan: ' + tiles().map(t => `${t.l} ${t.v}`).join(', '));
   $('r-line2').textContent = tiles().filter(t => /^(Wave|Waves|Period|Wind|Sea)$/.test(t.l)).map(t => `${t.l} ${t.v}`).join(' · ');
-  updateNews(); fitName(); requestAnimationFrame(fitName); setTimeout(fitName, 400);
+  updateNews(); updateBar(); requestAnimationFrame(fitName); setTimeout(fitName, 400);
 }
 function syncNote() { const on = mode === 'world' && world === BLUE; $('blue-note').hidden = !on; $('blue-note-m').hidden = !on; document.body.classList.toggle('is-blue', on); document.body.classList.toggle('is-place', mode === 'place'); }
 function setMode(m, set) {
@@ -1028,14 +1033,34 @@ $('m-place').addEventListener('click', () => setMode('place'));
 const wide = window.matchMedia('(min-width: 1180px)');
 // Phones: the headline card is the second screen of the swipe. Wider screens: it sits under the view switch.
 const phone = window.matchMedia('(max-width: 760px)');
+const holes = {};   // where the phone sheet's borrowed pieces live on bigger screens
+function toSheet(el) { if (!holes[el.id]) { holes[el.id] = document.createComment(el.id); el.before(holes[el.id]); } $('mbody').append(el); }
+function fromSheet(el) { const h = holes[el.id]; if (h) { h.replaceWith(el); delete holes[el.id]; } }
 function placeNews() {
   const news = $('news'), seg = document.querySelector('.seg');
-  if (phone.matches) { if (news.parentNode !== $('panel')) $('panel').insertBefore(news, $('pg-read')); }
-  else if (news.parentNode !== seg.parentNode || news.previousElementSibling !== seg) seg.after(news);
+  if (phone.matches) { if (news.parentNode !== $('panel')) $('panel').insertBefore(news, $('pg-read')); toSheet(seg); toSheet($('panel')); toSheet($('dockdots')); $('mbody').append($('mb-music')); $('panel').scrollLeft = 0; }
+  else { fromSheet($('panel')); fromSheet($('dockdots')); fromSheet(seg); if (news.parentNode !== seg.parentNode || news.previousElementSibling !== seg) seg.after(news); }
   setTimeout(resize, 0);
 }
 if (phone.addEventListener) phone.addEventListener('change', placeNews); else phone.addListener(placeNews);
 placeNews();
+// the phone sheet: tap the bar, or swipe it up, to open. It nudges until you do.
+let sheetOpen = false;
+function setSheet(on) {
+  sheetOpen = !!on; document.body.classList.toggle('sheet-open', sheetOpen); $('mtoggle').setAttribute('aria-expanded', sheetOpen);
+  if (sheetOpen) { $('mbody').removeAttribute('inert'); $('msheet').classList.remove('nudge'); } else $('mbody').setAttribute('inert', '');
+  setTimeout(() => { measureArea(); refreshDots(); }, 460);
+}
+(() => {
+  const head = $('mhead'); let y0 = null;
+  head.addEventListener('click', (e) => { if (e.target.closest('#mb-play')) return; setSheet(!sheetOpen); });
+  head.addEventListener('touchstart', (e) => { y0 = e.target.closest('#mb-play') ? null : e.touches[0].clientY; }, { passive: true });
+  head.addEventListener('touchend', (e) => { if (y0 == null) return; const dy = e.changedTouches[0].clientY - y0; y0 = null; if (dy < -24) setSheet(true); else if (dy > 24) setSheet(false); }, { passive: true });
+  $('rings').addEventListener('pointerdown', () => { if (sheetOpen) setSheet(false); });
+  document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && sheetOpen) setSheet(false); });
+  $('mb-music').addEventListener('click', () => { setSheet(false); openPanel('music'); });
+  if (phone.matches) $('msheet').classList.add('nudge');
+})();
 function placeLeft() {
   const left = $('left'), panel = $('panel');
   if (wide.matches) { left.classList.add('float'); if (left.parentNode !== document.body) document.body.appendChild(left); }
@@ -1053,7 +1078,7 @@ function shareURL() {
   } catch (e) { return ''; }
 }
 const titleLine = () => mode === 'place' ? `Blue Wave · ${place.name}${place.sub ? ', ' + place.sub : ''}` : (world === BLUE ? 'Blue Wave · the Blue Coast' : 'Blue Wave · the sea around the world');
-function syncUrl() { document.title = titleLine(); try { const u = shareURL(); if (u) history.replaceState(null, '', u); } catch (e) { /* some browsers refuse on local files */ } }
+function syncUrl() { document.title = titleLine(); /* the address bar stays plain, so a reload opens on the Blue Coast. The Share button carries the place. */ }
 function shareLine() {
   return mode === 'place' ? `Here's the sea at ${place.name}${place.sub ? ', ' + place.sub : ''} right now, played as a rhythm. Try your own beach.` : (world === BLUE ? `Here's the sea off the Blue Coast right now, played as a rhythm.` : `Here's the sea around the world right now, played as a rhythm.`);
 }
@@ -1077,22 +1102,12 @@ function showCard(which) {   // phone: swipe the dock to the search card or to t
   if (W >= 760) return; const panel = $('panel'), el = which === 'search' ? $('search') : $('pg-read'), i = dockPages().indexOf(el);
   if (i >= 0) panel.scrollTo({ left: i * panel.clientWidth, behavior: 'smooth' });
 }
-// phone: while the headline card is up, the dock rocks gently between it and the beach card, so it is obvious where the place is. It stops for a while once you touch the dock.
-let lastUser = -1e9;
-['pointerdown', 'touchstart', 'wheel', 'keydown'].forEach(ev => $('panel').addEventListener(ev, () => { lastUser = performance.now(); }, { passive: true }));
-$('q').addEventListener('focus', () => { lastUser = performance.now(); });
-setInterval(() => {
-  if (W >= 760 || document.hidden || $('news').hidden || reduce || performance.now() - lastUser < 20000) return;
-  const panel = $('panel'), pages = dockPages(), n = pages.indexOf($('news')), r = pages.indexOf($('pg-read')); if (n < 0 || r < 0) return;
-  const cur = Math.round(panel.scrollLeft / Math.max(1, panel.clientWidth));
-  panel.scrollTo({ left: (cur === n ? r : n) * panel.clientWidth, behavior: 'smooth' });
-}, 6000);
 const msg = (t) => { $('msg').textContent = t || ''; };
 function choose(lat, lon, name, sub) {
   Object.assign(place, { lat, lon, name, sub, loaded: false, live: false, noSea: false, error: false, hr: null, tide: null, coast: null, suggest: null });
   try { localStorage.setItem('bluewave.place', JSON.stringify({ lat, lon, name, sub })); } catch (e) { /* ignore */ }
   $('results').textContent = ''; $('q').value = ''; msg('');
-  showFacts(); renderPanel(); renderSurf(); fetchPlace(); syncUrl(); findCountry(lat, lon); showCard('read');
+  showFacts(); renderPanel(); renderSurf(); fetchPlace(); syncUrl(); findCountry(lat, lon); showCard('read'); setSheet(false);
 }
 // The flag: the country of the place, looked up once per place.
 function setFlag(cc) {
@@ -1521,12 +1536,12 @@ function togglePlay() {
   if (!ctx) initAudio();
   if (ctx.state === 'suspended') ctx.resume();
   playing = !playing;
-  $('play').setAttribute('aria-pressed', playing); $('play').textContent = playing ? 'Stop' : 'Play'; document.body.classList.toggle('is-playing', playing); setTimeout(fitName, 450); if (playing && mode === 'place') showCard('read');
+  $('play').setAttribute('aria-pressed', playing); $('play').textContent = playing ? 'Stop' : 'Play'; document.body.classList.toggle('is-playing', playing); $('mb-play').setAttribute('aria-pressed', playing); $('mb-play').setAttribute('aria-label', playing ? 'Stop' : 'Play'); updateBar();
   if (playing) { tick = 0; mi = 0; chordNow = []; nextTime = ctx.currentTime + .05; waveT = ctx.currentTime + .05; swayG.gain.cancelScheduledValues(0); swayLP.frequency.cancelScheduledValues(0); musicSync(); startDrone(); if (MIDI.on && MIDI.clock) midiSend([0xFA]); timer = setInterval(schedule, 25); }
   else { clearInterval(timer); stopDrone(); if (MIDI.on) { if (MIDI.clock) midiSend([0xFC]); midiAllOff(); } }
   droneLevel(); updateOcean();
 }
-$('play').addEventListener('click', togglePlay);
+$('play').addEventListener('click', togglePlay); $('mb-play').addEventListener('click', togglePlay);
 document.addEventListener('keydown', (e) => { const t = e.target.tagName; if (e.code === 'Space' && t !== 'BUTTON' && t !== 'INPUT') { e.preventDefault(); togglePlay(); } });
 function bindRange(id, fn) { const el = $(id), o = $(id + '-o'); el.addEventListener('input', () => { o.textContent = el.value; if (fn) fn(); }); }
 bindRange('tempo', () => { if (delayNode) delayNode.delayTime.value = stepDur() * 3; });
@@ -1630,10 +1645,7 @@ const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 let areaTop = 0, areaBot = 0, lastDockb = '', playEase = 0, lastMeasure = 0;
 // phone: measure what is above and below the rings. Runs again whenever the title block changes height (fonts, the headline card).
 function measureArea() {
-  if (W < 760) {
-    const bar = $('bar').getBoundingClientRect(), db = Math.round(H - bar.top + 8) + 'px'; if (db !== lastDockb) { lastDockb = db; document.documentElement.style.setProperty('--dockb', db); }
-    const ttl = document.querySelector('.title').getBoundingClientRect(); areaTop = ttl.bottom + 4; areaBot = $('panel').getBoundingClientRect().top - 4;
-  }
+  if (W < 760) { const top = $('msheet').getBoundingClientRect().top; areaTop = 64 + (mode === 'place' ? 36 : 0); areaBot = Math.max(areaTop + 60, top - 8); }
 }
 // The "?" note: on a mouse it opens while the pointer is over the button; a click pins it open or shut.
 (() => {
@@ -1971,9 +1983,9 @@ function drawWorld(now, dt) {
 
 // ---------- the rings ----------
 function geom() {
-  const small = W < 760, cx = W / 2, aT = small ? areaTop * (1 - playEase) + (mode === 'place' ? 52 : 12) * playEase : 0, aB = small ? areaBot + 4 * playEase : 0;   // playing on a phone: the rings may slip a little under the title
-  const cy = small ? (aT + aB) / 2 + 12 * (1 - playEase) : H * .47;
-  const maxR = small ? Math.max(60, Math.min(W * (.44 + .056 * playEase), (aB - aT) / 2 - (12 - 8 * playEase))) : Math.min(W * .38, H * .35);
+  const small = W < 760, cx = W / 2, aT = small ? areaTop : 0, aB = small ? areaBot : 0;   // phone: the rings fill the space between the title and the bar (they shrink up when the sheet opens)
+  const cy = small ? (aT + aB) / 2 : H * .47;
+  const maxR = small ? Math.max(36, Math.min(W / 2 - 6, (aB - aT) / 2 - 4)) : Math.min(W * .38, H * .35);
   return { cx, cy, maxR, minR: maxR * (mode === 'place' ? .36 : .2), small };
 }
 // Smallest wave, smallest ring. Largest wave, largest ring. The rest fill in between. Air is always the middle of the place rings.
@@ -1991,7 +2003,7 @@ function hitVisual(i, step) {
   const s = voices[i]; if (!s) return; s.flash = 1; flagPulse = Math.min(1, flagPulse + .35);
   const g = geom(), r = radiusOf(i, g), a = step / s.steps * Math.PI * 2 - Math.PI / 2;
   ripples.push({ x: g.cx + Math.cos(a) * r, y: g.cy + Math.sin(a) * r, t: 0, c: tempColor(s.temp, 1) }); if (ripples.length > 60) ripples.shift();
-  if (W < 760 && mode !== 'place' && playing && i !== selected) { tagsNow.push({ nm: String(s.name).toUpperCase().slice(0, 21) + ' ' + s.val.toFixed(1) + 'M', x: g.cx + Math.cos(a) * r, y: g.cy + Math.sin(a) * r, t: 0 }); if (tagsNow.length > 2) tagsNow.shift(); }
+  if (W < 760 && mode !== 'place' && playing && i !== selected && !sheetOpen) { tagsNow.push({ nm: String(s.name).toUpperCase().slice(0, 21) + ' ' + s.val.toFixed(1) + 'M', x: g.cx + Math.cos(a) * r, y: g.cy + Math.sin(a) * r, t: 0 }); if (tagsNow.length > 2) tagsNow.shift(); }
   if (!reduce && Math.random() < .15) { const dx = g.cx + Math.cos(a) * r, dy = g.cy + Math.sin(a) * r; drips.push({ x: dx, y: dy, vy: 30 + Math.random() * 50, ty: Math.min(H - 24, Math.max(dy + 36, H * (.66 + Math.random() * .26))), c: tempColor(s.temp, 1), t: 0, hit: false }); if (drips.length > 48) drips.shift(); }
 }
 let manual = 0, lastCycle = 0;
@@ -2035,9 +2047,9 @@ function buildTitle() {
   let fs = tH * .92; oc.font = fs + 'px "Archivo Black", "Arial Black", sans-serif';
   const w = oc.measureText('BLUE WAVE').width; fs *= Math.min(1, (tW * .97) / w); oc.font = fs + 'px "Archivo Black", "Arial Black", sans-serif';
   oc.fillText('BLUE WAVE', 2, tH * .86);
-  const d = oc.getImageData(0, 0, tW, tH).data, step = tW < 300 ? 2.4 : 4.2; tpts = [];
+  const d = oc.getImageData(0, 0, tW, tH).data, step = tW < 220 ? 1.5 : tW < 300 ? 2.4 : 4.2; tpts = [];
   for (let y = step / 2; y < tH; y += step) for (let x = step / 2; x < tW; x += step) {
-    if (d[((y | 0) * tW + (x | 0)) * 4 + 3] > 128) tpts.push({ x: x + (Math.random() - .5) * step * .5, y: y + (Math.random() - .5) * step * .5, r: step * (tW < 300 ? .72 + Math.random() * .22 : .46 + Math.random() * .3), ph: Math.random() * 6.28 });
+    if (d[((y | 0) * tW + (x | 0)) * 4 + 3] > 128) tpts.push({ x: x + (Math.random() - .5) * step * .5, y: y + (Math.random() - .5) * step * .5, r: step * (tW < 220 ? .62 + Math.random() * .22 : tW < 300 ? .72 + Math.random() * .22 : .46 + Math.random() * .3), ph: Math.random() * 6.28 });
   }
 }
 let tPulse = 0, tClock = 0, tSel = null, tBurst = 0;
@@ -2133,7 +2145,7 @@ function frame(now) {
   // every ring gets its label in Place view, unless the rings are so close that the labels would pile up: then only the one you picked is named
   const rr = voices.map((s, i) => radiusOf(i, g)).sort((a, b) => b - a), crowded = rr.some((r, k) => k && rr[k - 1] - r < 27);
   voices.forEach((s, i) => { if (W >= 760 || mode === 'place') { if ((mode === 'place' && !crowded) || i === selected) pill(labelFor(s), g.cx, g.cy - radiusOf(i, g) - 18, i === selected, iconFor(s, now / 1000)); } });
-  if (g.small && mode !== 'place' && playEase > .5) {   // phone, playing: the selected ring keeps its name; every other beach names itself for a moment when its dot is struck
+  if (g.small && mode !== 'place' && playEase > .5 && !sheetOpen) {   // phone, playing: the selected ring keeps its name; every other beach names itself for a moment when its dot is struck
     rx.save(); rx.font = '500 10px "JetBrains Mono", ui-monospace, monospace'; rx.lineJoin = 'round'; rx.textBaseline = 'middle';
     const tag = (nm, x, y, right, a, bright) => { rx.globalAlpha = a * playEase; rx.textAlign = right ? 'right' : 'left'; rx.lineWidth = 3; rx.strokeStyle = 'rgba(5,16,44,.8)'; rx.strokeText(nm, x, y); rx.fillStyle = bright ? '#fff' : 'rgba(225,236,255,.95)'; rx.fillText(nm, x, y); };
     const nameOf = (s) => String(s.name).toUpperCase().slice(0, 21) + ' ' + s.val.toFixed(1) + 'M';
