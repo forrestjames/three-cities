@@ -183,7 +183,18 @@ input[type=search]::placeholder { color: var(--faint); }
 .fn { font: 500 16px var(--display); color: var(--foam); margin-top: 4px; }
 .fl { font: 400 12.5px/1.45 var(--mono); color: var(--mist); margin-top: 8px; }
 .fcard .go { margin-top: 14px; }
-.pclose { display: none; }
+.popbar { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 10px; } .popbar .cap { margin: 0; }
+.pclose { display: block; font: 500 12px var(--mono); letter-spacing: .06em; color: var(--abyss); background: var(--foam); border: 0; border-radius: 999px; padding: 0 18px; min-height: 40px; cursor: pointer; }
+.scrim { position: fixed; inset: 0; z-index: 6; background: rgba(2, 8, 24, .62); -webkit-backdrop-filter: blur(3px); backdrop-filter: blur(3px); }
+.scrim[hidden] { display: none; }
+.pop:not(.how-pop) { z-index: 7; }
+@media (max-width: 760px) { .fchips { display: grid; grid-auto-flow: column; grid-template-rows: repeat(2, auto); } }
+@media (min-width: 761px) {   /* on a big screen the windows sit in the middle and have room */
+  .pop:not(.how-pop) { top: 50%; bottom: auto; transform: translate(-50%, -50%); width: min(820px, calc(100% - 64px)); max-height: calc(100vh - 64px); max-height: calc(100dvh - 64px); padding: 22px 30px 28px; font-size: 14px; }
+  .pop:not(.how-pop) .cap { font-size: 13px; }
+  .fchips { flex-wrap: wrap; overflow: visible; }
+  .fv { font-size: 64px; } .fn { font-size: 22px; } .fl { font-size: 14px; } .fcard { padding: 22px 28px 26px; }
+}
 .phone-only { display: none; }
 @media (min-width: 761px) { .bn-phone { display: none !important; } }   /* the line sits in the headline card on wider screens, so no second copy */
 /* "?" : a short note on how to read the rings. Hover shows it on a mouse; a tap opens and closes it on a phone. */
@@ -311,9 +322,9 @@ input[type=range]::-moz-range-thumb { width: 14px; height: 14px; border-radius: 
 
   @media (max-height: 700px) { body.sheet-open .msheet { max-height: calc(100vh - 170px); max-height: calc(100dvh - 170px); } .panel { height: 190px; height: clamp(140px, calc(100dvh - 420px), 190px); } .mbody { gap: 8px; } }
   .pop { left: 12px; right: 12px; width: auto; transform: none; bottom: calc(env(safe-area-inset-bottom, 0px) + 12px); top: auto; max-height: calc(100vh - 24px - env(safe-area-inset-bottom, 0px)); max-height: calc(100dvh - 24px - env(safe-area-inset-bottom, 0px)); z-index: 7; padding-top: 0; }
-  .popbar { position: sticky; top: 0; z-index: 1; display: flex; align-items: center; justify-content: space-between; gap: 12px; margin: 0 -20px 8px; padding: 12px 20px 8px; background: var(--abyss); border-radius: 16px 16px 0 0; }
+  .popbar { position: sticky; top: 0; z-index: 1; margin: 0 -20px 8px; padding: 12px 20px 8px; background: var(--abyss); border-radius: 16px 16px 0 0; }
   .popbar .cap { margin: 0; }
-  .pclose { display: block; font: 500 12px var(--mono); letter-spacing: .06em; color: var(--abyss); background: var(--foam); border: 0; border-radius: 999px; padding: 0 18px; min-height: 44px; cursor: pointer; }
+  .pclose { min-height: 44px; }
   .how-pop { left: 0; right: 0; bottom: auto; top: calc(100% + 6px); max-height: none; overflow: visible; }
   .ctl { flex: 1; min-width: 0; } .ctl label { font-size: 10.5px; }
   input[type=range] { width: 100%; }
@@ -417,6 +428,7 @@ input[type=range]::-moz-range-thumb { width: 14px; height: 14px; border-radius: 
   <div class="ctl"><label for="vol">Level <output id="vol-o">70</output></label><input id="vol" type="range" min="0" max="100" value="70"></div>
 </div>
 
+<div class="scrim" id="scrim" hidden></div>
 <section class="pop" id="p-music" role="region" aria-label="Music" hidden>
   <div class="popbar"><div class="cap">Music</div><button type="button" class="pclose" data-close aria-label="Close music settings">Close</button></div>
   <div class="how" aria-label="How the rings work">
@@ -1073,15 +1085,28 @@ const FACTS = [
   { k: 'surf', label: 'Best surf right now', dir: 1, f: (s) => Math.min(s.tval, 3) * Math.min(s.tper, 14), show: (s) => s.tval.toFixed(1) + ' m at ' + s.tper.toFixed(0) + ' s', line: () => 'Tall and well spaced. Height times wait, capped so a storm does not win.' },
   { k: 'bbig', label: 'Biggest on the Blue Coast', set: 'blue', dir: 1, f: (s) => s.tval, show: (s) => s.tval.toFixed(1) + ' m', line: (s) => s.res || compare(s.tval) },
   { k: 'bwarm', label: 'Warmest on the Blue Coast', set: 'blue', dir: 1, f: (s) => s.ttemp, show: (s) => s.ttemp.toFixed(1) + ' °C', line: (s) => wetsuit(s.ttemp) },
+  { k: 'bcold', label: 'Coldest on the Blue Coast', set: 'blue', dir: -1, f: (s) => s.ttemp, show: (s) => s.ttemp.toFixed(1) + ' °C', line: (s) => wetsuit(s.ttemp) },
+  { k: 'bcalm', label: 'Calmest on the Blue Coast', set: 'blue', dir: -1, f: (s) => s.tval, show: (s) => s.tval.toFixed(1) + ' m', line: (s) => s.res || 'Waves ' + s.tper.toFixed(0) + ' seconds apart.' },
+  { k: 'bsurf', label: 'Best surf on the Blue Coast', set: 'blue', dir: 1, f: (s) => Math.min(s.tval, 3) * Math.min(s.tper, 14), show: (s) => s.tval.toFixed(1) + ' m at ' + s.tper.toFixed(0) + ' s', line: (s) => s.res || 'Tall and well spaced.' },
+  { k: 'swim', label: 'Best for a swim', dir: 1, f: (s) => s.ttemp - s.tval * 5, show: (s) => s.ttemp.toFixed(1) + ' °C, ' + s.tval.toFixed(1) + ' m', line: () => 'The warmest water with the smallest waves.' },
+  { k: 'warmbig', label: 'Biggest wave in warm water', dir: 1, ok: (s) => s.ttemp >= 24, f: (s) => s.tval, show: (s) => s.tval.toFixed(1) + ' m', line: (s) => 'In a sea of ' + s.ttemp.toFixed(0) + ' °C, ' + compare(s.tval) },
+  { k: 'coldbig', label: 'Biggest wave in cold water', dir: 1, ok: (s) => s.ttemp <= 8, f: (s) => s.tval, show: (s) => s.tval.toFixed(1) + ' m', line: (s) => 'In a sea of ' + s.ttemp.toFixed(0) + ' °C, ' + compare(s.tval) },
+  { k: 'steep', label: 'Steepest waves', dir: 1, f: (s) => s.tval / (s.tper * s.tper), show: (s) => s.tval.toFixed(1) + ' m every ' + s.tper.toFixed(0) + ' s', line: () => 'Tall and close together, so they break hard.' },
+  { k: 'gentle', label: 'Gentlest swell', dir: -1, f: (s) => s.tval / (s.tper * s.tper), show: (s) => s.tval.toFixed(1) + ' m every ' + s.tper.toFixed(0) + ' s', line: () => 'Low and widely spaced. It barely lifts the water.' },
+  { k: 'north', label: 'Furthest north', dir: 1, f: (s) => s.lat, show: (s) => Math.abs(s.lat).toFixed(0) + '° ' + (s.lat < 0 ? 'S' : 'N'), line: (s) => s.tval.toFixed(1) + ' m waves in a ' + s.ttemp.toFixed(0) + ' °C sea.' },
+  { k: 'south', label: 'Furthest south', dir: -1, f: (s) => s.lat, show: (s) => Math.abs(s.lat).toFixed(0) + '° ' + (s.lat < 0 ? 'S' : 'N'), line: (s) => s.tval.toFixed(1) + ' m waves in a ' + s.ttemp.toFixed(0) + ' °C sea.' },
+  { k: 'typical', label: 'The most typical sea', dir: -1, f: (s, L) => { const n = L.length, mh = L.reduce((a, x) => a + x.tval, 0) / n, mt = L.reduce((a, x) => a + x.ttemp, 0) / n; return Math.abs(s.tval - mh) / 2 + Math.abs(s.ttemp - mt) / 8; }, show: (s) => s.tval.toFixed(1) + ' m, ' + s.ttemp.toFixed(0) + ' °C', line: (s, L) => 'Closest to the average of all of them: ' + (L.reduce((a, x) => a + x.tval, 0) / L.length).toFixed(1) + ' m and ' + (L.reduce((a, x) => a + x.ttemp, 0) / L.length).toFixed(0) + ' °C.' },
+  { k: 'gap', label: 'The temperature gap', dir: 1, f: (s) => s.ttemp, show: (s, L) => (Math.max(...L.map(x => x.ttemp)) - Math.min(...L.map(x => x.ttemp))).toFixed(0) + ' °C', line: (s, L) => 'From the coldest sea to this one, the warmest, ' + s.ttemp.toFixed(0) + ' °C.' },
 ];
 let factSel = 'big', factPlace = null;
 function renderFacts() {
   const chips = $('f-chips'); if (!chips) return;
   if (!chips.children.length) FACTS.forEach(F => { const b = document.createElement('button'); b.type = 'button'; b.className = 'fchip'; b.textContent = F.label; b.dataset.k = F.k; b.addEventListener('click', () => { factSel = F.k; renderFacts(); }); chips.append(b); });
   [...chips.children].forEach(b => b.setAttribute('aria-pressed', b.dataset.k === factSel));
-  const F = FACTS.find(x => x.k === factSel), list = F.set === 'blue' ? BLUE_POOL : OCEANS.concat(BLUE_POOL);
-  const s = list.reduce((a, x) => (!a || F.dir * F.f(x) > F.dir * F.f(a) ? x : a), null); factPlace = s; if (!s) return;
-  $('f-k').textContent = F.label; $('f-v').textContent = F.show(s); $('f-n').textContent = s.sub ? s.name + ', ' + s.sub : s.name; $('f-l').textContent = F.line(s);
+  const F = FACTS.find(x => x.k === factSel), all = F.set === 'blue' ? BLUE_POOL : OCEANS.concat(BLUE_POOL), list = F.ok ? all.filter(F.ok) : all;
+  const s = list.reduce((a, x) => (!a || F.dir * F.f(x, all) > F.dir * F.f(a, all) ? x : a), null); factPlace = s;
+  $('f-go').hidden = !s; if (!s) { $('f-k').textContent = F.label; $('f-v').textContent = '–'; $('f-n').textContent = 'Nothing fits right now.'; $('f-l').textContent = ''; return; }
+  $('f-k').textContent = F.label; $('f-v').textContent = F.show(s, all); $('f-n').textContent = s.sub ? s.name + ', ' + s.sub : s.name; $('f-l').textContent = F.line(s, all);
 }
 $('f-go').addEventListener('click', () => {
   const s = factPlace; if (!s) return; TRACK.add('fact:' + factSel);
@@ -1726,11 +1751,13 @@ $('m-style').addEventListener('change', () => setStyle($('m-style').value, true)
 setStyle(lsGet('bw-style', 'default'), false);
 function openPanel(id) {
   ['music', 'midi', 'facts'].forEach(p => { const el = $('p-' + p), btn = $('b-' + p), open = p === id && el.hidden; el.hidden = !open; btn.setAttribute('aria-expanded', open); });
+  $('scrim').hidden = !['music', 'midi', 'facts'].some(p => !$('p-' + p).hidden);
   if (id === 'midi' && !$('p-midi').hidden) midiConnect();
   if (id === 'facts' && !$('p-facts').hidden) { renderFacts(); TRACK.add('facts-open'); }
 }
 $('b-music').addEventListener('click', () => openPanel('music')); $('b-facts').addEventListener('click', () => openPanel('facts')); $('b-midi').addEventListener('click', () => openPanel('midi')); $('b-midi2').addEventListener('click', () => openPanel('midi'));
 document.addEventListener('keydown', (e) => { if (e.key === 'Escape') openPanel(null); });
+$('scrim').addEventListener('click', () => openPanel(null));
 document.querySelectorAll('[data-close]').forEach(b => b.addEventListener('click', () => openPanel(null)));
 
 // ---------- drawing helpers ----------
