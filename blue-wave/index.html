@@ -683,6 +683,7 @@ function detectUS() {
 }
 let unitPref = 'auto'; try { unitPref = localStorage.getItem('bw-units') || 'auto'; } catch (e) {}
 const isUS = () => unitPref === 'us' || (unitPref === 'auto' && detectUS());
+TRACK.once('units:' + (isUS() ? 'us' : 'metric'));
 const FT = 3.281, ftn = (m) => { const f = m * FT; return f < 10 ? f.toFixed(1) : String(Math.round(f)); };
 const fH = (m) => isUS() ? `${ftn(m)} ft` : `${m.toFixed(1)} m`;                       // a height
 const fT = (c, d = 1) => isUS() ? `${Math.round(c * 9 / 5 + 32)} °F` : `${c.toFixed(d)} °C`;   // a temperature
@@ -1788,7 +1789,7 @@ SCALES.forEach((x, i) => $('m-scale').add(new Option(x[0], i))); $('m-scale').in
 shiftBars = +$('m-shift').value;
 $('m-units').value = unitPref;
 $('m-units').addEventListener('change', () => {
-  unitPref = $('m-units').value; try { localStorage.setItem('bw-units', unitPref); } catch (e) {}
+  unitPref = $('m-units').value; TRACK.add('units-set:' + unitPref); try { localStorage.setItem('bw-units', unitPref); } catch (e) {}
   showFacts(); renderPanel(); renderSurf(); renderFacts(); updateBar(); fitName();
 });
 // Sound presets. Choosing one also sets the tempo, chords, melody and drone to suit it. Every slider can still be moved afterwards.

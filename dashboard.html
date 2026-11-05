@@ -290,6 +290,8 @@ function drawBW(inRange, today, span) {
   card("Places they pick", "Beaches and towns chosen by a person", by("place:"), cap, null);
   card("Countries", "From Cloudflare. No address is kept", by("country:"), countryName, visits);
   card("Devices", "Phone, tablet or computer", by("device:"), cap, visits);
+  card("Units shown", "Picked automatically from the phone or browser language", by("units:"), k => k === "us" ? "Feet and °F" : "Metres and °C", visits);
+  card("Units chosen by hand", "Changed in Music settings", by("units-set:"), k => ({ auto: "Auto", metric: "Metres and °C", us: "Feet and °F" })[k] || k, null);
   card("How long they stay", "Share of visits still open at each point", [["10s", "10 seconds"], ["30s", "30 seconds"], ["1m", "1 minute"], ["3m", "3 minutes"], ["10m", "10 minutes"]].map(([k, l]) => [l, bwSum(rng, "stay:" + k)]), x => x, visits);
 }
 function drawVisits() {
