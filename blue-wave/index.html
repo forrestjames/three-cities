@@ -95,9 +95,10 @@ dd { margin: 0; text-align: right; color: var(--foam); font-size: 13px; overflow
 #s-note { font-size: 11.5px; color: var(--faint); }
 .scale-cap { font-size: 13px; color: var(--foam); margin-top: 2px; line-height: 1.4; }
 .scale-cap b { font-weight: 500; }
-:root { --sb: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cg transform='rotate(35 12 12)' fill='none' stroke='%23000' stroke-width='1.7' stroke-linecap='round'%3E%3Cpath d='M12 1.8c3 4 4 9 4 13.2 0 4-1.8 7.2-4 7.2s-4-3.2-4-7.2c0-4.2 1-9.2 4-13.2z'/%3E%3Cpath d='M12 6v13'/%3E%3C/g%3E%3C/svg%3E"); }
+:root { --gear: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cg fill='none' stroke='%23000' stroke-width='1.7' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M5 4.5h14l1.6 13.5h-6.1L12 11.5 9.5 18H3.4z'/%3E%3Cpath d='M5.2 8h13.6'/%3E%3C/g%3E%3C/svg%3E"); }
+.mshare { display: none; }
 .sline { margin-top: 8px; font: 400 15px/1.35 var(--display); color: var(--foam); }
-#r-line:not(:empty)::before, .sline:not(:empty)::before { content: ""; display: inline-block; width: 27px; height: 27px; margin-right: 8px; vertical-align: -8px; background: currentColor; -webkit-mask: var(--sb) center / contain no-repeat; mask: var(--sb) center / contain no-repeat; }
+#r-line:not(:empty)::before, .sline:not(:empty)::before { content: ""; display: inline-block; width: 27px; height: 27px; margin-right: 8px; vertical-align: -8px; background: currentColor; -webkit-mask: var(--gear) center / contain no-repeat; mask: var(--gear) center / contain no-repeat; }
 .geo { display: flex; margin-bottom: 8px; align-items: center; justify-content: space-between; gap: 12px; }
 .geo-t { min-width: 0; }
 #mini { flex: none; width: 130px; height: 54px; margin: 0; }
@@ -337,10 +338,10 @@ input[type=range]::-moz-range-thumb { width: 14px; height: 14px; border-radius: 
   #pg-read .name { display: none; } #pg-read .geo { display: contents; }
   #pg-read .sub { grid-column: 1; margin: 2px 0 0; font-size: 12.5px; } #mini { grid-column: 2; grid-row: 1 / 3; width: 112px; height: 48px; margin: 0; align-self: center; }
   #r-line { display: block; grid-column: 1 / -1; grid-row: 3; margin: 8px 0 0; font: 400 15px/1.35 var(--display); color: var(--foam); } #r-line:empty, #r-line2 { display: none; }
-  #pg-read #gauges { grid-column: 1 / -1; grid-row: 4; width: calc(100% - 56px); height: 78px; margin-top: 8px; }
-  #pg-read .share-btn { grid-column: 1 / -1; grid-row: 4; justify-self: end; align-self: start; margin: 14px 0 0; padding: 0; width: 38px; min-height: 38px; justify-content: center; font-size: 0; gap: 0; } #pg-read .share-btn svg { width: 17px; height: 17px; }
-  body.is-place #pg-read .share-btn { margin-top: 60px; }
-  body.is-place .chg { display: grid; place-items: center; grid-column: 1 / -1; grid-row: 4; justify-self: end; align-self: start; margin: 14px 0 0; width: 38px; height: 38px; padding: 0; border: 1px solid var(--edge); border-radius: 50%; background: none; color: var(--foam); cursor: pointer; } body.is-place .chg svg { width: 17px; height: 17px; } body.is-place .chg:hover, body.is-place .chg:focus-visible { border-color: var(--accent); }
+  #pg-read #gauges { grid-column: 1 / -1; grid-row: 4; width: 100%; height: 96px; margin-top: 8px; }
+  #pg-read .share-btn { display: none; }   /* on phones Share lives by the beach name, in the bar */
+  body.is-place .chg { display: inline-grid; place-items: center; width: 34px; height: 34px; margin: -9px 0 -9px 4px; padding: 0; border: 0; border-radius: 8px; background: none; color: var(--foam); vertical-align: middle; cursor: pointer; } body.is-place .chg svg { width: 19px; height: 19px; } body.is-place .chg:hover, body.is-place .chg:focus-visible { color: var(--accent); }
+  .mshare { flex: none; width: 40px; height: 40px; margin-right: -2px; padding: 0; border: 0; border-radius: 10px; background: none; color: var(--foam); display: grid; place-items: center; cursor: pointer; } .mshare svg { width: 22px; height: 22px; } .mshare:hover, .mshare:focus-visible { color: var(--accent); }
   /* card: the surfer */
   #pg-scale { overflow: hidden; } #pg-scale #scale { height: 132px; margin-top: -16px; } .scale-cap { display: none; } #pg-scale .sline { margin-top: 2px; }   /* the sea line says what the caption said, so the card fits without scrolling */
   /* card: the data */
@@ -430,9 +431,9 @@ input[type=range]::-moz-range-thumb { width: 14px; height: 14px; border-radius: 
 <aside class="panel" id="panel" aria-live="polite">
   <div class="pg" id="pg-read"><div class="top"><div class="cap" id="r-cap">&nbsp;</div><button class="share-btn" id="share" type="button" title="Share what is loaded, with a link"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 15V4M8 8l4-4 4 4" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/><path d="M7 11H5.5A1.5 1.5 0 0 0 4 12.5v6A1.5 1.5 0 0 0 5.5 20h13a1.5 1.5 0 0 0 1.5-1.5v-6a1.5 1.5 0 0 0-1.5-1.5H17" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>Share</button></div>
   <div class="name" id="r-name">&nbsp;</div>
-  <div class="geo"><div class="sub"><img id="r-flag" class="flag" alt="" width="20" height="14" hidden><span id="r-sub"></span></div>
+  <div class="geo"><div class="sub"><img id="r-flag" class="flag" alt="" width="20" height="14" hidden><span id="r-sub"></span><button type="button" class="chg" id="chg" aria-label="Change place" title="Change place"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M15 15l5 5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg></button></div>
   <canvas id="mini" role="img" aria-label="A small world map with a dot where this is"></canvas></div>
-  <div class="wline" id="r-line"></div><div class="wline" id="r-line2"></div><button type="button" class="chg" id="chg" aria-label="Change place" title="Change place"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M15 15l5 5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg></button>
+  <div class="wline" id="r-line"></div><div class="wline" id="r-line2"></div>
   <canvas class="inline" id="gauges" role="img" aria-label="Quick scan of the conditions"></canvas>
   </div>
   <div class="pg" id="pg-scale">
@@ -524,6 +525,7 @@ input[type=range]::-moz-range-thumb { width: 14px; height: 14px; border-radius: 
 <div class="msheet" id="msheet" aria-label="Where you are, play, and more">
   <div class="mhead" id="mhead"><div class="mgrab" aria-hidden="true"></div>
     <button type="button" class="mtxt" id="mtoggle" aria-expanded="false" aria-controls="mbody" aria-label="Show more: views, headline and data"><span id="mb-name">&nbsp;</span><span id="mb-sub"></span></button>
+    <button type="button" class="mshare" id="mb-share" aria-label="Share what is loaded, with a link" title="Share"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 15V4M8 8l4-4 4 4" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/><path d="M7 11H5.5A1.5 1.5 0 0 0 4 12.5v6A1.5 1.5 0 0 0 5.5 20h13a1.5 1.5 0 0 0 1.5-1.5v-6a1.5 1.5 0 0 0-1.5-1.5H17" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg></button>
     <button type="button" class="mplay" id="mb-play" aria-label="Play" aria-pressed="false"><svg class="i-play" width="22" height="22" viewBox="0 0 22 22" aria-hidden="true"><path d="M6 3.5v15l13-7.5z" fill="#06143a"/></svg><svg class="i-stop" width="20" height="20" viewBox="0 0 20 20" aria-hidden="true"><rect x="3" y="3" width="14" height="14" rx="2" fill="#06143a"/></svg></button>
   </div>
   <div class="mbody" id="mbody" inert></div>
@@ -1250,6 +1252,7 @@ function syncUrl() { document.title = titleLine(); /* the address bar stays plai
 function shareLine() {
   return mode === 'place' ? `Here's the sea at ${place.name}${place.sub ? ', ' + place.sub : ''} right now, played as a rhythm. Try your own beach.` : (world === BLUE ? `Here's the sea off the Blue Coast right now, played as a rhythm.` : `Here's the sea around the world right now, played as a rhythm.`);
 }
+$('mb-share').addEventListener('click', () => $('share').click());
 $('share').addEventListener('click', () => {
   const btn = $('share'), url = shareURL(); if (!url) return;
   const line = shareLine(), label = btn.lastChild, done = (m) => { label.textContent = m; clearTimeout(btn._t); btn._t = setTimeout(() => { label.textContent = 'Share'; }, 2000); };
@@ -1965,14 +1968,14 @@ function drawMini(now) {
 function drawGauges(now) {
   const f = fit($('gauges')); if (!f) return; const { c, cw } = f, list = tiles(), n = list.length, t = now / 1000;
   list.forEach((g, i) => {
-    const x = (i === 0 ? 11 : i === n - 1 ? cw - 11 : 11 + i * (cw - 22) / (n - 1)), y = 24;
+    const x = (i === 0 ? 11 : i === n - 1 ? cw - 11 : 11 + i * (cw - 22) / (n - 1)), y = 24, gap = phone.matches ? 10 : 0;
     if (g.k === 'glass') gGlass(c, x, y, 22, 32, g.f, t);
     else if (g.k === 'thermo') gThermo(c, x, y, 34, g.f, g.col);
     else if (g.k === 'wind') gWind(c, x, y, 34, g.f, g.dir);
     else gTide(c, x, y, 32, g.f, g.up, t);
     const lx = i === 0 ? 0 : i === n - 1 ? cw : x; c.textAlign = i === 0 ? 'left' : i === n - 1 ? 'right' : 'center'; c.textBaseline = 'alphabetic';
-    c.font = '500 11px "JetBrains Mono", ui-monospace, monospace'; c.fillStyle = FOAM; c.fillText(g.v, lx, 55);
-    c.font = '400 10px "JetBrains Mono", ui-monospace, monospace'; c.fillStyle = 'rgba(206,222,255,.7)'; c.fillText(g.l.toUpperCase(), lx, 70);
+    c.font = '500 11px "JetBrains Mono", ui-monospace, monospace'; c.fillStyle = FOAM; c.fillText(g.v, lx, 55 + gap);
+    c.font = '400 10px "JetBrains Mono", ui-monospace, monospace'; c.fillStyle = 'rgba(206,222,255,.7)'; c.fillText(g.l.toUpperCase(), lx, 70 + gap);
   });
 }
 
