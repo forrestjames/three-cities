@@ -118,10 +118,9 @@ button:hover { border-color: var(--ink); }
     <a class="page" href="https://claude.ai/artifact/JA73MPgsJ2VEVYty8WzQrQ" target="_blank" rel="noopener"><b>Title mockups</b><span>the dotted BLUE WAVE type</span></a>
   </div>
   <h2>Blue Wave stats</h2>
-  <p class="hint">Nothing is counted for Blue Wave yet. The Visitors numbers below are for Three Cities only. This is where stats and the graphics made from them will live: biggest wave of the day, warmest sea, how many beaches are playing, and so on.</p>
-  <div class="pages">
-    <a class="page" href="https://dash.cloudflare.com/" target="_blank" rel="noopener"><b>Cloudflare</b><span>page views, once Blue Wave is counted</span></a>
-  </div>
+  <p class="hint">Anonymous daily counts from the Blue Wave page, in the same way as Visitors below: no cookies, no addresses. They load with the Load button in Visitors. Blue Wave only starts counting once the new Worker code is pasted into Cloudflare (quiz-worker/worker.js).</p>
+  <div class="vtiles" id="bwtiles"></div>
+  <div class="vg" id="bwlists"></div>
 
   <h2>Visitors</h2>
   <p class="hint">Anonymous daily counts from the app: no cookies, no addresses, nobody followed from visit to visit. A visit is one time someone opens the page. Days are London days.</p>
@@ -246,6 +245,31 @@ const addDays = (iso, n) => { const d = new Date(iso + "T12:00:00Z"); d.setUTCDa
 const weekStart = iso => { const d = new Date(iso + "T12:00:00Z"), w = (d.getUTCDay() + 6) % 7; return addDays(iso, -w); };
 function sumBy(rows, kind, key) { let n = 0; rows.forEach(r => { if (r[1] === kind && (key == null || r[2] === key)) n += r[3]; }); return n; }
 function tally(rows, kind) { const m = new Map(); rows.forEach(r => { if (r[1] === kind) m.set(r[2], (m.get(r[2]) || 0) + r[3]); }); return [...m].sort((a, b) => b[1] - a[1]); }
+// ---------- Blue Wave ----------
+const bwSum = (rows, key) => sumBy(rows, "bw", key);
+function drawBW(inRange, today, span) {
+  const t = $("bwtiles"), box = $("bwlists"); if (!t) return;
+  const rows = V.rows.filter(r => r[1] === "bw"), rng = inRange.filter(r => r[1] === "bw");
+  const visits = bwSum(rng, "visit"), plays = bwSum(rng, "listen"), pc = (n, d) => d ? Math.round(100 * n / d) + "%" : "–";
+  const tiles = [["Visits today", bwSum(rows.filter(r => r[0] === today), "visit")], ["Visits, last 7 days", bwSum(rows.filter(r => r[0] >= addDays(today, -6)), "visit")], ["Visits in range", visits],
+    ["Pressed play", pc(plays, visits)], ["Stayed a minute", pc(bwSum(rng, "stay:1m"), visits)], ["Shared", bwSum(rng, "share")]];
+  t.innerHTML = ""; tiles.forEach(([l, v]) => { const d = document.createElement("div"); d.className = "stat"; d.innerHTML = "<b></b><span></span>"; d.querySelector("b").textContent = typeof v === "number" ? v.toLocaleString("en-GB") : v; d.querySelector("span").textContent = l; t.appendChild(d); });
+  const by = pre => { const m = new Map(); rng.forEach(r => { if (r[2].startsWith(pre)) m.set(r[2].slice(pre.length), (m.get(r[2].slice(pre.length)) || 0) + r[3]); }); return [...m].sort((a, b) => b[1] - a[1]); };
+  box.innerHTML = "";
+  const card = (title, sub, items, fmt, total) => {
+    const c = document.createElement("div"); c.className = "vc"; const h = document.createElement("h3"); h.textContent = title; const s2 = document.createElement("div"); s2.className = "sub"; s2.textContent = sub; c.append(h, s2);
+    if (!items.length) { const e = document.createElement("div"); e.className = "empty"; e.textContent = "Nothing yet."; c.appendChild(e); }
+    const topN = items.slice(0, 10), mx = Math.max(1, ...topN.map(x => x[1]));
+    topN.forEach(([k, n]) => { const r = document.createElement("div"); r.className = "vr"; r.innerHTML = `<span class="c"></span><span class="tr"><i style="width:${Math.round(100 * n / mx)}%"></i></span><span class="p">${n.toLocaleString("en-GB")} <small>${total ? pc(n, total) : ""}</small></span>`; const x = fmt(k); r.querySelector(".c").textContent = x; r.querySelector(".c").title = x; c.appendChild(r); });
+    box.appendChild(c);
+  };
+  const VIEW = { blue: "Blue Coast", oceans: "World", place: "Place" };
+  card("Views they pick", "Blue Coast, World or Place", by("view:"), k => VIEW[k] || k, null);
+  card("Places they pick", "Beaches and towns chosen by a person", by("place:"), cap, null);
+  card("Countries", "From Cloudflare. No address is kept", by("country:"), countryName, visits);
+  card("Devices", "Phone, tablet or computer", by("device:"), cap, visits);
+  card("How long they stay", "Share of visits still open at each point", [["10s", "10 seconds"], ["30s", "30 seconds"], ["1m", "1 minute"], ["3m", "3 minutes"], ["10m", "10 minutes"]].map(([k, l]) => [l, bwSum(rng, "stay:" + k)]), x => x, visits);
+}
 function drawVisits() {
   if (!V) return;
   const today = V.today, span = Number($("vrange").value), from = addDays(today, -(span - 1));
@@ -275,6 +299,7 @@ function drawVisits() {
     svg += `<g><title>${label(p)}${gran === "week" ? " (week starting)" : ""}: ${v} visits, ${pl} pressed play</title><rect x="${x + bw * 0.16}" y="${H - B - h}" width="${w}" height="${Math.max(h, v ? 1 : 0)}" rx="2" fill="#e07a4f"/><rect x="${x + bw * 0.16}" y="${H - B - h2}" width="${w}" height="${Math.max(h2, pl ? 1 : 0)}" rx="2" fill="#f3ece6" fill-opacity="0.85"/></g>`;
     if ((last - i) % every === 0) svg += `<text x="${i === last ? x + bw : x + bw / 2}" y="${H - 10}" text-anchor="${i === last ? "end" : "middle"}" fill="rgba(243,236,230,0.55)" font-size="11" font-family="monospace">${label(p)}</text>`;
   });
+  drawBW(inRange, today, span);
   $("vchart").innerHTML = `<div class="lg"><span><i style="background:#e07a4f"></i>Visits</span><span><i style="background:#f3ece6"></i>Pressed play</span></div>` + svg + "</svg>";
   // lists
   const box = $("vlists"); box.innerHTML = "";

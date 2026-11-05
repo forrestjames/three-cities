@@ -36,7 +36,7 @@ const STAY = new Set(["10s", "30s", "1m", "3m", "10m", "30m"]);
 const HEARD = new Set(["30s", "1m", "3m", "10m", "30m"]);
 const ACTS = new Set(["share-sheet", "share-copy", "record", "record-saved", "quiz-answer", "midi-out", "own-sound", "opened-shared-link", "chords-on", "mix-saved"]);
 // kinds the page may send. Free text ones (city names, sources) are capped per day so nobody can flood the table.
-const KINDS = { visit: null, listen: new Set(["start"]), stay: STAY, heard: HEARD, act: ACTS, city: "free", link: "free", citypick: "free", sound: "free", soundpick: "free", kit: "free", chords: "free", scale: "free", tempo: "free" };
+const KINDS = { visit: null, listen: new Set(["start"]), stay: STAY, heard: HEARD, act: ACTS, city: "free", link: "free", citypick: "free", sound: "free", soundpick: "free", kit: "free", chords: "free", scale: "free", tempo: "free", bw: "free" };   // bw: the Blue Wave page ("visit", "play", "view:blue", "place:…", "stay:30s"…)
 const FREE_CAP = 400;
 const BOT = /bot|crawl|spider|headless|lighthouse|preview|facebookexternalhit|slurp|python|curl|wget|node-fetch|axios/i;
 const today = () => new Date().toLocaleDateString("en-CA", { timeZone: "Europe/London" });   // the day, in London
@@ -73,6 +73,9 @@ async function collect(req, env) {
       const vc = clean2(req.cf && req.cf.city), cc = clean2(c === "XX" ? "" : c);
       if (vc) { bump("vcity", vc + (cc ? ", " + cc : "")); free.set("vcity", true); }
       continue;
+    }
+    if (kind === "bw" && key === "visit") {   // a Blue Wave visit also counts its country and device, apart from Three Cities
+      const c = (req.cf && req.cf.country) || "unknown"; bump("bw", "country:" + (c === "XX" ? "unknown" : c.toLowerCase())); bump("bw", "device:" + deviceOf(req.headers.get("User-Agent") || "")); free.set("bw", true);
     }
     const allowed = KINDS[kind];
     if (allowed === "free") { if (!key) continue; free.set(kind, true); bump(kind, key); }
