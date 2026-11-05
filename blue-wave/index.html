@@ -57,13 +57,6 @@ h1 { margin: 0; font-weight: 200; letter-spacing: -.02em; line-height: .9; font-
 .live.offline::before { background: var(--faint); box-shadow: none; }
 .seg { margin-top: 16px; display: inline-flex; border: 1px solid var(--edge); border-radius: 999px; padding: 3px; background: var(--glass); text-shadow: none; }
 .seg button { font: 500 13px var(--mono); letter-spacing: .06em; color: var(--mist); background: transparent; border: 0; border-radius: 999px; padding: 9px 20px; cursor: pointer; min-height: 38px; }
-.supers[hidden] { display: none !important; }
-.supers { display: grid; grid-template-columns: minmax(0, 1fr); gap: 8px; margin-top: 8px; }
-.sup { display: flex; flex-direction: column; align-items: flex-start; gap: 1px; text-align: left; min-width: 0; font: 500 11px var(--mono); letter-spacing: .03em; color: var(--foam); background: var(--glass); border: 1px solid var(--edge); border-radius: 17px; padding: 6px 14px; min-height: 44px; cursor: pointer; text-shadow: none; }
-.sup { display: grid; grid-template-columns: minmax(0, 1fr) auto; column-gap: 12px; align-items: center; width: 100%; border-radius: 16px; padding: 7px 16px; min-height: 52px; } .sup .sv { display: contents; } .sup .sk { grid-column: 1; grid-row: 1; } .sup .sv span:first-child { grid-column: 2; grid-row: 1 / 3; font: 400 24px var(--display); letter-spacing: 0; } .sup .sn { grid-column: 1; grid-row: 2; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--mist); font-size: 12px; } .sup .sn::before { content: none; }
-#pg-records { overflow-y: auto; }
-.sup .sk { color: var(--mist); font-size: 9.5px; letter-spacing: .08em; text-transform: uppercase; white-space: nowrap; } .sup .sv { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.sup[aria-pressed="true"] { background: var(--foam); color: var(--abyss); } .sup[aria-pressed="true"] .sk { color: var(--abyss); }
 .seg .usf { display: inline-block; vertical-align: -5px; margin-left: 8px; border-radius: 50%; box-shadow: 0 0 0 1px rgba(255,255,255,.25); opacity: .75; }
 .seg button[aria-pressed="true"] .usf { opacity: .7; }
 .seg button[aria-pressed="true"] { background: var(--foam); color: var(--abyss); }
@@ -178,6 +171,18 @@ input[type=search]::placeholder { color: var(--faint); }
 .pop { position: fixed; z-index: 4; left: 50%; transform: translateX(-50%); bottom: calc(env(safe-area-inset-bottom, 0px) + 118px); width: min(560px, calc(100% - 32px)); max-height: calc(100% - 150px); overflow: auto;
   background: var(--glass); border: 1px solid var(--edge); border-radius: 16px; backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); padding: 16px 20px; font: 400 13px var(--mono); color: var(--mist); }
 .pop[hidden] { display: none; }
+.go.alt { background: transparent; color: var(--foam); border: 1px solid var(--edge); }
+.mrow { display: flex; gap: 8px; width: 100%; flex: none; }
+.mrow .go { flex: 1; margin-top: 0; }
+.fchips { display: flex; gap: 6px; overflow-x: auto; margin: 0 -4px; padding: 2px 4px 10px; scrollbar-width: none; }
+.fchip { flex: none; font: 500 12px var(--mono); letter-spacing: .04em; color: var(--foam); background: transparent; border: 1px solid var(--edge); border-radius: 17px; padding: 0 14px; min-height: 40px; cursor: pointer; white-space: nowrap; }
+.fchip[aria-pressed="true"] { background: var(--foam); color: var(--abyss); }
+.fcard { border: 1px solid var(--edge); border-radius: 16px; padding: 14px 18px 16px; }
+.fk { font: 500 10.5px var(--mono); letter-spacing: .1em; text-transform: uppercase; color: var(--mist); }
+.fv { font: 400 44px/1.1 var(--display); color: var(--foam); margin-top: 6px; }
+.fn { font: 500 16px var(--display); color: var(--foam); margin-top: 4px; }
+.fl { font: 400 12.5px/1.45 var(--mono); color: var(--mist); margin-top: 8px; }
+.fcard .go { margin-top: 14px; }
 .pclose { display: none; }
 .phone-only { display: none; }
 @media (min-width: 761px) { .bn-phone { display: none !important; } }   /* the line sits in the headline card on wider screens, so no second copy */
@@ -261,7 +266,7 @@ input[type=range]::-moz-range-thumb { width: 14px; height: 14px; border-radius: 
   .seg button { flex: 1; display: flex; align-items: center; justify-content: center; gap: 6px; white-space: nowrap; padding: 6px 4px; min-height: 44px; font-size: 12.5px; letter-spacing: .03em; }
   .seg .usf { margin: 0; width: 16px; height: 16px; flex: none; vertical-align: baseline; }
   .seg #m-blue { flex: 1.7 1 0; padding: 6px 14px; gap: 8px; } .seg #m-place, .seg #m-world { flex: 1 1 0; }
-  .mmusic { flex: none; min-height: 46px; position: sticky; bottom: 0; }
+  .mrow { position: sticky; bottom: 0; } .mrow .go { min-height: 46px; padding: 0 8px; }
   .mbody { padding-bottom: calc(14px + env(safe-area-inset-bottom, 0px)); }
 
   /* the swipeable cards */
@@ -401,20 +406,11 @@ input[type=range]::-moz-range-thumb { width: 14px; height: 14px; border-radius: 
   <div class="note" id="r-note"></div>
   <button class="go wide" id="open-place" type="button" hidden>Open this beach</button>
   </div>
-  <div class="pg" id="pg-records">
-  <div class="cap">Records right now</div>
-<div class="supers" id="supers" role="group" aria-label="Records right now">
-  <button type="button" class="sup" data-k="big"><span class="sk">Biggest wave</span><span class="sv"></span></button>
-  <button type="button" class="sup" data-k="warm"><span class="sk">Warmest sea</span><span class="sv"></span></button>
-  <button type="button" class="sup" data-k="cold"><span class="sk">Coldest sea</span><span class="sv"></span></button>
-</div>
-  <div class="note">Across the seas of the world and the Blue Coast beaches. Tap one to hear it.</div>
-  </div>
 </aside>
 <div class="dockdots" id="dockdots" hidden></div>
 
 <div class="bar" id="bar" role="group" aria-label="Controls">
-  <div class="btns"><button class="play" id="play" aria-pressed="false">Play</button><button class="mini-btn" id="b-music" type="button" aria-expanded="false" aria-controls="p-music">Music</button><button class="mini-btn" id="b-midi" type="button" aria-expanded="false" aria-controls="p-midi">MIDI</button></div>
+  <div class="btns"><button class="play" id="play" aria-pressed="false">Play</button><button class="mini-btn" id="b-music" type="button" aria-expanded="false" aria-controls="p-music">Music</button><button class="mini-btn" id="b-facts" type="button" aria-expanded="false" aria-controls="p-facts">Facts</button><button class="mini-btn" id="b-midi" type="button" aria-expanded="false" aria-controls="p-midi">MIDI</button></div>
   <div class="ctl"><label for="tempo">Tempo <output id="tempo-o">60</output></label><input id="tempo" type="range" min="30" max="140" value="60"></div>
   <div class="ctl"><label for="drift">Drift <output id="drift-o">35</output></label><input id="drift" type="range" min="0" max="100" value="35"></div>
   <div class="ctl"><label for="ocean">Ocean <output id="ocean-o">55</output></label><input id="ocean" type="range" min="0" max="100" value="55"></div>
@@ -451,6 +447,15 @@ input[type=range]::-moz-range-thumb { width: 14px; height: 14px; border-radius: 
   <button class="go phone-only" id="b-midi2" type="button" style="margin-top:6px">MIDI out</button>
   <p class="note phone-only">Sea and weather: <a href="https://open-meteo.com/" target="_blank" rel="noopener">Open-Meteo</a> (DWD, ECMWF, Météo-France), CC BY 4.0 · Places: <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a> · <a href="https://threecities.forrestjamesmusic.com">Three Cities</a>, the sister piece</p>
 </section>
+<section class="pop" id="p-facts" role="region" aria-label="Fun facts" hidden>
+  <div class="popbar"><div class="cap">Fun facts</div><button type="button" class="pclose" data-close aria-label="Close fun facts">Close</button></div>
+  <div class="fchips" id="f-chips" role="group" aria-label="Pick a fact"></div>
+  <div class="fcard" id="f-card" aria-live="polite">
+    <div class="fk" id="f-k"></div><div class="fv" id="f-v"></div><div class="fn" id="f-n"></div><div class="fl" id="f-l"></div>
+    <button type="button" class="go wide" id="f-go">Play this place</button>
+  </div>
+  <p class="note">Read live across the seas of the world and the Blue Coast beaches.</p>
+</section>
 <section class="pop" id="p-midi" role="region" aria-label="MIDI out" hidden>
   <div class="popbar"><div class="cap">MIDI out</div><button type="button" class="pclose" data-close aria-label="Close MIDI settings">Close</button></div>
   <p class="note" id="midist">Send the rings, chord and melody to your studio. Needs Chrome or Edge.</p>
@@ -475,7 +480,7 @@ input[type=range]::-moz-range-thumb { width: 14px; height: 14px; border-radius: 
     <button type="button" class="mtxt" id="mtoggle" aria-expanded="false" aria-controls="mbody" aria-label="Show more: views, headline and data"><span id="mb-name">&nbsp;</span><span id="mb-sub"></span></button>
     <button type="button" class="mplay" id="mb-play" aria-label="Play" aria-pressed="false"><svg class="i-play" width="22" height="22" viewBox="0 0 22 22" aria-hidden="true"><path d="M6 3.5v15l13-7.5z" fill="#06143a"/></svg><svg class="i-stop" width="20" height="20" viewBox="0 0 20 20" aria-hidden="true"><rect x="3" y="3" width="14" height="14" rx="2" fill="#06143a"/></svg></button>
   </div>
-  <div class="mbody" id="mbody" inert><button type="button" class="go wide mmusic" id="mb-music">Music settings</button></div>
+  <div class="mbody" id="mbody" inert><div class="mrow" id="mrow"><button type="button" class="go alt" id="mb-facts">Fun facts</button><button type="button" class="go mmusic" id="mb-music">Music settings</button></div></div>
 </div>
 
 <script>
@@ -722,7 +727,7 @@ async function fetchList(list, ref) {
   } catch (e) { console.warn('Blue Wave: sea list unavailable, using sample readings', e); }
   list.forEach(rebuild);
 }
-async function fetchWorld() { await Promise.all([fetchList(BLUE_POOL, BLUE_REF), fetchList(OCEANS, WORLD_REF)]); BLUE.live = BLUE_POOL.live; showFacts(); renderPanel(); updateSupers(); }
+async function fetchWorld() { await Promise.all([fetchList(BLUE_POOL, BLUE_REF), fetchList(OCEANS, WORLD_REF)]); BLUE.live = BLUE_POOL.live; showFacts(); renderPanel(); renderFacts(); }
 
 async function fetchPlace() {
   const p = place, stamp = ++fetchPlace.n;
@@ -1016,8 +1021,7 @@ function updateBar() {   // the bar along the bottom of a phone: where you are, 
 }
 function scaleVoice() { const s = voices[selected]; return !s || s.kind === 'air' ? voices[0] : s; }
 function renderPanel() {
-  if (typeof updateSupers === 'function') updateSupers();
-  const dl = $('r-dl'); dl.textContent = '';
+    const dl = $('r-dl'); dl.textContent = '';
   const row = (k, v) => { const dt = document.createElement('dt'), dd = document.createElement('dd'); dt.textContent = k; dd.textContent = v; dl.append(dt, dd); };
   const sv = scaleVoice(), cap = $('scale-cap'); cap.textContent = '';
   if (mode === 'world') {
@@ -1056,26 +1060,34 @@ function renderPanel() {
   updateNews(); updateBar(); requestAnimationFrame(fitName); setTimeout(fitName, 400);
 }
 function syncNote() { const on = mode === 'world' && world === BLUE; $('blue-note').hidden = !on; $('blue-note-m').hidden = !on; document.body.classList.toggle('is-blue', on); document.body.classList.toggle('is-place', mode === 'place'); }
-// Records: biggest wave, warmest and coldest sea, in the view you are on. Tap one to go straight to that ring.
-function recordSet() { return OCEANS.concat(BLUE_POOL); }   // the seas around the world and the Blue Coast beaches
-function records() {
-  const l = recordSet(), by = (f, d) => l.reduce((a, s) => (!a || d * f(s) > d * f(a) ? s : a), null);
-  return { big: by(s => s.tval, 1), warm: by(s => s.ttemp, 1), cold: by(s => s.ttemp, -1) };
+// Fun facts: one window, one card. Pick a fact and it finds the place in the live readings.
+const POWER = (s) => .49 * s.tval * s.tval * s.tper;
+const FACTS = [
+  { k: 'big', label: 'Biggest wave', dir: 1, f: (s) => s.tval, show: (s) => s.tval.toFixed(1) + ' m', line: (s) => compare(s.tval) },
+  { k: 'calm', label: 'Calmest sea', dir: -1, f: (s) => s.tval, show: (s) => s.tval.toFixed(1) + ' m', line: (s) => 'Waves ' + s.tper.toFixed(0) + ' seconds apart. A good day for a swim, if it were warm.' },
+  { k: 'warm', label: 'Warmest sea', dir: 1, f: (s) => s.ttemp, show: (s) => s.ttemp.toFixed(1) + ' °C', line: (s) => wetsuit(s.ttemp) },
+  { k: 'cold', label: 'Coldest sea', dir: -1, f: (s) => s.ttemp, show: (s) => s.ttemp.toFixed(1) + ' °C', line: (s) => wetsuit(s.ttemp) },
+  { k: 'long', label: 'Longest wait between waves', dir: 1, f: (s) => s.tper, show: (s) => s.tper.toFixed(0) + ' s', line: () => 'A long gap means the swell began a long way off.' },
+  { k: 'short', label: 'Choppiest sea', dir: -1, f: (s) => s.tper, show: (s) => s.tper.toFixed(0) + ' s', line: () => 'Waves close together are made by the wind right here.' },
+  { k: 'power', label: 'Most powerful', dir: 1, f: POWER, show: (s) => POWER(s).toFixed(0) + ' kW', line: () => 'Wave energy per metre of coast. Height and wait both count.' },
+  { k: 'surf', label: 'Best surf right now', dir: 1, f: (s) => Math.min(s.tval, 3) * Math.min(s.tper, 14), show: (s) => s.tval.toFixed(1) + ' m at ' + s.tper.toFixed(0) + ' s', line: () => 'Tall and well spaced. Height times wait, capped so a storm does not win.' },
+  { k: 'bbig', label: 'Biggest on the Blue Coast', set: 'blue', dir: 1, f: (s) => s.tval, show: (s) => s.tval.toFixed(1) + ' m', line: (s) => s.res || compare(s.tval) },
+  { k: 'bwarm', label: 'Warmest on the Blue Coast', set: 'blue', dir: 1, f: (s) => s.ttemp, show: (s) => s.ttemp.toFixed(1) + ' °C', line: (s) => wetsuit(s.ttemp) },
+];
+let factSel = 'big', factPlace = null;
+function renderFacts() {
+  const chips = $('f-chips'); if (!chips) return;
+  if (!chips.children.length) FACTS.forEach(F => { const b = document.createElement('button'); b.type = 'button'; b.className = 'fchip'; b.textContent = F.label; b.dataset.k = F.k; b.addEventListener('click', () => { factSel = F.k; renderFacts(); }); chips.append(b); });
+  [...chips.children].forEach(b => b.setAttribute('aria-pressed', b.dataset.k === factSel));
+  const F = FACTS.find(x => x.k === factSel), list = F.set === 'blue' ? BLUE_POOL : OCEANS.concat(BLUE_POOL);
+  const s = list.reduce((a, x) => (!a || F.dir * F.f(x) > F.dir * F.f(a) ? x : a), null); factPlace = s; if (!s) return;
+  $('f-k').textContent = F.label; $('f-v').textContent = F.show(s); $('f-n').textContent = s.sub ? s.name + ', ' + s.sub : s.name; $('f-l').textContent = F.line(s);
 }
-function updateSupers() {
-  const box = $('supers'); if (!box) return;
-  const r = records();
-  box.querySelectorAll('.sup').forEach(b => {
-    const s = r[b.dataset.k]; if (!s) { b.hidden = true; return; } b.hidden = false;
-    const v = b.dataset.k === 'big' ? s.tval.toFixed(1) + ' m' : Math.round(s.ttemp) + '°C';
-    const sv = b.querySelector('.sv'); sv.textContent = ''; const a1 = document.createElement('span'), a2 = document.createElement('span'); a1.textContent = v; a2.className = 'sn'; a2.textContent = s.short || s.name; sv.append(a1, a2); b.setAttribute('aria-pressed', mode === 'place' && place.name === s.name);
-    b.setAttribute('aria-label', b.querySelector('.sk').textContent + ': ' + (s.short || s.name) + ', ' + v);
-  });
-}
-$('supers').addEventListener('click', (e) => {
-  const b = e.target.closest('.sup'); if (!b) return; const s = records()[b.dataset.k]; if (!s) return;
-  TRACK.add('record:' + b.dataset.k); if (mode !== 'place') setMode('place'); choose(s.blat || s.lat, s.blon || s.lon, s.name, s.sub || '');
+$('f-go').addEventListener('click', () => {
+  const s = factPlace; if (!s) return; TRACK.add('fact:' + factSel);
+  openPanel(null); if (mode !== 'place') setMode('place'); choose(s.blat || s.lat, s.blon || s.lon, s.name, s.sub || '');
 });
+$('mb-facts').addEventListener('click', () => { setSheet(false); openPanel('facts'); });
 function setMode(m, set) {
   mode = m; TRACK.add('view:' + (m === 'place' ? 'place' : (set ? set : (world === BLUE ? 'blue' : 'oceans')))); if (set) { world = set === 'blue' ? BLUE : OCEANS; musicKey = ''; }
   syncNote();
@@ -1085,7 +1097,7 @@ function setMode(m, set) {
   $('left').hidden = m !== 'place';
   ripples.length = 0; ringOrder = order();
   if (m === 'place' && !place.loaded) { fetchPlace(); if (!place.cc) findCountry(place.lat, place.lon); }
-  showFacts(); renderPanel(); updateSupers(); renderSurf(); syncUrl(); $('panel').scrollTo({ left: 0 }); if (m === 'place' && place.loaded) setTimeout(() => showCard('read'), 60); setTimeout(() => { resize(); }, 0);
+  showFacts(); renderPanel(); renderSurf(); syncUrl(); $('panel').scrollTo({ left: 0 }); if (m === 'place' && place.loaded) setTimeout(() => showCard('read'), 60); setTimeout(() => { resize(); }, 0);
 }
 $('chg').addEventListener('click', () => { showCard('search'); setTimeout(() => $('q').focus({ preventScroll: true }), 350); });
 $('m-blue').addEventListener('click', () => setMode('world', 'blue'));
@@ -1101,7 +1113,7 @@ function toSheet(el) { if (!holes[el.id]) { holes[el.id] = document.createCommen
 function fromSheet(el) { const h = holes[el.id]; if (h) { h.replaceWith(el); delete holes[el.id]; } }
 function placeNews() {
   const news = $('news'), seg = document.querySelector('.seg');
-  if (phone.matches) { if (news.parentNode !== $('panel')) $('panel').insertBefore(news, $('pg-read')); toSheet(seg); toSheet($('panel')); toSheet($('dockdots')); $('mbody').append($('mb-music')); $('panel').scrollLeft = 0; }
+  if (phone.matches) { if (news.parentNode !== $('panel')) $('panel').insertBefore(news, $('pg-read')); toSheet(seg); toSheet($('panel')); toSheet($('dockdots')); $('mbody').append($('mrow')); $('panel').scrollLeft = 0; }
   else { fromSheet($('panel')); fromSheet($('dockdots')); fromSheet(seg); if (news.parentNode !== seg.parentNode || news.previousElementSibling !== seg) seg.after(news); }
   setTimeout(resize, 0);
 }
@@ -1233,19 +1245,24 @@ function split(display) {
   const parts = String(display).split(', ');
   return { name: parts[0], sub: parts.slice(1, 3).join(', ') + (parts.length > 3 ? ', ' + parts[parts.length - 1] : '') };
 }
+const AREA_BIG = /^(county|state|region|island|archipelago|peninsula|province|state_district)$/;
+const isArea = (r) => r.boundingbox && (r.category === 'boundary' || (r.category === 'place' && AREA_BIG.test(r.type)));
+const areaGo = (r) => { const nm = (r.name || String(r.display_name).split(',')[0]).trim(); return () => countryBeaches({ name: nm, address: { country_code: r.address && r.address.country_code }, bbox: r.boundingbox }); };
 const isBeachHit = (r) => (r.category === 'natural' && r.type === 'beach') || /beach|praia|playa|plage|strand|bay|cove/i.test(String(r.display_name).split(',')[0]);
 async function runSearch(q, typing) {
   const run = ++aheadRun; ++countryRun; lastQ = q;   // a new search cancels any country list still loading
   const cs = countryMatches(q), ex = cs.find(c => c.exact), goCountry = (c) => countryBeaches({ name: c.name, address: { country_code: c.cc } });
   if (ex) { msg(''); goCountry(ex); return; }   // a whole country typed: list its beaches
   const countryRows = cs.length ? [{ head: 'Countries' }, ...cs.map(c => ({ name: c.name, sub: 'Country · its most active beaches', go: () => goCountry(c) }))] : [];
-  let beaches = [], towns = [], pending = 2, failed = 0;
+  let beaches = [], towns = [], areas = [], others = [], pending = 2, failed = 0;
   const draw = () => {
     if (run !== aheadRun) return;
     const seen = [], keep = (la, lo) => { la = +la; lo = +lo; if (seen.some(x => Math.abs(x[0] - la) < .02 && Math.abs(x[1] - lo) < .02)) return false; seen.push([la, lo]); return true; };
     const brows = beaches.filter(r => keep(r.lat, r.lon)).map(r => { const { name, sub } = split(r.display_name); return { name, sub, go: () => choose(+r.lat, +r.lon, name, sub) }; });
     const trows = towns.filter(h => keep(h.latitude, h.longitude)).map(h => ({ name: h.name, sub: [h.admin1, h.country].filter(Boolean).filter((v, i, a) => a.indexOf(v) === i).join(', '), go: () => choose(h.latitude, h.longitude, h.name, [h.admin1, h.country].filter(Boolean).join(', ')) }));
-    const rows = [...countryRows, ...(brows.length ? [{ head: 'Beaches' }, ...brows] : []), ...(trows.length ? [{ head: 'Places' }, ...trows] : [])];
+    const arows = areas.map(r => ({ name: (r.name || String(r.display_name).split(',')[0]).trim(), sub: 'Area · its most active beaches', go: areaGo(r) }));
+    const orows = others.filter(r => keep(r.lat, r.lon)).map(r => { const { name, sub } = split(r.display_name); return { name, sub, go: () => choose(+r.lat, +r.lon, name, sub) }; });
+    const rows = [...countryRows, ...(arows.length ? [{ head: 'Areas' }, ...arows] : []), ...(brows.length ? [{ head: 'Beaches' }, ...brows] : []), ...((trows.length || orows.length) ? [{ head: 'Places' }, ...orows, ...trows] : [])];
     showRows(rows);
     if (!rows.length) msg(pending ? (typing ? '' : 'Searching…') : (failed === 2 ? 'Search is not reachable right now.' : 'Nothing found. Try a beach name and a town.')); else msg('');
   };
@@ -1254,7 +1271,9 @@ async function runSearch(q, typing) {
     if (run !== aheadRun) return;
     const top = found[0];
     if (top && top.addresstype === 'country' && top.address && top.address.country_code) { countryBeaches(top); return; }   // a country we don't have by name
-    beaches = found.filter(isBeachHit); pending--; draw();
+    const top2 = found[0];   // a whole region typed in full, like Cornwall: list its beaches, the way a country does
+    if (top2 && isArea(top2) && !isBeachHit(top2) && AREA_BIG.test(top2.addresstype || top2.type) && fold(top2.name) === fold(q)) { areaGo(top2)(); return; }
+    beaches = found.filter(isBeachHit); areas = found.filter(r => !isBeachHit(r) && isArea(r)).slice(0, 2); others = found.filter(r => !isBeachHit(r) && !isArea(r)); pending--; draw();
   }).catch(() => { pending--; failed++; draw(); });
   lookupPlaces(q).then(r => { towns = r; pending--; draw(); }).catch(() => { pending--; failed++; draw(); });
 }
@@ -1311,18 +1330,18 @@ setInterval(rotateBlue, 30000);
 // A country: its beaches, busiest first, the top 20. The beaches come from OpenStreetMap, the wave height from the nearest sea reading.
 let countryRun = 0;
 async function countryBeaches(c) {
-  const run = ++countryRun, cc = c.address.country_code, nm = c.name || c.address.country;
+  const run = ++countryRun, cc = c.address && c.address.country_code, nm = c.name || (c.address && c.address.country), bb = c.bbox && c.bbox.length === 4 ? c.bbox.map(Number) : null;   // bb: a region's box, south north west east
   msg(`Finding beaches in ${nm}…`);
   try {
     const seen = [], all = [], add = (la, lo, r) => { if (!isFinite(la) || !isFinite(lo) || seen.some(x => Math.abs(x[0] - la) < .04 && Math.abs(x[1] - lo) < .04)) return; seen.push([la, lo]); all.push({ la, lo, r }); };
     // 1. OpenStreetMap's own beach list for the country (named beaches only). Works for Denmark's "Strand", Spain's "Playa" and so on.
     try {
-      const q = `[out:json][timeout:20];area["ISO3166-1"="${cc.toUpperCase()}"]->.a;nwr["natural"="beach"]["name"](area.a);out center 150;`;
+      const q = bb ? `[out:json][timeout:25];nwr["natural"="beach"]["name"](${bb[0]},${bb[2]},${bb[1]},${bb[3]});out center 150;` : `[out:json][timeout:20];area["ISO3166-1"="${cc.toUpperCase()}"]->.a;nwr["natural"="beach"]["name"](area.a);out center 150;`;
       const r = await fetch('https://overpass-api.de/api/interpreter', { method: 'POST', body: 'data=' + encodeURIComponent(q), headers: { 'Content-Type': 'application/x-www-form-urlencoded' } });
       if (r.ok) { const j = await r.json(); (j.elements || []).sort(() => Math.random() - .5).forEach(e => { const la = e.lat != null ? e.lat : e.center && e.center.lat, lo = e.lon != null ? e.lon : e.center && e.center.lon; add(la, lo, { display_name: e.tags.name + ', ' + nm }); }); }
     } catch (e) {}
     // 2. If that fails, fall back to a name search.
-    if (all.length < 3) {
+    if (all.length < 3 && cc && !bb) {
       const one = async (q) => { const r = await fetch(`https://nominatim.openstreetmap.org/search?format=jsonv2&limit=40&countrycodes=${cc}&q=${encodeURIComponent(q)}`); return r.ok ? r.json() : []; };
       const lists = await Promise.all([one('beach'), one('strand'), one('playa')]).catch(() => []);
       lists.flat().forEach(r => { if (!(r.category === 'natural' && r.type === 'beach') && !/beach|praia|playa|plage|strand/i.test(r.display_name.split(',')[0])) return; add(+r.lat, +r.lon, r); });
@@ -1706,10 +1725,11 @@ function setStyle(v, apply) {
 $('m-style').addEventListener('change', () => setStyle($('m-style').value, true));
 setStyle(lsGet('bw-style', 'default'), false);
 function openPanel(id) {
-  ['music', 'midi'].forEach(p => { const el = $('p-' + p), btn = $('b-' + p), open = p === id && el.hidden; el.hidden = !open; btn.setAttribute('aria-expanded', open); });
+  ['music', 'midi', 'facts'].forEach(p => { const el = $('p-' + p), btn = $('b-' + p), open = p === id && el.hidden; el.hidden = !open; btn.setAttribute('aria-expanded', open); });
   if (id === 'midi' && !$('p-midi').hidden) midiConnect();
+  if (id === 'facts' && !$('p-facts').hidden) { renderFacts(); TRACK.add('facts-open'); }
 }
-$('b-music').addEventListener('click', () => openPanel('music')); $('b-midi').addEventListener('click', () => openPanel('midi')); $('b-midi2').addEventListener('click', () => openPanel('midi'));
+$('b-music').addEventListener('click', () => openPanel('music')); $('b-facts').addEventListener('click', () => openPanel('facts')); $('b-midi').addEventListener('click', () => openPanel('midi')); $('b-midi2').addEventListener('click', () => openPanel('midi'));
 document.addEventListener('keydown', (e) => { if (e.key === 'Escape') openPanel(null); });
 document.querySelectorAll('[data-close]').forEach(b => b.addEventListener('click', () => openPanel(null)));
 
