@@ -340,7 +340,7 @@ input[type=range]::-moz-range-thumb { width: 14px; height: 14px; border-radius: 
   #r-line { display: block; grid-column: 1 / -1; grid-row: 3; margin: 8px 0 0; font: 400 15px/1.35 var(--display); color: var(--foam); } #r-line:empty, #r-line2 { display: none; }
   #pg-read #gauges { grid-column: 1 / -1; grid-row: 4; width: 100%; height: 96px; margin-top: 8px; }
   #pg-read .share-btn { display: none; }   /* on phones Share lives by the beach name, in the bar */
-  body.is-place .chg { display: inline-grid; place-items: center; width: 34px; height: 34px; margin: -9px 0 -9px 4px; padding: 0; border: 0; border-radius: 8px; background: none; color: var(--foam); vertical-align: middle; cursor: pointer; } body.is-place .chg svg { width: 19px; height: 19px; } body.is-place .chg:hover, body.is-place .chg:focus-visible { color: var(--accent); }
+  body.is-place #r-place { cursor: pointer; -webkit-tap-highlight-color: transparent; padding: 9px 0; margin: -7px 0 -7px; } body.is-place #r-place #r-sub { text-decoration: underline dotted; text-underline-offset: 4px; text-decoration-color: rgba(206, 222, 255, .45); } body.is-place #r-place:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 6px; }
   .mshare { flex: none; width: 40px; height: 40px; margin-right: -2px; padding: 0; border: 0; border-radius: 10px; background: none; color: var(--foam); display: grid; place-items: center; cursor: pointer; } .mshare svg { width: 22px; height: 22px; } .mshare:hover, .mshare:focus-visible { color: var(--accent); }
   /* card: the surfer */
   #pg-scale { overflow: hidden; } #pg-scale #scale { height: 132px; margin-top: -16px; } .scale-cap { display: none; } #pg-scale .sline { margin-top: 2px; }   /* the sea line says what the caption said, so the card fits without scrolling */
@@ -431,7 +431,7 @@ input[type=range]::-moz-range-thumb { width: 14px; height: 14px; border-radius: 
 <aside class="panel" id="panel" aria-live="polite">
   <div class="pg" id="pg-read"><div class="top"><div class="cap" id="r-cap">&nbsp;</div><button class="share-btn" id="share" type="button" title="Share what is loaded, with a link"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 15V4M8 8l4-4 4 4" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/><path d="M7 11H5.5A1.5 1.5 0 0 0 4 12.5v6A1.5 1.5 0 0 0 5.5 20h13a1.5 1.5 0 0 0 1.5-1.5v-6a1.5 1.5 0 0 0-1.5-1.5H17" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>Share</button></div>
   <div class="name" id="r-name">&nbsp;</div>
-  <div class="geo"><div class="sub"><img id="r-flag" class="flag" alt="" width="20" height="14" hidden><span id="r-sub"></span><button type="button" class="chg" id="chg" aria-label="Change place" title="Change place"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M15 15l5 5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg></button></div>
+  <div class="geo"><div class="sub" id="r-place"><img id="r-flag" class="flag" alt="" width="20" height="14" hidden><span id="r-sub"></span></div>
   <canvas id="mini" role="img" aria-label="A small world map with a dot where this is"></canvas></div>
   <div class="wline" id="r-line"></div><div class="wline" id="r-line2"></div>
   <canvas class="inline" id="gauges" role="img" aria-label="Quick scan of the conditions"></canvas>
@@ -1169,7 +1169,7 @@ $('h-facts').addEventListener('click', () => { setSheet(false); openPanel('facts
 $('h-music').addEventListener('click', () => { setSheet(false); openPanel('music'); });
 try { if (window.matchMedia('(max-width: 760px)').matches) $('how-d').open = false; } catch (e) {}
 function setMode(m, set) {
-  mode = m; TRACK.add('view:' + (m === 'place' ? 'place' : (set ? set : (world === BLUE ? 'blue' : 'oceans')))); if (set) { world = set === 'blue' ? BLUE : OCEANS; musicKey = ''; }
+  mode = m; window.markPlaceLine && window.markPlaceLine(m === 'place'); TRACK.add('view:' + (m === 'place' ? 'place' : (set ? set : (world === BLUE ? 'blue' : 'oceans')))); if (set) { world = set === 'blue' ? BLUE : OCEANS; musicKey = ''; }
   syncNote();
   voices = m === 'world' ? world : place.voices;
   selected = m === 'world' ? (world === BLUE ? 2 : 1) : 0;
@@ -1179,7 +1179,12 @@ function setMode(m, set) {
   if (m === 'place' && !place.loaded) { fetchPlace(); if (!place.cc) findCountry(place.lat, place.lon); }
   showFacts(); renderPanel(); renderSurf(); syncUrl(); $('panel').scrollTo({ left: 0 }); if (m === 'place' && place.loaded) setTimeout(() => showCard('read'), 60); setTimeout(() => { resize(); }, 0);
 }
-$('chg').addEventListener('click', () => { $('results').textContent = ''; $('q').value = ''; msg(''); showCard('search'); setTimeout(() => $('q').focus({ preventScroll: true }), 350); });
+// Phones: the place line (flag and name) is the way back to search. Tap it and a blank search comes up.
+(() => { const el = $('r-place');
+  const go = () => { if (!phone.matches || !document.body.classList.contains('is-place')) return; $('results').textContent = ''; $('q').value = ''; msg(''); showCard('search'); setTimeout(() => $('q').focus({ preventScroll: true }), 350); };
+  el.addEventListener('click', go); el.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); go(); } });
+  window.markPlaceLine = (on) => { if (on) { el.setAttribute('role', 'button'); el.tabIndex = 0; el.setAttribute('aria-label', 'Change place'); } else { el.removeAttribute('role'); el.removeAttribute('tabindex'); el.removeAttribute('aria-label'); } };
+})();
 $('m-blue').addEventListener('click', () => setMode('world', 'blue'));
 $('m-world').addEventListener('click', () => setMode('world', 'oceans'));
 $('open-place').addEventListener('click', () => { const s = world[selected]; if (!s || !s.blat) return; setMode('place'); choose(s.blat, s.blon, s.name, s.sub); });
