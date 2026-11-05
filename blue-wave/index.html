@@ -253,10 +253,11 @@ input[type=range]::-moz-range-thumb { width: 14px; height: 14px; border-radius: 
   .seg button { flex: 1; display: flex; align-items: center; justify-content: center; gap: 6px; white-space: nowrap; padding: 6px 4px; min-height: 44px; font-size: 12.5px; letter-spacing: .03em; }
   .seg .usf { margin: 0; width: 16px; height: 16px; flex: none; vertical-align: baseline; }
   .seg #m-blue { flex: 1.7 1 0; padding: 6px 14px; gap: 8px; } .seg #m-place, .seg #m-world { flex: 1 1 0; }
-  .mmusic { flex: none; min-height: 46px; }
+  .mmusic { flex: none; min-height: 46px; position: sticky; bottom: 0; }
+  .mbody { padding-bottom: calc(14px + env(safe-area-inset-bottom, 0px)); }
 
   /* the swipeable cards */
-  .panel { position: static; z-index: auto; width: auto; max-height: none; height: 236px; flex: none; margin: 0 -14px; padding: 0; border: 0; border-radius: 0; background: none; backdrop-filter: none; -webkit-backdrop-filter: none;
+  .panel { position: static; z-index: auto; width: auto; max-height: none; height: 236px; height: clamp(150px, calc(100dvh - 370px), 236px); flex: none; margin: 0 -14px; padding: 0; border: 0; border-radius: 0; background: none; backdrop-filter: none; -webkit-backdrop-filter: none;
     display: flex; overflow-x: auto; overflow-y: hidden; scroll-snap-type: x mandatory; scrollbar-width: none; overscroll-behavior-x: contain; overflow-anchor: none; }
   .panel::-webkit-scrollbar { display: none; }
   .left { display: contents; }
@@ -295,7 +296,7 @@ input[type=range]::-moz-range-thumb { width: 14px; height: 14px; border-radius: 
   #results { max-height: 96px; }
   .chips { margin-top: 8px; } .chip { min-height: 38px; }
 
-  @media (max-height: 700px) { body.sheet-open .msheet { max-height: calc(100vh - 190px); max-height: calc(100dvh - 190px); } .panel { height: 190px; } .mbody { gap: 8px; } }
+  @media (max-height: 700px) { body.sheet-open .msheet { max-height: calc(100vh - 170px); max-height: calc(100dvh - 170px); } .panel { height: 190px; height: clamp(140px, calc(100dvh - 420px), 190px); } .mbody { gap: 8px; } }
   .pop { left: 12px; right: 12px; width: auto; transform: none; bottom: calc(env(safe-area-inset-bottom, 0px) + 12px); max-height: 80vh; z-index: 7; }
   .how-pop { left: 0; right: 0; bottom: auto; top: calc(100% + 6px); max-height: none; overflow: visible; }
   .ctl { flex: 1; min-width: 0; } .ctl label { font-size: 10.5px; }
