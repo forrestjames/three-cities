@@ -1472,7 +1472,11 @@ function impulse(seconds, decay) { // a dark room: the highs die away first
 }
 let swayIn, swayLP, swayG, crashBus, pinkBuf;
 function initAudio() {
+  // iPhone: play through the media channel so the silent switch doesn't mute the sea (Safari 16.4+)
+  try { if (navigator.audioSession) navigator.audioSession.type = 'playback'; } catch (e) {}
   ctx = new (window.AudioContext || window.webkitAudioContext)();
+  // iPhone unlock: play one silent sample inside the tap, so the context is allowed to make sound
+  { const s = ctx.createBufferSource(); s.buffer = ctx.createBuffer(1, 1, 22050); s.connect(ctx.destination); s.start(0); }
   master = ctx.createGain(); master.gain.value = $('vol').value / 100;
   const comp = ctx.createDynamicsCompressor(); comp.threshold.value = -18; comp.ratio.value = 3;
   master.connect(comp).connect(ctx.destination);
@@ -1710,7 +1714,8 @@ function updateOcean() {
 }
 function togglePlay() {
   if (!ctx) initAudio();
-  if (ctx.state === 'suspended') ctx.resume();
+  // iPhone can leave the context 'suspended' or 'interrupted' (after a call, or switching apps): wake it on every tap
+  if (ctx.state !== 'running') ctx.resume().catch(() => {});
   playing = !playing; if (playing) { TRACK.once('listen'); TRACK.add('play'); }
   $('play').setAttribute('aria-pressed', playing); $('play').textContent = playing ? 'Stop' : 'Play'; document.body.classList.toggle('is-playing', playing); $('mb-play').setAttribute('aria-pressed', playing); $('mb-play').setAttribute('aria-label', playing ? 'Stop' : 'Play'); updateBar();
   if (playing) { tick = 0; mi = 0; chordNow = []; nextTime = ctx.currentTime + .05; waveT = ctx.currentTime + .05; swayG.gain.cancelScheduledValues(0); swayLP.frequency.cancelScheduledValues(0); musicSync(); startDrone(); if (MIDI.on && MIDI.clock) midiSend([0xFA]); timer = setInterval(schedule, 25); }
