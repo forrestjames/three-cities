@@ -2198,7 +2198,9 @@ function radiusOf(i, g) { const n = voices.length, s = voices[i], k = s && s.rk 
 const ripples = [];
 const drips = [];
 const tagsNow = [];   // beach names that pop up beside a struck dot, phone only   // every struck dot lets a drop fall into the sea
-let flagCv = null, flagPulse = 0;   // the flag's ripple: a pulse that every hit adds to
+let flagCv = null, flagPulse = 0;
+const FLAG_IMG = {};
+function flagImg(cc) { let i = FLAG_IMG[cc]; if (!i) { i = FLAG_IMG[cc] = new Image(); i.crossOrigin = 'anonymous'; i.src = `https://flagcdn.com/w320/${cc}.png`; } return i; }   // the flag's ripple: a pulse that every hit adds to
 function hitVisual(i, step) {
   const s = voices[i]; if (!s) return; s.flash = 1; flagPulse = Math.min(1, flagPulse + .35);
   const g = geom(), r = radiusOf(i, g), a = step / s.steps * Math.PI * 2 - Math.PI / 2;
@@ -2306,18 +2308,22 @@ function frame(now) {
   const g = geom(); let frac = 0, curTick = 0, swell = 0;
   if (playing && ctx && waveP) { const ph = clamp((ctx.currentTime - waveStart) / waveP, 0, 1); swell = ph < .68 ? ph / .68 : Math.max(0, 1 - (ph - .68) / .3); }
   if (playing && ctx) { const sd = stepDur(); frac = clamp((ctx.currentTime - (nextTime - sd)) / sd, 0, 1); curTick = tick - 1; }
-  // Blue coast: a faint US flag fills the middle of the innermost ring. It ripples with the music: every hit sends a ripple through the cloth, and the swell lifts it.
-  if (mode === 'world' && world === BLUE && voices.length) {
+  // A faint flag fills the middle of the innermost ring: the US flag on the Blue Coast, and the country's flag for a place. It ripples with the music: every hit sends a ripple through the cloth, and the swell lifts it.
+  const flagCC = (mode === 'world' && world === BLUE) ? 'us' : (mode === 'place' ? place.cc : null), fim = flagCC && flagCC !== 'us' ? flagImg(flagCC) : null;
+  if (flagCC && voices.length && (flagCC === 'us' || (fim.complete && fim.naturalWidth))) {
     flagPulse = Math.max(0, flagPulse - dt * 1.3);
-    const ri = Math.min(...voices.map((s, i) => radiusOf(i, g))) - 3, fh = Math.max(40, Math.round(ri * 2)), fw = Math.round(fh * 1.9), key = fh;
+    const ri = Math.min(...voices.map((s, i) => radiusOf(i, g))) - 3, fh = Math.max(40, Math.round(ri * 2)), fw = Math.round(fh * (flagCC === 'us' ? 1.9 : 1.5)), key = fh + flagCC;
     if (!flagCv || flagCv.key !== key) {   // the flag is drawn once, then cut into strips each frame
       const cv = document.createElement('canvas'); cv.width = fw; cv.height = fh; cv.key = key; const c = cv.getContext('2d'), sh = fh / 13;
-      for (let k = 0; k < 13; k++) { c.fillStyle = k % 2 ? '#f4f7ff' : '#d8434f'; c.fillRect(0, k * sh, fw, sh + .5); }
-      c.fillStyle = '#1c2f6b'; c.fillRect(0, 0, fw * .4, sh * 7); c.fillStyle = '#f4f7ff';
-      for (let rw = 0; rw < 9; rw++) { const cnt = rw % 2 ? 5 : 6; for (let q = 0; q < cnt; q++) { c.beginPath(); c.arc(fw * .4 * ((rw % 2 ? 2 : 1) + q * 2) / 12.2, sh * 7 * (rw + 1) / 10, Math.max(.8, ri / 55), 0, Math.PI * 2); c.fill(); } }
+      if (flagCC !== 'us') c.drawImage(fim, 0, 0, fw, fh);
+      else {
+        for (let k = 0; k < 13; k++) { c.fillStyle = k % 2 ? '#f4f7ff' : '#d8434f'; c.fillRect(0, k * sh, fw, sh + .5); }
+        c.fillStyle = '#1c2f6b'; c.fillRect(0, 0, fw * .4, sh * 7); c.fillStyle = '#f4f7ff';
+        for (let rw = 0; rw < 9; rw++) { const cnt = rw % 2 ? 5 : 6; for (let q = 0; q < cnt; q++) { c.beginPath(); c.arc(fw * .4 * ((rw % 2 ? 2 : 1) + q * 2) / 12.2, sh * 7 * (rw + 1) / 10, Math.max(.8, ri / 55), 0, Math.PI * 2); c.fill(); } }
+      }
       flagCv = cv;
     }
-    const amp = (1.2 + swell * 4 + flagPulse * 7) * (ri / 150), tt = now / 1000, strips = Math.ceil(fh / 3), fx = g.cx - fw * .4, fy = g.cy - fh / 2;
+    const amp = (1.2 + swell * 4 + flagPulse * 7) * (ri / 150), tt = now / 1000, strips = Math.ceil(fh / 3), fx = g.cx - fw * (flagCC === 'us' ? .4 : .5), fy = g.cy - fh / 2;
     rx.save(); rx.beginPath(); rx.arc(g.cx, g.cy, ri, 0, Math.PI * 2); rx.clip(); rx.globalAlpha = .17 + flagPulse * .08;
     for (let k = 0; k < strips; k++) {
       const y = k * 3, off = Math.sin(tt * 2.4 + y * .045 + (fx + 0) * .01) * amp + Math.sin(tt * 1.3 + y * .11) * amp * .35;
