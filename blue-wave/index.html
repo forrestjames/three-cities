@@ -612,12 +612,7 @@ const place = {
   windKmh: 12, gust: null, airTemp: null, seaTemp: null, feels: null, cloud: null, rain: 0,
   off: null, sunrise: null, sunset: null, coast: null, hr: null, tide: null, suggest: null, sugFor: '',
 };
-try {
-  const saved = JSON.parse(localStorage.getItem('bluewave.place') || 'null');
-  if (saved && isFinite(saved.lat) && isFinite(saved.lon) && saved.name) {
-    place.name = String(saved.name); place.sub = String(saved.sub || ''); place.lat = +saved.lat; place.lon = +saved.lon;
-  }
-} catch (e) { /* storage unavailable, fine */ }
+// Every visit starts on Good Harbor Beach. A place picked earlier is not restored.
 
 let mode = 'world', voices = world, selected = 1;
 let worldLive = false, worldUpdated = null;
@@ -2384,7 +2379,9 @@ try {
 } catch (e) { /* no link state, fine */ }
 try { if (new URLSearchParams(location.search).get('view') === 'world') setMode('world', 'oceans'); } catch (e) { /* ignore */ }
 showFacts(); renderPanel();
-if (arrivedByLink) setMode('place');
+// Start on Good Harbor (place view) unless the link asks for the sea view.
+const wantWorld = (() => { try { return new URLSearchParams(location.search).get('view') === 'world'; } catch (e) { return false; } })();
+if (arrivedByLink || !wantWorld) setMode('place');
 syncNote();
 fetchWorld();
 setInterval(() => { fetchWorld(); if (place.loaded) fetchPlace(); }, REFRESH_MS);
