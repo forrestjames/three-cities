@@ -271,9 +271,10 @@ input[type=range]::-moz-range-thumb { width: 14px; height: 14px; border-radius: 
   /* typing in the search box: the card pins to the top of what you can see, above the keyboard, and the rest steps aside */
   body.typing .msheet { top: calc(env(safe-area-inset-top, 0px) + 8px); bottom: auto; transform: translateY(var(--vvtop, 0px)); max-height: calc(var(--vvh, 48vh) - 16px); transition: none; }
   body.typing .seg, body.typing .dockdots, body.typing .chips, body.typing .mgrab, body.typing .title, body.typing .hact { display: none; }
-  body.typing .mhead { min-height: 64px; }
-  body.typing .panel { height: auto; max-height: calc(var(--vvh, 48vh) - 110px); }
-  body.typing #search { overflow-y: auto; }
+  body.typing .mhead { display: none; }
+  body.typing .mbody { flex: 0 1 auto; min-height: 0; }
+  body.typing .panel { height: auto; max-height: none; flex: 0 1 auto; min-height: 0; }
+  body.typing #search { overflow-y: auto; max-height: calc(var(--vvh, 48vh) - 40px); }
   body.typing #results { max-height: none; }
   .msheet.nudge { animation: sheetBob 5.5s ease-in-out 1.2s infinite, sheetGlow 2.6s ease-in-out infinite; }
   body.sheet-open .msheet.nudge { animation: none; }
