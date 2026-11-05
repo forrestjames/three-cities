@@ -438,7 +438,7 @@ input[type=range]::-moz-range-thumb { width: 14px; height: 14px; border-radius: 
   <div class="btns"><button class="play" id="play" aria-pressed="false">Play</button><button class="mini-btn" id="b-music" type="button" aria-expanded="false" aria-controls="p-music">Music</button><button class="mini-btn" id="b-facts" type="button" aria-expanded="false" aria-controls="p-facts">Facts</button><button class="mini-btn" id="b-midi" type="button" aria-expanded="false" aria-controls="p-midi">MIDI</button></div>
   <div class="ctl"><label for="tempo">Tempo <output id="tempo-o">60</output></label><input id="tempo" type="range" min="30" max="140" value="60"></div>
   <div class="ctl"><label for="drift">Drift <output id="drift-o">35</output></label><input id="drift" type="range" min="0" max="100" value="35"></div>
-  <div class="ctl"><label for="ocean">Ocean <output id="ocean-o">55</output></label><input id="ocean" type="range" min="0" max="100" value="55"></div>
+  <div class="ctl"><label for="ocean">Ocean <output id="ocean-o">35</output></label><input id="ocean" type="range" min="0" max="100" value="35"></div>
   <div class="ctl"><label for="vol">Level <output id="vol-o">70</output></label><input id="vol" type="range" min="0" max="100" value="70"></div>
 </div>
 
@@ -1706,7 +1706,7 @@ function updateOcean() {
   const T = ctx.currentTime, per = Math.max(4, a.per), tw = 2 * Math.PI * T;
   const swell = .5 + .5 * (.5 * Math.sin(tw / per) + .3 * Math.sin(tw / (per * 1.73) + 1.3) + .2 * Math.sin(tw / (per * 2.91) + .4));
   oceanFilter.frequency.setTargetAtTime(260 + swell * (500 + a.h * 300), T, .3);
-  oceanGain.gain.setTargetAtTime(playing ? level * (.22 + a.e * .6) * (.75 + .5 * swell) : 0, T, .8);
+  oceanGain.gain.setTargetAtTime(playing ? level * (.14 + a.e * .36) * (.75 + .5 * swell) : 0, T, .8);
 }
 function togglePlay() {
   if (!ctx) initAudio();
