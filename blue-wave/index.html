@@ -2620,7 +2620,7 @@ const REEL = (() => {
     // name plate low in the frame
     const pa = ease((ls - 1.6) / .6), name = (sh.kind === 'beach' ? place.name : sh.title).toUpperCase(), nw = Math.min(800, tw(name, `500 34px ${JOST}`, 6) + 90) * pa;
     if (nw > 4) { g.fillStyle = CREAM; g.fillRect(LC - nw / 2, 1352, nw, 70); g.save(); g.beginPath(); g.rect(LC - nw / 2, 1340, nw, 100); g.clip(); tx(name, LC, 1399, `500 34px ${JOST}`, INK, 6, 720); g.restore(); }
-    g.globalAlpha = ease((ls - 2) / .6); const sub = (sh.kind === 'beach' ? sh.desc : [sh.desc, mi(sh.dist)].filter(Boolean).join(' · ')); tx(sub.slice(0, 60), LC, 1462, `500 24px ${MONO}`, CREAM, 1, 800); g.globalAlpha = 1;
+    g.globalAlpha = ease((ls - 2) / .6); const sub = (sh.kind === 'beach' ? sh.desc : [sh.desc, mi(sh.dist)].filter(Boolean).join(' · ')); tx(sub.slice(0, 60), LC, 1462, `500 30px ${MONO}`, CREAM, 1, 820); g.globalAlpha = 1;
     strip(1514, ls);
   }
   function sea(sc, ls, s) {
@@ -2637,8 +2637,8 @@ const REEL = (() => {
     rows.forEach(([col, lab, val], i) => {
       const pa = io((ls - 1.9 - i * .3) / .7), y = 1252 + i * 100; if (pa <= 0) return;
       g.save(); g.translate((i % 2 ? 1 : -1) * (1 - pa) * RW, 0); g.fillStyle = col; g.fillRect(0, y, RW, 94); g.fillStyle = INK; g.fillRect(0, y, RW, 3); g.fillRect(0, y + 91, RW, 3);
-      g.textAlign = 'left'; g.font = `500 22px ${JOST}`; g.fillStyle = INK; let cx = 100; for (const ch of lab) { g.fillText(ch, cx, y + 36); cx += g.measureText(ch).width + 6; }
-      g.font = `600 40px ${JOST}`; let px = 40, f = ''; do { f = `600 ${px}px ${JOST}`; px -= 2; } while (tw(val, f, 1) > 760 && px > 22); g.font = f; g.fillText(val, 100, y + 80); g.textAlign = 'center'; g.restore();
+      g.textAlign = 'left'; g.font = `500 30px ${JOST}`; g.fillStyle = INK; let cx = 100; for (const ch of lab) { g.fillText(ch, cx, y + 34); cx += g.measureText(ch).width + 6; }
+      g.font = `600 56px ${JOST}`; let px = 56, f = ''; do { f = `600 ${px}px ${JOST}`; px -= 2; } while (tw(val, f, 1) > 780 && px > 26); g.font = f; g.fillText(val, 100, y + 82); g.textAlign = 'center'; g.restore();
     });
   }
   function endCard(sc, ls) {
@@ -2649,7 +2649,6 @@ const REEL = (() => {
       tx('BLUE WAVE', 0, -20, `600 130px ${JOST}`, CREAM, 10, 760);
       g.save(); g.strokeStyle = BUTTER; g.lineWidth = 2; g.beginPath(); g.moveTo(-300, 14); g.lineTo(300, 14); g.stroke(); g.restore();
       tx('LIVE WAVES, PLAYED AS A RHYTHM', 0, 66, `400 26px ${JOST}`, CREAM, 7, 760); g.restore(); }
-    g.globalAlpha = ease((ls - 1.4) / .6); tx('threecities.forrestjamesmusic.com/blue-wave', LC, 1480, `500 28px ${MONO}`, BUTTER, 1, 800); g.globalAlpha = 1;
   }
   function scene(ms) {
     const s = (ms - rt0) / 1000, sd = stepDur();
