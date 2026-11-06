@@ -24,7 +24,7 @@
 <script type="application/ld+json">{"@context":"https://schema.org","@type":"WebApplication","name":"Blue Wave","url":"https://threecities.forrestjamesmusic.com/blue-wave/","description":"Live wave height and sea temperature for beaches around the world, played as a Euclidean rhythm. Pick a beach and hear the sea.","applicationCategory":"MusicApplication","genre":"Generative music","operatingSystem":"Any (web browser)","browserRequirements":"Requires JavaScript and Web Audio","isAccessibleForFree":true,"offers":{"@type":"Offer","price":"0","priceCurrency":"USD"},"image":"https://threecities.forrestjamesmusic.com/blue-wave/og.jpg?v=4","author":{"@type":"Person","name":"Jim Forrest","url":"https://forrestjamesmusic.com"},"isPartOf":{"@type":"WebSite","name":"Three Cities","url":"https://threecities.forrestjamesmusic.com/"}}</script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Hanken+Grotesk:wght@200;300;400;500&family=JetBrains+Mono:wght@400;500&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Hanken+Grotesk:wght@200;300;400;500&family=Jost:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap">
 <style>
 /* Layout: the sky and sea fill the page, the rings are the hero. Title and view switch top left. In Place view a search and surf check sit down the left, readings down the right, one control bar along the bottom. */
 :root {
@@ -2448,88 +2448,220 @@ setInterval(() => { showFacts(); if (mode === 'place' && place.hr) { analyseTide
 const REEL = (() => {
   let qs; try { qs = new URLSearchParams(location.search); } catch (e) { return null; }
   if (!qs.has('reel')) return null;
-  const RW = 1080, RH = 1920, DUR = 26;
+  // A short film in chapters, in the spirit of Wes Anderson: flat pastel colour, perfect symmetry, tidy frames, whip pans between scenes, slow pushes inside them.
+  const RW = 1080, RH = 1920;
   // Instagram covers the top ~290px, the bottom ~360px and a strip down the right from y 1040. Words stay in x 80-1000 (80-880 below y 1040) and y 330-1550.
   const SAFE = { l: 80, r: 1000, rLow: 880, top: 330, bot: 1550, low: 1040 };
+  const INK = '#1d2f4f', CREAM = '#f7efdc', CORAL = '#e8877a', BUTTER = '#f3d98b', TEAL = '#3f8f88', SKY = '#6fa6d3';
+  const JOST = '"Jost", "Futura", "Century Gothic", sans-serif', MONO = '"JetBrains Mono", ui-monospace, monospace';
   const wrap = document.createElement('div'); wrap.className = 'reelw';
   wrap.innerHTML = '<canvas width="1080" height="1920" aria-label="Reel preview"></canvas><div class="reelbar"><button type="button" data-a="preview">▶ Preview</button><button type="button" data-a="record">● Record reel</button><button type="button" data-a="caption">Copy caption</button><button type="button" data-a="guide" aria-pressed="false">Safe zone</button></div><p class="reelstat" role="status">Loading the sea…</p>';
   document.body.appendChild(wrap);
   const cv = wrap.querySelector('canvas'), g = cv.getContext('2d'), status = wrap.querySelector('.reelstat');
-  const ease = (x) => x < 0 ? 0 : x > 1 ? 1 : 1 - Math.pow(1 - x, 3), c01 = (x) => Math.max(0, Math.min(1, x));
-  const COL = ['#8fc4ff', '#6ea8ff', '#c9e6ff', '#ffd98a'];   // waves, swell, wind sea, air
-  let run = false, rt0 = 0, idleAt = 0.8, rec = null, chunks = [], guide = false, tap = null, ready = false;
+  const c01 = (x) => Math.max(0, Math.min(1, x)), ease = (x) => 1 - Math.pow(1 - c01(x), 3), io = (x) => { x = c01(x); return x < .5 ? 8 * x * x * x * x : 1 - Math.pow(-2 * x + 2, 4) / 2; };
+  let run = false, rt0 = 0, idleAt = 2.6, rec = null, chunks = [], guide = false, tap = null, ready = false, shotsDone = false, closed = false;
+  let curStep = [-1, -1, -1, -1], curFrac = 1;
   const grain = document.createElement('canvas'); grain.width = grain.height = 256;
-  { const gx = grain.getContext('2d'), im = gx.createImageData(256, 256); for (let i = 0; i < im.data.length; i += 4) { const v = Math.random() * 255; im.data[i] = im.data[i + 1] = im.data[i + 2] = v; im.data[i + 3] = 34; } gx.putImageData(im, 0, 0); }
-  const DISPLAY = '"Archivo Black", Impact, sans-serif', MONO = '"JetBrains Mono", ui-monospace, monospace', BODY = '"Hanken Grotesk", system-ui, sans-serif';
-  const fontsReady = Promise.all(['64px "Archivo Black"', '30px "JetBrains Mono"', '44px "Hanken Grotesk"'].map(f => document.fonts.load(f).catch(() => {})));
+  { const gx = grain.getContext('2d'), im = gx.createImageData(256, 256); for (let i = 0; i < im.data.length; i += 4) { const v = Math.random() * 255; im.data[i] = im.data[i + 1] = im.data[i + 2] = v; im.data[i + 3] = 22; } gx.putImageData(im, 0, 0); }
+  const fontsReady = Promise.all(['600 64px "Jost"', '400 30px "Jost"', '30px "JetBrains Mono"'].map(f => document.fonts.load(f).catch(() => {})));
   const data = () => { const v = place.voices[0]; return { h: v.tval, per: v.tper, sea: place.seaTemp }; };
-  function fit(text, font, maxW, start) { let px = start; do { g.font = `${px}px ${font}`; px -= 2; } while (g.measureText(text).width > maxW && px > 30); }
+  const pastel = () => { const t = place.seaTemp; return t == null ? '#a8d5c8' : t < 10 ? '#bcd6e6' : t < 18 ? '#a8d5c8' : '#f2b8a2'; };
+  const mi = (m) => `${(m / 1609.34).toFixed(1)} mi · ${(m / 1000).toFixed(1)} km`;
+
+  // ----- the places around the beach: a beach photo and a couple of landmarks, from Wikipedia and Wikimedia Commons -----
+  const shots = [];
+  const BADRX = /\b(list of|school|college|university|hospital|census|district|county|township|airport|station|railway|cemetery|company|politician|football|baseball|station)\b/i;
+  const LANDRX = /(light ?house|castle|\bfort\b|fortress|bridge|pier|tower|cliff|rock|island|monument|memorial|park|harbou?r|cove|church|cathedral|palace|statue|reef|point|cape|head\b|dune|trail|reserve|hall|museum|garden|beach|bay|shore|coast|lido|boardwalk|promenade|jetty|mill|lake|river|canal)/i;
+  const BEACHRX = /(beach|\bbay\b|cove|shore|coast|dune|sands?\b|strand|lido|plage)/i;
+  const BADFILE = /(map|flag|logo|diagram|plan|seal|poster|interior|portrait|sign|chart|banner|emblem|stamp|coin)/i;
+  const J = (u) => fetch(u).then(r => r.json());
+  const loadImg = (src) => new Promise(res => { const im = new Image(); im.crossOrigin = 'anonymous'; const to = setTimeout(() => res(null), 20000); im.onload = () => { clearTimeout(to); res(im.naturalWidth ? im : null); }; im.onerror = () => { clearTimeout(to); res(null); }; im.src = src; });
+  async function findShots() {
+    try {
+      const la = place.lat, lo = place.lon, WP = 'https://en.wikipedia.org/w/api.php?format=json&origin=*&action=query';
+      const gs = await J(`${WP}&list=geosearch&gscoord=${la}|${lo}&gsradius=10000&gslimit=50`);
+      const hits = ((gs.query && gs.query.geosearch) || []).filter(h => !BADRX.test(h.title));
+      const pg = hits.length ? await J(`${WP}&prop=pageimages|description&piprop=thumbnail&pithumbsize=1400&pilimit=50&pageids=${hits.map(h => h.pageid).join('|')}`) : {};
+      const pages = (pg.query && pg.query.pages) || {};
+      const cand = hits.map(h => {
+        const p = pages[h.pageid]; if (!p || !p.thumbnail || p.thumbnail.width < 700 || /\.svg/i.test(p.thumbnail.source)) return null;
+        const d = p.description || '', txt = h.title + ' ' + d; if (BADRX.test(d)) return null;
+        return { title: h.title, desc: d, dist: h.dist, src: p.thumbnail.source, sc: (LANDRX.test(txt) ? 3 : 0) + (BEACHRX.test(txt) ? 1 : 0) - h.dist / 4000, beach: BEACHRX.test(txt) && h.dist < 5000 };
+      }).filter(Boolean);
+      const beach = cand.filter(c => c.beach).sort((a, b) => a.dist - b.dist)[0];
+      const rest = cand.filter(c => c !== beach).sort((a, b) => b.sc - a.sc);
+      const picks = [];
+      if (beach) picks.push(Object.assign({ kind: 'beach' }, beach)); else {
+        // no article photo for the beach itself: look for a photo taken right there
+        try {
+          const cm = await J(`https://commons.wikimedia.org/w/api.php?format=json&origin=*&action=query&generator=geosearch&ggscoord=${la}|${lo}&ggsradius=2000&ggsnamespace=6&ggslimit=30&prop=imageinfo&iiprop=url|size|mime&iiurlwidth=1400`);
+          const fs = Object.values((cm.query && cm.query.pages) || {}).map(p => ({ p, ii: p.imageinfo && p.imageinfo[0] })).filter(x => x.ii && /jpeg/.test(x.ii.mime) && x.ii.width >= 1000 && !BADFILE.test(x.p.title)).sort((a, b) => (a.p.index || 0) - (b.p.index || 0));
+          const f = fs.find(x => /(beach|sea|coast|shore|sand|wave|ocean)/i.test(x.p.title)) || fs[0];
+          if (f) picks.push({ kind: 'beach', title: place.name, desc: 'Where the waves are', dist: 0, src: f.ii.thumburl || f.ii.url });
+        } catch (e) {}
+      }
+      rest.slice(0, 2).forEach(c => picks.push(Object.assign({ kind: 'land' }, c)));
+      const imgs = await Promise.all(picks.map(p => loadImg(p.src)));
+      picks.forEach((p, i) => { if (imgs[i]) shots.push(Object.assign(p, { img: imgs[i] })); });
+    } catch (e) { /* no photos is fine: the film still plays */ }
+    shotsDone = true;
+  }
+  findShots();
+
+  // ----- the film: scenes in order, with whip pans between them -----
+  let scenes = [], DUR = 0; const TR = .7;
+  function build() {
+    const L = [{ t: 'title', d: 3.8 }];
+    const S = shots.slice(); const shapes = ['rect', 'arch', 'oval'];
+    S.forEach((sh, i) => { sh.shape = shapes[i % 3]; });
+    if (S[0]) L.push({ t: 'photo', d: 5.6, sh: S[0], i: 0 });
+    if (S[1]) L.push({ t: 'photo', d: 5.6, sh: S[1], i: 1 });
+    L.push({ t: 'sea', d: S.length ? 7 : 10 });
+    if (S[2]) L.push({ t: 'photo', d: 5.6, sh: S[2], i: 2 });
+    L.push({ t: 'end', d: 3.8 });
+    let t = 0, n = 0; L.forEach(sc => { sc.t0 = t; sc.t1 = t + sc.d; t += sc.d; if (sc.t !== 'title' && sc.t !== 'end') sc.n = ++n; });
+    scenes = L; DUR = t;
+  }
+  build();
+  const NUMW = ['ONE', 'TWO', 'THREE', 'FOUR', 'FIVE'];
+
+  // text with letter spacing, centred (works the same in every browser)
+  function tw(text, font, sp) { g.font = font; return [...text].reduce((a, ch) => a + g.measureText(ch).width + sp, -sp); }
+  function tx(text, x, y, font, color, sp, maxW) {
+    let f = font; if (maxW) { let px = parseInt(font.match(/(\d+)px/)[1], 10); while (tw(text, f, sp) > maxW && px > 24) { px -= 2; f = font.replace(/\d+px/, px + 'px'); } }
+    g.font = f; g.fillStyle = color; g.textAlign = 'left'; g.textBaseline = 'alphabetic';
+    let cx = x - tw(text, f, sp) / 2; for (const ch of text) { g.fillText(ch, cx, y); cx += g.measureText(ch).width + sp; }
+    g.textAlign = 'center';
+  }
+  function frameLines(col, a) { g.save(); g.globalAlpha = a == null ? 1 : a; g.strokeStyle = col; g.lineWidth = 4; g.strokeRect(56, 310, 968, 1250); g.lineWidth = 1.5; g.strokeRect(70, 324, 940, 1222); g.restore(); }
+  function ornament(y, col, k) { const w = 300 * ease(k); g.save(); g.strokeStyle = col; g.lineWidth = 2; g.beginPath(); g.moveTo(540 - 16 - w, y); g.lineTo(540 - 16, y); g.moveTo(540 + 16, y); g.lineTo(540 + 16 + w, y); g.stroke(); g.fillStyle = col; g.beginPath(); g.moveTo(540, y - 8); g.lineTo(548, y); g.lineTo(540, y + 8); g.lineTo(532, y); g.fill(); g.restore(); }
+  function waveLines(y, col, s, n) { g.save(); g.strokeStyle = col; g.lineWidth = 3; for (let k = 0; k < n; k++) { g.beginPath(); for (let x = 100; x <= 980; x += 10) { const yy = y + k * 20 + Math.sin(x / 55 + s * 2 + k * 1.3) * 7; x === 100 ? g.moveTo(x, yy) : g.lineTo(x, yy); } g.stroke(); } g.restore(); }
+  // the four rings, symmetrical, one dot per step. The lit dot is the step playing now.
+  function rings(cx, cy, R0, ls, cols, restCol, lineCol) {
+    place.voices.forEach((vc, i) => {
+      const R = R0 * (1 - i * .21), ap = ease((ls - .2 - i * .2) / .9); if (ap <= 0) return;
+      g.save(); g.globalAlpha = ap; g.beginPath(); g.arc(cx, cy, R, 0, Math.PI * 2); g.strokeStyle = lineCol; g.lineWidth = 2; g.stroke();
+      const n = vc.steps || 8, now = curStep[i], hr = R0 * .05;
+      for (let j = 0; j < n; j++) {
+        const a = -Math.PI / 2 + j / n * Math.PI * 2, x = cx + Math.cos(a) * R, y = cy + Math.sin(a) * R, hit = vc.pattern && vc.pattern[(j + (vc.offset || 0)) % n], on = j === now;
+        if (hit) {
+          const r = hr + (on ? hr * .75 * (1 - curFrac) : 0);
+          if (on) { g.beginPath(); g.arc(x, y, r * 2.4, 0, Math.PI * 2); g.fillStyle = cols[i] + '55'; g.fill(); }
+          g.beginPath(); g.arc(x, y, r, 0, Math.PI * 2); g.fillStyle = cols[i]; g.fill(); g.lineWidth = 3; g.strokeStyle = INK; g.stroke();
+        } else { g.beginPath(); g.arc(x, y, on ? hr * .5 : hr * .3, 0, Math.PI * 2); g.fillStyle = on ? INK : restCol; g.fill(); }
+      }
+      g.restore();
+    });
+  }
+  // the beat as a tidy row of dots, so the rhythm stays on screen during the photos
+  function strip(y, ls) {
+    const vc = place.voices[0], n = vc.steps || 8, sp = Math.min(54, 780 / n), x0 = 540 - sp * (n - 1) / 2, a = ease((ls - .6) / .6);
+    g.save(); g.globalAlpha = a;
+    for (let j = 0; j < n; j++) {
+      const hit = vc.pattern && vc.pattern[(j + (vc.offset || 0)) % n], on = j === curStep[0], x = x0 + j * sp;
+      g.beginPath(); g.arc(x, y, hit ? 13 + (on ? 9 * (1 - curFrac) : 0) : 5, 0, Math.PI * 2);
+      if (hit) { g.fillStyle = on ? CORAL : INK; g.fill(); } else { g.fillStyle = on ? INK : 'rgba(29,47,79,.35)'; g.fill(); }
+    }
+    g.restore();
+  }
+  function shapePath(shape, pad) {
+    const x0 = 120 - pad, x1 = 960 + pad, y0 = 500 - pad, y1 = 1260 + pad; g.beginPath();
+    if (shape === 'arch') { const r = (x1 - x0) / 2; g.moveTo(x0, y1); g.lineTo(x0, y0 + r); g.arc(540, y0 + r, r, Math.PI, 0); g.lineTo(x1, y1); g.closePath(); }
+    else if (shape === 'oval') g.ellipse(540, 880, (x1 - x0) / 2, (y1 - y0) / 2, 0, 0, Math.PI * 2);
+    else g.rect(x0, y0, x1 - x0, y1 - y0);
+  }
+
+  function title(sc, ls, s) {
+    const P = pastel(), d = data(), z = 1 + .05 * c01(ls / sc.d);
+    g.fillStyle = P; g.fillRect(0, 0, RW, RH);
+    g.save(); g.translate(540, 935); g.scale(z, z); g.translate(-540, -935);
+    frameLines(INK, ease(ls / .6));
+    const a = ease((ls - .3) / .7);
+    g.globalAlpha = a; tx('A BLUE WAVE FILM', 540, 392, `400 28px ${JOST}`, INK, 12); g.globalAlpha = 1;
+    ornament(436, INK, (ls - .5) / .9);
+    g.globalAlpha = ease((ls - .7) / .7); tx(place.name.toUpperCase(), 540, 548 + (1 - ease((ls - .7) / .7)) * 24, `600 112px ${JOST}`, INK, 6, 880);
+    tx((place.sub || '').toUpperCase(), 540, 612, `400 34px ${JOST}`, INK, 9, 880); g.globalAlpha = 1;
+    rings(540, 985, 300, ls, [CORAL, SKY, BUTTER, TEAL], 'rgba(29,47,79,.4)', 'rgba(29,47,79,.4)');
+    g.globalAlpha = ease((ls - 1.6) / .6);
+    tx(`${Math.abs(place.lat).toFixed(2)}° ${place.lat >= 0 ? 'N' : 'S'} · ${Math.abs(place.lon).toFixed(2)}° ${place.lon >= 0 ? 'E' : 'W'}`, 540, 1346, `500 26px ${MONO}`, INK, 3);
+    tx('LIVE FROM THE SEA', 540, 1440, `400 28px ${JOST}`, INK, 12); g.globalAlpha = 1;
+    g.restore();
+  }
+  function photo(sc, ls) {
+    const sh = sc.sh, im = sh.img, prog = c01(ls / sc.d);
+    g.fillStyle = CREAM; g.fillRect(0, 0, RW, RH); frameLines(INK, 1);
+    const a = ease((ls - .35) / .6);
+    g.globalAlpha = a; tx('CHAPTER ' + NUMW[sc.n - 1], 540, 392, `400 28px ${JOST}`, INK, 12);
+    tx(sh.kind === 'beach' ? 'THE BEACH' : (sc.i === 1 ? 'THE LANDMARK' : 'THE VIEW'), 540, 462 + (1 - a) * 18, `600 64px ${JOST}`, INK, 8, 840); g.globalAlpha = 1;
+    // the photo, in its frame, slowly pushing in
+    g.save(); shapePath(sh.shape, 0); g.clip();
+    const bw = 840, bh = 760, sc2 = Math.max(bw / im.naturalWidth, bh / im.naturalHeight) * (1.06 + .12 * prog), dir = sc.i % 2 ? -1 : 1;
+    const dx = dir * (prog - .5) * 70, dy = (.5 - prog) * 30;
+    g.drawImage(im, 540 - im.naturalWidth * sc2 / 2 + dx, 880 - im.naturalHeight * sc2 / 2 + dy, im.naturalWidth * sc2, im.naturalHeight * sc2);
+    g.globalCompositeOperation = 'soft-light'; g.globalAlpha = .55; g.fillStyle = pastel(); g.fillRect(100, 480, 880, 800);
+    g.globalCompositeOperation = 'source-over'; g.globalAlpha = .1; g.fillStyle = CREAM; g.fillRect(100, 480, 880, 800); g.globalAlpha = 1; g.restore();
+    g.lineWidth = 5; g.strokeStyle = INK; shapePath(sh.shape, 0); g.stroke(); g.lineWidth = 2; shapePath(sh.shape, 18); g.stroke();
+    // a name plate
+    const pa = ease((ls - .9) / .6), name = (sh.kind === 'beach' ? place.name : sh.title).toUpperCase(), w = Math.min(860, tw(name, `500 34px ${JOST}`, 6) + 90) * pa;
+    if (w > 4) { g.fillStyle = INK; g.fillRect(540 - w / 2, 1318 - (1 - pa) * 10, w, 68); g.save(); g.beginPath(); g.rect(540 - w / 2, 1300, w, 120); g.clip(); tx(name, 540, 1363, `500 34px ${JOST}`, CREAM, 6, 780); g.restore(); }
+    g.globalAlpha = ease((ls - 1.3) / .6); const sub = (sh.kind === 'beach' ? sh.desc : [sh.desc, mi(sh.dist)].filter(Boolean).join(' · ')); tx(sub.slice(0, 64), 540, 1424, `400 24px ${MONO}`, INK, 1, 800); g.globalAlpha = 1;
+    strip(1488, ls);
+  }
+  function sea(sc, ls, s) {
+    const d = data(), P = pastel(); g.fillStyle = P; g.fillRect(0, 0, RW, RH); frameLines(INK, 1);
+    const a = ease((ls - .3) / .6);
+    g.globalAlpha = a; tx('CHAPTER ' + NUMW[sc.n - 1], 540, 392, `400 28px ${JOST}`, INK, 12); tx('THE SEA, TODAY', 540, 462 + (1 - a) * 18, `600 64px ${JOST}`, INK, 8, 840); g.globalAlpha = 1;
+    rings(540, 860, 320, ls - .3, [CORAL, SKY, BUTTER, TEAL], 'rgba(29,47,79,.4)', 'rgba(29,47,79,.4)');
+    const ca = ease((ls - 1) / .7); g.globalAlpha = ca; tx(`${ftn(d.h)} ft`, 540, 872, `600 66px ${JOST}`, INK, 2); g.font = `500 24px ${MONO}`; g.fillStyle = INK; g.fillText(`${d.h.toFixed(1)} m`, 540, 912); g.globalAlpha = 1;
+    waveLines(1218, 'rgba(29,47,79,.5)', s, 2);
+    const items = [['PERIOD', `${Math.round(d.per)} s`, 'between waves'], ['SEA', d.sea != null ? `${Math.round(d.sea * 9 / 5 + 32)} °F` : '·', d.sea != null ? `${d.sea.toFixed(1)} °C` : 'no reading'], ['AIR', place.airTemp != null ? `${Math.round(place.airTemp * 9 / 5 + 32)} °F` : '·', place.airTemp != null ? `${place.airTemp.toFixed(1)} °C` : 'no reading']];
+    items.forEach(([lab, big, small], i) => {
+      const pa = ease((ls - 1.6 - i * .25) / .6), cx = 480 + (i - 1) * 260, y = 1290 + (1 - pa) * 24; if (pa <= 0) return;
+      g.save(); g.globalAlpha = pa; g.fillStyle = CREAM; g.fillRect(cx - 112, y, 224, 150); g.strokeStyle = INK; g.lineWidth = 3; g.strokeRect(cx - 112, y, 224, 150); g.lineWidth = 1.5; g.strokeRect(cx - 104, y + 8, 208, 134);
+      tx(lab, cx, y + 40, `500 22px ${JOST}`, INK, 6); g.font = `600 50px ${JOST}`; g.fillStyle = INK; g.fillText(big, cx, y + 96); g.font = `400 20px ${MONO}`; g.fillText(small, cx, y + 128); g.restore();
+    });
+    const wa = ease((ls - 2.6) / .7); g.globalAlpha = wa; tx((up1(compare(d.h)) + (d.sea != null ? ' · ' + wetsuit(d.sea) : '')).toUpperCase(), 480, 1506, `500 30px ${JOST}`, INK, 4, 800); g.globalAlpha = 1;
+  }
+  function endCard(sc, ls) {
+    g.fillStyle = INK; g.fillRect(0, 0, RW, RH); frameLines(CREAM, .9);
+    const a = ease((ls - .2) / .7);
+    g.globalAlpha = a; tx('BLUE WAVE', 540, 760, `600 150px ${JOST}`, CREAM, 10, 860);
+    ornament(812, BUTTER, (ls - .4) / .8);
+    tx('LIVE WAVES, PLAYED AS A RHYTHM', 540, 884, `400 32px ${JOST}`, CREAM, 8, 860); g.globalAlpha = 1;
+    rings(540, 1190, 170, ls, [CORAL, SKY, BUTTER, '#8fd0c8'], 'rgba(247,239,220,.5)', 'rgba(247,239,220,.35)');
+    g.globalAlpha = ease((ls - 1.2) / .6); tx('threecities.forrestjamesmusic.com/blue-wave', 540, 1000, `500 28px ${MONO}`, BUTTER, 1, 840); g.globalAlpha = 1;
+  }
+  function scene(ms) {
+    const s = (ms - rt0) / 1000, sd = stepDur();
+    if (playing && ctx) { const c = tick - 1; curStep = place.voices.map(v => c >= 0 ? c % (v.steps || 8) : -1); curFrac = clamp((ctx.currentTime - (nextTime - sd)) / sd, 0, 1); } else { curStep = [-1, -1, -1, -1]; curFrac = 1; }
+    g.fillStyle = INK; g.fillRect(0, 0, RW, RH);
+    const last = scenes.length - 1;
+    scenes.forEach((sc, k) => {
+      const enter = k > 0 ? c01((s - (sc.t0 - TR / 2)) / TR) : 1, exit = k < last ? c01((s - (sc.t1 - TR / 2)) / TR) : 0;
+      if ((k > 0 && enter <= 0) || exit >= 1) return;
+      g.save(); g.translate((1 - io(enter)) * RW - io(exit) * RW, 0); g.beginPath(); g.rect(0, 0, RW, RH); g.clip();
+      const ls = Math.max(0, s - sc.t0); (sc.t === 'title' ? title : sc.t === 'photo' ? photo : sc.t === 'sea' ? sea : endCard)(sc, ls, s); g.restore();
+    });
+    g.save(); g.globalAlpha = .6; g.fillStyle = g.createPattern(grain, 'repeat'); g.translate(-Math.random() * 256, -Math.random() * 256); g.fillRect(0, 0, RW + 256, RH + 256); g.restore();
+    if (s < .5) { g.fillStyle = `rgba(29,47,79,${1 - s / .5})`; g.fillRect(0, 0, RW, RH); }
+    if (guide) { g.strokeStyle = 'rgba(255,60,60,.9)'; g.lineWidth = 4; g.strokeRect(SAFE.l, SAFE.top, SAFE.r - SAFE.l, SAFE.bot - SAFE.top); g.beginPath(); g.moveTo(SAFE.rLow, SAFE.low); g.lineTo(SAFE.rLow, SAFE.bot); g.stroke(); }
+    return s;
+  }
   function caption() {
     const d = data(), fl = d.sea != null ? Math.round(d.sea * 9 / 5 + 32) : null, where = [place.name, place.sub].filter(Boolean).join(', ');
     const sea = d.sea != null ? ` The sea is ${Math.round(d.sea)} °C (${fl} °F), so ${wetsuit(d.sea).toLowerCase()}.` : '';
-    return `${where}. ${up1(sizeWord(d.h).toLowerCase())} waves right now, ${compare(d.h)}.${sea}\n\nThis is the live sea, played as a rhythm. Bigger waves play more notes. Longer waves play more steps. Warmer water plays higher.\n\nPick any beach in the world at threecities.forrestjamesmusic.com/blue-wave\n\n#bluewave #surf #ocean #generativemusic #beach #euclideanrhythm`;
+    const near = shots.filter(x => x.kind === 'land').map(x => x.title); const nearTxt = near.length ? `\n\nNearby: ${near.join(' and ')}.` : '';
+    return `${where}. ${up1(sizeWord(d.h).toLowerCase())} waves right now, ${compare(d.h)}.${sea}${nearTxt}\n\nThis is the live sea, played as a rhythm. Bigger waves play more notes. Longer waves play more steps. Warmer water plays higher.\n\nPick any beach in the world at threecities.forrestjamesmusic.com/blue-wave\n\n#bluewave #surf #ocean #generativemusic #beach #euclideanrhythm`;
   }
-  function scene(ms) {
-    const s = (ms - rt0) / 1000, d = data(), v = place.voices;
-    let swell = .35 + .2 * Math.sin(s * .8);
-    if (playing && ctx && waveP) { const ph = clamp((ctx.currentTime - waveStart) / waveP, 0, 1); swell = ph < .68 ? ph / .68 : Math.max(0, 1 - (ph - .68) / .3); }
-    // the sea and sky
-    const bg = g.createLinearGradient(0, 0, 0, RH); bg.addColorStop(0, '#0d3a8a'); bg.addColorStop(.5, '#1a55ad'); bg.addColorStop(.66, '#0c2f70'); bg.addColorStop(1, '#03102a');
-    g.fillStyle = bg; g.fillRect(0, 0, RW, RH);
-    [[.2, .18, 420, 'rgba(160,200,255,.16)'], [.85, .42, 380, 'rgba(120,170,255,.12)']].forEach(([bx, by, br, c], i) => { const px = RW * bx + Math.sin(s * .25 + i * 2) * 40, py = RH * by + Math.cos(s * .2 + i) * 30, gr = g.createRadialGradient(px, py, 0, px, py, br); gr.addColorStop(0, c); gr.addColorStop(1, 'rgba(0,0,0,0)'); g.fillStyle = gr; g.fillRect(0, 0, RW, RH); });
-    for (let k = 0; k < 9; k++) {
-      const y0 = 1260 + k * 70, amp = 6 + k * 1.6 + swell * 14; g.beginPath();
-      for (let x = 0; x <= RW; x += 20) { const y = y0 + Math.sin(x / (150 + k * 12) + s * (.9 + k * .08) + k) * amp; x ? g.lineTo(x, y) : g.moveTo(x, y); }
-      g.strokeStyle = `rgba(190,222,255,${.05 + k * .012})`; g.lineWidth = 3; g.stroke();
-    }
-    // the rings: one per voice, the lit dot is the step playing now
-    const cx = 540, cy = 900, cur = playing && ctx ? tick - 1 : -1, sd = stepDur();
-    const frac = playing && ctx ? clamp((ctx.currentTime - (nextTime - sd)) / sd, 0, 1) : 1;
-    v.forEach((vc, i) => {
-      const R = 350 - i * 72, ap = ease((s - .15 - i * .22) / .9); if (ap <= 0) return;
-      g.globalAlpha = ap; g.beginPath(); g.arc(cx, cy, R, 0, Math.PI * 2); g.strokeStyle = 'rgba(190,222,255,.22)'; g.lineWidth = 2; g.stroke();
-      const n = vc.steps || 8, stepNow = cur >= 0 ? cur % n : -1;
-      for (let j = 0; j < n; j++) {
-        const a = -Math.PI / 2 + j / n * Math.PI * 2, x = cx + Math.cos(a) * R, y = cy + Math.sin(a) * R, hit = vc.pattern && vc.pattern[(j + (vc.offset || 0)) % n], on = j === stepNow;
-        if (hit) {
-          const r = 16 + (on ? 12 * (1 - frac) : 0);
-          if (on) { const gl = g.createRadialGradient(x, y, 0, x, y, 70); gl.addColorStop(0, COL[i] + 'cc'); gl.addColorStop(1, COL[i] + '00'); g.fillStyle = gl; g.fillRect(x - 70, y - 70, 140, 140); }
-          g.beginPath(); g.arc(x, y, r, 0, Math.PI * 2); g.fillStyle = COL[i]; g.fill();
-        } else { g.beginPath(); g.arc(x, y, on ? 8 : 5, 0, Math.PI * 2); g.fillStyle = on ? 'rgba(255,255,255,.9)' : 'rgba(220,235,255,.4)'; g.fill(); }
-      }
-      g.globalAlpha = 1;
-    });
-    // words
-    const nameA = ease((s - .1) / .8); g.textAlign = 'center'; g.textBaseline = 'alphabetic';
-    g.globalAlpha = nameA; g.fillStyle = '#f2f7ff'; fit(place.name.toUpperCase(), DISPLAY, SAFE.r - SAFE.l, 96); g.fillText(place.name.toUpperCase(), 540, 440 + (1 - nameA) * 20);
-    g.font = `34px ${MONO}`; g.fillStyle = 'rgba(210,228,255,.85)'; g.fillText((place.sub || '').toUpperCase(), 540, 498); g.globalAlpha = 1;
-    const sa = ease((s - 2) / .9);
-    if (sa > 0) {
-      g.globalAlpha = sa; const mx = (SAFE.l + SAFE.rLow) / 2, cols = [[`${ftn(d.h)} ft`, `${d.h.toFixed(1)} m`, 'WAVES'], [`${Math.round(d.per)} s`, 'between waves', 'PERIOD'], d.sea != null ? [`${Math.round(d.sea * 9 / 5 + 32)} °F`, `${d.sea.toFixed(1)} °C`, 'SEA'] : ['·', 'no reading', 'SEA']];
-      cols.forEach(([big, small, lab], i) => { const x = mx + (i - 1) * 270; g.fillStyle = '#f2f7ff'; g.font = `60px ${DISPLAY}`; g.fillText(big, x, 1360); g.font = `26px ${MONO}`; g.fillStyle = 'rgba(210,228,255,.8)'; g.fillText(small, x, 1402); g.fillStyle = COL[i]; g.fillText(lab, x, 1296); });
-      g.fillStyle = '#f2f7ff'; fit(up1(compare(d.h)) + (d.sea != null ? ' · ' + wetsuit(d.sea) : ''), BODY, SAFE.rLow - SAFE.l, 44); g.fillText(up1(compare(d.h)) + (d.sea != null ? ' · ' + wetsuit(d.sea) : ''), mx, 1490); g.globalAlpha = 1;
-    }
-    // the end card
-    const ea = ease((s - (DUR - 4.5)) / 1);
-    if (ea > 0) {
-      g.fillStyle = `rgba(3,16,42,${ea * .9})`; g.fillRect(0, 0, RW, RH); g.globalAlpha = ea; g.fillStyle = '#f2f7ff';
-      fit('BLUE WAVE', DISPLAY, SAFE.r - SAFE.l, 170); g.fillText('BLUE WAVE', 540, 820);
-      g.font = `46px ${BODY}`; g.fillText('Live waves, played as a rhythm.', 540, 910);
-      g.font = `30px ${MONO}`; g.fillStyle = COL[0]; g.fillText('threecities.forrestjamesmusic.com/blue-wave', 540, 1000); g.globalAlpha = 1;
-    }
-    // grain and a soft vignette
-    g.save(); g.globalAlpha = .5; g.fillStyle = g.createPattern(grain, 'repeat'); g.translate(-Math.random() * 256, -Math.random() * 256); g.fillRect(0, 0, RW + 256, RH + 256); g.restore();
-    const vg = g.createRadialGradient(RW / 2, RH / 2, RH * .3, RW / 2, RH / 2, RH * .75); vg.addColorStop(0, 'rgba(0,0,0,0)'); vg.addColorStop(1, 'rgba(0,0,0,.4)'); g.fillStyle = vg; g.fillRect(0, 0, RW, RH);
-    if (guide) { g.strokeStyle = 'rgba(255,90,90,.9)'; g.lineWidth = 4; g.strokeRect(SAFE.l, SAFE.top, SAFE.r - SAFE.l, SAFE.bot - SAFE.top); g.beginPath(); g.moveTo(SAFE.rLow, SAFE.low); g.lineTo(SAFE.rLow, SAFE.bot); g.stroke(); }
-    return s;
-  }
-  let closed = false;
   function loop(now) {
+    if (closed) return;
     const s = scene(run ? now : rt0 + idleAt * 1000);
-    if (run && s >= DUR) { run = false; wrap.classList.remove('running'); idleAt = DUR - .5; if (playing) togglePlay(); if (rec) rec.stop(); else status.textContent = 'Done. Preview again, or record it.'; }
+    if (run && s >= DUR) { run = false; wrap.classList.remove('running'); idleAt = 2.6; if (playing) togglePlay(); if (rec) rec.stop(); else status.textContent = 'Done. Preview again, or record it.'; }
     requestAnimationFrame(loop);
   }
   async function begin(record) {
+    if (!shotsDone) { status.textContent = 'Still finding photos…'; return; }
+    build();
     if (!playing) togglePlay();
     await new Promise(r => setTimeout(r, 400));
     chunks = [];
@@ -2556,10 +2688,9 @@ const REEL = (() => {
     if (a === 'caption') { const c = caption(); (navigator.clipboard ? navigator.clipboard.writeText(c) : Promise.reject()).then(() => { status.textContent = 'Caption copied.'; }, () => { status.textContent = c; }); return; }
     if (run) return; begin(a === 'record').catch((err) => { status.textContent = "Couldn't start: " + err.message; });
   });
-  // Ready means live readings for this place have arrived (never sample numbers), so an automatic run can't record a made-up sea.
-  const wait = setInterval(() => { if (place.loaded && place.live && !closed) { fontsReady.then(() => { if (!ready) { ready = true; clearInterval(wait); status.textContent = 'Ready. Preview it, or record the reel.'; } }); } }, 300);
+  // Ready means live readings for this place have arrived (never sample numbers) and the photos have been tried.
+  const wait = setInterval(() => { if (place.loaded && place.live && shotsDone && !closed) { fontsReady.then(() => { if (!ready) { ready = true; clearInterval(wait); build(); status.textContent = `Ready. ${DUR.toFixed(0)} seconds, ${shots.length} photo${shots.length === 1 ? '' : 's'}. Preview it, or record the reel.`; } }); } }, 300);
   setTimeout(() => { if (!ready) status.textContent = 'The live sea is slow to arrive. Preview works, but the numbers may be samples.'; }, 45000);
-  window.__reelCaption = caption;
   requestAnimationFrame(loop);
   return { caption };
 })();
