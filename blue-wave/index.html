@@ -24,7 +24,7 @@
 <script type="application/ld+json">{"@context":"https://schema.org","@type":"WebApplication","name":"Blue Wave","url":"https://threecities.forrestjamesmusic.com/blue-wave/","description":"Live wave height and sea temperature for beaches around the world, played as a Euclidean rhythm. Pick a beach and hear the sea.","applicationCategory":"MusicApplication","genre":"Generative music","operatingSystem":"Any (web browser)","browserRequirements":"Requires JavaScript and Web Audio","isAccessibleForFree":true,"offers":{"@type":"Offer","price":"0","priceCurrency":"USD"},"image":"https://threecities.forrestjamesmusic.com/blue-wave/og.jpg?v=4","author":{"@type":"Person","name":"Jim Forrest","url":"https://forrestjamesmusic.com"},"isPartOf":{"@type":"WebSite","name":"Three Cities","url":"https://threecities.forrestjamesmusic.com/"}}</script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Hanken+Grotesk:wght@200;300;400;500&family=Jost:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Hanken+Grotesk:wght@200;300;400;500&family=JetBrains+Mono:wght@400;500&display=swap">
 <style>
 /* Layout: the sky and sea fill the page, the rings are the hero. Title and view switch top left. In Place view a search and surf check sit down the left, readings down the right, one control bar along the bottom. */
 :root {
@@ -1761,7 +1761,7 @@ function togglePlay() {
   if (!ctx) initAudio();
   // iPhone can leave the context 'suspended' or 'interrupted' (after a call, or switching apps): wake it on every tap
   if (ctx.state !== 'running') ctx.resume().catch(() => {});
-  playing = !playing; if (playing) { const rg = $('ringer'); if (rg) rg.classList.add('gone'); } if (playing) { TRACK.once('listen'); TRACK.add('play'); }
+  playing = !playing; if (playing) { const rg = $('ringer'); if (rg) rg.classList.add('gone'); CH.contour = Math.floor(Math.random() * PPAT.length); } if (playing) { TRACK.once('listen'); TRACK.add('play'); }
   $('play').setAttribute('aria-pressed', playing); $('play').textContent = playing ? 'Stop' : 'Play'; document.body.classList.toggle('is-playing', playing); $('mb-play').setAttribute('aria-pressed', playing); $('mb-play').setAttribute('aria-label', playing ? 'Stop' : 'Play'); updateBar();
   if (playing) { tick = 0; mi = 0; chordNow = []; nextTime = ctx.currentTime + .05; waveT = ctx.currentTime + .05; swayG.gain.cancelScheduledValues(0); swayLP.frequency.cancelScheduledValues(0); musicSync(); startDrone(); if (MIDI.on && MIDI.clock) midiSend([0xFA]); timer = setInterval(schedule, 25); }
   else { clearInterval(timer); stopDrone(); if (MIDI.on) { if (MIDI.clock) midiSend([0xFC]); midiAllOff(); } }
@@ -2448,35 +2448,40 @@ setInterval(() => { showFacts(); if (mode === 'place' && place.hr) { analyseTide
 const REEL = (() => {
   let qs; try { qs = new URLSearchParams(location.search); } catch (e) { return null; }
   if (!qs.has('reel')) return null;
-  // A short film in chapters, in the spirit of Wes Anderson: flat pastel colour, perfect symmetry, tidy frames, whip pans between scenes, slow pushes inside them.
+  // A short film in the Blue Wave look: the site's navy, its blue accent and its fonts, with Wes Anderson's centred symmetry,
+  // tidy frames, whip pans and slow pushes. Two films: one beach (photos, landmarks, the sea, a fact) and the sea around the world.
+  const WORLD = qs.get('world') === '1';
   const RW = 1080, RH = 1920;
   // Instagram covers the top ~290px, the bottom ~360px and a strip down the right from y 1040. Words stay in x 80-1000 (80-880 below y 1040) and y 330-1550.
   const SAFE = { l: 80, r: 1000, rLow: 880, top: 330, bot: 1550, low: 1040 };
-  const INK = '#1d2f4f', CREAM = '#f7efdc', CORAL = '#e8877a', BUTTER = '#f3d98b', TEAL = '#3f8f88', SKY = '#6fa6d3';
-  const JOST = '"Jost", "Futura", "Century Gothic", sans-serif', MONO = '"JetBrains Mono", ui-monospace, monospace';
+  const INK = '#03102a', FOAM = '#f2f7ff', ACC = '#6aa2ff', EDGE = 'rgba(170,202,255,.26)', MIST = 'rgba(226,236,255,.88)', DIM = 'rgba(206,222,255,.68)', GLASS = 'rgba(3,14,38,.84)';
+  const RINGC = [ACC, FOAM, '#9ccbff', DIM];
+  const DISPLAY = '"Archivo Black", Impact, sans-serif', BODY = '"Hanken Grotesk", system-ui, sans-serif', MONO = '"JetBrains Mono", ui-monospace, monospace';
+  const LC = 480;   // below y 1040 the visible middle is x 80-880, centred on 480
   const wrap = document.createElement('div'); wrap.className = 'reelw';
   wrap.innerHTML = '<canvas width="1080" height="1920" aria-label="Reel preview"></canvas><div class="reelbar"><button type="button" data-a="preview">▶ Preview</button><button type="button" data-a="record">● Record reel</button><button type="button" data-a="caption">Copy caption</button><button type="button" data-a="guide" aria-pressed="false">Safe zone</button></div><p class="reelstat" role="status">Loading the sea…</p>';
   document.body.appendChild(wrap);
   const cv = wrap.querySelector('canvas'), g = cv.getContext('2d'), status = wrap.querySelector('.reelstat');
   const c01 = (x) => Math.max(0, Math.min(1, x)), ease = (x) => 1 - Math.pow(1 - c01(x), 3), io = (x) => { x = c01(x); return x < .5 ? 8 * x * x * x * x : 1 - Math.pow(-2 * x + 2, 4) / 2; };
-  let run = false, rt0 = 0, idleAt = 2.6, rec = null, chunks = [], guide = false, tap = null, ready = false, shotsDone = false, closed = false;
-  let curStep = [-1, -1, -1, -1], curFrac = 1;
+  const back = (x) => { x = c01(x) - 1; return 1 + 2.70158 * x * x * x + 1.70158 * x * x; }, lerp2 = (a, b, k) => a + (b - a) * k;
+  let run = false, rt0 = 0, idleAt = 2.6, rec = null, chunks = [], guide = false, tap = null, ready = false, shotsDone = false, closed = false, DUR = 0, scenes = [];
+  let curFrac = 1;
   const grain = document.createElement('canvas'); grain.width = grain.height = 256;
   { const gx = grain.getContext('2d'), im = gx.createImageData(256, 256); for (let i = 0; i < im.data.length; i += 4) { const v = Math.random() * 255; im.data[i] = im.data[i + 1] = im.data[i + 2] = v; im.data[i + 3] = 22; } gx.putImageData(im, 0, 0); }
-  const fontsReady = Promise.all(['600 64px "Jost"', '400 30px "Jost"', '30px "JetBrains Mono"'].map(f => document.fonts.load(f).catch(() => {})));
-  const data = () => { const v = place.voices[0]; return { h: v.tval, per: v.tper, sea: place.seaTemp }; };
-  const pastel = () => { const t = place.seaTemp; return t == null ? '#a8d5c8' : t < 10 ? '#bcd6e6' : t < 18 ? '#a8d5c8' : '#f2b8a2'; };
-  const mi = (m) => `${(m / 1609.34).toFixed(1)} mi · ${(m / 1000).toFixed(1)} km`;
-
-  // ----- the places around the beach: a beach photo and a couple of landmarks, from Wikipedia and Wikimedia Commons -----
+  const fontsReady = Promise.all(['400 64px "Archivo Black"', '600 30px "Hanken Grotesk"', '30px "JetBrains Mono"'].map(f => document.fonts.load(f).catch(() => {})));
+  const data = () => { const v = place.voices[0]; return { h: v.tval, per: v.tper, sea: place.seaTemp, air: place.airTemp }; };
+  const mi = (m) => `${(m / 1609.34).toFixed(1)} mi`;
+  const stepOf = (vc) => playing && ctx ? (tick - 1) % (vc.steps || 8) : -1;
+  // ----- photos: a beach and nearby landmarks from Wikipedia and Wikimedia Commons -----
   const shots = [];
-  const BADRX = /\b(list of|school|college|university|hospital|census|district|county|township|airport|station|railway|cemetery|company|politician|football|baseball|station)\b/i;
+  const BADRX = /\b(list of|school|college|university|hospital|census|district|county|township|airport|station|railway|cemetery|company|politician|football|baseball)\b/i;
   const LANDRX = /(light ?house|castle|\bfort\b|fortress|bridge|pier|tower|cliff|rock|island|monument|memorial|park|harbou?r|cove|church|cathedral|palace|statue|reef|point|cape|head\b|dune|trail|reserve|hall|museum|garden|beach|bay|shore|coast|lido|boardwalk|promenade|jetty|mill|lake|river|canal)/i;
   const BEACHRX = /(beach|\bbay\b|cove|shore|coast|dune|sands?\b|strand|lido|plage)/i;
   const BADFILE = /(map|flag|logo|diagram|plan|seal|poster|interior|portrait|sign|chart|banner|emblem|stamp|coin)/i;
   const J = (u) => fetch(u).then(r => r.json());
   const loadImg = (src) => new Promise(res => { const im = new Image(); im.crossOrigin = 'anonymous'; const to = setTimeout(() => res(null), 20000); im.onload = () => { clearTimeout(to); res(im.naturalWidth ? im : null); }; im.onerror = () => { clearTimeout(to); res(null); }; im.src = src; });
   async function findShots() {
+    if (WORLD) { shotsDone = true; return; }
     try {
       const la = place.lat, lo = place.lon, WP = 'https://en.wikipedia.org/w/api.php?format=json&origin=*&action=query';
       const gs = await J(`${WP}&list=geosearch&gscoord=${la}|${lo}&gsradius=10000&gslimit=50`);
@@ -2492,10 +2497,9 @@ const REEL = (() => {
       const rest = cand.filter(c => c !== beach).sort((a, b) => b.sc - a.sc);
       const picks = [];
       if (beach) picks.push(Object.assign({ kind: 'beach' }, beach)); else {
-        // no article photo for the beach itself: look for a photo taken right there
         try {
           const cm = await J(`https://commons.wikimedia.org/w/api.php?format=json&origin=*&action=query&generator=geosearch&ggscoord=${la}|${lo}&ggsradius=2000&ggsnamespace=6&ggslimit=30&prop=imageinfo&iiprop=url|size|mime&iiurlwidth=1400`);
-          const fs = Object.values((cm.query && cm.query.pages) || {}).map(p => ({ p, ii: p.imageinfo && p.imageinfo[0] })).filter(x => x.ii && /jpeg/.test(x.ii.mime) && x.ii.width >= 1000 && !BADFILE.test(x.p.title)).sort((a, b) => (a.p.index || 0) - (b.p.index || 0));
+          const fs = Object.values((cm.query && cm.query.pages) || {}).map(p => ({ p, ii: p.imageinfo && p.imageinfo[0] })).filter(x => x.ii && /jpeg/.test(x.ii.mime) && x.ii.width >= 1000 && !BADFILE.test(x.p.title));
           const f = fs.find(x => /(beach|sea|coast|shore|sand|wave|ocean)/i.test(x.p.title)) || fs[0];
           if (f) picks.push({ kind: 'beach', title: place.name, desc: 'Where the waves are', dist: 0, src: f.ii.thumburl || f.ii.url });
         } catch (e) {}
@@ -2507,170 +2511,208 @@ const REEL = (() => {
     shotsDone = true;
   }
   findShots();
-
-  // ----- the film: scenes in order, with whip pans between them -----
-  let scenes = [], DUR = 0; const TR = .7;
+  // ----- the facts, the same winners as the Facts panel -----
+  function winner(F) {
+    const all = F.set === 'blue' ? BLUE_POOL : OCEANS.concat(BLUE_POOL), list = F.ok ? all.filter(F.ok) : all;
+    const s = list.reduce((a, x) => (!a || F.dir * F.f(x, all) > F.dir * F.f(a, all) ? x : a), null);
+    return s ? { F, s, all } : null;
+  }
+  const pickFacts = (n) => {
+    const ok = FACTS.map(winner).filter(Boolean).sort(() => Math.random() - .5);
+    return ok.slice(0, n);
+  };
+  // ----- the sea around the world: four seas, spread out -----
+  const seasNow = () => { const pool = OCEANS.slice().sort(() => Math.random() - .5), pick = []; for (const s of pool) { if (pick.length >= 4) break; if (pick.every(p => Math.abs(p.lon - s.lon) > 40 || Math.abs(p.lat - s.lat) > 25)) pick.push(s); } return pick; };
+  // ----- the film: chapters, in order -----
   function build() {
-    const L = [{ t: 'title', d: 3.8 }];
-    const S = shots.slice(); const shapes = ['rect', 'arch', 'oval'];
-    S.forEach((sh, i) => { sh.shape = shapes[i % 3]; });
-    if (S[0]) L.push({ t: 'photo', d: 5.6, sh: S[0], i: 0 });
-    if (S[1]) L.push({ t: 'photo', d: 5.6, sh: S[1], i: 1 });
-    L.push({ t: 'sea', d: S.length ? 7 : 10 });
-    if (S[2]) L.push({ t: 'photo', d: 5.6, sh: S[2], i: 2 });
-    L.push({ t: 'end', d: 3.8 });
+    const L = []; const SHAPES = ['rect', 'arch', 'oval']; shots.forEach((sh, i) => { sh.shape = SHAPES[i % 3]; });
+    if (WORLD) {
+      L.push({ t: 'title', d: 3.8 }, { t: 'world', d: 7.4, seas: seasNow() });
+      const f = pickFacts(2); f.forEach(x => L.push({ t: 'fact', d: 5.2, w: x }));
+      L.push({ t: 'end', d: 3.8 });
+    } else {
+      const beach = shots.find(s => s.kind === 'beach'), lands = shots.filter(s => s.kind === 'land');
+      const pf = pickFacts(1)[0];
+      const P = (sh, i) => ({ t: 'photo', d: 5.4, sh, i });
+      const sea = { t: 'sea', d: 7.5 }, fact = pf ? { t: 'fact', d: 5.2, w: pf } : null;
+      L.push({ t: 'title', d: 3.8 });
+      if (Math.random() < .5) {
+        if (beach) L.push(P(beach, 0)); if (lands[0]) L.push(P(lands[0], 1)); L.push(sea); if (fact) L.push(fact); if (lands[1]) L.push(P(lands[1], 2));
+      } else {
+        L.push(sea); if (beach) L.push(P(beach, 0)); if (fact) L.push(fact); if (lands[0]) L.push(P(lands[0], 1)); if (lands[1]) L.push(P(lands[1], 2));
+      }
+      L.push({ t: 'end', d: 3.8 });
+    }
     let t = 0, n = 0; L.forEach(sc => { sc.t0 = t; sc.t1 = t + sc.d; t += sc.d; if (sc.t !== 'title' && sc.t !== 'end') sc.n = ++n; });
     scenes = L; DUR = t;
   }
   build();
-  const NUMW = ['ONE', 'TWO', 'THREE', 'FOUR', 'FIVE'];
-
-  // text with letter spacing, centred (works the same in every browser)
+  const NUMW = ['ONE', 'TWO', 'THREE', 'FOUR', 'FIVE', 'SIX'];
+  // ----- drawing helpers -----
   function tw(text, font, sp) { g.font = font; return [...text].reduce((a, ch) => a + g.measureText(ch).width + sp, -sp); }
   function tx(text, x, y, font, color, sp, maxW) {
-    let f = font; if (maxW) { let px = parseInt(font.match(/(\d+)px/)[1], 10); while (tw(text, f, sp) > maxW && px > 24) { px -= 2; f = font.replace(/\d+px/, px + 'px'); } }
+    let f = font; if (maxW) { let px = parseInt(font.match(/(\d+)px/)[1], 10); while (tw(text, f, sp) > maxW && px > 22) { px -= 2; f = font.replace(/\d+px/, px + 'px'); } }
     g.font = f; g.fillStyle = color; g.textAlign = 'left'; g.textBaseline = 'alphabetic';
     let cx = x - tw(text, f, sp) / 2; for (const ch of text) { g.fillText(ch, cx, y); cx += g.measureText(ch).width + sp; }
     g.textAlign = 'center';
   }
-  function frameLines(col, a) { g.save(); g.globalAlpha = a == null ? 1 : a; g.strokeStyle = col; g.lineWidth = 4; g.strokeRect(56, 310, 968, 1250); g.lineWidth = 1.5; g.strokeRect(70, 324, 940, 1222); g.restore(); }
-  function ornament(y, col, k) { const w = 300 * ease(k); g.save(); g.strokeStyle = col; g.lineWidth = 2; g.beginPath(); g.moveTo(540 - 16 - w, y); g.lineTo(540 - 16, y); g.moveTo(540 + 16, y); g.lineTo(540 + 16 + w, y); g.stroke(); g.fillStyle = col; g.beginPath(); g.moveTo(540, y - 8); g.lineTo(548, y); g.lineTo(540, y + 8); g.lineTo(532, y); g.fill(); g.restore(); }
-  function waveLines(y, col, s, n) { g.save(); g.strokeStyle = col; g.lineWidth = 3; for (let k = 0; k < n; k++) { g.beginPath(); for (let x = 100; x <= 980; x += 10) { const yy = y + k * 20 + Math.sin(x / 55 + s * 2 + k * 1.3) * 7; x === 100 ? g.moveTo(x, yy) : g.lineTo(x, yy); } g.stroke(); } g.restore(); }
-  // the four rings, symmetrical, one dot per step. The lit dot is the step playing now.
-  function rings(cx, cy, R0, ls, cols, restCol, lineCol) {
-    place.voices.forEach((vc, i) => {
-      const R = R0 * (1 - i * .21), ap = ease((ls - .2 - i * .2) / .9); if (ap <= 0) return;
-      g.save(); g.globalAlpha = ap; g.beginPath(); g.arc(cx, cy, R, 0, Math.PI * 2); g.strokeStyle = lineCol; g.lineWidth = 2; g.stroke();
-      const n = vc.steps || 8, now = curStep[i], hr = R0 * .05;
-      for (let j = 0; j < n; j++) {
-        const a = -Math.PI / 2 + j / n * Math.PI * 2, x = cx + Math.cos(a) * R, y = cy + Math.sin(a) * R, hit = vc.pattern && vc.pattern[(j + (vc.offset || 0)) % n], on = j === now;
-        if (hit) {
-          const r = hr + (on ? hr * .75 * (1 - curFrac) : 0);
-          if (on) { g.beginPath(); g.arc(x, y, r * 2.4, 0, Math.PI * 2); g.fillStyle = cols[i] + '55'; g.fill(); }
-          g.beginPath(); g.arc(x, y, r, 0, Math.PI * 2); g.fillStyle = cols[i]; g.fill(); g.lineWidth = 3; g.strokeStyle = INK; g.stroke();
-        } else { g.beginPath(); g.arc(x, y, on ? hr * .5 : hr * .3, 0, Math.PI * 2); g.fillStyle = on ? INK : restCol; g.fill(); }
-      }
-      g.restore();
-    });
+  function wrapText(text, x, y, maxW, font, lh, color) {
+    g.font = font; g.fillStyle = color; g.textAlign = 'center'; const words = text.split(' '); let line = '', yy = y;
+    for (const w of words) { const t = line ? line + ' ' + w : w; if (g.measureText(t).width > maxW && line) { g.fillText(line, x, yy); line = w; yy += lh; } else line = t; }
+    if (line) g.fillText(line, x, yy); return yy;
   }
-  // the beat as a tidy row of dots, so the rhythm stays on screen during the photos
+  function rr(x, y, w, h, r) { g.beginPath(); g.moveTo(x + r, y); g.arcTo(x + w, y, x + w, y + h, r); g.arcTo(x + w, y + h, x, y + h, r); g.arcTo(x, y + h, x, y, r); g.arcTo(x, y, x + w, y, r); g.closePath(); }
+  function panel(x, y, w, h, a) { g.save(); g.globalAlpha = a == null ? 1 : a; rr(x, y, w, h, 22); g.fillStyle = GLASS; g.fill(); g.lineWidth = 2; g.strokeStyle = EDGE; g.stroke(); g.restore(); }
+  function frameLines(a) { g.save(); g.globalAlpha = a == null ? 1 : a; g.strokeStyle = EDGE; g.lineWidth = 2; rr(56, 310, 968, 1250, 22); g.stroke(); g.restore(); }
+  function skyBg(s) {
+    const bg = g.createLinearGradient(0, 0, 0, RH); bg.addColorStop(0, '#0b2d70'); bg.addColorStop(.55, '#06163f'); bg.addColorStop(1, INK); g.fillStyle = bg; g.fillRect(0, 0, RW, RH);
+    const px = 540 + Math.sin(s * .2) * 60, gr = g.createRadialGradient(px, 900, 0, px, 900, 760); gr.addColorStop(0, 'rgba(106,162,255,.22)'); gr.addColorStop(1, 'rgba(106,162,255,0)'); g.fillStyle = gr; g.fillRect(0, 0, RW, RH);
+  }
+  // one ring of dots: the lit dot is the step playing now; hits are filled
+  function ring(vc, cx, cy, R, col, a, ls, delay) {
+    const ap = a != null ? a : ease((ls - delay) / .9); if (ap <= 0) return;
+    const n = vc.steps || 8, now = stepOf(vc), dr = Math.max(7, R * .05), pat = vc.pattern || [];
+    g.save(); g.globalAlpha = ap; g.beginPath(); g.arc(cx, cy, R, 0, Math.PI * 2); g.strokeStyle = 'rgba(170,202,255,.32)'; g.lineWidth = 2; g.stroke();
+    for (let j = 0; j < n; j++) {
+      const an = -Math.PI / 2 + j / n * Math.PI * 2, x = cx + Math.cos(an) * R, y = cy + Math.sin(an) * R, hit = pat[(j + (vc.offset || 0)) % n], on = j === now;
+      if (hit) {
+        const r = dr + (on ? dr * .8 * (1 - curFrac) : 0);
+        if (on) { g.beginPath(); g.arc(x, y, r * 2.6, 0, Math.PI * 2); g.fillStyle = col + '44'; g.fill(); }
+        g.beginPath(); g.arc(x, y, r, 0, Math.PI * 2); g.fillStyle = col; g.fill();
+      } else { g.beginPath(); g.arc(x, y, on ? dr * .6 : dr * .32, 0, Math.PI * 2); g.fillStyle = on ? FOAM : 'rgba(170,202,255,.5)'; g.fill(); }
+    }
+    g.restore();
+  }
+  function rings(cx, cy, R0, ls, delay0) {
+    place.voices.forEach((vc, i) => ring(vc, cx, cy, R0 * (1 - i * .21), RINGC[i], null, ls, (delay0 || 0) + i * .2));
+  }
   function strip(y, ls) {
-    const vc = place.voices[0], n = vc.steps || 8, sp = Math.min(54, 780 / n), x0 = 480 - sp * (n - 1) / 2, a = ease((ls - .6) / .6);
+    const vc = place.voices[0], n = vc.steps || 8, sp = Math.min(54, 760 / n), x0 = LC - sp * (n - 1) / 2, a = ease((ls - .6) / .6), now = stepOf(vc);
     g.save(); g.globalAlpha = a;
     for (let j = 0; j < n; j++) {
-      const hit = vc.pattern && vc.pattern[(j + (vc.offset || 0)) % n], on = j === curStep[0], x = x0 + j * sp;
-      g.beginPath(); g.arc(x, y, hit ? 13 + (on ? 9 * (1 - curFrac) : 0) : 5, 0, Math.PI * 2);
-      if (hit) { g.fillStyle = on ? CORAL : CREAM; g.fill(); g.lineWidth = 3; g.strokeStyle = INK; g.stroke(); } else { g.fillStyle = on ? CREAM : 'rgba(247,239,220,.55)'; g.fill(); }
+      const hit = vc.pattern && vc.pattern[(j + (vc.offset || 0)) % n], on = j === now, x = x0 + j * sp;
+      g.beginPath(); g.arc(x, y, hit ? 12 + (on ? 8 * (1 - curFrac) : 0) : 5, 0, Math.PI * 2);
+      g.fillStyle = hit ? (on ? ACC : FOAM) : (on ? FOAM : 'rgba(170,202,255,.45)'); g.fill();
     }
     g.restore();
   }
-  function shapePath(shape, pad) {
-    const x0 = 120 - pad, x1 = 960 + pad, y0 = 500 - pad, y1 = 1260 + pad; g.beginPath();
-    if (shape === 'arch') { const r = (x1 - x0) / 2; g.moveTo(x0, y1); g.lineTo(x0, y0 + r); g.arc(540, y0 + r, r, Math.PI, 0); g.lineTo(x1, y1); g.closePath(); }
-    else if (shape === 'oval') g.ellipse(540, 880, (x1 - x0) / 2, (y1 - y0) / 2, 0, 0, Math.PI * 2);
+  function shapePath(shape, cx, cy, w, h, pad) {
+    const x0 = cx - w / 2 - pad, x1 = cx + w / 2 + pad, y0 = cy - h / 2 - pad, y1 = cy + h / 2 + pad; g.beginPath();
+    if (shape === 'arch') { const r = (x1 - x0) / 2; g.moveTo(x0, y1); g.lineTo(x0, y0 + r); g.arc(cx, y0 + r, r, Math.PI, 0); g.lineTo(x1, y1); g.closePath(); }
+    else if (shape === 'oval') g.ellipse(cx, cy, (x1 - x0) / 2, (y1 - y0) / 2, 0, 0, Math.PI * 2);
     else g.rect(x0, y0, x1 - x0, y1 - y0);
   }
-
-  const lerp2 = (a, b, k) => a + (b - a) * k, back = (x) => { x = c01(x) - 1; return 1 + 2.70158 * x * x * x + 1.70158 * x * x; };
-  // Backgrounds and photos run edge to edge. Words and key art stay inside the safe zone: x 80-1000 (80-880 below y 1040), y 330-1550.
-  // Below y 1040 the visible middle is x 480, so low elements are centred there.
-  const LC = 480;
-  function title(sc, ls, s) {
-    const P = pastel(), d = data(); g.fillStyle = P; g.fillRect(0, 0, RW, RH);
-    // huge rings that open out from a tiny seed, the whole film's first scale change
-    const R0 = lerp2(90, 600, ease(ls / 3.4));
-    rings(540, 935, R0, ls, [CORAL, SKY, BUTTER, TEAL], 'rgba(29,47,79,.4)', 'rgba(29,47,79,.4)');
+  // ----- chapters -----
+  function title(sc, ls) {
+    skyBg(ls); rings(540, 935, lerp2(90, 600, ease(ls / 3.4)), ls, 0);
     const k = back((ls - .9) / .7);
     if (k > 0) {
-      g.save(); g.translate(540, 935); g.scale(k, k);
-      g.fillStyle = CREAM; g.fillRect(-380, -190, 760, 380); g.strokeStyle = INK; g.lineWidth = 4; g.strokeRect(-380, -190, 760, 380); g.lineWidth = 1.5; g.strokeRect(-366, -176, 732, 352);
-      tx('A BLUE WAVE FILM', 0, -112, `400 26px ${JOST}`, INK, 12); ornament2(-82);
-      tx(place.name.toUpperCase(), 0, -8, `600 84px ${JOST}`, INK, 5, 690);
-      tx((place.sub || '').toUpperCase(), 0, 52, `400 32px ${JOST}`, INK, 8, 690);
-      tx(`${Math.abs(place.lat).toFixed(2)}° ${place.lat >= 0 ? 'N' : 'S'} · ${Math.abs(place.lon).toFixed(2)}° ${place.lon >= 0 ? 'E' : 'W'}`, 0, 120, `500 24px ${MONO}`, INK, 3);
+      g.save(); g.translate(540, 935); g.scale(k, k); panel(-400, -200, 800, 400, 1);
+      tx(WORLD ? 'THE SEA AROUND THE WORLD' : 'A BLUE WAVE FILM', 0, -112, `500 26px ${BODY}`, ACC, 8, 720);
+      tx(WORLD ? 'LIVE, FROM FOUR SEAS' : place.name.toUpperCase(), 0, -6, `400 ${WORLD ? 84 : 76}px ${DISPLAY}`, FOAM, 2, 740);
+      tx(WORLD ? 'Played as a rhythm' : (place.sub || '').toUpperCase(), 0, 60, `500 30px ${BODY}`, MIST, 4, 740);
+      tx(WORLD ? 'BLUE WAVE' : `${Math.abs(place.lat).toFixed(2)}° ${place.lat >= 0 ? 'N' : 'S'} · ${Math.abs(place.lon).toFixed(2)}° ${place.lon >= 0 ? 'E' : 'W'}`, 0, 130, `500 24px ${MONO}`, DIM, 2);
       g.restore();
     }
-    const la = ease((ls - 1.8) / .6); g.globalAlpha = la; tx('LIVE FROM THE SEA', LC, 1490, `500 32px ${JOST}`, INK, 12, 780); g.globalAlpha = 1;
+    const la = ease((ls - 1.8) / .6); g.globalAlpha = la; tx('LIVE FROM THE SEA', LC, 1490, `500 30px ${BODY}`, MIST, 10, 780); g.globalAlpha = 1;
   }
-  function ornament2(y) { g.save(); g.strokeStyle = INK; g.lineWidth = 2; g.beginPath(); g.moveTo(-300, y); g.lineTo(-16, y); g.moveTo(16, y); g.lineTo(300, y); g.stroke(); g.fillStyle = INK; g.beginPath(); g.moveTo(0, y - 8); g.lineTo(8, y); g.lineTo(0, y + 8); g.lineTo(-8, y); g.fill(); g.restore(); }
   function photo(sc, ls) {
     const sh = sc.sh, im = sh.img, prog = c01(ls / sc.d), open = io(ls / 1.6), dir = sc.i % 2 ? -1 : 1;
-    g.fillStyle = CREAM; g.fillRect(0, 0, RW, RH);
-    // a window that opens from a small frame to the whole screen: the shape is different each time
+    skyBg(ls);
     const sz = { rect: [[460, 620], [RW + 6, RH + 6]], arch: [[460, 700], [RW * 1.4, RH * 1.6]], oval: [[460, 540], [RW * 1.55, RH * 1.55]] }[sh.shape];
-    const w = lerp2(sz[0][0], sz[1][0], open), h = lerp2(sz[0][1], sz[1][1], open), cx = 540, cy = lerp2(935, 960, open);
-    const path = (pad) => { g.beginPath(); const x0 = cx - w / 2 - pad, x1 = cx + w / 2 + pad, y0 = cy - h / 2 - pad, y1 = cy + h / 2 + pad;
-      if (sh.shape === 'arch') { const r = (x1 - x0) / 2; g.moveTo(x0, y1); g.lineTo(x0, y0 + r); g.arc(cx, y0 + r, r, Math.PI, 0); g.lineTo(x1, y1); g.closePath(); }
-      else if (sh.shape === 'oval') g.ellipse(cx, cy, (x1 - x0) / 2, (y1 - y0) / 2, 0, 0, Math.PI * 2); else g.rect(x0, y0, x1 - x0, y1 - y0); };
-    g.save(); path(0); g.clip();
+    const w = lerp2(sz[0][0], sz[1][0], open), h = lerp2(sz[0][1], sz[1][1], open), cy = lerp2(935, 960, open);
+    g.save(); shapePath(sh.shape, 540, cy, w, h, 0); g.clip();
     const scl = Math.max(RW / im.naturalWidth, RH / im.naturalHeight) * (1.02 + .40 * prog), dw = im.naturalWidth * scl, dh = im.naturalHeight * scl, slack = Math.max(0, dw - RW);
-    const px = dir * (prog - .5) * slack * .6;
-    g.drawImage(im, 540 - dw / 2 + px, 960 - dh / 2 - (prog - .5) * 40, dw, dh);
-    g.globalCompositeOperation = 'soft-light'; g.globalAlpha = .55; g.fillStyle = pastel(); g.fillRect(0, 0, RW, RH);
-    g.globalCompositeOperation = 'source-over'; g.globalAlpha = 1;
-    let gr = g.createLinearGradient(0, 0, 0, 700); gr.addColorStop(0, 'rgba(29,47,79,.55)'); gr.addColorStop(1, 'rgba(29,47,79,0)'); g.fillStyle = gr; g.fillRect(0, 0, RW, 700);
-    gr = g.createLinearGradient(0, 1150, 0, RH); gr.addColorStop(0, 'rgba(29,47,79,0)'); gr.addColorStop(1, 'rgba(29,47,79,.6)'); g.fillStyle = gr; g.fillRect(0, 1150, RW, RH - 1150);
+    g.drawImage(im, 540 - dw / 2 + dir * (prog - .5) * slack * .6, 960 - dh / 2 - (prog - .5) * 40, dw, dh);
+    let gr = g.createLinearGradient(0, 0, 0, 760); gr.addColorStop(0, 'rgba(3,16,42,.6)'); gr.addColorStop(1, 'rgba(3,16,42,0)'); g.fillStyle = gr; g.fillRect(0, 0, RW, 760);
+    gr = g.createLinearGradient(0, 1080, 0, RH); gr.addColorStop(0, 'rgba(3,16,42,0)'); gr.addColorStop(1, 'rgba(3,16,42,.8)'); g.fillStyle = gr; g.fillRect(0, 1080, RW, RH - 1080);
     g.restore();
-    if (open < .98) { g.save(); g.globalAlpha = 1 - open; g.lineWidth = 6; g.strokeStyle = INK; path(0); g.stroke(); g.lineWidth = 2; path(18); g.stroke(); g.restore(); }
-    frameLines(CREAM, .9 * open);
-    // title plate at the top of the safe zone, popping in
+    if (open < .98) { g.save(); g.globalAlpha = 1 - open; g.lineWidth = 4; g.strokeStyle = ACC; shapePath(sh.shape, 540, cy, w, h, 0); g.stroke(); g.restore(); }
+    frameLines(.9 * open);
     const k = back((ls - 1.1) / .6);
-    if (k > 0) { g.save(); g.translate(540, 420); g.scale(k, k); g.fillStyle = CREAM; g.fillRect(-300, -86, 600, 172); g.strokeStyle = INK; g.lineWidth = 3; g.strokeRect(-300, -86, 600, 172); g.lineWidth = 1.5; g.strokeRect(-290, -76, 580, 152);
-      tx('CHAPTER ' + NUMW[sc.n - 1], 0, -26, `400 24px ${JOST}`, INK, 12); tx(sh.kind === 'beach' ? 'THE BEACH' : (sc.i === 1 ? 'THE LANDMARK' : 'THE VIEW'), 0, 40, `600 58px ${JOST}`, INK, 6, 540); g.restore(); }
-    // name plate low in the frame
-    const pa = ease((ls - 1.6) / .6), name = (sh.kind === 'beach' ? place.name : sh.title).toUpperCase(), nw = Math.min(800, tw(name, `500 34px ${JOST}`, 6) + 90) * pa;
-    if (nw > 4) { g.fillStyle = CREAM; g.fillRect(LC - nw / 2, 1352, nw, 70); g.save(); g.beginPath(); g.rect(LC - nw / 2, 1340, nw, 100); g.clip(); tx(name, LC, 1399, `500 34px ${JOST}`, INK, 6, 720); g.restore(); }
-    g.globalAlpha = ease((ls - 2) / .6); const sub = (sh.kind === 'beach' ? sh.desc : [sh.desc, mi(sh.dist)].filter(Boolean).join(' · ')); tx(sub.slice(0, 60), LC, 1462, `500 30px ${MONO}`, CREAM, 1, 820); g.globalAlpha = 1;
-    strip(1514, ls);
+    if (k > 0) { g.save(); g.translate(540, 420); g.scale(k, k); panel(-300, -86, 600, 172, 1);
+      tx('CHAPTER ' + NUMW[sc.n - 1], 0, -26, `500 24px ${BODY}`, ACC, 8); tx(sh.kind === 'beach' ? 'THE BEACH' : (sc.i === 1 ? 'THE LANDMARK' : 'THE VIEW'), 0, 40, `400 52px ${DISPLAY}`, FOAM, 2, 540); g.restore(); }
+    const pa = ease((ls - 1.6) / .6), name = (sh.kind === 'beach' ? place.name : sh.title).toUpperCase(), nw = Math.min(800, tw(name, `500 34px ${BODY}`, 4) + 90) * pa;
+    if (nw > 4) { panel(LC - nw / 2, 1340, nw, 92, 1); g.save(); g.beginPath(); g.rect(LC - nw / 2, 1340, nw, 92); g.clip(); tx(name, LC, 1399, `500 34px ${BODY}`, FOAM, 4, 740); g.restore(); }
+    g.globalAlpha = ease((ls - 2) / .6); const sub = sh.kind === 'beach' ? sh.desc : [sh.desc, mi(sh.dist) + ' away'].filter(Boolean).join(' · '); tx(sub.slice(0, 60), LC, 1476, `500 28px ${MONO}`, MIST, 0, 800); g.globalAlpha = 1;
+    strip(1530, ls);
   }
   function sea(sc, ls, s) {
-    const d = data(), P = pastel(); g.fillStyle = P; g.fillRect(0, 0, RW, RH);
-    // pull back from a giant ring to the whole thing: scale change
-    const R0 = lerp2(1000, 340, io(ls / 2.4)), cy = 875;
-    rings(540, cy, R0, ls - .2, [CORAL, SKY, BUTTER, TEAL], 'rgba(29,47,79,.4)', 'rgba(29,47,79,.4)');
+    const d = data(); skyBg(ls);
+    const R0 = lerp2(1000, 340, io(ls / 2.4)), cy = 820;
+    rings(540, cy, R0, ls - .2, 0);
     const a = ease((ls - .4) / .6);
-    g.globalAlpha = a; tx('CHAPTER ' + NUMW[sc.n - 1], 540, 388, `400 26px ${JOST}`, INK, 12); tx('THE SEA, TODAY', 540, 452 + (1 - a) * 18, `600 62px ${JOST}`, INK, 8, 840);
-    tx((up1(compare(d.h))).toUpperCase(), 540, 510, `500 30px ${JOST}`, INK, 8, 840); g.globalAlpha = 1;
-    const ca = back((ls - 1.4) / .7); if (ca > 0) { g.save(); g.translate(540, cy); g.scale(ca, ca); tx(`${ftn(d.h)} ft`, 0, 8, `600 76px ${JOST}`, INK, 2); g.font = `500 26px ${MONO}`; g.fillStyle = INK; g.textAlign = 'center'; g.fillText(`${d.h.toFixed(1)} m`, 0, 52); g.restore(); }
-    waveLines(1226, 'rgba(29,47,79,.45)', s, 1);
-    const rows = [[BUTTER, 'SEA', d.sea != null ? `${Math.round(d.sea * 9 / 5 + 32)} °F · ${d.sea.toFixed(1)} °C` : 'no reading'], [CORAL, 'BETWEEN WAVES', `${Math.round(d.per)} seconds`], [SKY, 'WHAT TO WEAR', d.sea != null ? wetsuit(d.sea) : 'boardshorts']];
-    rows.forEach(([col, lab, val], i) => {
-      const pa = io((ls - 1.9 - i * .3) / .7), y = 1252 + i * 100; if (pa <= 0) return;
-      g.save(); g.translate((i % 2 ? 1 : -1) * (1 - pa) * RW, 0); g.fillStyle = col; g.fillRect(0, y, RW, 94); g.fillStyle = INK; g.fillRect(0, y, RW, 3); g.fillRect(0, y + 91, RW, 3);
-      g.textAlign = 'left'; g.font = `500 30px ${JOST}`; g.fillStyle = INK; let cx = 100; for (const ch of lab) { g.fillText(ch, cx, y + 34); cx += g.measureText(ch).width + 6; }
-      g.font = `600 56px ${JOST}`; let px = 56, f = ''; do { f = `600 ${px}px ${JOST}`; px -= 2; } while (tw(val, f, 1) > 780 && px > 26); g.font = f; g.fillText(val, 100, y + 82); g.textAlign = 'center'; g.restore();
+    g.globalAlpha = a; tx('CHAPTER ' + NUMW[sc.n - 1], 540, 384, `500 24px ${BODY}`, ACC, 8); tx('THE SEA, TODAY', 540, 448 + (1 - a) * 18, `400 60px ${DISPLAY}`, FOAM, 2, 900); g.globalAlpha = 1;
+    const ca = back((ls - 1.4) / .7); if (ca > 0) { g.save(); g.translate(540, cy); g.scale(ca, ca); panel(-170, -80, 340, 160, .86); tx(`${ftn(d.h)} ft`, 0, 6, `400 74px ${DISPLAY}`, FOAM, 1); g.font = `500 26px ${MONO}`; g.fillStyle = MIST; g.fillText(`${d.h.toFixed(1)} m`, 0, 56); g.restore(); }
+    const rows = [['SEA', d.sea != null ? `${Math.round(d.sea * 9 / 5 + 32)} °F · ${d.sea.toFixed(1)} °C` : 'no reading'], ['AIR', d.air != null ? `${Math.round(d.air * 9 / 5 + 32)} °F · ${d.air.toFixed(1)} °C` : 'no reading'], ['WHAT TO WEAR', d.sea != null ? wetsuit(d.sea) : 'boardshorts']];
+    rows.forEach(([lab, val], i) => {
+      const pa = io((ls - 1.9 - i * .3) / .7), y = 1222 + i * 118; if (pa <= 0) return;
+      g.save(); g.translate((i % 2 ? 1 : -1) * (1 - pa) * 200, 0); g.globalAlpha = pa; panel(96, y, 888, 102, .9);
+      g.textAlign = 'left'; g.font = `500 24px ${BODY}`; g.fillStyle = ACC; let cx = 130; for (const ch of lab) { g.fillText(ch, cx, y + 38); cx += g.measureText(ch).width + 5; }
+      g.textAlign = 'right'; let px = 58, f = ''; do { f = `400 ${px}px ${DISPLAY}`; px -= 2; } while (tw(val, f, 1) > 620 && px > 26); g.font = f; g.fillStyle = FOAM; g.fillText(val, 950, y + 72); g.textAlign = 'center'; g.restore();
     });
   }
-  function endCard(sc, ls) {
-    g.fillStyle = INK; g.fillRect(0, 0, RW, RH);
-    rings(540, 935, lerp2(300, 760, ease(ls / 3)), ls, [CORAL, SKY, BUTTER, '#8fd0c8'], 'rgba(247,239,220,.4)', 'rgba(247,239,220,.22)');
-    const k = back((ls - .3) / .7);
-    if (k > 0) { g.save(); g.translate(540, 935); g.scale(k, k); g.fillStyle = INK; g.fillRect(-420, -150, 840, 300); g.strokeStyle = CREAM; g.lineWidth = 4; g.strokeRect(-420, -150, 840, 300); g.lineWidth = 1.5; g.strokeRect(-406, -136, 812, 272);
-      tx('BLUE WAVE', 0, -20, `600 130px ${JOST}`, CREAM, 10, 760);
-      g.save(); g.strokeStyle = BUTTER; g.lineWidth = 2; g.beginPath(); g.moveTo(-300, 14); g.lineTo(300, 14); g.stroke(); g.restore();
-      tx('LIVE WAVES, PLAYED AS A RHYTHM', 0, 66, `400 26px ${JOST}`, CREAM, 7, 760); g.restore(); }
+  function fact(sc, ls) {
+    const { F, s, all } = sc.w; skyBg(ls);
+    const a = ease(ls / .6);
+    g.globalAlpha = a; tx('CHAPTER ' + NUMW[sc.n - 1], 540, 384, `500 24px ${BODY}`, ACC, 8); g.globalAlpha = 1;
+    const k = back((ls - .2) / .7);
+    if (k > 0) { g.save(); g.translate(540, 760); g.scale(k, k); panel(-380, -220, 760, 440, 1);
+      g.font = `400 130px "Noto Color Emoji", sans-serif`; g.textAlign = 'center'; g.fillStyle = FOAM; g.fillText(FACT_E[F.k] || '🌊', 0, -60);
+      tx(F.label.toUpperCase(), 0, 30, `500 30px ${BODY}`, ACC, 4, 680);
+      let px = 92, f = ''; const val = F.show(s, all); do { f = `400 ${px}px ${DISPLAY}`; px -= 2; } while (tw(val, f, 1) > 680 && px > 30); tx(val, 0, 130, f, FOAM, 1);
+      g.restore(); }
+    const b = ease((ls - 1.2) / .7); g.globalAlpha = b;
+    wrapText(F.line(s, all), 540, 1040, 720, `500 46px ${BODY}`, 58, FOAM);
+    g.globalAlpha = ease((ls - 2.2) / .6); tx((s.sub ? s.name + ', ' + s.sub : s.name).toUpperCase(), 540, 1400, `500 30px ${BODY}`, MIST, 6, 800); g.globalAlpha = 1;
   }
+  function world(sc, ls) {
+    skyBg(ls);
+    const a = ease(ls / .6);
+    g.globalAlpha = a; tx('CHAPTER ' + NUMW[sc.n - 1], 540, 384, `500 24px ${BODY}`, ACC, 8); tx('FOUR SEAS, RIGHT NOW', 540, 448, `400 56px ${DISPLAY}`, FOAM, 2, 900); g.globalAlpha = 1;
+    const pos = [[300, 740], [780, 740], [300, 1110], [780, 1110]];
+    sc.seas.forEach((vc, i) => {
+      const [cx, cy] = pos[i], R = 124 * (vc.tval > 3 ? 1.05 : 1), ap = ease((ls - .2 - i * .25) / .8);
+      if (ap <= 0) return;
+      ring(vc, cx, cy, R, RINGC[i], ap, ls, 0);
+      g.globalAlpha = ap; tx(vc.name.toUpperCase(), cx, cy + R + 50, `500 28px ${BODY}`, FOAM, 2, 400); g.font = `400 28px ${MONO}`; g.fillStyle = MIST; g.fillText(`${fH(vc.tval)} · ${vc.tper.toFixed(0)} s`, cx, cy + R + 88); g.globalAlpha = 1;
+    });
+    g.globalAlpha = ease((ls - 1.4) / .6); tx('Each ring is a sea. Bigger waves light more dots.', 540, 1470, `500 28px ${BODY}`, MIST, 0, 820); g.globalAlpha = 1;
+  }
+  function endCard(sc, ls) {
+    skyBg(ls); rings(540, 935, lerp2(300, 760, ease(ls / 3)), ls, 0);
+    const k = back((ls - .3) / .7);
+    if (k > 0) { g.save(); g.translate(540, 935); g.scale(k, k); panel(-420, -150, 840, 300, 1);
+      tx('BLUE WAVE', 0, -16, `400 124px ${DISPLAY}`, FOAM, 3, 760);
+      g.save(); g.strokeStyle = ACC; g.lineWidth = 2; g.beginPath(); g.moveTo(-200, 40); g.lineTo(200, 40); g.stroke(); g.restore();
+      tx('LIVE WAVES, PLAYED AS A RHYTHM', 0, 92, `500 26px ${BODY}`, MIST, 5, 760); g.restore(); }
+  }
+  // ----- transitions and the frame -----
   function scene(ms) {
     const s = (ms - rt0) / 1000, sd = stepDur();
-    if (playing && ctx) { const c = tick - 1; curStep = place.voices.map(v => c >= 0 ? c % (v.steps || 8) : -1); curFrac = clamp((ctx.currentTime - (nextTime - sd)) / sd, 0, 1); } else { curStep = [-1, -1, -1, -1]; curFrac = 1; }
+    if (playing && ctx) curFrac = clamp((ctx.currentTime - (nextTime - sd)) / sd, 0, 1); else curFrac = 1;
     g.fillStyle = INK; g.fillRect(0, 0, RW, RH);
     const last = scenes.length - 1;
     scenes.forEach((sc, k) => {
-      const enter = k > 0 ? c01((s - (sc.t0 - TR / 2)) / TR) : 1, exit = k < last ? c01((s - (sc.t1 - TR / 2)) / TR) : 0;
+      const enter = k > 0 ? c01((s - (sc.t0 - .35)) / .7) : 1, exit = k < last ? c01((s - (sc.t1 - .35)) / .7) : 0;
       if ((k > 0 && enter <= 0) || exit >= 1) return;
-      g.save(); g.beginPath(); g.rect(0, 0, RW, RH); g.clip(); { const z = 1 + .16 * (1 - io(enter)) - .08 * io(exit); g.translate((1 - io(enter)) * RW - io(exit) * RW, 0); g.translate(540, 960); g.scale(z, z); g.translate(-540, -960); }
-      const ls = Math.max(0, s - sc.t0); (sc.t === 'title' ? title : sc.t === 'photo' ? photo : sc.t === 'sea' ? sea : endCard)(sc, ls, s); g.restore();
+      g.save(); g.beginPath(); g.rect(0, 0, RW, RH); g.clip();
+      { const z = 1 + .16 * (1 - io(enter)) - .08 * io(exit); g.translate((1 - io(enter)) * RW - io(exit) * RW, 0); g.translate(540, 960); g.scale(z, z); g.translate(-540, -960); }
+      const ls = Math.max(0, s - sc.t0), fn = { title, photo, sea, fact, world, end: endCard }[sc.t];
+      fn(sc, ls, s); g.restore();
     });
-    g.save(); g.globalAlpha = .6; g.fillStyle = g.createPattern(grain, 'repeat'); g.translate(-Math.random() * 256, -Math.random() * 256); g.fillRect(0, 0, RW + 256, RH + 256); g.restore();
-    if (s < .5) { g.fillStyle = `rgba(29,47,79,${1 - s / .5})`; g.fillRect(0, 0, RW, RH); }
-    if (guide) { g.strokeStyle = 'rgba(255,60,60,.9)'; g.lineWidth = 4; g.strokeRect(SAFE.l, SAFE.top, SAFE.r - SAFE.l, SAFE.bot - SAFE.top); g.beginPath(); g.moveTo(SAFE.rLow, SAFE.low); g.lineTo(SAFE.rLow, SAFE.bot); g.stroke(); }
+    g.save(); g.globalAlpha = .5; g.fillStyle = g.createPattern(grain, 'repeat'); g.translate(-Math.random() * 256, -Math.random() * 256); g.fillRect(0, 0, RW + 256, RH + 256); g.restore();
+    if (s < .5) { g.fillStyle = `rgba(3,16,42,${1 - s / .5})`; g.fillRect(0, 0, RW, RH); }
+    if (guide) { g.strokeStyle = 'rgba(255,90,90,.9)'; g.lineWidth = 4; g.strokeRect(SAFE.l, SAFE.top, SAFE.r - SAFE.l, SAFE.bot - SAFE.top); g.beginPath(); g.moveTo(SAFE.rLow, SAFE.low); g.lineTo(SAFE.rLow, SAFE.bot); g.stroke(); }
     return s;
   }
   function caption() {
-    const d = data(), fl = d.sea != null ? Math.round(d.sea * 9 / 5 + 32) : null, where = [place.name, place.sub].filter(Boolean).join(', ');
-    const sea = d.sea != null ? ` The sea is ${Math.round(d.sea)} °C (${fl} °F), so ${wetsuit(d.sea).toLowerCase()}.` : '';
-    const near = shots.filter(x => x.kind === 'land').map(x => x.title); const nearTxt = near.length ? `\n\nNearby: ${near.join(' and ')}.` : '';
-    return `${where}. ${up1(sizeWord(d.h).toLowerCase())} waves right now, ${compare(d.h)}.${sea}${nearTxt}\n\nThis is the live sea, played as a rhythm. Bigger waves play more notes. Longer waves play more steps. Warmer water plays higher.\n\nPick any beach in the world at threecities.forrestjamesmusic.com/blue-wave\n\n#bluewave #surf #ocean #generativemusic #beach #euclideanrhythm`;
+    const d = data(), where = [place.name, place.sub].filter(Boolean).join(', ');
+    const sea = d.sea != null ? ` The sea is ${Math.round(d.sea)} °C (${Math.round(d.sea * 9 / 5 + 32)} °F), so ${wetsuit(d.sea).toLowerCase()}.` : '';
+    const seas = scenes.filter(x => x.t === 'world').length ? scenes.find(x => x.t === 'world').seas.map(x => x.name).join(', ') : '';
+    const lead = WORLD ? `The sea around the world, right now: ${seas}.` : `${where}. ${up1(sizeWord(d.h).toLowerCase())} waves right now, ${compare(d.h)}.${sea}`;
+    const near = shots.filter(x => x.kind === 'land').map(x => x.title); const nearTxt = near.length && !WORLD ? `\n\nNearby: ${near.join(' and ')}.` : '';
+    return `${lead}${nearTxt}\n\nThis is the live sea, played as a rhythm. Bigger waves play more notes. Longer waves play more steps. Warmer water plays higher.\n\nPick any beach in the world at threecities.forrestjamesmusic.com/blue-wave\n\n#bluewave #surf #ocean #generativemusic #beach #euclideanrhythm`;
   }
   function loop(now) {
     if (closed) return;
@@ -2685,7 +2727,7 @@ const REEL = (() => {
     await new Promise(r => setTimeout(r, 400));
     chunks = [];
     if (record) {
-      if (!tap) { tap = ctx.createMediaStreamDestination(); (compOut || master).connect(tap); }   // after the compressor: exactly what you hear
+      if (!tap) { tap = ctx.createMediaStreamDestination(); (compOut || master).connect(tap); }
       const types = ['video/mp4;codecs=avc1.42E01E,mp4a.40.2', 'video/mp4', 'video/webm;codecs=vp9,opus', 'video/webm'];
       const type = types.find(t => window.MediaRecorder && MediaRecorder.isTypeSupported(t));
       const stream = new MediaStream([...cv.captureStream(30).getVideoTracks(), ...tap.stream.getAudioTracks()]);
@@ -2693,7 +2735,7 @@ const REEL = (() => {
       rec.ondataavailable = (e) => { if (e.data.size) chunks.push(e.data); };
       rec.onstop = () => {
         const t = rec.mimeType || 'video/webm', blob = new Blob(chunks, { type: t }), ext = /mp4/.test(t) ? 'mp4' : 'webm';
-        const name = `Blue Wave reel - ${place.name} - ${new Date().toISOString().slice(0, 10)}.${ext}`.replace(/[\\/:*?"<>|]/g, ''); rec = null;
+        const name = `Blue Wave reel - ${WORLD ? 'the sea around the world' : place.name} - ${new Date().toISOString().slice(0, 10)}.${ext}`.replace(/[\\/:*?"<>|]/g, ''); rec = null;
         const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = name; document.body.appendChild(a); a.click(); a.remove();
         status.textContent = `Saved the reel (${(blob.size / 1e6).toFixed(1)} MB, .${ext}).${ext === 'webm' ? ' Instagram wants MP4: Safari records MP4 directly.' : ''}`;
       };
@@ -2707,8 +2749,9 @@ const REEL = (() => {
     if (a === 'caption') { const c = caption(); (navigator.clipboard ? navigator.clipboard.writeText(c) : Promise.reject()).then(() => { status.textContent = 'Caption copied.'; }, () => { status.textContent = c; }); return; }
     if (run) return; begin(a === 'record').catch((err) => { status.textContent = "Couldn't start: " + err.message; });
   });
-  // Ready means live readings for this place have arrived (never sample numbers) and the photos have been tried.
-  const wait = setInterval(() => { if (place.loaded && place.live && shotsDone && !closed) { fontsReady.then(() => { if (!ready) { ready = true; clearInterval(wait); build(); status.textContent = `Ready. ${DUR.toFixed(0)} seconds, ${shots.length} photo${shots.length === 1 ? '' : 's'}. Preview it, or record the reel.`; } }); } }, 300);
+  // Ready means live readings have arrived (never sample numbers) and the photos have been tried.
+  const liveNow = () => WORLD ? worldLive : (place.loaded && place.live);
+  const wait = setInterval(() => { if (liveNow() && shotsDone && !closed) { fontsReady.then(() => { if (!ready) { ready = true; clearInterval(wait); build(); status.textContent = `Ready. ${DUR.toFixed(0)} seconds${WORLD ? '' : `, ${shots.length} photo${shots.length === 1 ? '' : 's'}`}. Preview it, or record the reel.`; } }); } }, 300);
   setTimeout(() => { if (!ready) status.textContent = 'The live sea is slow to arrive. Preview works, but the numbers may be samples.'; }, 45000);
   requestAnimationFrame(loop);
   return { caption };

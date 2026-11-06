@@ -39,6 +39,7 @@ small { display: block; font: 400 12px/1.5 var(--mono); color: var(--dim); margi
       <label for="cs">Place line</label><input id="cs" placeholder="Sydney, Australia">
       <div class="row"><div><label for="clat">Latitude</label><input id="clat" inputmode="decimal" placeholder="-33.89"></div><div><label for="clon">Longitude</label><input id="clon" inputmode="decimal" placeholder="151.27"></div></div>
     </details>
+    <label style="display:flex;align-items:center;gap:10px;font:400 15px var(--display);text-transform:none;letter-spacing:0;color:var(--foam);margin:0 0 16px"><input type="checkbox" id="world" style="width:auto;margin:0"> The sea around the world (four seas, no photos)</label>
     <div class="btns"><a class="go" id="open" href="#">Open the reel</a><button type="button" id="rand">Surprise me</button></div>
     <small>In the reel: Preview to watch it, Record reel to save the video, Copy caption for Instagram. Keep the tab in front while it records. Safari saves MP4 directly. Chrome saves WebM, so convert it for Instagram.</small>
   </div>
@@ -53,8 +54,10 @@ function link() {
   if (cn && isFinite(clat) && isFinite(clon)) { name = cn; sub = document.getElementById('cs').value.trim(); lat = clat; lon = clon; }
   else { const b = BEACHES[sel.value]; name = b[0]; sub = b[1]; lat = b[2]; lon = b[3]; }
   const q = new URLSearchParams({ reel: '1', lat: lat, lon: lon, name: name, sub: sub });
+  if (document.getElementById('world').checked) q.set('world', '1');
   open.href = '/blue-wave/?' + q.toString();
 }
+document.getElementById('world').addEventListener('change', link);
 document.addEventListener('input', link); document.addEventListener('change', link);
 document.getElementById('rand').addEventListener('click', () => { sel.value = Math.floor(Math.random() * BEACHES.length); link(); });
 link();
