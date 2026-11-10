@@ -724,31 +724,13 @@
     <div class="panel" id="tab-midi"><div class="fx2"><div class="fxrow"><div class="grp"><span class="fxlab">Send the drums out</span><button id="midiOpen" class="btn" type="button" title="Send the drums to a drum machine or synth over MIDI">MIDI settings</button></div></div></div></div>
   </section>
 </div>
-<div class="mappanel" id="midiPanel" hidden role="dialog" aria-modal="true" aria-label="MIDI out">
-  <div class="midibox">
-    <div class="maphead"><b>MIDI out</b><button id="midiClose" class="btn" type="button">Done</button></div>
-    <p class="note" id="midiMsg"></p>
-    <label>Send to<select id="midiOut"></select></label>
-    <label>Channel<select id="midiCh"></select></label>
-    <label>Notes<select id="midiMap"></select></label>
-    <label>Melody channel<select id="midiMCh"></select></label>
-    <div class="chips">
-      <button id="midiOn" class="btn" type="button" aria-pressed="false">Send notes</button>
-      <button id="midiClock" class="btn" type="button" aria-pressed="false" title="Sends tempo, start and stop so your machine follows">Send clock</button>
-      <button id="midiCC" class="btn" type="button" aria-pressed="true" title="The filter, LFO and chance knobs, and the faders, go out as controllers">Send knobs</button>
-      <button id="midiMel" class="btn" type="button" aria-pressed="true" title="Melodic sounds and the melodic side of the mix go out on their own channel">Send melody</button>
-      <button id="midiTest" class="btn" type="button">Test note</button>
-    </div>
-    <p class="note">Drum notes follow the name on each fader (kick 36, snare 38, closed hat 42, open hat 46, clap 39, toms 43, 47, 50, rim 37, cymbals 49 and 51), so a TR-8S or similar plays the same drum you see in every kit. Percussion with no match goes to the nearest drum. Melodic sounds go out on the melody channel as notes in the key, with a program change that picks the closest General MIDI sound: kalimba 109, harp 47, electric piano 5, steel drums 115 (as numbered on most synths).</p>
-    <p class="note">Every hit you hear goes out too, including stutters, chance and mutes. Knobs use CC 74 (filter), 75 (LFO level), 76 (chance). Faders use CC 7.</p>
-  </div>
-</div>
 <div class="keytip" id="keytip" aria-hidden="true"></div>
 <div class="mappanel" id="mapPanel" hidden role="dialog" aria-modal="true" aria-label="World map">
   <canvas id="mapCv" aria-label="World map of cities. Drag to move, scroll or pinch to zoom, click a city."></canvas>
   <div class="maptop"><span id="mapName">Pick a city. Every dot has its own rhythm.</span><span class="maphelp">Drag to move. Scroll or pinch to zoom.</span><button id="mapClose" class="btn" type="button">Close</button></div>
 </div>
 
+<script src="/rhythm-geometry/rg-midi.js"></script>
 <script>
 const ATLAS = __ATLAS__;
 let SEL = -1;   // the ring opened in design B
@@ -780,6 +762,7 @@ const clamp = (x, a, b) => Math.min(b, Math.max(a, x));
 // ---------- audio ----------
 const ctx = new (window.AudioContext || window.webkitAudioContext)();
 const masterIn = ctx.createGain();
+const NATIVE_OUT = ctx.createGain();   // muted from the MIDI panel when the hardware should play alone
 const djHP = ctx.createBiquadFilter(), djLP = ctx.createBiquadFilter();
 const lfoLP = ctx.createBiquadFilter(), lfoAmt = ctx.createGain();   // the tempo-synced filter sweep
 lfoLP.type = 'lowpass'; lfoLP.frequency.value = 20000; lfoLP.Q.value = 0.7; lfoAmt.gain.value = 0; lfoAmt.connect(lfoLP.detune);
@@ -787,7 +770,7 @@ djHP.type = 'highpass'; djHP.frequency.value = 20; djLP.type = 'lowpass'; djLP.f
 const pre = ctx.createGain(), comp = ctx.createDynamicsCompressor();
 comp.threshold.value = -14; comp.ratio.value = 4; comp.attack.value = 0.004; comp.release.value = 0.12;
 const lim = ctx.createDynamicsCompressor(); lim.threshold.value = -2; lim.knee.value = 0; lim.ratio.value = 20; lim.attack.value = 0.001; lim.release.value = 0.08;   // catches the loud moments so nothing clips
-masterIn.connect(djHP).connect(djLP).connect(lfoLP).connect(pre).connect(comp).connect(lim).connect(ctx.destination);
+masterIn.connect(djHP).connect(djLP).connect(lfoLP).connect(pre).connect(comp).connect(lim).connect(NATIVE_OUT).connect(ctx.destination);
 // delay: the same five styles and nine times as Three Cities
 const DELAY_BEATS = { '16': 0.25, '16t': 1 / 6, '8t': 1 / 3, '8': 0.5, 'd8': 0.75, '4t': 2 / 3, '4': 1, 'd4': 1.5 };
 const DELAY_TIMES = { '16': '1/16', '16t': '1/16 triplet', '8t': '1/8 triplet', '8': '1/8', 'd8': 'dotted 1/8', '4t': '1/4 triplet', '4': '1/4', 'd4': 'dotted 1/4' };
@@ -1243,7 +1226,7 @@ function cityStep(t, n) {
         if (PADS[CH.snd]) padVoice(CH.snd, m, v, t + j * (held ? 0.012 : 0.004), len, held, CA.cd);
         else citySamp(CH.snd, m, t + j * (held ? 0.012 : 0.004), 0.55 * v, CA.cd, len);
       });
-      midiMel(cityMidi(root + 2, 55, CH.oct), t, 0.6 * v, 'city');
+      midiChord([2, 4, 7].map(k => { let m = cityMidi(root + k, 55, CH.oct); if (m > 84 + ROOT) m -= 12; return m; }), t, 0.6 * v, len);
     }
   }
 }
@@ -1799,67 +1782,23 @@ $('blend').addEventListener('input', e => { BLEND.v = +e.target.value; say(BLEND
 $('blendSnd').addEventListener('change', e => { BLEND.snd = e.target.value; });
 
 // ---------- MIDI out ----------
-const MIDI_MAPS = { drum: 'Drum machine (TR-8S style, by drum name)', perc: 'Percussion (congas, bongos, timbales)', tuned: 'The tuned notes of the key', tracks: 'One drum per channel (all on note C3)' };
-const MIDI_NOTES = { drum: [36, 38, 42, 46, 43, 50, 49, 39], perc: [64, 63, 62, 61, 60, 65, 66, 75] };
-// Drum notes by the name on the fader. They only use the eleven sounds a TR-8S, TR-8 or most drum machines have (BD 36, RS 37, SD 38, CP 39, CH 42, LT 43, OH 46, MT 47, CC 49, HT 50, RC 51),
-// so every kit lands on a real drum. Percussion with no match goes to the nearest drum, so congas, bongos and timbales play the toms.
-const MIDI_BY_NAME = { 'kick': 36, 'rim': 37, 'snare': 38, 'clap': 39, 'hat': 42, 'open hat': 46, 'low tom': 43, 'mid tom': 47, 'high tom': 50,
-  'cowbell': 51, 'agogo': 51, 'tambourine': 49, 'triangle': 49, 'wood block': 37, 'clave': 37, 'guiro': 42, 'timbale': 50,
-  'conga low': 43, 'conga mid': 47, 'conga high': 50, 'conga slap': 37, 'quinto': 50, 'bongo low': 47, 'bongo high': 50, 'bongo bright': 50,
-  'sub pop': 36, 'pop': 38, 'bleep': 51, 'blip': 49, 'zap': 39, 'click': 37, 'tick': 42, 'glitch': 46 };
-// the General MIDI sound that is closest to each melodic voice, sent as a program change on the melodic channel
-const MIDI_PROG = { kalimba: 108, harp: 46, rhodes: 4, steel: 114 }, MIDI_HOLD = { kalimba: 0.45, harp: 0.8, rhodes: 0.7, steel: 0.5 };
-$('midiCh').innerHTML = Array.from({ length: 16 }, (_, i) => `<option value="${i + 1}">${i + 1}${i === 9 ? ' (drums)' : ''}</option>`).join(''); $('midiCh').value = MIDI.ch;
-$('midiMap').innerHTML = Object.entries(MIDI_MAPS).map(([k, v]) => `<option value="${k}">${v}</option>`).join('');
-const midiPerf = t => { const ts = ctx.getOutputTimestamp ? ctx.getOutputTimestamp() : null; return ts && ts.performanceTime ? ts.performanceTime + (t - ts.contextTime) * 1000 : performance.now() + (t - ctx.currentTime) * 1000; };
-function midiNoteOf(l) {
-  if (MIDI.map === 'tracks') return 60;
-  if (MIDI.map === 'tuned') { const m = /^([A-G][b#]?)(-?\d+)$/.exec(l.note || ''); const pc = m ? NOTES.indexOf(m[1]) : -1; return pc >= 0 ? clamp((+m[2] + 1) * 12 + pc, 0, 127) : clamp(48 + ROOT, 0, 127); }
-  if (MIDI.map === 'drum' && MIDI_BY_NAME[l.d.n] != null) return MIDI_BY_NAME[l.d.n];
-  return MIDI_NOTES[MIDI.map][l.i];
-}
-const midiChOf = l => MIDI.map === 'tracks' ? ((MIDI.ch - 1 + l.i) % 16) : MIDI.ch - 1;
-function midiSend(bytes, t) { if (!MIDI.out) return; try { MIDI.out.send(bytes, t ? midiPerf(t) : undefined); } catch (e) {} }
-function midiMel(n, t, vel, snd) {
-  if (!MIDI.on || !MIDI.out || !MIDI.mel) return;
-  const c = MIDI.mch - 1, v = clamp(Math.round(30 + 97 * Math.min(1, vel)), 1, 127), pr = MIDI_PROG[snd];
-  if (MIDI.prog !== snd && pr != null) { midiSend([0xC0 | c, pr], t); MIDI.prog = snd; }
-  midiSend([0x90 | c, n, v], t); midiSend([0x80 | c, n, 0], t + (MIDI_HOLD[snd] || 0.5));
-}
+const MIDI_HOLD = { kalimba: 0.45, harp: 0.8, rhodes: 0.7, steel: 0.5, arp: 0.3, bell: 0.9, city: 0.5, sub: 2 };
+const MIDI_PART = { arp: 'arp', bell: 'bells', sub: 'bass' };
+RGMidi.init({ page: 'play2', ctx: () => ctx, tuned: true, button: 'midiOpen', parts: [{ id: 'drums', label: 'Drums', kind: 'drum', ch: 1, hint: 'the rings' }, { id: 'melody', label: 'Melody', kind: 'note', ch: 2, hint: 'the city line and the melodic side of the mix' }, { id: 'chord', label: 'Chords', kind: 'note', ch: 3 }, { id: 'arp', label: 'Arpeggio', kind: 'note', ch: 4 }, { id: 'bells', label: 'Bells', kind: 'note', ch: 5 }],
+  mute: v => NATIVE_OUT.gain.setTargetAtTime(v ? 0 : 1, ctx.currentTime, 0.03),
+  onChange: on => { const t = document.querySelector('.tabs [data-tab="midi"]'); if (t) t.classList.toggle('lit', on); },
+  note: 'Every hit you hear goes out too, including stutters, chance and mutes. Knobs use CC 74 (filter), 75 (LFO level) and 76 (chance). On the TR-8S set-up each fader moves that drum\'s Level on the machine. On other set-ups the faders use CC 7 or CC 20 and up.' });
+function midiTuned(l) { const m = /^([A-G][b#]?)(-?\d+)$/.exec(l.note || ''); const pc = m ? NOTES.indexOf(m[1]) : -1; return pc >= 0 ? clamp((+m[2] + 1) * 12 + pc, 0, 127) : clamp(48 + ROOT, 0, 127); }
+function midiMel(n, t, vel, snd, dur) { RGMidi.note(MIDI_PART[snd] || 'melody', n, vel, t, dur || MIDI_HOLD[snd] || 0.5, { label: snd }); }
+function midiChord(notes, t, vel, dur) { notes.forEach(n => RGMidi.note('chord', n, vel, t, dur, { label: 'chord' })); }
 function midiHit(l, t, vel) {
-  if (!MIDI.on || !MIDI.out) return;
-  if (l.d.syn && MELODIC[l.d.syn]) { midiMel(clamp(Math.round(l.d.m + 12 * Math.log2(l.rate)), 0, 127), t, vel, l.d.syn); return; }
-  const n = midiNoteOf(l), c = midiChOf(l), v = clamp(Math.round(40 + 87 * Math.min(1, vel)), 1, 127);
-  midiSend([0x90 | c, n, v], t); midiSend([0x80 | c, n, 0], t + 0.09);
+  if (!RGMidi.on) return;
+  if (l.d.syn && typeof MELODIC !== 'undefined' && MELODIC[l.d.syn]) { midiMel(clamp(Math.round(l.d.m + 12 * Math.log2(l.rate)), 0, 127), t, vel, l.d.syn); return; }
+  RGMidi.drum(l.d.n, vel, t, { idx: l.i, tuned: midiTuned(l) });
 }
-function midiCC(cc, v, l) { if (!MIDI.on || !MIDI.cc || !MIDI.out) return; const c = l ? midiChOf(l) : MIDI.ch - 1; midiSend([0xB0 | c, cc, clamp(Math.round(v), 0, 127)]); }
-function midiClockStep(t, ss) { if (!MIDI.on || !MIDI.clock || !MIDI.out) return; for (let k = 0; k < 6; k++) midiSend([0xF8], t + ss * k / 6); }
-function midiTransport(go, t) { if (MIDI.on && MIDI.clock && MIDI.out) midiSend([go ? 0xFA : 0xFC], t); }
-function midiMsg(m) { $('midiMsg').textContent = m; }
-function midiFillOutputs() {
-  const outs = MIDI.access ? [...MIDI.access.outputs.values()] : [];
-  const cur = MIDI.out && MIDI.out.id;
-  $('midiOut').innerHTML = '<option value="">None</option>' + outs.map(o => `<option value="${o.id}">${o.name}</option>`).join('');
-  const keep = outs.find(o => o.id === cur) || outs[0]; MIDI.out = keep || null; $('midiOut').value = keep ? keep.id : '';
-  midiMsg(outs.length ? 'Pick where the drums should go, then press Send notes.' : 'No MIDI device found. Plug one in and it will show up here.');
-}
-async function midiConnect() {
-  if (MIDI.access) return true;
-  if (!navigator.requestMIDIAccess) { midiMsg('This browser cannot send MIDI. Chrome, Edge and Firefox can. Safari cannot yet.'); return false; }
-  try { MIDI.access = await navigator.requestMIDIAccess(); MIDI.access.onstatechange = midiFillOutputs; midiFillOutputs(); if (MIDI.out && !MIDI.on) $('midiOn').click(); return true; }
-  catch (e) { midiMsg('MIDI was blocked. Allow it in the browser and try again.'); return false; }
-}
-function openMidi() { $('midiPanel').hidden = false; $('midiClose').focus(); midiConnect(); }
-function closeMidi() { $('midiPanel').hidden = true; $('midiOpen').focus(); }
-$('midiOpen').addEventListener('click', openMidi); $('midiClose').addEventListener('click', closeMidi);
-$('midiPanel').addEventListener('pointerdown', e => { if (e.target === $('midiPanel')) closeMidi(); });
-addEventListener('keydown', e => { if (e.key === 'Escape' && !$('midiPanel').hidden) closeMidi(); });
-const midiLight = () => { const on = MIDI.on && !!MIDI.out; $('midiOpen').setAttribute('aria-pressed', String(on)); const t = document.querySelector('.tabs [data-tab="midi"]'); if (t) t.classList.toggle('lit', on); };
-$('midiOut').addEventListener('change', () => { MIDI.prog = null; MIDI.out = MIDI.access ? MIDI.access.outputs.get($('midiOut').value) || null : null; midiLight(); });
-$('midiCh').addEventListener('change', () => MIDI.ch = +$('midiCh').value);
-$('midiMCh').innerHTML = Array.from({ length: 16 }, (_, i) => `<option value="${i + 1}">${i + 1}</option>`).join(''); $('midiMCh').value = MIDI.mch;
-$('midiMCh').addEventListener('change', () => { MIDI.mch = +$('midiMCh').value; MIDI.prog = null; });
-toggle($('midiMel'), v => MIDI.mel = v);
+function midiCC(cc, v, l) { if (l) RGMidi.level(l.d.n, v / 127, { idx: l.i }); else RGMidi.cc('drums', cc, v); }
+function midiClockStep(t, ss) { RGMidi.step(t, ss); }
+function midiTransport(go, t) { RGMidi.transport(go, t); }
 $('wxAmt').addEventListener('input', e => { WEATHER.level = +e.target.value; applyWx(); });
 const wxAmtShow = () => { $('wxAmtV').textContent = WEATHER.level + '%'; }; $('wxAmt').addEventListener('input', wxAmtShow);
 $('wxVoice').addEventListener('change', e => setWxVoice(e.target.value));
@@ -1896,11 +1835,6 @@ function dialSet(e) {
   hit.addEventListener('keydown', () => {});
 }
 toggle($('wxGate'), v => { WEATHER.gate = v; });
-$('midiMap').addEventListener('change', () => MIDI.map = $('midiMap').value);
-toggle($('midiOn'), v => { MIDI.on = v; midiLight(); if (v && playing) midiTransport(true, ctx.currentTime); });
-toggle($('midiClock'), v => { MIDI.clock = v; if (v && MIDI.on && playing) midiTransport(true, ctx.currentTime); });
-toggle($('midiCC'), v => MIDI.cc = v);
-$('midiTest').addEventListener('click', () => { const was = MIDI.on; MIDI.on = true; midiHit(lanes[0], ctx.currentTime + 0.02, 1); MIDI.on = was; });
 
 NOTES.forEach((n, i) => $('root').add(new Option(n, i)));
 $('root').addEventListener('change', () => { ROOT = +$('root').value; retune(); });

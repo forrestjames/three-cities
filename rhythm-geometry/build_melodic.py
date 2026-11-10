@@ -63,20 +63,24 @@ function melodicHit(role, node, t, vel) {
   const r = chordRootAt(schedN), tu = tuneOf(node);
   const hz = midi => 440 * Math.pow(2, (midi - 69) / 12) * tu;
   if (role === 'bass' || role === 'bass2') {
-    const f = hz(mNote(role === 'bass2' ? r + 4 : r, -1));
+    const mm = mNote(role === 'bass2' ? r + 4 : r, -1), f = hz(mm);
+    if (!midiQuiet) RGMidi.note('bass', mm, vel, t, 0.35, { label: 'bass' });
     tone(node, t, 'triangle', f, 0.6 * vel, 0.7, 800);
     tone(node, t, 'sine', f * 2, 0.1 * vel, 0.22, 1600);
     noiseBurst(node, t, 'lowpass', 600, 0.7, 0.02, 0.18 * vel);
   } else if (role === 'keys') {
-    const f = hz(mNote(r + [2, 4, 0, 4][ARP.keys++ % 4], 0) + 12);
+    const mm = mNote(r + [2, 4, 0, 4][ARP.keys++ % 4], 0) + 12, f = hz(mm);
+    if (!midiQuiet) RGMidi.note('keys', mm, vel, t, 0.3, { label: 'keys' });
     tone(node, t, 'triangle', f, 0.3 * vel, 0.55, 3800);
     tone(node, t, 'sine', f * 2, 0.1 * vel, 0.4, 5200);
   } else if (role === 'bell') {
-    const f = hz(mNote(r + [0, 2, 4, 7, 9, 7, 4, 2][ARP.bell++ % 8], 1) + 12);
+    const mm = mNote(r + [0, 2, 4, 7, 9, 7, 4, 2][ARP.bell++ % 8], 1) + 12, f = hz(mm);
+    if (!midiQuiet) RGMidi.note('bells', mm, vel, t, 0.5, { label: 'bells' });
     tone(node, t, 'sine', f, 0.17 * vel, 1.1, 9000);
     tone(node, t, 'sine', f * 2.76, 0.06 * vel, 0.5, 9000);
   } else {
-    const f = hz(mNote(r + [4, 2, 0, 2, 7, 4][ARP.tom++ % 6], 1));
+    const mm = mNote(r + [4, 2, 0, 2, 7, 4][ARP.tom++ % 6], 1), f = hz(mm);
+    if (!midiQuiet) RGMidi.note('marimba', mm, vel, t, 0.25, { label: 'marimba' });
     tone(node, t, 'sine', f, 0.34 * vel, 0.42, 6000);
     tone(node, t, 'sine', f * 4, 0.07 * vel, 0.07, 9000);
   }
