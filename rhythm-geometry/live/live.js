@@ -35,7 +35,7 @@
   /* ---------- state ---------- */
   const SKEY = SRC === 'atlas' ? 'rg-live' : 'rg-live-' + SRC;
   let saved = {}; try { saved = JSON.parse(localStorage.getItem(SKEY) || '{}'); } catch (e) {}
-  const keep = () => { try { localStorage.setItem(SKEY, JSON.stringify({ city: ST.city, bpm: ST.follow ? null : ST.bpm, kit: ST.kit, mode: ST.mode, voice: ST.voice })); } catch (e) {} };
+  const keep = () => { try { localStorage.setItem(SKEY, JSON.stringify({ city: ST.city, bpm: ST.follow ? null : ST.bpm, kit: ST.kit, mode: ST.mode, voice: ST.voice, places: PLACES.map(p => p.n) })); } catch (e) {} };
   const cityByName = n => D.cities.findIndex(c => c.n === n);
   const ST = { city: saved.city != null && D.cities[saved.city] ? saved.city : Math.max(0, cityByName('London')), genre: 0, kit: saved.kit || (SRC === 'three' ? 'tr707' : SRC === 'wave' ? 'tr606' : '808'), bpm: saved.bpm || (SRC === 'three' ? 108 : SRC === 'wave' ? 84 : 120), mode: saved.mode === 'notes' || (SRC !== 'atlas' && saved.mode === 'both') ? saved.mode : (SRC === 'atlas' ? 'drums' : 'both'), voice: saved.voice || 'keys', follow: SRC === 'atlas' && !saved.bpm, playing: false };
   let WX = { temp: 11, wind: 14, hum: 70, cloud: 60, pres: 1010, rain: 0, live: false };
@@ -130,13 +130,17 @@
   const kit = () => KITS.find(k => k.id === ST.kit) || KITS[0];
 
   /* ---------- the place sources: Three Cities and Blue Wave ---------- */
-  // Boston, Copenhagen and London, or four seas. Each place plays two rings. The numbers shown are what plays until the live reading arrives.
-  const PLACES = SRC === 'three'
-    ? [{ n: 'Boston', a: 42.36, o: -71.06 }, { n: 'Copenhagen', a: 55.68, o: 12.57 }, { n: 'London', a: 51.51, o: -0.13 }]
-    : SRC === 'wave' ? [{ n: 'North Sea', a: 56, o: 3 }, { n: 'Gulf of Maine', a: 42.5, o: -69 }, { n: 'Mediterranean', a: 35, o: 18 }, { n: 'Cape of Good Hope', a: -36, o: 18 }] : [];
-  const PW = SRC === 'three'
-    ? [{ temp: 9, wind: 14, hum: 60, cloud: 40, pres: 1015 }, { temp: 5, wind: 18, hum: 80, cloud: 70, pres: 1008 }, { temp: 11, wind: 12, hum: 72, cloud: 60, pres: 1010 }]
-    : SRC === 'wave' ? [{ h: 2.1, p: 7, d: 300, sh: 1.2, sp: 9, t: 11.4 }, { h: 1.4, p: 7.5, d: 210, sh: 0.9, sp: 10, t: 12.1 }, { h: 0.9, p: 6, d: 320, sh: 0.4, sp: 8, t: 21 }, { h: 3.6, p: 13, d: 240, sh: 2.8, sp: 14, t: 16.5 }] : [];
+  // The places to choose from: the atlas cities (plus Boston) or the seas and beaches Blue Wave knows. The numbers are what plays until the live reading arrives.
+  const CITY_S = { temp: 10, wind: 14, hum: 70, cloud: 60, pres: 1012 };
+  const OPTS = SRC === 'three'
+    ? [{ n: 'Boston', a: 42.36, o: -71.06, s: { temp: 9, wind: 14, hum: 60, cloud: 40, pres: 1015 } }].concat(D.cities.map(c => ({ n: c.n, a: c.a, o: c.o, s: CITY_S })))
+        .filter((c, i, all) => all.findIndex(x => x.n === c.n) === i).sort((a, b) => a.n.localeCompare(b.n))
+    : SRC === 'wave' ? (window.RG_WAVE || []).map(([n, a, o, h, p, d, t, ring, grp]) => ({ n, a, o, ring, grp, s: { h, p, d, sh: +(h * 0.6).toFixed(1), sp: p + 1.5, t } })) : [];
+  const DEFN = SRC === 'three' ? ['Boston', 'Copenhagen', 'London'] : ['North Sea', 'Gulf of Maine', 'Mediterranean', 'Cape of Good Hope'];
+  const optOf = n => OPTS.find(o => o.n === n);
+  const chosen = SRC === 'atlas' ? [] : DEFN.map((d, i) => optOf(saved.places && saved.places[i]) || optOf(d) || OPTS[i]);
+  const PLACES = chosen.map(o => ({ n: o.n, a: o.a, o: o.o, ring: o.ring }));
+  const PW = chosen.map(o => Object.assign({}, o.s));
   const PLIVE = { ok: false };
   const num = (v, d) => typeof v === 'number' && isFinite(v) ? v : d;
   const mean = k => PW.reduce((a, r) => a + r[k], 0) / Math.max(1, PW.length);
@@ -168,19 +172,36 @@
   }
   async function loadPlaces() {
     try {
-      const la = PLACES.map(p => p.a).join(','), lo = PLACES.map(p => p.o).join(',');
+      // A beach sits on land, and the wave model only has sea cells, so a beach asks for a little ring of points around it.
+      const pts = [], at = [];
+      PLACES.forEach((p, i) => { at[i] = pts.length; pts.push([p.a, p.o]); if (p.ring) for (const [dy, dx] of [[0, 0.12], [0, -0.12], [0.12, 0], [-0.12, 0], [0.12, 0.12], [-0.12, -0.12], [0.12, -0.12], [-0.12, 0.12], [0, 0.3], [0, -0.3], [0.3, 0], [-0.3, 0]]) pts.push([p.a + dy, p.o + dx]); });
+      at.push(pts.length);
+      const la = pts.map(q => q[0].toFixed(3)).join(','), lo = pts.map(q => q[1].toFixed(3)).join(',');
       const url = SRC === 'three'
         ? 'https://api.open-meteo.com/v1/forecast?latitude=' + la + '&longitude=' + lo + '&current=temperature_2m,relative_humidity_2m,cloud_cover,wind_speed_10m,surface_pressure&timezone=GMT'
         : 'https://marine-api.open-meteo.com/v1/marine?latitude=' + la + '&longitude=' + lo + '&current=wave_height,wave_period,wave_direction,swell_wave_height,swell_wave_period,sea_surface_temperature&timezone=GMT';
       const j = await (await fetch(url)).json(), arr = Array.isArray(j) ? j : [j];
-      arr.forEach((x, i) => {
-        const c = x && x.current, r = PW[i]; if (!c || !r) return;
+      PLACES.forEach((p, i) => {
+        const r = PW[i]; let c = null;
+        for (let k = at[i]; k < at[i + 1]; k++) { const x = arr[k] && arr[k].current; if (x && (SRC === 'three' ? x.temperature_2m != null : x.wave_height != null)) { c = x; break; } }
+        if (!c) return;
         if (SRC === 'three') { r.temp = num(c.temperature_2m, r.temp); r.wind = num(c.wind_speed_10m, r.wind); r.hum = num(c.relative_humidity_2m, r.hum); r.cloud = num(c.cloud_cover, r.cloud); r.pres = num(c.surface_pressure, r.pres); }
         else { r.h = num(c.wave_height, r.h); r.p = num(c.wave_period, r.p); r.d = num(c.wave_direction, r.d); r.sh = num(c.swell_wave_height, r.sh); r.sp = num(c.swell_wave_period, r.sp); r.t = num(c.sea_surface_temperature, r.t); }
       });
       PLIVE.ok = true;
     } catch (e) { PLIVE.ok = false; }
     buildLanes();
+  }
+  // the place pickers: one menu per place
+  function fillPlaces() {
+    const box = $('places'); if (!box || !PLACES.length) return;
+    const groups = {}; OPTS.forEach((o, k) => { (groups[o.grp || ''] = groups[o.grp || ''] || []).push([o, k]); });
+    const opts = Object.keys(groups).map(g => { const inner = groups[g].map(([o, k]) => '<option value="' + k + '">' + esc(o.n) + '</option>').join(''); return g ? '<optgroup label="' + g + '">' + inner + '</optgroup>' : inner; }).join('');
+    box.innerHTML = PLACES.map((p, i) => '<select data-i="' + i + '" aria-label="' + (SRC === 'three' ? 'City ' : 'Sea or beach ') + (i + 1) + '">' + opts + '</select>').join('');
+    box.querySelectorAll('select').forEach(sel => {
+      const i = +sel.dataset.i; sel.value = String(OPTS.findIndex(o => o.n === PLACES[i].n));
+      sel.addEventListener('change', () => { const o = OPTS[+sel.value]; PLACES[i] = { n: o.n, a: o.a, o: o.o, ring: o.ring }; PW[i] = Object.assign({}, o.s); keep(); buildLanes(); loadPlaces(); });
+    });
   }
   function buildLanes() {
     if (SRC !== 'atlas') return buildPlaceLanes();
@@ -546,6 +567,6 @@
   size(); addEventListener('resize', size); if (window.ResizeObserver) new ResizeObserver(size).observe(cv);
   citySel.value = ST.city; fillGenres(); setBpm(ST.bpm); if (!saved.bpm && SRC === 'atlas') ST.follow = true;
   $('mode').setAttribute('aria-pressed', String(ST.mode !== 'drums')); $('mode').querySelector('span').textContent = MODE_WORDS[ST.mode];
-  pickGenre(0); loadWeather(); paintSay(); paintPlay(); draw();
+  fillPlaces(); pickGenre(0); loadWeather(); paintSay(); paintPlay(); draw();
   window.__live = { ST, FX, PAD, MOT, lanes, padSet, padRelease, setProg, playhead, start, stop };
 })();

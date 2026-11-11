@@ -6,8 +6,8 @@ import os, re
 here = os.path.dirname(os.path.abspath(__file__))
 def rd(p): return open(os.path.join(here, p), encoding='utf8').read()
 SRCS = {
-  'three': dict(name='Three Cities', eyebrow='Three Cities', desc='Play the live weather in Boston, Copenhagen and London with your hands. A chaos pad and a slicer, with full MIDI out.', how='Boston, Copenhagen and London each play two rings. Temperature sets how long a ring is.', accent='#e8744a'),
-  'wave': dict(name='Blue Wave', eyebrow='Blue Wave', desc='Play live sea waves with your hands. A chaos pad and a slicer, with full MIDI out.', how='Four seas play two rings each. Bigger waves play more notes. Longer waves play more steps.', accent='#5aa9e6'),
+  'three': dict(name='Three Cities', eyebrow='Three Cities', desc='Play the live weather in Boston, Copenhagen and London with your hands. A chaos pad and a slicer, with full MIDI out.', how='Pick any three cities. Each plays two rings. Temperature sets how long a ring is.', accent='#e8744a'),
+  'wave': dict(name='Blue Wave', eyebrow='Blue Wave', desc='Play live sea waves with your hands. A chaos pad and a slicer, with full MIDI out.', how='Pick four seas or beaches. Each plays two rings. Bigger waves play more notes. Longer waves play more steps.', accent='#5aa9e6'),
 }
 for src, c in SRCS.items():
     for surf, base, out in (('pad', 'pad/index.html', src + '/index.html'), ('slice', 'slice/index.html', src + '/slice/index.html')):
@@ -16,8 +16,8 @@ for src, c in SRCS.items():
         h = re.sub(r'<title>[^<]*</title>', '<title>%s: %s</title>' % (c['name'], 'Pad' if surf == 'pad' else 'Slice'), h)
         h = re.sub(r'<meta name="description" content="[^"]*">', '<meta name="description" content="%s">' % c['desc'], h)
         h = re.sub(r'<p class="eyebrow">.*?</p>', '<p class="eyebrow">%s &middot; <b>%s</b></p>' % (c['eyebrow'], 'Pad' if surf == 'pad' else 'Slice'), h, count=1)
-        h = re.sub(r'<div class="picks">.*?</div>', '<p class="how2">%s</p>' % c['how'], h, count=1, flags=re.S)
-        h = h.replace('<script src="/rhythm-geometry/live/data.js"></script>\n', '')
+        h = re.sub(r'<div class="picks">.*?</div>', '<div class="picks" id="places"></div><p class="how2">%s</p>' % c['how'], h, count=1, flags=re.S)
+        if src == 'wave': h = h.replace('<script src="/rhythm-geometry/live/data.js"></script>', '<script src="/rhythm-geometry/live/places.js"></script>')
         h = h.replace('title="Drums: the rings play the kit. Notes: every ring plays a note of the chord, for your synths."', 'title="Drums, Notes or Both. Both: the first ring of each place plays notes and the second plays the kit."')
         h = h.replace('<div class="lanes" id="lanes"', '<select id="voice" aria-label="Melodic sound" title="The sound the note rings play"></select>\n  <div class="lanes" id="lanes"', 1)
         h = h.replace('</head>', '<style>:root{--accent:%s}.how2{margin:6px 0 0;font-size:11.5px;color:var(--ink-dim);max-width:34ch}</style>\n</head>' % c['accent'])
