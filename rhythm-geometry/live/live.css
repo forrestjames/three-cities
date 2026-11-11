@@ -98,3 +98,6 @@ body[data-surface="slice"] .ringbox { min-height: 0; height: 100%; width: 100%; 
   body[data-surface="slice"] .stage { display: block; } body[data-surface="slice"] .ringbox { display: block; }
 }
 @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+
+.space { display: grid; gap: 10px; padding-top: 6px; border-top: 1px solid var(--line, rgba(243,236,230,.14)); }
+.space select { font: inherit; letter-spacing: .06em; }

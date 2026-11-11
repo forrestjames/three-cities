@@ -43,6 +43,11 @@
   </div>
   <label class="row">Thin to full <span id="densV">as written</span><input id="dens" type="range" min="-100" max="100" value="0"></label>
   <label class="row">Filter <span id="cutV">open</span><input id="cut" type="range" min="0" max="100" value="50"></label>
+  <div class="space">
+    <label class="row">Echo <span id="echoV">off</span><input id="echoAmt" type="range" min="0" max="100" value="0" aria-label="Echo amount"></label>
+    <label class="row">Echo time <select id="echoDiv" aria-label="Echo time"><option value="1">1/4</option><option value="0.75" selected>dotted 1/8</option><option value="0.5">1/8</option><option value="0.3333333333">1/8 triplet</option><option value="0.25">1/16</option></select></label>
+    <label class="row">Reverb <span id="verbV">10%</span><input id="verbAmt" type="range" min="0" max="100" value="10" aria-label="Reverb amount"></label>
+  </div>
 </aside>
 <footer class="bar">
   <button id="play" type="button" aria-pressed="false" aria-label="Play" title="Play or stop. Space bar."></button>

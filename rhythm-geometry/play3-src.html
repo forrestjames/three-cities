@@ -2395,8 +2395,8 @@ function showTab(t) {
 function openSheet(v) { sheet.hidden = !v; [editBtn, $('editBtn2')].forEach(b => { b.setAttribute('aria-expanded', String(v)); b.classList.toggle('on', v); }); $('editBtn2').lastElementChild.textContent = v ? 'Close' : 'Controls'; document.body.classList.toggle('sheet-open', v); $('scrim').hidden = !(v && matchMedia('(max-width: 700px) and (min-height: 560px)').matches); }
 editBtn.addEventListener('click', () => openSheet(sheet.hidden)); $('sheetX').addEventListener('click', () => openSheet(false)); $('scrim').addEventListener('click', () => openSheet(false));
 $('gdesc').addEventListener('click', e => e.currentTarget.classList.toggle('open')); document.addEventListener('click', e => { const g = $('gdesc'); if (g.classList.contains('open') && !g.contains(e.target)) g.classList.remove('open'); }); $('editBtn2').addEventListener('click', () => openSheet(sheet.hidden));
-document.querySelectorAll('.tabs button').forEach(b => b.addEventListener('click', () => { if (b.dataset.tab === 'midi') { openMidi(); return; } showTab(b.dataset.tab); }));
-addEventListener('keydown', e => { if (e.key === 'Escape' && !sheet.hidden && $('midiPanel').hidden && $('mapPanel').hidden) openSheet(false); });
+document.querySelectorAll('.tabs button').forEach(b => b.addEventListener('click', () => { if (b.dataset.tab === 'midi') { RGMidi.open(); return; } showTab(b.dataset.tab); }));
+addEventListener('keydown', e => { if (e.key === 'Escape' && !sheet.hidden && (!document.querySelector('.rgm') || document.querySelector('.rgm').hidden) && $('mapPanel').hidden) openSheet(false); });
 
 function setLay(l) {
   appEl.dataset.lay = l;

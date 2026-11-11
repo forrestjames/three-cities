@@ -88,6 +88,16 @@ KITS = [
    ('snare', M('RolandTR909', 'sd', 'sd01.wav'), 0, 1), ('mid tom', M('RolandTR909', 'mt', 'Tom M.wav'), 1, 1),
    ('clap', M('RolandTR909', 'cp', 'Clap.wav'), 0, 1), ('rim', M('RolandTR909', 'rim', 'Rimhot.wav'), 0, 1),
    ('hat', M('RolandTR909', 'hh', 'hh01.wav'), 0, 0.7), ('open hat', M('RolandTR909', 'oh', 'Hat Open.wav'), 0, 0.7)])),
+ dict(id='tr707', name='TR-707', lanes=L([
+   ('kick', M('RolandTR707', 'bd', 'Bassdrum-01.wav'), 1, 1), ('low tom', M('RolandTR707', 'lt', 'Tom L.wav'), 1, 1),
+   ('snare', M('RolandTR707', 'sd', 'Snaredrum-01.wav'), 0, 1), ('mid tom', M('RolandTR707', 'mt', 'Tom M.wav'), 1, 1),
+   ('clap', M('RolandTR707', 'cp', 'Clap.wav'), 0, 1), ('rim', M('RolandTR707', 'rim', 'Rimshot.wav'), 0, 1),
+   ('hat', M('RolandTR707', 'hh', 'Hat Closed.wav'), 0, 0.7), ('open hat', M('RolandTR707', 'oh', 'Hat Open.wav'), 0, 0.7)])),
+ dict(id='tr606', name='TR-606', lanes=L([
+   ('kick', M('RolandTR606', 'bd', 'Bassdrum.wav'), 1, 1), ('low tom', M('RolandTR606', 'lt', 'Tom L.wav'), 1, 1),
+   ('snare', M('RolandTR606', 'sd', 'Snaredrum.wav'), 0, 1), ('high tom', M('RolandTR606', 'ht', 'Tom H.wav'), 1, 1),
+   ('cymbal', M('RolandTR606', 'cr', 'Cymbal.wav'), 0, 0.8), ('soft hat', M('RolandTR606', 'hh', 'Hat Closed.wav'), 0, 0.5),
+   ('hat', M('RolandTR606', 'hh', 'Hat Closed.wav'), 0, 0.7), ('open hat', M('RolandTR606', 'oh', 'Hat Open.wav'), 0, 0.7)])),
  dict(id='linn', name='LinnDrum', lanes=L([
    ('kick', M('LinnDrum', 'bd', 'Bassdrum.wav'), 1, 1), ('low tom', M('LinnDrum', 'lt', 'Tom L-01.wav'), 1, 1),
    ('snare', M('LinnDrum', 'sd', '0Snarderum-01.wav'), 0, 1), ('high tom', M('LinnDrum', 'ht', 'Tom H-01.wav'), 1, 1),
