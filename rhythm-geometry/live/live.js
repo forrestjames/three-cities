@@ -9,7 +9,8 @@
    from the live weather, the same way the Play pages do it. */
 (function () {
   'use strict';
-  const D = window.RG_DATA, SURFACE = document.body.dataset.surface || 'pad';
+  const SURFACE = document.body.dataset.surface || 'pad', SRC = document.body.dataset.source || 'atlas';   // SRC: atlas (a city and genre), three (Boston, Copenhagen, London) or wave (four seas)
+  const D = window.RG_DATA || { cities: [{ n: '', g: [{ n: '', i: [] }] }], patterns: {} };
   const $ = id => document.getElementById(id);
   const clamp = (x, a, b) => Math.min(b, Math.max(a, x)), mod = (a, n) => ((a % n) + n) % n;
   const COLORS = ['#e8744a', '#f2b84b', '#7bc6a4', '#5aa9e6', '#c58ad8', '#e86a92', '#9bd35a', '#f0e0c8'];
@@ -32,10 +33,11 @@
   const LDEG = [0, 0, 2, 4, 7, 6, 8, 11];          // notes mode: ring one is the bass, the others stack a chord and its colours
 
   /* ---------- state ---------- */
-  let saved = {}; try { saved = JSON.parse(localStorage.getItem('rg-live') || '{}'); } catch (e) {}
-  const keep = () => { try { localStorage.setItem('rg-live', JSON.stringify({ city: ST.city, bpm: ST.follow ? null : ST.bpm, kit: ST.kit, mode: ST.mode })); } catch (e) {} };
+  const SKEY = SRC === 'atlas' ? 'rg-live' : 'rg-live-' + SRC;
+  let saved = {}; try { saved = JSON.parse(localStorage.getItem(SKEY) || '{}'); } catch (e) {}
+  const keep = () => { try { localStorage.setItem(SKEY, JSON.stringify({ city: ST.city, bpm: ST.follow ? null : ST.bpm, kit: ST.kit, mode: ST.mode })); } catch (e) {} };
   const cityByName = n => D.cities.findIndex(c => c.n === n);
-  const ST = { city: saved.city != null && D.cities[saved.city] ? saved.city : Math.max(0, cityByName('London')), genre: 0, kit: saved.kit || '808', bpm: saved.bpm || 120, mode: saved.mode === 'notes' ? 'notes' : 'drums', follow: !saved.bpm, playing: false };
+  const ST = { city: saved.city != null && D.cities[saved.city] ? saved.city : Math.max(0, cityByName('London')), genre: 0, kit: saved.kit || (SRC === 'three' ? 'tr707' : SRC === 'wave' ? 'tr606' : '808'), bpm: saved.bpm || (SRC === 'three' ? 108 : SRC === 'wave' ? 84 : 120), mode: saved.mode === 'notes' ? 'notes' : 'drums', follow: SRC === 'atlas' && !saved.bpm, playing: false };
   let WX = { temp: 11, wind: 14, hum: 70, cloud: 60, pres: 1010, rain: 0, live: false };
   let ROOT = 0, MODE = 'dorian', pattern = null;
   // what the hands are doing to the rhythm right now
@@ -101,7 +103,62 @@
   function rng(seed) { let s = seed >>> 0 || 1; return () => (s = (s * 1664525 + 1013904223) >>> 0) / 4294967296; }
   const hash = (a, b) => { let h = (a * 374761393 + b * 668265263) >>> 0; h = ((h ^ (h >>> 13)) * 1274126177) >>> 0; return ((h ^ (h >>> 16)) >>> 0) / 4294967296; };
   const kit = () => KITS.find(k => k.id === ST.kit) || KITS[0];
+
+  /* ---------- the place sources: Three Cities and Blue Wave ---------- */
+  // Boston, Copenhagen and London, or four seas. Each place plays two rings. The numbers shown are what plays until the live reading arrives.
+  const PLACES = SRC === 'three'
+    ? [{ n: 'Boston', a: 42.36, o: -71.06 }, { n: 'Copenhagen', a: 55.68, o: 12.57 }, { n: 'London', a: 51.51, o: -0.13 }]
+    : SRC === 'wave' ? [{ n: 'North Sea', a: 56, o: 3 }, { n: 'Gulf of Maine', a: 42.5, o: -69 }, { n: 'Mediterranean', a: 35, o: 18 }, { n: 'Cape of Good Hope', a: -36, o: 18 }] : [];
+  const PW = SRC === 'three'
+    ? [{ temp: 9, wind: 14, hum: 60, cloud: 40, pres: 1015 }, { temp: 5, wind: 18, hum: 80, cloud: 70, pres: 1008 }, { temp: 11, wind: 12, hum: 72, cloud: 60, pres: 1010 }]
+    : SRC === 'wave' ? [{ h: 2.1, p: 7, d: 300, sh: 1.2, sp: 9, t: 11.4 }, { h: 1.4, p: 7.5, d: 210, sh: 0.9, sp: 10, t: 12.1 }, { h: 0.9, p: 6, d: 320, sh: 0.4, sp: 8, t: 21 }, { h: 3.6, p: 13, d: 240, sh: 2.8, sp: 14, t: 16.5 }] : [];
+  const PLIVE = { ok: false };
+  const num = (v, d) => typeof v === 'number' && isFinite(v) ? v : d;
+  const mean = k => PW.reduce((a, r) => a + r[k], 0) / Math.max(1, PW.length);
+  function ringOf(steps, hits, rot) { return euclid(steps, clamp(hits, 0, steps), mod(rot, steps)); }
+  function buildPlaceLanes() {
+    const K = kit(), free = [0, 1, 2, 3, 4, 5, 6, 7], slot = [0, 2, 1, 6, 3, 4, 5, 7];
+    const take = want => { const k = free.includes(want) ? want : free[0]; free.splice(free.indexOf(k), 1); return k; };
+    lanes.forEach((l, i) => {
+      const p = PLACES[i >> 1], r = PW[i >> 1], j = i & 1; let steps, hits, rot, why;
+      if (SRC === 'three') {
+        if (p) {
+          if (j === 0) { steps = clamp(Math.round(Math.abs(r.temp)), 5, 16); hits = Math.round(steps * (0.25 + r.cloud / 100 * 0.3)); rot = Math.round(r.wind); why = p.n + ', temperature ' + Math.round(r.temp) + '°'; }
+          else { steps = clamp(Math.round(r.wind / 2) + 4, 5, 16); hits = Math.round(steps * (0.25 + r.hum / 100 * 0.25)); rot = Math.round(r.pres); why = p.n + ', wind ' + Math.round(r.wind) + ' km/h'; }
+        } else if (i === 6) { steps = 5 + Math.round(mean('cloud') / 100 * 11); hits = Math.round(steps * 0.4); rot = 0; why = 'all three, cloud'; }
+        else { steps = 5 + Math.round(mean('hum') / 100 * 11); hits = Math.round(steps * 0.35); rot = 1; why = 'all three, humidity'; }
+        hits = clamp(hits, 2, Math.max(2, steps - 2));
+      } else {
+        const hgt = j === 0 ? r.h : r.sh, per = j === 0 ? r.p : r.sp, lv = clamp(hgt / 3, 0, 1);
+        steps = clamp(Math.round(per), 5, 16); const mx = Math.max(1, Math.floor(steps / 2));
+        hits = lv < 0.02 ? 0 : clamp(1 + Math.round(lv * (mx - 1)), 1, mx); rot = Math.round(mod(r.d, 360) / 360 * steps);
+        why = p.n + (j === 0 ? ', waves ' : ', swell ') + hgt.toFixed(1) + ' m every ' + Math.round(per) + ' s';
+      }
+      l.wx = true; l.steps = steps; l.bits = ringOf(steps, hits, rot); l.why = why;
+      const v = K.v[take(slot[i])]; l.name = v[0]; l.file = v[1]; l.lvl = v[2] || 1; loadSample(l.file);
+    });
+    const t = SRC === 'three' ? mean('temp') : mean('t'), b = SRC === 'three' ? clamp((t - 4) / 22, 0, 1) * 0.55 + (1 - mean('cloud') / 100) * 0.45 : 1 - clamp(mean('h') / 4, 0, 1) * 0.8;
+    ROOT = mod(Math.round(t), 12); MODE = b > 0.78 ? 'lydian' : b > 0.62 ? 'major' : b > 0.46 ? 'mixolydian' : b > 0.3 ? 'dorian' : 'minor';
+    paintLanes(); paintFacts(); paintSlices();
+  }
+  async function loadPlaces() {
+    try {
+      const la = PLACES.map(p => p.a).join(','), lo = PLACES.map(p => p.o).join(',');
+      const url = SRC === 'three'
+        ? 'https://api.open-meteo.com/v1/forecast?latitude=' + la + '&longitude=' + lo + '&current=temperature_2m,relative_humidity_2m,cloud_cover,wind_speed_10m,surface_pressure&timezone=GMT'
+        : 'https://marine-api.open-meteo.com/v1/marine?latitude=' + la + '&longitude=' + lo + '&current=wave_height,wave_period,wave_direction,swell_wave_height,swell_wave_period,sea_surface_temperature&timezone=GMT';
+      const j = await (await fetch(url)).json(), arr = Array.isArray(j) ? j : [j];
+      arr.forEach((x, i) => {
+        const c = x && x.current, r = PW[i]; if (!c || !r) return;
+        if (SRC === 'three') { r.temp = num(c.temperature_2m, r.temp); r.wind = num(c.wind_speed_10m, r.wind); r.hum = num(c.relative_humidity_2m, r.hum); r.cloud = num(c.cloud_cover, r.cloud); r.pres = num(c.surface_pressure, r.pres); }
+        else { r.h = num(c.wave_height, r.h); r.p = num(c.wave_period, r.p); r.d = num(c.wave_direction, r.d); r.sh = num(c.swell_wave_height, r.sh); r.sp = num(c.swell_wave_period, r.sp); r.t = num(c.sea_surface_temperature, r.t); }
+      });
+      PLIVE.ok = true;
+    } catch (e) { PLIVE.ok = false; }
+    buildLanes();
+  }
   function buildLanes() {
+    if (SRC !== 'atlas') return buildPlaceLanes();
     const c = D.cities[ST.city], g = c.g[ST.genre] || c.g[0];
     pattern = D.patterns[g.i[0]] || null;
     const rows = pattern ? pattern.p : [], K = kit(), used = new Set(), free = [0, 1, 2, 3, 4, 5, 6, 7];
@@ -135,6 +192,7 @@
     paintLanes(); paintFacts(); paintSlices();
   }
   async function loadWeather() {
+    if (SRC !== 'atlas') return loadPlaces();
     const c = D.cities[ST.city];
     try {
       const j = await (await fetch('https://api.open-meteo.com/v1/forecast?latitude=' + c.a + '&longitude=' + c.o + '&current=temperature_2m,relative_humidity_2m,cloud_cover,wind_speed_10m,precipitation,surface_pressure&timezone=auto')).json(), w = j.current, num = (v, d) => typeof v === 'number' && isFinite(v) ? v : d;
@@ -331,6 +389,13 @@
   /* ---------- the page ---------- */
   const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
   function paintFacts() {
+    if (SRC !== 'atlas') {
+      const key = NOTE_NAMES[ROOT] + ' ' + MODE;
+      $('cityName').textContent = SRC === 'three' ? 'Three Cities' : 'Blue Wave';
+      $('facts').textContent = PLACES.map((p, i) => p.n + ' ' + (SRC === 'three' ? Math.round(PW[i].temp) + '°' : PW[i].h.toFixed(1) + ' m')).join(' · ');
+      $('genreLine').textContent = (PLIVE.ok ? 'live now' : 'sample readings') + ' · ' + key;
+      return;
+    }
     const c = D.cities[ST.city], g = c.g[ST.genre] || c.g[0];
     $('cityName').textContent = c.n;
     $('facts').textContent = (WX.live ? Math.round(WX.temp) + '° · wind ' + Math.round(WX.wind) + ' · ' : 'weather offline · ') + NOTE_NAMES[ROOT] + ' ' + MODE;
@@ -356,7 +421,7 @@
   function paintSliceNow() { const h = $('slices'); if (!h) return; const cur = FX.held.length ? -1 : curSlice; [...h.children].forEach((b, s) => b.classList.toggle('now', s === cur || (FX.held.length > 0 && FX.order[s] === curSrc))); }
 
   // city, genre, kit
-  const citySel = $('city'), genreSel = $('genre'), kitSel = $('kit');
+  const citySel = $('city') || document.createElement('select'), genreSel = $('genre') || document.createElement('select'), kitSel = $('kit');
   citySel.innerHTML = D.cities.map((c, i) => [c.n, i]).sort((a, b) => a[0].localeCompare(b[0])).map(([n, i]) => '<option value="' + i + '">' + esc(n) + '</option>').join('');
   kitSel.innerHTML = KITS.map(k => '<option value="' + k.id + '">' + k.name + '</option>').join('');
   function fillGenres() { const c = D.cities[ST.city]; genreSel.innerHTML = c.g.map((g, i) => '<option value="' + i + '">' + esc(g.n) + '</option>').join(''); genreSel.value = ST.genre; }
@@ -452,7 +517,7 @@
 
   /* ---------- go ---------- */
   size(); addEventListener('resize', size); if (window.ResizeObserver) new ResizeObserver(size).observe(cv);
-  citySel.value = ST.city; fillGenres(); setBpm(ST.bpm); if (!saved.bpm) ST.follow = true;
+  citySel.value = ST.city; fillGenres(); setBpm(ST.bpm); if (!saved.bpm && SRC === 'atlas') ST.follow = true;
   $('mode').setAttribute('aria-pressed', String(ST.mode === 'notes')); $('mode').querySelector('span').textContent = ST.mode === 'notes' ? 'Notes' : 'Drums';
   pickGenre(0); loadWeather(); paintSay(); paintPlay(); draw();
   window.__live = { ST, FX, PAD, MOT, lanes, padSet, padRelease, setProg, playhead, start, stop };

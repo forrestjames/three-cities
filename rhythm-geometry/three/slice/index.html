@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Three Cities: Slice</title>
+<meta name="robots" content="noindex">
+<meta name="description" content="Play the live weather in Boston, Copenhagen and London with your hands. A chaos pad and a slicer, with full MIDI out.">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Abel&family=Source+Code+Pro:wght@400;500&display=swap">
+<link rel="stylesheet" href="/rhythm-geometry/live/live.css">
+<style>:root{--accent:#e8744a}.how2{margin:6px 0 0;font-size:11.5px;color:var(--ink-dim);max-width:34ch}</style>
+</head>
+<body data-surface="slice" data-source="three">
+<header class="head">
+  <p class="eyebrow">Three Cities &middot; <b>Slice</b></p>
+  <h1 id="cityName">London</h1>
+  <p class="facts" id="facts"></p>
+  <p class="genre" id="genreLine"></p>
+  <p class="how2">Boston, Copenhagen and London each play two rings. Temperature sets how long a ring is.</p>
+  <p class="how"><b>Eight slices of the bar.</b>Hold a pad and that slice loops. Hold a few and they play in the order you pressed them. Drag one pad onto another to swap them for good. Every move goes out over MIDI too.</p>
+</header>
+<main class="stage">
+  <div class="ringbox"><div class="padwrap"><canvas id="rings" aria-label="The rings, with the eight slices drawn round the outside"></canvas></div></div>
+  <div class="slices" id="slices" role="group" aria-label="The eight slices. Hold to loop, drag to swap."></div>
+</main>
+<aside class="side">
+  <p class="lab">Reorder</p>
+  <div class="acts">
+    <button class="pill" type="button" data-act="scramble" title="A new order for the eight slices"><kbd>Z</kbd>Scramble</button>
+    <button class="pill" type="button" data-act="mirror" title="Play the slices back to front"><kbd>X</kbd>Mirror</button>
+    <button class="pill" type="button" data-act="turn" title="Move every slice one place round"><kbd>C</kbd>Turn</button>
+    <button class="pill" type="button" data-act="reset" title="Back to the rhythm as written"><kbd>V</kbd>Reset</button>
+    <button id="latch" class="pill wide" type="button" aria-pressed="false" title="Pads stay down when you let go. Press again to lift them."><kbd>L</kbd>Latch the pads</button>
+  </div>
+  <label class="row">Scramble by itself<select id="auto"><option value="0">Off</option><option value="1">Every bar</option><option value="2">Every 2 bars</option><option value="4">Every 4 bars</option><option value="8">Every 8 bars</option></select></label>
+  <p class="lab">Hold to repeat</p>
+  <div class="acts">
+    <button class="pill" type="button" data-rep="4" aria-pressed="false"><kbd>Q</kbd>1/4</button>
+    <button class="pill" type="button" data-rep="2" aria-pressed="false"><kbd>W</kbd>1/8</button>
+    <button class="pill" type="button" data-rep="1" aria-pressed="false"><kbd>E</kbd>1/16</button>
+    <button class="pill" type="button" data-rep="0.5" aria-pressed="false"><kbd>R</kbd>1/32</button>
+    <button id="rev" class="pill wide" type="button" aria-pressed="false" title="Hold to play the bar backwards"><kbd>T</kbd>Backwards</button>
+  </div>
+  <label class="row">Thin to full <span id="densV">as written</span><input id="dens" type="range" min="-100" max="100" value="0"></label>
+  <label class="row">Filter <span id="cutV">open</span><input id="cut" type="range" min="0" max="100" value="50"></label>
+  <div class="space">
+    <label class="row">Echo <span id="echoV">off</span><input id="echoAmt" type="range" min="0" max="100" value="0" aria-label="Echo amount"></label>
+    <label class="row">Echo time <select id="echoDiv" aria-label="Echo time"><option value="1">1/4</option><option value="0.75" selected>dotted 1/8</option><option value="0.5">1/8</option><option value="0.3333333333">1/8 triplet</option><option value="0.25">1/16</option></select></label>
+    <label class="row">Reverb <span id="verbV">10%</span><input id="verbAmt" type="range" min="0" max="100" value="10" aria-label="Reverb amount"></label>
+  </div>
+</aside>
+<footer class="bar">
+  <button id="play" type="button" aria-pressed="false" aria-label="Play" title="Play or stop. Space bar."></button>
+  <div class="tempo"><small>Tempo</small><b id="bpmV">120</b><input id="bpm" type="range" min="60" max="180" value="120" aria-label="Tempo"></div>
+  <button id="tap" class="pill" type="button" title="Tap three or more times to set the tempo">Tap</button>
+  <select id="kit" aria-label="Drum kit"></select>
+  <button id="mode" class="pill" type="button" aria-pressed="false" title="Drums: the rings play the kit. Notes: every ring plays a note of the chord, for your synths."><i class="dot"></i><span>Drums</span></button>
+  <div class="lanes" id="lanes" role="group" aria-label="Rings. Click one to mute it."></div>
+  <button id="midi" class="pill" type="button" aria-pressed="false" title="Send everything to your drum machine, synths or DAW">MIDI</button>
+</footer>
+<script src="/rhythm-geometry/rg-midi.js"></script>
+<script src="/rhythm-geometry/live/live.js"></script>
+<script src="/rhythm-geometry/nav.js" defer></script>
+</body>
+</html>
