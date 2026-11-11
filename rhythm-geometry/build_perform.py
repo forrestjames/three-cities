@@ -6,8 +6,8 @@ import os, re
 here = os.path.dirname(os.path.abspath(__file__))
 def rd(p): return open(os.path.join(here, p), encoding='utf8').read()
 SRCS = {
-  'three': dict(name='Three Cities', eyebrow='Three Cities', desc='Play the live weather in Boston, Copenhagen and London with your hands. A chaos pad and a slicer, with full MIDI out.', how='Pick any three cities. Each plays two rings. Temperature sets how long a ring is.', accent='#e8744a'),
-  'wave': dict(name='Blue Wave', eyebrow='Blue Wave', desc='Play live sea waves with your hands. A chaos pad and a slicer, with full MIDI out.', how='Pick four seas or beaches. Each plays two rings. Bigger waves play more notes. Longer waves play more steps.', accent='#5aa9e6'),
+  'three': dict(name='Three Cities', eyebrow='Three Cities', desc='Play the live weather in Boston, Copenhagen and London with your hands. A chaos pad and a slicer, with full MIDI out.', how='Use one to three cities. Each plays two rings. Temperature sets how long a ring is.', accent='#e8744a'),
+  'wave': dict(name='Blue Wave', eyebrow='Blue Wave', desc='Play live sea waves with your hands. A chaos pad and a slicer, with full MIDI out.', how='Use one to four seas or beaches. Each plays two rings. Bigger waves play more notes. Longer waves play more steps.', accent='#5aa9e6'),
 }
 for src, c in SRCS.items():
     for surf, base, out in (('pad', 'pad/index.html', src + '/index.html'), ('slice', 'slice/index.html', src + '/slice/index.html')):

@@ -113,3 +113,12 @@ body[data-surface="slice"] .ringbox { min-height: 0; height: 100%; width: 100%; 
 #rec[aria-pressed="true"] { border-color: #e0604f; color: #e0604f; }
 #rec[aria-pressed="true"] .dot { animation: recpulse 1s infinite; }
 @keyframes recpulse { 50% { opacity: .25; } }
+
+#places { display: grid; gap: 8px; width: 100%; }
+#places .chips { display: flex; flex-wrap: wrap; gap: 6px; }
+#places .chip { display: inline-flex; align-items: center; gap: 6px; min-height: 32px; padding: 4px 6px 4px 14px; border-radius: 999px; border: 1px solid var(--accent); color: var(--accent); font-size: 12px; letter-spacing: .06em; }
+#places .chip button { all: unset; cursor: pointer; width: 22px; height: 22px; display: grid; place-items: center; border-radius: 50%; opacity: .7; }
+#places .chip button:hover, #places .chip button:focus-visible { opacity: 1; background: rgba(243, 236, 230, .12); }
+#places .add { display: flex; gap: 6px; flex-wrap: wrap; }
+#places .add input { flex: 1 1 140px; min-width: 0; font: inherit; font-size: 12px; letter-spacing: .06em; }
+#places .how2 { min-height: 1.2em; margin: 0; }

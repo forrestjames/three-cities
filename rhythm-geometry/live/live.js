@@ -35,7 +35,7 @@
   /* ---------- state ---------- */
   const SKEY = SRC === 'atlas' ? 'rg-live' : 'rg-live-' + SRC;
   let saved = {}; try { saved = JSON.parse(localStorage.getItem(SKEY) || '{}'); } catch (e) {}
-  const keep = () => { try { localStorage.setItem(SKEY, JSON.stringify({ city: ST.city, bpm: ST.follow ? null : ST.bpm, kit: ST.kit, mode: ST.mode, voice: ST.voice, key: ST.key, scale: ST.scale, places: PLACES.map(p => p.n) })); } catch (e) {} };
+  const keep = () => { try { localStorage.setItem(SKEY, JSON.stringify({ city: ST.city, bpm: ST.follow ? null : ST.bpm, kit: ST.kit, mode: ST.mode, voice: ST.voice, key: ST.key, scale: ST.scale, places: PLACES.map(p => p.n), custom: CUSTOM.filter(c => PLACES.some(p => p.n === c.n)) })); } catch (e) {} };
   const cityByName = n => D.cities.findIndex(c => c.n === n);
   const ST = { city: saved.city != null && D.cities[saved.city] ? saved.city : Math.max(0, cityByName('London')), genre: 0, kit: saved.kit || (SRC === 'three' ? 'tr707' : SRC === 'wave' ? 'tr606' : '808'), bpm: saved.bpm || (SRC === 'three' ? 108 : SRC === 'wave' ? 84 : 120), mode: saved.mode === 'notes' || (SRC !== 'atlas' && saved.mode === 'both') ? saved.mode : (SRC === 'atlas' ? 'drums' : 'both'), voice: saved.voice || 'keys', follow: SRC === 'atlas' && !saved.bpm, playing: false };
   let WX = { temp: 11, wind: 14, hum: 70, cloud: 60, pres: 1010, rain: 0, live: false };
@@ -167,7 +167,11 @@
     : SRC === 'wave' ? (window.RG_WAVE || []).map(([n, a, o, h, p, d, t, ring, grp]) => ({ n, a, o, ring, grp, s: { h, p, d, sh: +(h * 0.6).toFixed(1), sp: p + 1.5, t } })) : [];
   const DEFN = SRC === 'three' ? ['Boston', 'Copenhagen', 'London'] : ['North Sea', 'Gulf of Maine', 'Mediterranean', 'Cape of Good Hope'];
   const optOf = n => OPTS.find(o => o.n === n);
-  const chosen = SRC === 'atlas' ? [] : DEFN.map((d, i) => optOf(saved.places && saved.places[i]) || optOf(d) || OPTS[i]);
+  const MAXP = SRC === 'three' ? 3 : 4;   // how many places you can have at once. One is fine.
+  const CUSTOM = Array.isArray(saved.custom) ? saved.custom.filter(c => c && c.n && isFinite(c.a) && isFinite(c.o)) : [];   // cities found by search, not in the list
+  const findOpt = n => optOf(n) || (CUSTOM.find(c => c.n === n) ? Object.assign({ s: CITY_S }, CUSTOM.find(c => c.n === n)) : null);
+  const fromSaved = Array.isArray(saved.places) ? saved.places.map(findOpt).filter(Boolean).slice(0, MAXP) : [];
+  const chosen = SRC === 'atlas' ? [] : fromSaved.length ? fromSaved : DEFN.map((d, i) => optOf(d) || OPTS[i]);
   const PLACES = chosen.map(o => ({ n: o.n, a: o.a, o: o.o, ring: o.ring }));
   const PW = chosen.map(o => Object.assign({}, o.s));
   const PLIVE = { ok: false };
@@ -177,8 +181,12 @@
   function buildPlaceLanes() {
     const K = kit(), free = [0, 1, 2, 3, 4, 5, 6, 7], slot = [0, 2, 1, 6, 3, 4, 5, 7];
     const take = want => { const k = free.includes(want) ? want : free[0]; free.splice(free.indexOf(k), 1); return k; };
+    const np = PLACES.length;
     lanes.forEach((l, i) => {
-      const p = PLACES[i >> 1], r = PW[i >> 1], j = i & 1; let steps, hits, rot, why;
+      // with fewer places than rings, the spare rings go quiet. Add a place and they come back.
+      const gone = SRC === 'three' ? i < 6 && (i >> 1) >= np : (i >> 1) >= np, pi = gone ? 0 : Math.min(i >> 1, np - 1);
+      const p = SRC === 'three' && i >= 6 ? null : PLACES[pi], r = PW[pi], j = i & 1; let steps, hits, rot, why;
+      if (gone) l.mute = true; else if (l.gone) l.mute = false; l.gone = gone;
       if (SRC === 'three') {
         if (p) {
           if (j === 0) { steps = clamp(Math.round(Math.abs(r.temp)), 5, 16); hits = Math.round(steps * (0.25 + r.cloud / 100 * 0.3)); rot = Math.round(r.wind); why = p.n + ', temperature ' + Math.round(r.temp) + '°'; }
@@ -221,16 +229,49 @@
     } catch (e) { PLIVE.ok = false; }
     buildLanes();
   }
-  // the place pickers: one menu per place
+  // the place picker: the places you have as chips, a search box to add one, and Random
+  const WHAT = SRC === 'three' ? 'city' : 'sea or beach';
+  function setPlaces(list) {   // list of options (from OPTS or a search)
+    PLACES.length = 0; PW.length = 0;
+    list.slice(0, MAXP).forEach(o => { PLACES.push({ n: o.n, a: o.a, o: o.o, ring: o.ring }); PW.push(Object.assign({}, o.s || CITY_S)); });
+    keep(); fillPlaces(); buildLanes(); loadPlaces();
+  }
+  function addPlace(o) {
+    if (!o) return;
+    if (PLACES.some(p => p.n === o.n)) return say('You already have ' + o.n + '.');
+    if (PLACES.length >= MAXP) return say('That is the most: ' + MAXP + '. Remove one first.');
+    if (!optOf(o.n) && !CUSTOM.some(c => c.n === o.n)) CUSTOM.push({ n: o.n, a: o.a, o: o.o });
+    PLACES.push({ n: o.n, a: o.a, o: o.o, ring: o.ring }); PW.push(Object.assign({}, o.s || CITY_S));
+    keep(); fillPlaces(); buildLanes(); loadPlaces();
+  }
+  function removePlace(i) {
+    if (PLACES.length < 2) return;
+    PLACES.splice(i, 1); PW.splice(i, 1); keep(); fillPlaces(); buildLanes(); loadPlaces();
+  }
+  function say(t) { const e = $('placeSay'); if (e) { e.textContent = t; clearTimeout(say.t); say.t = setTimeout(() => { e.textContent = ''; }, 4000); } }
+  async function searchPlace(q) {
+    q = q.trim(); if (!q) return;
+    const low = q.toLowerCase(), hit = OPTS.find(o => o.n.toLowerCase() === low) || OPTS.find(o => o.n.toLowerCase().startsWith(low)) || OPTS.find(o => o.n.toLowerCase().indexOf(low) >= 0);
+    if (hit) return addPlace(hit);
+    if (SRC !== 'three') return say('No sea or beach called that. Try the list.');
+    say('Looking for ' + q + '...');
+    try {
+      const j = await (await fetch('https://geocoding-api.open-meteo.com/v1/search?count=1&language=en&name=' + encodeURIComponent(q))).json(), r = j.results && j.results[0];
+      if (!r) return say('Could not find ' + q + '.');
+      addPlace({ n: r.name, a: r.latitude, o: r.longitude }); say('');
+    } catch (e) { say('Could not search just now. Pick from the list.'); }
+  }
   function fillPlaces() {
-    const box = $('places'); if (!box || !PLACES.length) return;
-    const groups = {}; OPTS.forEach((o, k) => { (groups[o.grp || ''] = groups[o.grp || ''] || []).push([o, k]); });
-    const opts = Object.keys(groups).map(g => { const inner = groups[g].map(([o, k]) => '<option value="' + k + '">' + esc(o.n) + '</option>').join(''); return g ? '<optgroup label="' + g + '">' + inner + '</optgroup>' : inner; }).join('');
-    box.innerHTML = PLACES.map((p, i) => '<select data-i="' + i + '" aria-label="' + (SRC === 'three' ? 'City ' : 'Sea or beach ') + (i + 1) + '">' + opts + '</select>').join('');
-    box.querySelectorAll('select').forEach(sel => {
-      const i = +sel.dataset.i; sel.value = String(OPTS.findIndex(o => o.n === PLACES[i].n));
-      sel.addEventListener('change', () => { const o = OPTS[+sel.value]; PLACES[i] = { n: o.n, a: o.a, o: o.o, ring: o.ring }; PW[i] = Object.assign({}, o.s); keep(); buildLanes(); loadPlaces(); });
-    });
+    const box = $('places'); if (!box || SRC === 'atlas') return;
+    box.innerHTML = '<div class="chips" id="placeChips">' + PLACES.map((p, i) => '<span class="chip">' + esc(p.n) + (PLACES.length > 1 ? '<button type="button" data-x="' + i + '" aria-label="Remove ' + esc(p.n) + '">&times;</button>' : '') + '</span>').join('') + '</div>'
+      + '<div class="add"><input id="placeIn" list="placeList" type="search" placeholder="Add a ' + WHAT + '..." aria-label="Search for a ' + WHAT + ' to add" autocomplete="off"><button type="button" class="pill" id="placeAdd">Add</button><button type="button" class="pill" id="placeRand" title="Just one ' + WHAT + ', picked for you"><kbd>?</kbd>Random</button></div>'
+      + '<datalist id="placeList">' + OPTS.map(o => '<option value="' + esc(o.n) + '">').join('') + '</datalist><p class="how2" id="placeSay" aria-live="polite"></p>';
+    $('placeChips').addEventListener('click', e => { const x = e.target.closest('[data-x]'); if (x) removePlace(+x.dataset.x); });
+    const go = () => { const v = $('placeIn').value; $('placeIn').value = ''; searchPlace(v); };
+    $('placeAdd').addEventListener('click', go);
+    $('placeIn').addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); go(); } e.stopPropagation(); });
+    $('placeIn').addEventListener('change', () => { if (OPTS.some(o => o.n === $('placeIn').value)) go(); });
+    $('placeRand').addEventListener('click', () => { let o; do { o = OPTS[Math.floor(Math.random() * OPTS.length)]; } while (OPTS.length > 1 && PLACES.length === 1 && PLACES[0].n === o.n); setPlaces([o]); });
   }
   function buildLanes() {
     if (SRC !== 'atlas') return buildPlaceLanes();
