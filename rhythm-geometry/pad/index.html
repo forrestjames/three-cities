@@ -33,14 +33,14 @@
   </div>
   <div class="loops" id="loops" aria-label="Recorded loops. They all keep playing."></div>
   <div class="space">
-    <label class="row">Scatter <span id="scatV">0%</span><input id="scat" type="range" min="0" max="100" value="0" aria-label="How much the hits scatter, all the time"></label>
-    <label class="row">Cluster <span id="clusV">0%</span><input id="clus" type="range" min="0" max="100" value="0" aria-label="How much the hits crowd together, all the time"></label>
-    <label class="row">Volume <span id="volV">90%</span><input id="vol" type="range" min="0" max="100" value="90" aria-label="Overall volume"></label>
-    <label class="row">Octave <span id="octV">0</span><input id="oct" type="range" min="-3" max="3" step="1" value="0" aria-label="Octave shift"></label>
-    <label class="row">Decay <span id="decayV">1x</span><input id="decay" type="range" min="20" max="250" value="100" aria-label="How long the sounds ring"></label>
-    <label class="row">Echo <span id="echoV">off</span><input id="echoAmt" type="range" min="0" max="100" value="0" aria-label="Echo amount"></label>
+    <label class="row kc">Scatter <span id="scatV">0%</span><input class="k" id="scat" type="range" min="0" max="100" value="0" aria-label="How much the hits scatter, all the time"></label>
+    <label class="row kc">Cluster <span id="clusV">0%</span><input class="k" id="clus" type="range" min="0" max="100" value="0" aria-label="How much the hits crowd together, all the time"></label>
+    <label class="row kc">Volume <span id="volV">90%</span><input class="k" id="vol" type="range" min="0" max="100" value="90" aria-label="Overall volume"></label>
+    <label class="row kc">Octave <span id="octV">0</span><input class="k" id="oct" type="range" min="-3" max="3" step="1" value="0" aria-label="Octave shift"></label>
+    <label class="row kc">Decay <span id="decayV">1x</span><input class="k" id="decay" type="range" min="20" max="250" value="100" aria-label="How long the sounds ring"></label>
+    <label class="row kc">Echo <span id="echoV">off</span><input class="k" id="echoAmt" type="range" min="0" max="100" value="0" aria-label="Echo amount"></label>
+    <label class="row kc">Reverb <span id="verbV">10%</span><input class="k" id="verbAmt" type="range" min="0" max="100" value="10" aria-label="Reverb amount"></label>
     <label class="row">Echo time <select id="echoDiv" aria-label="Echo time"><option value="1">1/4</option><option value="0.75" selected>dotted 1/8</option><option value="0.5">1/8</option><option value="0.3333333333">1/8 triplet</option><option value="0.25">1/16</option></select></label>
-    <label class="row">Reverb <span id="verbV">10%</span><input id="verbAmt" type="range" min="0" max="100" value="10" aria-label="Reverb amount"></label>
     <label class="row">Chords change <select id="chordBars" aria-label="How often the chords change"><option value="0">Never</option><option value="1">1 bar</option><option value="2">2 bars</option><option value="4">4 bars</option><option value="8">8 bars</option><option value="16">16 bars</option></select></label>
     <label class="row">Melody changes <select id="melBars" aria-label="How often the melody changes"><option value="0">Never</option><option value="1">1 bar</option><option value="2">2 bars</option><option value="4">4 bars</option><option value="8">8 bars</option><option value="16">16 bars</option></select></label>
     <label class="row">Key <select id="key" aria-label="Key"></select></label>
@@ -62,6 +62,7 @@
 <script src="/rhythm-geometry/live/data.js"></script>
 <script src="/rhythm-geometry/live/tcvoices.js"></script>
 <script src="/rhythm-geometry/live/live.js"></script>
+<script src="/rhythm-geometry/live/knobs.js"></script>
 <script src="/rhythm-geometry/nav.js" defer></script>
 </body>
 </html>

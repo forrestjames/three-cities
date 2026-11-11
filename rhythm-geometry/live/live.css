@@ -135,3 +135,17 @@ body[data-surface="slice"] .ringbox { min-height: 0; height: 100%; width: 100%; 
   .space { gap: 4px 12px; }
   .space .row { gap: 0; }
 }
+
+/* knobs, the same dials as the Three Cities app */
+.sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); opacity: 0; pointer-events: none; }
+.dial { user-select: none; -webkit-user-select: none; width: 46px; height: 46px; touch-action: none; cursor: ns-resize; border-radius: 50%; outline: none; }
+.dial:focus-visible { box-shadow: 0 0 0 1px var(--accent); }
+.dial svg { width: 100%; height: 100%; display: block; }
+.dial .face { fill: rgba(255, 255, 255, .035); stroke: var(--line, rgba(243, 236, 230, .14)); stroke-width: 1; }
+.dial .trk { fill: none; stroke: rgba(243, 236, 230, .14); stroke-width: 3; stroke-linecap: round; }
+.dial .val { fill: none; stroke: var(--accent); stroke-width: 3; stroke-linecap: round; }
+.dial .ptr { stroke: var(--ink); stroke-width: 2.5; stroke-linecap: round; }
+.space { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+.space .row { grid-column: span 2; }
+.space .row.kc { grid-column: span 1; display: flex; flex-direction: column; align-items: center; gap: 3px; text-align: center; font-size: 8.5px; letter-spacing: .12em; }
+.space .row.kc span { float: none; order: 3; letter-spacing: .04em; }
