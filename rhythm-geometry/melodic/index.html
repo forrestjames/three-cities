@@ -995,6 +995,7 @@
           <div class="field grow"><label class="label" for="sampRhythm">Rhythm</label><select id="sampRhythm"></select></div>
           <div class="field"><label class="label" for="sampRepeat">Repeat</label><select id="sampRepeat" title="How many hits play the same start point before it moves on"><option value="auto" selected>Auto</option><option value="2">2 hits</option><option value="3">3 hits</option><option value="4">4 hits</option><option value="6">6 hits</option><option value="8">8 hits</option></select></div>
         </div>
+        <div class="chance-row" title="How likely each hit of your sound is to play. Lower it and the sound thins out."><div class="knob-cell"><div class="head"><span class="label">Sound chance</span><output id="sampChanceOut">100%</output></div><input id="sampChance" type="range" min="0" max="100" value="100" aria-label="Chance that each hit of your sound plays"></div></div>
         <div class="samp-shape" id="sampShape" role="group" aria-label="What the steps change">
           <button type="button" data-shape="vel" aria-pressed="true" title="Loud on the one, softer halfway round the rhythm">Velocity</button>
           <button type="button" data-shape="filter" aria-pressed="true" title="The filter opens step by step across the rhythm">Filter</button>
@@ -2905,6 +2906,7 @@ function refreshYourRhythm() {
 }
 $('sampRhythm').addEventListener('change', () => { yours.rhythm = $('sampRhythm').value; });
 $('sampRepeat').addEventListener('change', () => { yours.repeat = $('sampRepeat').value; });
+$('sampChance').addEventListener('input', e => { yours.chance = Number(e.target.value) / 100; $('sampChanceOut').textContent = e.target.value + '%'; });
 
 // Called on every 16th step: the chosen rhythm decides when the sound plays
 function yoursStep(t, n) {
@@ -2912,7 +2914,7 @@ function yoursStep(t, n) {
   if (!L) return;
   const i = n % L;
   if (n === 0) { yours.hitN = 0; yours.group = -1; yours.drift = 0; }   // a fresh start
-  if (lane.bits[i] && roll()) yoursHit(t, i / L, lane);
+  if (lane.bits[i] && roll() && (yours.chance == null || yours.chance >= 1 || Math.random() < yours.chance)) yoursHit(t, i / L, lane);
 }
 // How many hits share one start point. Auto: the number of hits in one lap of the rhythm, so each bar repeats and the next bar moves on.
 function repeatCount(lane) {
