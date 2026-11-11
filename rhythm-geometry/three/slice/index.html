@@ -63,10 +63,16 @@
   <button id="play" type="button" aria-pressed="false" aria-label="Play" title="Play or stop. Space bar."></button>
   <div class="tempo"><small>Tempo</small><b id="bpmV">120</b><input id="bpm" type="range" min="60" max="180" value="120" aria-label="Tempo"></div>
   <button id="tap" class="pill" type="button" title="Tap three or more times to set the tempo">Tap</button>
-  <select id="kit" aria-label="Drum kit"></select>
+  <div class="mixctl" id="mixctl" title="Crossfader: drums on the left, notes on the right. In between, every ring plays both.">
+    <span class="mlab">Crossfader &middot; drag</span>
+    <div class="mixrow">
+      <label class="sp d"><span class="mlab" id="mixD">Drums 100%</span><select id="kit" aria-label="Drum kit"></select></label>
+      <div class="mtrack" id="mixTrack"><i class="tk l"></i><i class="tk r"></i><div class="mh" id="mixHandle" role="slider" tabindex="0" aria-label="Mix between drums and notes" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"></div></div>
+      <label class="sp m"><span class="mlab" id="mixM">Notes 0%</span><select id="voice" aria-label="Melodic sound" title="The sound the note rings play"></select></label>
+    </div>
+    <input id="xf" class="sr-only" type="range" min="0" max="100" value="0" aria-label="Crossfader between drums and notes" tabindex="-1"><output id="xfV" hidden></output>
+  </div>
   <button id="mode" class="pill" type="button" aria-pressed="false" title="Drums, Notes or Both. Both: the first ring of each place plays notes and the second plays the kit."><i class="dot"></i><span>Drums</span></button>
-  <label class="xf" title="Crossfader: drums on the left, notes on the right. In between, every ring plays both."><span>Drums</span><input id="xf" type="range" min="0" max="100" value="0" aria-label="Crossfader between drums and notes"><span>Notes</span><output id="xfV" aria-live="off">drums</output></label>
-  <select id="voice" aria-label="Melodic sound" title="The sound the note rings play"></select>
   <div class="lanes" id="lanes" role="group" aria-label="Rings. Click one to mute it."></div>
   <button id="rec" class="pill" type="button" aria-pressed="false" title="Record everything you hear as a WAV file"><i class="dot"></i><span>Record</span></button>
   <button id="midi" class="pill" type="button" aria-pressed="false" title="Send everything to your drum machine, synths or DAW">MIDI</button>

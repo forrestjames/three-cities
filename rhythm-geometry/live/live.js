@@ -591,10 +591,23 @@
   }
   { let taps = []; $('tap').addEventListener('click', () => { const t = performance.now(); taps = taps.filter(x => t - x < 2400); taps.push(t); if (taps.length >= 3) setBpm(60000 / ((taps[taps.length - 1] - taps[0]) / (taps.length - 1)), true); }); }
   const MODE_WORDS = { drums: 'Drums', notes: 'Notes', both: 'Split', blend: 'Mix' };
-  function paintXf() { const x = $('xf'); if (x) { x.value = ST.xf; $('xfV').textContent = ST.mode === 'both' ? 'split' : ST.xf <= 0 ? 'drums' : ST.xf >= 100 ? 'notes' : (100 - ST.xf) + ' / ' + ST.xf; } }
+  function paintXf() {
+    const x = $('xf'); if (!x) return; x.value = ST.xf;
+    const split = ST.mode === 'both', hh = $('mixHandle');
+    if (hh) { hh.style.left = ST.xf + '%'; hh.setAttribute('aria-valuenow', String(ST.xf)); }
+    $('mixD').textContent = split ? 'Drums' : 'Drums ' + (100 - ST.xf) + '%'; $('mixM').textContent = split ? 'Notes' : 'Notes ' + ST.xf + '%';
+    $('mixctl').classList.toggle('split', split);
+  }
   function setMode(m) { ST.mode = m; if (m === 'drums') ST.xf = 0; else if (m === 'notes') ST.xf = 100; else if (m === 'blend' && (ST.xf <= 0 || ST.xf >= 100)) ST.xf = 50; paintXf(); $('mode').setAttribute('aria-pressed', String(m !== 'drums')); $('mode').querySelector('span').textContent = MODE_WORDS[m]; RGMidi.allOff(); keep(); paintLanes(); paintSay(); }
   if ($('rec')) $('rec').addEventListener('click', () => REC.on ? recStop() : recStart());
   $('mode').addEventListener('click', () => setMode(SRC === 'atlas' ? (ST.mode === 'notes' ? 'drums' : 'notes') : ({ drums: 'notes', notes: 'both', both: 'drums', blend: 'drums' })[ST.mode]));
+  if ($('mixTrack')) {   // drag the fader, or use the arrow keys
+    const tr = $('mixTrack'), hh = $('mixHandle'), setX = v => { $('xf').value = String(Math.max(0, Math.min(100, Math.round(v)))); $('xf').dispatchEvent(new Event('input')); };
+    let on = false; const at = e => { const r = tr.getBoundingClientRect(); setX((e.clientX - r.left) / r.width * 100); };
+    tr.addEventListener('pointerdown', e => { on = true; tr.setPointerCapture(e.pointerId); at(e); e.preventDefault(); });
+    tr.addEventListener('pointermove', e => { if (on) at(e); }); tr.addEventListener('pointerup', () => { on = false; }); tr.addEventListener('pointercancel', () => { on = false; });
+    hh.addEventListener('keydown', e => { const d = e.key === 'ArrowRight' || e.key === 'ArrowUp' ? 5 : e.key === 'ArrowLeft' || e.key === 'ArrowDown' ? -5 : e.key === 'Home' ? -100 : e.key === 'End' ? 100 : 0; if (!d) return; e.stopPropagation(); e.preventDefault(); setX(ST.xf + d); });
+  }
   if ($('xf')) $('xf').addEventListener('input', () => { ST.xf = +$('xf').value; const m = ST.xf <= 0 ? 'drums' : ST.xf >= 100 ? 'notes' : 'blend'; if (ST.mode !== m) { const x = ST.xf; setMode(m); ST.xf = x; paintXf(); } else { paintXf(); keep(); } });
   { const vs = $('voice');
     if (vs) {
