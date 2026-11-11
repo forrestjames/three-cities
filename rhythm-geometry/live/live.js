@@ -36,20 +36,21 @@
   /* ---------- state ---------- */
   const SKEY = SRC === 'atlas' ? 'rg-live' : 'rg-live-' + SRC;
   let saved = {}; try { saved = JSON.parse(localStorage.getItem(SKEY) || '{}'); } catch (e) {}
-  const keep = () => { try { localStorage.setItem(SKEY, JSON.stringify({ city: ST.city, bpm: ST.follow ? null : ST.bpm, kit: ST.kit, mode: ST.mode, voice: ST.voice, key: ST.key, scale: ST.scale, chordBars: ST.chordBars, melBars: ST.melBars, vol: ST.vol, oct: ST.oct, decay: ST.decay, places: PLACES.map(p => p.n), custom: CUSTOM.filter(c => PLACES.some(p => p.n === c.n)) })); } catch (e) {} };
+  const keep = () => { try { localStorage.setItem(SKEY, JSON.stringify({ city: ST.city, bpm: ST.follow ? null : ST.bpm, kit: ST.kit, mode: ST.mode, voice: ST.voice, key: ST.key, scale: ST.scale, chordBars: ST.chordBars, melBars: ST.melBars, scat: ST.scat, clus: ST.clus, vol: ST.vol, oct: ST.oct, decay: ST.decay, places: PLACES.map(p => p.n), custom: CUSTOM.filter(c => PLACES.some(p => p.n === c.n)) })); } catch (e) {} };
   const cityByName = n => D.cities.findIndex(c => c.n === n);
   const ST = { city: saved.city != null && D.cities[saved.city] ? saved.city : Math.max(0, cityByName('London')), genre: 0, kit: saved.kit || (SRC === 'three' ? 'tr707' : SRC === 'wave' ? 'tr606' : '808'), bpm: saved.bpm || (SRC === 'three' ? 108 : SRC === 'wave' ? 84 : 120), mode: saved.mode === 'notes' || (SRC !== 'atlas' && saved.mode === 'both') ? saved.mode : (SRC === 'atlas' ? 'drums' : 'both'), voice: saved.voice || 'keys', follow: SRC === 'atlas' && !saved.bpm, playing: false };
   let WX = { temp: 11, wind: 14, hum: 70, cloud: 60, pres: 1010, rain: 0, live: false };
   let ROOT = 0, MODE = 'dorian', pattern = null;
   // what the hands are doing to the rhythm right now
   // the three plain controls: volume, octave and decay. They sit under the hand moves.
-  const FX = { repeat: null, held: [], heldTk0: 0, sliceLen: 2, order: [0, 1, 2, 3, 4, 5, 6, 7], reverse: false, scatter: 0, rprob: 0, rot: 0, dens: 0, pitch: 0, len: 1, chord: 0, chordHeld: false, oct: 0 };
+  const FX = { repeat: null, held: [], heldTk0: 0, sliceLen: 2, order: [0, 1, 2, 3, 4, 5, 6, 7], reverse: false, scatter: 0, rprob: 0, rot: 0, dens: 0, pitch: 0, len: 1, cluster: 0, clusterAt: 8, chord: 0, chordHeld: false, oct: 0 };
 
   /* ---------- sound ---------- */
   const ctx = new (window.AudioContext || window.webkitAudioContext)();
   const TC = window.TCVoices ? window.TCVoices(ctx) : null;   // every Three Cities sound, from live/tcvoices.js
   // Key and scale: Auto follows the weather. Pick one and it stays put.
   ST.chordBars = saved.chordBars != null ? saved.chordBars : 2; ST.melBars = saved.melBars != null ? saved.melBars : 0;
+  ST.scat = saved.scat != null ? saved.scat : 0; ST.clus = saved.clus != null ? saved.clus : 0; ST.clusAt = 8;
   ST.vol = saved.vol != null ? saved.vol : 90; ST.oct = saved.oct != null ? saved.oct : 0; ST.decay = saved.decay != null ? saved.decay : 100;
   const LEN = () => FX.len * ST.decay / 100;
   ST.key = saved.key != null ? saved.key : null; ST.scale = saved.scale != null ? saved.scale : null;
@@ -338,7 +339,10 @@
     const bar = Math.floor(pos / 16), b = mod(pos, 16); let b2;
     if (FX.held.length) { const n = Math.max(0, k - FX.heldTk0), L = FX.sliceLen; b2 = mod(FX.held[Math.floor(n / L) % FX.held.length] * 2 + (n % L), 16); }
     else b2 = FX.order[b >> 1] * 2 + (b & 1);
-    if (FX.scatter > 0 && hash(k, 7) < FX.scatter) b2 = Math.floor(hash(k, 13) * 8) * 2 + (b & 1);
+    const sc = Math.max(FX.scatter, ST.scat / 100 * 0.85);   // the Scatter and Cluster sliders set a constant amount. The pad moves go on top.
+    if (sc > 0 && hash(k, 7) < sc) b2 = Math.floor(hash(k, 13) * 8) * 2 + (b & 1);
+    const cl = Math.max(FX.cluster, ST.clus / 100);   // cluster: the hits crowd together round one point in the bar, so they come in bursts with gaps between
+    if (cl > 0) { const c = FX.cluster > ST.clus / 100 ? FX.clusterAt : ST.clusAt; b2 = clamp(Math.round(c + (b2 - c) * (1 - cl * 0.8)), 0, 15); }
     if (FX.rprob > 0 && ratchet === 1 && hash(k, 23) < FX.rprob) ratchet = hash(k, 29) < 0.3 ? 3 : 2;
     if (FX.reverse) b2 = 15 - b2;
     return { pos: bar * 16 + b2, ratchet, vm: Math.max(0.12, vm), slice: b >> 1, src: b2 >> 1 };
@@ -411,6 +415,7 @@
     { id: 'repeat', name: 'Repeat', key: 'W', x: 'long · short', y: 'fades · holds', xz: 7, on(x, y) { const len = [8, 4, 3, 2, 1, 0.5, 0.25][zone(x, 7)]; repeatOn(len, 0.7 + 0.3 * y); return LEN_NAMES[len] + (y < 0.9 ? ' · fading' : ''); }, off: repeatOff },
     { id: 'slice', name: 'Slice', key: 'E', x: 'slice 1 to 8', y: 'long · short', xz: 8, yz: 3, on(x, y) { const s = zone(x, 8), len = [4, 2, 1][zone(y, 3)]; holdSlices([s], len); return 'slice ' + (s + 1) + ' · ' + LEN_NAMES[len]; }, off() { holdSlices([], 2); } },
     { id: 'scatter', name: 'Scatter', key: 'R', x: 'in order · scattered', y: 'plain · rolls · backwards', on(x, y) { FX.scatter = x * 0.85; FX.rprob = clamp(y, 0, 0.8) * 0.55; FX.reverse = y > 0.82; return Math.round(x * 100) + '% scattered' + (FX.reverse ? ' · backwards' : y > 0.15 ? ' · rolls' : ''); }, off() { FX.scatter = 0; FX.rprob = 0; FX.reverse = false; } },
+    { id: 'cluster', name: 'Cluster', key: 'P', x: 'loose · tight', y: 'early · late', on(x, y) { FX.cluster = x * 0.95; FX.clusterAt = Math.round(y * 15); return Math.round(x * 100) + '% tight, round step ' + (FX.clusterAt + 1); }, off() { FX.cluster = 0; } },
     { id: 'shift', name: 'Shift', key: 'T', x: 'turn the weather rings', y: 'thinner · as written · fuller', xz: 16, on(x, y) { FX.rot = zone(x, 16); const d = (y - 0.5) * 2; FX.dens = Math.abs(d) < 0.1 ? 0 : d; return 'turned ' + FX.rot + (FX.dens ? (FX.dens < 0 ? ' · thinner' : ' · fuller') : ''); }, off() { FX.rot = 0; FX.dens = 0; } },
     { id: 'echo', name: 'Echo', key: 'Y', x: 'slow · fast', y: 'a little · a lot', xz: 5, on(x, y) { const z = zone(x, 5); DDIV = [1, 0.75, 0.5, 1 / 3, 0.25][z]; setDelay(); const t = ctx.currentTime; dfb.gain.setTargetAtTime(0.25 + 0.6 * y, t, 0.03); dSend.gain.setTargetAtTime(Math.max(BASE.echo, 0.2 + 0.7 * y), t, 0.03); RGMidi.cc('pad', 94, y * 127); return ['1/4', 'dotted 1/8', '1/8', '1/8 triplet', '1/16'][z] + ' echo'; }, off() { restSpace(); RGMidi.cc('pad', 94, BASE.echo / 0.8 * 127); } },
     { id: 'reverb', name: 'Reverb', key: 'O', x: 'dry · drenched', y: 'dark · bright', on(x, y) { const t = ctx.currentTime; vSend.gain.setTargetAtTime(BASE.verb + x * 1.1, t, 0.03); vTone.frequency.setTargetAtTime(700 * Math.pow(22, y), t, 0.03); RGMidi.cc('pad', 91, x * 127); return Math.round(x * 100) + '% reverb · ' + (y < 0.35 ? 'dark' : y > 0.7 ? 'bright' : 'warm'); }, off() { restSpace(); RGMidi.cc('pad', 91, BASE.verb * 127); } },
@@ -593,6 +598,8 @@
     }
     const slider = (id, key, fmt, apply) => { const e = $(id), o = $(id + 'V'); if (!e) return; e.value = ST[key]; const show = () => { if (o) o.textContent = fmt(+e.value); }; show(); e.addEventListener('input', () => { ST[key] = +e.value; apply && apply(); show(); keep(); }); };
     slider('vol', 'vol', v => v + '%', () => mix.gain.setTargetAtTime(Math.pow(ST.vol / 100, 1.5) * 1.1, ctx.currentTime, 0.02));
+    slider('scat', 'scat', v => v + '%', null);
+    slider('clus', 'clus', v => v + '%', null);
     slider('oct', 'oct', v => (v > 0 ? '+' : '') + v, null);
     slider('decay', 'decay', v => (v / 100).toFixed(2).replace(/0$/, '') + 'x', null);
     [['chordBars', 'chordBars'], ['melBars', 'melBars']].forEach(([id, key]) => { const e = $(id); if (!e) return; e.value = String(ST[key]); e.addEventListener('change', () => { ST[key] = +e.value; keep(); }); });

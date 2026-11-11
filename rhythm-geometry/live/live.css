@@ -126,3 +126,10 @@ body[data-surface="slice"] .ringbox { min-height: 0; height: 100%; width: 100%; 
 .space { grid-template-columns: 1fr 1fr; gap: 10px 14px; }
 .space .row { min-width: 0; }
 .space .row select { width: 100%; min-width: 0; }
+/* on a desktop screen the side panel fits without scrolling. When it can't, it scrolls and never clips. */
+@media (min-width: 900px) {
+  .side { justify-content: flex-start; overflow-y: auto; max-height: 100%; padding-bottom: 6px; scrollbar-width: thin; }
+  .side .progs .pill, .side .acts .pill { min-height: 34px; padding-top: 4px; padding-bottom: 4px; }
+  .space { gap: 4px 12px; }
+  .space .row { gap: 0; }
+}

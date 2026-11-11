@@ -34,6 +34,8 @@
   </div>
   <div class="loops" id="loops" aria-label="Recorded loops. They all keep playing."></div>
   <div class="space">
+    <label class="row">Scatter <span id="scatV">0%</span><input id="scat" type="range" min="0" max="100" value="0" aria-label="How much the hits scatter, all the time"></label>
+    <label class="row">Cluster <span id="clusV">0%</span><input id="clus" type="range" min="0" max="100" value="0" aria-label="How much the hits crowd together, all the time"></label>
     <label class="row">Volume <span id="volV">90%</span><input id="vol" type="range" min="0" max="100" value="90" aria-label="Overall volume"></label>
     <label class="row">Octave <span id="octV">0</span><input id="oct" type="range" min="-3" max="3" step="1" value="0" aria-label="Octave shift"></label>
     <label class="row">Decay <span id="decayV">1x</span><input id="decay" type="range" min="20" max="250" value="100" aria-label="How long the sounds ring"></label>
