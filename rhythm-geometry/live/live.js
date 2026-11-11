@@ -35,9 +35,9 @@
   /* ---------- state ---------- */
   const SKEY = SRC === 'atlas' ? 'rg-live' : 'rg-live-' + SRC;
   let saved = {}; try { saved = JSON.parse(localStorage.getItem(SKEY) || '{}'); } catch (e) {}
-  const keep = () => { try { localStorage.setItem(SKEY, JSON.stringify({ city: ST.city, bpm: ST.follow ? null : ST.bpm, kit: ST.kit, mode: ST.mode })); } catch (e) {} };
+  const keep = () => { try { localStorage.setItem(SKEY, JSON.stringify({ city: ST.city, bpm: ST.follow ? null : ST.bpm, kit: ST.kit, mode: ST.mode, voice: ST.voice })); } catch (e) {} };
   const cityByName = n => D.cities.findIndex(c => c.n === n);
-  const ST = { city: saved.city != null && D.cities[saved.city] ? saved.city : Math.max(0, cityByName('London')), genre: 0, kit: saved.kit || (SRC === 'three' ? 'tr707' : SRC === 'wave' ? 'tr606' : '808'), bpm: saved.bpm || (SRC === 'three' ? 108 : SRC === 'wave' ? 84 : 120), mode: saved.mode === 'notes' ? 'notes' : 'drums', follow: SRC === 'atlas' && !saved.bpm, playing: false };
+  const ST = { city: saved.city != null && D.cities[saved.city] ? saved.city : Math.max(0, cityByName('London')), genre: 0, kit: saved.kit || (SRC === 'three' ? 'tr707' : SRC === 'wave' ? 'tr606' : '808'), bpm: saved.bpm || (SRC === 'three' ? 108 : SRC === 'wave' ? 84 : 120), mode: saved.mode === 'notes' || (SRC !== 'atlas' && saved.mode === 'both') ? saved.mode : (SRC === 'atlas' ? 'drums' : 'both'), voice: saved.voice || 'keys', follow: SRC === 'atlas' && !saved.bpm, playing: false };
   let WX = { temp: 11, wind: 14, hum: 70, cloud: 60, pres: 1010, rain: 0, live: false };
   let ROOT = 0, MODE = 'dorian', pattern = null;
   // what the hands are doing to the rhythm right now
@@ -87,7 +87,30 @@
     const sc = MODES[MODE], d = FX.chord + LDEG[l.i], semis = sc[mod(d, 7)] + 12 * Math.floor(d / 7);
     return clamp((l.i === 0 ? 36 : 60) + ROOT + semis + 12 * FX.oct + FX.pitch, 12, 115);
   }
+  // The melodic sounds. Each is a few sine or triangle partials, [wave, ratio, level, decay scale, detune in cents]. Soft keys is the starting sound.
+  const VOICES = {
+    keys:    { name: 'Soft keys',   p: [['triangle', 1, 1], ['sine', 2, 0.15, 0.6]], a: 0.012, d: 0.9, lp: 4, lvl: 0.2 },
+    bells:   { name: 'Glass bells', p: [['sine', 1, 1], ['sine', 2.76, 0.28, 0.5], ['sine', 5.4, 0.1, 0.25]], a: 0.003, d: 1.5, lp: 0, lvl: 0.15 },
+    marimba: { name: 'Marimba',     p: [['sine', 1, 1], ['sine', 4, 0.3, 0.12]], a: 0.002, d: 0.5, lp: 0, lvl: 0.28 },
+    pad:     { name: 'Warm pad',    p: [['triangle', 1, 1, 1, -7], ['triangle', 1, 1, 1, 7], ['sine', 0.5, 0.5]], a: 0.14, d: 1.6, lp: 3, lvl: 0.09 },
+    pluck:   { name: 'Pluck' }
+  };
   function noteSound(l, m, t, vel) {
+    const f = 440 * Math.pow(2, (m - 69) / 12), bass = l.i === 0, V = VOICES[ST.voice] || VOICES.keys;
+    if (!V.p) return pluckSound(l, m, t, vel);
+    const P = bass ? [['sine', 1, 1], ['triangle', 1, 0.35]] : V.p, a = bass ? 0.01 : V.a, dec = (bass ? 0.7 : V.d) * FX.len, lvl = (bass ? 0.34 : V.lvl) * vel;
+    const out = ctx.createGain(); let end = out;
+    if (V.lp && !bass) { const fl = ctx.createBiquadFilter(); fl.type = 'lowpass'; fl.Q.value = 0.5; fl.frequency.value = Math.min(12000, f * V.lp * 1.5 + 400); out.connect(fl); end = fl; }
+    out.gain.setValueAtTime(0.0001, t); out.gain.linearRampToValueAtTime(lvl, t + a); out.gain.setTargetAtTime(0, t + a, dec / 2.2);
+    end.connect(l.g);
+    const life = a + dec * 3 + 0.2;
+    P.forEach(([type, ratio, g, dm, cents]) => {
+      const o = ctx.createOscillator(), pg = ctx.createGain(); o.type = type; o.frequency.value = f * ratio; if (cents) o.detune.value = cents;
+      pg.gain.setValueAtTime(g, t); if (dm && dm < 1) pg.gain.setTargetAtTime(0, t + a, dec * dm / 2.2);
+      o.connect(pg).connect(out); o.start(t); o.stop(t + life);
+    });
+  }
+  function pluckSound(l, m, t, vel) {
     const f = 440 * Math.pow(2, (m - 69) / 12), g = ctx.createGain(), fl = ctx.createBiquadFilter(), o = ctx.createOscillator(), o2 = ctx.createOscillator(), g2 = ctx.createGain();
     const bass = l.i === 0, dec = (bass ? 0.5 : 0.34) * FX.len;
     o.type = bass ? 'sawtooth' : 'triangle'; o.frequency.value = f; o2.type = 'sine'; o2.frequency.value = f * (bass ? 0.5 : 2); g2.gain.value = bass ? 0.6 : 0.22;
@@ -96,6 +119,8 @@
     o.connect(fl); o2.connect(g2).connect(fl); fl.connect(g).connect(l.g);
     o.start(t); o2.start(t); o.stop(t + dec * 3 + 0.1); o2.stop(t + dec * 3 + 0.1);
   }
+  // does this ring play a note? In Both, the first ring of each place plays notes and the second plays the kit.
+  const isNote = l => ST.mode === 'notes' || (ST.mode === 'both' && !(l.i & 1));
 
   /* ---------- rings ---------- */
   const lanes = COLORS.map((color, i) => { const g = ctx.createGain(), pn = ctx.createStereoPanner(); pn.pan.value = [0, -0.15, 0.2, 0.3, -0.35, 0.4, -0.25, 0.1][i]; g.connect(pn).connect(mix); return { i, color, g, mute: i > 5,   /* the page opens with six rings playing: the last two are a key press away */ steps: 16, bits: [], name: '', file: '', lvl: 1, why: '', wx: false, flash: -1, now: -1 }; });
@@ -223,7 +248,7 @@
   }
   function fire(l, t, vel) {
     l.flash = t;
-    if (ST.mode === 'notes') { const m = noteOf(l); noteSound(l, m, t, vel); RGMidi.note(l.i === 0 ? 'bass' : 'melody', m, vel, t, sd() * (l.i === 0 ? 1.8 : 1.4) * FX.len, { label: l.i === 0 ? 'bass' : 'ring ' + (l.i + 1) }); }
+    if (isNote(l)) { const m = noteOf(l); noteSound(l, m, t, vel); RGMidi.note(l.i === 0 ? 'bass' : 'melody', m, vel, t, sd() * (l.i === 0 ? 1.8 : 1.4) * FX.len, { label: l.i === 0 ? 'bass' : 'ring ' + (l.i + 1) }); }
     else { drumSound(l, t, vel); RGMidi.drum(l.name, vel, t, { idx: l.i, dur: 0.06 * FX.len }); }
   }
   function step(t, k) {
@@ -402,7 +427,7 @@
     $('genreLine').textContent = g.n + (g.b ? ' · ' + g.b + ' bpm' : '');
   }
   function paintLanes() {
-    $('lanes').innerHTML = lanes.map(l => '<button type="button" class="lane" data-i="' + l.i + '" aria-pressed="' + (!l.mute) + '" title="' + esc(l.why) + '. Click to mute."><i style="background:' + l.color + '"></i><span>' + esc(ST.mode === 'notes' ? (l.i === 0 ? 'bass' : 'note ' + (l.i + 1)) : l.name) + '</span><b>' + l.steps + '</b><kbd>' + (SURFACE === 'pad' ? l.i + 1 : 'ASDFGHJK'[l.i]) + '</kbd></button>').join('');
+    $('lanes').innerHTML = lanes.map(l => '<button type="button" class="lane" data-i="' + l.i + '" aria-pressed="' + (!l.mute) + '" title="' + esc(l.why) + '. Click to mute."><i style="background:' + l.color + '"></i><span>' + esc(isNote(l) ? (l.i === 0 ? 'bass' : 'note ' + (l.i + 1)) : l.name) + '</span><b>' + l.steps + '</b><kbd>' + (SURFACE === 'pad' ? l.i + 1 : 'ASDFGHJK'[l.i]) + '</kbd></button>').join('');
   }
   function setMute(i, v) { lanes[i].mute = v == null ? !lanes[i].mute : v; const b = $('lanes').children[i]; if (b) b.setAttribute('aria-pressed', String(!lanes[i].mute)); }
   function paintPlay() { $('play').setAttribute('aria-pressed', String(ST.playing)); $('play').setAttribute('aria-label', ST.playing ? 'Stop' : 'Play'); }
@@ -439,8 +464,10 @@
     if (eD) { eD.addEventListener('change', () => { DDIV = +eD.value; setDelay(); }); eD.value = String(DDIV); }
   }
   { let taps = []; $('tap').addEventListener('click', () => { const t = performance.now(); taps = taps.filter(x => t - x < 2400); taps.push(t); if (taps.length >= 3) setBpm(60000 / ((taps[taps.length - 1] - taps[0]) / (taps.length - 1)), true); }); }
-  function setMode(m) { ST.mode = m; $('mode').setAttribute('aria-pressed', String(m === 'notes')); $('mode').querySelector('span').textContent = m === 'notes' ? 'Notes' : 'Drums'; RGMidi.allOff(); keep(); paintLanes(); paintSay(); }
-  $('mode').addEventListener('click', () => setMode(ST.mode === 'notes' ? 'drums' : 'notes'));
+  const MODE_WORDS = { drums: 'Drums', notes: 'Notes', both: 'Both' };
+  function setMode(m) { ST.mode = m; $('mode').setAttribute('aria-pressed', String(m !== 'drums')); $('mode').querySelector('span').textContent = MODE_WORDS[m]; RGMidi.allOff(); keep(); paintLanes(); paintSay(); }
+  $('mode').addEventListener('click', () => setMode(SRC === 'atlas' ? (ST.mode === 'notes' ? 'drums' : 'notes') : ({ drums: 'notes', notes: 'both', both: 'drums' })[ST.mode]));
+  { const vs = $('voice'); if (vs) { vs.innerHTML = Object.keys(VOICES).map(k => '<option value="' + k + '">' + VOICES[k].name + '</option>').join(''); vs.value = VOICES[ST.voice] ? ST.voice : 'keys'; ST.voice = vs.value; vs.addEventListener('change', () => { ST.voice = vs.value; keep(); }); } }
   $('lanes').addEventListener('click', e => { const b = e.target.closest('.lane'); if (b) setMute(+b.dataset.i); });
 
   // the pad surface
@@ -518,7 +545,7 @@
   /* ---------- go ---------- */
   size(); addEventListener('resize', size); if (window.ResizeObserver) new ResizeObserver(size).observe(cv);
   citySel.value = ST.city; fillGenres(); setBpm(ST.bpm); if (!saved.bpm && SRC === 'atlas') ST.follow = true;
-  $('mode').setAttribute('aria-pressed', String(ST.mode === 'notes')); $('mode').querySelector('span').textContent = ST.mode === 'notes' ? 'Notes' : 'Drums';
+  $('mode').setAttribute('aria-pressed', String(ST.mode !== 'drums')); $('mode').querySelector('span').textContent = MODE_WORDS[ST.mode];
   pickGenre(0); loadWeather(); paintSay(); paintPlay(); draw();
   window.__live = { ST, FX, PAD, MOT, lanes, padSet, padRelease, setProg, playhead, start, stop };
 })();

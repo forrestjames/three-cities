@@ -18,6 +18,8 @@ for src, c in SRCS.items():
         h = re.sub(r'<p class="eyebrow">.*?</p>', '<p class="eyebrow">%s &middot; <b>%s</b></p>' % (c['eyebrow'], 'Pad' if surf == 'pad' else 'Slice'), h, count=1)
         h = re.sub(r'<div class="picks">.*?</div>', '<p class="how2">%s</p>' % c['how'], h, count=1, flags=re.S)
         h = h.replace('<script src="/rhythm-geometry/live/data.js"></script>\n', '')
+        h = h.replace('title="Drums: the rings play the kit. Notes: every ring plays a note of the chord, for your synths."', 'title="Drums, Notes or Both. Both: the first ring of each place plays notes and the second plays the kit."')
+        h = h.replace('<div class="lanes" id="lanes"', '<select id="voice" aria-label="Melodic sound" title="The sound the note rings play"></select>\n  <div class="lanes" id="lanes"', 1)
         h = h.replace('</head>', '<style>:root{--accent:%s}.how2{margin:6px 0 0;font-size:11.5px;color:var(--ink-dim);max-width:34ch}</style>\n</head>' % c['accent'])
         d = os.path.join(here, os.path.dirname(out)); os.makedirs(d, exist_ok=True)
         open(os.path.join(here, out), 'w', encoding='utf8').write(h)
