@@ -688,6 +688,7 @@
           <label class="cc-f"><span class="lab">Scale</span><select id="cityScale"><option value="">Weather picks</option></select></label>
           <label class="cc-f"><span class="lab">Key changes</span><select id="keyMove" title="The key moves up a fourth, a fifth, then a second on each trip round the journey"><option value="1">Each cycle</option><option value="0">Never</option></select></label>
           <label class="cc-f"><span class="lab">Notes come from</span><select id="citySrc"><option value="hum">Humidity</option><option value="wind">Wind</option><option value="cloud">Cloud</option><option value="rain">Rain</option></select></label>
+          <label class="cc-f"><span class="lab">Melody changes</span><select id="melEvery" title="How often the melody moves on, in bars"><option value="auto">Auto</option><option value="never">Never</option><option value="1">1 bar</option><option value="2">2 bars</option><option value="4">4 bars</option><option value="8">8 bars</option><option value="16">16 bars</option></select></label>
           <label class="cc-f"><span class="lab">Pace</span><select id="cityPace"><option value="auto">Auto</option><option value="1">1/16</option><option value="2">1/8</option></select></label>
           <div class="cc-f"><span class="lab">Octave</span><span class="padrow"><button class="oct" id="cityOctD" type="button" aria-label="City voice down an octave">&minus;</button><span class="octv" id="cityOctV">0</span><button class="oct" id="cityOctU" type="button" aria-label="City voice up an octave">+</button></span></div>
           <label class="cc-f"><span class="lab">Level</span><input class="big" id="cityVol" type="range" min="0" max="100" value="70"></label>
@@ -699,6 +700,7 @@
         <p class="cc-note" id="voiceNote"></p>
         <div class="cc-sub"><span class="lab">Chords</span></div>
         <div class="cc-grid">
+          <label class="cc-f"><span class="lab">Chords change</span><select id="chordEvery" title="How often the chords move on, in bars"><option value="auto">Auto</option><option value="never">Never</option><option value="1">1 bar</option><option value="2">2 bars</option><option value="4">4 bars</option><option value="8">8 bars</option><option value="16">16 bars</option></select></label>
           <label class="cc-f"><span class="lab">Style</span><select id="chordStyle"><option value="none">Off</option><option value="auto">Auto, from the genre</option><option value="pump">Pumped stabs</option><option value="offbeat">Off-beat stabs</option><option value="held">Held chords</option></select></label>
           <label class="cc-f"><span class="lab">Sound</span><select id="chordSnd"><option value="warm">Warm pad</option><option value="glass">Glass</option><option value="air">Air</option><option value="tape">Tape strings</option><option value="strings">Strings</option><option value="choir">Choir</option><option value="organ">Soft organ</option><option value="bowed">Bowed</option><option value="shimmer">Shimmer</option><option value="junopad">Juno pad</option><option value="junostrings">Juno strings</option><option value="junokeys">Juno keys</option><option value="vibes">Soft mallets</option><option value="piano">Grand piano</option><option value="harp">Harp</option><option value="marimbarec">Marimba</option></select></label>
           <label class="cc-f"><span class="lab">Level</span><input class="big" id="chordLvl" type="range" min="0" max="100" value="50"></label>
@@ -1197,6 +1199,14 @@ function cityProfile(name) {
   let h = 7; for (const ch of name || '') h = (h * 31 + ch.charCodeAt(0)) >>> 0;
   return { deg: CSHAPES[h % 6], snd: ['marimbarec', 'xylophone', 'vibes', 'harp', 'piano'][(h >> 3) % 5] };
 }
+// How often the chords and the melody change, in bars. The same two controls are on every page.
+const MELPLAN = [0, 2, 1, 4, 0, -1, 2, 3];
+function everyOf(v) { return v === 'never' ? -1 : v === 'auto' || v == null ? 0 : +v; }
+function chordRootBar(bar, held) {
+  const ev = CH.every | 0, per = ev > 0 ? ev : held ? 2 : 1;
+  return CPROGS[(Math.abs(Math.round(WX.pres)) + JOURNEY.shift) % 4][ev < 0 ? 0 : Math.floor(bar / per) % 4];
+}
+function melShift(n) { const ev = CITY.melEvery | 0; return ev > 0 ? MELPLAN[Math.floor(n / 16 / ev) % MELPLAN.length] : 0; }
 function chordAuto() {
   const c = ATLAS.cities[city.value], g = c && (c.g[genre.value] || c.g[0]), nm = ((g && g.n) || '').toLowerCase();
   if (/ambient|\bdub\b|drone|chill|lo-?fi|downtempo|trip|dream|shoegaze|new age|bolero/.test(nm)) return 'held';
@@ -1241,7 +1251,7 @@ function arpStep(t, n, ss, sc) {
   const div = WX.wind < 10 ? 8 : WX.wind < 25 ? 4 : 2;   // calm: a note every half bar. Windy: every eighth
   if (n % div) return;
   const held = CH.mode === 'held', bar = Math.floor(n / 16);
-  const root = CPROGS[(Math.abs(Math.round(WX.pres)) + JOURNEY.shift) % 4][Math.floor(bar / (held ? 2 : 1)) % 4];
+  const root = chordRootBar(bar, held);
   const k = [0, 2, 4, 7, 4, 2][AB.i++ % 6];
   let m = cityMidi(root + k, 57, CH.oct); if (m > 86 + ROOT) m -= 12;
   AB.lp.frequency.setTargetAtTime(700 + (1 - clamp(WX.cloud / 100, 0, 1)) * 4800, t, 0.3);   // cloud takes the shine off
@@ -1253,7 +1263,7 @@ function bellStep(t, n, ss, sc) {
   const kl = lanes.find(l => l.i === 0 && !l.wx);
   if (kl && kl.bits[n % kl.steps]) return;   // the kick is playing: leave it alone
   if (Math.random() * 100 >= BELL.dens * 0.3) return;
-  const bar = Math.floor(n / 16), root = CPROGS[(Math.abs(Math.round(WX.pres)) + JOURNEY.shift) % 4][bar % 4];
+  const bar = Math.floor(n / 16), root = chordRootBar(bar, false);
   let m = cityMidi(root + [4, 7, 9, 11][Math.floor(Math.random() * 4)], 69, 0); if (m > 98 + ROOT) m -= 12;
   const f = 440 * Math.pow(2, (m - 69) / 12), v = 0.5 + Math.random() * 0.4;
   melPartial(BELL.g, f, t, 0.5 * v, 1.9); melPartial(BELL.g, f * 2.76, t, 0.12 * v, 0.6); melPartial(BELL.g, f * 5.4, t, 0.04 * v, 0.25);
@@ -1273,7 +1283,7 @@ function compBuild(c) {   // a motif for this city and this weather: mostly step
 }
 function chordRootAt(bar) {
   const held = CH.mode === 'held';
-  return CPROGS[(Math.abs(Math.round(WX.pres)) + JOURNEY.shift) % 4][Math.floor(bar / (held ? 2 : 1)) % 4];
+  return chordRootBar(bar, held);
 }
 function compBar(bar) {   // once a bar: the key, the chord
   const cyc = Math.floor((bar + (JOURNEY.on ? JOURNEY.off : 0)) / JOURNEY.len), ks = COMP.keyMove ? KEYPLAN[((cyc % 4) + 4) % 4] : 0;
@@ -1283,7 +1293,7 @@ function compBar(bar) {   // once a bar: the key, the chord
 function compDeg(n, pos, scene) {
   const bits = CITY.bits, k = bits.slice(0, pos).reduce((a, b) => a + (b ? 1 : 0), 0), total = bits.reduce((a, b) => a + (b ? 1 : 0), 0) || 1;
   COMP.k0 = k === 0;
-  const ph = Math.floor((n / CITY.rate) / CITY.steps), M = COMP.motif, tf = ph % 8, base = M[k % M.length];
+  const me = CITY.melEvery | 0, ph = me > 0 ? Math.floor(n / 16 / me) : me < 0 ? 0 : Math.floor((n / CITY.rate) / CITY.steps), M = COMP.motif, tf = ph % 8, base = M[k % M.length];
   let d = base;
   if (tf === 2) d = base + 1; else if (tf === 4) d = 2 * M[0] - base; else if (tf === 5) d = base - 1; else if (tf === 6) d = M[(M.length - 1 - k % M.length)];
   COMP.tf = ['the tune', 'the tune', 'a step up', 'the tune', 'upside down', 'a step down', 'backwards', 'coming home'][tf];
@@ -1396,7 +1406,7 @@ function cityStep(t, n) {
   if (!CITY.mute && sc.chords && M && M !== 'none') {
     const held = M === 'held', now = held ? (s === 0 && bar % 2 === 0) : M === 'offbeat' ? s % 4 === 2 : s % 4 === 0;
     if (now) {
-      const root = CPROGS[(Math.abs(Math.round(WX.pres)) + JOURNEY.shift) % 4][Math.floor(bar / (held ? 2 : 1)) % 4], v = (s === 0 || s === 2 ? 1 : 0.78), len = held ? ss * 30 : ss * (M === 'offbeat' ? 2.4 : 3);
+      const root = chordRootBar(bar, held), v = (s === 0 || s === 2 ? 1 : 0.78), len = held ? ss * 30 : ss * (M === 'offbeat' ? 2.4 : 3);
       [2, 4, 7].forEach((k, j) => {   // the third, fifth and octave: the root is left to the bass, and the chord sits an octave or more above it
         let m = cityMidi(root + k, 55, CH.oct); if (m > 84 + ROOT) m -= 12;
         if (PADS[CH.snd]) padVoice(CH.snd, m, v, t + j * (held ? 0.012 : 0.004), len, held, CA.cd);
@@ -1815,6 +1825,8 @@ function setMute(l, v) { l.mute = v; l.pad.setAttribute('aria-pressed', String(v
   el('citySnd').innerHTML = Object.entries(CNAMES).map(([k, v]) => `<option value="${k}">${v}</option>`).join('');
   el('citySnd').addEventListener('change', e => { CITY.snd = e.target.value; CITY.hand = true; cityBuild(); });
   el('citySrc').addEventListener('change', e => { CITY.src = e.target.value; cityBuild(); });
+  el('melEvery').addEventListener('change', e => { CITY.melEvery = everyOf(e.target.value);  });
+  el('chordEvery').addEventListener('change', e => { CH.every = everyOf(e.target.value); });
   el('cityPace').addEventListener('change', e => { CITY.pace = e.target.value; cityBuild(); });
   el('cityVol').addEventListener('input', () => { CITY.vol = val('cityVol') / 100; CA.g.gain.setTargetAtTime(faderGain(CITY.vol), ctx.currentTime, 0.02); });
   el('cityDens').addEventListener('input', () => { CITY.dens = val('cityDens'); cityBuild(); });

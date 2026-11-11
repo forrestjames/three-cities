@@ -122,3 +122,7 @@ body[data-surface="slice"] .ringbox { min-height: 0; height: 100%; width: 100%; 
 #places .add { display: flex; gap: 6px; flex-wrap: wrap; }
 #places .add input { flex: 1 1 140px; min-width: 0; font: inherit; font-size: 12px; letter-spacing: .06em; }
 #places .how2 { min-height: 1.2em; margin: 0; }
+/* the side controls sit in two columns so the page never needs to scroll */
+.space { grid-template-columns: 1fr 1fr; gap: 10px 14px; }
+.space .row { min-width: 0; }
+.space .row select { width: 100%; min-width: 0; }

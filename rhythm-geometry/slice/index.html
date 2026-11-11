@@ -44,9 +44,14 @@
   <label class="row">Thin to full <span id="densV">as written</span><input id="dens" type="range" min="-100" max="100" value="0"></label>
   <label class="row">Filter <span id="cutV">open</span><input id="cut" type="range" min="0" max="100" value="50"></label>
   <div class="space">
+    <label class="row">Volume <span id="volV">90%</span><input id="vol" type="range" min="0" max="100" value="90" aria-label="Overall volume"></label>
+    <label class="row">Octave <span id="octV">0</span><input id="oct" type="range" min="-3" max="3" step="1" value="0" aria-label="Octave shift"></label>
+    <label class="row">Decay <span id="decayV">1x</span><input id="decay" type="range" min="20" max="250" value="100" aria-label="How long the sounds ring"></label>
     <label class="row">Echo <span id="echoV">off</span><input id="echoAmt" type="range" min="0" max="100" value="0" aria-label="Echo amount"></label>
     <label class="row">Echo time <select id="echoDiv" aria-label="Echo time"><option value="1">1/4</option><option value="0.75" selected>dotted 1/8</option><option value="0.5">1/8</option><option value="0.3333333333">1/8 triplet</option><option value="0.25">1/16</option></select></label>
     <label class="row">Reverb <span id="verbV">10%</span><input id="verbAmt" type="range" min="0" max="100" value="10" aria-label="Reverb amount"></label>
+    <label class="row">Chords change <select id="chordBars" aria-label="How often the chords change"><option value="0">Never</option><option value="1">1 bar</option><option value="2">2 bars</option><option value="4">4 bars</option><option value="8">8 bars</option><option value="16">16 bars</option></select></label>
+    <label class="row">Melody changes <select id="melBars" aria-label="How often the melody changes"><option value="0">Never</option><option value="1">1 bar</option><option value="2">2 bars</option><option value="4">4 bars</option><option value="8">8 bars</option><option value="16">16 bars</option></select></label>
     <label class="row">Key <select id="key" aria-label="Key"></select></label>
     <label class="row">Scale <select id="scale" aria-label="Scale"></select></label>
   </div>

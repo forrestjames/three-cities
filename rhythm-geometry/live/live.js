@@ -29,24 +29,29 @@
   ];
   const MODES = { lydian: [0, 2, 4, 6, 7, 9, 11], major: [0, 2, 4, 5, 7, 9, 11], mixolydian: [0, 2, 4, 5, 7, 9, 10], dorian: [0, 2, 3, 5, 7, 9, 10], minor: [0, 2, 3, 5, 7, 8, 10], phrygian: [0, 1, 3, 5, 7, 8, 10] };
   const NOTE_NAMES = ['C', 'C#', 'D', 'Eb', 'E', 'F', 'F#', 'G', 'Ab', 'A', 'Bb', 'B'];
+  const MELPLAN = [0, 2, 1, 4, 0, -1, 2, 3], MEL = { shift: 0 };   // the melody rings move to a new place every so often
   const PROG = [0, 5, 3, 4];                       // the chord moves every two bars, as scale degrees
   const LDEG = [0, 0, 2, 4, 7, 6, 8, 11];          // notes mode: ring one is the bass, the others stack a chord and its colours
 
   /* ---------- state ---------- */
   const SKEY = SRC === 'atlas' ? 'rg-live' : 'rg-live-' + SRC;
   let saved = {}; try { saved = JSON.parse(localStorage.getItem(SKEY) || '{}'); } catch (e) {}
-  const keep = () => { try { localStorage.setItem(SKEY, JSON.stringify({ city: ST.city, bpm: ST.follow ? null : ST.bpm, kit: ST.kit, mode: ST.mode, voice: ST.voice, key: ST.key, scale: ST.scale, places: PLACES.map(p => p.n), custom: CUSTOM.filter(c => PLACES.some(p => p.n === c.n)) })); } catch (e) {} };
+  const keep = () => { try { localStorage.setItem(SKEY, JSON.stringify({ city: ST.city, bpm: ST.follow ? null : ST.bpm, kit: ST.kit, mode: ST.mode, voice: ST.voice, key: ST.key, scale: ST.scale, chordBars: ST.chordBars, melBars: ST.melBars, vol: ST.vol, oct: ST.oct, decay: ST.decay, places: PLACES.map(p => p.n), custom: CUSTOM.filter(c => PLACES.some(p => p.n === c.n)) })); } catch (e) {} };
   const cityByName = n => D.cities.findIndex(c => c.n === n);
   const ST = { city: saved.city != null && D.cities[saved.city] ? saved.city : Math.max(0, cityByName('London')), genre: 0, kit: saved.kit || (SRC === 'three' ? 'tr707' : SRC === 'wave' ? 'tr606' : '808'), bpm: saved.bpm || (SRC === 'three' ? 108 : SRC === 'wave' ? 84 : 120), mode: saved.mode === 'notes' || (SRC !== 'atlas' && saved.mode === 'both') ? saved.mode : (SRC === 'atlas' ? 'drums' : 'both'), voice: saved.voice || 'keys', follow: SRC === 'atlas' && !saved.bpm, playing: false };
   let WX = { temp: 11, wind: 14, hum: 70, cloud: 60, pres: 1010, rain: 0, live: false };
   let ROOT = 0, MODE = 'dorian', pattern = null;
   // what the hands are doing to the rhythm right now
+  // the three plain controls: volume, octave and decay. They sit under the hand moves.
   const FX = { repeat: null, held: [], heldTk0: 0, sliceLen: 2, order: [0, 1, 2, 3, 4, 5, 6, 7], reverse: false, scatter: 0, rprob: 0, rot: 0, dens: 0, pitch: 0, len: 1, chord: 0, chordHeld: false, oct: 0 };
 
   /* ---------- sound ---------- */
   const ctx = new (window.AudioContext || window.webkitAudioContext)();
   const TC = window.TCVoices ? window.TCVoices(ctx) : null;   // every Three Cities sound, from live/tcvoices.js
   // Key and scale: Auto follows the weather. Pick one and it stays put.
+  ST.chordBars = saved.chordBars != null ? saved.chordBars : 2; ST.melBars = saved.melBars != null ? saved.melBars : 0;
+  ST.vol = saved.vol != null ? saved.vol : 90; ST.oct = saved.oct != null ? saved.oct : 0; ST.decay = saved.decay != null ? saved.decay : 100;
+  const LEN = () => FX.len * ST.decay / 100;
   ST.key = saved.key != null ? saved.key : null; ST.scale = saved.scale != null ? saved.scale : null;
   const SCALES = TC ? TC.scales : [];
   const rootNow = () => ST.key != null ? ST.key : ROOT;
@@ -59,6 +64,7 @@
   dSend.gain.value = 0; dfb.gain.value = 0.4; dTone.type = 'lowpass'; dTone.frequency.value = 3400;
   const verb = ctx.createConvolver(), vSend = ctx.createGain(); vSend.gain.value = 0.1;
   (function () { const n = Math.floor(ctx.sampleRate * 2.2), b = ctx.createBuffer(2, n, ctx.sampleRate); for (let c = 0; c < 2; c++) { const d = b.getChannelData(c); for (let i = 0; i < n; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / n, 2.6); } verb.buffer = b; })();
+  mix.gain.value = Math.pow(ST.vol / 100, 1.5) * 1.1;
   mix.connect(hp).connect(lp).connect(comp).connect(native).connect(ctx.destination);
   // Record: whatever you hear, as a stereo WAV that drops straight into Ableton.
   const REC = { on: false, l: [], r: [], n: 0, t0: 0, node: null, timer: 0 };
@@ -98,11 +104,11 @@
   }
   const noise = (() => { const b = ctx.createBuffer(1, ctx.sampleRate / 2, ctx.sampleRate), d = b.getChannelData(0); for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1; return b; })();
   function drumSound(l, t, vel) {
-    const s = SAMPLES.get(l.file), rate = Math.pow(2, FX.pitch / 12), g = ctx.createGain();
+    const s = SAMPLES.get(l.file), rate = Math.pow(2, (FX.pitch + 12 * ST.oct) / 12), g = ctx.createGain();
     g.connect(l.g);
     if (s && s.buf) {
       const src = ctx.createBufferSource(); src.buffer = s.buf; src.playbackRate.value = rate;
-      const dur = Math.min(s.buf.duration / rate, 1.6 * FX.len);
+      const dur = Math.min(s.buf.duration / rate, 1.6 * LEN());
       g.gain.setValueAtTime(0.42 * s.gain * l.lvl * vel, t); g.gain.setTargetAtTime(0, t + dur * 0.7, Math.max(0.01, dur * 0.1));
       src.connect(g); src.start(t); src.stop(t + dur + 0.3); return;
     }
@@ -111,8 +117,8 @@
     else { const n = ctx.createBufferSource(), f = ctx.createBiquadFilter(); n.buffer = noise; f.type = 'bandpass'; f.frequency.value = (900 + l.i * 1100) * rate; f.Q.value = 1.2; g.gain.setValueAtTime(0.3 * vel, t); g.gain.exponentialRampToValueAtTime(0.001, t + 0.07); n.connect(f).connect(g); n.start(t); n.stop(t + 0.1); }
   }
   function noteOf(l) {
-    const sc = scaleNow(), n = sc.length, d = FX.chord + LDEG[l.i], semis = sc[mod(d, n)] + 12 * Math.floor(d / n);
-    return clamp((l.i === 0 ? 36 : 60) + rootNow() + semis + 12 * FX.oct + FX.pitch, 12, 115);
+    const sc = scaleNow(), n = sc.length, d = FX.chord + LDEG[l.i] + (l.i > 0 ? MEL.shift : 0), semis = sc[mod(d, n)] + 12 * Math.floor(d / n);
+    return clamp((l.i === 0 ? 36 : 60) + rootNow() + semis + 12 * FX.oct + 12 * ST.oct + FX.pitch, 12, 115);
   }
   // The melodic sounds. Each is a few sine or triangle partials, [wave, ratio, level, decay scale, detune in cents]. Soft keys is the starting sound.
   const VOICES = {
@@ -125,9 +131,9 @@
   function noteSound(l, m, t, vel) {
     const f = 440 * Math.pow(2, (m - 69) / 12), bass = l.i === 0, V = VOICES[ST.voice] || VOICES.keys;
     // a Three Cities sound. Ring one stays the soft bass underneath.
-    if (TC && !bass && ST.voice.indexOf('tc:') === 0) { try { l.tc = l.tc || TC.make(l.g); TC.play(l.tc, ST.voice.slice(3), m, Math.min(1, vel * 0.9), t, Math.max(0.3, FX.len)); } catch (e) {} return; }
+    if (TC && !bass && ST.voice.indexOf('tc:') === 0) { try { l.tc = l.tc || TC.make(l.g); TC.play(l.tc, ST.voice.slice(3), m, Math.min(1, vel * 0.9), t, Math.max(0.3, LEN())); } catch (e) {} return; }
     if (!V.p) return pluckSound(l, m, t, vel);
-    const P = bass ? [['sine', 1, 1], ['triangle', 1, 0.35]] : V.p, a = bass ? 0.01 : V.a, dec = (bass ? 0.7 : V.d) * FX.len, lvl = (bass ? 0.34 : V.lvl) * vel;
+    const P = bass ? [['sine', 1, 1], ['triangle', 1, 0.35]] : V.p, a = bass ? 0.01 : V.a, dec = (bass ? 0.7 : V.d) * LEN(), lvl = (bass ? 0.34 : V.lvl) * vel;
     const out = ctx.createGain(); let end = out;
     if (V.lp && !bass) { const fl = ctx.createBiquadFilter(); fl.type = 'lowpass'; fl.Q.value = 0.5; fl.frequency.value = Math.min(12000, f * V.lp * 1.5 + 400); out.connect(fl); end = fl; }
     out.gain.setValueAtTime(0.0001, t); out.gain.linearRampToValueAtTime(lvl, t + a); out.gain.setTargetAtTime(0, t + a, dec / 2.2);
@@ -141,7 +147,7 @@
   }
   function pluckSound(l, m, t, vel) {
     const f = 440 * Math.pow(2, (m - 69) / 12), g = ctx.createGain(), fl = ctx.createBiquadFilter(), o = ctx.createOscillator(), o2 = ctx.createOscillator(), g2 = ctx.createGain();
-    const bass = l.i === 0, dec = (bass ? 0.5 : 0.34) * FX.len;
+    const bass = l.i === 0, dec = (bass ? 0.5 : 0.34) * LEN();
     o.type = bass ? 'sawtooth' : 'triangle'; o.frequency.value = f; o2.type = 'sine'; o2.frequency.value = f * (bass ? 0.5 : 2); g2.gain.value = bass ? 0.6 : 0.22;
     fl.type = 'lowpass'; fl.Q.value = bass ? 3 : 0.8; fl.frequency.setValueAtTime(bass ? 900 : Math.min(12000, f * 7), t); fl.frequency.exponentialRampToValueAtTime(bass ? 160 : Math.max(300, f * 1.5), t + dec);
     g.gain.setValueAtTime(0.0001, t); g.gain.linearRampToValueAtTime((bass ? 0.34 : 0.2) * vel, t + 0.004); g.gain.setTargetAtTime(0, t + 0.02, dec / 2.2);
@@ -339,15 +345,18 @@
   }
   function fire(l, t, vel) {
     l.flash = t;
-    if (isNote(l)) { const m = noteOf(l); noteSound(l, m, t, vel); RGMidi.note(l.i === 0 ? 'bass' : 'melody', m, vel, t, sd() * (l.i === 0 ? 1.8 : 1.4) * FX.len, { label: l.i === 0 ? 'bass' : 'ring ' + (l.i + 1) }); }
-    else { drumSound(l, t, vel); RGMidi.drum(l.name, vel, t, { idx: l.i, dur: 0.06 * FX.len }); }
+    if (isNote(l)) { const m = noteOf(l); noteSound(l, m, t, vel); RGMidi.note(l.i === 0 ? 'bass' : 'melody', m, vel, t, sd() * (l.i === 0 ? 1.8 : 1.4) * LEN(), { label: l.i === 0 ? 'bass' : 'ring ' + (l.i + 1) }); }
+    else { drumSound(l, t, vel); RGMidi.drum(l.name, vel, t, { idx: l.i, dur: 0.06 * LEN() }); }
   }
   function step(t, k) {
     inStep = k; motionStep(k); inStep = null;
     autoStep(k);
     RGMidi.step(t, sd());
     const P = playhead(k), s = sd();
-    if (!FX.chordHeld) FX.chord = PROG[Math.floor(k / 32) % PROG.length];
+    // how often the chords and the melody change, in bars. Chords start at every 2 bars, the melody at never.
+    { const bar = Math.floor(k / 16), at = ST.chordBars > 0 ? Math.floor(bar / ST.chordBars) : 0;
+      if (!FX.chordHeld) FX.chord = PROG[at % PROG.length];
+      if (ST.melBars > 0 && k % 16 === 0 && bar % ST.melBars === 0) MEL.shift = MELPLAN[Math.floor(bar / ST.melBars) % MELPLAN.length]; else if (!(ST.melBars > 0)) MEL.shift = 0; }
     vis.push({ t, pos: P.pos, slice: P.slice, src: P.src });
     for (const l of lanes) {
       const idx = mod(P.pos + (l.wx ? FX.rot : 0), l.steps); l.sched = idx;
@@ -582,6 +591,11 @@
       vs.value = ST.voice; if (TC && ST.voice.indexOf('tc:') === 0) TC.preload(ST.voice.slice(3));
       vs.addEventListener('change', () => { ST.voice = vs.value; if (TC && ST.voice.indexOf('tc:') === 0) TC.preload(ST.voice.slice(3)); keep(); });
     }
+    const slider = (id, key, fmt, apply) => { const e = $(id), o = $(id + 'V'); if (!e) return; e.value = ST[key]; const show = () => { if (o) o.textContent = fmt(+e.value); }; show(); e.addEventListener('input', () => { ST[key] = +e.value; apply && apply(); show(); keep(); }); };
+    slider('vol', 'vol', v => v + '%', () => mix.gain.setTargetAtTime(Math.pow(ST.vol / 100, 1.5) * 1.1, ctx.currentTime, 0.02));
+    slider('oct', 'oct', v => (v > 0 ? '+' : '') + v, null);
+    slider('decay', 'decay', v => (v / 100).toFixed(2).replace(/0$/, '') + 'x', null);
+    [['chordBars', 'chordBars'], ['melBars', 'melBars']].forEach(([id, key]) => { const e = $(id); if (!e) return; e.value = String(ST[key]); e.addEventListener('change', () => { ST[key] = +e.value; keep(); }); });
     const ks = $('key'), ss = $('scale');
     if (ks) { ks.innerHTML = '<option value="">Key: weather</option>' + NOTE_NAMES.map((n, i) => '<option value="' + i + '">Key: ' + n + '</option>').join(''); ks.value = ST.key == null ? '' : String(ST.key); ks.addEventListener('change', () => { ST.key = ks.value === '' ? null : +ks.value; keep(); paintFacts(); }); }
     if (ss) { ss.innerHTML = '<option value="">Scale: weather</option>' + SCALES.map((c, i) => '<option value="' + i + '">' + esc(c[0]) + '</option>').join(''); ss.value = ST.scale == null ? '' : String(ST.scale); ss.addEventListener('change', () => { ST.scale = ss.value === '' ? null : +ss.value; keep(); paintFacts(); }); }
