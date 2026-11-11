@@ -35,7 +35,7 @@
   /* ---------- state ---------- */
   const SKEY = SRC === 'atlas' ? 'rg-live' : 'rg-live-' + SRC;
   let saved = {}; try { saved = JSON.parse(localStorage.getItem(SKEY) || '{}'); } catch (e) {}
-  const keep = () => { try { localStorage.setItem(SKEY, JSON.stringify({ city: ST.city, bpm: ST.follow ? null : ST.bpm, kit: ST.kit, mode: ST.mode, voice: ST.voice, places: PLACES.map(p => p.n) })); } catch (e) {} };
+  const keep = () => { try { localStorage.setItem(SKEY, JSON.stringify({ city: ST.city, bpm: ST.follow ? null : ST.bpm, kit: ST.kit, mode: ST.mode, voice: ST.voice, key: ST.key, scale: ST.scale, places: PLACES.map(p => p.n) })); } catch (e) {} };
   const cityByName = n => D.cities.findIndex(c => c.n === n);
   const ST = { city: saved.city != null && D.cities[saved.city] ? saved.city : Math.max(0, cityByName('London')), genre: 0, kit: saved.kit || (SRC === 'three' ? 'tr707' : SRC === 'wave' ? 'tr606' : '808'), bpm: saved.bpm || (SRC === 'three' ? 108 : SRC === 'wave' ? 84 : 120), mode: saved.mode === 'notes' || (SRC !== 'atlas' && saved.mode === 'both') ? saved.mode : (SRC === 'atlas' ? 'drums' : 'both'), voice: saved.voice || 'keys', follow: SRC === 'atlas' && !saved.bpm, playing: false };
   let WX = { temp: 11, wind: 14, hum: 70, cloud: 60, pres: 1010, rain: 0, live: false };
@@ -45,6 +45,13 @@
 
   /* ---------- sound ---------- */
   const ctx = new (window.AudioContext || window.webkitAudioContext)();
+  const TC = window.TCVoices ? window.TCVoices(ctx) : null;   // every Three Cities sound, from live/tcvoices.js
+  // Key and scale: Auto follows the weather. Pick one and it stays put.
+  ST.key = saved.key != null ? saved.key : null; ST.scale = saved.scale != null ? saved.scale : null;
+  const SCALES = TC ? TC.scales : [];
+  const rootNow = () => ST.key != null ? ST.key : ROOT;
+  const scaleNow = () => ST.scale != null && SCALES[ST.scale] ? SCALES[ST.scale][1] : MODES[MODE];
+  const keyText = () => NOTE_NAMES[rootNow()] + ' ' + (ST.scale != null && SCALES[ST.scale] ? SCALES[ST.scale][0] : MODE);
   const mix = ctx.createGain(), hp = ctx.createBiquadFilter(), lp = ctx.createBiquadFilter(), comp = ctx.createDynamicsCompressor(), native = ctx.createGain();
   hp.type = 'highpass'; hp.frequency.value = 20; lp.type = 'lowpass'; lp.frequency.value = 20000; hp.Q.value = lp.Q.value = 0.7;
   comp.threshold.value = -9; comp.ratio.value = 4; comp.attack.value = 0.004; comp.release.value = 0.14; mix.gain.value = 0.9;
@@ -53,6 +60,26 @@
   const verb = ctx.createConvolver(), vSend = ctx.createGain(); vSend.gain.value = 0.1;
   (function () { const n = Math.floor(ctx.sampleRate * 2.2), b = ctx.createBuffer(2, n, ctx.sampleRate); for (let c = 0; c < 2; c++) { const d = b.getChannelData(c); for (let i = 0; i < n; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / n, 2.6); } verb.buffer = b; })();
   mix.connect(hp).connect(lp).connect(comp).connect(native).connect(ctx.destination);
+  // Record: whatever you hear, as a stereo WAV that drops straight into Ableton.
+  const REC = { on: false, l: [], r: [], n: 0, t0: 0, node: null, timer: 0 };
+  function recStart() {
+    ctx.resume(); REC.l = []; REC.r = []; REC.n = 0;
+    const sp = ctx.createScriptProcessor(4096, 2, 2), mute = ctx.createGain(); mute.gain.value = 0;
+    sp.onaudioprocess = e => { if (!REC.on) return; REC.l.push(new Float32Array(e.inputBuffer.getChannelData(0))); REC.r.push(new Float32Array(e.inputBuffer.getChannelData(1))); REC.n += 4096; };
+    comp.connect(sp); sp.connect(mute).connect(ctx.destination); REC.node = sp; REC.on = true; REC.t0 = Date.now();
+    REC.timer = setInterval(paintRec, 500); paintRec();
+  }
+  function recStop() {
+    REC.on = false; clearInterval(REC.timer); try { comp.disconnect(REC.node); } catch (e) {} REC.node.disconnect(); REC.node = null;
+    const n = REC.n, buf = new ArrayBuffer(44 + n * 4), v = new DataView(buf), w = (o, str) => { for (let i = 0; i < str.length; i++) v.setUint8(o + i, str.charCodeAt(i)); };
+    w(0, 'RIFF'); v.setUint32(4, 36 + n * 4, true); w(8, 'WAVE'); w(12, 'fmt '); v.setUint32(16, 16, true); v.setUint16(20, 1, true); v.setUint16(22, 2, true); v.setUint32(24, ctx.sampleRate, true); v.setUint32(28, ctx.sampleRate * 4, true); v.setUint16(32, 4, true); v.setUint16(34, 16, true); w(36, 'data'); v.setUint32(40, n * 4, true);
+    let o = 44; for (let b = 0; b < REC.l.length; b++) for (let i = 0; i < 4096; i++) { v.setInt16(o, clamp(REC.l[b][i], -1, 1) * 32767, true); v.setInt16(o + 2, clamp(REC.r[b][i], -1, 1) * 32767, true); o += 4; }
+    REC.l = []; REC.r = [];
+    const a = document.createElement('a'), d = new Date(), pad2 = x => String(x).padStart(2, '0');
+    a.href = URL.createObjectURL(new Blob([buf], { type: 'audio/wav' })); a.download = 'rhythm-geometry-' + (SRC === 'atlas' ? SURFACE : SRC + '-' + SURFACE) + '-' + d.getFullYear() + pad2(d.getMonth() + 1) + pad2(d.getDate()) + '-' + pad2(d.getHours()) + pad2(d.getMinutes()) + '.wav';
+    document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 20000); paintRec();
+  }
+  function paintRec() { const b = $('rec'); if (!b) return; const s = Math.floor((Date.now() - REC.t0) / 1000); b.setAttribute('aria-pressed', String(REC.on)); b.classList.toggle('rec', REC.on); b.querySelector('span').textContent = REC.on ? 'Stop ' + Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0') : 'Record'; }
   lp.connect(dSend).connect(dly).connect(dTone).connect(dfb).connect(dly); dTone.connect(comp);
   const vTone = ctx.createBiquadFilter(); vTone.type = 'lowpass'; vTone.frequency.value = 14000;
   lp.connect(vSend).connect(vTone).connect(verb).connect(comp);
@@ -84,8 +111,8 @@
     else { const n = ctx.createBufferSource(), f = ctx.createBiquadFilter(); n.buffer = noise; f.type = 'bandpass'; f.frequency.value = (900 + l.i * 1100) * rate; f.Q.value = 1.2; g.gain.setValueAtTime(0.3 * vel, t); g.gain.exponentialRampToValueAtTime(0.001, t + 0.07); n.connect(f).connect(g); n.start(t); n.stop(t + 0.1); }
   }
   function noteOf(l) {
-    const sc = MODES[MODE], d = FX.chord + LDEG[l.i], semis = sc[mod(d, 7)] + 12 * Math.floor(d / 7);
-    return clamp((l.i === 0 ? 36 : 60) + ROOT + semis + 12 * FX.oct + FX.pitch, 12, 115);
+    const sc = scaleNow(), n = sc.length, d = FX.chord + LDEG[l.i], semis = sc[mod(d, n)] + 12 * Math.floor(d / n);
+    return clamp((l.i === 0 ? 36 : 60) + rootNow() + semis + 12 * FX.oct + FX.pitch, 12, 115);
   }
   // The melodic sounds. Each is a few sine or triangle partials, [wave, ratio, level, decay scale, detune in cents]. Soft keys is the starting sound.
   const VOICES = {
@@ -97,6 +124,8 @@
   };
   function noteSound(l, m, t, vel) {
     const f = 440 * Math.pow(2, (m - 69) / 12), bass = l.i === 0, V = VOICES[ST.voice] || VOICES.keys;
+    // a Three Cities sound. Ring one stays the soft bass underneath.
+    if (TC && !bass && ST.voice.indexOf('tc:') === 0) { try { l.tc = l.tc || TC.make(l.g); TC.play(l.tc, ST.voice.slice(3), m, Math.min(1, vel * 0.9), t, Math.max(0.3, FX.len)); } catch (e) {} return; }
     if (!V.p) return pluckSound(l, m, t, vel);
     const P = bass ? [['sine', 1, 1], ['triangle', 1, 0.35]] : V.p, a = bass ? 0.01 : V.a, dec = (bass ? 0.7 : V.d) * FX.len, lvl = (bass ? 0.34 : V.lvl) * vel;
     const out = ctx.createGain(); let end = out;
@@ -300,7 +329,7 @@
   }
   function stop() {
     clearInterval(timer); ST.playing = false; vis.length = 0; lanes.forEach(l => { l.now = -1; });
-    RGMidi.transport(false); FX.repeat = null; paintPlay();
+    RGMidi.transport(false); FX.repeat = null; Object.keys(TRK).forEach(trackOff); paintPlay();
   }
   const toggle = () => (ST.playing ? stop() : start());
   function setBpm(b, user) { let x = b; while (x < 60) x *= 2; while (x > 180) x /= 2; ST.bpm = Math.round(x); if (user) ST.follow = false; $('bpm').value = ST.bpm; $('bpmV').textContent = ST.bpm; setDelay(); keep(); }
@@ -339,18 +368,18 @@
     { id: 'chord', name: 'Chord', key: 'I', x: 'chord one to seven', y: 'low · high', xz: 7, yz: 3, on(x, y) { FX.chord = zone(x, 7); FX.oct = zone(y, 3) - 1; FX.chordHeld = true; return 'chord ' + ['I', 'II', 'III', 'IV', 'V', 'VI', 'VII'][FX.chord] + (ST.mode === 'notes' ? '' : ' · switch to Notes to hear it'); }, off() {} }
   ];
   const progOf = id => PROGS.find(p => p.id === id);
-  function padSet(x, y, fromMotion) {
+  function padSet(x, y) {
     PAD.x = clamp(x, 0, 1); PAD.y = clamp(y, 0, 1); PAD.down = true;
     PAD.said = progOf(PAD.prog).on(PAD.x, PAD.y) || '';
     RGMidi.cc('pad', 12, PAD.x * 127); RGMidi.cc('pad', 13, PAD.y * 127); RGMidi.cc('pad', 92, 127);
     PAD.trail.push([PAD.x, PAD.y, performance.now()]); if (PAD.trail.length > 28) PAD.trail.shift();
-    if (!fromMotion && MOT.state === 'rec') MOT.ev.push({ k: nowTk() - MOT.t0, x: PAD.x, y: PAD.y });
+    if (MOT.state === 'rec') MOT.ev.push({ k: nowTk() - MOT.t0, x: PAD.x, y: PAD.y });
     paintSay();
   }
-  function padRelease(fromMotion) {
+  function padRelease() {
     if (!PAD.down) return;
-    if (!fromMotion && MOT.state === 'rec') motionEnd();
-    if (PAD.hold && !fromMotion) return;
+    if (MOT.state === 'rec') motionEnd();
+    if (PAD.hold) return;
     PAD.down = false; progOf(PAD.prog).off(); RGMidi.cc('pad', 92, 0); PAD.said = ''; paintSay();
   }
   function setProg(id) {
@@ -358,21 +387,34 @@
     const was = PAD.down; if (PAD.down) { PAD.down = false; progOf(PAD.prog).off(); }
     if (PAD.prog === 'chord') { FX.chordHeld = false; FX.oct = 0; }
     PAD.prog = id; PAD.said = '';
-    if (MOT.state !== 'off') motionClear();
     if (was && PAD.hold) padSet(PAD.x, PAD.y);
     paintProgs(); paintSay();
   }
-  // pad motion: record one gesture, then it loops in time, a whole number of bars long
-  const MOT = { state: 'off', ev: [], t0: 0, len: 16, start: 0, live: false };
-  function motionArm() { if (MOT.state === 'off') { MOT.state = 'armed'; } else motionClear(); paintMotion(); }
-  function motionBegin() { MOT.state = 'rec'; MOT.ev = []; MOT.t0 = nowTk(); paintMotion(); }
-  function motionEnd() { const dur = nowTk() - MOT.t0; if (!ST.playing || MOT.ev.length < 2) { motionClear(); return; } MOT.len = Math.max(16, Math.ceil(dur / 16) * 16); MOT.start = Math.floor(MOT.t0); MOT.state = 'play'; paintMotion(); }
-  function motionClear() { const was = MOT.live; MOT.state = 'off'; MOT.ev = []; MOT.live = false; if (was) padRelease(true); paintMotion(); }
+  // pad motion: record a move, and it loops in time, a whole number of bars long. Every move can have its own loop, and they all play at once.
+  const MOT = { state: 'off', ev: [], t0: 0, prog: null };
+  const TRK = {};   // the loops, by move: { ev, len, start, on, live, pos }
+  function motionArm() { if (MOT.state === 'off') MOT.state = 'armed'; else { MOT.state = 'off'; MOT.ev = []; } paintMotion(); }
+  function motionBegin() { MOT.state = 'rec'; MOT.ev = []; MOT.t0 = nowTk(); MOT.prog = PAD.prog; paintMotion(); }
+  function motionEnd() {
+    const dur = nowTk() - MOT.t0, id = MOT.prog;
+    if (ST.playing && MOT.ev.length >= 2) { if (TRK[id]) trackOff(id); TRK[id] = { ev: MOT.ev, len: Math.max(16, Math.ceil(dur / 16) * 16), start: Math.floor(MOT.t0), on: true, live: false, pos: null }; }
+    MOT.state = 'off'; MOT.ev = []; paintMotion(); paintLoops(); paintProgs();
+  }
+  function trackOff(id) { const t = TRK[id]; if (t && t.live) { t.live = false; if (!(PAD.down && PAD.prog === id)) progOf(id).off(); } }
+  function trackToggle(id) { const t = TRK[id]; if (!t) return; t.on = !t.on; if (!t.on) trackOff(id); paintLoops(); }
+  function trackDelete(id) { trackOff(id); delete TRK[id]; paintLoops(); paintProgs(); }
+  function tracksClear() { Object.keys(TRK).forEach(trackDelete); }
   function motionStep(k) {
-    if (MOT.state !== 'play') return;
-    const ph = mod(k - MOT.start, MOT.len), last = MOT.ev[MOT.ev.length - 1].k;
-    if (ph <= last + 0.5) { let e = MOT.ev[0]; for (const x of MOT.ev) { if (x.k <= ph + 0.5) e = x; else break; } MOT.live = true; padSet(e.x, e.y, true); }
-    else if (MOT.live) { MOT.live = false; padRelease(true); }
+    for (const id in TRK) {
+      const t = TRK[id]; if (!t.on || (PAD.down && PAD.prog === id)) continue;   // a finger on the pad takes over its own move
+      const ph = mod(k - t.start, t.len), last = t.ev[t.ev.length - 1].k;
+      if (ph <= last + 0.5) { let e = t.ev[0]; for (const x of t.ev) { if (x.k <= ph + 0.5) e = x; else break; } t.live = true; t.pos = [e.x, e.y]; progOf(id).on(e.x, e.y); }
+      else if (t.live) { t.live = false; progOf(id).off(); }
+    }
+  }
+  function paintLoops() {
+    const h = $('loops'); if (!h) return; const ids = Object.keys(TRK);
+    h.innerHTML = ids.map(id => { const t = TRK[id], p = progOf(id); return '<span class="loop"><button type="button" class="pill" data-t="' + id + '" aria-pressed="' + t.on + '" title="Switch this loop on or off">' + p.name + ' <small>' + t.len / 16 + (t.len === 16 ? ' bar' : ' bars') + '</small></button><button type="button" class="pill x" data-x="' + id + '" aria-label="Delete the ' + p.name + ' loop" title="Delete this loop">&times;</button></span>'; }).join('') + (ids.length > 1 ? '<button type="button" class="pill" data-clear="1">Clear all</button>' : '');
   }
 
   /* ---------- drawing ---------- */
@@ -423,6 +465,7 @@
       const t = performance.now();
       PAD.trail = PAD.trail.filter(p => t - p[2] < 700);
       PAD.trail.forEach(p => { const a = 1 - (t - p[2]) / 700; g2.beginPath(); g2.arc(p[0] * W, (1 - p[1]) * H, 5 + 9 * a, 0, 7); g2.fillStyle = 'rgba(232,116,74,' + 0.22 * a + ')'; g2.fill(); });
+      for (const id in TRK) { const tk = TRK[id]; if (tk.on && tk.live && tk.pos && !(act && PAD.prog === id)) { const x = tk.pos[0] * W, y = (1 - tk.pos[1]) * H; g2.beginPath(); g2.arc(x, y, 8, 0, 7); g2.strokeStyle = 'rgba(243,236,230,.85)'; g2.lineWidth = 1.5; g2.stroke(); g2.beginPath(); g2.arc(x, y, 3, 0, 7); g2.fillStyle = 'rgba(243,236,230,.85)'; g2.fill(); } }
       if (act) {
         const x = PAD.x * W, y = (1 - PAD.y) * H;
         g2.strokeStyle = 'rgba(232,116,74,.45)'; g2.beginPath(); g2.moveTo(x, 0); g2.lineTo(x, H); g2.moveTo(0, y); g2.lineTo(W, y); g2.stroke();
@@ -436,7 +479,7 @@
   const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
   function paintFacts() {
     if (SRC !== 'atlas') {
-      const key = NOTE_NAMES[ROOT] + ' ' + MODE;
+      const key = keyText();
       $('cityName').textContent = SRC === 'three' ? 'Three Cities' : 'Blue Wave';
       $('facts').textContent = PLACES.map((p, i) => p.n + ' ' + (SRC === 'three' ? Math.round(PW[i].temp) + '°' : PW[i].h.toFixed(1) + ' m')).join(' · ');
       $('genreLine').textContent = (PLIVE.ok ? 'live now' : 'sample readings') + ' · ' + key;
@@ -444,7 +487,7 @@
     }
     const c = D.cities[ST.city], g = c.g[ST.genre] || c.g[0];
     $('cityName').textContent = c.n;
-    $('facts').textContent = (WX.live ? Math.round(WX.temp) + '° · wind ' + Math.round(WX.wind) + ' · ' : 'weather offline · ') + NOTE_NAMES[ROOT] + ' ' + MODE;
+    $('facts').textContent = (WX.live ? Math.round(WX.temp) + '° · wind ' + Math.round(WX.wind) + ' · ' : 'weather offline · ') + keyText();
     $('genreLine').textContent = g.n + (g.b ? ' · ' + g.b + ' bpm' : '');
   }
   function paintLanes() {
@@ -453,8 +496,8 @@
   function setMute(i, v) { lanes[i].mute = v == null ? !lanes[i].mute : v; const b = $('lanes').children[i]; if (b) b.setAttribute('aria-pressed', String(!lanes[i].mute)); }
   function paintPlay() { $('play').setAttribute('aria-pressed', String(ST.playing)); $('play').setAttribute('aria-label', ST.playing ? 'Stop' : 'Play'); }
   function paintSay() { const P = progOf(PAD.prog), el = $('say'); if (!el) return; el.innerHTML = '<b>' + P.name + '</b>' + (PAD.said ? esc(PAD.said) : 'touch the rings'); $('axX').textContent = P.x; $('axY').textContent = P.y; }
-  function paintProgs() { const h = $('progs'); if (!h) return; [...h.children].forEach(b => b.setAttribute('aria-pressed', String(b.dataset.p === PAD.prog))); }
-  function paintMotion() { const b = $('motion'); if (!b) return; b.setAttribute('aria-pressed', String(MOT.state !== 'off')); b.querySelector('span').textContent = { off: 'Record a move', armed: 'Now touch the pad', rec: 'Recording', play: 'Move is looping' }[MOT.state]; b.classList.toggle('rec', MOT.state === 'rec' || MOT.state === 'armed'); }
+  function paintProgs() { const h = $('progs'); if (!h) return; [...h.children].forEach(b => { b.setAttribute('aria-pressed', String(b.dataset.p === PAD.prog)); b.classList.toggle('has', !!TRK[b.dataset.p]); }); }
+  function paintMotion() { const b = $('motion'); if (!b) return; b.setAttribute('aria-pressed', String(MOT.state !== 'off')); b.querySelector('span').textContent = { off: 'Record a move', armed: 'Now touch the pad', rec: 'Recording' }[MOT.state]; b.classList.toggle('rec', MOT.state === 'rec' || MOT.state === 'armed'); }
   function paintSlices() {
     const h = $('slices'); if (!h) return;
     const kick = lanes[0];
@@ -487,8 +530,21 @@
   { let taps = []; $('tap').addEventListener('click', () => { const t = performance.now(); taps = taps.filter(x => t - x < 2400); taps.push(t); if (taps.length >= 3) setBpm(60000 / ((taps[taps.length - 1] - taps[0]) / (taps.length - 1)), true); }); }
   const MODE_WORDS = { drums: 'Drums', notes: 'Notes', both: 'Both' };
   function setMode(m) { ST.mode = m; $('mode').setAttribute('aria-pressed', String(m !== 'drums')); $('mode').querySelector('span').textContent = MODE_WORDS[m]; RGMidi.allOff(); keep(); paintLanes(); paintSay(); }
+  if ($('rec')) $('rec').addEventListener('click', () => REC.on ? recStop() : recStart());
   $('mode').addEventListener('click', () => setMode(SRC === 'atlas' ? (ST.mode === 'notes' ? 'drums' : 'notes') : ({ drums: 'notes', notes: 'both', both: 'drums' })[ST.mode]));
-  { const vs = $('voice'); if (vs) { vs.innerHTML = Object.keys(VOICES).map(k => '<option value="' + k + '">' + VOICES[k].name + '</option>').join(''); vs.value = VOICES[ST.voice] ? ST.voice : 'keys'; ST.voice = vs.value; vs.addEventListener('change', () => { ST.voice = vs.value; keep(); }); } }
+  { const vs = $('voice');
+    if (vs) {
+      const mine = '<optgroup label="Soft starters">' + Object.keys(VOICES).map(k => '<option value="' + k + '">' + VOICES[k].name + '</option>').join('') + '</optgroup>';
+      const tcs = TC ? TC.groups.map(([g, list]) => '<optgroup label="Three Cities: ' + g + '">' + list.map(v => '<option value="tc:' + v + '">' + esc(TC.name[v]) + '</option>').join('') + '</optgroup>').join('') : '';
+      vs.innerHTML = mine + tcs;
+      if (!(VOICES[ST.voice] || (TC && ST.voice.indexOf('tc:') === 0 && TC.name[ST.voice.slice(3)]))) ST.voice = 'keys';
+      vs.value = ST.voice; if (TC && ST.voice.indexOf('tc:') === 0) TC.preload(ST.voice.slice(3));
+      vs.addEventListener('change', () => { ST.voice = vs.value; if (TC && ST.voice.indexOf('tc:') === 0) TC.preload(ST.voice.slice(3)); keep(); });
+    }
+    const ks = $('key'), ss = $('scale');
+    if (ks) { ks.innerHTML = '<option value="">Key: weather</option>' + NOTE_NAMES.map((n, i) => '<option value="' + i + '">Key: ' + n + '</option>').join(''); ks.value = ST.key == null ? '' : String(ST.key); ks.addEventListener('change', () => { ST.key = ks.value === '' ? null : +ks.value; keep(); paintFacts(); }); }
+    if (ss) { ss.innerHTML = '<option value="">Scale: weather</option>' + SCALES.map((c, i) => '<option value="' + i + '">' + esc(c[0]) + '</option>').join(''); ss.value = ST.scale == null ? '' : String(ST.scale); ss.addEventListener('change', () => { ST.scale = ss.value === '' ? null : +ss.value; keep(); paintFacts(); }); }
+  }
   $('lanes').addEventListener('click', e => { const b = e.target.closest('.lane'); if (b) setMute(+b.dataset.i); });
 
   // the pad surface
@@ -497,12 +553,13 @@
     $('progs').addEventListener('click', e => { const b = e.target.closest('[data-p]'); if (b) setProg(b.dataset.p); });
     const at = e => { const r = cv.getBoundingClientRect(); return [(e.clientX - r.left) / r.width, 1 - (e.clientY - r.top) / r.height]; };
     let pid = null;
-    cv.addEventListener('pointerdown', e => { e.preventDefault(); ctx.resume(); pid = e.pointerId; try { cv.setPointerCapture(pid); } catch (x) {} if (MOT.state === 'play') motionClear(); if (MOT.state === 'armed') motionBegin(); const [x, y] = at(e); padSet(x, y); });
+    cv.addEventListener('pointerdown', e => { e.preventDefault(); ctx.resume(); pid = e.pointerId; try { cv.setPointerCapture(pid); } catch (x) {} if (MOT.state === 'armed') motionBegin(); const [x, y] = at(e); padSet(x, y); });
     cv.addEventListener('pointermove', e => { if (e.pointerId !== pid) return; const [x, y] = at(e); padSet(x, y); });
     const up = e => { if (e.pointerId !== pid) return; pid = null; padRelease(); };
     cv.addEventListener('pointerup', up); cv.addEventListener('pointercancel', up);
     $('hold').addEventListener('click', () => { PAD.hold = !PAD.hold; $('hold').setAttribute('aria-pressed', String(PAD.hold)); if (!PAD.hold && PAD.down && pid == null) padRelease(); });
-    $('motion').addEventListener('click', motionArm);
+    if ($('motion')) $('motion').addEventListener('click', motionArm);
+    if ($('loops')) $('loops').addEventListener('click', e => { const t = e.target.closest('[data-t]'), x = e.target.closest('[data-x]'); if (t) trackToggle(t.dataset.t); else if (x) trackDelete(x.dataset.x); else if (e.target.closest('[data-clear]')) tracksClear(); });
     paintProgs(); paintMotion();
   }
   // the slice surface
@@ -539,8 +596,8 @@
     const d = /^Digit([1-8])$/.exec(e.code), n = d ? +d[1] - 1 : -1;
     if (SURFACE === 'pad') {
       if (n >= 0) setMute(n);
-      const p = PROGS.find(p => 'Key' + p.key === e.code); if (p) setProg(p.id);
-      if (e.code === 'KeyH') $('hold').click(); if (e.code === 'KeyM') $('motion').click();
+      const p = PROGS.find(p => 'Key' + p.key === e.code); if (p) { if (e.shiftKey && TRK[p.id]) trackToggle(p.id); else setProg(p.id); }
+      if (e.code === 'KeyH') $('hold').click(); if (e.code === 'KeyM' && $('motion')) $('motion').click();
     } else {
       if (n >= 0) window.__slice.press(n);
       const li = ['KeyA', 'KeyS', 'KeyD', 'KeyF', 'KeyG', 'KeyH', 'KeyJ', 'KeyK'].indexOf(e.code); if (li >= 0) setMute(li);
@@ -568,5 +625,5 @@
   citySel.value = ST.city; fillGenres(); setBpm(ST.bpm); if (!saved.bpm && SRC === 'atlas') ST.follow = true;
   $('mode').setAttribute('aria-pressed', String(ST.mode !== 'drums')); $('mode').querySelector('span').textContent = MODE_WORDS[ST.mode];
   fillPlaces(); pickGenre(0); loadWeather(); paintSay(); paintPlay(); draw();
-  window.__live = { ST, FX, PAD, MOT, lanes, padSet, padRelease, setProg, playhead, start, stop };
+  window.__live = { ST, FX, PAD, MOT, TRK, lanes, padSet, padRelease, setProg, playhead, start, stop };
 })();

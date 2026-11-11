@@ -101,3 +101,15 @@ body[data-surface="slice"] .ringbox { min-height: 0; height: 100%; width: 100%; 
 
 .space { display: grid; gap: 10px; padding-top: 6px; border-top: 1px solid var(--line, rgba(243,236,230,.14)); }
 .space select { font: inherit; letter-spacing: .06em; }
+
+.loops { display: flex; flex-wrap: wrap; gap: 6px; }
+.loops:empty { display: none; }
+.loop { display: inline-flex; gap: 2px; }
+.loop .pill { min-height: 32px; padding: 4px 12px; }
+.loop .pill:first-child { border-radius: 999px 0 0 999px; }
+.loop .pill.x { border-radius: 0 999px 999px 0; padding: 4px 10px; }
+.loop small { opacity: .6; }
+.progs .has { box-shadow: inset 0 -3px 0 var(--accent); }
+#rec[aria-pressed="true"] { border-color: #e0604f; color: #e0604f; }
+#rec[aria-pressed="true"] .dot { animation: recpulse 1s infinite; }
+@keyframes recpulse { 50% { opacity: .25; } }

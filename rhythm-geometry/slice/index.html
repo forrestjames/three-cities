@@ -47,6 +47,8 @@
     <label class="row">Echo <span id="echoV">off</span><input id="echoAmt" type="range" min="0" max="100" value="0" aria-label="Echo amount"></label>
     <label class="row">Echo time <select id="echoDiv" aria-label="Echo time"><option value="1">1/4</option><option value="0.75" selected>dotted 1/8</option><option value="0.5">1/8</option><option value="0.3333333333">1/8 triplet</option><option value="0.25">1/16</option></select></label>
     <label class="row">Reverb <span id="verbV">10%</span><input id="verbAmt" type="range" min="0" max="100" value="10" aria-label="Reverb amount"></label>
+    <label class="row">Key <select id="key" aria-label="Key"></select></label>
+    <label class="row">Scale <select id="scale" aria-label="Scale"></select></label>
   </div>
 </aside>
 <footer class="bar">
@@ -55,11 +57,14 @@
   <button id="tap" class="pill" type="button" title="Tap three or more times to set the tempo">Tap</button>
   <select id="kit" aria-label="Drum kit"></select>
   <button id="mode" class="pill" type="button" aria-pressed="false" title="Drums: the rings play the kit. Notes: every ring plays a note of the chord, for your synths."><i class="dot"></i><span>Drums</span></button>
+  <select id="voice" aria-label="Melodic sound" title="The sound the note rings play"></select>
   <div class="lanes" id="lanes" role="group" aria-label="Rings. Click one to mute it."></div>
+  <button id="rec" class="pill" type="button" aria-pressed="false" title="Record everything you hear as a WAV file"><i class="dot"></i><span>Record</span></button>
   <button id="midi" class="pill" type="button" aria-pressed="false" title="Send everything to your drum machine, synths or DAW">MIDI</button>
 </footer>
 <script src="/rhythm-geometry/rg-midi.js"></script>
 <script src="/rhythm-geometry/live/data.js"></script>
+<script src="/rhythm-geometry/live/tcvoices.js"></script>
 <script src="/rhythm-geometry/live/live.js"></script>
 <script src="/rhythm-geometry/nav.js" defer></script>
 </body>
