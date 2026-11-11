@@ -36,9 +36,9 @@
   /* ---------- state ---------- */
   const SKEY = SRC === 'atlas' ? 'rg-live' : 'rg-live-' + SRC;
   let saved = {}; try { saved = JSON.parse(localStorage.getItem(SKEY) || '{}'); } catch (e) {}
-  const keep = () => { try { localStorage.setItem(SKEY, JSON.stringify({ city: ST.city, bpm: ST.follow ? null : ST.bpm, kit: ST.kit, mode: ST.mode, voice: ST.voice, key: ST.key, scale: ST.scale, chordBars: ST.chordBars, melBars: ST.melBars, scat: ST.scat, clus: ST.clus, vol: ST.vol, oct: ST.oct, decay: ST.decay, places: PLACES.map(p => p.n), custom: CUSTOM.filter(c => PLACES.some(p => p.n === c.n)) })); } catch (e) {} };
+  const keep = () => { try { localStorage.setItem(SKEY, JSON.stringify({ city: ST.city, bpm: ST.follow ? null : ST.bpm, kit: ST.kit, mode: ST.mode, voice: ST.voice, key: ST.key, scale: ST.scale, chordBars: ST.chordBars, melBars: ST.melBars, xf: ST.xf, scat: ST.scat, clus: ST.clus, vol: ST.vol, oct: ST.oct, decay: ST.decay, places: PLACES.map(p => p.n), custom: CUSTOM.filter(c => PLACES.some(p => p.n === c.n)) })); } catch (e) {} };
   const cityByName = n => D.cities.findIndex(c => c.n === n);
-  const ST = { city: saved.city != null && D.cities[saved.city] ? saved.city : Math.max(0, cityByName('London')), genre: 0, kit: saved.kit || (SRC === 'three' ? 'tr707' : SRC === 'wave' ? 'tr606' : '808'), bpm: saved.bpm || (SRC === 'three' ? 108 : SRC === 'wave' ? 84 : 120), mode: saved.mode === 'notes' || (SRC !== 'atlas' && saved.mode === 'both') ? saved.mode : (SRC === 'atlas' ? 'drums' : 'both'), voice: saved.voice || 'keys', follow: SRC === 'atlas' && !saved.bpm, playing: false };
+  const ST = { city: saved.city != null && D.cities[saved.city] ? saved.city : Math.max(0, cityByName('London')), genre: 0, kit: saved.kit || (SRC === 'three' ? 'tr707' : SRC === 'wave' ? 'tr606' : '808'), bpm: saved.bpm || (SRC === 'three' ? 108 : SRC === 'wave' ? 84 : 120), mode: saved.mode === 'notes' || (SRC !== 'atlas' && (saved.mode === 'both' || saved.mode === 'blend')) ? saved.mode : (SRC === 'atlas' ? 'drums' : 'both'), voice: saved.voice || 'keys', follow: SRC === 'atlas' && !saved.bpm, playing: false };
   let WX = { temp: 11, wind: 14, hum: 70, cloud: 60, pres: 1010, rain: 0, live: false };
   let ROOT = 0, MODE = 'dorian', pattern = null;
   // what the hands are doing to the rhythm right now
@@ -51,6 +51,7 @@
   // Key and scale: Auto follows the weather. Pick one and it stays put.
   ST.chordBars = saved.chordBars != null ? saved.chordBars : 2; ST.melBars = saved.melBars != null ? saved.melBars : 0;
   ST.scat = saved.scat != null ? saved.scat : 0; ST.clus = saved.clus != null ? saved.clus : 0; ST.clusAt = 8;
+  ST.xf = saved.xf != null ? saved.xf : (saved.mode === 'notes' ? 100 : 0);
   ST.vol = saved.vol != null ? saved.vol : 90; ST.oct = saved.oct != null ? saved.oct : 0; ST.decay = saved.decay != null ? saved.decay : 100;
   const LEN = () => FX.len * ST.decay / 100;
   ST.key = saved.key != null ? saved.key : null; ST.scale = saved.scale != null ? saved.scale : null;
@@ -349,6 +350,12 @@
   }
   function fire(l, t, vel) {
     l.flash = t;
+    if (ST.mode === 'blend') {   // the crossfader sits between: every ring plays the drum and the note, one fading as the other comes up
+      const x = ST.xf / 100, gd = Math.cos(x * Math.PI / 2), gn = Math.sin(x * Math.PI / 2);
+      if (gd > 0.05) { drumSound(l, t, vel * gd); RGMidi.drum(l.name, vel * gd, t, { idx: l.i, dur: 0.06 * LEN() }); }
+      if (gn > 0.05) { const m = noteOf(l); noteSound(l, m, t, vel * gn); RGMidi.note(l.i === 0 ? 'bass' : 'melody', m, vel * gn, t, sd() * (l.i === 0 ? 1.8 : 1.4) * LEN(), { label: l.i === 0 ? 'bass' : 'ring ' + (l.i + 1) }); }
+      return;
+    }
     if (isNote(l)) { const m = noteOf(l); noteSound(l, m, t, vel); RGMidi.note(l.i === 0 ? 'bass' : 'melody', m, vel, t, sd() * (l.i === 0 ? 1.8 : 1.4) * LEN(), { label: l.i === 0 ? 'bass' : 'ring ' + (l.i + 1) }); }
     else { drumSound(l, t, vel); RGMidi.drum(l.name, vel, t, { idx: l.i, dur: 0.06 * LEN() }); }
   }
@@ -583,10 +590,12 @@
     if (eD) { eD.addEventListener('change', () => { DDIV = +eD.value; setDelay(); }); eD.value = String(DDIV); }
   }
   { let taps = []; $('tap').addEventListener('click', () => { const t = performance.now(); taps = taps.filter(x => t - x < 2400); taps.push(t); if (taps.length >= 3) setBpm(60000 / ((taps[taps.length - 1] - taps[0]) / (taps.length - 1)), true); }); }
-  const MODE_WORDS = { drums: 'Drums', notes: 'Notes', both: 'Both' };
-  function setMode(m) { ST.mode = m; $('mode').setAttribute('aria-pressed', String(m !== 'drums')); $('mode').querySelector('span').textContent = MODE_WORDS[m]; RGMidi.allOff(); keep(); paintLanes(); paintSay(); }
+  const MODE_WORDS = { drums: 'Drums', notes: 'Notes', both: 'Split', blend: 'Mix' };
+  function paintXf() { const x = $('xf'); if (x) { x.value = ST.xf; $('xfV').textContent = ST.mode === 'both' ? 'split' : ST.xf <= 0 ? 'drums' : ST.xf >= 100 ? 'notes' : (100 - ST.xf) + ' / ' + ST.xf; } }
+  function setMode(m) { ST.mode = m; if (m === 'drums') ST.xf = 0; else if (m === 'notes') ST.xf = 100; else if (m === 'blend' && (ST.xf <= 0 || ST.xf >= 100)) ST.xf = 50; paintXf(); $('mode').setAttribute('aria-pressed', String(m !== 'drums')); $('mode').querySelector('span').textContent = MODE_WORDS[m]; RGMidi.allOff(); keep(); paintLanes(); paintSay(); }
   if ($('rec')) $('rec').addEventListener('click', () => REC.on ? recStop() : recStart());
-  $('mode').addEventListener('click', () => setMode(SRC === 'atlas' ? (ST.mode === 'notes' ? 'drums' : 'notes') : ({ drums: 'notes', notes: 'both', both: 'drums' })[ST.mode]));
+  $('mode').addEventListener('click', () => setMode(SRC === 'atlas' ? (ST.mode === 'notes' ? 'drums' : 'notes') : ({ drums: 'notes', notes: 'both', both: 'drums', blend: 'drums' })[ST.mode]));
+  if ($('xf')) $('xf').addEventListener('input', () => { ST.xf = +$('xf').value; const m = ST.xf <= 0 ? 'drums' : ST.xf >= 100 ? 'notes' : 'blend'; if (ST.mode !== m) { const x = ST.xf; setMode(m); ST.xf = x; paintXf(); } else { paintXf(); keep(); } });
   { const vs = $('voice');
     if (vs) {
       const mine = '<optgroup label="Soft starters">' + Object.keys(VOICES).map(k => '<option value="' + k + '">' + VOICES[k].name + '</option>').join('') + '</optgroup>';
@@ -685,7 +694,7 @@
   /* ---------- go ---------- */
   size(); addEventListener('resize', size); if (window.ResizeObserver) new ResizeObserver(size).observe(cv);
   citySel.value = ST.city; fillGenres(); setBpm(ST.bpm); if (!saved.bpm && SRC === 'atlas') ST.follow = true;
-  $('mode').setAttribute('aria-pressed', String(ST.mode !== 'drums')); $('mode').querySelector('span').textContent = MODE_WORDS[ST.mode];
+  $('mode').setAttribute('aria-pressed', String(ST.mode !== 'drums')); $('mode').querySelector('span').textContent = MODE_WORDS[ST.mode]; paintXf();
   fillPlaces(); pickGenre(0); loadWeather(); paintSay(); paintPlay(); draw();
   window.__live = { ST, FX, PAD, MOT, TRK, lanes, padSet, padRelease, setProg, playhead, start, stop };
 })();
