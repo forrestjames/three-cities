@@ -10,6 +10,7 @@ Disallow: /today
 Disallow: /sound-test
 Disallow: /sound-shelf
 Disallow: /placement-test
+Disallow: /record-test
 Disallow: /daily-reel/
 Disallow: /social-images/
 

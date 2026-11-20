@@ -1,0 +1,21 @@
+.rec { display: grid; gap: 8px; padding-bottom: 8px; border-bottom: 1px dashed var(--line); }
+.rec-sides, .rec-row { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.rec-sides button, .rec-edit .samp-shape button { min-height: 30px; padding: 0 10px; border-radius: 15px; border: 1px solid var(--line); background: none; color: var(--ink-dim); font: 11px var(--mono); cursor: pointer; }
+.rec-sides button[aria-pressed="true"], .rec-edit .samp-shape button[aria-pressed="true"] { border-color: var(--accent); color: var(--ink); background: color-mix(in srgb, var(--accent) 22%, transparent); }
+.rec-in { display: flex; align-items: center; gap: 8px; font-size: 11px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--ink-dim); min-width: 0; }
+.rec select { max-width: 100%; min-height: 30px; padding: 0 8px; border: 1px solid var(--line); border-radius: 3px; background: rgba(16,8,6,0.5); color: var(--ink); font: 11px var(--mono); }
+.rec-go.on { border-color: var(--accent); background: color-mix(in srgb, var(--accent) 38%, transparent); animation: recPulse 1.2s ease-in-out infinite; }
+@keyframes recPulse { 50% { opacity: 0.6; } }
+@media (prefers-reduced-motion: reduce) { .rec-go.on { animation: none; } }
+.rec-meter { height: 6px; border-radius: 3px; background: rgba(255,255,255,0.08); overflow: hidden; }
+.rec-meter i { display: block; height: 100%; width: 0; background: var(--accent); transition: width 60ms linear; }
+.rec-meter i.hot { background: var(--ink); }
+.rec-time { font-size: 12px; color: var(--ink-dim); }
+.rec-edit { display: grid; gap: 8px; }
+.rec-wave { width: 100%; height: 96px; border: 1px solid var(--line); border-radius: 3px; background: rgba(16,8,6,0.5); touch-action: none; cursor: ew-resize; }
+.rec-trim { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+.rec-trim label, .rec-sl { display: grid; gap: 4px; font-size: 11px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--ink-dim); }
+.rec-sliders { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 8px 14px; }
+.rec-sl output { color: var(--ink); text-transform: none; letter-spacing: 0; margin-left: 4px; }
+.rec-shape { display: grid; gap: 8px; }
+@media (pointer: coarse) { .rec-sides button, .rec-edit .samp-shape button, .rec select { min-height: 40px; } }
