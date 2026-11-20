@@ -800,6 +800,15 @@ body.perform .viz .ring { display: block; width: 100%; max-width: 190px; aspect-
 .rec-sl output { color: var(--ink); text-transform: none; letter-spacing: 0; margin-left: 4px; }
 .rec-shape { display: grid; gap: 8px; }
 @media (pointer: coarse) { .rec-sides button, .rec-edit .samp-shape button, .rec select { min-height: 40px; } }
+.city.remote-sel { outline: 2px solid var(--accent); outline-offset: 4px; }
+.rr { position: fixed; left: 14px; bottom: 14px; z-index: 40; display: grid; gap: 8px; max-width: min(340px, calc(100vw - 28px)); }
+.rr-btn { justify-self: start; min-height: 40px; padding: 0 14px; border-radius: 17px; border: 1px solid var(--line); background: rgba(16,8,6,0.9); color: var(--ink); font: 11px var(--mono); letter-spacing: 0.08em; text-transform: uppercase; cursor: pointer; }
+.rr-btn[aria-pressed="true"] { border-color: var(--accent); }
+.rr-panel { padding: 14px; border: 1px solid var(--line); border-radius: 16px; background: rgba(16,8,6,0.95); display: grid; gap: 8px; font-size: 12px; color: var(--ink-dim); }
+.rr-panel p { margin: 0; }
+.rr-code { font: 500 34px var(--mono); letter-spacing: 0.3em; color: var(--ink); }
+.rr-row { display: flex; flex-wrap: wrap; gap: 8px; }
+.rr-keys { color: var(--ink-faint); }
 
 
 /* reel mode */
@@ -2096,7 +2105,7 @@ body.perform.fit .pl-shape-btn { display: inline-block !important; }
         if (!io.an) return;
         io.an.getFloatTimeDomainData(buf);
         let pk = 0; for (let i = 0; i < buf.length; i++) pk = Math.max(pk, Math.abs(buf[i]));
-        const ui = io.owner.rec.ui; ui.meter.style.width = Math.min(100, Math.sqrt(pk) * 100) + "%"; ui.meter.classList.toggle("hot", pk > 0.97);
+        io.lvl = Math.max(io.lvl || 0, pk); const ui = io.owner.rec.ui; ui.meter.style.width = Math.min(100, Math.sqrt(pk) * 100) + "%"; ui.meter.classList.toggle("hot", pk > 0.97);
         if (io.recording) ui.time.textContent = "Recording " + ((ac.currentTime - io.t0)).toFixed(1) + " s. Press Stop when you are done.";
         io.raf = requestAnimationFrame(tick);
       };
@@ -2350,6 +2359,7 @@ body.perform.fit .pl-shape-btn { display: inline-block !important; }
         sync(c);
       })();
       if (c === cities[0]) setTimeout(() => { try { setMore(true); } catch (e) {} }, 0);
+      if (c === cities[cities.length - 1]) setTimeout(initRemote, 0);
     }
     // a file loaded or dropped on the card goes through the same trim
     function fromFile(c, buf, name) {
@@ -2357,7 +2367,103 @@ body.perform.fit .pl-shape-btn { display: inline-block !important; }
       for (let ch = 0; ch < chs; ch++) { const d = buf.getChannelData(ch); for (let i = 0; i < n; i++) mono[i] += d[i] / chs; }
       newTake(c, mono, buf.sampleRate, name);
     }
-    return { mount, play, fromFile };
+
+    // ----- the phone remote: pick a city and start or stop a take from across the studio -----
+    // The phone page (/record-remote) and this page share a six letter code through the quiz Worker. This side checks in about once a second.
+    const rem = { on: false, code: lsGet("tc-remote-code") || "", sel: 0, count: 0, timer: 0, tick: 0, busy: false, err: "", last: "", hooked: new WeakSet() };
+    const makeCode = () => { const A = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"; let o = ""; for (let i = 0; i < 6; i++) o += A[Math.floor(Math.random() * A.length)]; return o; };
+    const recBusy = () => io.recording || rem.count > 0;
+    function pick(n) {
+      rem.sel = Math.max(0, Math.min(cities.length - 1, n));
+      cities.forEach((x, i) => x.el.classList.toggle("remote-sel", i === rem.sel));
+      try { cities[rem.sel].el.scrollIntoView({ behavior: "smooth", block: "center" }); } catch (e) {}
+    }
+    function beep(hz) { try { if (!ac) return; const o = ac.createOscillator(), g4 = ac.createGain(); o.frequency.value = hz; g4.gain.value = 0.06; o.connect(g4).connect(ac.destination); o.start(); o.stop(ac.currentTime + 0.07); } catch (e) {} }
+    async function recordIn(n) {
+      if (recBusy()) return;
+      const c = cities[rem.sel]; rem.err = "";
+      if (n <= 0) { await startRec(c); return; }
+      rem.count = n;
+      try { if (!ac) setupAudio(); await openInput(c); } catch (e) { rem.count = 0; rem.err = (e && e.name === "NotAllowedError") ? "The browser said no to the input. Allow it on the computer." : (e && e.message) || "Couldn't open the input."; c.rec.ui.time.textContent = rem.err; return; }
+      const step = async () => {
+        if (rem.count <= 0) return;
+        if (rem.count <= 3) beep(660);
+        await new Promise(r => { rem.tick = setTimeout(r, 1000); });
+        if (rem.count <= 0) return;   // cancelled
+        rem.count--;
+        if (rem.count > 0) return step();
+        await startRec(c);
+      };
+      step();
+    }
+    function stopAny() {
+      if (rem.count > 0) { rem.count = 0; clearTimeout(rem.tick); if (!io.recording) closeInput(); return; }
+      if (io.recording) stopRec(io.owner);
+    }
+    function toggleRec() { recBusy() ? stopAny() : recordIn(0); }
+    function run(cmd) {
+      rem.last = cmd; renderRem();
+      if (/^city:[0-9]$/.test(cmd)) { if (!recBusy()) pick(Number(cmd.slice(5))); }
+      else if (cmd.startsWith("record:")) recordIn(Number(cmd.slice(7)));
+      else if (cmd === "stop") stopAny();
+      else if (cmd === "clear") { if (!recBusy()) { const b = cities[rem.sel].rec.ui.box.querySelector('[data-k="clear"]'); b && b.click(); } }
+    }
+    const NAMES = { stop: "Stop", clear: "Clear take" };
+    function renderRem() {
+      const el = rem.el; if (!el) return;
+      el.querySelector(".rr-code").textContent = rem.code;
+      const c = cities[rem.sel], last = rem.last ? (rem.last.startsWith("city:") ? "City: " + cities[Number(rem.last.slice(5))].name : rem.last.startsWith("record:") ? "Record" : NAMES[rem.last] || rem.last) : "";
+      el.querySelector(".rr-last").textContent = last ? `Last tap from your phone: ${last} (${new Date().toLocaleTimeString("en-GB")}).` : "Nothing from your phone yet.";
+    }
+    function status() {
+      const c = cities[rem.sel], lvl = Math.round(Math.sqrt(io.lvl || 0) * 100); io.lvl = 0;
+      const msg = rem.count > 0 ? `${c.name} starts in ${rem.count}.` : io.recording ? `Recording ${c.name}.` : rem.err || (c.rec.ui.time.textContent || "").slice(0, 120);
+      return { city: rem.sel, names: cities.map(x => x.name), rec: !!io.recording, count: rem.count, secs: io.recording ? Math.floor(ac.currentTime - io.t0) : 0, lvl: io.stream ? lvl : 0, take: cities.map(x => !!(x.rec && x.rec.raw)), msg };
+    }
+    async function sync() {
+      if (!rem.on || rem.busy) return; rem.busy = true;
+      try {
+        const r = await fetch(QUIZ_API + "/remote/sync", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ code: rem.code, status: status() }) }).then(x => x.json());
+        rem.el.querySelector(".rr-net").textContent = "";
+        (r.cmds || []).forEach(run);
+      } catch (e) { rem.el.querySelector(".rr-net").textContent = "Can't reach the server right now."; }
+      rem.busy = false;
+    }
+    async function hookMidi() {
+      try {
+        const acc = (typeof midiAccess !== "undefined" && midiAccess) || (navigator.requestMIDIAccess ? await navigator.requestMIDIAccess() : null); if (!acc) return;
+        const on = e => { const [st, n, v] = e.data; if (!rem.on || (st & 0xF0) !== 0x90 || !v) return; if (n >= 36 && n <= 38) { if (!recBusy()) pick(n - 36); } else if (n === 39) toggleRec(); };
+        acc.inputs.forEach(i => { if (!rem.hooked.has(i)) { rem.hooked.add(i); i.addEventListener("midimessage", on); } });
+      } catch (e) {}
+    }
+    function setRemote(on) {
+      rem.on = on; rem.el.querySelector(".rr-panel").hidden = !on; rem.el.querySelector(".rr-btn").setAttribute("aria-pressed", String(on));
+      clearInterval(rem.timer);
+      if (on) { if (!rem.code) { rem.code = makeCode(); lsSet("tc-remote-code", rem.code); } renderRem(); pick(rem.sel); sync(); rem.timer = setInterval(sync, 900); hookMidi(); }
+    }
+    function initRemote() {
+      const el = rem.el = document.createElement("div"); el.className = "rr";
+      el.innerHTML = `<button type="button" class="rr-btn" aria-pressed="false">Phone remote</button>
+        <div class="rr-panel" hidden>
+          <div class="rr-code" aria-label="Pairing code"></div>
+          <p>On your phone, open <b>/record-remote</b> and type this code. Then pick a city and tap Record.</p>
+          <div class="rr-row"><button type="button" class="samp-load" data-k="copy">Copy phone link</button><button type="button" class="samp-load" data-k="new">New code</button></div>
+          <p class="rr-last" aria-live="polite"></p><p class="rr-net"></p>
+          <p class="rr-keys">Keys: R records or stops, 1 2 3 pick a city. A page-turner pedal works too (Page Down records or stops). MIDI: C1, C#1, D1 pick a city, D#1 records or stops.</p>
+        </div>`;
+      document.body.appendChild(el);
+      el.querySelector(".rr-btn").addEventListener("click", () => setRemote(!rem.on));
+      el.querySelector('[data-k="copy"]').addEventListener("click", async e => { const u = location.origin + "/record-remote?c=" + rem.code; try { await navigator.clipboard.writeText(u); e.target.textContent = "Copied"; } catch (x) { e.target.textContent = u; } setTimeout(() => { e.target.textContent = "Copy phone link"; }, 2500); });
+      el.querySelector('[data-k="new"]').addEventListener("click", () => { rem.code = makeCode(); lsSet("tc-remote-code", rem.code); renderRem(); sync(); });
+      document.addEventListener("keydown", e => {
+        if (!rem.on || e.ctrlKey || e.metaKey || e.altKey || e.repeat) return;
+        const t = e.target, tag = t && t.tagName; if (tag === "TEXTAREA" || tag === "SELECT" || tag === "INPUT" && /^(text|search|email|url|number)$/.test(t.type) || (t && t.isContentEditable)) return;
+        const k = (e.key || "").toLowerCase(); let used = true;
+        if (k === "r" || k === "pagedown") toggleRec(); else if (k >= "1" && k <= "3") { if (!recBusy()) pick(Number(k) - 1); } else used = false;
+        if (used) { e.preventDefault(); e.stopImmediatePropagation(); }
+      }, true);
+    }
+    return { mount, play, fromFile, initRemote };
   })();
   cities.forEach(c => {
     const id = c.key.toLowerCase();

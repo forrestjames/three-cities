@@ -49,3 +49,11 @@ Nothing else: no IPs, no ids, no cookies, no times per event.
 
 The question ids live in both `worker.js` and `index.html` (QUIZ). Add new ones to both.
 Optional: a Cloudflare rate limiting rule on `/answer` (for example 30 requests a minute per visitor) keeps spam down.
+
+## Phone remote for the record test
+
+The same Worker also relays the phone remote (`/remote/cmd`, `/remote/sync`, `/remote/status`). A six letter code pairs a phone
+(`/record-remote`) with the Record test page. It keeps the code, the last few commands, a small status line and when the computer
+last checked in. No people, no addresses, nothing older than a day. It makes its own `remote` table the first time it is used,
+so after pasting the new `worker.js` and deploying there is nothing else to set up.
+

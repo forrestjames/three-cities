@@ -97,6 +97,44 @@ async function collect(req, env) {
   return json(req, { ok: true, counted: keep.length });
 }
 
+// ---------- phone remote for the record test: /remote/cmd, /remote/sync, /remote/status ----------
+// A six letter pairing code links a phone to a computer. Kept: the code, the last few commands, a small status line and when the
+// computer last checked in. Nothing about a person. Rows older than a day are removed.
+const RCMD = /^(record:(0|3|5|10)|stop|clear|city:[0-2])$/;
+let remoteReady = false;
+const remoteCode = c => { c = String(c || "").toUpperCase(); return /^[A-Z2-9]{6}$/.test(c) ? c : ""; };
+async function remote(req, env, url) {
+  if (!remoteReady) { await env.DB.prepare("CREATE TABLE IF NOT EXISTS remote (code TEXT PRIMARY KEY, cmds TEXT NOT NULL DEFAULT '[]', status TEXT NOT NULL DEFAULT '{}', seen INTEGER NOT NULL DEFAULT 0)").run(); remoteReady = true; }
+  const now = Date.now(), path = url.pathname;
+  if (path === "/remote/status" && req.method === "GET") {
+    const code = remoteCode(url.searchParams.get("code")); if (!code) return json(req, { ok: false, error: "bad code" }, 400);
+    const row = await env.DB.prepare("SELECT status, seen FROM remote WHERE code = ?").bind(code).first();
+    return json(req, { ok: !!row, status: row ? JSON.parse(row.status || "{}") : null, age: row ? now - row.seen : null });
+  }
+  if (req.method !== "POST") return json(req, { error: "no" }, 405);
+  const text = await req.text(); if (text.length > 1500) return json(req, { error: "too big" }, 413);
+  let b; try { b = JSON.parse(text); } catch (e) { return json(req, { error: "bad json" }, 400); }
+  const code = remoteCode(b.code); if (!code) return json(req, { ok: false, error: "bad code" }, 400);
+  if (Math.random() < 0.02) await env.DB.prepare("DELETE FROM remote WHERE seen < ?").bind(now - 86400000).run();
+  const row = await env.DB.prepare("SELECT cmds, status, seen FROM remote WHERE code = ?").bind(code).first();
+  if (path === "/remote/cmd") {   // the phone: { code, cmd }
+    if (!row) return json(req, { ok: false, error: "no computer with that code" }, 404);
+    if (!RCMD.test(String(b.cmd))) return json(req, { ok: false, error: "unknown command" }, 400);
+    const list = JSON.parse(row.cmds || "[]"); list.push(String(b.cmd));
+    await env.DB.prepare("UPDATE remote SET cmds = ? WHERE code = ?").bind(JSON.stringify(list.slice(-20)), code).run();
+    return json(req, { ok: true });
+  }
+  if (path === "/remote/sync") {   // the computer: { code, status } and it gets the waiting commands back
+    const stat = JSON.stringify(b.status && typeof b.status === "object" ? b.status : {}).slice(0, 700);
+    if (!row) { await env.DB.prepare("INSERT INTO remote (code, cmds, status, seen) VALUES (?, '[]', ?, ?)").bind(code, stat, now).run(); return json(req, { ok: true, cmds: [] }); }
+    const cmds = row.cmds || "[]";
+    if (cmds === "[]" && stat === row.status && now - row.seen < 3000) return json(req, { ok: true, cmds: [] });
+    const res = await env.DB.prepare("UPDATE remote SET cmds = '[]', status = ?, seen = ? WHERE code = ? AND cmds = ?").bind(stat, now, code, cmds).run();
+    return json(req, { ok: true, cmds: res.meta && res.meta.changes ? JSON.parse(cmds) : [] });   // if a command slipped in just now, it comes next time
+  }
+  return json(req, { error: "no" }, 404);
+}
+
 export default {
   async fetch(req, env) {
     const url = new URL(req.url);
@@ -151,6 +189,8 @@ export default {
 
     // shows a visitor their own address, so the owner can copy it into OWNER_IPS. Nothing is stored.
     if (url.pathname === "/myip" && req.method === "GET") { const ip = req.headers.get("CF-Connecting-IP") || ""; return json(req, { ip, matches: ipKey(ip), counted_out: isOwner(req, env) }); }
+
+    if (url.pathname.startsWith("/remote/")) return remote(req, env, url);
 
     if (url.pathname === "/") return json(req, { ok: true, service: "three-cities-quiz", questions: QUIZ.length });
     return json(req, { error: "not found" }, 404);

@@ -19,3 +19,12 @@
 .rec-sl output { color: var(--ink); text-transform: none; letter-spacing: 0; margin-left: 4px; }
 .rec-shape { display: grid; gap: 8px; }
 @media (pointer: coarse) { .rec-sides button, .rec-edit .samp-shape button, .rec select { min-height: 40px; } }
+.city.remote-sel { outline: 2px solid var(--accent); outline-offset: 4px; }
+.rr { position: fixed; left: 14px; bottom: 14px; z-index: 40; display: grid; gap: 8px; max-width: min(340px, calc(100vw - 28px)); }
+.rr-btn { justify-self: start; min-height: 40px; padding: 0 14px; border-radius: 17px; border: 1px solid var(--line); background: rgba(16,8,6,0.9); color: var(--ink); font: 11px var(--mono); letter-spacing: 0.08em; text-transform: uppercase; cursor: pointer; }
+.rr-btn[aria-pressed="true"] { border-color: var(--accent); }
+.rr-panel { padding: 14px; border: 1px solid var(--line); border-radius: 16px; background: rgba(16,8,6,0.95); display: grid; gap: 8px; font-size: 12px; color: var(--ink-dim); }
+.rr-panel p { margin: 0; }
+.rr-code { font: 500 34px var(--mono); letter-spacing: 0.3em; color: var(--ink); }
+.rr-row { display: flex; flex-wrap: wrap; gap: 8px; }
+.rr-keys { color: var(--ink-faint); }
