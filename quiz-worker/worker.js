@@ -100,7 +100,7 @@ async function collect(req, env) {
 // ---------- phone remote for the record test: /remote/cmd, /remote/sync, /remote/status ----------
 // A six letter pairing code links a phone to a computer. Kept: the code, the last few commands, a small status line and when the
 // computer last checked in. Nothing about a person. Rows older than a day are removed.
-const RCMD = /^(record:(0|3|5|10)|stop|clear|city:[0-2])$/;
+const RCMD = /^(record:(0|3|5|10)|stop|clear|undo|mode:(replace|over)|city:[0-2])$/;
 let remoteReady = false;
 const remoteCode = c => { c = String(c || "").toUpperCase(); return /^[A-Z2-9]{6}$/.test(c) ? c : ""; };
 async function remote(req, env, url) {

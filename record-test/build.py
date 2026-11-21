@@ -26,7 +26,7 @@ s = sub('color: "--london", voice: "sub"', 'color: "--london", voice: "sample"',
 s = sub('["sample", "Your sample…"]', '["sample", "Your recording…"]', s)
 s = sub('No sample yet', 'No recording yet', s, 2)
 # audio side: the studio engine plays the recording, and the Audio switch can silence the browser side
-s = sub('  function voiceCore(c, midi, vel, t, L = 1) {\n', '  function voiceCore(c, midi, vel, t, L = 1) {\n    if (c.recMute) return;\n    if (c.voice === "sample" && c.samp && c.samp.buf && STUDIO.play(c, midi, vel, t, L)) return;\n', s)
+s = sub('  function voiceCore(c, midi, vel, t, L = 1) {\n', '  function voiceCore(c, midi, vel, t, L = 1) {\n    if (c.recMute || c._recHold) return;\n    if (c.voice === "sample" && c.samp && c.samp.buf && STUDIO.play(c, midi, vel, t, L)) return;\n', s)
 # MIDI side: the MIDI switch can silence what goes out
 s = sub('  function sendMidi(c, note, vel, t) {\n    if (!midiOut) return;\n', '  function sendMidi(c, note, vel, t) {\n    if (!midiOut || c.recNoMidi) return;\n', s)
 # a loaded file gets the trim too

@@ -2,7 +2,7 @@
   // Each city has two sides: audio (your recording, played here) and MIDI (the same notes, sent out on its own channel).
   // Either side can be switched off. The recording is trimmed, then cut up and shaped by the loop, like "Your sample".
   const STUDIO = (() => {
-    const DEF = () => ({ slice: "even", dir: "fwd", ftype: "lowpass", fLo: 220, fHi: 14000, q: 3, spread: 100, drift: 100, root: "auto", edge: "xfade30", snap: true, t0: 0, t1: 1 });
+    const DEF = () => ({ slice: "even", dir: "fwd", ftype: "lowpass", fLo: 220, fHi: 14000, q: 3, spread: 100, drift: 100, root: "auto", edge: "xfade30", snap: true, mode: "replace", hear: true, t0: 0, t1: 1 });
     const NOTES = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"];
     const MAXSEC = 60;
     const lsGet = k => { try { return localStorage.getItem(k); } catch (e) { return null; } };
@@ -26,7 +26,7 @@
     async function dbSet(key, val) { try { const db = await DB(); await new Promise((res, rej) => { const tx = db.transaction("slots", "readwrite"); tx.objectStore("slots").put(val, key); tx.oncomplete = res; tx.onerror = () => rej(tx.error); }); db.close(); } catch (e) {} }
     async function dbGet(key) { try { const db = await DB(); const v = await new Promise((res, rej) => { const r = db.transaction("slots").objectStore("slots").get(key); r.onsuccess = () => res(r.result); r.onerror = () => rej(r.error); }); db.close(); return v; } catch (e) { return null; } }
     async function dbDel(key) { try { const db = await DB(); await new Promise(res => { const tx = db.transaction("slots", "readwrite"); tx.objectStore("slots").delete(key); tx.oncomplete = res; tx.onerror = res; }); db.close(); } catch (e) {} }
-    const saveOpts = c => { clearTimeout(c.rec.saveT); c.rec.saveT = setTimeout(() => { const { slice, dir, ftype, fLo, fHi, q, spread, drift, root, edge, snap, t0, t1 } = c.rec; dbSet("opts" + idx(c), { slice, dir, ftype, fLo, fHi, q, spread, drift, root, edge, snap, t0, t1, ref: c.samp ? c.samp.ref || 0 : 0, audioOff: !!c.recMute, midiOff: !!c.recNoMidi }); }, 400); };
+    const saveOpts = c => { clearTimeout(c.rec.saveT); c.rec.saveT = setTimeout(() => { const { slice, dir, ftype, fLo, fHi, q, spread, drift, root, edge, snap, mode, hear, t0, t1 } = c.rec; dbSet("opts" + idx(c), { slice, dir, ftype, fLo, fHi, q, spread, drift, root, edge, snap, mode, hear, t0, t1, ref: c.samp ? c.samp.ref || 0 : 0, audioOff: !!c.recMute, midiOff: !!c.recNoMidi }); }, 400); };
 
     // ----- the input -----
     async function fillDevices() {
@@ -91,21 +91,28 @@
       };
       tick();
     }
+    let mon = null;
+    function stopMon() { if (mon) { try { mon.stop(); } catch (e) {} mon = null; } }
+    function startMon(c) {
+      stopMon(); const R = c.rec; if (!(R.mode === "over" && R.hear && c.samp && c.samp.buf)) return;
+      const src = ac.createBufferSource(), g5 = ac.createGain(); src.buffer = c.samp.buf; src.loop = true; g5.gain.value = Math.min(1, c.samp.norm * 0.35);
+      src.connect(g5).connect(ac.destination); src.start(io.t0); mon = src;
+    }
     async function startRec(c) {
       const ui = c.rec.ui;
       try {
         if (io.recording) await stopRec(io.owner);
         if (!io.stream || io.owner !== c) await openInput(c);
-        setPick(); io.chunks = io.pick.map(() => []); io.frames = 0; io.t0 = ac.currentTime; io.recording = true; io.node.port.postMessage({ on: true });
+        setPick(); io.chunks = io.pick.map(() => []); io.frames = 0; io.t0 = ac.currentTime; io.recording = true; c._recHold = true; startMon(c); io.node.port.postMessage({ on: true });
         ui.go.textContent = "■ Stop"; ui.go.classList.add("on"); ui.check.hidden = true;
       } catch (e) {
-        closeInput(); io.recording = false;
+        closeInput(); io.recording = false; c._recHold = false; stopMon();
         ui.time.textContent = e && e.name === "NotAllowedError" ? "The browser said no to the input. Allow it for this page and try again." : (e && e.message) || "Couldn't open that input.";
       }
     }
     async function stopRec(c) {
       if (!io.recording) return;
-      io.recording = false; try { io.node.port.postMessage({ on: false }); } catch (e) {}
+      io.recording = false; c._recHold = false; stopMon(); try { io.node.port.postMessage({ on: false }); } catch (e) {}
       const ui = c.rec.ui; ui.go.textContent = "● Record"; ui.go.classList.remove("on"); ui.check.hidden = false;
       const sr = ac.sampleRate, chans = io.chunks.map(parts => { const out = new Float32Array(parts.reduce((n, p) => n + p.length, 0)); let o = 0; parts.forEach(p => { out.set(p, o); o += p.length; }); return out; }).filter(a => a.length);
       closeInput();
@@ -116,14 +123,31 @@
       if (chans.length === 1) data = chans[0];
       else { const ranked = chans.map(a => ({ a, r: rms(a) })).sort((x, y) => y.r - x.r), A = ranked[0], B = ranked[1]; data = B.r > A.r * 0.5 ? A.a.map((v, i) => (v + B.a[i]) / 2) : A.a; }
       if (rms(data) < 0.0005) { ui.time.textContent = io.ch === "auto" ? "Nothing but silence came in. Check the level and the input." : `Input ${Number(io.ch) + 1} was silent. Pick another channel, or check the level with Check level.`; return; }
-      newTake(c, data, sr, null);
+      newTake(c, data, sr, null, c.rec.mode === "over");
     }
 
     // ----- a take, its trim, and the sound the city plays -----
-    function newTake(c, data, sr, name) {
-      const R = c.rec; R.raw = { data, sr }; R.name = name || "Recording"; R.t0 = 0; R.t1 = 1; R.peaks = null;
+    function newTake(c, data, sr, name, over) {
+      const R = c.rec;
+      R.prev = R.raw ? { raw: R.raw, name: R.name, t0: R.t0, t1: R.t1 } : null;
+      if (over && R.raw && c.samp && c.samp.buf) {
+        // what you heard: the loop repeating, with your new take on top. The result is a whole number of loops long.
+        const base = cut(R), lat = Math.min(Math.round((ac.outputLatency || 0) * sr), data.length >> 1), d = data.subarray(lat);
+        const len = Math.max(1, Math.ceil(d.length / base.length)) * base.length, out = new Float32Array(len);
+        for (let i = 0; i < len; i++) out[i] = base[i % base.length];
+        for (let i = 0; i < d.length; i++) out[i] += d[i];
+        let pk = 0; for (let i = 0; i < len; i += 2) pk = Math.max(pk, Math.abs(out[i])); if (pk > 0.98) { const k = 0.98 / pk; for (let i = 0; i < len; i++) out[i] *= k; }
+        R.raw = { data: out, sr }; R.peaks = null; R.t0 = 0; R.t1 = 1; ui_show(c); sync(c); apply(c);
+        dbSet("raw" + idx(c), { data: out, sr, name: R.name }); R.ui.time.textContent = `Overdubbed. Now ${c.samp.buf.duration.toFixed(2)} s. ` + R.ui.time.textContent.replace(/^Playing [^.]*\. /, ""); return;
+      }
+      R.raw = { data, sr }; R.name = name || "Recording"; R.t0 = 0; R.t1 = 1; R.peaks = null;
       ui_show(c); autoTrim(c, true);
       dbSet("raw" + idx(c), { data, sr, name: R.name });
+    }
+    function undoTake(c) {
+      const R = c.rec; if (!R.prev || io.recording) return;
+      R.raw = R.prev.raw; R.name = R.prev.name; R.t0 = R.prev.t0; R.t1 = R.prev.t1; R.prev = null; R.peaks = null;
+      ui_show(c); sync(c); apply(c); dbSet("raw" + idx(c), { data: R.raw.data, sr: R.raw.sr, name: R.name }); R.ui.time.textContent = "Back to the take before. " + R.ui.time.textContent;
     }
     function ui_show(c) { c.rec.ui.edit.hidden = false; }
     function autoTrim(c, first) {
@@ -195,7 +219,7 @@
       const R = c.rec, ui = R.ui;
       ui.box.querySelectorAll("[data-opt]").forEach(b => { const [k, v] = b.dataset.opt.split(":"); b.setAttribute("aria-pressed", String(R[k] === v)); });
       ui.box.querySelectorAll("[data-v]").forEach(el => { const k = el.dataset.v; if (el.type === "range") { el.value = R[k]; const o = el.parentElement.querySelector("output"); if (o) o.textContent = k === "q" ? Number(R[k]).toFixed(1) : k === "spread" || k === "drift" ? R[k] + "%" : Math.round(R[k]) + " Hz"; } else el.value = R[k]; });
-      ui.snap.setAttribute("aria-pressed", String(R.snap));
+      ui.snap.setAttribute("aria-pressed", String(R.snap)); ui.hear.setAttribute("aria-pressed", String(R.hear)); ui.hear.hidden = R.mode !== "over"; ui.undo.disabled = !R.prev;
       ui.r0.value = Math.round(R.t0 * 1000); ui.r1.value = Math.round(R.t1 * 1000);
       ui.audio.setAttribute("aria-pressed", String(!c.recMute)); ui.midi.setAttribute("aria-pressed", String(!c.recNoMidi));
       draw(c);
@@ -262,6 +286,11 @@
           <button type="button" class="samp-load rec-go" data-k="go">● Record</button>
         </div>
         <p class="rec-hint" data-k="chhint" hidden>Your browser only hands over two inputs, 1 and 2, whatever the interface has. That is a browser limit. To record another input, send it to 1 and 2 in your interface mixer, or record in your DAW and drop the file on this card.</p>
+        <div class="samp-shape" role="group" aria-label="New take"><span class="samp-label">New take</span>
+          <button type="button" data-opt="mode:replace" title="Recording again throws the old take away">Replace</button>
+          <button type="button" data-opt="mode:over" title="Recording again lays the new take on top of what is there">Overdub</button>
+          <button type="button" data-k="hear" aria-pressed="true" title="While overdubbing, hear the loop in your headphones. Use headphones, or it will leak into the mic">Hear it while I record</button>
+          <button type="button" data-k="undo" disabled title="Go back to the take before this one">Undo take</button></div>
         <div class="rec-meter" aria-hidden="true"><i data-k="meter"></i></div>
         <div class="rec-time" data-k="time" aria-live="polite">Pick your input and press Record. Up to a minute. Raw sound, with no echo or noise clean-up.</div>
         <div class="rec-edit" data-k="edit" hidden>
@@ -301,7 +330,7 @@
           </div>
         </div>`;
       const q = k => box.querySelector(`[data-k="${k}"]`);
-      R.ui = { box, dev: q("dev"), ch: q("ch"), chhint: q("chhint"), check: q("check"), go: q("go"), meter: q("meter"), time: q("time"), edit: q("edit"), wave: q("wave"), r0: q("r0"), r1: q("r1"), prev: q("prev"), snap: q("snap"), audio: q("audio"), midi: q("midi") };
+      R.ui = { box, hear: q("hear"), undo: q("undo"), dev: q("dev"), ch: q("ch"), chhint: q("chhint"), check: q("check"), go: q("go"), meter: q("meter"), time: q("time"), edit: q("edit"), wave: q("wave"), r0: q("r0"), r1: q("r1"), prev: q("prev"), snap: q("snap"), audio: q("audio"), midi: q("midi") };
       c.ref.samp.prepend(box);
       // what plays and what is sent
       R.ui.audio.addEventListener("click", () => { c.recMute = !c.recMute; sync(c); saveOpts(c); });
@@ -326,10 +355,12 @@
       R.ui.wave.addEventListener("pointerup", () => { if (drag) { drag = 0; apply(c); } });
       R.ui.wave.addEventListener("pointercancel", () => { drag = 0; });
       R.ui.prev.addEventListener("click", () => preview(c));
+      R.ui.hear.addEventListener("click", () => { R.hear = !R.hear; sync(c); saveOpts(c); });
+      R.ui.undo.addEventListener("click", () => undoTake(c));
       q("auto").addEventListener("click", () => autoTrim(c, false));
       R.ui.snap.addEventListener("click", () => { R.snap = !R.snap; sync(c); apply(c); });
       q("wav").addEventListener("click", () => { if (c.samp && c.samp.buf) wav(c); });
-      q("clear").addEventListener("click", () => { if (prev && prev.c === c) preview(c); R.raw = null; R.peaks = null; R.ui.edit.hidden = true; c.samp = null; c.ref.sampName.textContent = "No recording yet"; c.ref.sampKey.hidden = true; R.ui.time.textContent = "Cleared. Press Record for a new one."; dbDel("raw" + idx(c)); saveOpts(c); });
+      q("clear").addEventListener("click", () => { if (prev && prev.c === c) preview(c); R.raw = null; R.prev = null; R.peaks = null; R.ui.edit.hidden = true; c.samp = null; c.ref.sampName.textContent = "No recording yet"; c.ref.sampKey.hidden = true; R.ui.time.textContent = "Cleared. Press Record for a new one."; dbDel("raw" + idx(c)); saveOpts(c); });
       q("main").addEventListener("click", () => { if (!c.samp) { R.ui.time.textContent = "Record or load a sound first."; return; } keyLeader = null; matchSampleKey(c); });
       // shaping
       box.querySelectorAll("[data-opt]").forEach(b => b.addEventListener("click", () => { const [k, v] = b.dataset.opt.split(":"); R[k] = v; sync(c); saveOpts(c); }));
@@ -339,7 +370,7 @@
       // bring back what was saved on this device
       (async () => {
         const raw = await dbGet("raw" + idx(c)), o = await dbGet("opts" + idx(c));
-        if (o) { ["slice", "dir", "ftype", "fLo", "fHi", "q", "spread", "drift", "root", "edge", "snap", "t0", "t1"].forEach(k => { if (o[k] !== undefined) R[k] = o[k]; }); c.recMute = !!o.audioOff; c.recNoMidi = !!o.midiOff; }
+        if (o) { ["slice", "dir", "ftype", "fLo", "fHi", "q", "spread", "drift", "root", "edge", "snap", "mode", "hear", "t0", "t1"].forEach(k => { if (o[k] !== undefined) R[k] = o[k]; }); c.recMute = !!o.audioOff; c.recNoMidi = !!o.midiOff; }
         if (raw && raw.data) { R.raw = { data: raw.data, sr: raw.sr }; R.name = raw.name || "Recording"; ui_show(c); apply(c); if (o && o.ref) c.samp.ref = o.ref; }
         sync(c);
       })();
@@ -391,9 +422,11 @@
       if (/^city:[0-9]$/.test(cmd)) { if (!recBusy()) pick(Number(cmd.slice(5))); }
       else if (cmd.startsWith("record:")) recordIn(Number(cmd.slice(7)));
       else if (cmd === "stop") stopAny();
+      else if (cmd.startsWith("mode:")) { const R = cities[rem.sel].rec; R.mode = cmd.slice(5) === "over" ? "over" : "replace"; sync(cities[rem.sel]); saveOpts(cities[rem.sel]); }
+      else if (cmd === "undo") { if (!recBusy()) undoTake(cities[rem.sel]); }
       else if (cmd === "clear") { if (!recBusy()) { const b = cities[rem.sel].rec.ui.box.querySelector('[data-k="clear"]'); b && b.click(); } }
     }
-    const NAMES = { stop: "Stop", clear: "Clear take" };
+    const NAMES = { stop: "Stop", clear: "Clear take", undo: "Undo take", "mode:over": "Overdub", "mode:replace": "Replace" };
     function renderRem() {
       const el = rem.el; if (!el) return;
       el.querySelector(".rr-code").textContent = rem.code;
@@ -403,9 +436,9 @@
     function status() {
       const c = cities[rem.sel], lvl = Math.round(Math.sqrt(io.lvl || 0) * 100); io.lvl = 0;
       const msg = rem.count > 0 ? `${c.name} starts in ${rem.count}.` : io.recording ? `Recording ${c.name}.` : rem.err || (c.rec.ui.time.textContent || "").slice(0, 120);
-      return { city: rem.sel, names: cities.map(x => x.name), rec: !!io.recording, count: rem.count, secs: io.recording ? Math.floor(ac.currentTime - io.t0) : 0, lvl: io.stream ? lvl : 0, take: cities.map(x => !!(x.rec && x.rec.raw)), msg };
+      return { city: rem.sel, names: cities.map(x => x.name), rec: !!io.recording, count: rem.count, secs: io.recording ? Math.floor(ac.currentTime - io.t0) : 0, lvl: io.stream ? lvl : 0, take: cities.map(x => !!(x.rec && x.rec.raw)), mode: c.rec.mode, canUndo: !!c.rec.prev, msg };
     }
-    async function sync() {
+    async function remSync() {
       if (!rem.on || rem.busy) return; rem.busy = true;
       try {
         const r = await fetch(QUIZ_API + "/remote/sync", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ code: rem.code, status: status() }) }).then(x => x.json());
@@ -424,7 +457,7 @@
     function setRemote(on) {
       rem.on = on; rem.el.querySelector(".rr-panel").hidden = !on; rem.el.querySelector(".rr-btn").setAttribute("aria-pressed", String(on));
       clearInterval(rem.timer);
-      if (on) { if (!rem.code) { rem.code = makeCode(); lsSet("tc-remote-code", rem.code); } renderRem(); pick(rem.sel); sync(); rem.timer = setInterval(sync, 900); hookMidi(); }
+      if (on) { if (!rem.code) { rem.code = makeCode(); lsSet("tc-remote-code", rem.code); } renderRem(); pick(rem.sel); remSync(); rem.timer = setInterval(remSync, 900); hookMidi(); }
     }
     function initRemote() {
       const el = rem.el = document.createElement("div"); el.className = "rr";
@@ -439,7 +472,7 @@
       document.body.appendChild(el);
       el.querySelector(".rr-btn").addEventListener("click", () => setRemote(!rem.on));
       el.querySelector('[data-k="copy"]').addEventListener("click", async e => { const u = location.origin + "/record-remote?c=" + rem.code; try { await navigator.clipboard.writeText(u); e.target.textContent = "Copied"; } catch (x) { e.target.textContent = u; } setTimeout(() => { e.target.textContent = "Copy phone link"; }, 2500); });
-      el.querySelector('[data-k="new"]').addEventListener("click", () => { rem.code = makeCode(); lsSet("tc-remote-code", rem.code); renderRem(); sync(); });
+      el.querySelector('[data-k="new"]').addEventListener("click", () => { rem.code = makeCode(); lsSet("tc-remote-code", rem.code); renderRem(); remSync(); });
       document.addEventListener("keydown", e => {
         if (!rem.on || e.ctrlKey || e.metaKey || e.altKey || e.repeat) return;
         const t = e.target, tag = t && t.tagName; if (tag === "TEXTAREA" || tag === "SELECT" || tag === "INPUT" && /^(text|search|email|url|number)$/.test(t.type) || (t && t.isContentEditable)) return;
