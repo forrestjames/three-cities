@@ -46,7 +46,7 @@
       cities.forEach(c => {
         const sel = c.rec && c.rec.ui && c.rec.ui.ch; if (!sel) return;
         sel.innerHTML = '<option value="auto">Auto (the loudest)</option>' + Array.from({ length: io.nch }, (_, i) => `<option value="${i}">Input ${i + 1}</option>`).join("");
-        sel.value = io.ch;
+        sel.value = io.ch; c.rec.ui.chhint.hidden = !(io.stream && io.nch <= 2);
       });
     }
     function closeInput() {
@@ -261,6 +261,7 @@
           <button type="button" class="samp-load" data-k="check" aria-pressed="false">Check level</button>
           <button type="button" class="samp-load rec-go" data-k="go">● Record</button>
         </div>
+        <p class="rec-hint" data-k="chhint" hidden>Your browser only hands over two inputs, 1 and 2, whatever the interface has. That is a browser limit. To record another input, send it to 1 and 2 in your interface mixer, or record in your DAW and drop the file on this card.</p>
         <div class="rec-meter" aria-hidden="true"><i data-k="meter"></i></div>
         <div class="rec-time" data-k="time" aria-live="polite">Pick your input and press Record. Up to a minute. Raw sound, with no echo or noise clean-up.</div>
         <div class="rec-edit" data-k="edit" hidden>
@@ -300,7 +301,7 @@
           </div>
         </div>`;
       const q = k => box.querySelector(`[data-k="${k}"]`);
-      R.ui = { box, dev: q("dev"), ch: q("ch"), check: q("check"), go: q("go"), meter: q("meter"), time: q("time"), edit: q("edit"), wave: q("wave"), r0: q("r0"), r1: q("r1"), prev: q("prev"), snap: q("snap"), audio: q("audio"), midi: q("midi") };
+      R.ui = { box, dev: q("dev"), ch: q("ch"), chhint: q("chhint"), check: q("check"), go: q("go"), meter: q("meter"), time: q("time"), edit: q("edit"), wave: q("wave"), r0: q("r0"), r1: q("r1"), prev: q("prev"), snap: q("snap"), audio: q("audio"), midi: q("midi") };
       c.ref.samp.prepend(box);
       // what plays and what is sent
       R.ui.audio.addEventListener("click", () => { c.recMute = !c.recMute; sync(c); saveOpts(c); });
